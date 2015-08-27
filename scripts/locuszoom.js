@@ -16,13 +16,18 @@ LocusZoom.initContainer = function(x) {
 };
 
 LocusZoom.initD3Viewer = function(holder, region) {
+	var margin = {top: 20, right: 20, bottom: 50, left: 50};
 	var width = 700;
-	var height = 275;
+	var height = 350;
 	var vis = d3.selectAll(holder.toArray() )
 		.append("svg:svg")
 		.attr("width", width)
 		.attr("height", height)
-		.append("svg:g");
+		.append("svg:g")
+		.attr("transform", "translate(" + margin.left +  "," + margin.top + ")")
+	
+	width = width - margin.left - margin.right;
+	height = height - margin.top - margin.bottom;
 
 	var datasource = new LocusZoom.Default.Datasource();
 	datasource.fetchResults(1,region.chr, region.start, region.end).then(function(x) {
@@ -36,6 +41,13 @@ LocusZoom.initD3Viewer = function(holder, region) {
 
 		var xt = d3.scale.linear().domain([ posmin, posmax]).range([0, width]);
 		var yt = d3.scale.linear().domain([ 0, pvalmax ]).range([height, 0]);
+
+		var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
+
+		vis.append("g")
+			.attr("class","y axis")
+			.attr("transform", "translate(-10,0)")
+			.call(yAxis);
 
 		var rules = vis.selectAll("g.rule")
 			.data(yt.ticks(4))
