@@ -1,0 +1,35 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LocusZoom Plugin</title>
+
+  <script src="scripts/jquery.min.js"></script>
+  <script src="scripts/q.min.js"></script>
+  <script src="scripts/d3.min.js"></script>
+
+  <!--
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/q.js/1.4.1/q.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+  -->
+
+  <style type="text/css">
+	.rule line {stroke: #eee}
+  </style>
+
+  <script src="scripts/burlap.js" type="text/javascript"></script>
+  <script src="scripts/locuszoom.js" type="text/javascript"></script>
+
+  <script language="javascript" type="text/javascript">
+	  $(document).ready(function() {
+		LocusZoom.init()
+	  });
+  </script>
+</head>
+<body>
+  <a href="/">Return Home</a>
+  <div class="lz-container" data-region="10:114560000-114960000"></div>
+</body>
+</html>
