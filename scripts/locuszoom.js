@@ -31,6 +31,24 @@ LocusZoom.initD3Viewer = function(holder, region) {
 
 	var datasource = new LocusZoom.Default.Datasource();
 	datasource.fetchResults(1,region.chr, region.start, region.end).then(function(x) {
+
+    // Function to transmute raw data into an array of objects
+    var transmute = function(raw_data){
+      var ret = [];
+      var count = raw_data[Object.keys(raw_data)[0]].length;
+      for (var i = 0; i < count; i++){
+        ret.push({});
+      }
+      for (var key in raw_data){
+        raw_data[key].forEach(function(element, index, array) {
+          ret[index][key] = element;
+        });
+      }
+      return ret;
+    };
+    
+    LocusZoom.Data = transmute(x);
+    
 		x.log10pval = LocusZoom.Transform.NegLog10(x.pvalue);
 
 		var posmin = d3.min(x.position);
