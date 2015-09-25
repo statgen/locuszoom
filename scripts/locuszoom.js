@@ -1,6 +1,28 @@
 /* global $,Q,d3,Burlap */
 /* eslint-env browser */
 
+function Datum (d) { 
+  this.id            = d.id;
+  this.chr           = +d.chr;
+  this.analysis      = +d.analysis;
+  this.position      = +d.position;
+  this.pvalue        = +d.pvalue;
+  this.refAllele     = d.refAllele
+  this.refAlleleFreq = +d.refAlleleFreq
+  this.scoreTestStat = d.scoreTestStat
+
+  this.log10pval = -Math.log(this.pvalue) / Math.LN10
+}
+
+var metadataset = {
+  'position_range': [0,0],
+  'pvalue_range': [0,0]
+};
+var dataset = [];
+
+
+////////////////////////////
+
 var LocusZoom = {};
 
 LocusZoom.init = function() {
@@ -16,38 +38,75 @@ LocusZoom.initContainer = function(x) {
 };
 
 LocusZoom.initD3Viewer = function(holder, region) {
+  
 	var margin = {top: 20, right: 20, bottom: 50, left: 50};
 	var width = 700;
 	var height = 350;
 	var vis = d3.selectAll(holder.toArray() )
-		.append("svg:svg")
+	  .append("svg:svg")
 		.attr("width", width)
 		.attr("height", height)
-		.append("svg:g")
+    .append("svg:g")
+    .attr("id", "stage")
 		.attr("transform", "translate(" + margin.left +  "," + margin.top + ")");
 	
 	width = width - margin.left - margin.right;
 	height = height - margin.top - margin.bottom;
+  
+  d3.csv("staticdata/pval.csv", function(d) {
+    return new Datum(d);
+  }, function(error, data) {
+    if (!error){
+      
+      dataset = data;
+      
+      metadataset.position_range = d3.extent(data, function(d) { return +d.position; } );
+      metadataset.pvalue_range = d3.extent(data, function(d) { return +d.log10pval; } );
 
+      var xt = d3.scale.linear().domain([metadataset.position_range[0], metadataset.position_range[1]]).range([0, width]);
+		  var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
+      var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
+
+      vis.append("g")
+		    .attr("class","y axis")
+		    .attr("transform", "translate(-10,0)")
+		    .call(yAxis);
+      
+	    var rules = vis.selectAll("g.rule")
+			    .data(yt.ticks(4))
+			    .enter().append("svg:g")
+			    .attr("class","rule");
+      
+	    rules.append("svg:line")
+		    .attr("y1", yt)
+		    .attr("y2", yt)
+		    .attr("x1", 0)
+		    .attr("x2", width-1);
+      
+      vis.selectAll("circle.datum")
+        .data(dataset)
+        .enter().append("circle")
+        .attr("class", "datum")
+        .attr("id", function(d){ return d.id; })
+        .attr("cx", function(d){ return xt(d.position); })
+        .attr("cy", function(d){ return yt(d.log10pval); })
+        .attr("fill", "red")
+        .attr("stroke", "black")
+        .attr("r", 4);
+      
+    } else {
+      console.log("Error loading data: " + error);
+    }
+  });
+
+  function render(){
+    
+  }
+
+  /*
+  
 	var datasource = new LocusZoom.Default.Datasource();
 	datasource.fetchResults(1,region.chr, region.start, region.end).then(function(x) {
-
-    // Function to transmute raw data into an array of objects
-    var transmute = function(raw_data){
-      var ret = [];
-      var count = raw_data[Object.keys(raw_data)[0]].length;
-      for (var i = 0; i < count; i++){
-        ret.push({});
-      }
-      for (var key in raw_data){
-        raw_data[key].forEach(function(element, index, array) {
-          ret[index][key] = element;
-        });
-      }
-      return ret;
-    };
-    
-    LocusZoom.Data = transmute(x);
     
 		x.log10pval = LocusZoom.Transform.NegLog10(x.pvalue);
 
@@ -80,7 +139,7 @@ LocusZoom.initD3Viewer = function(holder, region) {
 
 		vis.selectAll("circle.line")
 			.data(x.pvalue)
-		.enter().append("svg:circle")
+		  .enter().append("svg:circle")
 			.attr("cx", function(d,i) {return xt(x.position[i]);})
 			.attr("cy", function(d,i) {return yt(x.log10pval[i]);})
 			.attr("fill", "red")
@@ -88,6 +147,8 @@ LocusZoom.initD3Viewer = function(holder, region) {
 			.attr("r", 4);
 	
 	}).done();
+
+  */
 	
 };
 
