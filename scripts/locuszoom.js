@@ -39,19 +39,19 @@ LocusZoom.initContainer = function(x) {
 
 LocusZoom.initD3Viewer = function(holder, region) {
   
-	var margin = {top: 20, right: 20, bottom: 50, left: 50};
-	var width = 700;
-	var height = 350;
-	var vis = d3.selectAll(holder.toArray() )
-	  .append("svg:svg")
-		.attr("width", width)
-		.attr("height", height)
+  var margin = {top: 20, right: 20, bottom: 50, left: 50};
+  var width = 700;
+  var height = 350;
+  var vis = d3.selectAll(holder.toArray() )
+    .append("svg:svg")
+    .attr("width", width)
+    .attr("height", height)
     .append("svg:g")
     .attr("id", "stage")
-		.attr("transform", "translate(" + margin.left +  "," + margin.top + ")");
-	
-	width = width - margin.left - margin.right;
-	height = height - margin.top - margin.bottom;
+    .attr("transform", "translate(" + margin.left +  "," + margin.top + ")");
+
+  width = width - margin.left - margin.right;
+  height = height - margin.top - margin.bottom;
   
   d3.csv("staticdata/pval.csv", function(d) {
     return new Datum(d);
@@ -64,24 +64,24 @@ LocusZoom.initD3Viewer = function(holder, region) {
       metadataset.pvalue_range = d3.extent(data, function(d) { return +d.log10pval; } );
 
       var xt = d3.scale.linear().domain([metadataset.position_range[0], metadataset.position_range[1]]).range([0, width]);
-		  var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
+      var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
       var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
 
       vis.append("g")
-		    .attr("class","y axis")
-		    .attr("transform", "translate(-10,0)")
-		    .call(yAxis);
+        .attr("class","y axis")
+        .attr("transform", "translate(-10,0)")
+        .call(yAxis);
       
-	    var rules = vis.selectAll("g.rule")
-			    .data(yt.ticks(4))
-			    .enter().append("svg:g")
-			    .attr("class","rule");
+      var rules = vis.selectAll("g.rule")
+        .data(yt.ticks(4))
+        .enter().append("svg:g")
+        .attr("class","rule");
       
-	    rules.append("svg:line")
-		    .attr("y1", yt)
-		    .attr("y2", yt)
-		    .attr("x1", 0)
-		    .attr("x2", width-1);
+      rules.append("svg:line")
+        .attr("y1", yt)
+        .attr("y2", yt)
+        .attr("x1", 0)
+        .attr("x2", width-1);
       
       vis.selectAll("circle.datum")
         .data(dataset)
