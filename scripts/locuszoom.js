@@ -7,11 +7,11 @@ function Datum (d) {
   this.analysis      = +d.analysis;
   this.position      = +d.position;
   this.pvalue        = +d.pvalue;
-  this.refAllele     = d.refAllele
-  this.refAlleleFreq = +d.refAlleleFreq
-  this.scoreTestStat = d.scoreTestStat
+  this.refAllele     = d.refAllele;
+  this.refAlleleFreq = +d.refAlleleFreq;
+  this.scoreTestStat = d.scoreTestStat;
 
-  this.log10pval = -Math.log(this.pvalue) / Math.LN10
+  this.log10pval = -Math.log(this.pvalue) / Math.LN10;
 }
 
 var metadataset = {
@@ -99,57 +99,6 @@ LocusZoom.initD3Viewer = function(holder, region) {
     }
   });
 
-  function render(){
-    
-  }
-
-  /*
-  
-	var datasource = new LocusZoom.Default.Datasource();
-	datasource.fetchResults(1,region.chr, region.start, region.end).then(function(x) {
-    
-		x.log10pval = LocusZoom.Transform.NegLog10(x.pvalue);
-
-		var posmin = d3.min(x.position);
-		var posmax = d3.max(x.position);
-
-		var pvalmin = 0;
-		var pvalmax = d3.max(x.log10pval);
-
-		var xt = d3.scale.linear().domain([ posmin, posmax]).range([0, width]);
-		var yt = d3.scale.linear().domain([ 0, pvalmax ]).range([height, 0]);
-
-		var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
-
-		vis.append("g")
-			.attr("class","y axis")
-			.attr("transform", "translate(-10,0)")
-			.call(yAxis);
-
-		var rules = vis.selectAll("g.rule")
-			.data(yt.ticks(4))
-			.enter().append("svg:g")
-			.attr("class","rule");
-
-		rules.append("svg:line")
-			.attr("y1", yt)
-			.attr("y2", yt)
-			.attr("x1", 0)
-			.attr("x2", width-1);
-
-		vis.selectAll("circle.line")
-			.data(x.pvalue)
-		  .enter().append("svg:circle")
-			.attr("cx", function(d,i) {return xt(x.position[i]);})
-			.attr("cy", function(d,i) {return yt(x.log10pval[i]);})
-			.attr("fill", "red")
-			.attr("stroke", "black")
-			.attr("r", 4);
-	
-	}).done();
-
-  */
-	
 };
 
 LocusZoom.initCanvasViewer = function(holder, region) {
