@@ -12,6 +12,7 @@ function Datum (d) {
   this.scoreTestStat = d.scoreTestStat;
 
   this.log10pval = -Math.log(this.pvalue) / Math.LN10;
+
 }
 
 var metadataset = {
@@ -53,38 +54,40 @@ LocusZoom.initD3Viewer = function(holder, region) {
   width = width - margin.left - margin.right;
   height = height - margin.top - margin.bottom;
   
-  d3.csv("staticdata/pval.csv", function(d) {
+  // d3.csv("staticdata/pval.csv", function(d) {
+  // 114560253 - 114959615
+
+  var csv = mockCSV(114560253, 114959615);
+  console.log(csv);
+  LocusZoom.Data = d3.csv.parse(csv, function(d) {
     return new Datum(d);
-  }, function(error, data) {
-    if (!error){
-      
-      dataset = data;
-      
-      metadataset.position_range = d3.extent(data, function(d) { return +d.position; } );
-      metadataset.pvalue_range = d3.extent(data, function(d) { return +d.log10pval; } );
+  });
 
-      var xt = d3.scale.linear().domain([metadataset.position_range[0], metadataset.position_range[1]]).range([0, width]);
-      var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
-      var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
+  metadataset.position_range = d3.extent(LocusZoom.Data, function(d) { return +d.position; } );
+  metadataset.pvalue_range = d3.extent(LocusZoom.Data, function(d) { return +d.log10pval; } );
 
-      vis.append("g")
+  var xt = d3.scale.linear().domain([metadataset.position_range[0], metadataset.position_range[1]]).range([0, width]);
+  var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
+  var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
+
+  vis.append("g")
         .attr("class","y axis")
         .attr("transform", "translate(-10,0)")
         .call(yAxis);
       
-      var rules = vis.selectAll("g.rule")
+  var rules = vis.selectAll("g.rule")
         .data(yt.ticks(4))
         .enter().append("svg:g")
         .attr("class","rule");
       
-      rules.append("svg:line")
+  rules.append("svg:line")
         .attr("y1", yt)
         .attr("y2", yt)
         .attr("x1", 0)
         .attr("x2", width-1);
       
-      vis.selectAll("circle.datum")
-        .data(dataset)
+  vis.selectAll("circle.datum")
+        .data(LocusZoom.Data)
         .enter().append("circle")
         .attr("class", "datum")
         .attr("id", function(d){ return d.id; })
@@ -94,12 +97,75 @@ LocusZoom.initD3Viewer = function(holder, region) {
         .attr("stroke", "black")
         .attr("r", 4);
       
-    } else {
-      console.log("Error loading data: " + error);
-    }
-  });
-
 };
+
+// mockCSV(): Simple method for mocking quasi-realistic data for more rapid development
+// Written with extremely poor working knowledge of the actual shape and behavior of such data. =P
+//
+// Arguments:
+//   min_position: integer value for lower position bound (required)
+//   max_position: integer value for upper position bound (required)
+var mockCSV = function(min_position, max_position){
+
+  var csv = "analysis,chr,id,position,pvalue,refAllele,refAlleleFreq,scoreTestStat";
+  var random_nuc = function(exclude){
+    var nucs = 'GATC';
+    if (typeof exclude != 'undefined'){
+      nucs = nucs.replace(exclude, '');
+    }
+    return nucs[Math.floor(Math.random()*nucs.length)];
+  }
+
+  var range = max_position - min_position;
+  var points = Math.max(Math.round(Math.random()*Math.min(range, 4000)), 1);
+  var step = range / (points * 1.1);
+
+  for (var p = 1; p <= points; p++){
+
+    // Analysis (TODO: mock something more realistic)
+    var analysis = 1;
+    // Chromosome (TODO: mock something more realistic)
+    var chr = 10;
+    // Position
+    var position = min_position + Math.ceil(p * step);
+    // P-Value
+    var pvalue = Math.max(Math.pow(Math.random(), 1.2), 0.0001).toFixed(4);
+    // Reference / Variant Allele
+    var ref_allele = random_nuc();
+    var var_allele = random_nuc(ref_allele);
+    if (Math.random() < 0.04){
+      var ref_length = Math.ceil(Math.random() * 14);
+      for (var n = 0; n < ref_length; n++){ ref_allele += random_nuc(); }
+    }
+    if (Math.random() < 0.04 && ref_allele.length == 1){
+      var var_length = Math.ceil(Math.random() * 14);
+      for (var n = 0; n < var_length; n++){ var_allele += random_nuc(); }
+    }
+    // Reference Allele Frequency
+    var ref_allele_freq = Math.pow(Math.random(), 0.1).toFixed(4);
+    // Score Test Stat (TODO: ???)
+    var score_test_stat = '';
+    // ID
+    var id = chr + ":" + position + "_" + ref_allele  + '/' + var_allele
+    if (Math.random() < 0.1 && ref_allele.length == 1 && var_allele.length == 1){
+      id += '_';
+      if (Math.random() > 0.5){
+        id += 'SNP' + chr + '-' + (position + Math.ceil(Math.random() * 100));
+      } else {
+        id += 'rs' + Math.round(Math.random() * Math.pow(10, 8));
+      }
+    }
+
+    // Append the completed line
+    csv += "\n" + analysis + "," + chr + "," + id + "," + position + "," + pvalue + "," + ref_allele + "," + ref_allele_freq + "," + score_test_stat;
+
+  }
+
+  return csv;
+
+}
+
+////////////////////////////////////////////////////////
 
 LocusZoom.initCanvasViewer = function(holder, region) {
 	var cv = $("<canvas>").attr({
