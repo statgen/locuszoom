@@ -16,17 +16,17 @@
 
   <link rel="stylesheet" type="text/css" href="css/locuszoom.css"/>
 
-  <script src="scripts/burlap.js" type="text/javascript"></script>
   <script src="scripts/locuszoom.js" type="text/javascript"></script>
 
   <script language="javascript" type="text/javascript">
 	  $(document).ready(function() {
-		LocusZoom.init()
+      LocusZoom.init();
+      //LocusZoom.mapTo(10, 114560000, 114960000);
+      LocusZoom.mapTo(10, 100, 200);
 	  });
   </script>
 </head>
 <body>
-  <a href="/">Return Home</a>
-  <div class="lz-container" data-region="10:114560000-114960000"></div>
+  <svg id="lz-container" style="width: 700px; height: 350px;"></svg>
 </body>
 </html>
