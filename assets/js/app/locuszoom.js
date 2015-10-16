@@ -1,19 +1,4 @@
-/* global $,Q,d3,Burlap */
-/* eslint-env browser */
-
-function Datum (d) { 
-  this.id            = d.id;
-  this.chr           = +d.chr;
-  this.analysis      = +d.analysis;
-  this.position      = +d.position;
-  this.pvalue        = +d.pvalue;
-  this.refAllele     = d.refAllele;
-  this.refAlleleFreq = +d.refAlleleFreq;
-  this.scoreTestStat = d.scoreTestStat;
-
-  this.log10pval = -Math.log(this.pvalue) / Math.LN10;
-
-}
+"use strict"
 
 var LocusZoom = {};
 
@@ -95,7 +80,6 @@ LocusZoom.mapTo = function(chromosome, new_start, new_end){
     this.data = this.data.concat(append_data);
   }
 
-
   this.view.chromosome = chromosome;
   this.view.position_range = [new_start, new_end];
 
@@ -111,6 +95,8 @@ LocusZoom.mapTo = function(chromosome, new_start, new_end){
       var transform = d3.transform(stage.attr("transform"));
       transform.translate[0] += d3.event.dx;
       stage.attr("transform", transform.toString());
+    }).on('dragend', function() {
+      // mapTo new values
     });
   this.svg.call(this.drag);
 
