@@ -8,10 +8,12 @@ LocusZoom.data = [];
 // Object for storing current view parameters
 LocusZoom.view = {
   chromosome: 0,
+  xscale: null,
+  yscale: null,
   position_range: [0,0],
   data_array_index_range: [0,0],
   svg: { width: 700, height: 350 },
-  margin: { top: 20, right: 20, bottom: 50, left: 50 }
+  margin: { top: 20, right: 30, bottom: 30, left: 40 }
 };
 
 // Object for storing aggregated information about the data in the view
@@ -23,17 +25,17 @@ LocusZoom.metadata = {
 // Initialize the LocusZoom object and SVG container
 LocusZoom.init = function(svg_id) {
 
+  // Initialize SVG object
   this.svg = d3.select("#" + svg_id);
+  this.svg.attr("width", this.view.width).attr("height", this.view.height);
 
+  // Set stage attributes
   this.view.stage = {
     width: this.view.svg.width - this.view.margin.left - this.view.margin.right,
     height: this.view.svg.height - this.view.margin.top - this.view.margin.bottom,
   };
 
-  this.svg
-    .attr("width", this.view.width)
-    .attr("height", this.view.height);
-
+  // Append stage clipping path
   this.svg.append("clipPath")
     .attr("class", "stage_clip")
     .append("rect")
@@ -42,53 +44,140 @@ LocusZoom.init = function(svg_id) {
     .attr("width", this.view.stage.width)
     .attr("height", this.view.stage.height);
 
+  // Append stage group, apply clipping path
   this.svg
     .append("g")
     .attr("class", "stage")
     .attr("transform", "translate(" + this.view.margin.left +  "," + this.view.margin.top + ")")
     .attr("clip-path", "url(#" + svg_id + ".stage_clip)");
 
+  // Store stage selector
   this.stage = d3.select("#" + svg_id + " g.stage");
+
+  // Initialize axes
+  this.view.xscale = d3.scale.linear().domain([0,1]).range([0, this.view.stage.width]);
+  this.view.xaxis  = d3.svg.axis().scale(this.view.xscale).orient("bottom");
+  this.view.yscale = d3.scale.linear().domain([0,1]).range([this.view.stage.height, 0]).nice();
+  this.view.yaxis  = d3.svg.axis().scale(this.view.yscale).orient("left");
+
+  // Append axes
+  this.svg.append("g")
+    .attr("class", "y axis")
+    .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
+    .call(this.view.yaxis);
+  this.svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.svg.height - this.view.margin.bottom) + ")")
+    .call(this.view.xaxis);
+
+  /*
+  this.stage.append("rect")
+    .attr("x", 0 )
+    .attr("y", 0 )
+    .attr("width", this.view.stage.width)
+    .attr("height", this.view.stage.height)
+    .attr("fill", "rgba(160, 240, 190, 0.3)");
+  */
   
+  // Initialize zoom
+  /*
+  this.view.zoom = d3.behavior.zoom()
+    .scaleExtent([1, 1])
+    .x(this.view.xscale)
+    .on('zoom', function() {
+      //svg.select('.data').attr('d', line)
+      console.log("zooming");
+    });
+  this.svg.call(this.view.zoom);
+  */
+
 };
 
 // Map the LocusZoom SVG container to a new region
-LocusZoom.mapTo = function(chromosome, new_start, new_end){
+LocusZoom.mapTo = function(chromosome, new_start, new_stop){
 
   // Prepend region
   if (new_start < this.view.position_range[0]){
-    var prepend = { start: new_start, end: Math.min(new_end, this.view.position_range[0]) };
+    var prepend = { start: new_start, stop: Math.min(new_stop, this.view.position_range[0]) };
     console.log("prepending region:");
     console.log(prepend);
-    var prepend_csv = this.streamData(chromosome, prepend.start, prepend.end);
-    var prepend_data = d3.csv.parse(prepend_csv, function(d) {
-      return new Datum(d);
+    var lzd = new LZD();
+    var prepend_promise = lzd.getData({start: prepend.start, stop: prepend.stop},
+                                      ['id','position','pvalue','refAllele']);
+    prepend_promise.then(function(data){
+      LocusZoom.data = new_data.body.concat(LocusZoom.data);
+      LocusZoom.view.data_array_index_range[0] = 0;
+      LocusZoom.render();
     });
-    this.data = prepend_data.concat(this.data);
-    this.view.data_array_index_range[0] = 0;
   }
 
   // Append region
-  if (new_end > this.view.position_range[1]){
-    var append = { start: Math.max(this.view.position_range[1], new_start), end: new_end };
+  else if (new_stop > this.view.position_range[1]){
+    var append = { start: Math.max(this.view.position_range[1], new_start), stop: new_stop };
     console.log("appending region:");
     console.log(append);
-    var append_csv = this.streamData(chromosome, append.start, append.end);
-    var append_data = d3.csv.parse(append_csv, function(d) {
-      return new Datum(d);
+    var lzd = new LZD();
+    var append_promise = lzd.getData({start: append.start, stop: append.stop},
+                                     ['id','position','pvalue','refAllele']);
+    append_promise.then(function(new_data){
+      LocusZoom.data = LocusZoom.data.concat(new_data.body);
+      LocusZoom.render();
     });
-    this.data = this.data.concat(append_data);
   }
 
+  // This doesn't belong here...
   this.view.chromosome = chromosome;
-  this.view.position_range = [new_start, new_end];
+  this.view.position_range = [new_start, new_stop];
+
+}
+
+// Draw (or redraw) axes and data
+LocusZoom.render = function(){
 
   this.metadata.position_range = d3.extent(this.data, function(d) { return +d.position; } );
   this.metadata.pvalue_range = d3.extent(this.data, function(d) { return +d.log10pval; } );
 
-  var xscale = d3.scale.linear().domain([this.metadata.position_range[0], this.metadata.position_range[1]]).range([0, this.view.stage.width]);
-  var yscale = d3.scale.linear().domain([0, this.metadata.pvalue_range[1]]).range([this.view.stage.height, 0]);
+  // Update axes
+  this.view.xscale = d3.scale.linear()
+    .domain([this.metadata.position_range[0], this.metadata.position_range[1]])
+    .range([0, this.view.stage.width]);
+  this.view.xaxis  = d3.svg.axis().scale(this.view.xscale).orient('bottom')
+    .tickValues(d3.range(this.metadata.position_range[0], this.metadata.position_range[1], (this.metadata.position_range[1] - this.metadata.position_range[0]) / 10));
+  this.svg.selectAll("g .x.axis").call(this.view.xaxis);
 
+  this.view.yscale = d3.scale.linear()
+    .domain([0, this.metadata.pvalue_range[1]])
+    .range([this.view.stage.height, 0]);
+  this.view.yaxis  = d3.svg.axis().scale(this.view.yscale).orient('left')
+    .tickValues(d3.range(this.metadata.pvalue_range[0], this.metadata.pvalue_range[1], (this.metadata.pvalue_range[1] - this.metadata.pvalue_range[0]) / 4));
+  this.svg.selectAll("g .y.axis").call(this.view.yaxis);
+
+  // Render data
+  this.stage
+    .selectAll("circle.datum")
+    .data(LocusZoom.data)
+    .enter().append("circle")
+    .attr("class", "datum")
+    .attr("id", function(d){ return d.id; })
+    .attr("cx", function(d){ return LocusZoom.view.xscale(d.position); })
+    .attr("cy", function(d){ return LocusZoom.view.yscale(d.log10pval); })
+    .attr("fill", "red")
+    .attr("stroke", "black")
+    .attr("r", 4);
+
+  // Set zoom
+  /*
+  this.view.zoom = d3.behavior.zoom()
+    .scaleExtent([1, 1])
+    .x(this.view.xscale)
+    .on('zoom', function() {
+      svg.select('.datum').attr('d', line)
+      console.log("zooming");
+    });
+  this.svg.call(this.view.zoom);
+  */
+
+  // Set drag
   this.drag = d3.behavior.drag()
     .on('drag', function() {
       var stage = d3.select('#'+this.id+' g.stage');
@@ -100,159 +189,15 @@ LocusZoom.mapTo = function(chromosome, new_start, new_end){
     });
   this.svg.call(this.drag);
 
-  var xaxis = d3.svg.axis().scale(xscale).orient('bottom').tickValues(d3.range(this.metadata.position_range[0], this.metadata.position_range[1], (this.metadata.position_range[1] - this.metadata.position_range[0]) / 10));
-  var yaxis = d3.svg.axis().scale(yscale).orient('left').tickValues(d3.range(this.metadata.pvalue_range[0], this.metadata.pvalue_range[1], (this.metadata.pvalue_range[1] - this.metadata.pvalue_range[0]) / 4)).orient("left");
-
-  var yAxis = d3.svg.axis().scale(yscale).ticks(4).orient("left");
-
-  // Render data
-  this.stage
-    .selectAll("circle.datum")
-    .data(LocusZoom.data)
-    .enter().append("circle")
-    .attr("class", "datum")
-    .attr("id", function(d){ return d.id; })
-    .attr("cx", function(d){ return xscale(d.position); })
-    .attr("cy", function(d){ return yscale(d.log10pval); })
-    .attr("fill", "red")
-    .attr("stroke", "black")
-    .attr("r", 4);
-
-  this.svg.call(xaxis)
-  this.svg.call(yaxis)
-
 }
 
-// Wrapper method to stream data by whatever means currently supported and just return it outright for handling elsewhere
-LocusZoom.streamData = function(chromosome, start, end){
-  var csv = mockCSV(chromosome, start, end);
-  return csv;
-}
-
-
-LocusZoom.initContainer = function(x) {
-	var reg = x.data("region");
-	console.log(reg);
-	var splitter = /^(.*):(.*)-(.*)$/;
-	var match = splitter.exec(reg);
-	LocusZoom.Default.Viewer(x, {chr:match[1], start:match[2], end:match[3]});
-};
-
-LocusZoom.initD3Viewer = function(holder, region) {
-  
-  // d3.csv("staticdata/pval.csv", function(d) {
-  // 114560253 - 114959615
-
-  var csv = mockCSV(114560253, 114959615);
-  console.log(csv);
-  LocusZoom.Data = d3.csv.parse(csv, function(d) {
-    return new Datum(d);
-  });
-
-  metadataset.position_range = d3.extent(LocusZoom.Data, function(d) { return +d.position; } );
-  metadataset.pvalue_range = d3.extent(LocusZoom.Data, function(d) { return +d.log10pval; } );
-
-  var xt = d3.scale.linear().domain([metadataset.position_range[0], metadataset.position_range[1]]).range([0, width]);
-  var yt = d3.scale.linear().domain([0, metadataset.pvalue_range[1]]).range([height, 0]);
-  var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
-
-  vis.append("g")
-        .attr("class","y axis")
-        .attr("transform", "translate(-10,0)")
-        .call(yAxis);
-      
-  var rules = vis.selectAll("g.rule")
-        .data(yt.ticks(4))
-        .enter().append("svg:g")
-        .attr("class","rule");
-      
-  rules.append("svg:line")
-        .attr("y1", yt)
-        .attr("y2", yt)
-        .attr("x1", 0)
-        .attr("x2", width-1);
-      
-  vis.selectAll("circle.datum")
-        .data(LocusZoom.Data)
-        .enter().append("circle")
-        .attr("class", "datum")
-        .attr("id", function(d){ return d.id; })
-        .attr("cx", function(d){ return xt(d.position); })
-        .attr("cy", function(d){ return yt(d.log10pval); })
-        .attr("fill", "red")
-        .attr("stroke", "black")
-        .attr("r", 4);
-      
-};
-
-// mockCSV(): Simple method for mocking quasi-realistic data for more rapid development
-// Written with extremely poor working knowledge of the actual shape and behavior of such data. =P
-//
-// Arguments:
-//   chromosome: integer value for a chromosome number (required)
-//   min_position: integer value for lower position bound (required)
-//   max_position: integer value for upper position bound (required)
-var mockCSV = function(chromosome, min_position, max_position){
-
-  var csv = "analysis,chr,id,position,pvalue,refAllele,refAlleleFreq,scoreTestStat";
-  var random_nuc = function(exclude){
-    var nucs = 'GATC';
-    if (typeof exclude != 'undefined'){
-      nucs = nucs.replace(exclude, '');
-    }
-    return nucs[Math.floor(Math.random()*nucs.length)];
-  }
-
-  var range = max_position - min_position;
-  var points = Math.max(Math.round(Math.random()*Math.min(range, 4000)), 1);
-  var step = range / (points * 1.1);
-
-  for (var p = 1; p <= points; p++){
-
-    // Analysis (TODO: mock something more realistic)
-    var analysis = 1;
-    // Chromosome
-    var chr = chromosome;
-    // Position
-    var position = min_position + Math.ceil(p * step);
-    // P-Value
-    var pvalue = Math.max(Math.pow(Math.random(), 1.2), 0.0001).toFixed(4);
-    // Reference / Variant Allele
-    var ref_allele = random_nuc();
-    var var_allele = random_nuc(ref_allele);
-    if (Math.random() < 0.04){
-      var ref_length = Math.ceil(Math.random() * 14);
-      for (var n = 0; n < ref_length; n++){ ref_allele += random_nuc(); }
-    }
-    if (Math.random() < 0.04 && ref_allele.length == 1){
-      var var_length = Math.ceil(Math.random() * 14);
-      for (var n = 0; n < var_length; n++){ var_allele += random_nuc(); }
-    }
-    // Reference Allele Frequency
-    var ref_allele_freq = Math.pow(Math.random(), 0.1).toFixed(4);
-    // Score Test Stat (TODO: ???)
-    var score_test_stat = '';
-    // ID
-    var id = chr + ":" + position + "_" + ref_allele  + '/' + var_allele
-    if (Math.random() < 0.1 && ref_allele.length == 1 && var_allele.length == 1){
-      id += '_';
-      if (Math.random() > 0.5){
-        id += 'SNP' + chr + '-' + (position + Math.ceil(Math.random() * 100));
-      } else {
-        id += 'rs' + Math.round(Math.random() * Math.pow(10, 8));
-      }
-    }
-
-    // Append the completed line
-    csv += "\n" + analysis + "," + chr + "," + id + "," + position + "," + pvalue + "," + ref_allele + "," + ref_allele_freq + "," + score_test_stat;
-
-  }
-
-  return csv;
-
-}
 
 ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+
+// Original LocusZoom logic
+
 
 LocusZoom.initCanvasViewer = function(holder, region) {
 	var cv = $("<canvas>").attr({
@@ -504,7 +449,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
 	return response.promise;
 };
 
-LocusZoom.Default = {};
-LocusZoom.Default.Viewer = LocusZoom.initD3Viewer;
+//LocusZoom.Default = {};
+//LocusZoom.Default.Viewer = LocusZoom.initD3Viewer;
 //LocusZoom.Default.Viewer = LocusZoom.initCanvasViewer;
-LocusZoom.Default.Datasource = LocusZoom.Data.StaticLocal;
+//LocusZoom.Default.Datasource = LocusZoom.Data.StaticLocal;
