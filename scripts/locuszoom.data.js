@@ -23,40 +23,57 @@ LocusZoom.Data.Requester = function(sources) {
 	this.getData = function(state, fields) {
 		var requests = split_requests(fields);
 		var promises = Object.keys(requests).map(function(key) {
-			return sources[key].getData(state, requests[key])
-		})
-		return Q.all(promises);
+			return sources[key].getData(state, requests[key]);
+		});
+		//assume the are requested in dependent order
+		//TODO: better manage dependencies
+		var ret = Q.when({});
+		for(var i=0; i < promises.length; i++) {
+			ret = ret.then(promises[i]);
+		}
+		return ret;
 	}
 }
 
 LocusZoom.Data.AssociationSource = function(url) {
+	var that = this;
 	this.url = url;
 
 	this.getData = function(state, fields) {
-		var requrl = this.url + "results?filter=analysis in 1 " + 
-			"and chromosome in  '" + state.chr + "'" + 
-			" and position ge " + state.start + 
-			" and position le " + state.end;
-		//var ret = LocusZoom.createCORSPromise("GET",url);
-		var ret = LocusZoom.createResolvedPromise("GET",url);
-		return(ret);
+		return function (chain) {
+			var requrl = that.url + "results?filter=analysis in 1 " + 
+				"and chromosome in  '" + state.chr + "'" + 
+				" and position ge " + state.start + 
+				" and position le " + state.end;
+			return LocusZoom.createCORSPromise("GET",url).then(function(x) {
+				var res = {header:{}, body:x}
+				return res;
+			});
+			//var ret = LocusZoom.createResolvedPromise("GET",url);
+			//return(ret);
+		}
 	}
 }
 
 LocusZoom.Data.LDSource = function(url) {
+	var that = this;
 	this.url = url;
 
 	this.getData = function(state, fields) {
-		var requrl = this.url + "results?find=reference::2" + 
-			"|chr::" + state.chr + 
-			"|start::" + state.start + 
-			"|end::" + state.end + 
-			"|id1::" + state.refvar + 
-			"&fields=chr,pos,rsquare";
-		//var ret = LocusZoom.createCORSPromise("GET",url);
-		var ret = LocusZoom.createResolvedPromise("GET",url);
-		return(ret);
-
+		return function (chain) {
+			var requrl = that.url + "results?find=reference::2" + 
+				"|chr::" + state.chr + 
+				"|start::" + state.start + 
+				"|end::" + state.end + 
+				"|id1::" + state.refvar + 
+				"&fields=chr,pos,rsquare";
+			return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
+				chain.touched=true;
+				return chain;	
+			});
+		};
+		//var ret = LocusZoom.createResolvedPromise("GET",url);
+		//return(ret);
 	}
 }
 
