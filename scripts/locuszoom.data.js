@@ -40,17 +40,29 @@ LocusZoom.Data.AssociationSource = function(url) {
 	this.url = url;
 
 	this.getData = function(state, fields) {
+		if (fields.indexOf("position")==-1) {
+			fields.unshift("position");
+		}
 		return function (chain) {
 			var requrl = that.url + "results?filter=analysis in 1 " + 
 				"and chromosome in  '" + state.chr + "'" + 
 				" and position ge " + state.start + 
 				" and position le " + state.end;
-			return LocusZoom.createCORSPromise("GET",url).then(function(x) {
-				var res = {header:{}, body:x}
+			return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
+				var records = [];
+				fields.forEach(function(f) {
+					if (!(f in x)) {throw "field " + f + " not found in response"}
+				});
+				for(var i = 0; i < x.position.length; i++) {
+					var record = {};
+					fields.forEach(function(f) {
+						record[f] = x[f][i]
+					})
+					records.push(record)
+				}
+				var res = {header:{}, body:records}
 				return res;
 			});
-			//var ret = LocusZoom.createResolvedPromise("GET",url);
-			//return(ret);
 		}
 	}
 }
@@ -72,8 +84,6 @@ LocusZoom.Data.LDSource = function(url) {
 				return chain;	
 			});
 		};
-		//var ret = LocusZoom.createResolvedPromise("GET",url);
-		//return(ret);
 	}
 }
 
