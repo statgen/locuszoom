@@ -5,10 +5,13 @@ LocusZoom.Data = LocusZoom.Data ||  {};
 LocusZoom.Data.Requester = function(sources) {
 
 	function split_requests(fields) {
-		var requests = {base: []};
+		var requests = {};
 		fields.forEach(function(field) {
 			var parts = field.split(/\:(.*)/);
 			if (parts.length==1) {
+				if (typeof requests["base"] == "undefined") {
+					requests.base = [];
+				}
 				requests.base.push(field);
 			} else {
 				if (typeof requests[parts[0]] =="undefined") {
@@ -36,7 +39,6 @@ LocusZoom.Data.Requester = function(sources) {
 }
 
 LocusZoom.Data.AssociationSource = function(url) {
-	var that = this;
 	this.url = url;
 
 	this.getData = function(state, fields) {
@@ -44,7 +46,7 @@ LocusZoom.Data.AssociationSource = function(url) {
 			fields.unshift("position");
 		}
 		return function (chain) {
-			var requrl = that.url + "results?filter=analysis in 1 " + 
+			var requrl = url + "results?filter=analysis in 1 " + 
 				"and chromosome in  '" + state.chr + "'" + 
 				" and position ge " + state.start + 
 				" and position le " + state.end;
@@ -68,12 +70,11 @@ LocusZoom.Data.AssociationSource = function(url) {
 }
 
 LocusZoom.Data.LDSource = function(url) {
-	var that = this;
 	this.url = url;
 
 	this.getData = function(state, fields) {
 		return function (chain) {
-			var requrl = that.url + "results?find=reference::2" + 
+			var requrl = url + "results?find=reference::2" + 
 				"|chr::" + state.chr + 
 				"|start::" + state.start + 
 				"|end::" + state.end + 
@@ -88,6 +89,21 @@ LocusZoom.Data.LDSource = function(url) {
 }
 
 LocusZoom.Data.GeneSource = function(url) {
+	this.url = url;
+
+	this.getData = function(state, fields) {
+		return function (chain) {
+			var requrl = url + "?filter=source eq 1" + 
+				" and chrom eq " + state.chr + 
+				" and start ge " + state.start + 
+				" and end le " + state.end;
+			return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
+				return x.data;
+			}, function(err) {
+				console.log(err);
+			})
+		}
+	}
 
 }
 
@@ -100,7 +116,7 @@ LocusZoom.createResolvedPromise = function() {
 LocusZoom.DefaultDataSources = {
 	base: new LocusZoom.Data.AssociationSource("/api/v1/single/"),
 	ld: new LocusZoom.Data.LDSource("/api/v1/pair/LD/"),
-	gene: new LocusZoom.Data.GeneSource("/api/v1/pair/LD/")
+	gene: new LocusZoom.Data.GeneSource("/api/v1/annotation/genes/")
 }
 
 var lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
