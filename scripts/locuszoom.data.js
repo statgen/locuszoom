@@ -52,7 +52,7 @@ LocusZoom.Data.AssociationSource = function(url) {
             }
         });
         return function (chain) {
-            var requrl = url + "results?filter=analysis in 1 " + 
+            var requrl = url + "results/?filter=analysis in 1 " + 
                 "and chromosome in  '" + state.chr + "'" + 
                 " and position ge " + state.start + 
                 " and position le " + state.end;
@@ -68,7 +68,7 @@ LocusZoom.Data.AssociationSource = function(url) {
                     });
                     records.push(record);
                 }
-                var res = {header: chain.header, body: records};
+                var res = {header: chain.header || {}, body: records};
                 return res;
             });
         };
@@ -96,11 +96,11 @@ LocusZoom.Data.LDSource = function(url) {
             if (!refVar) {
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
-            var requrl = url + "results?find=reference::2" + 
-                "|chr::" + state.chr + 
-                "|start::" + state.start + 
-                "|end::" + state.end + 
-                "|id1::" + refVar + 
+            var requrl = url + "results/?filter=reference eq 2" + 
+                " and chromosome2 eq '" + state.chr + "'" + 
+                " and position2 ge " + state.start + 
+                " and position2 le " + state.end + 
+                " and variant1 eq '" + refVar + "'" + 
                 "&fields=chr,pos,rsquare";
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
                 chain.header.ldrefvar = refVar;
@@ -116,8 +116,8 @@ LocusZoom.Data.GeneSource = function(url) {
 
     this.getData = function(state, fields) {
         return function (chain) {
-            var requrl = url + "?filter=source eq 1" + 
-                " and chrom eq " + state.chr + 
+            var requrl = url + "?filter=source in 1" + 
+                " and chrom eq '" + state.chr + "'" + 
                 " and start ge " + state.start + 
                 " and end le " + state.end;
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
