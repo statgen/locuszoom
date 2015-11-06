@@ -1,11 +1,28 @@
 "use strict"
 
+// Singleton LocusZoom object to behave as a namespace for all instances contained herein
 var LocusZoom = {};
 
-// Array for storing all data points currently displayed in the view
-LocusZoom.data = [];
+LocusZoom.instances = {};
+
+// Method to automatically detect divs by class and populate them with LocusZoom instances
+LocusZoom.populate = function(class_name){
+  if (typeof class_name === "undefined"){
+    var class_name = "lz-instance";
+  }
+  d3.selectAll("div." + class_name).each(function(){
+    LocusZoom.addInstance(this.id);
+  });
+}
+
+// Method to instantiate a new LocusZoom instance
+LocusZoom.addInstance = function(div_id){
+  this.instances[div_id] = new LocusZoom.Instance(div_id);
+}
+
 
 // Object for storing current view parameters
+/*
 LocusZoom.view = {
   chromosome: 0,
   xscale: null,
@@ -15,19 +32,20 @@ LocusZoom.view = {
   svg: { width: 700, height: 350 },
   margin: { top: 20, right: 30, bottom: 30, left: 40 }
 };
+*/
 
 // Object for storing aggregated information about the data in the view
+/*
 LocusZoom.metadata = {
   position_range: [0,0],
   pvalue_range: [0,0]
 };
+*/
 
-// Initialize the LocusZoom object and SVG container
-LocusZoom.init = function(svg_id) {
+// var lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
 
-  // Initialize SVG object
-  this.svg = d3.select("#" + svg_id);
-  this.svg.attr("width", this.view.width).attr("height", this.view.height);
+// To be migrated out into panel abstract class and beyond
+function migrate_me(){
 
   // Set stage attributes
   this.view.stage = {
@@ -93,7 +111,7 @@ LocusZoom.init = function(svg_id) {
 
 };
 
-// Map the LocusZoom SVG container to a new region
+// Map the LocusZoom SVG container to a new region (requires migration)
 LocusZoom.mapTo = function(chromosome, new_start, new_stop){
 
   // Prepend region
@@ -196,8 +214,7 @@ LocusZoom.render = function(){
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 
-// Original LocusZoom logic
-
+// Legace LocusZoom logic
 
 LocusZoom.initCanvasViewer = function(holder, region) {
 	var cv = $("<canvas>").attr({

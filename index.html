@@ -7,21 +7,37 @@
   <!-- TODO: migrate to using a task runner (grunt, gulp, etc.) to minify/uglify down to a smaller set of includes -->
   <script src="assets/js/vendor/jquery.min.js"></script>
   <script src="assets/js/vendor/d3.min.js"></script>
-  <script src="assets/js/app/Datum.js"></script>
   <script src="assets/js/app/locuszoom.js"></script>
+  <script src="assets/js/app/Instance.js"></script>
+  <script src="assets/js/app/Panel.js"></script>
+  <script src="assets/js/app/Datum.js"></script>
   <script src="assets/js/app/LZD.js"></script>
 
   <link rel="stylesheet" type="text/css" href="assets/css/locuszoom.css"/>
 
   <script language="javascript" type="text/javascript">
 	  $(document).ready(function() {
-      LocusZoom.init("lz-container");
+      
+      //LocusZoom.init("lz-container");
+      //LocusZoom.addPanel("Positions").setDimensions().init();
+      //LocusZoom.addPanel("Genes").init();
       //LocusZoom.mapTo(10, 114560000, 114960000);
-      LocusZoom.mapTo(10, 100, 200);
+      //LocusZoom.mapTo(10, 100, 200);
 	  });
   </script>
 </head>
-<body style="background-color: #CCCCCC; margin: 50px;">
-  <svg id="lz-container" style="width: 700px; height: 350px; background-color: #FFFFFF; cursor: move;"></svg>
+<body style="background-color: #CCCCCC; margin: 20px;" onload="LocusZoom.populate();">
+  <table border="0" cellspacing="20">
+    <tr>
+      <td>
+        <h1>LocusZoom 1:</h1>
+        <div id="lz-1" class="lz-instance" data-region=""></div>
+      </td>
+      <td>
+        <h1>LocusZoom 2:</h1>
+        <div id="lz-2" class="lz-instance" data-region=""></div>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
