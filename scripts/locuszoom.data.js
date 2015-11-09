@@ -32,9 +32,12 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         var promises = Object.keys(requests).map(function(key) {
+            if (!sources[key]) {
+                throw("Datasource for namespace " + key + " not found");
+            }
             return sources[key].getData(state, requests[key].fields, requests[key].names);
         });
-        //assume the are requested in dependent order
+        //assume the fields are requested in dependent order
         //TODO: better manage dependencies
         var ret = Q.when({});
         for(var i=0; i < promises.length; i++) {
@@ -118,6 +121,9 @@ LocusZoom.Data.LDSource = function(url) {
                 refVar = state.ldrefvar || chain.header.ldrefvar || "best";
             }
             if ( refVar=="best") {
+                if (!chain.body) {
+                    throw("No association data found to find best pvalue");
+                }
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
             var requrl = url + "results/?filter=reference eq 2" + 
@@ -127,6 +133,7 @@ LocusZoom.Data.LDSource = function(url) {
                 " and variant1 eq '" + refVar + "'" + 
                 "&fields=chr,pos,rsquare";
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
+                if (!chain.header) {chain.header = {};}
                 chain.header.ldrefvar = refVar;
                 leftJoin(chain.body, x, outnames[0], "rsquare");
                 return chain;   
