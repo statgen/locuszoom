@@ -167,9 +167,8 @@ LocusZoom.createResolvedPromise = function() {
 };
 
 LocusZoom.DefaultDataSources = {
-    base: new LocusZoom.Data.AssociationSource("/api/v1/single/"),
-    ld: new LocusZoom.Data.LDSource("/api/v1/pair/LD/"),
-    gene: new LocusZoom.Data.GeneSource("/api/v1/annotation/genes/")
+    base: new LocusZoom.Data.AssociationSource("http://portaldev.sph.umich.edu/api/v1/single/"),
+    ld: new LocusZoom.Data.LDSource("http://portaldev.sph.umich.edu/api/v1/pair/LD/"),
+    gene: new LocusZoom.Data.GeneSource("http://portaldev.sph.umich.edu/api/v1/annotation/genes/")
 };
 
-var lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);

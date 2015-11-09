@@ -42,6 +42,9 @@ LocusZoom.Instance = function(div_id) {
         width: 0,
         height: 0
     };
+
+    // LocusZoom.Data.Requester
+    this.lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
     
     // Method to set dimensions on the SVG DOM element
     this.setDimensions = function(width, height){
@@ -93,10 +96,12 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, new_start, new_stop){
     // Prepend region
     if (new_start < this.state.position.start){
         var prepend = { start: new_start, stop: Math.min(new_stop, this.state.position.start) };
-        var lzd = new LZD();
-        var prepend_promise = lzd.getData({start: prepend.start, stop: prepend.stop},
-                                          ["id","position","pvalue","refAllele"]);
+        var prepend_promise = this.lzd.getData({chr: chromosome, start: prepend.start, end: prepend.stop},
+                                               ["id","position","pvalue","refAllele"]);
         prepend_promise.then(function(new_data){
+            for (var idx in new_data.body){
+                new_data.body[idx].log10pval = -Math.log(new_data.body[idx].pvalue) / Math.LN10;
+            }
             this.data = new_data.body.concat(this.data);
         }.bind(this));
         promises.push(prepend_promise);
@@ -105,10 +110,12 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, new_start, new_stop){
     // Append region
     else if (new_stop > this.state.position.stop){
         var append = { start: Math.max(this.state.position.stop, new_start), stop: new_stop };
-        var lzd = new LZD();
-        var append_promise = lzd.getData({start: append.start, stop: append.stop},
-                                         ["id","position","pvalue","refAllele"]);
+        var append_promise = this.lzd.getData({chr: chromosome, start: append.start, end: append.stop},
+                                         ["id","position","pvalue","refAllele"]); //,"ld:best"
         append_promise.then(function(new_data){
+            for (var idx in new_data.body){
+                new_data.body[idx].log10pval = -Math.log(new_data.body[idx].pvalue) / Math.LN10;
+            }
             this.data = this.data.concat(new_data.body);
         }.bind(this));
         promises.push(append_promise);

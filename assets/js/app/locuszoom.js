@@ -26,6 +26,46 @@ LocusZoom.populate = function(class_name){
     });
 };
 
+//from http://www.html5rocks.com/en/tutorials/cors/
+//and with promises from https://gist.github.com/kriskowal/593076
+LocusZoom.createCORSPromise = function (method, url, body, timeout) {
+	var response = Q.defer();
+	var xhr = new XMLHttpRequest();
+	if ("withCredentials" in xhr) {
+
+		// Check if the XMLHttpRequest object has a "withCredentials" property.
+		// "withCredentials" only exists on XMLHTTPRequest2 objects.
+		xhr.open(method, url, true);
+
+	} else if (typeof XDomainRequest != "undefined") {
+
+		// Otherwise, check if XDomainRequest.
+		// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+		xhr = new XDomainRequest();
+		xhr.open(method, url);
+
+	} else {
+		// Otherwise, CORS is not supported by the browser.
+		xhr = null;
+	}
+	if (xhr) {
+		xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200 || xhr.status === 0 ) {
+					response.resolve(JSON.parse(xhr.responseText));
+				} else {
+					response.reject("HTTP" + xhr.status + " for " + url);
+				}
+			}
+		};
+		timeout && setTimeout(response.reject, timeout);
+		body = typeof body !== "undefined" ? body : "";
+		xhr.send(body);
+
+	} 
+	return response.promise;
+};
+
 
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
@@ -241,46 +281,6 @@ LocusZoom.GenomePosComparer = function(a,b, chrVal, posVal) {
 			return(1);
 		}
 	}
-};
-
-//from http://www.html5rocks.com/en/tutorials/cors/
-//and with promises from https://gist.github.com/kriskowal/593076
-LocusZoom.createCORSPromise = function (method, url, body, timeout) {
-	var response = Q.defer();
-	var xhr = new XMLHttpRequest();
-	if ("withCredentials" in xhr) {
-
-		// Check if the XMLHttpRequest object has a "withCredentials" property.
-		// "withCredentials" only exists on XMLHTTPRequest2 objects.
-		xhr.open(method, url, true);
-
-	} else if (typeof XDomainRequest != "undefined") {
-
-		// Otherwise, check if XDomainRequest.
-		// XDomainRequest only exists in IE, and is IE's way of making CORS requests.
-		xhr = new XDomainRequest();
-		xhr.open(method, url);
-
-	} else {
-		// Otherwise, CORS is not supported by the browser.
-		xhr = null;
-	}
-	if (xhr) {
-		xhr.onreadystatechange = function() {
-			if (xhr.readyState === 4) {
-				if (xhr.status === 200 || xhr.status === 0 ) {
-					response.resolve(JSON.parse(xhr.responseText));
-				} else {
-					response.reject("HTTP" + xhr.status + " for " + url);
-				}
-			}
-		};
-		timeout && setTimeout(response.reject, timeout);
-		body = typeof body !== "undefined" ? body : "";
-		xhr.send(body);
-
-	} 
-	return response.promise;
 };
 
 //LocusZoom.Default = {};
