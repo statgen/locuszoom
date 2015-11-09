@@ -1,77 +1,39 @@
-/* global $,Q,d3,Burlap */
-/* eslint-env browser */
+"use strict";
 
+// Singleton LocusZoom object to behave as a namespace for all instances contained herein
 var LocusZoom = {};
 
-LocusZoom.init = function() {
-	$(".lz-container").each(function() {LocusZoom.initContainer($(this));});
+LocusZoom.instances = {};
+
+// Method to instantiate a new LocusZoom instance
+LocusZoom.addInstance = function(div_id){
+    this.instances[div_id] = new LocusZoom.Instance(div_id);
 };
 
-LocusZoom.initContainer = function(x) {
-	var reg = x.data("region");
-	console.log(reg);
-	var splitter = /^(.*):(.*)-(.*)$/;
-	var match = splitter.exec(reg);
-	LocusZoom.Default.Viewer(x, {chr:match[1], start:match[2], end:match[3]});
+// Method to automatically detect divs by class and populate them with LocusZoom instances
+LocusZoom.populate = function(class_name){
+    if (typeof class_name === "undefined"){
+        class_name = "lz-instance";
+    }
+    d3.selectAll("div." + class_name).each(function(){
+        LocusZoom.addInstance(this.id);
+        // Detect regon and map to it
+        if (typeof this.dataset.region !== "undefined"){
+            var region = this.dataset.region.split(":");
+            region[1]  = region[1].split("-");
+            LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
+        }
+    });
 };
 
-LocusZoom.initD3Viewer = function(holder, region) {
-	var margin = {top: 20, right: 20, bottom: 50, left: 50};
-	var width = 700;
-	var height = 350;
-	var vis = d3.selectAll(holder.toArray() )
-		.append("svg:svg")
-		.attr("width", width)
-		.attr("height", height)
-		.append("svg:g")
-		.attr("transform", "translate(" + margin.left +  "," + margin.top + ")");
-	
-	width = width - margin.left - margin.right;
-	height = height - margin.top - margin.bottom;
 
-	var datasource = new LocusZoom.Default.Datasource();
-	datasource.fetchResults(1,region.chr, region.start, region.end).then(function(x) {
-		x.log10pval = LocusZoom.Transform.NegLog10(x.pvalue);
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
 
-		var posmin = d3.min(x.position);
-		var posmax = d3.max(x.position);
-
-		var pvalmin = 0;
-		var pvalmax = d3.max(x.log10pval);
-
-		var xt = d3.scale.linear().domain([ posmin, posmax]).range([0, width]);
-		var yt = d3.scale.linear().domain([ 0, pvalmax ]).range([height, 0]);
-
-		var yAxis = d3.svg.axis().scale(yt).ticks(4).orient("left");
-
-		vis.append("g")
-			.attr("class","y axis")
-			.attr("transform", "translate(-10,0)")
-			.call(yAxis);
-
-		var rules = vis.selectAll("g.rule")
-			.data(yt.ticks(4))
-			.enter().append("svg:g")
-			.attr("class","rule");
-
-		rules.append("svg:line")
-			.attr("y1", yt)
-			.attr("y2", yt)
-			.attr("x1", 0)
-			.attr("x2", width-1);
-
-		vis.selectAll("circle.line")
-			.data(x.pvalue)
-		.enter().append("svg:circle")
-			.attr("cx", function(d,i) {return xt(x.position[i]);})
-			.attr("cy", function(d,i) {return yt(x.log10pval[i]);})
-			.attr("fill", "red")
-			.attr("stroke", "black")
-			.attr("r", 4);
-	
-	}).done();
-	
-};
+/*******************************************************
+// Legacy LocusZoom Logic
+// Commented so as not to throw linting noise. Purge?
 
 LocusZoom.initCanvasViewer = function(holder, region) {
 	var cv = $("<canvas>").attr({
@@ -159,7 +121,6 @@ LocusZoom.Data.LZAPI = function() {
 	};
 };
 
-/*
 LocusZoom.Data.UM.ResultsFacade = function(x) {
 	this.GetBestPvalue = function() {
 		var bestidx = 0;
@@ -171,7 +132,6 @@ LocusZoom.Data.UM.ResultsFacade = function(x) {
 		return bestidx;
 	}
 }
-*/
 
 LocusZoom.Data.StaticLocal = function() {
 
@@ -323,7 +283,9 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
 	return response.promise;
 };
 
-LocusZoom.Default = {};
-LocusZoom.Default.Viewer = LocusZoom.initD3Viewer;
+//LocusZoom.Default = {};
+//LocusZoom.Default.Viewer = LocusZoom.initD3Viewer;
 //LocusZoom.Default.Viewer = LocusZoom.initCanvasViewer;
-LocusZoom.Default.Datasource = LocusZoom.Data.StaticLocal;
+//LocusZoom.Default.Datasource = LocusZoom.Data.StaticLocal;
+
+*/
