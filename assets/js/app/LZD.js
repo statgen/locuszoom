@@ -13,7 +13,7 @@ var LZD = function(){
       var resp = {
         header: '1',
         body: d3.csv.parse(csv, function(d) {
-          return new Datum(d);
+          return new LocusZoom.Datum(d);
         })
       };
       
