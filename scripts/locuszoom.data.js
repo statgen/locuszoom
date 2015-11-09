@@ -113,8 +113,11 @@ LocusZoom.Data.LDSource = function(url) {
             throw("LD currently only supports one field");
         }
         return function (chain) {
-            var refVar = state.ldrefvar || chain.header.ldrefvar;
-            if (!refVar) {
+            var refVar = fields[0];
+            if (refVar == "state") {
+                refVar = state.ldrefvar || chain.header.ldrefvar || "best";
+            }
+            if ( refVar=="best") {
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
             var requrl = url + "results/?filter=reference eq 2" + 
