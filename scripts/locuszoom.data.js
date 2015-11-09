@@ -90,20 +90,20 @@ LocusZoom.Data.LDSource = function(url) {
         return smIdx;
     };
 
-	var leftJoin  = function(left, right, lfield, rfield) {
-		var i=0, j=0;
-		while (i < left.length && j < right.position2.length) {
-			if (left[i].position == right.position2[j]) {
-				left[i][lfield] = right[rfield][j];
-				i++;
-				j++;
-			} else if (left[i].position < right.position2[j]) {
-				i++;
-			} else {
-				j++;
-			}
-		}
-	}
+    var leftJoin  = function(left, right, lfield, rfield) {
+        var i=0, j=0;
+        while (i < left.length && j < right.position2.length) {
+            if (left[i].position == right.position2[j]) {
+                left[i][lfield] = right[rfield][j];
+                i++;
+                j++;
+            } else if (left[i].position < right.position2[j]) {
+                i++;
+            } else {
+                j++;
+            }
+        }
+    };
 
     this.getData = function(state, fields) {
         return function (chain) {
@@ -119,7 +119,7 @@ LocusZoom.Data.LDSource = function(url) {
                 "&fields=chr,pos,rsquare";
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
                 chain.header.ldrefvar = refVar;
-				leftJoin(chain.body, x, fields[0], "rsquare") 
+                leftJoin(chain.body, x, fields[0], "rsquare");
                 return chain;   
             });
         };
