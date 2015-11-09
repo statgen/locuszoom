@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 // Singleton LocusZoom object to behave as a namespace for all instances contained herein
 var LocusZoom = {};
@@ -7,31 +7,33 @@ LocusZoom.instances = {};
 
 // Method to instantiate a new LocusZoom instance
 LocusZoom.addInstance = function(div_id){
-  this.instances[div_id] = new LocusZoom.Instance(div_id);
-}
+    this.instances[div_id] = new LocusZoom.Instance(div_id);
+};
 
 // Method to automatically detect divs by class and populate them with LocusZoom instances
 LocusZoom.populate = function(class_name){
-  if (typeof class_name === "undefined"){
-    var class_name = "lz-instance";
-  }
-  d3.selectAll("div." + class_name).each(function(){
-    LocusZoom.addInstance(this.id);
-    // Detect regon and map to it
-    if (typeof this.dataset.region !== 'undefined'){
-      var region = this.dataset.region.split(':');
-      region[1]  = region[1].split('-');
-      LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
+    if (typeof class_name === "undefined"){
+        class_name = "lz-instance";
     }
-  });
-}
+    d3.selectAll("div." + class_name).each(function(){
+        LocusZoom.addInstance(this.id);
+        // Detect regon and map to it
+        if (typeof this.dataset.region !== "undefined"){
+            var region = this.dataset.region.split(":");
+            region[1]  = region[1].split("-");
+            LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
+        }
+    });
+};
 
 
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
 
-// Legacy LocusZoom logic
+/*******************************************************
+// Legacy LocusZoom Logic
+// Commented so as not to throw linting noise. Purge?
 
 LocusZoom.initCanvasViewer = function(holder, region) {
 	var cv = $("<canvas>").attr({
@@ -119,7 +121,6 @@ LocusZoom.Data.LZAPI = function() {
 	};
 };
 
-/*
 LocusZoom.Data.UM.ResultsFacade = function(x) {
 	this.GetBestPvalue = function() {
 		var bestidx = 0;
@@ -131,7 +132,6 @@ LocusZoom.Data.UM.ResultsFacade = function(x) {
 		return bestidx;
 	}
 }
-*/
 
 LocusZoom.Data.StaticLocal = function() {
 
@@ -287,3 +287,5 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
 //LocusZoom.Default.Viewer = LocusZoom.initD3Viewer;
 //LocusZoom.Default.Viewer = LocusZoom.initCanvasViewer;
 //LocusZoom.Default.Datasource = LocusZoom.Data.StaticLocal;
+
+*/
