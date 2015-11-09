@@ -14,14 +14,16 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = field.split(/\:(.*)/);
             if (parts.length==1) {
                 if (typeof requests["base"] == "undefined") {
-                    requests.base = [];
+                    requests.base = {names:[], fields:[]};
                 }
-                requests.base.push(field);
+                requests.base.names.push(field);
+                requests.base.fields.push(field);
             } else {
                 if (typeof requests[parts[0]] =="undefined") {
-                    requests[parts[0]] = [];
+                    requests[parts[0]] = {names:[], fields:[]};
                 }
-                requests[parts[0]].push(parts[1]);
+                requests[parts[0]].names.push(field);
+                requests[parts[0]].fields.push(parts[1]);
             }
         });
         return requests;
@@ -30,7 +32,7 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         var promises = Object.keys(requests).map(function(key) {
-            return sources[key].getData(state, requests[key]);
+            return sources[key].getData(state, requests[key].fields, requests[key].names);
         });
         //assume the are requested in dependent order
         //TODO: better manage dependencies
@@ -45,10 +47,11 @@ LocusZoom.Data.Requester = function(sources) {
 LocusZoom.Data.AssociationSource = function(url) {
     this.url = url;
 
-    this.getData = function(state, fields) {
+    this.getData = function(state, fields, outnames) {
         ["id","position"].forEach(function(x) {
             if (fields.indexOf(x)==-1) {
                 fields.unshift(x);
+                outnames.unshift(x);
             }
         });
         return function (chain) {
@@ -63,9 +66,9 @@ LocusZoom.Data.AssociationSource = function(url) {
                 });
                 for(var i = 0; i < x.position.length; i++) {
                     var record = {};
-                    fields.forEach(function(f) {
-                        record[f] = x[f][i];
-                    });
+                    for(var j=0; j<fields.length; j++) {
+                        record[outnames[j]] = x[fields[j]][i];
+                    }
                     records.push(record);
                 }
                 var res = {header: chain.header || {}, body: records};
@@ -105,7 +108,10 @@ LocusZoom.Data.LDSource = function(url) {
         }
     };
 
-    this.getData = function(state, fields) {
+    this.getData = function(state, fields, outnames) {
+        if (fields.length>1) {
+            throw("LD currently only supports one field");
+        }
         return function (chain) {
             var refVar = state.ldrefvar || chain.header.ldrefvar;
             if (!refVar) {
@@ -119,7 +125,7 @@ LocusZoom.Data.LDSource = function(url) {
                 "&fields=chr,pos,rsquare";
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
                 chain.header.ldrefvar = refVar;
-                leftJoin(chain.body, x, fields[0], "rsquare");
+                leftJoin(chain.body, x, outnames[0], "rsquare");
                 return chain;   
             });
         };
@@ -129,7 +135,7 @@ LocusZoom.Data.LDSource = function(url) {
 LocusZoom.Data.GeneSource = function(url) {
     this.url = url;
 
-    this.getData = function(state, fields) {
+    this.getData = function(state, fields, outnames) {
         return function (chain) {
             var requrl = url + "?filter=source in 1" + 
                 " and chrom eq '" + state.chr + "'" + 
