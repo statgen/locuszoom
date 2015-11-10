@@ -208,7 +208,11 @@ LocusZoom.PositionsPanel = function(){
             .attr("cy", function(d){ return this.view.margin.top + this.state.y_scale(d.log10pval); }.bind(this))
             .attr("fill", "red")
             .attr("stroke", "black")
-            .attr("r", 4);
+            .attr("r", 4)
+            .style({ cursor: "pointer"})
+            .append("svg:title")
+            .text(function(d) { return d.id; });
+
     };
     
     return this;
