@@ -31,7 +31,16 @@ LocusZoom.Panel = function() {
     this.state = {};
     
     this.data_layers = {};
+
+    this.axes = {
+        y1_data_layer_id: null,
+        y2_data_layer_id: null
+    };
     
+    this.applyDefaults = function(){
+        return null;
+    };
+
     this.xExtent = function(){
         return null;
     };
@@ -118,6 +127,25 @@ LocusZoom.Panel.prototype.init = function(){
     
 };
 
+// Add a Data Layer to a Panel
+// - data_layer (required): a DataLayer object
+// - y_axis (optional): a number (1 or 2) specifying which y axis should represent the range of the data layer
+// If no data layer is yet set to be the y1 axis then this data layer will be mapped to y1 by default
+// (This can be overridden by adding a subsequent data layer and specifying y_axis = 1)
+LocusZoom.Panel.prototype.addDataLayer(data_layer, y_axis){
+    this.data_layers[data_layer.id] = data_layer;
+    if (y_axis === 1 || y_axis === 2){
+        this.axes["y" + y_axis + "_data_layer_id"] = data_layer.id;
+    } else if (this.axes.y1_data_layer_id == null){
+        this.axes.y1_data_layer_id = data_layer.id;
+    }
+}
+
+// Re-Map a panel to new positions according to the parent instance's state
+LocusZoom.Panel.prototype.reMap = function(){
+    // ...
+};
+
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
     
@@ -182,12 +210,16 @@ LocusZoom.PositionsPanel = function(){
     
     this.id = "positions";
     
-    this.view.defaults = {
-        width:  700,
-        height: 350,
-        origin: { x: 0, y: 0 },
-        margin: { top: 20, right: 20, bottom: 20, left: 30 }
-    };
+    this.applyDefaults = function(){
+        this.view = {
+            width:  700,
+            height: 350,
+            origin: { x: 0, y: 0 },
+            margin: { top: 20, right: 20, bottom: 20, left: 30 }
+        };
+        this.addDataLayer(new LocusZoom.PositionsDataLayer(), 1);
+        this.addDataLayer(new LocusZoom.LDDataLayer(), 2);
+    }
     
     this.xExtent = function(){
         return d3.extent(this.parent.data, function(d) { return +d.position; } );
@@ -209,7 +241,7 @@ LocusZoom.PositionsPanel = function(){
             .attr("fill", "red")
             .attr("stroke", "black")
             .attr("r", 4)
-            .style({ cursor: "pointer"})
+            .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
 
@@ -234,14 +266,6 @@ LocusZoom.GenesPanel = function(){
         height: 250,
         origin: { x: 0, y: 350 },
         margin: { top: 20, right: 20, bottom: 20, left: 30 }
-    };
-    
-    this.render = function(){
-        console.log("rendering for Genes panel not yet defined");
-    };
-    
-    this.renderData = function(){
-        console.log("rendering data for Genes panel not yet defined");
     };
     
     return this;

@@ -86,8 +86,21 @@ LocusZoom.Instance.prototype.addPanel = function(panel_name){
     }
 };
 
-// Map an entire LocusZoom Instance (all Panels) to a new region
-LocusZoom.Instance.prototype.mapTo = function(chromosome, new_start, new_stop){
+// Map an entire LocusZoom Instance to a new region
+LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
+
+    // Apply new state values
+    // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
+    this.state.chromosome     = +chromosome;
+    this.state.position.start = +start;
+    this.state.position.stop  = +stop;
+
+    // Trigger reMap on each Panel
+    for (var panel_id in this.panels){
+        this.panels.reMap();
+    }
+
+    /*
     
     // TODO: data requests need to pushed down into data layers
     
@@ -128,14 +141,7 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, new_start, new_stop){
         this.state.position.stop  = new_stop;
         this.render();
     }.bind(this));
-    
-};
 
-// Draw (or redraw) axes and data for all panels
-LocusZoom.Instance.prototype.render = function(){
-    
-    for (var panel_id in this.panels){
-        this.panels[panel_id].render();
-    }
+    */
     
 };
