@@ -30,6 +30,7 @@ LocusZoom.Panel = function() {
     this.state = {};
     
     this._data_layers = {};
+    this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
     this.axes = {
@@ -86,21 +87,28 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 
 // Initialize a panel
 LocusZoom.Panel.prototype.initialize = function(){
+
+    var clip_id = this.parent.id + "." + this.id + ".clip";
         
-    // Append clip path to the SVG
+    // Append clip path to the parent svg element
     this.parent.svg.append("clipPath")
+        .attr("id", clip_id)
         .append("rect")
-        .attr("id", this.id + "_clip")
         .attr("x", this.view.origin.x)
         .attr("y", this.view.origin.y)
         .attr("width", this.view.width)
         .attr("height", this.view.height);
     
-    // Append svg group for rendering all panel elements, clipped by the clip path
+    // Append svg group for rendering all panel child elements, clipped by the clip path
     this.svg = this.parent.svg.append("g")
         .attr("id", this.id + "_panel")
         .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")")
-        .attr("clip-path", "url(rect#" + this.id + "_clip)");
+        .attr("clip-path", "url(#" + clip_id + ")");
+
+    // Initialize child Data Layers
+    for (var id in this._data_layers){
+        this._data_layers[id].initialize();
+    }
 
     // Initialize Axes
     if (this.axes.render_x){
@@ -127,12 +135,13 @@ LocusZoom.Panel.prototype.initialize = function(){
             .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
             .call(this.state.y2_axis);
     }
+
+    return this;
     
 };
 
 
 // Create a new data layer by data layer class
-// TODO: break out setting of y axis to a chainable function?
 LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
     if (typeof DataLayerClass !== "function"){
         return false;
@@ -140,6 +149,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
     var data_layer = new DataLayerClass();
     data_layer.parent = this;
     this._data_layers[data_layer.id] = data_layer;
+    this.data_layer_ids_by_z_index.push(data_layer.id);
     return this._data_layers[data_layer.id];
 };
 
@@ -155,7 +165,9 @@ LocusZoom.Panel.prototype.reMap = function(){
     Promise.all(this.data_promises).then(function(){
         this.render();
     }.bind(this));
+    return this;
 };
+
 
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
@@ -189,8 +201,12 @@ LocusZoom.Panel.prototype.render = function(){
         this.svg.selectAll("g .y.y2.axis").call(this.state.y2_axis);
     }
     
-    // Render data
-    this.renderData();
+    // Render data layers by z-index
+    for (var z_index in this.data_layer_ids_by_z_index){
+        this._data_layers[this.data_layer_ids_by_z_index[z_index]].render();
+    }
+
+    return this;
     
     // Set zoom
     /*
@@ -240,24 +256,6 @@ LocusZoom.PositionsPanel = function(){
     
     this.y1Extent = function(){
         return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval; } );
-    };
-    
-    this.renderData = function(){
-        this.svg
-            .selectAll("circle.datum")
-            .data(this._data_layers.positions.data)
-            .enter().append("circle")
-            .attr("class", "datum")
-            .attr("id", function(d){ return d.id; })
-            .attr("cx", function(d){ return this.view.margin.left + this.state.x_scale(d.position); }.bind(this))
-            .attr("cy", function(d){ return this.view.margin.top + this.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", "red")
-            .attr("stroke", "black")
-            .attr("r", 4)
-            .style({ cursor: "pointer" })
-            .append("svg:title")
-            .text(function(d) { return d.id; });
-
     };
     
     return this;

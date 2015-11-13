@@ -67,6 +67,7 @@ LocusZoom.Instance.prototype.initializePanels = function(){
     for (var id in this._panels){
         this._panels[id].initialize();
     }
+    return this;
 };
 
 // Map an entire LocusZoom Instance to a new region
