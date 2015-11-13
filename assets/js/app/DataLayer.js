@@ -24,6 +24,17 @@ LocusZoom.DataLayer = function() {
 
 }
 
+LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
+    if (typeof y === "undefined"){
+        y = 1;
+    }
+    if (y !== 1 && y !== 2){
+        return false;
+    } else {
+        this.parent.axes["y" + y + "_data_layer_id"] = this.id
+    }
+    return this;
+}
 
 /*
        var append = { start: Math.max(this.state.position.stop, new_start), stop: new_stop };

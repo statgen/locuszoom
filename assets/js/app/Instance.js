@@ -11,21 +11,13 @@
 
 LocusZoom.Instance = function(id) {
 
-  this.id = id;
-  this.parent = LocusZoom;
-  
-  this.svg = null;
-
-    this.defaults = {
-        view: { width: 700, height: 600 },
-        panels: [ "Positions", "Genes" ]
-    };
-
-    // The panels property stores child panel instances
-    this.panels = {};
+    this.id = id;
+    this.parent = LocusZoom;
     
-    // TODO: move into datalayers within panels!
-    this.data = [];
+    this.svg = null;
+
+    // The _panels property stores child panel instances
+    this._panels = {};
     
     // The state property stores any instance-wide parameters subject to change via user input
     this.state = {
@@ -42,54 +34,43 @@ LocusZoom.Instance = function(id) {
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
     
-  return this;
+    return this;
   
 };
 
-
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-  if (typeof width === "undefined") {
-    this.view.width = this.defaults.view.width;
-  } else {
-    this.view.width = +width;
-  }
-  if (typeof height === "undefined") {
-    this.view.height = this.defaults.view.height;
-  } else {
-    this.view.height = +height;
-        }
-  this.svg.attr("width", this.view.width).attr("height", this.view.height);
-  return this;
+    if (typeof width !== "undefined" && typeof height !== "undefined") {
+        this.view.width  = +width;
+        this.view.height = +height;
+    }
+    if (this.svg != null){
+        this.svg.attr("width", this.view.width).attr("height", this.view.height);
+    }
+    return this;
 };
-
-
-// Select a div element, add an SVG element, and change id to match the id of the div
-LocusZoom.Instance.prototype.attachToDivById = function(id){
-  this.parent.changeInstanceId(this.id, id);
-  this.id = id;
-  this.svg = d3.select("div#" + this.id).append("svg").attr("id", this.id + "_svg").attr("class", "locuszoom");
-  // Detect data-region and map to it if necessary
-  if (typeof this.svg.node().parentNode.dataset.region !== "undefined"){
-    var region = this.svg.node().parentNode.dataset.region.split(/\D/);
-    this.mapTo(+region[0], +region[1], +region[2]);
-  }
-}
 
 // Create a new panel by panel class
 LocusZoom.Instance.prototype.addPanel = function(PanelClass){
-  if (typeof PanelClass !== "function"){
-    return false
-  }
-  var panel = new PanelClass();
-  this.panels[panel.id] = panel;
-  return this.panels[panel.id];
+    if (typeof PanelClass !== "function"){
+        return false
+    }
+    var panel = new PanelClass();
+    panel.parent = this;
+    this._panels[panel.id] = panel;
+    return this._panels[panel.id];
 };
+
+LocusZoom.Instance.prototype.initializePanels = function(){
+    for (var id in this._panels){
+        this._panels[id].initialize();
+    }
+}
 
 // Map an entire LocusZoom Instance to a new region
 LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
 
-  console.log(this.id + " Map to:", chromosome, start, stop);
-  return;
+    console.log(this.id + " Map to:", chromosome, start, stop);
+    return;
 
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
@@ -98,8 +79,8 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
     this.state.position.stop  = +stop;
 
     // Trigger reMap on each Panel
-    for (var panel_id in this.panels){
-        this.panels[panel_id].reMap();
+    for (var panel_id in this._panels){
+        this._panels[panel_id].reMap();
     }
 
     /*
@@ -158,18 +139,20 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
 LocusZoom.DefaultInstance = function(id){
 
     LocusZoom.Instance.apply(this, arguments);
+
+    this.setDimensions(700,600);
   
     this.addPanel(LocusZoom.PositionsPanel)
         .setOrigin(0, 0)
         .setDimensions(700, 350)
-        .setMargin(20, 20, 20, 30);
-    this.panels.positions.addDataLayer(LocusZoom.PositionsDataLayer);
-    this.panels.positions.addDataLayer(LocusZoom.LDDataLayer);
+        .setMargin(20, 30, 20, 30);
+    this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
+    this._panels.positions.addDataLayer(LocusZoom.LDDataLayer).attachToYAxis(2);
 
     this.addPanel(LocusZoom.GenesPanel)
         .setOrigin(0, 350)
         .setDimensions(700, 250)
-        .setMargin(20, 20, 20, 30);
+        .setMargin(20, 30, 20, 30);
   
     return this;
   

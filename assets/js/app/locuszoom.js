@@ -3,44 +3,39 @@
 // Singleton LocusZoom object to behave as a namespace for all instances contained herein
 var LocusZoom = {};
 
-LocusZoom.instances = {};
+LocusZoom._instances = {};
 
-// Create a new instance by instance class
+// Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
-LocusZoom.addInstance = function(InstanceClass, id){
-  if (typeof id === "undefined"){
-    id = Math.random().toString(36).substr(2);
-  }
-  if (typeof InstanceClass === "undefined"){
-    InstanceClass = LocusZoom.Instance;
-  }
-  this.instances[id] = new InstanceClass(id);
-  return this.instances[id];
+LocusZoom.addInstanceToDivById = function(InstanceClass, id){
+    // Initialize a new Instance
+    if (typeof InstanceClass === "undefined"){
+        InstanceClass = LocusZoom.Instance;
+    }
+    this._instances[id] = new InstanceClass(id);
+    // Add an SVG to the div and set its dimensions
+    this._instances[id].svg = d3.select("div#" + id)
+        .append("svg").attr("id", id + "_svg").attr("class", "locuszoom");
+    this._instances[id].setDimensions();
+    // Initialize all panels
+    this._instances[id].initializePanels();
+    // Detect data-region and map to it if necessary
+    if (typeof this._instances[id].svg.node().parentNode.dataset.region !== "undefined"){
+        var region = this._instances[id].svg.node().parentNode.dataset.region.split(/\D/);
+        this._instances[id].mapTo(+region[0], +region[1], +region[2]);
+    }
+    return this._instances[id];
 };
-
-// Change the ID (instances object key) of an existing instance
-LocusZoom.changeInstanceId = function(old_id, new_id){
-  if (old_id == new_id) {
-    return this.instances[old_id];
-  }
-  if (this.instances.hasOwnProperty(old_id)){
-    this.instances[new_id] = this.instances[old_id];
-    delete this.instances[old_id];
-  } else {
-    return false;
-  }
-}
 
 // Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(class_name){
-  if (typeof class_name === "undefined"){
-    class_name = "lz-instance";
-  }
-  d3.selectAll("div." + class_name).each(function(){
-    LocusZoom.addInstance(LocusZoom.DefaultInstance)
-      .attachToDivById(this.id);
-  });
+    if (typeof class_name === "undefined"){
+        class_name = "lz-instance";
+    }
+    d3.selectAll("div." + class_name).each(function(){
+        LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, this.id);
+    });
 };
 
 //from http://www.html5rocks.com/en/tutorials/cors/
