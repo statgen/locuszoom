@@ -92,13 +92,30 @@ LocusZoom.PositionsDataLayer = function(){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", "red")
+            .attr("fill", function(d){ return this.fillColor(d.log10pval); }.bind(this))
             .attr("stroke", "black")
             .attr("r", 4)
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
     };
+
+    // TODO: abstract out to a Color Scale class and support arbitrarily many scales that can be substituted out per user input
+    this.fillColor = function(pval){
+        var getCutter = function(breaks) {
+            var fn = function(x) {
+                if (x == null){ return null; }
+                for(var i = 0; i < breaks.length; i++) {
+                    if (x < breaks[i]) break;
+                }
+                return i;
+            }
+            return fn;
+        }
+        var cutter = getCutter([0,.2,.4,.6,.8])
+        var fill = ["grey","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ]
+        return fill;
+    }
        
     return this;
 };
