@@ -30,6 +30,7 @@ LocusZoom.Panel = function() {
     this.state = {};
     
     this._data_layers = {};
+    this.data_promises = [];
 
     this.axes = {
         render_x: false,
@@ -145,7 +146,15 @@ LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
-    // ...
+    this.data_promises = [];
+    // Trigger reMap on each Data Layer
+    for (var id in this._data_layers){
+        this.data_promises.push(this._data_layers[id].reMap());
+    }   
+    // When all finished trigger a render
+    Promise.all(this.data_promises).then(function(){
+        this.render();
+    }.bind(this));
 };
 
 // Render a given panel
@@ -223,20 +232,20 @@ LocusZoom.PositionsPanel = function(){
 
     this.axes.render_x = true;
     this.axes.render_y1 = true;
-    this.axes.render_y2 = true;
+    this.axes.render_y2 = false;
     
     this.xExtent = function(){
-        return d3.extent(this.parent.data, function(d) { return +d.position; } );
+        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
     };
     
-    this.yExtent = function(){
-        return d3.extent(this.parent.data, function(d) { return +d.log10pval; } );
+    this.y1Extent = function(){
+        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval; } );
     };
     
     this.renderData = function(){
         this.svg
             .selectAll("circle.datum")
-            .data(this.parent.data)
+            .data(this._data_layers.positions.data)
             .enter().append("circle")
             .attr("class", "datum")
             .attr("id", function(d){ return d.id; })
@@ -266,7 +275,7 @@ LocusZoom.GenesPanel = function(){
     LocusZoom.Panel.apply(this, arguments);
     this.id = "genes";
 
-    this.axes.render_x = true;
+    //this.axes.render_x = true;
   
     return this;
 };
