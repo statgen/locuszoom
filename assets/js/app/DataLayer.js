@@ -9,7 +9,7 @@
 
 */
 
-var DataLayer = function() { 
+LocusZoom.DataLayer = function() { 
 
     this.id     = null;
     this.parent = null;
@@ -17,7 +17,7 @@ var DataLayer = function() {
     this.data = [];
 
     this.state = {
-        z_index: null;
+        z_index: null
     };
     
     return this;

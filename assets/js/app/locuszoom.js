@@ -6,24 +6,48 @@ var LocusZoom = {};
 LocusZoom.instances = {};
 
 // Method to instantiate a new LocusZoom instance
-LocusZoom.addInstance = function(div_id){
-    this.instances[div_id] = new LocusZoom.Instance(div_id);
+LocusZoom.addInstance = function(InstanceClass, id){
+  if (typeof id === "undefined"){
+    id = Math.random().toString(36).substr(2);
+  }
+  if (typeof InstanceClass === "undefined"){
+    InstanceClass = LocusZoom.Instance;
+  }
+  this.instances[id] = new InstanceClass(id);
+  return this.instances[id];
 };
+
+LocusZoom.changeInstanceId = function(old_id, new_id){
+  if (old_id == new_id) {
+    return this.instances[old_id];
+  }
+  if (this.instances.hasOwnProperty(old_id)){
+    this.instances[new_id] = this.instances[old_id];
+    delete this.instances[old_id];
+  } else {
+    return false;
+  }
+}
 
 // Method to automatically detect divs by class and populate them with LocusZoom instances
 LocusZoom.populate = function(class_name){
-    if (typeof class_name === "undefined"){
-        class_name = "lz-instance";
+  if (typeof class_name === "undefined"){
+    class_name = "lz-instance";
+  }
+  d3.selectAll("div." + class_name).each(function(){
+    LocusZoom.addInstance(LocusZoom.DefaultInstance)
+      .attachToDivById(this.id);
+
+    /*
+    LocusZoom.addInstance(this.id);
+    // Detect regon and map to it
+    if (typeof this.dataset.region !== "undefined"){
+      var region = this.dataset.region.split(":");
+      region[1]  = region[1].split("-");
+      LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
     }
-    d3.selectAll("div." + class_name).each(function(){
-        LocusZoom.addInstance(this.id);
-        // Detect regon and map to it
-        if (typeof this.dataset.region !== "undefined"){
-            var region = this.dataset.region.split(":");
-            region[1]  = region[1].split("-");
-            LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
-        }
-    });
+    */
+  });
 };
 
 //from http://www.html5rocks.com/en/tutorials/cors/

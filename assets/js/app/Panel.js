@@ -132,7 +132,7 @@ LocusZoom.Panel.prototype.init = function(){
 // - y_axis (optional): a number (1 or 2) specifying which y axis should represent the range of the data layer
 // If no data layer is yet set to be the y1 axis then this data layer will be mapped to y1 by default
 // (This can be overridden by adding a subsequent data layer and specifying y_axis = 1)
-LocusZoom.Panel.prototype.addDataLayer(data_layer, y_axis){
+LocusZoom.Panel.prototype.addDataLayer = function(data_layer, y_axis){
     this.data_layers[data_layer.id] = data_layer;
     if (y_axis === 1 || y_axis === 2){
         this.axes["y" + y_axis + "_data_layer_id"] = data_layer.id;

@@ -9,21 +9,17 @@
 
 */
 
-// Initialize the Instance and its div container
-LocusZoom.Instance = function(div_id) {
+LocusZoom.Instance = function(id) {
 
-    this.id = div_id;
+  this.id = id;
+  this.parent = LocusZoom;
+  
+  this.svg = null;
 
     this.defaults = {
         view: { width: 700, height: 600 },
         panels: [ "Positions", "Genes" ]
     };
-
-    // Select the div, append an SVG element, store the selector for said SVG element
-    this.svg = d3.select("div#" + div_id)
-        .append("svg")
-        .attr("id", div_id + "_svg")
-        .attr("style", "background-color: #FFFFFF; cursor: move; border: 1px solid black;"); // hard-coded styles for dev only
 
     // The panels property stores child panel instances
     this.panels = {};
@@ -46,32 +42,38 @@ LocusZoom.Instance = function(div_id) {
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
     
-    // Method to set dimensions on the SVG DOM element
-    this.setDimensions = function(width, height){
-        if (typeof width === "undefined") {
-            this.view.width = this.defaults.view.width;
-        } else {
-            this.view.width = +width;
-        }
-        if (typeof height === "undefined") {
-            this.view.height = this.defaults.view.height;
-        } else {
-            this.view.height = +height;
-        }
-        this.svg.attr("width", this.view.width).attr("height", this.view.height);
-        return this;
-    };
-    
-    // Set default dimensions
-    this.setDimensions();
-    
-    // Set default panels (needs to be toggled off somehow)
-    for (var p in this.defaults.panels){
-        this.addPanel(this.defaults.panels[p]).init();
-    }
-    
-    return this;
+  return this;
+  
 };
+
+
+LocusZoom.Instance.prototype.setDimensions = function(width, height){
+  if (typeof width === "undefined") {
+    this.view.width = this.defaults.view.width;
+  } else {
+    this.view.width = +width;
+  }
+  if (typeof height === "undefined") {
+    this.view.height = this.defaults.view.height;
+  } else {
+    this.view.height = +height;
+        }
+  this.svg.attr("width", this.view.width).attr("height", this.view.height);
+  return this;
+};
+
+
+// Select a div element, add an SVG element, and change id to match the id of the div
+LocusZoom.Instance.prototype.attachToDivById = function(id){
+  this.parent.changeInstanceId(this.id, id);
+  this.id = id;
+  this.svg = d3.select("div#" + this.id).append("svg").attr("id", this.id + "_svg").attr("class", "locuszoom");
+  // Detect data-region and map to it if necessary
+  if (typeof this.svg.node().parentNode.dataset.region !== "undefined"){
+    var region = this.svg.node().parentNode.dataset.region.split(/\D/);
+    this.mapTo(+region[0], +region[1], +region[2]);
+  }
+}
 
 // Initialize and store a new panel object
 LocusZoom.Instance.prototype.addPanel = function(panel_name){
@@ -89,6 +91,9 @@ LocusZoom.Instance.prototype.addPanel = function(panel_name){
 // Map an entire LocusZoom Instance to a new region
 LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
 
+  console.log(this.id + " Map to:", chromosome, start, stop);
+  return;
+
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
     this.state.chromosome     = +chromosome;
@@ -97,7 +102,7 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
 
     // Trigger reMap on each Panel
     for (var panel_id in this.panels){
-        this.panels.reMap();
+        this.panels[panel_id].reMap();
     }
 
     /*
@@ -145,3 +150,17 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
     */
     
 };
+
+/******************
+  Default Instance
+  - During alpha development this class definition can serve as a functional draft of the API
+  - The default instance should therefore have/do "one of everything" (however possible)
+  - Ultimately the default instance should stand up the most commonly configured LZ use case
+*/
+
+LocusZoom.DefaultInstance = function(id){
+  //this.addPanel(LocusZoom.PositionsPanel);
+  return this;
+};
+
+LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
