@@ -83,7 +83,7 @@ LocusZoom.PositionsDataLayer = function(){
     this.fields = ["id","position","pvalue","refAllele"];
 
     this.render = function(){
-        this.svg.selectAll("*").remove();
+        this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         this.svg
             .selectAll("circle.datum")
             .data(this.data)
@@ -115,6 +115,10 @@ LocusZoom.LDDataLayer = function(){
     LocusZoom.DataLayer.apply(this, arguments);
     this.id = "ld";
     this.fields = [];
+
+    this.render = function(){
+        this.svg.selectAll("*").remove();
+    }
        
     return this;
 };
@@ -131,6 +135,10 @@ LocusZoom.GenesDataLayer = function(){
     LocusZoom.DataLayer.apply(this, arguments);
     this.id = "genes";
     this.fields = [];
+
+    this.render = function(){
+        this.svg.selectAll("*").remove();
+    }
        
     return this;
 };

@@ -113,6 +113,7 @@ LocusZoom.DefaultInstance = function(){
         .setOrigin(0, 350)
         .setDimensions(700, 250)
         .setMargin(20, 30, 20, 30);
+    this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
   
     return this;
   
