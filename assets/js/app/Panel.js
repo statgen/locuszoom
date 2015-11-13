@@ -179,7 +179,8 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.view.cliparea.width]);
         this.state.x_axis = d3.svg.axis().scale(this.state.x_scale).orient("bottom")
-            .tickValues(d3.range(this.state.x_extent[0], this.state.x_extent[1], (this.state.x_extent[1] - this.state.x_extent[0]) / 10));
+            .tickValues(d3.range(this.state.x_extent[0], this.state.x_extent[1], (this.state.x_extent[1] - this.state.x_extent[0]) / 10))
+            .tickFormat(function(d) { return LocusZoom.formatPosition(d); });
         this.svg.selectAll("g .x.axis").call(this.state.x_axis);
     }
     if (this.axes.render_y1){
@@ -248,7 +249,7 @@ LocusZoom.PositionsPanel = function(){
 
     this.axes.render_x = true;
     this.axes.render_y1 = true;
-    this.axes.render_y2 = false;
+    //this.axes.render_y2 = true;
     
     this.xExtent = function(){
         return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
@@ -257,6 +258,12 @@ LocusZoom.PositionsPanel = function(){
     this.y1Extent = function(){
         return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval; } );
     };
+
+    /*
+    this.y2Extent = function(){
+        return d3.extent(this._data_layers.ld.data, function(d) { return +d.foo; } );
+    };
+    */
     
     return this;
 };

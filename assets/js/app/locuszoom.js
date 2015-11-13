@@ -39,6 +39,23 @@ LocusZoom.populate = function(class_name){
     });
 };
 
+// Format positional tick values in terms of kilo/mega bases
+LocusZoom.formatPosition = function(p){
+    var log10 = Math.log10(p);
+    var SIpre = { 0: '', 3: 'K', 6: 'M', 9: 'G' };
+    var scale = 9;
+    var label = '';
+    while (scale > 0){
+        if (log10 > scale){
+            label = (p / Math.pow(10,scale)).toFixed(2) + ' ' + SIpre[scale] + 'b';
+            break;
+        } else {
+            scale -= 3;
+        }
+    }
+    return label;
+};
+
 // From http://www.html5rocks.com/en/tutorials/cors/
 // and with promises from https://gist.github.com/kriskowal/593076
 LocusZoom.createCORSPromise = function (method, url, body, timeout) {
