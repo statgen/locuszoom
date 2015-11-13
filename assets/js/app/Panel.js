@@ -135,7 +135,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 // TODO: break out setting of y axis to a chainable function?
 LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
     if (typeof DataLayerClass !== "function"){
-        return false
+        return false;
     }
     var data_layer = new DataLayerClass();
     data_layer.parent = this;

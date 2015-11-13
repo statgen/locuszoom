@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 /**
 
@@ -23,7 +23,7 @@ LocusZoom.DataLayer = function() {
     
     return this;
 
-}
+};
 
 LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
     if (typeof y === "undefined"){
@@ -32,10 +32,10 @@ LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
     if (y !== 1 && y !== 2){
         return false;
     } else {
-        this.parent.axes["y" + y + "_data_layer_id"] = this.id
+        this.parent.axes["y" + y + "_data_layer_id"] = this.id;
     }
     return this;
-}
+};
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
@@ -47,7 +47,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
         this.data = new_data.body;
     }.bind(this));
     return promise;
-}
+};
 
 
 /*********************

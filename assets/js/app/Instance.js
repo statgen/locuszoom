@@ -54,7 +54,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 // Create a new panel by panel class
 LocusZoom.Instance.prototype.addPanel = function(PanelClass){
     if (typeof PanelClass !== "function"){
-        return false
+        return false;
     }
     var panel = new PanelClass();
     panel.parent = this;
@@ -67,7 +67,7 @@ LocusZoom.Instance.prototype.initializePanels = function(){
     for (var id in this._panels){
         this._panels[id].initialize();
     }
-}
+};
 
 // Map an entire LocusZoom Instance to a new region
 LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
@@ -84,52 +84,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     }
 
     return this;
-
-    /*
-    
-    // TODO: data requests need to pushed down into data layers
-    
-    var promises = [];
-    
-    // Prepend region
-    if (new_start < this.state.position.start){
-        var prepend = { start: new_start, stop: Math.min(new_stop, this.state.position.start) };
-        var prepend_promise = this.lzd.getData({chr: chromosome, start: prepend.start, end: prepend.stop},
-                                               ["id","position","pvalue","refAllele"]);
-        prepend_promise.then(function(new_data){
-            for (var idx in new_data.body){
-                new_data.body[idx].log10pval = -Math.log(new_data.body[idx].pvalue) / Math.LN10;
-            }
-            this.data = new_data.body.concat(this.data);
-        }.bind(this));
-        promises.push(prepend_promise);
-    }
-    
-    // Append region
-    else if (new_stop > this.state.position.stop){
-        var append = { start: Math.max(this.state.position.stop, new_start), stop: new_stop };
-        var append_promise = this.lzd.getData({chr: chromosome, start: append.start, end: append.stop},
-                                         ["id","position","pvalue","refAllele"]); //,"ld:best"
-        append_promise.then(function(new_data){
-            for (var idx in new_data.body){
-                new_data.body[idx].log10pval = -Math.log(new_data.body[idx].pvalue) / Math.LN10;
-            }
-            this.data = this.data.concat(new_data.body);
-        }.bind(this));
-        promises.push(append_promise);
-    }
-    
-    // When all finished: update Instance state and render
-    Promise.all(promises).then(function(){
-        this.state.chromosome     = chromosome;
-        this.state.position.start = new_start;
-        this.state.position.stop  = new_stop;
-        this.render();
-    }.bind(this));
-
-    */
     
 };
+
 
 /******************
   Default Instance
@@ -138,7 +95,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
   - Ultimately the default instance should stand up the most commonly configured LZ use case
 */
 
-LocusZoom.DefaultInstance = function(id){
+LocusZoom.DefaultInstance = function(){
 
     LocusZoom.Instance.apply(this, arguments);
 
