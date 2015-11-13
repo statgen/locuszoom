@@ -230,10 +230,10 @@ LocusZoom.Panel.prototype.render = function(){
             transform.translate[0] += d3.event.dx;
             stage.attr("transform", transform.toString());
         }).on("dragend", function() {
-    // mapTo new values
-    });
+            // mapTo new values
+        });
     this.svg.call(this.drag);
-    */
+    */    
     
 };
 
@@ -256,7 +256,7 @@ LocusZoom.PositionsPanel = function(){
     };
     
     this.y1Extent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval; } );
+        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
     };
 
     /*

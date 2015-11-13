@@ -90,7 +90,7 @@ LocusZoom.PositionsDataLayer = function(){
             this.data[i].ld = +d["ld:best"];
             this.data[i].log10pval = -Math.log(d.pvalue) / Math.LN10;
         }.bind(this));
-    }
+    };
 
     this.render = function(){
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
@@ -119,13 +119,13 @@ LocusZoom.PositionsDataLayer = function(){
                     if (x < breaks[i]) break;
                 }
                 return i;
-            }
+            };
             return fn;
-        }
-        var cutter = getCutter([0,.2,.4,.6,.8])
-        var fill = ["#808080","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ]
+        };
+        var cutter = getCutter([0,.2,.4,.6,.8]);
+        var fill = ["#808080","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
         return fill;
-    }
+    };
        
     return this;
 };
@@ -145,7 +145,7 @@ LocusZoom.RecombinationRateDataLayer = function(){
 
     this.render = function(){
         this.svg.selectAll("*").remove();
-    }
+    };
        
     return this;
 };
@@ -165,7 +165,7 @@ LocusZoom.GenesDataLayer = function(){
 
     this.render = function(){
         this.svg.selectAll("*").remove();
-    }
+    };
        
     return this;
 };
