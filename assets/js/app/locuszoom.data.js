@@ -149,8 +149,8 @@ LocusZoom.Data.GeneSource = function(url) {
         return function (chain) {
             var requrl = url + "?filter=source in 1" + 
                 " and chrom eq '" + state.chr + "'" + 
-                " and start ge " + state.start + 
-                " and end le " + state.end;
+                " and start le " + state.end +
+                " and end ge " + state.start;
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
                 return {header: chain.header, body: x.data};
             }, function(err) {

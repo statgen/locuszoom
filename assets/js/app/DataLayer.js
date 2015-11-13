@@ -18,6 +18,9 @@ LocusZoom.DataLayer = function() {
     this.fields = [];
     this.data = [];
 
+    // TODO: abstract out afterGet functions to canonical filters on fields at the LocusZoom.Data.Requester level
+    this.afterGet = null;
+
     this.state = {
         z_index: null
     };
@@ -63,9 +66,9 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
     promise.then(function(new_data){
-        this.data = [];
-        for (var idx in new_data.body){
-            this.data.push(new LocusZoom.PositionDatum(new_data.body[idx]));
+        this.data = new_data.body;
+        if (typeof this.afterGet == "function"){
+            this.afterGet();
         }
     }.bind(this));
     return promise;
@@ -80,7 +83,14 @@ LocusZoom.PositionsDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);  
     this.id = "positions";
-    this.fields = ["id","position","pvalue","refAllele"];
+    this.fields = ["id","position","pvalue","refAllele","ld:best"];
+
+    this.afterGet = function(){
+        this.data.map(function(d, i){
+            this.data[i].ld = +d["ld:best"];
+            this.data[i].log10pval = -Math.log(d.pvalue) / Math.LN10;
+        }.bind(this));
+    }
 
     this.render = function(){
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
@@ -92,7 +102,7 @@ LocusZoom.PositionsDataLayer = function(){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", function(d){ return this.fillColor(d.log10pval); }.bind(this))
+            .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
             .attr("stroke", "black")
             .attr("r", 4)
             .style({ cursor: "pointer" })
@@ -104,7 +114,7 @@ LocusZoom.PositionsDataLayer = function(){
     this.fillColor = function(pval){
         var getCutter = function(breaks) {
             var fn = function(x) {
-                if (x == null){ return null; }
+                if (x == null || isNaN(x)){ return 0; }
                 for(var i = 0; i < breaks.length; i++) {
                     if (x < breaks[i]) break;
                 }
@@ -113,7 +123,7 @@ LocusZoom.PositionsDataLayer = function(){
             return fn;
         }
         var cutter = getCutter([0,.2,.4,.6,.8])
-        var fill = ["grey","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ]
+        var fill = ["#808080","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ]
         return fill;
     }
        
@@ -124,10 +134,10 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
 
 
 /*********************
-  LD Data Layer
+  Recombination Rate Data Layer
 */
 
-LocusZoom.LDDataLayer = function(){
+LocusZoom.RecombinationRateDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.id = "ld";
@@ -140,7 +150,7 @@ LocusZoom.LDDataLayer = function(){
     return this;
 };
 
-LocusZoom.LDDataLayer.prototype = new LocusZoom.DataLayer();
+LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
 
 
 /*********************
@@ -151,7 +161,7 @@ LocusZoom.GenesDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.id = "genes";
-    this.fields = [];
+    this.fields = ["gene:gene"];
 
     this.render = function(){
         this.svg.selectAll("*").remove();
