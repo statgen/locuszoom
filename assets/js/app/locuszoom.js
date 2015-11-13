@@ -5,7 +5,9 @@ var LocusZoom = {};
 
 LocusZoom.instances = {};
 
-// Method to instantiate a new LocusZoom instance
+// Create a new instance by instance class
+// NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
+//       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstance = function(InstanceClass, id){
   if (typeof id === "undefined"){
     id = Math.random().toString(36).substr(2);
@@ -17,6 +19,7 @@ LocusZoom.addInstance = function(InstanceClass, id){
   return this.instances[id];
 };
 
+// Change the ID (instances object key) of an existing instance
 LocusZoom.changeInstanceId = function(old_id, new_id){
   if (old_id == new_id) {
     return this.instances[old_id];
@@ -29,7 +32,7 @@ LocusZoom.changeInstanceId = function(old_id, new_id){
   }
 }
 
-// Method to automatically detect divs by class and populate them with LocusZoom instances
+// Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(class_name){
   if (typeof class_name === "undefined"){
     class_name = "lz-instance";
@@ -37,16 +40,6 @@ LocusZoom.populate = function(class_name){
   d3.selectAll("div." + class_name).each(function(){
     LocusZoom.addInstance(LocusZoom.DefaultInstance)
       .attachToDivById(this.id);
-
-    /*
-    LocusZoom.addInstance(this.id);
-    // Detect regon and map to it
-    if (typeof this.dataset.region !== "undefined"){
-      var region = this.dataset.region.split(":");
-      region[1]  = region[1].split("-");
-      LocusZoom.instances[this.id].mapTo(+region[0], +region[1][0], +region[1][1]);
-    }
-    */
   });
 };
 

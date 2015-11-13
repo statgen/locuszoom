@@ -75,17 +75,14 @@ LocusZoom.Instance.prototype.attachToDivById = function(id){
   }
 }
 
-// Initialize and store a new panel object
-LocusZoom.Instance.prototype.addPanel = function(panel_name){
-    var panel_class = panel_name + "Panel";
-    if (typeof LocusZoom[panel_class] === "function"){
-        var panel = new LocusZoom[panel_class];
-        panel.setParent(this);
-        this.panels[panel.id] = panel;
-        return this.panels[panel.id];
-    } else {
-        console.log("Invalid panel name: " + panel_name);
-    }
+// Create a new panel by panel class
+LocusZoom.Instance.prototype.addPanel = function(PanelClass){
+  if (typeof PanelClass !== "function"){
+    return false
+  }
+  var panel = new PanelClass();
+  this.panels[panel.id] = panel;
+  return this.panels[panel.id];
 };
 
 // Map an entire LocusZoom Instance to a new region
@@ -159,8 +156,23 @@ LocusZoom.Instance.prototype.mapTo = function(chromosome, start, stop){
 */
 
 LocusZoom.DefaultInstance = function(id){
-  //this.addPanel(LocusZoom.PositionsPanel);
-  return this;
+
+    LocusZoom.Instance.apply(this, arguments);
+  
+    this.addPanel(LocusZoom.PositionsPanel)
+        .setOrigin(0, 0)
+        .setDimensions(700, 350)
+        .setMargin(20, 20, 20, 30);
+    this.panels.positions.addDataLayer(LocusZoom.PositionsDataLayer);
+    this.panels.positions.addDataLayer(LocusZoom.LDDataLayer);
+
+    this.addPanel(LocusZoom.GenesPanel)
+        .setOrigin(0, 350)
+        .setDimensions(700, 250)
+        .setMargin(20, 20, 20, 30);
+  
+    return this;
+  
 };
 
 LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();

@@ -132,6 +132,7 @@ LocusZoom.Panel.prototype.init = function(){
 // - y_axis (optional): a number (1 or 2) specifying which y axis should represent the range of the data layer
 // If no data layer is yet set to be the y1 axis then this data layer will be mapped to y1 by default
 // (This can be overridden by adding a subsequent data layer and specifying y_axis = 1)
+/*
 LocusZoom.Panel.prototype.addDataLayer = function(data_layer, y_axis){
     this.data_layers[data_layer.id] = data_layer;
     if (y_axis === 1 || y_axis === 2){
@@ -140,6 +141,24 @@ LocusZoom.Panel.prototype.addDataLayer = function(data_layer, y_axis){
         this.axes.y1_data_layer_id = data_layer.id;
     }
 }
+*/
+
+// Create a new data layer by data layer class
+// TODO: break out setting of y axis to a chainable function?
+LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass, y_axis){
+    if (typeof DataLayerClass !== "function"){
+        return false
+    }
+    var data_layer = new DataLayerClass();
+    this.data_layers[data_layer.id] = data_layer;
+    if (y_axis === 1 || y_axis === 2){
+        this.axes["y" + y_axis + "_data_layer_id"] = data_layer.id;
+    } else if (this.axes.y1_data_layer_id == null){
+        this.axes.y1_data_layer_id = data_layer.id;
+    }
+  return this.data_layers[data_layer.id];
+};
+
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
@@ -207,19 +226,9 @@ LocusZoom.Panel.prototype.render = function(){
 */
 
 LocusZoom.PositionsPanel = function(){
-    
+  
+    LocusZoom.Panel.apply(this, arguments);   
     this.id = "positions";
-    
-    this.applyDefaults = function(){
-        this.view = {
-            width:  700,
-            height: 350,
-            origin: { x: 0, y: 0 },
-            margin: { top: 20, right: 20, bottom: 20, left: 30 }
-        };
-        this.addDataLayer(new LocusZoom.PositionsDataLayer(), 1);
-        this.addDataLayer(new LocusZoom.LDDataLayer(), 2);
-    }
     
     this.xExtent = function(){
         return d3.extent(this.parent.data, function(d) { return +d.position; } );
@@ -259,15 +268,9 @@ LocusZoom.PositionsPanel.prototype = new LocusZoom.Panel();
 
 LocusZoom.GenesPanel = function(){
     
+    LocusZoom.Panel.apply(this, arguments);
     this.id = "genes";
-    
-    this.view.defaults = {
-        width:  700,
-        height: 250,
-        origin: { x: 0, y: 350 },
-        margin: { top: 20, right: 20, bottom: 20, left: 30 }
-    };
-    
+  
     return this;
 };
 

@@ -45,7 +45,8 @@ LocusZoom.DataLayer = function() {
 */
 
 LocusZoom.PositionsDataLayer = function(){
-    
+
+    LocusZoom.DataLayer.apply(this, arguments);  
     this.id = "positions";
        
     return this;
@@ -59,7 +60,8 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
 */
 
 LocusZoom.LDDataLayer = function(){
-    
+
+    LocusZoom.DataLayer.apply(this, arguments);
     this.id = "ld";
        
     return this;
