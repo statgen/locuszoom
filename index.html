@@ -14,17 +14,68 @@
   <script src="assets/js/app/Panel.js"></script>
   <script src="assets/js/app/DataLayer.js"></script>
   <link rel="stylesheet" type="text/css" href="assets/css/locuszoom.css"/>
+  <script type="text/javascript">
+    // Apply form data to a remapping of a LocusZoom object
+    function handleFormSubmit(lz_id){
+      var chr   = $("#" + lz_id + "_chr")[0].value;
+      var start = $("#" + lz_id + "_start")[0].value;
+      var end   = $("#" + lz_id + "_end")[0].value;
+      LocusZoom._instances[lz_id].mapTo(chr, start, end);
+    }
+    // Fill demo forms with values already loaded into LocusZoom objects
+    function populateForms(){
+      d3.selectAll("div.lz-instance").each(function(){
+        $("#" + this.id + "_chr")[0].value = LocusZoom._instances[this.id].state.chr;
+        $("#" + this.id + "_start")[0].value = LocusZoom._instances[this.id].state.start;
+        $("#" + this.id + "_end")[0].value = LocusZoom._instances[this.id].state.end;
+      });
+    }
+  </script>
 </head>
-<body style="background-color: #CCCCCC; margin: 10px;" onload="LocusZoom.populate();">
+<body style="background-color: #CCCCCC; margin: 10px;" onload="LocusZoom.populate(); populateForms();">
   <table border="0" cellspacing="10">
     <tr>
       <td>
-        <h2>LocusZoom 1:</h2>
+        <div>
+          <form>
+            <b>lz-1</b> &middot;
+            <label for="lz-1_chr">Chromosome: </label>
+            <select id="lz-1_chr">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+              <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+              <option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option>
+              <option>19</option><option>20</option><option>21</option><option>22</option>
+            </select>
+            <label for="lz-1_start">Start: </label>
+            <input id="lz-1_start" value="" size="12" />
+            <label for="lz-1_end">End: </label>
+            <input id="lz-1_end" value="" size="12" />
+            <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
+          </form>
+          <br>
+        </div>
         <div id="lz-1" class="lz-instance" data-region="10:114560000-114960000"></div>
       </td>
       <td>
-        <h2>LocusZoom 2:</h2>
-        <div id="lz-2" class="lz-instance" data-region="9:117560000-117960000"></div>
+        <div>
+          <form>
+            <b>lz-2</b> &middot;
+            <label for="lz-2_chr">Chromosome: </label>
+            <select id="lz-2_chr">
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option>
+              <option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option>
+              <option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option>
+              <option>19</option><option>20</option><option>21</option><option>22</option>
+            </select>
+            <label for="lz-2_start">Start: </label>
+            <input id="lz-2_start" value="" size="12" />
+            <label for="lz-2_end">End: </label>
+            <input id="lz-2_end" value="" size="12" />
+            <input type="button" id="lz-2_submit" value="Go" onClick="handleFormSubmit('lz-2');" />
+          </form>
+          <br>
+        </div>
+        <div id="lz-2" class="lz-instance" data-region="9:110940000-111040000"></div>
       </td>
     </tr>
   </table>

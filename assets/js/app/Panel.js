@@ -279,8 +279,6 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
     this.id = "genes";
-
-    //this.axes.render_x = true;
   
     return this;
 };

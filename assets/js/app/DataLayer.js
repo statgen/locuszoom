@@ -123,7 +123,7 @@ LocusZoom.PositionsDataLayer = function(){
             return fn;
         };
         var cutter = getCutter([0,.2,.4,.6,.8]);
-        var fill = ["#808080","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
+        var fill = ["#B8B8B8","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
         return fill;
     };
        
@@ -140,7 +140,7 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
 LocusZoom.RecombinationRateDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "ld";
+    this.id = "recombination_rate";
     this.fields = [];
 
     this.render = function(){
