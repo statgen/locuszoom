@@ -24,6 +24,10 @@ LocusZoom.DataLayer = function() {
     this.state = {
         z_index: null
     };
+
+    this.getBaseId = function(){
+        return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    }
     
     return this;
 
@@ -44,20 +48,22 @@ LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
 // Initialize a panel
 LocusZoom.DataLayer.prototype.initialize = function(){
 
-    var clip_id = this.parent.parent.id + "." + this.parent.id + "." + this.id + ".clip";
+    // Append a container group element to house the main data layer group element and the clip path
+    var container = this.parent.svg.append("g")
+        .attr("id", this.getBaseId() + ".data_layer_container")
+        .attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
         
-    // Append clip path to the parent svg element
-    this.parent.svg.append("clipPath")
-        .attr("id", clip_id)
+    // Append clip path to the container element
+    container.append("clipPath")
+        .attr("id", this.getBaseId() + ".clip")
         .append("rect")
         .attr("width", this.parent.view.cliparea.width)
         .attr("height", this.parent.view.cliparea.height);
     
-    // Append svg group for rendering all panel child elements, clipped by the clip path
-    this.svg = this.parent.svg.append("g")
-        .attr("id", this.id + "_data_layer")
-        .attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")")
-        .attr("clip-path", "url(#" + clip_id + ")");
+    // Append svg group for rendering all data layer elements, clipped by the clip path
+    this.svg = container.append("g")
+        .attr("id", this.getBaseId() + ".data_layer")
+        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
 };
 
@@ -95,16 +101,15 @@ LocusZoom.PositionsDataLayer = function(){
     this.render = function(){
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         this.svg
-            .selectAll("circle.datum")
+            .selectAll("circle.positions")
             .data(this.data)
             .enter().append("circle")
-            .attr("class", "datum")
+            .attr("class", "position")
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
             .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
-            .attr("stroke", "black")
-            .attr("r", 4)
+            .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
@@ -163,8 +168,31 @@ LocusZoom.GenesDataLayer = function(){
     this.id = "genes";
     this.fields = ["gene:gene"];
 
+    // After we've loaded the genes interpret them to assign each to a track
+    // so that they do not overlap in the view
+    this.afterGet = function(){
+        this.data.map(function(d, i){
+            // Iterative stagger for now, more sophisticated track logic forthcoming
+            this.data[i].track = 50 + ((i % 3 ) * 50);
+        }.bind(this));
+    };
+
     this.render = function(){
         this.svg.selectAll("*").remove();
+        this.svg
+            .selectAll("rect.gene")
+            .data(this.data)
+            .enter().append("rect")
+            .attr("class", "gene")
+            .attr("id", function(d){ return d.gene_id; })
+            .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(this))
+            .attr("y", function(d){ return d.track; }.bind(this))
+            .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(this))
+            .attr("height", 5) // This should be scaled dynamically somehow
+            .attr("fill", "#000099")
+            .style({ cursor: "pointer" })
+            .append("svg:title")
+            .text(function(d) { return d.gene_id; });
     };
        
     return this;

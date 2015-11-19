@@ -54,6 +54,10 @@ LocusZoom.Panel = function() {
     };
     
     this.renderData = function(){};
+
+    this.getBaseId = function(){
+        return this.parent.id + "." + this.id;
+    }
     
     return this;
     
@@ -88,22 +92,22 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 // Initialize a panel
 LocusZoom.Panel.prototype.initialize = function(){
 
-    var clip_id = this.parent.id + "." + this.id + ".clip";
+    // Append a container group element to house the main panel group element and the clip path
+    var container = this.parent.svg.append("g")
+        .attr("id", this.getBaseId() + ".panel_container")
+        .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
         
     // Append clip path to the parent svg element
-    this.parent.svg.append("clipPath")
-        .attr("id", clip_id)
+    container.append("clipPath")
+        .attr("id", this.getBaseId() + ".clip")
         .append("rect")
-        .attr("x", this.view.origin.x)
-        .attr("y", this.view.origin.y)
         .attr("width", this.view.width)
         .attr("height", this.view.height);
     
     // Append svg group for rendering all panel child elements, clipped by the clip path
-    this.svg = this.parent.svg.append("g")
-        .attr("id", this.id + "_panel")
-        .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")")
-        .attr("clip-path", "url(#" + clip_id + ")");
+    this.svg = container.append("g")
+        .attr("id", this.getBaseId() + ".panel")
+        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
     // Initialize child Data Layers
     for (var id in this._data_layers){
@@ -279,6 +283,12 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
     this.id = "genes";
+
+    this.axes.render_x = true;
+
+    this.xExtent = function(){
+        return d3.extent([this.parent.state.start, this.parent.state.end]);
+    };
   
     return this;
 };

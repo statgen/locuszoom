@@ -14,3 +14,13 @@ svg.locuszoom {
 }
 
 .rule line {stroke: #eee}
+
+circle.position {
+  stroke: #181818;
+  stroke-width: 1;
+}
+
+circle.position:hover {
+  stroke: #484848;
+  stroke-width: 3;
+}
