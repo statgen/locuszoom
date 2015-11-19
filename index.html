@@ -20,6 +20,7 @@
       var chr   = $("#" + lz_id + "_chr")[0].value;
       var start = $("#" + lz_id + "_start")[0].value;
       var end   = $("#" + lz_id + "_end")[0].value;
+      LocusZoom._instances[lz_id].state.ldrefsource = $("#" + lz_id + "_ld")[0].value;
       LocusZoom._instances[lz_id].mapTo(chr, start, end);
     }
     // Fill demo forms with values already loaded into LocusZoom objects
@@ -28,6 +29,7 @@
         $("#" + this.id + "_chr")[0].value = LocusZoom._instances[this.id].state.chr;
         $("#" + this.id + "_start")[0].value = LocusZoom._instances[this.id].state.start;
         $("#" + this.id + "_end")[0].value = LocusZoom._instances[this.id].state.end;
+        $("#" + this.id + "_ld")[0].value = LocusZoom._instances[this.id].state.ldrefsource;
       });
     }
   </script>
@@ -50,11 +52,13 @@
             <input id="lz-1_start" value="" size="12" />
             <label for="lz-1_end">End: </label>
             <input id="lz-1_end" value="" size="12" />
+            <label for="lz-1_ld">LD: </label>
+            <select id="lz-1_ld"><option></option><option>1</option><option>2</option></select>
             <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
           </form>
           <br>
         </div>
-        <div id="lz-1" class="lz-instance" data-region="10:114560000-114960000"></div>
+        <div id="lz-1" class="lz-instance" data-region="19:19014526-19614526"></div>
       </td>
       <td>
         <div>
