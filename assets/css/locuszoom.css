@@ -13,8 +13,6 @@ svg.locuszoom {
 	shape-rendering: crispEdges;
 }
 
-.rule line {stroke: #eee}
-
 circle.position {
   stroke: #181818;
   stroke-width: 1;
@@ -23,4 +21,26 @@ circle.position {
 circle.position:hover {
   stroke: #484848;
   stroke-width: 3;
+}
+
+circle.position.selected {
+  stroke-width: 4;
+}
+
+circle.position.selected:hover {
+  stroke-width: 4;
+}
+
+text.gene.label {
+  font-style: italic;
+}
+
+rect.gene.boundary {
+    stroke: #000099;
+    stroke-width: 1;
+}
+
+rect.gene.exon {
+    stroke: #000099;
+    stroke-width: 1;
 }

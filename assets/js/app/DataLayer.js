@@ -1,4 +1,4 @@
-/* global LocusZoom */
+/* global LocusZoom,d3 */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -115,8 +115,13 @@ LocusZoom.PositionsDataLayer = function(){
         var that = this;
         var clicker = function() {
             var me = d3.select(this);
-            console.log(me.attr("id"));
-            that.parent.parent.state.ldrefvar = me.attr("id");
+            that.svg.selectAll("circle.position").classed({"selected": false});
+            if (that.parent.parent.state.ldrefvar != me.attr("id")){
+                me.classed({"selected": true});
+                that.parent.parent.state.ldrefvar = me.attr("id");
+            } else {
+                that.parent.parent.state.ldrefvar = null;
+            }
         };
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         this.svg
@@ -284,26 +289,12 @@ LocusZoom.GenesDataLayer = function(){
     this.render = function(){
         this.svg.selectAll("*").remove();
 
-        // Alternating track background rects
-        var tracks = [];
-        for (var t = 0; t < this.metadata.tracks; t++){ tracks.push(t); }
-        this.svg.selectAll("rect.gene").filter(".track")
-            .data(tracks).enter().append("rect")
-            .attr("class", "gene track")
-            .attr("x", 0)
-            .attr("y", function(d){ return (d * 40) - 5; })
-            .attr("width", 640)
-            .attr("height", 40)
-            .attr("fill", function(d, i){
-                return (i % 2 ? "#FFFFFF" : "#E8E8E8");
-            });
-
         // Render gene groups
         this.svg.selectAll("g.gene").data(this.data).enter()
             .append("g")
             .attr("class", "gene")
             .attr("id", function(d){ return d.gene_name; })
-            .each(function(gene, g){
+            .each(function(gene){
 
                 // Render gene boundaries
                 d3.select(this).selectAll("rect.gene").filter(".boundary")
@@ -340,14 +331,14 @@ LocusZoom.GenesDataLayer = function(){
                 d3.select(this).selectAll("g.gene").filter(".exons")
                     .data([gene]).enter().append("g")
                     .attr("class", "gene exons")
-                    .each(function(gene, g){
+                    .each(function(gene){
 
                         d3.select(this).selectAll("rect.gene").filter(".exon")
                             .data(gene.transcripts[0].exons).enter().append("rect")
                             .attr("class", "gene exon")
                             .attr("id", function(d){ return d.exon_id; })
                             .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
-                            .attr("y", function(d){ return (this.track * 40) - 26; }.bind(gene)) // Arbitrary track height
+                            .attr("y", function(){ return (this.track * 40) - 26; }.bind(gene)) // Arbitrary track height
                             .attr("width", function(d){
                                 return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
                             }.bind(gene.parent))
