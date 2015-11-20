@@ -101,17 +101,23 @@ LocusZoom.PositionsDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);  
     this.id = "positions";
-    this.fields = ["id","position","pvalue","refAllele","ld:best"];
+    this.fields = ["id","position","pvalue","refAllele","ld:state"];
 
     this.postget = function(){
         this.data.map(function(d, i){
-            this.data[i].ld = +d["ld:best"];
+            this.data[i].ld = +d["ld:state"];
             this.data[i].log10pval = -Math.log(d.pvalue) / Math.LN10;
         }.bind(this));
         return this;
     };
 
     this.render = function(){
+        var that = this;
+        var clicker = function() {
+            var me = d3.select(this);
+            console.log(me.attr("id"));
+            that.parent.parent.state.ldrefvar = me.attr("id");
+        };
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         this.svg
             .selectAll("circle.positions")
@@ -122,6 +128,7 @@ LocusZoom.PositionsDataLayer = function(){
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
             .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
+            .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
             .append("svg:title")

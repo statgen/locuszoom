@@ -116,6 +116,7 @@ LocusZoom.Data.LDSource = function(url) {
             throw("LD currently only supports one field");
         }
         return function (chain) {
+            var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
             var refVar = fields[0];
             if (refVar == "state") {
                 refVar = state.ldrefvar || chain.header.ldrefvar || "best";
@@ -126,7 +127,7 @@ LocusZoom.Data.LDSource = function(url) {
                 }
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
-            var requrl = url + "results/?filter=reference eq 2" + 
+            var requrl = url + "results/?filter=reference eq " + refSource + 
                 " and chromosome2 eq '" + state.chr + "'" + 
                 " and position2 ge " + state.start + 
                 " and position2 le " + state.end + 
