@@ -58,7 +58,7 @@ LocusZoom.Data.AssociationSource = function(url) {
             }
         });
         return function (chain) {
-            var requrl = url + "results/?filter=analysis in 1 " + 
+            var requrl = url + "results/?filter=analysis in 3 " + 
                 "and chromosome in  '" + state.chr + "'" + 
                 " and position ge " + state.start + 
                 " and position le " + state.end;

@@ -1,3 +1,7 @@
+/* global LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
 "use strict";
 
 /**
@@ -186,9 +190,6 @@ LocusZoom.GenesDataLayer = function(){
     this.prerender = function(){
         this.data.map(function(d, i){
 
-            // CONSOLE
-            // LocusZoom._instances["lz-1"]._panels.genes._data_layers.genes.data
-
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[i].display_range = {
@@ -249,26 +250,40 @@ LocusZoom.GenesDataLayer = function(){
                     }
                 }
             }
+
         }.bind(this));
         return this;
     };
 
     this.render = function(){
         this.svg.selectAll("*").remove();
+        // Render gene centerlines
         this.svg
             .selectAll("rect.gene")
             .data(this.data)
             .enter().append("rect")
-            .attr("class", "gene")
+            .attr("class", "gene centerline")
             .attr("id", function(d){ return d.gene_name; })
             .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(this))
-            .attr("y", function(d){ return (d.track * 50); }.bind(this))
+            .attr("y", function(d){ return (d.track * 50); }) // Arbitrary track height; should be dynamic
             .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(this))
-            .attr("height", 5) // This should be scaled dynamically somehow
+            .attr("height", 3) // This should be scaled dynamically somehow
             .attr("fill", "#000099")
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.gene_name; });
+        // Render labels
+        this.svg
+            .selectAll("text.gene")
+            .data(this.data)
+            .enter().append("text")
+            .attr("class", "gene label")
+            .attr("x", function(d){ return d.display_range.start + (d.display_range.width / 2); })
+            .attr("y", function(d){ return (d.track * 50) - 10; })
+            .attr("text-anchor", "middle")
+            .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
+        // Render exons (first transcript only, for now)
+        
     };
        
     return this;

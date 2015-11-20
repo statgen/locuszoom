@@ -1,3 +1,7 @@
+/* global d3,Q */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
 "use strict";
 
 // Singleton LocusZoom object to behave as a namespace for all instances contained herein
