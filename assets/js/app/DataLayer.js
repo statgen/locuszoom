@@ -195,6 +195,11 @@ LocusZoom.GenesDataLayer = function(){
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
     this.prerender = function(){
+
+        // Reinitialize metadata
+        this.metadata.tracks = 1;
+        this.metadata.gene_track_index = { 1: [] };
+
         this.data.map(function(d, g){
 
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
@@ -278,6 +283,20 @@ LocusZoom.GenesDataLayer = function(){
 
     this.render = function(){
         this.svg.selectAll("*").remove();
+
+        // Alternating track background rects
+        var tracks = [];
+        for (var t = 0; t < this.metadata.tracks; t++){ tracks.push(t); }
+        this.svg.selectAll("rect.gene").filter(".track")
+            .data(tracks).enter().append("rect")
+            .attr("class", "gene track")
+            .attr("x", 0)
+            .attr("y", function(d){ return (d * 40) - 5; })
+            .attr("width", 640)
+            .attr("height", 40)
+            .attr("fill", function(d, i){
+                return (i % 2 ? "#FFFFFF" : "#E8E8E8");
+            });
 
         // Render gene groups
         this.svg.selectAll("g.gene").data(this.data).enter()

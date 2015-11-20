@@ -104,7 +104,7 @@ LocusZoom.DefaultInstance = function(){
 
     LocusZoom.Instance.apply(this, arguments);
 
-    this.setDimensions(700,600);
+    this.setDimensions(700,700);
   
     this.addPanel(LocusZoom.PositionsPanel)
         .setOrigin(0, 0)
@@ -115,7 +115,7 @@ LocusZoom.DefaultInstance = function(){
 
     this.addPanel(LocusZoom.GenesPanel)
         .setOrigin(0, 350)
-        .setDimensions(700, 250)
+        .setDimensions(700, 350)
         .setMargin(20, 30, 20, 30);
     this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
   
