@@ -188,47 +188,52 @@ LocusZoom.GenesDataLayer = function(){
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
     this.prerender = function(){
-        this.data.map(function(d, i){
+        this.data.map(function(d, g){
 
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
-            this.data[i].display_range = {
+            this.data[g].display_range = {
                 start: this.parent.state.x_scale(Math.max(d.start, this.parent.parent.state.start)),
                 end:   this.parent.state.x_scale(Math.min(d.end, this.parent.parent.state.end))
             };
-            this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
-            if (this.data[i].display_range.width < this.metadata.min_display_range_width){
+            this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
+            this.data[g].display_range.text_anchor = "middle";
+            if (this.data[g].display_range.width < this.metadata.min_display_range_width){
                 if (d.start < this.parent.parent.state.start){
-                    this.data[i].display_range.end = this.data[i].display_range.start + this.metadata.min_display_range_width;
+                    this.data[g].display_range.end = this.data[g].display_range.start + this.metadata.min_display_range_width;
+                    this.data[g].display_range.text_anchor = "start";
                 } else if (d.end > this.parent.parent.state.end){
-                    this.data[i].display_range.start = this.data[i].display_range.end - this.metadata.min_display_range_width;
+                    this.data[g].display_range.start = this.data[g].display_range.end - this.metadata.min_display_range_width;
+                    this.data[g].display_range.text_anchor = "end";
                 } else {
-                    var centered_margin = (this.metadata.min_display_range_width - this.data[i].display_range.width) / 2;
-                    if ((this.data[i].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
-                        this.data[i].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
-                        this.data[i].display_range.end = this.data[i].display_range.start + this.metadata.min_display_range_width;
-                    } else if ((this.data[i].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
-                        this.data[i].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
-                        this.data[i].display_range.start = this.data[i].display_range.end - this.metadata.min_display_range_width;
+                    var centered_margin = (this.metadata.min_display_range_width - this.data[g].display_range.width) / 2;
+                    if ((this.data[g].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
+                        this.data[g].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
+                        this.data[g].display_range.end = this.data[g].display_range.start + this.metadata.min_display_range_width;
+                        this.data[g].display_range.text_anchor = "start";
+                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
+                        this.data[g].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
+                        this.data[g].display_range.start = this.data[g].display_range.end - this.metadata.min_display_range_width;
+                        this.data[g].display_range.text_anchor = "end";
                     } else {
-                        this.data[i].display_range.start -= centered_margin;
-                        this.data[i].display_range.end += centered_margin;
+                        this.data[g].display_range.start -= centered_margin;
+                        this.data[g].display_range.end += centered_margin;
                     }
                 }
-                this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
+                this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
             }
             // Convert and stash display range values into domain values
             // (domain: values in terms of the data set, e.g. megabases)
-            this.data[i].display_domain = {
-                start: this.parent.state.x_scale.invert(this.data[i].display_range.start),
-                end:   this.parent.state.x_scale.invert(this.data[i].display_range.end)
+            this.data[g].display_domain = {
+                start: this.parent.state.x_scale.invert(this.data[g].display_range.start),
+                end:   this.parent.state.x_scale.invert(this.data[g].display_range.end)
             };
-            this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
+            this.data[g].display_domain.width = this.data[g].display_domain.end - this.data[g].display_domain.start;
 
             // Using display range/domain data generated above cast each gene to tracks such that none overlap
-            this.data[i].track = null;
+            this.data[g].track = null;
             var potential_track = 1;
-            while (this.data[i].track == null){
+            while (this.data[g].track == null){
                 var collision_on_potential_track = false;
                 this.metadata.gene_track_index[potential_track].map(function(placed_gene){
                     if (!collision_on_potential_track){
@@ -238,10 +243,10 @@ LocusZoom.GenesDataLayer = function(){
                             collision_on_potential_track = true;
                         }
                     }
-                }.bind(this.data[i]));
+                }.bind(this.data[g]));
                 if (!collision_on_potential_track){
-                    this.data[i].track = potential_track;
-                    this.metadata.gene_track_index[potential_track].push(this.data[i]);
+                    this.data[g].track = potential_track;
+                    this.metadata.gene_track_index[potential_track].push(this.data[g]);
                 } else {
                     potential_track++;
                     if (potential_track > this.metadata.tracks){
@@ -251,38 +256,82 @@ LocusZoom.GenesDataLayer = function(){
                 }
             }
 
+            // Stash parent references on all genes, trascripts, and exons
+            this.data[g].parent = this;
+            this.data[g].transcripts.map(function(d, t){
+                this.data[g].transcripts[t].parent = this.data[g];
+                this.data[g].transcripts[t].exons.map(function(d, e){
+                    this.data[g].transcripts[t].exons[e].parent = this.data[g].transcripts[t];
+                }.bind(this));
+            }.bind(this));
+
         }.bind(this));
         return this;
     };
 
     this.render = function(){
         this.svg.selectAll("*").remove();
-        // Render gene centerlines
-        this.svg
-            .selectAll("rect.gene")
-            .data(this.data)
-            .enter().append("rect")
-            .attr("class", "gene centerline")
+
+        // Render gene groups
+        this.svg.selectAll("g.gene").data(this.data).enter()
+            .append("g")
+            .attr("class", "gene")
             .attr("id", function(d){ return d.gene_name; })
-            .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(this))
-            .attr("y", function(d){ return (d.track * 50); }) // Arbitrary track height; should be dynamic
-            .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(this))
-            .attr("height", 3) // This should be scaled dynamically somehow
-            .attr("fill", "#000099")
-            .style({ cursor: "pointer" })
-            .append("svg:title")
-            .text(function(d) { return d.gene_name; });
-        // Render labels
-        this.svg
-            .selectAll("text.gene")
-            .data(this.data)
-            .enter().append("text")
-            .attr("class", "gene label")
-            .attr("x", function(d){ return d.display_range.start + (d.display_range.width / 2); })
-            .attr("y", function(d){ return (d.track * 50) - 10; })
-            .attr("text-anchor", "middle")
-            .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
-        // Render exons (first transcript only, for now)
+            .each(function(gene, g){
+
+                // Render gene boundaries
+                d3.select(this).selectAll("rect.gene").filter(".boundary")
+                    .data([gene]).enter().append("rect")
+                    .attr("class", "gene boundary")
+                    .attr("id", function(d){ return d.gene_name; })
+                    .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("y", function(d){ return (d.track * 40) - 20; }) // Arbitrary track height; should be dynamic
+                    .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("height", 3) // This should be scaled dynamically somehow
+                    .attr("fill", "#000099")
+                    .style({ cursor: "pointer" })
+                    .append("svg:title")
+                    .text(function(d) { return d.gene_name; });
+
+                // Render gene labels
+                d3.select(this).selectAll("text.gene")
+                    .data([gene]).enter().append("text")
+                    .attr("class", "gene label")
+                    .attr("x", function(d){
+                        if (d.display_range.text_anchor == "middle"){
+                            return d.display_range.start + (d.display_range.width / 2);
+                        } else if (d.display_range.text_anchor == "start"){
+                            return d.display_range.start;
+                        } else if (d.display_range.text_anchor == "end"){
+                            return d.display_range.end;
+                        }
+                    })
+                    .attr("y", function(d){ return (d.track * 40) - 30; })
+                    .attr("text-anchor", function(d){ return d.display_range.text_anchor; })
+                    .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
+
+                // Render exons (first transcript only, for now)
+                d3.select(this).selectAll("g.gene").filter(".exons")
+                    .data([gene]).enter().append("g")
+                    .attr("class", "gene exons")
+                    .each(function(gene, g){
+
+                        d3.select(this).selectAll("rect.gene").filter(".exon")
+                            .data(gene.transcripts[0].exons).enter().append("rect")
+                            .attr("class", "gene exon")
+                            .attr("id", function(d){ return d.exon_id; })
+                            .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                            .attr("y", function(d){ return (this.track * 40) - 26; }.bind(gene)) // Arbitrary track height
+                            .attr("width", function(d){
+                                return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
+                            }.bind(gene.parent))
+                            .attr("height", 15) // This should be scaled dynamically somehow
+                            .attr("fill", "#000099")
+                            .style({ cursor: "pointer" });
+
+                    });
+
+            });
         
     };
        
