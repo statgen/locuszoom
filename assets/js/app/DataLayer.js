@@ -17,9 +17,19 @@ LocusZoom.DataLayer = function() {
 
     this.fields = [];
     this.data = [];
+    this.metadata = {};
 
-    // TODO: abstract out afterGet functions to canonical filters on fields at the LocusZoom.Data.Requester level
-    this.afterGet = null;
+    // afterget is an automatic method called after data is acquired but before
+    // the parent panel works with it (e.g. to generate x/y scales)
+    this.postget = function(){
+        return this;
+    };
+
+    // prerender is an automatic method called after data is aqcuired and after
+    // the panel has access to it (e.g. to generate x/y scales), but before rendering
+    this.prerender = function(){
+        return this;
+    };
 
     this.state = {
         z_index: null
@@ -27,7 +37,7 @@ LocusZoom.DataLayer = function() {
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
-    }
+    };
     
     return this;
 
@@ -73,9 +83,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
-        if (typeof this.afterGet == "function"){
-            this.afterGet();
-        }
+        this.postget();
     }.bind(this));
     return promise;
 };
@@ -91,11 +99,12 @@ LocusZoom.PositionsDataLayer = function(){
     this.id = "positions";
     this.fields = ["id","position","pvalue","refAllele","ld:best"];
 
-    this.afterGet = function(){
+    this.postget = function(){
         this.data.map(function(d, i){
             this.data[i].ld = +d["ld:best"];
             this.data[i].log10pval = -Math.log(d.pvalue) / Math.LN10;
         }.bind(this));
+        return this;
     };
 
     this.render = function(){
@@ -168,13 +177,80 @@ LocusZoom.GenesDataLayer = function(){
     this.id = "genes";
     this.fields = ["gene:gene"];
 
-    // After we've loaded the genes interpret them to assign each to a track
-    // so that they do not overlap in the view
-    this.afterGet = function(){
+    this.metadata.tracks = 1;
+    this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
+    this.metadata.min_display_range_width = 80; // minimum width in pixels for a gene, to allow enough room for its label
+
+    // After we've loaded the genes interpret them to assign
+    // each to a track so that they do not overlap in the view
+    this.prerender = function(){
         this.data.map(function(d, i){
-            // Iterative stagger for now, more sophisticated track logic forthcoming
-            this.data[i].track = 50 + ((i % 3 ) * 50);
+
+            // CONSOLE
+            // LocusZoom._instances["lz-1"]._panels.genes._data_layers.genes.data
+
+            // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
+            // (range: values in terms of pixels on the screen)
+            this.data[i].display_range = {
+                start: this.parent.state.x_scale(Math.max(d.start, this.parent.parent.state.start)),
+                end:   this.parent.state.x_scale(Math.min(d.end, this.parent.parent.state.end))
+            };
+            this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
+            if (this.data[i].display_range.width < this.metadata.min_display_range_width){
+                if (d.start < this.parent.parent.state.start){
+                    this.data[i].display_range.end = this.data[i].display_range.start + this.metadata.min_display_range_width;
+                } else if (d.end > this.parent.parent.state.end){
+                    this.data[i].display_range.start = this.data[i].display_range.end - this.metadata.min_display_range_width;
+                } else {
+                    var centered_margin = (this.metadata.min_display_range_width - this.data[i].display_range.width) / 2;
+                    if ((this.data[i].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
+                        this.data[i].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
+                        this.data[i].display_range.end = this.data[i].display_range.start + this.metadata.min_display_range_width;
+                    } else if ((this.data[i].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
+                        this.data[i].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
+                        this.data[i].display_range.start = this.data[i].display_range.end - this.metadata.min_display_range_width;
+                    } else {
+                        this.data[i].display_range.start -= centered_margin;
+                        this.data[i].display_range.end += centered_margin;
+                    }
+                }
+                this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
+            }
+            // Convert and stash display range values into domain values
+            // (domain: values in terms of the data set, e.g. megabases)
+            this.data[i].display_domain = {
+                start: this.parent.state.x_scale.invert(this.data[i].display_range.start),
+                end:   this.parent.state.x_scale.invert(this.data[i].display_range.end)
+            };
+            this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
+
+            // Using display range/domain data generated above cast each gene to tracks such that none overlap
+            this.data[i].track = null;
+            var potential_track = 1;
+            while (this.data[i].track == null){
+                var collision_on_potential_track = false;
+                this.metadata.gene_track_index[potential_track].map(function(placed_gene){
+                    if (!collision_on_potential_track){
+                        var min_start = Math.min(placed_gene.display_range.start, this.display_range.start);
+                        var max_end = Math.max(placed_gene.display_range.end, this.display_range.end);
+                        if ((max_end - min_start) < (placed_gene.display_range.width + this.display_range.width)){
+                            collision_on_potential_track = true;
+                        }
+                    }
+                }.bind(this.data[i]));
+                if (!collision_on_potential_track){
+                    this.data[i].track = potential_track;
+                    this.metadata.gene_track_index[potential_track].push(this.data[i]);
+                } else {
+                    potential_track++;
+                    if (potential_track > this.metadata.tracks){
+                        this.metadata.tracks = potential_track;
+                        this.metadata.gene_track_index[potential_track] = [];
+                    }
+                }
+            }
         }.bind(this));
+        return this;
     };
 
     this.render = function(){
@@ -184,15 +260,15 @@ LocusZoom.GenesDataLayer = function(){
             .data(this.data)
             .enter().append("rect")
             .attr("class", "gene")
-            .attr("id", function(d){ return d.gene_id; })
+            .attr("id", function(d){ return d.gene_name; })
             .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(this))
-            .attr("y", function(d){ return d.track; }.bind(this))
+            .attr("y", function(d){ return (d.track * 50); }.bind(this))
             .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(this))
             .attr("height", 5) // This should be scaled dynamically somehow
             .attr("fill", "#000099")
             .style({ cursor: "pointer" })
             .append("svg:title")
-            .text(function(d) { return d.gene_id; });
+            .text(function(d) { return d.gene_name; });
     };
        
     return this;

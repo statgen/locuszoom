@@ -57,7 +57,7 @@ LocusZoom.Panel = function() {
 
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
-    }
+    };
     
     return this;
     
@@ -208,7 +208,7 @@ LocusZoom.Panel.prototype.render = function(){
     
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
-        this._data_layers[this.data_layer_ids_by_z_index[z_index]].render();
+        this._data_layers[this.data_layer_ids_by_z_index[z_index]].prerender().render();
     }
 
     return this;
