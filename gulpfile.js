@@ -8,7 +8,7 @@ var mocha = require('gulp-mocha');
 
 // App-specific JS files to be watched and concatenate/minify
 // NOTE: Order of inclusion is important!
-var app_js_files = ['./assets/js/app/Locuszoom.js',
+var app_js_files = ['./assets/js/app/LocusZoom.js',
                     './assets/js/app/Data.js',
                     './assets/js/app/Instance.js',
                     './assets/js/app/Panel.js',
