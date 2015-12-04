@@ -17,12 +17,12 @@ var app_js_files = ['./assets/js/app/LocusZoom.js',
 
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task('js', function() {
-    gulp.start('test', 'app_js', 'vendor_js');
+    gulp.start('app_js', 'vendor_js');
 });
 
 // Run Mocha unit tests
 gulp.task('test', function () {
-    gulp.src('test/test.js')
+    return gulp.src('test/test.js')
         .pipe(mocha())
         .on('error', function () {
             process.exit(1);
@@ -30,7 +30,7 @@ gulp.task('test', function () {
 });
 
 // Concatenate all app-specific JS libraries into unminified and minified single app files
-gulp.task('app_js', function() {
+gulp.task('app_js', ['test'], function() {
     gulp.src(app_js_files)
         .pipe(concat("locuszoom.app.js"))
         .pipe(gulp.dest('./assets/js'))
