@@ -20,9 +20,13 @@ $ sudo npm install -g gulp
 $ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify --save-dev
 ```
 
-Once complete run `gulp` or `gulp js` from the top of the application directory to build the two uglified javascript files: `assets/js/locuszoom.vendor.min.js` and `assets/js/locuszoom.app.min.js`. Each of these files should be included **only once** on each page that embeds LocusZoom instances, regardless of how many instances are embedded.
+Once complete run or `gulp js` from the top of the application directory to build the following files:
 
-When developing it is almost impossible to interpret errors when using minified/uglified/concatenated javascript files. Consider including the minified/uglified/concatenated *vendor* file (`assets/js/locuszoom.app.min.js`) but explicitly include each javascript file in `assets/app/js`.
+* `assets/js/locuszoom.app.js` - A concatenated app file suitable for use in development
+* `assets/js/locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
+* `assets/js/locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either development or production
+
+Running `gulp` from the repo's root directory will do all of the above and keep running in *watch* mode, such that any changes to app js source files will immediately regenerate concatenated/minified app files for testing.
 
 ### Linting and Strict Mode
 
