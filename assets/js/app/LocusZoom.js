@@ -47,12 +47,12 @@
     
     // Format positional tick values in terms of kilo/mega/giga bases
     exports.formatPosition = function(p){
-        var log10 = Math.log10(p);
-        var SIpre = { 3: "K", 6: "M", 9: "G" };
+        var log10 = (Math.log(p) / Math.log(10)).toFixed(12);
+        var SIpre = { 0: "", 3: "K", 6: "M", 9: "G" };
         var scale = 9;
         var label = "";
-        while (scale > 0){
-            if (log10 > scale){
+        while (scale >= 0){
+            if (log10 >= scale){
                 label = (p / Math.pow(10,scale)).toFixed(2) + " " + SIpre[scale] + "b";
                 break;
             } else {
