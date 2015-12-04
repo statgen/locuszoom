@@ -32,6 +32,14 @@ Running `gulp` from the repo's root directory will do all of the above and keep 
 
 All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
 
+### Unit Tests
+
+LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha with npm:
+
+```
+$ sudo npm install -g mocha
+```
+
 ## Architecture
 
 ### LocusZoom Singleton
