@@ -2,6 +2,32 @@
 
 (snappy project overview goes here)
 
+## Development Setup
+
+### Dependencies
+
+LocusZoom is an entirely client-side application designed to plug into arbitrary data sets, be they local files, APIs, or something else entirely. It has the following vendor dependencies:
+
+* [d3](http://d3js.org/) for a data visualization framework
+* [Q](https://github.com/kriskowal/q) for a promises framework
+
+### Build System
+
+The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
+
+```
+$ sudo npm install -g gulp
+$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify --save-dev
+```
+
+Once complete run `gulp` or `gulp js` from the top of the application directory to build the two uglified javascript files: `assets/js/locuszoom.vendor.min.js` and `assets/js/locuszoom.app.min.js`. Each of these files should be included **only once** on each page that embeds LocusZoom instances, regardless of how many instances are embedded.
+
+When developing it is almost impossible to interpret errors when using minified/uglified/concatenated javascript files. Consider including the minified/uglified/concatenated *vendor* file (`assets/js/locuszoom.app.min.js`) but explicitly include each javascript file in `assets/app/js`.
+
+### Linting and Strict Mode
+
+All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
+
 ## Architecture
 
 ### LocusZoom Singleton
