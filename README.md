@@ -17,7 +17,7 @@ The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessar
 
 ```
 $ sudo npm install -g gulp
-$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify --save-dev
+$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify gulp-mocha --save-dev
 ```
 
 Once complete run or `gulp js` from the top of the application directory to build the following files:
@@ -38,6 +38,14 @@ LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha wit
 
 ```
 $ sudo npm install -g mocha
+```
+
+Tests are currently all located in `/test/test.js`. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
+
+Run tests manually from the root application directory at any time like so:
+
+```
+$ mocha
 ```
 
 ## Architecture
