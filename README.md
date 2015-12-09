@@ -17,7 +17,7 @@ The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessar
 
 ```
 $ sudo npm install -g gulp
-$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify --save-dev
+$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify gulp-mocha --save-dev
 ```
 
 Once complete run or `gulp js` from the top of the application directory to build the following files:
@@ -31,6 +31,22 @@ Running `gulp` from the repo's root directory will do all of the above and keep 
 ### Linting and Strict Mode
 
 All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
+
+### Unit Tests
+
+LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha and with npm, along with a few modules employed by the testing suite:
+
+```
+$ sudo npm install -g mocha requirejs should
+```
+
+Tests are currently all located in `/test/test.js`. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
+
+Run tests manually from the root application directory at any time like so:
+
+```
+$ mocha
+```
 
 ## Architecture
 
