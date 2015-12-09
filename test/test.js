@@ -40,12 +40,12 @@ describe('LocusZoom', function(){
 
     describe('formatPosition()', function(){
         it ('should properly turn numbers into formatted bases', function(){
-            assert.equal("1.00 b", LocusZoom.formatPosition(1));
-            assert.equal("1.00 Kb", LocusZoom.formatPosition(1000));
-            assert.equal("4.57 Kb", LocusZoom.formatPosition(4567));
-            assert.equal("1.00 Mb", LocusZoom.formatPosition(1000000));
-            assert.equal("2.34 Mb", LocusZoom.formatPosition(2342345));
-            assert.equal("1.90 Gb", LocusZoom.formatPosition(1896335235));
+            assert.equal(LocusZoom.formatPosition(1),          "1.00 b");
+            assert.equal(LocusZoom.formatPosition(1000),       "1.00 Kb");
+            assert.equal(LocusZoom.formatPosition(4567),       "4.57 Kb");
+            assert.equal(LocusZoom.formatPosition(1000000),    "1.00 Mb");
+            assert.equal(LocusZoom.formatPosition(2342345),    "2.34 Mb");
+            assert.equal(LocusZoom.formatPosition(1896335235), "1.90 Gb");
         });
     });
 

@@ -55,4 +55,5 @@ gulp.task('watch', function() {
     gulp.watch(app_js_files, ['app_js']);
 });
 
-gulp.task('default', ['js', 'watch']); 
+// Default task: make all the javascripts
+gulp.task('default', ['js']); 
