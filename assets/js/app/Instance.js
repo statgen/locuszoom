@@ -45,9 +45,11 @@ LocusZoom.Instance = function(id) {
 
 // Set the view dimensions for this instance. If an SVG exists, update its dimensions
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-    if (typeof width !== "undefined" && typeof height !== "undefined") {
-        this.view.width  = +width;
-        this.view.height = +height;
+    if (!isNaN(width)){
+        this.view.width = Math.max(Math.round(+width),0);
+    }
+    if (!isNaN(height)){
+        this.view.height = Math.max(Math.round(+height),0);
     }
     if (this.svg != null){
         this.svg.attr("width", this.view.width).attr("height", this.view.height);
@@ -67,7 +69,7 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
 };
 
 // Call initialize on all child panels
-LocusZoom.Instance.prototype.initializePanels = function(){
+LocusZoom.Instance.prototype.initialize = function(){
     for (var id in this._panels){
         this._panels[id].initialize();
     }

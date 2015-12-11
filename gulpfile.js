@@ -22,7 +22,7 @@ gulp.task('js', function() {
 
 // Run Mocha unit tests
 gulp.task('test', function () {
-    return gulp.src('test/test.js')
+    return gulp.src('test/*.js')
         .pipe(mocha())
         .on('error', function () {
             process.exit(1);

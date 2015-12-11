@@ -37,10 +37,10 @@ All app-specific javascript files should be developed in **strict mode**. LocusZ
 LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha and with npm, along with a few modules employed by the testing suite:
 
 ```
-$ sudo npm install -g mocha requirejs should
+$ sudo npm install -g mocha requirejs should jsdom
 ```
 
-Tests are currently all located in `/test/test.js`. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
+Tests are currently located in the `test` subdirectory, with a one-to-one mapping of test files to app files. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
 
 Run tests manually from the root application directory at any time like so:
 

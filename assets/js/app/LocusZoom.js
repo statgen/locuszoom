@@ -26,7 +26,7 @@
             .append("svg").attr("id", id + "_svg").attr("class", "locuszoom");
         this._instances[id].setDimensions();
         // Initialize all panels
-        this._instances[id].initializePanels();
+        this._instances[id].initialize();
         // Detect data-region and map to it if necessary
         if (typeof this._instances[id].svg.node().parentNode.dataset.region !== "undefined"){
             var region = this._instances[id].svg.node().parentNode.dataset.region.split(/\D/);
