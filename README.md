@@ -16,8 +16,7 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
 
 ```
-$ sudo npm install -g gulp
-$ sudo npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify gulp-mocha --save-dev
+$ npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify gulp-mocha
 ```
 
 Once complete run or `gulp js` from the top of the application directory to build the following files:
@@ -37,7 +36,7 @@ All app-specific javascript files should be developed in **strict mode**. LocusZ
 LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha and with npm, along with a few modules employed by the testing suite:
 
 ```
-$ sudo npm install -g mocha requirejs should jsdom
+$ npm install mocha requirejs should jsdom
 ```
 
 Tests are currently located in the `test` subdirectory, with a one-to-one mapping of test files to app files. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
