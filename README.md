@@ -16,7 +16,7 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
 
 ```
-$ npm install gulp gulp-util gulp-watch gulp-notify gulp-concat gulp-uglify gulp-mocha
+$ npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha
 ```
 
 Once complete run or `gulp js` from the top of the application directory to build the following files:
