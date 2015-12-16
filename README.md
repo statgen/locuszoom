@@ -25,7 +25,9 @@ Once complete run or `gulp js` from the top of the application directory to buil
 * `assets/js/locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
 * `assets/js/locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either development or production
 
-Running `gulp` from the repo's root directory will do all of the above and keep running in *watch* mode, such that any changes to app js source files will immediately regenerate concatenated/minified app files for testing.
+Running `gulp` from the repo's root directory will do all of the above. Running `gulp watch` will put gulp in *watch* mode, such that any changes to app js source files will immediately regenerate concatenated/minified app files for testing.
+
+**Note that the plugins used by gulp in this project require Node.js version 4.x or higher.**
 
 ### Linting and Strict Mode
 
