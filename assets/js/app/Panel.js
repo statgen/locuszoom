@@ -38,24 +38,22 @@ LocusZoom.Panel = function() {
     this.data_promises = [];
 
     this.axes = {
-        render_x: false,
-        render_y1: false,
-        render_y2: false,
-        y1_data_layer_id: null,
-        y2_data_layer_id: null
+        x:  { render:        false,
+              tick_width:    0,
+              label:         null },
+        y1: { render:        false,
+              data_layer_id: null,
+              tick_width:    0,
+              label:         null },
+        y2: { render:        false,
+              data_layer_id: null,
+              tick_width:    0,
+              label:         null }
     };
 
-    this.xExtent = function(){
-        return null;
-    };
-
-    this.y1Extent = function(){
-        return null;
-    };
-
-    this.y2Extent = function(){
-        return null;
-    };
+    this.xExtent  = null;
+    this.y1Extent = null;
+    this.y2Extent = null;
     
     this.renderData = function(){};
 
@@ -119,7 +117,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Initialize Axes
-    if (this.axes.render_x){
+    if (this.axes.x.render){
         this.state.x_scale = d3.scale.linear().domain([0,1]).range([0, this.view.cliparea.width]);
         this.state.x_axis  = d3.svg.axis().scale(this.state.x_scale).orient("bottom");
         this.svg.append("g")
@@ -127,7 +125,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
             .call(this.state.x_axis);
     }
-    if (this.axes.render_y1){
+    if (this.axes.y1.render){
         this.state.y1_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
         this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left");
         this.svg.append("g")
@@ -135,7 +133,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
             .call(this.state.y1_axis);
     }
-    if (this.axes.render_y2){
+    if (this.axes.y2.render){
         this.state.y2_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("right");
         this.svg.append("g")
@@ -178,35 +176,80 @@ LocusZoom.Panel.prototype.reMap = function(){
 
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(){
-    
-    // Render axes  
-    if (this.axes.render_x){
+LocusZoom.Panel.prototype.render = function(){  
+
+    // Generate extents and scales
+    if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
         this.state.x_scale = d3.scale.linear()
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.view.cliparea.width]);
-        this.state.x_axis = d3.svg.axis().scale(this.state.x_scale).orient("bottom")
-            .tickValues(d3.range(this.state.x_extent[0], this.state.x_extent[1], (this.state.x_extent[1] - this.state.x_extent[0]) / 10))
-            .tickFormat(function(d) { return LocusZoom.formatPosition(d); });
-        this.svg.selectAll("g .x.axis").call(this.state.x_axis);
     }
-    if (this.axes.render_y1){
+    if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
         this.state.y1_scale = d3.scale.linear()
             .domain([0, this.state.y1_extent[1]])
             .range([this.view.cliparea.height, 0]);
-        this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left")
-            .tickValues(d3.range(this.state.y1_extent[0], this.state.y1_extent[1], (this.state.y1_extent[1] - this.state.y1_extent[0]) / 4));
-        this.svg.selectAll("g .y.y1.axis").call(this.state.y1_axis);
     }
-    if (this.axes.render_y2){
+    if (typeof this.y2Extent == "function"){
         this.state.y2_extent = this.y2Extent();
         this.state.y2_scale = d3.scale.linear()
             .domain([0, this.state.y2_extent[1]])
             .range([this.view.cliparea.height, 0]);
+    }
+
+    // Render axes and labels
+    if (this.axes.x.render){
+        this.state.x_axis = d3.svg.axis()
+            .scale(this.state.x_scale)
+            .orient("bottom")
+            .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
+        if (!isNaN(this.axes.x.tick_width) && this.axes.x.tick_width > 0){
+            this.state.x_axis.ticks(Math.floor(this.view.cliparea.width / this.axes.x.tick_width));
+        }
+        this.svg.selectAll("g .x.axis").call(this.state.x_axis);
+        if (this.axes.x.label != null){
+            var x_label = this.axes.x.label;
+            if (typeof this.axes.x.label == "function"){
+                x_label = this.axes.x.label();
+            }
+            this.svg.select("g .x.axis").append("text")
+                .attr("class", "x axis label")
+                .attr("text-anchor", "middle")
+                .attr("x", this.view.cliparea.width / 2)
+                .attr("y", 33)
+                .text(x_label);
+        }
+    }
+
+    if (this.axes.y1.render){
+        this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left")
+            .tickValues(d3.range(this.state.y1_extent[0], this.state.y1_extent[1], (this.state.y1_extent[1] - this.state.y1_extent[0]) / 4));
+        if (!isNaN(this.axes.y1.tick_width) && this.axes.y1.tick_width > 0){
+            this.state.y1_axis.ticks(Math.floor(this.view.cliparea.height / this.axes.y1.tick_width));
+        }
+        this.svg.selectAll("g .y.y1.axis").call(this.state.y1_axis);
+        if (this.axes.y1.label != null){
+            var y1_label = this.axes.y1.label;
+            if (typeof this.axes.y1.label == "function"){
+                y1_label = this.axes.y1.label();
+            }
+            this.svg.select("g .y1.axis").append("text")
+                .attr("class", "y1 axis label")
+                .attr("text-anchor", "middle")
+                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
+                .attr("x", -28)
+                .attr("y", this.view.cliparea.height / 2)
+                .text(y1_label);
+        }
+    }
+
+    if (this.axes.y2.render){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("left")
             .tickValues(d3.range(this.state.y2_extent[0], this.state.y2_extent[1], (this.state.y2_extent[1] - this.state.y2_extent[0]) / 4));
+        if (!isNaN(this.axes.y2.tick_width) && this.axes.y2.tick_width > 0){
+            this.state.y2_axis.ticks(Math.floor(this.view.cliparea.height / this.axes.y2.tick_width));
+        }
         this.svg.selectAll("g .y.y2.axis").call(this.state.y2_axis);
     }
     
@@ -255,9 +298,14 @@ LocusZoom.PositionsPanel = function(){
     LocusZoom.Panel.apply(this, arguments);   
     this.id = "positions";
 
-    this.axes.render_x = true;
-    this.axes.render_y1 = true;
-    //this.axes.render_y2 = true;
+    this.axes.x.render = true;
+    this.axes.x.tick_width = 120;
+    this.axes.x.label = function(){
+        return "Chromosome " + this.parent.state.chr + " (Mb)";
+    }.bind(this);
+
+    this.axes.y1.render = true;
+    this.axes.y1.label = "-log10 p-value";
     
     this.xExtent = function(){
         return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
@@ -266,12 +314,6 @@ LocusZoom.PositionsPanel = function(){
     this.y1Extent = function(){
         return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
     };
-
-    /*
-    this.y2Extent = function(){
-        return d3.extent(this._data_layers.ld.data, function(d) { return +d.foo; } );
-    };
-    */
     
     return this;
 };
@@ -287,8 +329,6 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
     this.id = "genes";
-
-    this.axes.render_x = true;
 
     this.xExtent = function(){
         return d3.extent([this.parent.state.start, this.parent.state.end]);

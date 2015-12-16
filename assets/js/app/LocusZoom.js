@@ -1,4 +1,4 @@
-/* global d3,Q */
+/* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -46,21 +46,10 @@
         });
     };
     
-    // Format positional tick values in terms of kilo/mega/giga bases
-    exports.formatPosition = function(p){
-        var log10 = (Math.log(p) / Math.LN10).toFixed(12);
-        var SIpre = { 0: "", 3: "K", 6: "M", 9: "G" };
-        var scale = 9;
-        var label = "";
-        while (scale >= 0){
-            if (log10 >= scale){
-                label = (p / Math.pow(10,scale)).toFixed(2) + " " + SIpre[scale] + "b";
-                break;
-            } else {
-                scale -= 3;
-            }
-        }
-        return label;
+    // Format a number as a Megabase value, limiting to two decimal places unless sufficiently small
+    exports.formatMegabase = function(p){
+        var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
+        return "" + (p / Math.pow(10, 6)).toFixed(places);
     };
     
     // From http://www.html5rocks.com/en/tutorials/cors/

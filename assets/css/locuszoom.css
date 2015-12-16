@@ -13,6 +13,11 @@ svg.locuszoom {
 	shape-rendering: crispEdges;
 }
 
+.axis .label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
 circle.position {
   stroke: #181818;
   stroke-width: 1;
@@ -33,6 +38,7 @@ circle.position.selected:hover {
 
 text.gene.label {
   font-style: italic;
+  font-size: 12px;
 }
 
 rect.gene.boundary {

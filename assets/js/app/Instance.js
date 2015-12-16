@@ -111,14 +111,14 @@ LocusZoom.DefaultInstance = function(){
     this.addPanel(LocusZoom.PositionsPanel)
         .setOrigin(0, 0)
         .setDimensions(700, 350)
-        .setMargin(20, 30, 20, 30);
+        .setMargin(20, 20, 35, 50);
     this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
     //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
 
     this.addPanel(LocusZoom.GenesPanel)
         .setOrigin(0, 350)
         .setDimensions(700, 350)
-        .setMargin(20, 30, 20, 30);
+        .setMargin(20, 20, 20, 50);
     this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
   
     return this;

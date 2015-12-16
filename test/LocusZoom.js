@@ -40,14 +40,14 @@ describe('LocusZoom', function(){
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String();
         });
-        it('should have a method for formatting numbers as bases', function(){
-            LocusZoom.formatPosition.should.be.a.Function();
-            assert.equal(LocusZoom.formatPosition(1),          "1.00 b");
-            assert.equal(LocusZoom.formatPosition(1000),       "1.00 Kb");
-            assert.equal(LocusZoom.formatPosition(4567),       "4.57 Kb");
-            assert.equal(LocusZoom.formatPosition(1000000),    "1.00 Mb");
-            assert.equal(LocusZoom.formatPosition(2342345),    "2.34 Mb");
-            assert.equal(LocusZoom.formatPosition(1896335235), "1.90 Gb");
+        it('should have a method for formatting numbers as megabases', function(){
+            LocusZoom.formatMegabase.should.be.a.Function();
+            assert.equal(LocusZoom.formatMegabase(1),          "0.000001");
+            assert.equal(LocusZoom.formatMegabase(1000),       "0.001");
+            assert.equal(LocusZoom.formatMegabase(4567),       "0.005");
+            assert.equal(LocusZoom.formatMegabase(1000000),    "1.00");
+            assert.equal(LocusZoom.formatMegabase(23423456),   "23.42");
+            assert.equal(LocusZoom.formatMegabase(1896335235), "1896.34");
         });
         it('should have a method for adding instances to a div by ID', function(){
             LocusZoom.addInstanceToDivById.should.be.a.Function();
