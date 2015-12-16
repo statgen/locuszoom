@@ -213,12 +213,14 @@ LocusZoom.Panel.prototype.render = function(){
             if (typeof this.axes.x.label == "function"){
                 x_label = this.axes.x.label();
             }
-            this.svg.select("g .x.axis").append("text")
-                .attr("class", "x axis label")
-                .attr("text-anchor", "middle")
-                .attr("x", this.view.cliparea.width / 2)
-                .attr("y", 33)
-                .text(x_label);
+            if (this.svg.select("text.x.axis.label")[0][0] == null){
+                this.svg.select("g .x.axis").append("text")
+                    .attr("class", "x axis label")
+                    .attr("text-anchor", "middle")
+                    .attr("x", this.view.cliparea.width / 2)
+                    .attr("y", 33);
+            }
+            this.svg.select("text.x.axis.label").text(x_label);
         }
     }
 
@@ -234,13 +236,15 @@ LocusZoom.Panel.prototype.render = function(){
             if (typeof this.axes.y1.label == "function"){
                 y1_label = this.axes.y1.label();
             }
-            this.svg.select("g .y1.axis").append("text")
-                .attr("class", "y1 axis label")
-                .attr("text-anchor", "middle")
-                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
-                .attr("x", -28)
-                .attr("y", this.view.cliparea.height / 2)
-                .text(y1_label);
+            if (this.svg.select("text.y1.axis.label")[0][0] == null){
+                this.svg.select("g .y1.axis").append("text")
+                    .attr("class", "y1 axis label")
+                    .attr("text-anchor", "middle")
+                    .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
+                    .attr("x", -28)
+                    .attr("y", this.view.cliparea.height / 2);
+            }
+            this.svg.select("text.y1.axis.label").text(y1_label);
         }
     }
 
