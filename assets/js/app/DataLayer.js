@@ -304,7 +304,7 @@ LocusZoom.GenesDataLayer = function(){
                     .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){ return (d.track * 40) - 20; }) // Arbitrary track height; should be dynamic
                     .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(gene.parent))
-                    .attr("height", 3) // This should be scaled dynamically somehow
+                    .attr("height", 1) // This should be scaled dynamically somehow
                     .attr("fill", "#000099")
                     .style({ cursor: "pointer" })
                     .append("svg:title")
@@ -342,7 +342,7 @@ LocusZoom.GenesDataLayer = function(){
                             .attr("width", function(d){
                                 return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
                             }.bind(gene.parent))
-                            .attr("height", 15) // This should be scaled dynamically somehow
+                            .attr("height", 12) // This should be scaled dynamically somehow
                             .attr("fill", "#000099")
                             .style({ cursor: "pointer" });
 
