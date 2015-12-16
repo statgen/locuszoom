@@ -11,6 +11,12 @@
   <link rel="stylesheet" type="text/css" href="assets/css/locuszoom.css"/>
 
   <script type="text/javascript">
+    LocusZoom.DefaultDataSources = {
+        position: new LocusZoom.Data.AssociationSource("http://portaldev.sph.umich.edu/api/v1/single/"),
+        ld: new LocusZoom.Data.LDSource("http://portaldev.sph.umich.edu/api/v1/pair/LD/"),
+        gene: new LocusZoom.Data.GeneSource("http://portaldev.sph.umich.edu/api/v1/annotation/genes/")
+    };
+
     var topHits = [
 	["16:53819169", "FTO"],
 	["9:22051670", "CDKN2A/B"],

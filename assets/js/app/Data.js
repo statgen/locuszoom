@@ -13,11 +13,11 @@ LocusZoom.Data.Requester = function(sources) {
         fields.forEach(function(field) {
             var parts = field.split(/\:(.*)/);
             if (parts.length==1) {
-                if (typeof requests["base"] == "undefined") {
-                    requests.base = {names:[], fields:[]};
+                if (typeof requests["position"] == "undefined") {
+                    requests.position = {names:[], fields:[]};
                 }
-                requests.base.names.push(field);
-                requests.base.fields.push(field);
+                requests.position.names.push(field);
+                requests.position.fields.push(field);
             } else {
                 if (typeof requests[parts[0]] =="undefined") {
                     requests[parts[0]] = {names:[], fields:[]};
@@ -167,9 +167,6 @@ LocusZoom.createResolvedPromise = function() {
     return response.promise;
 };
 
-LocusZoom.DefaultDataSources = {
-    base: new LocusZoom.Data.AssociationSource("http://portaldev.sph.umich.edu/api/v1/single/"),
-    ld: new LocusZoom.Data.LDSource("http://portaldev.sph.umich.edu/api/v1/pair/LD/"),
-    gene: new LocusZoom.Data.GeneSource("http://portaldev.sph.umich.edu/api/v1/annotation/genes/")
-};
+LocusZoom.DefaultDataSources = {};
+
 
