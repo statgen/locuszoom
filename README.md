@@ -49,52 +49,36 @@ Run tests manually from the root application directory at any time like so:
 $ mocha
 ```
 
-## Architecture
+## Using the LocusZoom Plugin
 
-### LocusZoom Singleton
+Refer to `demo.html` to see an example of how to embed LocusZoom into a page. In general, a given web page must include the following resources:
 
-All LocusZoom assets are defined within a singleton object called `LocusZoom`. This object behaves like a namespace.
+* `assets/js/locuszoom.vendor.min.js` (concatenated minified vender files)
+* `assets/js/locuszoom.app.js` OR `assets/js/locuszoom.app.min.js` (concatenated+minified application logic)
+* `assets/css/locuszoom.css` (stylesheet)
 
-### Instances
+LocusZoom only needs an empty `<div>` tag to create a new instance. The tag may optionally specify a starting region, like so:
 
-A single LocusZoom manifestation, with independent display parameters and state, is an `Instance`.
+```html
+<div id="foo" data-region="10:114550452-115067678"></div>
+```
 
-The `LocusZoom` singleton may have arbitrarily many `Instance` objects. Instance objects are stored in the `LocusZoom.instances` property.
+To populate this `<div>` with a LocusZoom instance:
 
-An Instance must have a globally unique `id`, which should correspond to the `id` property of the containing `<div>` tag for that instance. `LocusZoom.instances` is a key/value object where keys are Instance ids and values are Instance objects.
+```javascript
+LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, "foo");
+```
 
-### Panels
+Alternatively, one or more `<div>` tags can share a common class name, and this class can be used to populate multiple LocusZoom instances at once like so:
 
-A given Instance may have arbitrarily many `Panels`. A Panel is a physical subdivision of an instance intended to show a single type of graph, data representation, or collection of UI elements.
-
-A Panel must have an `id` property that is unique within the scope of the instance. A Panel must also be defined by a class that extends the Panel prototype.
-
-## API Reference
-
-### `LocusZoom`
-
-Singleton object defining the namespace for all LocusZoom instance(s) on a page
-
-#### `LocusZoom.instances`
-
-Key/value object for storing `Instance` objects by `id`.
-
-#### `LocusZoom.addInstance(id)`
-
-`id` - String
-
-Creates a new `Instance`, binds to `<div>` element by `id` (globally unique id for the instance object *and* id parameter of the `<div>` tag to contain the Instance)
-
-#### `LocusZoom.populate(class_name)`
-
-`class_name` - String
-
-Detects all `<div>` tags containing `class_name` as a class and initializes them as LocusZoom Instances
-
-### `LocusZoom.Instance`
-
+```html
+<div id="lz-1" class="lz-instance"></div>
+<div id="lz-2" class="lz-instance"></div>
 ...
+```
 
-### `LocusZoom.Panel`
+```javascript
+LocusZoom.populate("lz-instance");
+```
 
-...
+Also note that the default LocusZoom instance is `lz-instance`, so in the above example calling just `LocusZoom.populate()` would also work.
