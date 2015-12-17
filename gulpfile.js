@@ -23,6 +23,9 @@ gulp.task('js', function() {
 gulp.task('test', function () {
     return gulp.src('test/*.js')
         .pipe(mocha())
+        .on('end', function() {
+            gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));
+        })
         .on('error', function () {
             process.exit(1);
         });
@@ -33,15 +36,21 @@ gulp.task('app_js', ['test'], function() {
     gulp.src(app_js_files)
         .pipe(concat("locuszoom.app.js"))
         .pipe(gulp.dest('./assets/js'))
-        .on('success', function() {
-            gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.app.js"));
+        .on('end', function() {
+            gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
+        })
+        .on('error', function() {
+            gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.js "));
         });
     gulp.src(app_js_files)
         .pipe(uglify())
         .pipe(concat("locuszoom.app.min.js"))
         .pipe(gulp.dest('./assets/js'))
-        .on('success', function() {
-            gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.app.min.js"));
+        .on('end', function() {
+            gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
+        })
+        .on('error', function() {
+            gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.min.js "));
         });
 });
 
@@ -50,8 +59,11 @@ gulp.task('vendor_js', function() {
     gulp.src('./assets/js/vendor/*.js')
         .pipe(concat("locuszoom.vendor.min.js"))
         .pipe(gulp.dest('./assets/js'))
-        .on('success', function() {
+        .on('end', function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.vendor.min.js"));
+        })
+        .on('error', function() {
+            gutil.log(gutil.colors.bold.white.bgRed("FAILED to generate locuszoom.vendor.min.js"));
         });
 });
 
