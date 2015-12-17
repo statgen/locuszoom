@@ -15,36 +15,49 @@
     // Create a new instance by instance class and attach it to a div by ID
     // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
     //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
-    exports.addInstanceToDivById = function(InstanceClass, id){
+    function addInstanceToDivById(InstanceClass, id){
         // Initialize a new Instance
-        if (typeof InstanceClass === "undefined"){
-            InstanceClass = LocusZoom.Instance;
-        }
-        this._instances[id] = new InstanceClass(id);
+        var inst = exports._instances[id] = new InstanceClass(id);
         // Add an SVG to the div and set its dimensions
-        this._instances[id].svg = d3.select("div#" + id)
+        inst.svg = d3.select("div#" + id)
             .append("svg").attr("id", id + "_svg").attr("class", "locuszoom");
-        this._instances[id].setDimensions();
+        inst.setDimensions();
         // Initialize all panels
-        this._instances[id].initialize();
+        inst.initialize();
         // Detect data-region and map to it if necessary
-        if (typeof this._instances[id].svg.node().parentNode.dataset !== "undefined"
-            && typeof this._instances[id].svg.node().parentNode.dataset.region !== "undefined"){
-            var region = this._instances[id].svg.node().parentNode.dataset.region.split(/\D/);
+        if (typeof inst.svg.node().parentNode.dataset !== "undefined"
+            && typeof inst.svg.node().parentNode.dataset.region !== "undefined"){
+            var region = inst.svg.node().parentNode.dataset.region.split(/\D/);
             this._instances[id].mapTo(+region[0], +region[1], +region[2]);
         }
-        return this._instances[id];
+        return inst;
     };
     
     // Automatically detect divs by class and populate them with default LocusZoom instances
-    exports.populate = function(class_name){
-        if (typeof class_name === "undefined"){
-            class_name = "lz-instance";
+    exports.populate = function(selector, datasource, plotdef, state) {
+        if (typeof selector  === "undefined"){
+            selector = ".lz-instance";
         }
-        d3.selectAll("div." + class_name).each(function(){
-            LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, this.id);
+        if (typeof plotdef  === "undefined"){
+            plotdef = LocusZoom.DefaultInstance;
+        }
+        if (typeof state  === "undefined"){
+            state = {};
+        }
+        var instance;
+        d3.select(selector).each(function(){
+            instance = addInstanceToDivById(plotdef, this.id);
         });
+        return instance;
     };
+
+    exports.populateAll = function(selector, datasource, plotdef, state) {
+        var instances = [];
+        d3.selectAll(selector).each(function(d,i) {
+            instances[i] = exports.populate(this, datasource, plotdef, state)
+        });
+        return instances;
+    }
     
     // Format a number as a Megabase value, limiting to two decimal places unless sufficiently small
     exports.formatMegabase = function(p){
