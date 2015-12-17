@@ -28,10 +28,10 @@
         if (typeof inst.svg.node().parentNode.dataset !== "undefined"
             && typeof inst.svg.node().parentNode.dataset.region !== "undefined"){
             var region = inst.svg.node().parentNode.dataset.region.split(/\D/);
-            this._instances[id].mapTo(+region[0], +region[1], +region[2]);
+            inst.mapTo(+region[0], +region[1], +region[2]);
         }
         return inst;
-    };
+    }
     
     // Automatically detect divs by class and populate them with default LocusZoom instances
     exports.populate = function(selector, datasource, plotdef, state) {
@@ -54,15 +54,56 @@
     exports.populateAll = function(selector, datasource, plotdef, state) {
         var instances = [];
         d3.selectAll(selector).each(function(d,i) {
-            instances[i] = exports.populate(this, datasource, plotdef, state)
+            instances[i] = exports.populate(this, datasource, plotdef, state);
         });
         return instances;
-    }
+    };
     
     // Format a number as a Megabase value, limiting to two decimal places unless sufficiently small
     exports.formatMegabase = function(p){
         var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
         return "" + (p / Math.pow(10, 6)).toFixed(places);
+    };
+
+    //parse numbers like 5Mb and 1.4kB 
+    function parsePosition (x) {
+        var val = x.toUpperCase();
+        val = val.replace(",","");
+        var suffixre = /([KMG])[B]*$/;
+        var suffix = suffixre.exec(val);
+        var mult = 1;
+        if (suffix) {
+            if (suffix[1]=="M") {
+                mult = 1e6;
+            } else if (suffix[1]=="G") {
+                mult = 1e9;
+            } else {
+                mult = 1e3; //K
+            }
+            val = val.replace(suffixre,"");
+        }
+        val = Number(val) * mult;
+        return val;
+    }
+
+    exports.parsePositionQuery = function(x) {
+        var chrposoff = /^(\w+):([\d,.]+[kmgbKMGB]*)([-+])([\d,.]+[kmgbKMGB]*)$/;
+        var chrpos = /^(\w+):([\d,.]+[kmgbKMGB]*)$/;
+        var match = chrposoff.exec(x);
+        if (match) {
+            if (match[3] == "+") {
+                var center = parsePosition(match[2]);
+                var offset = parsePosition(match[4]);
+                return {chr:match[1], start:center-offset, end:center+offset};
+            } else {
+                return {chr:match[1], start:parsePosition(match[2]), end:parsePosition(match[4])};
+            }
+        }
+        match = chrpos.exec(x);
+        if (match) {
+            return {chr:match[1], position:parsePosition(match[2])};
+        };
+        return null;
     };
     
     // From http://www.html5rocks.com/en/tutorials/cors/

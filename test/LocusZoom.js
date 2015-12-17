@@ -72,6 +72,34 @@ describe('LocusZoom', function(){
                 assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
             });
         });
+        describe("Position Queries", function() {
+            it('should have a parsePositionQuery function', function() {
+                LocusZoom.parsePositionQuery.should.be.a.Function();
+            });
+            it("should parse chr:start-end", function() {
+                var test = LocusZoom.parsePositionQuery("10:45000-65000");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",45000);
+                test.should.have.property("end",65000);
+            });
+            it("should parse chr:start+end", function() {
+                var test = LocusZoom.parsePositionQuery("10:45000+5000");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",40000);
+                test.should.have.property("end",50000);
+            });
+            it("should parse kb/mb units", function() {
+                var test = LocusZoom.parsePositionQuery("10:5.5Mb+2k");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",5.5e6-2e3);
+                test.should.have.property("end",5.5e6+2e3);
+            });
+            it("should prase chr:pos", function() {
+                var test = LocusZoom.parsePositionQuery("2:5500");
+                test.should.have.property("chr","2");
+                test.should.have.property("position",5500);
+            });
+        });
         it('should have a method for creating a CORS promise', function(){
             LocusZoom.createCORSPromise.should.be.a.Function();
         });
