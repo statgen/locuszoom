@@ -113,8 +113,6 @@
             if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
         }
 
-        console.log(range, ticks);
-
         return ticks;
     };
     
