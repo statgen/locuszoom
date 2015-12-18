@@ -4,7 +4,58 @@
 
 "use strict";
 
+/* A named collection of data sources used to draw a plot*/
+LocusZoom.DataSources = function() {
+    this.sources = {};
+};
+
+LocusZoom.DataSources.prototype.addSource = function(ns, x) {
+    function findKnownSource(x) {
+        if (!LocusZoom.KnownDataSources) {return null;}
+        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
+            if (!LocusZoom.KnownDataSources[i].sourcename) {
+                throw("KnownDataSource at position " + i + "does not have a 'sourcename'");
+            }
+            if (LocusZoom.KnownDataSources[i].sourcename == x) {
+                return LocusZoom.KnownDataSources[i];
+            }
+        }
+        return null;
+    };
+    if (Array.isArray(x)) {
+        var dsclass = findKnownSource(x[0]);
+        if (dsclass) {
+            this.sources[ns] = new dsclass(x[1]);
+        } else {
+            throw("Unable to resolve " + x[0] + " data source");
+        }
+    } else {
+        this.sources[ns] = x;
+    }
+    return this;
+};
+
+LocusZoom.DataSources.prototype.getSource = function(ns) {
+    return this.sources[ns];
+};
+
+LocusZoom.DataSources.prototype.setSources = function(x) {
+    if (typeof x === "string" || x instanceof String) {
+        x = JSON.parse(x);
+    }
+    var ds = this;
+    Object.keys(x).forEach(function(ns) {
+        ds.addSource(ns, x[ns]);
+    });
+    return ds;
+};
+
+LocusZoom.DataSources.prototype.keys = function() {
+    return Object.keys(this.sources);
+}
+
 LocusZoom.Data = LocusZoom.Data ||  {};
+
 
 LocusZoom.Data.Requester = function(sources) {
 
@@ -81,6 +132,7 @@ LocusZoom.Data.AssociationSource = function(url) {
         };
     };
 };
+LocusZoom.Data.AssociationSource.sourcename = "AssocationLZ";
 
 LocusZoom.Data.LDSource = function(url) {
     this.url = url;
@@ -143,6 +195,7 @@ LocusZoom.Data.LDSource = function(url) {
         };
     };
 };
+LocusZoom.Data.LDSource.sourcename = "LDLZ";
 
 LocusZoom.Data.GeneSource = function(url) {
     this.url = url;
@@ -161,6 +214,7 @@ LocusZoom.Data.GeneSource = function(url) {
         };
     };
 };
+LocusZoom.Data.GeneSource.sourcename = "GeneLZ";
 
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
@@ -168,6 +222,10 @@ LocusZoom.createResolvedPromise = function() {
     return response.promise;
 };
 
+LocusZoom.KnownDataSources = [
+    LocusZoom.Data.AssociationSource,
+    LocusZoom.Data.LDSource,
+    LocusZoom.Data.GeneSource];
 LocusZoom.DefaultDataSources = {};
 
 

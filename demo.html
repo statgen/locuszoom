@@ -11,6 +11,12 @@
   <link rel="stylesheet" type="text/css" href="assets/css/locuszoom.css"/>
 
   <script type="text/javascript">
+    var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
+    var ds = new LocusZoom.DataSources();
+	ds.addSource("position", new LocusZoom.Data.AssociationSource(apiBase + "single/"));
+	ds.addSource("ld", new LocusZoom.Data.LDSource(apiBase + "pair/LD/"));
+	ds.addSource("gene", new LocusZoom.Data.GeneSource(apiBase + "annotation/genes"));
+
     LocusZoom.DefaultDataSources = {
         position: new LocusZoom.Data.AssociationSource("http://portaldev.sph.umich.edu/api_internal_dev/v1/single/"),
         ld: new LocusZoom.Data.LDSource("http://portaldev.sph.umich.edu/api_internal_dev/v1/pair/LD/"),
