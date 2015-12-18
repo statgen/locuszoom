@@ -51,6 +51,72 @@
         var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
         return "" + (p / Math.pow(10, 6)).toFixed(places);
     };
+
+    // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
+    // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
+    // Optionally specify n for a "target" number of ticks. Will not necessarily be the number of ticks you get! Defaults to 5.
+    exports.prettyTicks = function(range, n, internal_only){
+        if (typeof n == "undefined" || isNaN(parseInt(n))){
+  	        n = 5;
+        }
+        n = parseInt(n);
+        if (typeof internal_only == "undefined"){
+            internal_only = false;
+        }
+
+        var min_n = n / 3;
+        var shrink_sml = 0.75;
+        var high_u_bias = 1.5;
+        var u5_bias = 0.5 + 1.5 * high_u_bias;
+  
+        var d = Math.abs(range[0] - range[1]);
+        var c = d / n;
+        if ((Math.log(d) / Math.LN10) < -2){
+            c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
+        }
+  
+        var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
+        var base_toFixed = 0;
+        if (base < 1){
+            base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
+        }
+
+        var unit = base;
+        if ( ((2 * base) - c) < (high_u_bias * (c - unit)) ){
+            unit = 2 * base;
+            if ( ((5 * base) - c) < (u5_bias * (c - unit)) ){
+                unit = 5 * base;
+                if ( ((10 * base) - c) < (high_u_bias * (c - unit)) ){
+                    unit = 10 * base;
+                }
+            }
+        }
+  
+        var ticks = [];
+        if (range[0] <= unit){
+            var i = 0;
+        } else {
+            var i = Math.floor(range[0]/unit)*unit;
+            i = parseFloat(i.toFixed(base_toFixed));
+        }
+        while (i < range[1]){
+            ticks.push(i);
+            i += unit;
+            if (base_toFixed > 0){
+                i = parseFloat(i.toFixed(base_toFixed));
+            }
+        }
+        ticks.push(i);
+
+        if (internal_only){
+            if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+            if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
+        }
+
+        console.log(range, ticks);
+
+        return ticks;
+    };
     
     // From http://www.html5rocks.com/en/tutorials/cors/
     // and with promises from https://gist.github.com/kriskowal/593076
