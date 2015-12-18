@@ -63,6 +63,7 @@ LocusZoom.Data.AssociationSource = function(url) {
                 " and position ge " + state.start + 
                 " and position le " + state.end;
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
+                x = x.data;
                 var records = [];
                 fields.forEach(function(f) {
                     if (!(f in x)) {throw "field " + f + " not found in response";}
@@ -136,7 +137,7 @@ LocusZoom.Data.LDSource = function(url) {
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
                 if (!chain.header) {chain.header = {};}
                 chain.header.ldrefvar = refVar;
-                leftJoin(chain.body, x, outnames[0], "rsquare");
+                leftJoin(chain.body, x.data, outnames[0], "rsquare");
                 return chain;   
             });
         };
