@@ -32,9 +32,9 @@ describe('LocusZoom Data', function(){
         var TestSource1, TestSource2;
         beforeEach(function() {
             TestSource1 = function() {};
-            TestSource1.sourcename = "test1";
+            TestSource1.SOURCE_NAME = "test1";
             TestSource2 = function() {};
-            TestSource2.sourcename = "test2";
+            TestSource2.SOURCE_NAME = "test2";
             LocusZoom.KnownDataSources = [TestSource1, TestSource2];
         })
 

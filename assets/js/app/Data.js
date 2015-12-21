@@ -13,10 +13,10 @@ LocusZoom.DataSources.prototype.addSource = function(ns, x) {
     function findKnownSource(x) {
         if (!LocusZoom.KnownDataSources) {return null;}
         for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
-            if (!LocusZoom.KnownDataSources[i].sourcename) {
-                throw("KnownDataSource at position " + i + "does not have a 'sourcename'");
+            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
+                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
             }
-            if (LocusZoom.KnownDataSources[i].sourcename == x) {
+            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
                 return LocusZoom.KnownDataSources[i];
             }
         }
@@ -64,11 +64,11 @@ LocusZoom.Data.Requester = function(sources) {
         fields.forEach(function(field) {
             var parts = field.split(/\:(.*)/);
             if (parts.length==1) {
-                if (typeof requests["position"] == "undefined") {
-                    requests.position = {names:[], fields:[]};
+                if (typeof requests["base"] == "undefined") {
+                    requests.base = {names:[], fields:[]};
                 }
-                requests.position.names.push(field);
-                requests.position.fields.push(field);
+                requests.base.names.push(field);
+                requests.base.fields.push(field);
             } else {
                 if (typeof requests[parts[0]] =="undefined") {
                     requests[parts[0]] = {names:[], fields:[]};
@@ -83,10 +83,10 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         var promises = Object.keys(requests).map(function(key) {
-            if (!sources[key]) {
+            if (!sources.getSource(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
-            return sources[key].getData(state, requests[key].fields, requests[key].names);
+            return sources.getSource(key).getData(state, requests[key].fields, requests[key].names);
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
@@ -132,7 +132,7 @@ LocusZoom.Data.AssociationSource = function(url) {
         };
     };
 };
-LocusZoom.Data.AssociationSource.sourcename = "AssocationLZ";
+LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssocationLZ";
 
 LocusZoom.Data.LDSource = function(url) {
     this.url = url;
@@ -195,7 +195,7 @@ LocusZoom.Data.LDSource = function(url) {
         };
     };
 };
-LocusZoom.Data.LDSource.sourcename = "LDLZ";
+LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
 LocusZoom.Data.GeneSource = function(url) {
     this.url = url;
@@ -214,7 +214,7 @@ LocusZoom.Data.GeneSource = function(url) {
         };
     };
 };
-LocusZoom.Data.GeneSource.sourcename = "GeneLZ";
+LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
@@ -226,6 +226,5 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.AssociationSource,
     LocusZoom.Data.LDSource,
     LocusZoom.Data.GeneSource];
-LocusZoom.DefaultDataSources = {};
 
 
