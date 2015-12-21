@@ -83,7 +83,7 @@ The `state` parameter is not yet implemented.
 We can initialize our sample element with
 
 ```javascript
-var ds = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"];
-LocusZoom.populate("#foo");
+var ds = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"]);
+LocusZoom.populate("#foo", ds);
 ```
 
