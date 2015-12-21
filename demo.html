@@ -13,9 +13,9 @@
   <script type="text/javascript">
     var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
     var ds = new LocusZoom.DataSources();
-	ds.addSource("base", new LocusZoom.Data.AssociationSource(apiBase + "single/"));
-	ds.addSource("ld", new LocusZoom.Data.LDSource(apiBase + "pair/LD/"));
-	ds.addSource("gene", new LocusZoom.Data.GeneSource(apiBase + "annotation/genes/"));
+	ds.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
+	ds.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
+	ds.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
 
     var topHits = [
 	["16:53819169", "FTO"],

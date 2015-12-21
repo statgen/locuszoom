@@ -21,7 +21,8 @@ LocusZoom.DataSources.prototype.addSource = function(ns, x) {
             }
         }
         return null;
-    };
+    }
+
     if (Array.isArray(x)) {
         var dsclass = findKnownSource(x[0]);
         if (dsclass) {
@@ -40,7 +41,7 @@ LocusZoom.DataSources.prototype.getSource = function(ns) {
 };
 
 LocusZoom.DataSources.prototype.setSources = function(x) {
-    if (typeof x === "string" || x instanceof String) {
+    if (LocusZoom.isString(x)) {
         x = JSON.parse(x);
     }
     var ds = this;
@@ -52,7 +53,7 @@ LocusZoom.DataSources.prototype.setSources = function(x) {
 
 LocusZoom.DataSources.prototype.keys = function() {
     return Object.keys(this.sources);
-}
+};
 
 LocusZoom.Data = LocusZoom.Data ||  {};
 
@@ -90,7 +91,7 @@ LocusZoom.Data.Requester = function(sources) {
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
-        var ret = Q.when({});
+        var ret = Q.when({header:{}, body:{}});
         for(var i=0; i < promises.length; i++) {
             ret = ret.then(promises[i]);
         }
@@ -98,9 +99,19 @@ LocusZoom.Data.Requester = function(sources) {
     };
 };
 
-LocusZoom.Data.AssociationSource = function(url) {
-    this.url = url;
-
+LocusZoom.Data.AssociationSource = function(init) {
+    if (LocusZoom.isString(init)) {
+        this.url = init;
+        this.params = {};
+    } else {
+        this.url = init.url;
+        this.params = init.params || {};
+    }
+    if (!this.url) {
+        throw("AssociationSource not initialized with required URL");
+    }
+    
+    var that=this;
     this.getData = function(state, fields, outnames) {
         ["id","position"].forEach(function(x) {
             if (fields.indexOf(x)==-1) {
@@ -109,8 +120,9 @@ LocusZoom.Data.AssociationSource = function(url) {
             }
         });
         return function (chain) {
-            var requrl = url + "results/?filter=analysis in 3 " + 
-                "and chromosome in  '" + state.chr + "'" + 
+            var analysis = state.analysis || chain.header.analysis || that.params.analysis || 3;
+            var requrl = that.url + "results/?filter=analysis in " + analysis  +
+                " and chromosome in  '" + state.chr + "'" + 
                 " and position ge " + state.start + 
                 " and position le " + state.end;
             return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
@@ -132,10 +144,19 @@ LocusZoom.Data.AssociationSource = function(url) {
         };
     };
 };
-LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssocationLZ";
+LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
-LocusZoom.Data.LDSource = function(url) {
-    this.url = url;
+LocusZoom.Data.LDSource = function(init) {
+    if (LocusZoom.isString(init)) {
+        this.url = init;
+        this.params = {};
+    } else {
+        this.url = init.url;
+        this.params = init.params || {};
+    }
+    if (!this.url) {
+        throw("LDSource not initialized with required URL");
+    }
 
     var findSmallestPvalue = function(x, pval) {
         pval = pval || "pvalue";
@@ -164,6 +185,7 @@ LocusZoom.Data.LDSource = function(url) {
         }
     };
 
+    var that = this;
     this.getData = function(state, fields, outnames) {
         if (fields.length>1) {
             throw("LD currently only supports one field");
@@ -180,7 +202,7 @@ LocusZoom.Data.LDSource = function(url) {
                 }
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
-            var requrl = url + "results/?filter=reference eq " + refSource + 
+            var requrl = that.url + "results/?filter=reference eq " + refSource + 
                 " and chromosome2 eq '" + state.chr + "'" + 
                 " and position2 ge " + state.start + 
                 " and position2 le " + state.end + 
@@ -197,12 +219,22 @@ LocusZoom.Data.LDSource = function(url) {
 };
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
-LocusZoom.Data.GeneSource = function(url) {
-    this.url = url;
+LocusZoom.Data.GeneSource = function(init) {
+    if (LocusZoom.isString(init)) {
+        this.url = init;
+        this.params = {};
+    } else {
+        this.url = init.url;
+        this.params = init.params || {};
+    }
+    if (!this.url) {
+        throw("GeneSource not initialized with required URL");
+    }
 
+    var that = this;
     this.getData = function(state, fields, outnames) {
         return function (chain) {
-            var requrl = url + "?filter=source in 1" + 
+            var requrl = that.url + "?filter=source in 1" + 
                 " and chrom eq '" + state.chr + "'" + 
                 " and start le " + state.end +
                 " and end ge " + state.start;
