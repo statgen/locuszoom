@@ -31,9 +31,9 @@ describe('LocusZoom Data', function(){
 
         var TestSource1, TestSource2;
         beforeEach(function() {
-            TestSource1 = function() {};
+            TestSource1 = function(x) {this.init = x};
             TestSource1.SOURCE_NAME = "test1";
-            TestSource2 = function() {};
+            TestSource2 = function(x) {this.init = x};
             TestSource2.SOURCE_NAME = "test2";
             LocusZoom.KnownDataSources = [TestSource1, TestSource2];
         })
@@ -79,6 +79,17 @@ describe('LocusZoom Data', function(){
             ds.keys().should.have.length(2);
             should.exist(ds.getSource("t1"));
             should.exist(ds.getSource("t2"));
+        });
+        it('should pass in initiization values as object', function() {
+            var ds = new LocusZoom.DataSources();
+            ds.setSources({"t1": ["test1", {a:10}], "t2": ["test2", {b:20}]});
+            ds.keys().should.have.length(2);
+            should.exist(ds.getSource("t1").init);
+            should.exist(ds.getSource("t1").init.a);
+            ds.getSource("t1").init.a.should.equal(10);
+            should.exist(ds.getSource("t2").init);
+            should.exist(ds.getSource("t2").init.b);
+            ds.getSource("t2").init.b.should.equal(20);
         });
     });
 });
