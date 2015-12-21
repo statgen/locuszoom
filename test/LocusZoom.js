@@ -49,17 +49,25 @@ describe('LocusZoom', function(){
             assert.equal(LocusZoom.formatMegabase(23423456),   "23.42");
             assert.equal(LocusZoom.formatMegabase(1896335235), "1896.34");
         });
-        //it('should have a method for adding instances to a div by ID', function(){
-        //    LocusZoom.addInstanceToDivById.should.be.a.Function();
-        //    LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, "instance_id");
-        //    LocusZoom._instances["instance_id"].should.be.an.Object();
-        //    LocusZoom._instances["instance_id"].id.should.be.exactly("instance_id");
-        //    var svg_selector = d3.select('div#instance_id svg');
-        //    svg_selector.should.be.an.Object();
-        //    svg_selector.size().should.be.exactly(1);
-        //    LocusZoom._instances["instance_id"].svg.should.be.an.Object();
-        //    assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
-        //});
+        it('should have a method for generating pretty ticks', function(){
+            LocusZoom.prettyTicks.should.be.a.Function();
+            assert.deepEqual(LocusZoom.prettyTicks([0, 10]), [0, 2, 4, 6, 8, 10]);
+            assert.deepEqual(LocusZoom.prettyTicks([14, 67]), [10, 20, 30, 40, 50, 60, 70]);
+            assert.deepEqual(LocusZoom.prettyTicks([0.01, 0.23]), [0, 0.05, 0.10, 0.15, 0.20, 0.25]);
+            assert.deepEqual(LocusZoom.prettyTicks([1, 21], 10), [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
+            assert.deepEqual(LocusZoom.prettyTicks([1, 9], 5, true), [2, 4, 6, 8]);
+        });
+        it('should have a method for adding instances to a div by ID', function(){
+            LocusZoom.addInstanceToDivById.should.be.a.Function();
+            LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, "instance_id");
+            LocusZoom._instances["instance_id"].should.be.an.Object();
+            LocusZoom._instances["instance_id"].id.should.be.exactly("instance_id");
+            var svg_selector = d3.select('div#instance_id svg');
+            svg_selector.should.be.an.Object();
+            svg_selector.size().should.be.exactly(1);
+            LocusZoom._instances["instance_id"].svg.should.be.an.Object();
+            assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
+        });
         it('should have a method for populating divs with instances by class name', function(){
             LocusZoom.populate.should.be.a.Function();
             LocusZoom.populateAll("div.lz");

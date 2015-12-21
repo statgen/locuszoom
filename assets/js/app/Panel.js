@@ -39,15 +39,15 @@ LocusZoom.Panel = function() {
 
     this.axes = {
         x:  { render:        false,
-              tick_width:    0,
+              ticks:         [],
               label:         null },
         y1: { render:        false,
               data_layer_id: null,
-              tick_width:    0,
+              ticks:         [],
               label:         null },
         y2: { render:        false,
               data_layer_id: null,
-              tick_width:    0,
+              ticks:         [],
               label:         null }
     };
 
@@ -178,23 +178,27 @@ LocusZoom.Panel.prototype.reMap = function(){
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){  
 
-    // Generate extents and scales
+    // Generate extents and scales.
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
+        this.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.view.cliparea.width/120, true);
         this.state.x_scale = d3.scale.linear()
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.view.cliparea.width]);
     }
+    // Pad out y scales for pretty ticks, regardless of axis rendering
     if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
+        this.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent);
         this.state.y1_scale = d3.scale.linear()
-            .domain([0, this.state.y1_extent[1]])
+            .domain([this.axes.y1.ticks[0], this.axes.y1.ticks[this.axes.y1.ticks.length-1]])
             .range([this.view.cliparea.height, 0]);
     }
     if (typeof this.y2Extent == "function"){
         this.state.y2_extent = this.y2Extent();
+        this.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent);
         this.state.y2_scale = d3.scale.linear()
-            .domain([0, this.state.y2_extent[1]])
+            .domain([this.axes.y2.ticks[0], this.axes.y1.ticks[this.axes.y2.ticks.length-1]])
             .range([this.view.cliparea.height, 0]);
     }
 
@@ -203,10 +207,8 @@ LocusZoom.Panel.prototype.render = function(){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
             .orient("bottom")
+            .tickValues(this.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
-        if (!isNaN(this.axes.x.tick_width) && this.axes.x.tick_width > 0){
-            this.state.x_axis.ticks(Math.floor(this.view.cliparea.width / this.axes.x.tick_width));
-        }
         this.svg.selectAll("g .x.axis").call(this.state.x_axis);
         if (this.axes.x.label != null){
             var x_label = this.axes.x.label;
@@ -225,11 +227,8 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     if (this.axes.y1.render){
-        this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left")
-            .tickValues(d3.range(this.state.y1_extent[0], this.state.y1_extent[1], (this.state.y1_extent[1] - this.state.y1_extent[0]) / 4));
-        if (!isNaN(this.axes.y1.tick_width) && this.axes.y1.tick_width > 0){
-            this.state.y1_axis.ticks(Math.floor(this.view.cliparea.height / this.axes.y1.tick_width));
-        }
+        this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
+            .orient("left").tickValues(this.axes.y1.ticks);
         this.svg.selectAll("g .y.y1.axis").call(this.state.y1_axis);
         if (this.axes.y1.label != null){
             var y1_label = this.axes.y1.label;
@@ -249,11 +248,8 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     if (this.axes.y2.render){
-        this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("left")
-            .tickValues(d3.range(this.state.y2_extent[0], this.state.y2_extent[1], (this.state.y2_extent[1] - this.state.y2_extent[0]) / 4));
-        if (!isNaN(this.axes.y2.tick_width) && this.axes.y2.tick_width > 0){
-            this.state.y2_axis.ticks(Math.floor(this.view.cliparea.height / this.axes.y2.tick_width));
-        }
+        this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
+            .orient("left").tickValues(this.axes.y2.ticks);
         this.svg.selectAll("g .y.y2.axis").call(this.state.y2_axis);
     }
     
@@ -303,7 +299,6 @@ LocusZoom.PositionsPanel = function(){
     this.id = "positions";
 
     this.axes.x.render = true;
-    this.axes.x.tick_width = 120;
     this.axes.x.label = function(){
         return "Chromosome " + this.parent.state.chr + " (Mb)";
     }.bind(this);
