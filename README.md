@@ -1,6 +1,8 @@
 # LocusZoom
 
-(snappy project overview goes here)
+LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.
+
+[![Build Status](https://api.travis-ci.org/statgen/locuszoom.svg?branch=master)](https://api.travis-ci.org/statgen/locuszoom)
 
 ## Development Setup
 
