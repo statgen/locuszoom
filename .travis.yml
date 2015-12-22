@@ -2,20 +2,16 @@ language: node_js
 
 node_js:
   - "4.2"
-  - "4.1"
 
 before_script:
   - npm install -g gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha
-  - npm install -g mocha requirejs should jsdom
-
-install:
-    pip install coveralls --use-mirrors
+  - npm install -g mocha requirejs should jsdom coveralls
 
 script:
     coverage run --source=locuszoom gulp
 
-after_success:
-    coveralls
+after_script:
+    "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
 
 notifications:
   email:
