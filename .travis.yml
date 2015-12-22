@@ -8,7 +8,7 @@ before_script:
   - npm install -g mocha requirejs should jsdom coveralls
 
 script:
-    coverage run --source=locuszoom gulp
+    gulp
 
 after_script:
     "cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js"
