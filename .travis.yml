@@ -4,8 +4,8 @@ node_js:
   - "4.2"
 
 before_script:
-  - npm install -g gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha
-  - npm install -g mocha requirejs should jsdom coveralls
+  - npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha
+  - npm install mocha requirejs should jsdom coveralls
 
 script:
     gulp
