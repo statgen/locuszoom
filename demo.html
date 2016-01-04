@@ -11,11 +11,11 @@
   <link rel="stylesheet" type="text/css" href="assets/css/locuszoom.css"/>
 
   <script type="text/javascript">
-    LocusZoom.DefaultDataSources = {
-        position: new LocusZoom.Data.AssociationSource("http://portaldev.sph.umich.edu/api_internal_dev/v1/single/"),
-        ld: new LocusZoom.Data.LDSource("http://portaldev.sph.umich.edu/api_internal_dev/v1/pair/LD/"),
-        gene: new LocusZoom.Data.GeneSource("http://portaldev.sph.umich.edu/api_internal_dev/v1/annotation/genes/")
-    };
+    var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
+    var ds = new LocusZoom.DataSources();
+	ds.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
+	ds.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
+	ds.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
 
     var topHits = [
 	["16:53819169", "FTO"],
@@ -99,7 +99,7 @@
 
 	function initPage() {
 		listHits();
-		LocusZoom.populate();
+		LocusZoom.populateAll(".lz-instance", ds);
 		populateForms();
 		$("#lz-1_hits").html(topHits.map(function(k) {return "<option>" + k + "</option>"}).join(""));
 	};

@@ -59,28 +59,33 @@ Refer to `demo.html` to see an example of how to embed LocusZoom into a page. In
 * `assets/js/locuszoom.app.js` OR `assets/js/locuszoom.app.min.js` (concatenated+minified application logic)
 * `assets/css/locuszoom.css` (stylesheet)
 
-LocusZoom only needs an empty `<div>` tag to create a new instance. The tag may optionally specify a starting region, like so:
+LocusZoom only needs an empty HTML element to create a new instance. (This tag should have an ID defined. This ID will be used as a prfix to construct child elements.) The tag may optionally specify a starting region, like so:
 
 ```html
 <div id="foo" data-region="10:114550452-115067678"></div>
 ```
 
-To populate this `<div>` with a LocusZoom instance:
+You can then bring the element to life with either the `populate()` method (for a single element) or `populateAll` method (for potentially multiple elements). They are defined as
 
 ```javascript
-LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, "foo");
+var lz = LocusZoom.populate(selector, datasource, layout, state)
+var lz[] = LocusZoom.populateAll(selector, datasource, layout, state)
 ```
 
-Alternatively, one or more `<div>` tags can share a common class name, and this class can be used to populate multiple LocusZoom instances at once like so:
+The `populate()` method will return the new LocusZoom instance for the first matching element and the `populateAll()` method will always return an array containting instances for each of the matched elements.
 
-```html
-<div id="lz-1" class="lz-instance"></div>
-<div id="lz-2" class="lz-instance"></div>
-...
-```
+Here `selector` is either a reference to a DOM element (eg `document.getElementById("foo")`) or it is string that is a valid [D3 compatiable selector](http://www.w3.org/TR/selectors-api/) (eg `"#foo"`). 
+
+The `datasource` parameter must be a `LocusZoom.DataSources()` object.
+
+The `layout` paramter is not yet implemented.
+
+The `state` parameter is not yet implemented.
+
+We can initialize our sample element with
 
 ```javascript
-LocusZoom.populate("lz-instance");
+var ds = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"]);
+LocusZoom.populate("#foo", ds);
 ```
 
-Also note that the default LocusZoom instance is `lz-instance`, so in the above example calling just `LocusZoom.populate()` would also work.

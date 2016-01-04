@@ -59,7 +59,7 @@ describe('LocusZoom', function(){
         });
         it('should have a method for adding instances to a div by ID', function(){
             LocusZoom.addInstanceToDivById.should.be.a.Function();
-            LocusZoom.addInstanceToDivById(LocusZoom.DefaultInstance, "instance_id");
+            LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
             LocusZoom._instances["instance_id"].should.be.an.Object();
             LocusZoom._instances["instance_id"].id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
@@ -70,7 +70,7 @@ describe('LocusZoom', function(){
         });
         it('should have a method for populating divs with instances by class name', function(){
             LocusZoom.populate.should.be.a.Function();
-            LocusZoom.populate("lz");
+            LocusZoom.populateAll("div.lz");
             d3.select('div.lz').each(function(){
                 var div_selector = d3.select(this);
                 var svg_selector = div_selector.select("svg");
@@ -78,6 +78,34 @@ describe('LocusZoom', function(){
                 svg_selector.size().should.be.exactly(1);
                 LocusZoom._instances[div_selector.attr("id")].svg.should.be.an.Object();
                 assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
+            });
+        });
+        describe("Position Queries", function() {
+            it('should have a parsePositionQuery function', function() {
+                LocusZoom.parsePositionQuery.should.be.a.Function();
+            });
+            it("should parse chr:start-end", function() {
+                var test = LocusZoom.parsePositionQuery("10:45000-65000");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",45000);
+                test.should.have.property("end",65000);
+            });
+            it("should parse chr:start+end", function() {
+                var test = LocusZoom.parsePositionQuery("10:45000+5000");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",40000);
+                test.should.have.property("end",50000);
+            });
+            it("should parse kb/mb units", function() {
+                var test = LocusZoom.parsePositionQuery("10:5.5Mb+2k");
+                test.should.have.property("chr","10");
+                test.should.have.property("start",5.5e6-2e3);
+                test.should.have.property("end",5.5e6+2e3);
+            });
+            it("should prase chr:pos", function() {
+                var test = LocusZoom.parsePositionQuery("2:5500");
+                test.should.have.property("chr","2");
+                test.should.have.property("position",5500);
             });
         });
         it('should have a method for creating a CORS promise', function(){

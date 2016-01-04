@@ -13,7 +13,7 @@
 
 */
 
-LocusZoom.Instance = function(id) {
+LocusZoom.Instance = function(id, datasource, layout, state) {
 
     this.id = id;
     this.parent = LocusZoom;
@@ -24,7 +24,7 @@ LocusZoom.Instance = function(id) {
     this._panels = {};
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = {
+    this.state = state || {
         chr: 0,
         start: 0,
         end: 0
@@ -37,7 +37,7 @@ LocusZoom.Instance = function(id) {
     };
 
     // LocusZoom.Data.Requester
-    this.lzd = new LocusZoom.Data.Requester(LocusZoom.DefaultDataSources);
+    this.lzd = new LocusZoom.Data.Requester(datasource);
     
     return this;
   
