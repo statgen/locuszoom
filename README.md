@@ -18,16 +18,17 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
 
 ```
-$ npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha
+$ npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha gulp-sass
 ```
 
-Once complete run or `gulp js` from the top of the application directory to build the following files:
+Once complete run or `gulp` from the top of the application directory to run all tests and build the following files:
 
 * `assets/js/locuszoom.app.js` - A concatenated app file suitable for use in development
 * `assets/js/locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
 * `assets/js/locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either development or production
+* `assets/css/locuszoom.css` - A generated CSS file for all LocusZoom styles
 
-Running `gulp` from the repo's root directory will do all of the above. Running `gulp watch` will put gulp in *watch* mode, such that any changes to app js source files will immediately regenerate concatenated/minified app files for testing.
+Running `gulp watch` will put gulp in *watch* mode, such that any changes to app *.js or *.scss source files will immediately regenerate app files for testing.
 
 **Note that the plugins used by gulp in this project require Node.js version 4.x or higher.**
 

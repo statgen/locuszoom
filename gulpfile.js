@@ -1,6 +1,7 @@
 var gulp = require("gulp");
 var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
+var sass = require("gulp-sass");
 var concat = require("gulp-concat");
 var watch = require("gulp-watch");
 var mocha = require("gulp-mocha");
@@ -67,11 +68,25 @@ gulp.task("vendor_js", function() {
         });
 });
 
+// Build CSS
+gulp.task("css", function() {
+    gulp.src("./assets/css/*.scss")
+        .pipe(sass())
+        .pipe(gulp.dest('./assets/css/'))
+        .on("end", function() {
+            gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.css"));
+        })
+        .on("error", function() {
+            gutil.log(gutil.colors.bold.white.bgRed("FAILED to generate locuszoom.css"));
+        });
+});
+
 // Watch for changes in app source files to trigger fresh builds
 gulp.task("watch", function() {
     gutil.log(gutil.colors.bold.black.bgYellow("Watching for changes in app files..."));
     gulp.watch(app_js_files, ["app_js"]);
+    gulp.watch(["./assets/css/*.scss"], ["css"]);
 });
 
-// Default task: make all the javascripts
-gulp.task("default", ["js"]); 
+// Default task: make all the javascripts and css
+gulp.task("default", ["js", "css"]); 
