@@ -111,7 +111,6 @@ LocusZoom.Data.AssociationSource = function(init) {
         throw("AssociationSource not initialized with required URL");
     }
     
-    var that=this;
     this.getData = function(state, fields, outnames) {
         ["id","position"].forEach(function(x) {
             if (fields.indexOf(x)==-1) {
@@ -120,8 +119,8 @@ LocusZoom.Data.AssociationSource = function(init) {
             }
         });
         return function (chain) {
-            var analysis = state.analysis || chain.header.analysis || that.params.analysis || 3;
-            var requrl = that.url + "results/?filter=analysis in " + analysis  +
+            var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
+            var requrl = this.url + "results/?filter=analysis in " + analysis  +
                 " and chromosome in  '" + state.chr + "'" + 
                 " and position ge " + state.start + 
                 " and position le " + state.end;
@@ -141,7 +140,7 @@ LocusZoom.Data.AssociationSource = function(init) {
                 var res = {header: chain.header || {}, body: records};
                 return res;
             });
-        };
+        }.bind(this);
     };
 };
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
@@ -185,7 +184,6 @@ LocusZoom.Data.LDSource = function(init) {
         }
     };
 
-    var that = this;
     this.getData = function(state, fields, outnames) {
         if (fields.length>1) {
             throw("LD currently only supports one field");
@@ -202,7 +200,7 @@ LocusZoom.Data.LDSource = function(init) {
                 }
                 refVar = chain.body[findSmallestPvalue(chain.body)].id;
             }
-            var requrl = that.url + "results/?filter=reference eq " + refSource + 
+            var requrl = this.url + "results/?filter=reference eq " + refSource + 
                 " and chromosome2 eq '" + state.chr + "'" + 
                 " and position2 ge " + state.start + 
                 " and position2 le " + state.end + 
@@ -214,7 +212,7 @@ LocusZoom.Data.LDSource = function(init) {
                 leftJoin(chain.body, x.data, outnames[0], "rsquare");
                 return chain;   
             });
-        };
+        }.bind(this);
     };
 };
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
@@ -231,10 +229,9 @@ LocusZoom.Data.GeneSource = function(init) {
         throw("GeneSource not initialized with required URL");
     }
 
-    var that = this;
     this.getData = function(state, fields, outnames) {
         return function (chain) {
-            var requrl = that.url + "?filter=source in 1" + 
+            var requrl = this.url + "?filter=source in 1" + 
                 " and chrom eq '" + state.chr + "'" + 
                 " and start le " + state.end +
                 " and end ge " + state.start;
@@ -243,7 +240,7 @@ LocusZoom.Data.GeneSource = function(init) {
             }, function(err) {
                 console.log(err);
             });
-        };
+        }.bind(this);
     };
 };
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
