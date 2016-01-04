@@ -20,7 +20,7 @@
         var inst = LocusZoom._instances[id] = new layout(id, datasource, layout, state);
         // Add an SVG to the div and set its dimensions
         inst.svg = d3.select("div#" + id)
-            .append("svg").attr("id", id + "_svg").attr("class", "locuszoom");
+            .append("svg").attr("id", id + "_svg").attr("class", "lz-locuszoom");
         inst.setDimensions();
         // Initialize all panels
         inst.initialize();
