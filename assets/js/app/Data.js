@@ -41,7 +41,7 @@ LocusZoom.DataSources.prototype.getSource = function(ns) {
 };
 
 LocusZoom.DataSources.prototype.setSources = function(x) {
-    if (LocusZoom.isString(x)) {
+    if (typeof x === "string") {
         x = JSON.parse(x);
     }
     var ds = this;
@@ -100,7 +100,7 @@ LocusZoom.Data.Requester = function(sources) {
 };
 
 LocusZoom.Data.AssociationSource = function(init) {
-    if (LocusZoom.isString(init)) {
+    if (typeof init === "string") {
         this.url = init;
         this.params = {};
     } else {
@@ -146,7 +146,7 @@ LocusZoom.Data.AssociationSource = function(init) {
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
 LocusZoom.Data.LDSource = function(init) {
-    if (LocusZoom.isString(init)) {
+    if (typeof init === "string") {
         this.url = init;
         this.params = {};
     } else {
@@ -218,7 +218,7 @@ LocusZoom.Data.LDSource = function(init) {
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
 LocusZoom.Data.GeneSource = function(init) {
-    if (LocusZoom.isString(init)) {
+    if (typeof init === "string") {
         this.url = init;
         this.params = {};
     } else {

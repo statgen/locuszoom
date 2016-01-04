@@ -210,13 +210,5 @@
         return response.promise;
     };
 
-    exports.isString = function(x) {
-        if (typeof x === "string" || x instanceof String) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
 })(this.LocusZoom = {});
 
