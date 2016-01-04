@@ -115,9 +115,9 @@ LocusZoom.PositionsDataLayer = function(){
         var that = this;
         var clicker = function() {
             var me = d3.select(this);
-            that.svg.selectAll("circle.position").classed({"selected": false});
+            that.svg.selectAll("circle.lz-position").classed({"lz-selected": false});
             if (that.parent.parent.state.ldrefvar != me.attr("id")){
-                me.classed({"selected": true});
+                me.classed({"lz-selected": true});
                 that.parent.parent.state.ldrefvar = me.attr("id");
             } else {
                 that.parent.parent.state.ldrefvar = null;
@@ -125,10 +125,10 @@ LocusZoom.PositionsDataLayer = function(){
         };
         this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         this.svg
-            .selectAll("circle.positions")
+            .selectAll("circle.lz-position")
             .data(this.data)
             .enter().append("circle")
-            .attr("class", "position")
+            .attr("class", "lz-position")
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
@@ -290,16 +290,16 @@ LocusZoom.GenesDataLayer = function(){
         this.svg.selectAll("*").remove();
 
         // Render gene groups
-        this.svg.selectAll("g.gene").data(this.data).enter()
+        this.svg.selectAll("g.lz-gene").data(this.data).enter()
             .append("g")
-            .attr("class", "gene")
+            .attr("class", "lz-gene")
             .attr("id", function(d){ return d.gene_name; })
             .each(function(gene){
 
                 // Render gene boundaries
-                d3.select(this).selectAll("rect.gene").filter(".boundary")
+                d3.select(this).selectAll("rect.lz-gene").filter(".lz-boundary")
                     .data([gene]).enter().append("rect")
-                    .attr("class", "gene boundary")
+                    .attr("class", "lz-gene lz-boundary")
                     .attr("id", function(d){ return d.gene_name; })
                     .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){ return (d.track * 40) - 20; }) // Arbitrary track height; should be dynamic
@@ -311,9 +311,9 @@ LocusZoom.GenesDataLayer = function(){
                     .text(function(d) { return d.gene_name; });
 
                 // Render gene labels
-                d3.select(this).selectAll("text.gene")
+                d3.select(this).selectAll("text.lz-gene")
                     .data([gene]).enter().append("text")
-                    .attr("class", "gene label")
+                    .attr("class", "lz-gene lz-label")
                     .attr("x", function(d){
                         if (d.display_range.text_anchor == "middle"){
                             return d.display_range.start + (d.display_range.width / 2);
@@ -328,14 +328,14 @@ LocusZoom.GenesDataLayer = function(){
                     .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
 
                 // Render exons (first transcript only, for now)
-                d3.select(this).selectAll("g.gene").filter(".exons")
+                d3.select(this).selectAll("g.lz-gene").filter(".lz-exons")
                     .data([gene]).enter().append("g")
-                    .attr("class", "gene exons")
+                    .attr("class", "lz-gene lz-exons")
                     .each(function(gene){
 
-                        d3.select(this).selectAll("rect.gene").filter(".exon")
+                        d3.select(this).selectAll("rect.lz-gene").filter(".lz-exon")
                             .data(gene.transcripts[0].exons).enter().append("rect")
-                            .attr("class", "gene exon")
+                            .attr("class", "lz-gene lz-exon")
                             .attr("id", function(d){ return d.exon_id; })
                             .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
                             .attr("y", function(){ return (this.track * 40) - 26; }.bind(gene)) // Arbitrary track height

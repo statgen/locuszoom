@@ -121,7 +121,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.state.x_scale = d3.scale.linear().domain([0,1]).range([0, this.view.cliparea.width]);
         this.state.x_axis  = d3.svg.axis().scale(this.state.x_scale).orient("bottom");
         this.svg.append("g")
-            .attr("class", "x axis")
+            .attr("class", "lz-x lz-axis")
             .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
             .call(this.state.x_axis);
     }
@@ -129,7 +129,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.state.y1_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
         this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left");
         this.svg.append("g")
-            .attr("class", "y y1 axis")
+            .attr("class", "lz-y lz-y1 lz-axis")
             .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
             .call(this.state.y1_axis);
     }
@@ -137,7 +137,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.state.y2_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("right");
         this.svg.append("g")
-            .attr("class", "y y2 axis")
+            .attr("class", "lz-y lz-y2 lz-axis")
             .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
             .call(this.state.y2_axis);
     }
@@ -209,48 +209,48 @@ LocusZoom.Panel.prototype.render = function(){
             .orient("bottom")
             .tickValues(this.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
-        this.svg.selectAll("g .x.axis").call(this.state.x_axis);
+        this.svg.selectAll("g .lz-x.lz-axis").call(this.state.x_axis);
         if (this.axes.x.label != null){
             var x_label = this.axes.x.label;
             if (typeof this.axes.x.label == "function"){
                 x_label = this.axes.x.label();
             }
-            if (this.svg.select("text.x.axis.label")[0][0] == null){
-                this.svg.select("g .x.axis").append("text")
-                    .attr("class", "x axis label")
+            if (this.svg.select("text.lz-x.lz-axis.lz-label")[0][0] == null){
+                this.svg.select("g .lz-x.lz-axis").append("text")
+                    .attr("class", "lz-x lz-axis lz-label")
                     .attr("text-anchor", "middle")
                     .attr("x", this.view.cliparea.width / 2)
                     .attr("y", 33);
             }
-            this.svg.select("text.x.axis.label").text(x_label);
+            this.svg.select("text.lz-x.lz-axis.lz-label").text(x_label);
         }
     }
 
     if (this.axes.y1.render){
         this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
             .orient("left").tickValues(this.axes.y1.ticks);
-        this.svg.selectAll("g .y.y1.axis").call(this.state.y1_axis);
+        this.svg.selectAll("g .lz-y.lz-y1.lz-axis").call(this.state.y1_axis);
         if (this.axes.y1.label != null){
             var y1_label = this.axes.y1.label;
             if (typeof this.axes.y1.label == "function"){
                 y1_label = this.axes.y1.label();
             }
-            if (this.svg.select("text.y1.axis.label")[0][0] == null){
-                this.svg.select("g .y1.axis").append("text")
-                    .attr("class", "y1 axis label")
+            if (this.svg.select("text.lz-y1.lz-axis.lz-label")[0][0] == null){
+                this.svg.select("g .lz-y1.lz-axis").append("text")
+                    .attr("class", "lz-y1 lz-axis lz-label")
                     .attr("text-anchor", "middle")
                     .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
                     .attr("x", -28)
                     .attr("y", this.view.cliparea.height / 2);
             }
-            this.svg.select("text.y1.axis.label").text(y1_label);
+            this.svg.select("text.lz-y1.lz-axis.lz-label").text(y1_label);
         }
     }
 
     if (this.axes.y2.render){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
             .orient("left").tickValues(this.axes.y2.ticks);
-        this.svg.selectAll("g .y.y2.axis").call(this.state.y2_axis);
+        this.svg.selectAll("g .lz-y.lz-y2.lz-axis").call(this.state.y2_axis);
     }
     
     // Render data layers by z-index
