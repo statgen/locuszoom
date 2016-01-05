@@ -119,29 +119,37 @@ LocusZoom.Data.AssociationSource = function(init) {
             }
         });
         return function (chain) {
-            var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
-            var requrl = this.url + "results/?filter=analysis in " + analysis  +
-                " and chromosome in  '" + state.chr + "'" + 
-                " and position ge " + state.start + 
-                " and position le " + state.end;
-            return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
-                x = x.data;
-                var records = [];
-                fields.forEach(function(f) {
-                    if (!(f in x)) {throw "field " + f + " not found in response";}
-                });
-                for(var i = 0; i < x.position.length; i++) {
-                    var record = {};
-                    for(var j=0; j<fields.length; j++) {
-                        record[outnames[j]] = x[fields[j]][i];
-                    }
-                    records.push(record);
-                }
-                var res = {header: chain.header || {}, body: records};
-                return res;
-            });
+            return this.getRequest(state, chain).then(function(resp) {
+                return this.parseResponse(resp, chain, fields, outnames);
+            }.bind(this));
         }.bind(this);
     };
+};
+LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
+    var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
+    return this.url + "results/?filter=analysis in " + analysis  +
+        " and chromosome in  '" + state.chr + "'" +
+        " and position ge " + state.start +
+        " and position le " + state.end;
+};
+LocusZoom.Data.AssociationSource.prototype.getRequest = function(state, chain, fields) {
+    return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
+};
+LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    var x = resp.data;
+    var records = [];
+    fields.forEach(function(f) {
+        if (!(f in x)) {throw "field " + f + " not found in response";}
+    });
+    for(var i = 0; i < x.position.length; i++) {
+        var record = {};
+        for(var j=0; j<fields.length; j++) {
+            record[outnames[j]] = x[fields[j]][i];
+        }
+        records.push(record);
+    }
+    var res = {header: chain.header || {}, body: records};
+    return res;
 };
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
@@ -157,6 +165,18 @@ LocusZoom.Data.LDSource = function(init) {
         throw("LDSource not initialized with required URL");
     }
 
+    this.getData = function(state, fields, outnames) {
+        if (fields.length>1) {
+            throw("LD currently only supports one field");
+        }
+        return function (chain) {
+            return this.getRequest(state, chain, fields).then(function(resp) {
+                return this.parseResponse(resp, chain, fields, outnames);
+            }.bind(this));
+        }.bind(this);
+    };
+};
+LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var findSmallestPvalue = function(x, pval) {
         pval = pval || "pvalue";
         var smVal = x[0][pval], smIdx=0;
@@ -169,6 +189,30 @@ LocusZoom.Data.LDSource = function(init) {
         return smIdx;
     };
 
+    var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
+    var refVar = fields[0];
+    if ( refVar == "state" ) {
+        refVar = state.ldrefvar || chain.header.ldrefvar || "best";
+    }
+    if ( refVar=="best" ) {
+        if ( !chain.body ) {
+            throw("No association data found to find best pvalue");
+        }
+        refVar = chain.body[findSmallestPvalue(chain.body)].id;
+    }
+    if (!chain.header) {chain.header = {};}
+    chain.header.ldrefvar = refVar;
+    return this.url + "results/?filter=reference eq " + refSource + 
+        " and chromosome2 eq '" + state.chr + "'" + 
+        " and position2 ge " + state.start + 
+        " and position2 le " + state.end + 
+        " and variant1 eq '" + refVar + "'" + 
+        "&fields=chr,pos,rsquare";
+};
+LocusZoom.Data.LDSource.prototype.getRequest = function(state, chain, fields) {
+    return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
+};
+LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     var leftJoin  = function(left, right, lfield, rfield) {
         var i=0, j=0;
         while (i < left.length && j < right.position2.length) {
@@ -184,36 +228,8 @@ LocusZoom.Data.LDSource = function(init) {
         }
     };
 
-    this.getData = function(state, fields, outnames) {
-        if (fields.length>1) {
-            throw("LD currently only supports one field");
-        }
-        return function (chain) {
-            var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
-            var refVar = fields[0];
-            if (refVar == "state") {
-                refVar = state.ldrefvar || chain.header.ldrefvar || "best";
-            }
-            if ( refVar=="best") {
-                if (!chain.body) {
-                    throw("No association data found to find best pvalue");
-                }
-                refVar = chain.body[findSmallestPvalue(chain.body)].id;
-            }
-            var requrl = this.url + "results/?filter=reference eq " + refSource + 
-                " and chromosome2 eq '" + state.chr + "'" + 
-                " and position2 ge " + state.start + 
-                " and position2 le " + state.end + 
-                " and variant1 eq '" + refVar + "'" + 
-                "&fields=chr,pos,rsquare";
-            return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
-                if (!chain.header) {chain.header = {};}
-                chain.header.ldrefvar = refVar;
-                leftJoin(chain.body, x.data, outnames[0], "rsquare");
-                return chain;   
-            });
-        }.bind(this);
-    };
+    leftJoin(chain.body, resp.data, outnames[0], "rsquare");
+    return chain;   
 };
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
@@ -231,18 +247,24 @@ LocusZoom.Data.GeneSource = function(init) {
 
     this.getData = function(state, fields, outnames) {
         return function (chain) {
-            var requrl = this.url + "?filter=source in 1" + 
-                " and chrom eq '" + state.chr + "'" + 
-                " and start le " + state.end +
-                " and end ge " + state.start;
-            return LocusZoom.createCORSPromise("GET",requrl).then(function(x) {
-                return {header: chain.header, body: x.data};
-            }, function(err) {
-                console.log(err);
-            });
+            return this.getRequest(state, chain, fields).then(function(resp) {
+                return this.parseResponse(resp, chain, fields, outnames);
+            }.bind(this));
         }.bind(this);
     };
 };
+LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
+    return this.url + "?filter=source in 1" + 
+        " and chrom eq '" + state.chr + "'" + 
+        " and start le " + state.end +
+        " and end ge " + state.start;
+}
+LocusZoom.Data.GeneSource.prototype.getRequest = function(state, chain, fields) {
+    return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
+};
+LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    return {header: chain.header, body: resp.data};
+}
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
 LocusZoom.createResolvedPromise = function() {
