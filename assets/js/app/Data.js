@@ -55,6 +55,10 @@ LocusZoom.DataSources.prototype.keys = function() {
     return Object.keys(this.sources);
 };
 
+LocusZoom.DataSources.prototype.toJSON = function() {
+    return this.sources;
+};
+
 LocusZoom.Data = LocusZoom.Data ||  {};
 
 
@@ -151,6 +155,10 @@ LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain,
     var res = {header: chain.header || {}, body: records};
     return res;
 };
+LocusZoom.Data.AssociationSource.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
+        {url:this.url, params:this.params}];
+};
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
 LocusZoom.Data.LDSource = function(init) {
@@ -231,6 +239,10 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
     leftJoin(chain.body, resp.data, outnames[0], "rsquare");
     return chain;   
 };
+LocusZoom.Data.LDSource.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
+        {url:this.url, params:this.params}];
+};
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
 LocusZoom.Data.GeneSource = function(init) {
@@ -264,6 +276,10 @@ LocusZoom.Data.GeneSource.prototype.getRequest = function(state, chain, fields) 
 };
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     return {header: chain.header, body: resp.data};
+}
+LocusZoom.Data.GeneSource.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
+        {url:this.url, params:this.params}];
 }
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
