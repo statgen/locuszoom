@@ -120,6 +120,13 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
 };
+LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames) {
+    return function (chain) {
+        return this.getRequest(state, chain, fields).then(function(resp) {
+            return this.parseResponse(resp, chain, fields, outnames);
+        }.bind(this));
+    }.bind(this);
+};
 LocusZoom.Data.Source.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
         {url:this.url, params:this.params}];
