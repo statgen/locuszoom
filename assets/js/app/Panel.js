@@ -95,7 +95,7 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
-    var container = this.parent.svg.append("g")
+    var container = this.parent.svg.insert("g", ":last-child")
         .attr("id", this.getBaseId() + ".panel_container")
         .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
         

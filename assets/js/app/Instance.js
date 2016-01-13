@@ -70,11 +70,36 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
 
 // Call initialize on all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+    this.dropCurtain("Initializing LocusZoom Instance...");
     for (var id in this._panels){
         this._panels[id].initialize();
     }
+    this.raiseCurtain();
     return this;
 };
+
+LocusZoom.Instance.prototype.dropCurtain = function(message){
+    // Create the curtain element if it doesn't exist
+    if (!d3.select("g#" + this.id + "\\.curtain").size()){
+        var curtain = this.svg.append("g")
+            .attr("class", "lz-curtain").attr("display", "inherit")
+            .attr("id", this.id + ".curtain");
+        curtain.append("rect");
+        curtain.append("text")
+            .attr("id", this.id + ".curtain_text")
+            .attr("x", 10).attr("y", 10);
+    } else {
+        d3.select("g#" + this.id + "\\.curtain").attr("display", "none");
+    }
+    // Apply message
+    d3.select("text#" + this.id + "\\.curtain_text")
+        .append("tspan").text(message);
+    return this;
+}
+
+LocusZoom.Instance.prototype.raiseCurtain = function(){
+    d3.select("g#" + this.id + "\\.curtain").attr("display", "none");
+}
 
 // Map an entire LocusZoom Instance to a new region
 LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
