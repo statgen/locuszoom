@@ -80,4 +80,11 @@ describe('LocusZoom.Instance', function(){
             this.instance.state.end.should.be.exactly(500000);
         });
     });
+    describe("SVG Composition", function() {
+        it('should have a curtain object as the last child to obscure the intance when necessary', function(){
+            var instance = LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
+            instance.svg.select("g#"+instance.id+"\\.curtain").should.have.property("length").which.is.exactly(1);
+            d3.select(instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
+        });
+    });
 });

@@ -83,27 +83,26 @@ LocusZoom.Instance.prototype.dropCurtain = function(message){
     // Create the curtain element if it doesn't exist
     if (!d3.select(curtain_selector).size()){
         var curtain = this.svg.append("g")
-            .attr("class", "lz-curtain").attr("display", null)
+            .attr("class", "lz-curtain").style("display", null)
             .attr("id", this.id + ".curtain");
         curtain.append("rect");
         curtain.append("text")
             .attr("id", this.id + ".curtain_text")
             .attr("x", 10).attr("y", 10);
     } else {
-        d3.select(curtain_selector).attr("display", null);
+        d3.select(curtain_selector).style("opacity", 1).style("display", null);
     }
     // Apply message
     if (typeof message != "undefined"){
         var curtain_text_selector = "text#" + this.id + "\\.curtain_text";
-        d3.select(curtain_text_selector)
-            .append("tspan").text(message);
+        d3.select(curtain_text_selector).selectAll("*").remove();
+        d3.select(curtain_text_selector).append("tspan").text(message);
     }
     return this;
 }
 
 LocusZoom.Instance.prototype.raiseCurtain = function(){
     var curtain_selector = "svg > #" + this.id + "\\.curtain";
-    console.log(curtain_selector);
     d3.select(curtain_selector).transition().duration(1000).style("opacity",0);
     d3.timer(function(){
         d3.select(curtain_selector).style("display", "none");

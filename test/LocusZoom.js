@@ -66,7 +66,10 @@ describe('LocusZoom', function(){
             svg_selector.should.be.an.Object();
             svg_selector.size().should.be.exactly(1);
             LocusZoom._instances["instance_id"].svg.should.be.an.Object();
-            assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
+            LocusZoom._instances["instance_id"].svg.size().should.be.exactly(1);
+            // Note - because of the loading curtain direct selector object comparison is not reliable
+            // instead compare the HTML for the first children (e.g. the first panels)
+            assert.equal(LocusZoom._instances["instance_id"].svg.select(":first-child").html(), svg_selector.select(":first-child").html());
         });
         it('should have a method for populating divs with instances by class name', function(){
             LocusZoom.populate.should.be.a.Function();
