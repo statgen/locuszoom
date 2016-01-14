@@ -79,26 +79,36 @@ LocusZoom.Instance.prototype.initialize = function(){
 };
 
 LocusZoom.Instance.prototype.dropCurtain = function(message){
+    var curtain_selector = "svg > #" + this.id + "\\.curtain";
     // Create the curtain element if it doesn't exist
-    if (!d3.select("g#" + this.id + "\\.curtain").size()){
+    if (!d3.select(curtain_selector).size()){
         var curtain = this.svg.append("g")
-            .attr("class", "lz-curtain").attr("display", "inherit")
+            .attr("class", "lz-curtain").attr("display", null)
             .attr("id", this.id + ".curtain");
         curtain.append("rect");
         curtain.append("text")
             .attr("id", this.id + ".curtain_text")
             .attr("x", 10).attr("y", 10);
     } else {
-        d3.select("g#" + this.id + "\\.curtain").attr("display", "none");
+        d3.select(curtain_selector).attr("display", null);
     }
     // Apply message
-    d3.select("text#" + this.id + "\\.curtain_text")
-        .append("tspan").text(message);
+    if (typeof message != "undefined"){
+        var curtain_text_selector = "text#" + this.id + "\\.curtain_text";
+        d3.select(curtain_text_selector)
+            .append("tspan").text(message);
+    }
     return this;
 }
 
 LocusZoom.Instance.prototype.raiseCurtain = function(){
-    d3.select("g#" + this.id + "\\.curtain").attr("display", "none");
+    var curtain_selector = "svg > #" + this.id + "\\.curtain";
+    console.log(curtain_selector);
+    d3.select(curtain_selector).transition().duration(1000).style("opacity",0);
+    d3.timer(function(){
+        d3.select(curtain_selector).style("display", "none");
+        return true;
+    }, 1100);
 }
 
 // Map an entire LocusZoom Instance to a new region
