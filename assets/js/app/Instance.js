@@ -78,9 +78,10 @@ LocusZoom.Instance.prototype.initialize = function(){
     return this;
 };
 
+// Obscure the instance with an overlay (the "curtain") displaying a message
 LocusZoom.Instance.prototype.dropCurtain = function(message){
     var curtain_selector = "svg > #" + this.id + "\\.curtain";
-    // Create the curtain element if it doesn't exist
+    // Create the curtain element if it doesn't exist, otherwise make sure it's visible
     if (!d3.select(curtain_selector).size()){
         var curtain = this.svg.append("g")
             .attr("class", "lz-curtain").style("display", null)
@@ -88,19 +89,23 @@ LocusZoom.Instance.prototype.dropCurtain = function(message){
         curtain.append("rect");
         curtain.append("text")
             .attr("id", this.id + ".curtain_text")
-            .attr("x", 10).attr("y", 10);
+            .attr("x", "1em").attr("y", "0em");
     } else {
         d3.select(curtain_selector).style("opacity", 1).style("display", null);
     }
     // Apply message
     if (typeof message != "undefined"){
         var curtain_text_selector = "text#" + this.id + "\\.curtain_text";
-        d3.select(curtain_text_selector).selectAll("*").remove();
-        d3.select(curtain_text_selector).append("tspan").text(message);
+        d3.select(curtain_text_selector).selectAll("tspan").remove();
+        message.split("\n").forEach(function(line){
+            d3.select(curtain_text_selector).append("tspan")
+                .attr("x", "1em").attr("dy", "1.5em").text(line);
+        });
     }
     return this;
 }
 
+// Remove curtain overlay
 LocusZoom.Instance.prototype.raiseCurtain = function(){
     var curtain_selector = "svg > #" + this.id + "\\.curtain";
     d3.select(curtain_selector).transition().duration(1000).style("opacity",0);
