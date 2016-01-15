@@ -3,6 +3,7 @@ var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
 var sass = require("gulp-sass");
 var concat = require("gulp-concat");
+var wrap = require("gulp-wrap");
 var watch = require("gulp-watch");
 var mocha = require("gulp-mocha");
 
@@ -37,6 +38,7 @@ gulp.task("test", function () {
 gulp.task("app_js", ["test"], function() {
     gulp.src(app_js_files)
         .pipe(concat("locuszoom.app.js"))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
         .pipe(gulp.dest("./assets/js"))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
@@ -47,6 +49,7 @@ gulp.task("app_js", ["test"], function() {
     gulp.src(app_js_files)
         .pipe(uglify())
         .pipe(concat("locuszoom.app.min.js"))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
         .pipe(gulp.dest("./assets/js"))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
