@@ -20,11 +20,7 @@
         throw("LocusZoom unable to load: Q dependency not met. Library missing.");
     }
     */
-
-    if (typeof global == "undefined"){
-        throw("no work in browser");
-    }
-
+    
     // Object for storing key-indexed Instance objects
     exports._instances = {};
 
