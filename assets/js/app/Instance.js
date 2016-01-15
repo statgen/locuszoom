@@ -13,11 +13,6 @@
 
 */
 
-var LocusZoom;
-!function(){
-
-    LocusZoom = LocusZoom || {};
-
 LocusZoom.Instance = function(id, datasource, layout, state) {
 
     this.id = id;
@@ -130,6 +125,5 @@ LocusZoom.DefaultInstance = function(){
   
 };
 
-    LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
+LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
 
-}();

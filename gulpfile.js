@@ -16,6 +16,11 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/DataLayer.js"
                    ];
 
+var test_js_files = ["./test/LocusZoom.js"
+                   //"./test/Data.js",
+                   //"./test/Instance.js"
+                    ];
+
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task("js", function() {
     gulp.start("app_js", "vendor_js");
@@ -23,7 +28,7 @@ gulp.task("js", function() {
 
 // Run Mocha unit tests
 gulp.task("test", function () {
-    return gulp.src("test/LocusZoom.js")
+    return gulp.src(test_js_files)
         .pipe(mocha())
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));

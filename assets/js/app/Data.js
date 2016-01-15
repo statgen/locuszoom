@@ -4,11 +4,6 @@
 
 "use strict";
 
-var LocusZoom;
-!function(){
-
-    LocusZoom = LocusZoom || {};
-
 /* A named collection of data sources used to draw a plot*/
 LocusZoom.DataSources = function() {
     this.sources = {};
@@ -286,4 +281,3 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.LDSource,
     LocusZoom.Data.GeneSource];
 
-}();

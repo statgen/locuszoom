@@ -2,19 +2,9 @@
 /* eslint-env browser */
 /* eslint-disable no-console */
 
-var LocusZoom = LocusZoom || {};
-
-// Version number
-LocusZoom.version = "0.1";
-
-// Verify that the two prime dependencies - d3 and Q - are already met
-var minimum_d3_version = "3.5.6";
-if (typeof d3 != "object" || d3.version < minimum_d3_version){
-    throw("LocusZoom unable to load: d3 dependency not met. Missing or outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher.");
-}
-if (typeof Q != "function"){
-    throw("LocusZoom unable to load: Q dependency not met. Library missing.");
-}
+var LocusZoom = {
+    version: "0.1"
+};
 
 // Object for storing key-indexed Instance objects
 LocusZoom._instances = {};
@@ -99,7 +89,7 @@ LocusZoom.parsePosition = function(x) {
 }
 
 // Parse region queries that look like
-// chr:start-top
+// chr:start-end
 // chr:center+offset
 // chr:pos
 // TODO: handle genes (or send off to API)
@@ -109,16 +99,16 @@ LocusZoom.parsePositionQuery = function(x) {
     var match = chrposoff.exec(x);
     if (match) {
         if (match[3] == "+") {
-            var center = parsePosition(match[2]);
-            var offset = parsePosition(match[4]);
+            var center = LocusZoom.parsePosition(match[2]);
+            var offset = LocusZoom.parsePosition(match[4]);
             return {chr:match[1], start:center-offset, end:center+offset};
         } else {
-            return {chr:match[1], start:parsePosition(match[2]), end:parsePosition(match[4])};
+            return {chr:match[1], start:LocusZoom.parsePosition(match[2]), end:LocusZoom.parsePosition(match[4])};
         }
     }
     match = chrpos.exec(x);
     if (match) {
-        return {chr:match[1], position:parsePosition(match[2])};
+        return {chr:match[1], position:LocusZoom.parsePosition(match[2])};
     };
     return null;
 }

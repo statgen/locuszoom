@@ -16,7 +16,8 @@ describe('LocusZoom', function(){
 
     // Load all javascript files
     jsdom({
-        src: [ fs.readFileSync('./assets/js/vendor/d3.min.js'),
+        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
+               fs.readFileSync('./assets/js/vendor/d3.min.js'),
                fs.readFileSync('./assets/js/vendor/q.min.js'),
                fs.readFileSync('./assets/js/app/LocusZoom.js'),
                fs.readFileSync('./assets/js/app/Data.js'),
@@ -57,7 +58,7 @@ describe('LocusZoom', function(){
             LocusZoom.should.have.property('version').which.is.a.String();
         });
         it('should have a method for formatting numbers as megabases', function(){
-            should(LocusZoom.formatMegabase).be.a.Function();
+            LocusZoom.formatMegabase.should.be.a.Function;
             assert.equal(LocusZoom.formatMegabase(1),          "0.000001");
             assert.equal(LocusZoom.formatMegabase(1000),       "0.001");
             assert.equal(LocusZoom.formatMegabase(4567),       "0.005");
@@ -75,34 +76,34 @@ describe('LocusZoom', function(){
         });
         it('should have a method for adding instances to a div by ID', function(){
             d3.select("body").append("div").attr("id", "instance_id");
-            LocusZoom.addInstanceToDivById.should.be.a.Function();
-            LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
-            LocusZoom._instances["instance_id"].should.be.an.Object();
+            LocusZoom.addInstanceToDivById.should.be.a.Function;
+            LocusZoom.addInstanceToDivById("instance_id", Object(), LocusZoom.DefaultInstance);
+            LocusZoom._instances["instance_id"].should.be.an.Object;
             LocusZoom._instances["instance_id"].id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
-            svg_selector.should.be.an.Object();
+            svg_selector.should.be.an.Object;
             svg_selector.size().should.be.exactly(1);
-            LocusZoom._instances["instance_id"].svg.should.be.an.Object();
+            LocusZoom._instances["instance_id"].svg.should.be.an.Object;
             assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
         });
         it('should have a method for populating divs with instances by class name', function(){
             d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
             d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
-            LocusZoom.populate.should.be.a.Function();
+            LocusZoom.populate.should.be.a.Function;
             LocusZoom.populateAll("div.lz");
             d3.select('div.lz').each(function(){
                 var div_selector = d3.select(this);
                 var svg_selector = div_selector.select("svg");
-                svg_selector.should.be.an.Object();
+                svg_selector.should.be.an.Object;
                 svg_selector.size().should.be.exactly(1);
-                LocusZoom._instances[div_selector.attr("id")].svg.should.be.an.Object();
+                LocusZoom._instances[div_selector.attr("id")].svg.should.be.an.Object;
                 assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
             });
         });
         
         describe("Position Queries", function() {
             it('should have a parsePositionQuery function', function() {
-                LocusZoom.parsePositionQuery.should.be.a.Function();
+                LocusZoom.parsePositionQuery.should.be.a.Function;
             });
             it("should parse chr:start-end", function() {
                 var test = LocusZoom.parsePositionQuery("10:45000-65000");
@@ -130,7 +131,7 @@ describe('LocusZoom', function(){
         });
         
         it('should have a method for creating a CORS promise', function(){
-            LocusZoom.createCORSPromise.should.be.a.Function();
+            LocusZoom.createCORSPromise.should.be.a.Function;
         });
         
     });
