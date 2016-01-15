@@ -15,12 +15,13 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 
 **NOTE:** `should.min.js` appears in the vendor source directory along with source files for `d3` and `Q`, but `should` is only required in this way for the automated testing suite. It is not included in the final build.
 
-### Build System
+### Build System and Automated Testing
 
 The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
 
 ```
 $ npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha gulp-sass gulp-wrap
+$ npm install mocha should jsdom mocha-jsdom
 ```
 
 Once complete run or `gulp` from the top of the application directory to run all tests and build the following files:
@@ -30,29 +31,22 @@ Once complete run or `gulp` from the top of the application directory to run all
 * `assets/js/locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either development or production (contains d3 and Q)
 * `assets/css/locuszoom.css` - A generated CSS file for all LocusZoom styles
 
-Running `gulp watch` will put gulp in *watch* mode, such that any changes to app *.js or *.scss source files will immediately regenerate app files for testing.
+Other supported gulp commands:
+
+* `gulp watch` - Watch for any changes to app *.js or *.scss source files to trigger another run of `gulp`
+* `gulp test` - Just run the tests
+* `gulp js` - Build app and vendor js files (runs tests and aborts if tests fail)
+* `gulp app_js` - Build app js files (runs tests and aborts if tests fail)
+* `gulp vendor_js` - Build vendor js file
+* `gulp css` - Build CSS file
+
+LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory, with a one-to-one mapping of test files to app files.
 
 **Note that the plugins used by gulp in this project require Node.js version 4.x or higher.**
 
 ### Linting and Strict Mode
 
 All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
-
-### Automated Testing
-
-LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Install Mocha and with npm, along with a few modules employed by the testing suite:
-
-```
-$ npm install mocha should jsdom mocha-jsdom
-```
-
-Tests are currently located in the `test` subdirectory, with a one-to-one mapping of test files to app files. Gulp is configured to run all tests as the first step in the build process and will abort a build if any tests fail.
-
-Run tests manually from the root application directory at any time like so:
-
-```
-$ gulp test
-```
 
 ## Using the LocusZoom Plugin
 
