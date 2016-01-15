@@ -8,18 +8,6 @@
 
     // Version number
     exports.version = "0.1";
-
-    // Confirm dependencies are present or fail
-    // NOTE: This check needs to happen but the test environment currently does not load these correctly
-    /*
-    var minimum_d3_version = "3.5.6";
-    if (typeof d3 != "object" || d3.version < minimum_d3_version){
-        throw("LocusZoom unable to load: d3 dependency not met. Missing or outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher.");
-    }
-    if (typeof Q != "function"){
-        throw("LocusZoom unable to load: Q dependency not met. Library missing.");
-    }
-    */
     
     // Object for storing key-indexed Instance objects
     exports._instances = {};
