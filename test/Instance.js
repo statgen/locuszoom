@@ -81,10 +81,29 @@ describe('LocusZoom.Instance', function(){
         });
     });
     describe("SVG Composition", function() {
-        it('should have a curtain object as the last child to obscure the intance when necessary', function(){
-            var instance = LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
-            instance.svg.select("g#"+instance.id+"\\.curtain").should.have.property("length").which.is.exactly(1);
-            d3.select(instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
+        describe("Curtain", function() {
+            before(function(){
+                this.instance = LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
+            });
+            it('last child should be a curtain element', function(){
+                assert.equal(this.instance.svg.selectAll("g.lz-curtain").size(), 1);
+                d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
+            });
+            it('should have a curtain object with stored svg selector', function(){
+                this.instance.curtain.should.be.an.Object();
+                this.instance.curtain.svg.should.be.an.Object();
+                assert.equal(this.instance.curtain.svg, this.instance.svg.select("g.curtain"));
+            });
+            it('should have a method that drops the curtain', function(){
+                this.instance.curtain.drop.should.be.a.Function();
+                this.instance.curtain.drop();
+                assert.equal(this.instance.curtain.svg.attr("display"), null);
+            });
+            it('should have a method that raises the curtain', function(){
+                this.instance.curtain.raise.should.be.a.Function();
+                this.instance.curtain.raise();
+                assert.equal(this.instance.curtain.svg.attr("display"), "none");
+            });
         });
     });
 });

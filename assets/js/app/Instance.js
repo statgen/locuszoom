@@ -70,50 +70,40 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
 
 // Call initialize on all child panels
 LocusZoom.Instance.prototype.initialize = function(){
-    this.dropCurtain("Initializing LocusZoom Instance...");
+
+    // Create the curtain object with svg element and drop/raise methods
+    var curtain_svg = this.svg.append("g")
+        .attr("class", "lz-curtain").style("display", "none")
+        .attr("id", this.id + ".curtain");
+    this.curtain = {
+        svg: curtain_svg,
+        drop: function(message){
+            this.svg.style("display", null);
+            if (typeof message != "undefined"){
+                this.svg.select("text").selectAll("tspan").remove();
+                message.split("\n").forEach(function(line){
+                    this.svg.select("text").append("tspan")
+                        .attr("x", "1em").attr("dy", "1.5em").text(line);
+                }.bind(this));
+            }
+        },
+        raise: function(){
+            this.svg.style("display", "none");
+        }
+    };
+    this.curtain.svg.append("rect");
+    this.curtain.svg.append("text")
+        .attr("id", this.id + ".curtain_text")
+        .attr("x", "1em").attr("y", "0em");
+
+    // Initialize all panels
     for (var id in this._panels){
         this._panels[id].initialize();
     }
-    this.raiseCurtain();
+
     return this;
+
 };
-
-// Obscure the instance with an overlay (the "curtain") displaying a message
-LocusZoom.Instance.prototype.dropCurtain = function(message){
-    var curtain_selector = "svg > #" + this.id + "\\.curtain";
-    // Create the curtain element if it doesn't exist, otherwise make sure it's visible
-    if (!d3.select(curtain_selector).size()){
-        var curtain = this.svg.append("g")
-            .attr("class", "lz-curtain").style("display", null)
-            .attr("id", this.id + ".curtain");
-        curtain.append("rect");
-        curtain.append("text")
-            .attr("id", this.id + ".curtain_text")
-            .attr("x", "1em").attr("y", "0em");
-    } else {
-        d3.select(curtain_selector).style("opacity", 1).style("display", null);
-    }
-    // Apply message
-    if (typeof message != "undefined"){
-        var curtain_text_selector = "text#" + this.id + "\\.curtain_text";
-        d3.select(curtain_text_selector).selectAll("tspan").remove();
-        message.split("\n").forEach(function(line){
-            d3.select(curtain_text_selector).append("tspan")
-                .attr("x", "1em").attr("dy", "1.5em").text(line);
-        });
-    }
-    return this;
-}
-
-// Remove curtain overlay
-LocusZoom.Instance.prototype.raiseCurtain = function(){
-    var curtain_selector = "svg > #" + this.id + "\\.curtain";
-    d3.select(curtain_selector).transition().duration(1000).style("opacity",0);
-    d3.timer(function(){
-        d3.select(curtain_selector).style("display", "none");
-        return true;
-    }, 1100);
-}
 
 // Map an entire LocusZoom Instance to a new region
 LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
