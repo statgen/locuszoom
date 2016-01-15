@@ -27,7 +27,7 @@ describe('LocusZoom', function(){
 
     // Reset DOM and LocusZoom singleton after each test
     afterEach(function(){
-        LocusZoom.reset();
+        LocusZoom._instances = {};
         d3.select("body").selectAll("*").remove();
     });
 

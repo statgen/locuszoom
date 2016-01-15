@@ -9,11 +9,6 @@ var LocusZoom = {
 // Object for storing key-indexed Instance objects
 LocusZoom._instances = {};
 
-// Method for resetting the entire singleton (by purging all instances)
-LocusZoom.reset = function(){
-    this._instances = {};
-};
-
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
