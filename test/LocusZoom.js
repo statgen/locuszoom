@@ -5,43 +5,59 @@
   Test composition of the LocusZoom object and its base classes
 */
 
-// General Requirements
-var requirejs = require("requirejs");
+var jsdom = require('mocha-jsdom');
+var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
-var jsdom = require("jsdom");
-
-// Load all vendor dependencies and app files before running tests. Order is important!
-beforeEach(function(done){
-    var modules = [
-        './assets/js/vendor/d3.min.js',
-        './assets/js/vendor/q.min.js',
-        './assets/js/app/LocusZoom.js',
-        './assets/js/app/Data.js',
-        './assets/js/app/Instance.js',
-        './assets/js/app/Panel.js',
-        './assets/js/app/DataLayer.js'
-    ];
-    requirejs(modules, function(){
-        done();
-    });
-});
-
-global.document = jsdom.jsdom(   '<div id="instance_id"></div>'
-                               + '<div id="populated_instance_1" class="lz"></div>'
-                               + '<div id="populated_instance_2" class="lz"></div>');
-global.window = document.defaultView;
 
 describe('LocusZoom', function(){
+
+    var LocusZoomNode;
+
+    // Load all javascript files
+    jsdom({
+        src: [ fs.readFileSync('./assets/js/vendor/d3.min.js'),
+               fs.readFileSync('./assets/js/vendor/q.min.js'),
+               fs.readFileSync('./assets/js/app/LocusZoom.js'),
+               fs.readFileSync('./assets/js/app/Data.js'),
+               fs.readFileSync('./assets/js/app/Instance.js'),
+               fs.readFileSync('./assets/js/app/Panel.js'),
+               fs.readFileSync('./assets/js/app/DataLayer.js')
+             ]
+    });
+
+    // Apply the should Object prototype getter to the existing LocusZoom object recursively
+    before(function(){
+        function setProtoRecursive(obj){
+            obj.__proto__ = Object.__proto__;
+            for (var k in obj){
+                if ((typeof obj[k] == "object" || typeof obj[k] == "function") && obj[k] !== null){
+                    obj[k].__proto__ = Object.__proto__;
+                    setProtoRecursive(obj[k]);
+                }
+            }
+        }
+        setProtoRecursive(LocusZoom);
+    });
+
+    // Reset DOM and LocusZoom singleton after each test
+    afterEach(function(){
+        LocusZoom.reset();
+        d3.select("body").selectAll("*").remove();
+    });
+
+    // Tests!
+    
     it("creates an object for its name space", function() {
         should.exist(LocusZoom);
     });
+
     describe("Singleton", function() {
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String();
         });
         it('should have a method for formatting numbers as megabases', function(){
-            LocusZoom.formatMegabase.should.be.a.Function();
+            should(LocusZoom.formatMegabase).be.a.Function();
             assert.equal(LocusZoom.formatMegabase(1),          "0.000001");
             assert.equal(LocusZoom.formatMegabase(1000),       "0.001");
             assert.equal(LocusZoom.formatMegabase(4567),       "0.005");
@@ -58,6 +74,7 @@ describe('LocusZoom', function(){
             assert.deepEqual(LocusZoom.prettyTicks([1, 9], 5, true), [2, 4, 6, 8]);
         });
         it('should have a method for adding instances to a div by ID', function(){
+            d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.addInstanceToDivById.should.be.a.Function();
             LocusZoom.addInstanceToDivById("instance_id", {}, LocusZoom.DefaultInstance);
             LocusZoom._instances["instance_id"].should.be.an.Object();
@@ -69,6 +86,8 @@ describe('LocusZoom', function(){
             assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
         });
         it('should have a method for populating divs with instances by class name', function(){
+            d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
+            d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
             LocusZoom.populate.should.be.a.Function();
             LocusZoom.populateAll("div.lz");
             d3.select('div.lz').each(function(){
@@ -80,6 +99,7 @@ describe('LocusZoom', function(){
                 assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
             });
         });
+        
         describe("Position Queries", function() {
             it('should have a parsePositionQuery function', function() {
                 LocusZoom.parsePositionQuery.should.be.a.Function();
@@ -108,10 +128,11 @@ describe('LocusZoom', function(){
                 test.should.have.property("position",5500);
             });
         });
+        
         it('should have a method for creating a CORS promise', function(){
             LocusZoom.createCORSPromise.should.be.a.Function();
         });
+        
     });
+
 });
-
-

@@ -22,12 +22,13 @@ gulp.task("js", function() {
 
 // Run Mocha unit tests
 gulp.task("test", function () {
-    return gulp.src("test/*.js")
+    return gulp.src("test/LocusZoom.js")
         .pipe(mocha())
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));
         })
-        .on("error", function () {
+        .on("error", function (err) {
+            console.log(err);
             process.exit(1);
         });
 });
