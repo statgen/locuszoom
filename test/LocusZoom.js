@@ -12,8 +12,6 @@ var should = require("should");
 
 describe('LocusZoom', function(){
 
-    var LocusZoomNode;
-
     // Load all javascript files
     jsdom({
         src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
@@ -27,35 +25,19 @@ describe('LocusZoom', function(){
              ]
     });
 
-    // Apply the should Object prototype getter to the existing LocusZoom object recursively
-    before(function(){
-        function setProtoRecursive(obj){
-            obj.__proto__ = Object.__proto__;
-            for (var k in obj){
-                if ((typeof obj[k] == "object" || typeof obj[k] == "function") && obj[k] !== null){
-                    obj[k].__proto__ = Object.__proto__;
-                    setProtoRecursive(obj[k]);
-                }
-            }
-        }
-        setProtoRecursive(LocusZoom);
-    });
-
     // Reset DOM and LocusZoom singleton after each test
     afterEach(function(){
         LocusZoom.reset();
         d3.select("body").selectAll("*").remove();
     });
 
-    // Tests!
-    
+    // Tests
     it("creates an object for its name space", function() {
         should.exist(LocusZoom);
     });
-
     describe("Singleton", function() {
         it('should have a version number', function(){
-            LocusZoom.should.have.property('version').which.is.a.String();
+            LocusZoom.should.have.property('version').which.is.a.String;
         });
         it('should have a method for formatting numbers as megabases', function(){
             LocusZoom.formatMegabase.should.be.a.Function;
@@ -67,7 +49,7 @@ describe('LocusZoom', function(){
             assert.equal(LocusZoom.formatMegabase(1896335235), "1896.34");
         });
         it('should have a method for generating pretty ticks', function(){
-            LocusZoom.prettyTicks.should.be.a.Function();
+            LocusZoom.prettyTicks.should.be.a.Function;
             assert.deepEqual(LocusZoom.prettyTicks([0, 10]), [0, 2, 4, 6, 8, 10]);
             assert.deepEqual(LocusZoom.prettyTicks([14, 67]), [10, 20, 30, 40, 50, 60, 70]);
             assert.deepEqual(LocusZoom.prettyTicks([0.01, 0.23]), [0, 0.05, 0.10, 0.15, 0.20, 0.25]);
@@ -100,7 +82,6 @@ describe('LocusZoom', function(){
                 assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
             });
         });
-        
         describe("Position Queries", function() {
             it('should have a parsePositionQuery function', function() {
                 LocusZoom.parsePositionQuery.should.be.a.Function;
@@ -129,7 +110,6 @@ describe('LocusZoom', function(){
                 test.should.have.property("position",5500);
             });
         });
-        
         it('should have a method for creating a CORS promise', function(){
             LocusZoom.createCORSPromise.should.be.a.Function;
         });

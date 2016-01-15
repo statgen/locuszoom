@@ -16,9 +16,9 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/DataLayer.js"
                    ];
 
-var test_js_files = ["./test/LocusZoom.js"
-                   //"./test/Data.js",
-                   //"./test/Instance.js"
+var test_js_files = ["./test/LocusZoom.js",
+                     "./test/Data.js",
+                     "./test/Instance.js"
                     ];
 
 // Test app files, then build both app and vendor javascript files if all tests pass

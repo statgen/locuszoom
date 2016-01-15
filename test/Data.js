@@ -5,28 +5,33 @@
   Test LocusZoom Data access objects
 */
 
-// General Requirements
-var requirejs = require("requirejs");
+var jsdom = require('mocha-jsdom');
+var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
 
-// Load all vendor dependencies and app files before running tests. Order is important!
-beforeEach(function(done){
-    var modules = [
-        './assets/js/vendor/d3.min.js',
-        './assets/js/vendor/q.min.js',
-        './assets/js/app/LocusZoom.js',
-        './assets/js/app/Data.js',
-        './assets/js/app/Instance.js',
-        './assets/js/app/Panel.js',
-        './assets/js/app/DataLayer.js'
-    ];
-    requirejs(modules, function(){
-        done();
-    });
-});
-
 describe('LocusZoom Data', function(){
+
+    // Load all javascript files
+    jsdom({
+        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
+               fs.readFileSync('./assets/js/vendor/d3.min.js'),
+               fs.readFileSync('./assets/js/vendor/q.min.js'),
+               fs.readFileSync('./assets/js/app/LocusZoom.js'),
+               fs.readFileSync('./assets/js/app/Data.js'),
+               fs.readFileSync('./assets/js/app/Instance.js'),
+               fs.readFileSync('./assets/js/app/Panel.js'),
+               fs.readFileSync('./assets/js/app/DataLayer.js')
+             ]
+    });
+
+    // Reset DOM and LocusZoom singleton after each test
+    afterEach(function(){
+        LocusZoom.reset();
+        d3.select("body").selectAll("*").remove();
+    });
+
+    // Tests
     describe("LocusZoom Data Source", function() {
 
         var TestSource1, TestSource2;
@@ -39,7 +44,7 @@ describe('LocusZoom Data', function(){
         })
 
         it('should have a DataSources object', function(){
-            LocusZoom.DataSources.should.be.a.Function();
+            LocusZoom.DataSources.should.be.a.Function;
         });
         it('should add source via .addSource - object', function(){
             var ds = new LocusZoom.DataSources();
