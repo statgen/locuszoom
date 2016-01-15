@@ -3,6 +3,7 @@ var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
 var sass = require("gulp-sass");
 var concat = require("gulp-concat");
+var wrap = require("gulp-wrap");
 var watch = require("gulp-watch");
 var mocha = require("gulp-mocha");
 
@@ -15,6 +16,11 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/DataLayer.js"
                    ];
 
+var test_js_files = ["./test/LocusZoom.js",
+                     "./test/Data.js",
+                     "./test/Instance.js"
+                    ];
+
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task("js", function() {
     gulp.start("app_js", "vendor_js");
@@ -22,12 +28,13 @@ gulp.task("js", function() {
 
 // Run Mocha unit tests
 gulp.task("test", function () {
-    return gulp.src("test/*.js")
+    return gulp.src(test_js_files)
         .pipe(mocha())
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));
         })
-        .on("error", function () {
+        .on("error", function (err) {
+            console.log(err);
             process.exit(1);
         });
 });
@@ -36,6 +43,7 @@ gulp.task("test", function () {
 gulp.task("app_js", ["test"], function() {
     gulp.src(app_js_files)
         .pipe(concat("locuszoom.app.js"))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
         .pipe(gulp.dest("./assets/js"))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
@@ -46,6 +54,7 @@ gulp.task("app_js", ["test"], function() {
     gulp.src(app_js_files)
         .pipe(uglify())
         .pipe(concat("locuszoom.app.min.js"))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
         .pipe(gulp.dest("./assets/js"))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));

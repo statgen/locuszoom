@@ -281,4 +281,3 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.LDSource,
     LocusZoom.Data.GeneSource];
 
-
