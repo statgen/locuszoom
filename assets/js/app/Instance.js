@@ -155,3 +155,4 @@ LocusZoom.DefaultInstance = function(){
 };
 
 LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
+
