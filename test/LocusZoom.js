@@ -27,7 +27,6 @@ describe('LocusZoom', function(){
 
     // Reset DOM and LocusZoom singleton after each test
     afterEach(function(){
-        LocusZoom._instances = {};
         d3.select("body").selectAll("*").remove();
     });
 
@@ -59,27 +58,27 @@ describe('LocusZoom', function(){
         it('should have a method for adding instances to a div by ID', function(){
             d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.addInstanceToDivById.should.be.a.Function;
-            LocusZoom.addInstanceToDivById("instance_id", Object(), LocusZoom.DefaultInstance);
-            LocusZoom._instances["instance_id"].should.be.an.Object;
-            LocusZoom._instances["instance_id"].id.should.be.exactly("instance_id");
+            var instance = LocusZoom.addInstanceToDivById("instance_id", Object(), LocusZoom.DefaultInstance);
+            instance.should.be.an.Object;
+            instance.id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
             svg_selector.should.be.an.Object;
             svg_selector.size().should.be.exactly(1);
-            LocusZoom._instances["instance_id"].svg.should.be.an.Object;
-            assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
+            instance.svg.should.be.an.Object;
+            assert.equal(instance.svg.html(), svg_selector.html());
         });
         it('should have a method for populating divs with instances by class name', function(){
             d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
             d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
             LocusZoom.populate.should.be.a.Function;
-            LocusZoom.populateAll("div.lz");
-            d3.select('div.lz').each(function(){
+            var instances = LocusZoom.populateAll("div.lz");
+            d3.selectAll('div.lz').each(function(d, i){
                 var div_selector = d3.select(this);
                 var svg_selector = div_selector.select("svg");
                 svg_selector.should.be.an.Object;
                 svg_selector.size().should.be.exactly(1);
-                LocusZoom._instances[div_selector.attr("id")].svg.should.be.an.Object;
-                assert.equal(LocusZoom._instances[div_selector.attr("id")].svg[0][0], svg_selector[0][0]);
+                instances[i].svg.should.be.an.Object;
+                assert.equal(instances[i].svg.html(), svg_selector.html());
             });
         });
         describe("Position Queries", function() {

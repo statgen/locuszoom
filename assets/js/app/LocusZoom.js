@@ -6,15 +6,12 @@ var LocusZoom = {
     version: "0.1"
 };
 
-// Object for storing key-indexed Instance objects
-LocusZoom._instances = {};
-
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
     // Initialize a new Instance
-    var inst = LocusZoom._instances[id] = new layout(id, datasource, layout, state);
+    var inst = new layout(id, datasource, layout, state);
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
         .append("svg").attr("id", id + "_svg").attr("class", "lz-locuszoom");
