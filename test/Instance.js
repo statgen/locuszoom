@@ -89,14 +89,13 @@ describe('LocusZoom.Instance', function(){
                 this.instance = LocusZoom.populate("#instance_id");
             });
             it('last child should be a curtain element', function(){
-                
-                assert.equal(this.instance.svg.selectAll("g.lz-curtain").size(), 1);
                 d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
+                d3.select(this.instance.svg.node().lastChild).attr("class").should.be.exactly("lz-curtain");
             });
             it('should have a curtain object with stored svg selector', function(){
                 this.instance.curtain.should.be.an.Object;
                 this.instance.curtain.svg.should.be.an.Object;
-                assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("g.lz-curtain").html());
+                assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#instance_id\\.curtain").html());
             });
             it('should have a method that drops the curtain', function(){
                 this.instance.curtain.drop.should.be.a.Function;
