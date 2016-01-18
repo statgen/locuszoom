@@ -188,15 +188,19 @@ LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
-    this.data_promises = [];
-    // Trigger reMap on each Data Layer
-    for (var id in this._data_layers){
-        this.data_promises.push(this._data_layers[id].reMap());
+    try {
+        this.data_promises = [];
+        // Trigger reMap on each Data Layer
+        for (var id in this._data_layers){
+            this.data_promises.push(this._data_layers[id].reMap());
+        }
+        // When all finished trigger a render
+        Q.all(this.data_promises).then(function(){
+            this.render();
+        }.bind(this));
+    } catch (error){
+        this.curtain.drop(error);
     }
-    // When all finished trigger a render
-    Q.all(this.data_promises).then(function(){
-        this.render();
-    }.bind(this));
     return this;
 };
 
