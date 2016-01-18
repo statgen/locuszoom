@@ -70,10 +70,39 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
 
 // Call initialize on all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+
+    // Create the curtain object with svg element and drop/raise methods
+    var curtain_svg = this.svg.append("g")
+        .attr("class", "lz-curtain").style("display", "none")
+        .attr("id", this.id + ".curtain");
+    this.curtain = {
+        svg: curtain_svg,
+        drop: function(message){
+            this.svg.style("display", null);
+            if (typeof message != "undefined"){
+                this.svg.select("text").selectAll("tspan").remove();
+                message.split("\n").forEach(function(line){
+                    this.svg.select("text").append("tspan")
+                        .attr("x", "1em").attr("dy", "1.5em").text(line);
+                }.bind(this));
+            }
+        },
+        raise: function(){
+            this.svg.style("display", "none");
+        }
+    };
+    this.curtain.svg.append("rect");
+    this.curtain.svg.append("text")
+        .attr("id", this.id + ".curtain_text")
+        .attr("x", "1em").attr("y", "0em");
+
+    // Initialize all panels
     for (var id in this._panels){
         this._panels[id].initialize();
     }
+
     return this;
+
 };
 
 // Map an entire LocusZoom Instance to a new region

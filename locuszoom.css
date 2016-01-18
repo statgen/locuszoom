@@ -4,6 +4,16 @@ svg.lz-locuszoom {
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px; }
+  svg.lz-locuszoom .lz-curtain rect {
+    fill: rgba(210, 210, 210, 0.85);
+    width: 100%;
+    height: 100%; }
+  svg.lz-locuszoom .lz-curtain text, svg.lz-locuszoom .lz-curtain tspan {
+    fill: black;
+    font-weight: 600;
+    font-size: 14px;
+    text-anchor: start;
+    alignment-baseline: hanging; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
