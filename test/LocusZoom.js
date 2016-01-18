@@ -66,7 +66,7 @@ describe('LocusZoom', function(){
             svg_selector.should.be.an.Object;
             svg_selector.size().should.be.exactly(1);
             LocusZoom._instances["instance_id"].svg.should.be.an.Object;
-            assert.equal(LocusZoom._instances["instance_id"].svg[0][0], svg_selector[0][0]);
+            assert.equal(LocusZoom._instances["instance_id"].svg.html(), svg_selector.html());
         });
         it('should have a method for populating divs with instances by class name', function(){
             d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
