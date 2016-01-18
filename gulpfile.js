@@ -44,7 +44,7 @@ gulp.task("app_js", ["test"], function() {
     gulp.src(app_js_files)
         .pipe(concat("locuszoom.app.js"))
         .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
-        .pipe(gulp.dest("./assets/js"))
+        .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
         })
@@ -55,7 +55,7 @@ gulp.task("app_js", ["test"], function() {
         .pipe(uglify())
         .pipe(concat("locuszoom.app.min.js"))
         .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
-        .pipe(gulp.dest("./assets/js"))
+        .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
         })
@@ -68,7 +68,7 @@ gulp.task("app_js", ["test"], function() {
 gulp.task("vendor_js", function() {
     gulp.src("./assets/js/vendor/*.js")
         .pipe(concat("locuszoom.vendor.min.js"))
-        .pipe(gulp.dest("./assets/js"))
+        .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.vendor.min.js"));
         })
@@ -81,7 +81,7 @@ gulp.task("vendor_js", function() {
 gulp.task("css", function() {
     gulp.src("./assets/css/*.scss")
         .pipe(sass())
-        .pipe(gulp.dest('./assets/css/'))
+        .pipe(gulp.dest('.'))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.css"));
         })
