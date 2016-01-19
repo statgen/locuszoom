@@ -71,7 +71,7 @@ var lz[] = LocusZoom.populateAll(selector, datasource, layout, state)
 
 The `populate()` method will return the new LocusZoom instance for the first matching element and the `populateAll()` method will always return an array containting instances for each of the matched elements.
 
-Here `selector` is either a reference to a DOM element (eg `document.getElementById("foo")`) or it is string that is a valid [D3 compatiable selector](http://www.w3.org/TR/selectors-api/) (eg `"#foo"`). 
+Here `selector` is either a reference to a DOM element (eg `document.getElementById("foo")`) or a string that is a valid [D3-compatible selector](http://www.w3.org/TR/selectors-api/) (eg `"#foo"`). 
 
 The `datasource` parameter must be a `LocusZoom.DataSources()` object.
 
