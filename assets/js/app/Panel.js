@@ -14,10 +14,12 @@
 */
 
 LocusZoom.Panel = function() { 
+
+    this.initialized = false;
     
     this.id     = null;
     this.parent = null;
-    this.svg    = null;
+    this.svg    = {};
     
     this.view = {
         width:  0,
@@ -95,24 +97,21 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
-    var container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.curtain")
-        .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
+    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.curtain")
+        .attr("id", this.getBaseId() + ".panel_container");
         
     // Append clip path to the parent svg element
-    container.append("clipPath")
-        .attr("id", this.getBaseId() + ".clip")
-        .append("rect")
-        .attr("width", this.view.width)
-        .attr("height", this.view.height);
+    var clipPath = this.svg.container.append("clipPath")
+        .attr("id", this.getBaseId() + ".clip");
+    this.svg.clipRect = clipPath.append("rect");
     
     // Append svg group for rendering all panel child elements, clipped by the clip path
-    this.svg = container.append("g")
+    this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
     // Append a curtain element with svg element and drop/raise methods
-    var panel_curtain_svg = container.append("g")
+    var panel_curtain_svg = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".curtain")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)")
         .attr("class", "lz-curtain").style("display", "none");
@@ -137,36 +136,33 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+    // Initialize Axes
+    this.svg.x_axis = this.svg.group.append("g").attr("class", "lz-x lz-axis");
+    if (this.axes.x.render){
+        this.svg.x_axis_label = this.svg.x_axis.append("text")
+            .attr("class", "lz-x lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+    this.svg.y1_axis = this.svg.group.append("g").attr("class", "lz-y lz-y1 lz-axis");
+    if (this.axes.y1.render){
+        this.svg.y1_axis_label = this.svg.y1_axis.append("text")
+            .attr("class", "lz-y1 lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+    this.svg.y2_axis = this.svg.group.append("g").attr("class", "lz-y lz-y2 lz-axis");
+    if (this.axes.y2.render){
+        this.svg.y2_axis_label = this.svg.y2_axis.append("text")
+            .attr("class", "lz-y2 lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+
     // Initialize child Data Layers
     for (var id in this._data_layers){
         this._data_layers[id].initialize();
     }
 
-    // Initialize Axes
-    if (this.axes.x.render){
-        this.state.x_scale = d3.scale.linear().domain([0,1]).range([0, this.view.cliparea.width]);
-        this.state.x_axis  = d3.svg.axis().scale(this.state.x_scale).orient("bottom");
-        this.svg.append("g")
-            .attr("class", "lz-x lz-axis")
-            .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
-            .call(this.state.x_axis);
-    }
-    if (this.axes.y1.render){
-        this.state.y1_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
-        this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left");
-        this.svg.append("g")
-            .attr("class", "lz-y lz-y1 lz-axis")
-            .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
-            .call(this.state.y1_axis);
-    }
-    if (this.axes.y2.render){
-        this.state.y2_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
-        this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("right");
-        this.svg.append("g")
-            .attr("class", "lz-y lz-y2 lz-axis")
-            .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
-            .call(this.state.y2_axis);
-    }
+    // Flip the "initialized" bit
+    this.initialized = true;
 
     return this;
     
@@ -205,9 +201,15 @@ LocusZoom.Panel.prototype.reMap = function(){
 
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(){  
+LocusZoom.Panel.prototype.render = function(){
 
-    // Generate extents and scales.
+    // Position the panel container
+    this.svg.container.attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
+
+    // Set size on the clip rect
+    this.svg.clipRect.attr("width", this.view.width).attr("height", this.view.height);
+
+    // Generate extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
         this.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.view.cliparea.width/120, true);
@@ -215,7 +217,6 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.view.cliparea.width]);
     }
-    // Pad out y scales for pretty ticks, regardless of axis rendering
     if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
         this.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent);
@@ -235,51 +236,53 @@ LocusZoom.Panel.prototype.render = function(){
     if (this.axes.x.render){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
-            .orient("bottom")
-            .tickValues(this.axes.x.ticks)
+            .orient("bottom").tickValues(this.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
-        this.svg.selectAll("g .lz-x.lz-axis").call(this.state.x_axis);
+        this.svg.x_axis
+            .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
+            .call(this.state.x_axis);
         if (this.axes.x.label != null){
             var x_label = this.axes.x.label;
-            if (typeof this.axes.x.label == "function"){
-                x_label = this.axes.x.label();
-            }
-            if (this.svg.select("text.lz-x.lz-axis.lz-label")[0][0] == null){
-                this.svg.select("g .lz-x.lz-axis").append("text")
-                    .attr("class", "lz-x lz-axis lz-label")
-                    .attr("text-anchor", "middle")
-                    .attr("x", this.view.cliparea.width / 2)
-                    .attr("y", 33);
-            }
-            this.svg.select("text.lz-x.lz-axis.lz-label").text(x_label);
+            if (typeof this.axes.x.label == "function"){ x_label = this.axes.x.label(); }
+            this.svg.x_axis_label
+                .attr("x", this.view.cliparea.width / 2)
+                .attr("y", 33)
+                .text(x_label);
         }
     }
 
     if (this.axes.y1.render){
         this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
             .orient("left").tickValues(this.axes.y1.ticks);
-        this.svg.selectAll("g .lz-y.lz-y1.lz-axis").call(this.state.y1_axis);
+        this.svg.y1_axis
+            .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
+            .call(this.state.y1_axis);
         if (this.axes.y1.label != null){
             var y1_label = this.axes.y1.label;
-            if (typeof this.axes.y1.label == "function"){
-                y1_label = this.axes.y1.label();
-            }
-            if (this.svg.select("text.lz-y1.lz-axis.lz-label")[0][0] == null){
-                this.svg.select("g .lz-y1.lz-axis").append("text")
-                    .attr("class", "lz-y1 lz-axis lz-label")
-                    .attr("text-anchor", "middle")
-                    .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
-                    .attr("x", -28)
-                    .attr("y", this.view.cliparea.height / 2);
-            }
-            this.svg.select("text.lz-y1.lz-axis.lz-label").text(y1_label);
+            if (typeof this.axes.y1.label == "function"){ y1_label = this.axes.y1.label(); }
+            this.svg.y1_axis_label
+                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
+                .attr("x", -28)
+                .attr("y", this.view.cliparea.height / 2)
+                .text(y1_label);
         }
     }
 
     if (this.axes.y2.render){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
             .orient("left").tickValues(this.axes.y2.ticks);
-        this.svg.selectAll("g .lz-y.lz-y2.lz-axis").call(this.state.y2_axis);
+        this.svg.y2_axis
+            .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
+            .call(this.state.y2_axis);
+        if (this.axes.y2.label != null){
+            var y2_label = this.axes.y2.label;
+            if (typeof this.axes.y2.label == "function"){ y2_label = this.axes.y2.label(); }
+            this.svg.y2_axis_label
+                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
+                .attr("x", this.view.width - this.view.margin.right)
+                .attr("y", this.view.cliparea.height / 2)
+                .text(y2_label);
+        }
     }
     
     // Render data layers by z-index
@@ -290,32 +293,6 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     return this;
-    
-    // Set zoom
-    /*
-    this.view.zoom = d3.behavior.zoom()
-        .scaleExtent([1, 1])
-        .x(this.view.xscale)
-        .on("zoom", function() {
-            svg.select(".datum").attr("d", line)
-            console.log("zooming");
-        });
-    this.svg.call(this.view.zoom);
-    */
-    
-    // Set drag
-    /*
-    this.drag = d3.behavior.drag()
-        .on("drag", function() {
-            var stage = d3.select("#"+this.id+" g.stage");
-            var transform = d3.transform(stage.attr("transform"));
-            transform.translate[0] += d3.event.dx;
-            stage.attr("transform", transform.toString());
-        }).on("dragend", function() {
-            // mapTo new values
-        });
-    this.svg.call(this.drag);
-    */    
     
 };
 

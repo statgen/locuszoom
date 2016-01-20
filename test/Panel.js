@@ -43,8 +43,8 @@ describe('LocusZoom.Panel', function(){
             });
             it('last child of each panel container should be a curtain element', function(){
                 Object.keys(this.instance._panels).forEach(function(panel_id){
-                    d3.select(this.instance._panels[panel_id].svg.node().parentNode.lastChild).attr("id").should.be.exactly("instance_id." + panel_id + ".curtain");
-                    d3.select(this.instance._panels[panel_id].svg.node().parentNode.lastChild).attr("class").should.be.exactly("lz-curtain");
+                    d3.select(this.instance._panels[panel_id].svg.group.node().parentNode.lastChild).attr("id").should.be.exactly("instance_id." + panel_id + ".curtain");
+                    d3.select(this.instance._panels[panel_id].svg.group.node().parentNode.lastChild).attr("class").should.be.exactly("lz-curtain");
                 }.bind(this));
             });
             it('each panel should have a curtain object with stored svg selector', function(){

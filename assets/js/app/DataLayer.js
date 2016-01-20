@@ -63,7 +63,7 @@ LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
 LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
-    var container = this.parent.svg.append("g")
+    var container = this.parent.svg.group.append("g")
         .attr("id", this.getBaseId() + ".data_layer_container")
         .attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
         
