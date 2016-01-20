@@ -735,12 +735,14 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
     if (typeof height !== "undefined"){ this.view.height = +height; }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
+    if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
     if (typeof x !== "undefined"){ this.view.origin.x = +x; }
     if (typeof y !== "undefined"){ this.view.origin.y = +y; }
+    if (this.initialized){ this.render(); }
     return this;
 };
 
@@ -753,6 +755,7 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
     this.view.cliparea.origin.x = this.view.margin.left;
     this.view.cliparea.origin.y = this.view.margin.top;
+    if (this.initialized){ this.render(); }
     return this;
 };
 
@@ -865,7 +868,6 @@ LocusZoom.Panel.prototype.reMap = function(){
 
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
-    console.log("rendering");
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
@@ -952,7 +954,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
         if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].prerender().render();
+            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
         }
     }
 
@@ -1027,9 +1029,11 @@ LocusZoom.GenesPanel.prototype = new LocusZoom.Panel();
 
 LocusZoom.DataLayer = function() { 
 
+    this.initialized = false;
+
     this.id     = null;
     this.parent = null;
-    this.svg    = null;
+    this.svg    = {};
 
     this.fields = [];
     this.data = [];
@@ -1071,28 +1075,37 @@ LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
     return this;
 };
 
-// Initialize a panel
+// Initialize a data layer
 LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
-    var container = this.parent.svg.group.append("g")
-        .attr("id", this.getBaseId() + ".data_layer_container")
-        .attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.container = this.parent.svg.group.append("g")
+        .attr("id", this.getBaseId() + ".data_layer_container");
         
     // Append clip path to the container element
-    container.append("clipPath")
+    this.svg.clipRect = this.svg.container.append("clipPath")
         .attr("id", this.getBaseId() + ".clip")
-        .append("rect")
-        .attr("width", this.parent.view.cliparea.width)
-        .attr("height", this.parent.view.cliparea.height);
+        .append("rect");
     
     // Append svg group for rendering all data layer elements, clipped by the clip path
-    this.svg = container.append("g")
+    this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".data_layer")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
+    // Flip the "initialized" bit
+    this.initialized = true;
+
+    return this;
+
 };
 
+LocusZoom.DataLayer.prototype.draw = function(){
+    this.svg.container.attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.clipRect
+        .attr("width", this.parent.view.cliparea.width)
+        .attr("height", this.parent.view.cliparea.height);
+    return this;
+}
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
@@ -1127,7 +1140,7 @@ LocusZoom.PositionsDataLayer = function(){
         var that = this;
         var clicker = function() {
             var me = d3.select(this);
-            that.svg.selectAll("circle.lz-position").classed({"lz-selected": false});
+            that.svg.group.selectAll("circle.lz-position").classed({"lz-selected": false});
             if (that.parent.parent.state.ldrefvar != me.attr("id")){
                 me.classed({"lz-selected": true});
                 that.parent.parent.state.ldrefvar = me.attr("id");
@@ -1135,8 +1148,8 @@ LocusZoom.PositionsDataLayer = function(){
                 that.parent.parent.state.ldrefvar = null;
             }
         };
-        this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
-        this.svg
+        this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
+        this.svg.group
             .selectAll("circle.lz-position")
             .data(this.data)
             .enter().append("circle")
@@ -1186,7 +1199,7 @@ LocusZoom.RecombinationRateDataLayer = function(){
     this.fields = [];
 
     this.render = function(){
-        this.svg.selectAll("*").remove();
+        this.svg.group.selectAll("*").remove();
     };
        
     return this;
@@ -1299,10 +1312,10 @@ LocusZoom.GenesDataLayer = function(){
     };
 
     this.render = function(){
-        this.svg.selectAll("*").remove();
+        this.svg.group.selectAll("*").remove();
 
         // Render gene groups
-        this.svg.selectAll("g.lz-gene").data(this.data).enter()
+        this.svg.group.selectAll("g.lz-gene").data(this.data).enter()
             .append("g")
             .attr("class", "lz-gene")
             .attr("id", function(d){ return d.gene_name; })

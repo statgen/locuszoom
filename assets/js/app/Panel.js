@@ -72,12 +72,14 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
     if (typeof height !== "undefined"){ this.view.height = +height; }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
+    if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
     if (typeof x !== "undefined"){ this.view.origin.x = +x; }
     if (typeof y !== "undefined"){ this.view.origin.y = +y; }
+    if (this.initialized){ this.render(); }
     return this;
 };
 
@@ -90,6 +92,7 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
     this.view.cliparea.origin.x = this.view.margin.left;
     this.view.cliparea.origin.y = this.view.margin.top;
+    if (this.initialized){ this.render(); }
     return this;
 };
 
@@ -288,7 +291,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
         if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].prerender().render();
+            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
         }
     }
 
