@@ -193,7 +193,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
                     response.resolve(JSON.parse(xhr.responseText));
                 } else {
-                    response.reject("HTTP" + xhr.status + " for " + url);
+                    response.reject("HTTP " + xhr.status + " for " + url);
                 }
             }
         };

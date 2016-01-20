@@ -20,15 +20,12 @@ var LocusZoom = {
     version: "0.1"
 };
 
-// Object for storing key-indexed Instance objects
-LocusZoom._instances = {};
-
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
     // Initialize a new Instance
-    var inst = LocusZoom._instances[id] = new layout(id, datasource, layout, state);
+    var inst = new layout(id, datasource, layout, state);
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
         .append("svg").attr("id", id + "_svg").attr("class", "lz-locuszoom");
@@ -210,7 +207,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
                     response.resolve(JSON.parse(xhr.responseText));
                 } else {
-                    response.reject("HTTP" + xhr.status + " for " + url);
+                    response.reject("HTTP " + xhr.status + " for " + url);
                 }
             }
         };
@@ -854,19 +851,18 @@ LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
-    try {
-        this.data_promises = [];
-        // Trigger reMap on each Data Layer
-        for (var id in this._data_layers){
-            this.data_promises.push(this._data_layers[id].reMap());
-        }
-        // When all finished trigger a render
-        Q.all(this.data_promises).then(function(){
-            this.render();
-        }.bind(this));
-    } catch (error){
-        this.curtain.drop(error);
+    this.data_promises = [];
+    // Trigger reMap on each Data Layer
+    for (var id in this._data_layers){
+        this.data_promises.push(this._data_layers[id].reMap());
     }
+    // When all finished trigger a render
+    Q.all(this.data_promises).then(function(){
+        this.render();
+    }.bind(this), function(error){
+        console.log(error);
+        this.curtain.drop(error);
+    }.bind(this));
     return this;
 };
 
