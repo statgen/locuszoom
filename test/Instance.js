@@ -70,8 +70,12 @@ describe('LocusZoom.Instance', function(){
             this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
             this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
-        it('should allow for inializing itself', function(){
+        it('should track whether it\'s initialized', function(){
             this.instance.initialize.should.be.a.Function;
+            assert.equal(this.instance.initialized, false);
+            d3.select("body").append("div").attr("id", "another_instance_id");
+            var another_instance = LocusZoom.populate("#another_instance_id");
+            assert.equal(another_instance.initialized, true);
         });
         it('should allow for mapping to new coordinates', function(){
             this.instance.mapTo.should.be.a.Function;
@@ -92,6 +96,29 @@ describe('LocusZoom.Instance', function(){
                 d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("instance_id.ui");
                 d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("class").should.be.exactly("lz-ui");
             });
+            it('should have a ui object with ui svg selectors', function(){
+                this.instance.ui.should.be.an.Object;
+                this.instance.ui.svg.should.be.an.Object;
+                assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#instance_id\\.ui").html());
+                assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+            });
+            it('should be hidden by default', function(){
+                assert.equal(this.instance.ui.svg.style("display"), "none");
+            });
+            it('should have a method that shows the UI layer', function(){
+                this.instance.ui.show.should.be.a.Function;
+                this.instance.ui.show();
+                assert.equal(this.instance.ui.svg.style("display"), "");
+            });
+            it('should have a method that hides the UI layer', function(){
+                this.instance.ui.hide.should.be.a.Function;
+                this.instance.ui.show();
+                this.instance.ui.hide();
+                assert.equal(this.instance.ui.svg.style("display"), "none");
+            });
+            it('should have a method for toggling mouseovers', function(){
+                this.instance.ui.toggleMouseovers.should.be.a.Function;
+            });
         });
         describe("Curtain Layer", function() {
             beforeEach(function(){
@@ -106,6 +133,9 @@ describe('LocusZoom.Instance', function(){
                 this.instance.curtain.should.be.an.Object;
                 this.instance.curtain.svg.should.be.an.Object;
                 assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#instance_id\\.curtain").html());
+            });
+            it('should be hidden by default', function(){
+                assert.equal(this.instance.curtain.svg.style("display"), "none");
             });
             it('should have a method that drops the curtain', function(){
                 this.instance.curtain.drop.should.be.a.Function;

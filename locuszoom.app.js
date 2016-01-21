@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.1"
+    version: "0.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -580,7 +580,7 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
 };
 
 // Automatically position panels vertically with equally proportioned heights
-LocusZoom.Instance.prototype.stackPanels = function(PanelClass){
+LocusZoom.Instance.prototype.stackPanels = function(){
     var proportional_height = 1 / Object.keys(this._panels).length;
     var discrete_height = this.view.height * proportional_height;
     var panel_idx = 0;
@@ -626,7 +626,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.toggleMouseovers(true);
             // Resize handle
             this.resize_handle = this.svg.append("g")
-                .attr("id", "resize_handle")
+                .attr("id", this.parent.id + ".ui.resize_handle")
             this.resize_handle.append("path")
                 .attr("class", "lz-ui-resize_handle")
                 .attr("d", "M 0,16, L 16,0, L 16,16 Z");
