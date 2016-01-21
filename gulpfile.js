@@ -6,6 +6,7 @@ var concat = require("gulp-concat");
 var wrap = require("gulp-wrap");
 var watch = require("gulp-watch");
 var mocha = require("gulp-mocha");
+var argv = require("yargs").argv;
 
 // App-specific JS files to be watched and concatenate/minify
 // NOTE: Order of inclusion is important!
@@ -31,12 +32,22 @@ gulp.task("js", function() {
 gulp.task("test", function () {
     return gulp.src(test_js_files)
         .pipe(mocha())
-        .on("end", function() {
-            gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));
+        .on("end", function(err) {
+            if (this.failed){
+                gutil.log(gutil.colors.bold.white.bgRed(" Tests failed! "));
+            } else {
+                gutil.log(gutil.colors.bold.white.bgGreen(" All tests passed! "));
+            }
         })
         .on("error", function (err) {
             console.log(err);
-            process.exit(1);
+            if (argv.force){
+                this.failed = true;
+                this.emit('end');
+            } else {
+                gutil.log(gutil.colors.bold.white.bgRed(" Tests failed! "));
+                process.exit(1);
+            }
         });
 });
 
@@ -93,8 +104,8 @@ gulp.task("css", function() {
 
 // Watch for changes in app source files to trigger fresh builds
 gulp.task("watch", function() {
-    gutil.log(gutil.colors.bold.black.bgYellow("Watching for changes in app files..."));
-    gulp.watch(app_js_files, ["app_js"]);
+    gutil.log(gutil.colors.bold.black.bgYellow("Watching for changes in app and test files..."));
+    gulp.watch(app_js_files.concat(test_js_files), ["app_js"]);
     gulp.watch(["./assets/css/*.scss"], ["css"]);
 });
 
