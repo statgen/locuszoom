@@ -102,7 +102,7 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.curtain")
+    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
         .attr("id", this.getBaseId() + ".panel_container");
         
     // Append clip path to the parent svg element

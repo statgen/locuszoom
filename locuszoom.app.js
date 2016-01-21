@@ -561,6 +561,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.svg.attr("width", this.view.width).attr("height", this.view.height);
     }
     if (this.initialized){
+        this.ui.render();
         this.stackPanels();
     }
     return this;
@@ -593,6 +594,63 @@ LocusZoom.Instance.prototype.stackPanels = function(PanelClass){
 
 // Call initialize on all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+
+    // Create an element/layer for containing various UI items
+    var ui_svg = this.svg.append("g")
+        .attr("class", "lz-ui").attr("id", this.id + ".ui")
+        .style("display", "none");
+    this.ui = {
+        svg: ui_svg,
+        parent: this,
+        show: function(){
+            this.svg.style("display", null);
+        },
+        hide: function(){
+            this.svg.style("display", "none");
+        },
+        toggleMouseovers: function(bool){
+            if (bool){
+                this.svg.on("mouseover", function(){
+                    this.ui.show();
+                }.bind(this))
+                .on("mouseout", function(){
+                    this.ui.hide();
+                }.bind(this));
+            } else {
+                this.svg.on("mouseover", null);
+                this.svg.on("mouseout", null);
+            }
+        }.bind(this),
+        initialize: function(){
+            // Set mouse events
+            this.toggleMouseovers(true);
+            // Resize handle
+            this.resize_handle = this.svg.append("g")
+                .attr("id", "resize_handle")
+            this.resize_handle.append("path")
+                .attr("class", "lz-ui-resize_handle")
+                .attr("d", "M 0,16, L 16,0, L 16,16 Z");
+            var resize_drag = d3.behavior.drag();
+            //resize_drag.origin(function() { return this; });
+            resize_drag.on("dragstart", function(){
+                this.toggleMouseovers(false);
+            }.bind(this));
+            resize_drag.on("dragend", function(){
+                this.toggleMouseovers(true);
+            }.bind(this));
+            resize_drag.on("drag", function(){
+                this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
+            }.bind(this.parent));
+            this.resize_handle.call(resize_drag);
+            // Render all UI elements
+            this.render();
+        },
+        render: function(){
+            this.resize_handle
+                .attr("transform", "translate(" + (this.parent.view.width - 16) + ", " + (this.parent.view.height - 16) + ")");
+        }
+    };
+    this.ui.initialize();
 
     // Create the curtain object with svg element and drop/raise methods
     var curtain_svg = this.svg.append("g")
@@ -783,7 +841,7 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.curtain")
+    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
         .attr("id", this.getBaseId() + ".panel_container");
         
     // Append clip path to the parent svg element

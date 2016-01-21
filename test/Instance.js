@@ -82,12 +82,23 @@ describe('LocusZoom.Instance', function(){
         });
     });
     describe("SVG Composition", function() {
-        describe("Curtain", function() {
+        describe("UI Layer", function() {
             beforeEach(function(){
                 d3.select("body").append("div").attr("id", "instance_id");
                 this.instance = LocusZoom.populate("#instance_id");
             });
-            it('last child should be a curtain element', function(){
+            it('second-to-last child should be a ui group element', function(){
+                var childNodes = this.instance.svg.node().childNodes.length;
+                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("instance_id.ui");
+                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("class").should.be.exactly("lz-ui");
+            });
+        });
+        describe("Curtain Layer", function() {
+            beforeEach(function(){
+                d3.select("body").append("div").attr("id", "instance_id");
+                this.instance = LocusZoom.populate("#instance_id");
+            });
+            it('last child should be a curtain group element', function(){
                 d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
                 d3.select(this.instance.svg.node().lastChild).attr("class").should.be.exactly("lz-curtain");
             });
