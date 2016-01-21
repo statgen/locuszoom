@@ -33,7 +33,7 @@ Once complete run or `gulp` from the top of the application directory to run all
 
 #### Other supported gulp commands:
 
-* `gulp watch` - Watch for any changes to app *.js, *.scss, or test source files to trigger another full build
+* `gulp watch` - Watch for any changes to app .js, .scss, or test source files to trigger another full build
 * `gulp test` - Just run the tests
 * `gulp js` - Build app and vendor js files (runs tests and aborts if tests fail)
 * `gulp app_js` - Build app js files (runs tests and aborts if tests fail)
@@ -48,7 +48,7 @@ This flag is particularly useful with the watch command:
 
 `$ gulp watch --force`
 
-The above command with enter forced-watch-mode, which will detect any changes to app *.js or *.scss files, as well as test files, and run a new build. If errors are encountered in the tests they will be reported, but `locuszoom.app.js` and `locuszoom.app.min.js` will still be generated and gulp will not exit but return to watch mode. **This is an effective way to have automatic continuous builds while developing both the application and its tests.**
+The above command with enter forced-watch-mode, which will detect any changes to app .js or .scss files, as well as test files, and run a new build. If errors are encountered in the tests they will be reported, but `locuszoom.app.js` and `locuszoom.app.min.js` will still be generated and gulp will not exit but return to watch mode. **This is an effective way to have automatic continuous builds while developing both the application and its tests.**
 
 #### Automated Testing
 
