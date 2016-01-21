@@ -24,6 +24,8 @@ LocusZoom.Panel = function() {
     this.view = {
         width:  0,
         height: 0,
+        proportional_width: 1,
+        proportional_height: 1,
         origin: { x: 0, y: 0 },
         margin: { top: 0, right: 0, bottom: 0, left: 0 },
         cliparea: {
@@ -245,11 +247,12 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
             .call(this.state.x_axis);
         if (this.axes.x.label != null){
+            
             var x_label = this.axes.x.label;
             if (typeof this.axes.x.label == "function"){ x_label = this.axes.x.label(); }
             this.svg.x_axis_label
                 .attr("x", this.view.cliparea.width / 2)
-                .attr("y", 33)
+                .attr("y", this.view.margin.bottom * 0.95)
                 .text(x_label);
         }
     }
@@ -263,10 +266,11 @@ LocusZoom.Panel.prototype.render = function(){
         if (this.axes.y1.label != null){
             var y1_label = this.axes.y1.label;
             if (typeof this.axes.y1.label == "function"){ y1_label = this.axes.y1.label(); }
+            var x = this.view.margin.left * -0.55;
+            var y = this.view.cliparea.height / 2;
             this.svg.y1_axis_label
-                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
-                .attr("x", -28)
-                .attr("y", this.view.cliparea.height / 2)
+                .attr("transform", "rotate(-90 " + x + "," + y + ")")
+                .attr("x", x).attr("y", y)
                 .text(y1_label);
         }
     }
@@ -280,10 +284,11 @@ LocusZoom.Panel.prototype.render = function(){
         if (this.axes.y2.label != null){
             var y2_label = this.axes.y2.label;
             if (typeof this.axes.y2.label == "function"){ y2_label = this.axes.y2.label(); }
+            var x = this.view.margin.right * 0.55;
+            var y = this.view.cliparea.height / 2;
             this.svg.y2_axis_label
-                .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
-                .attr("x", this.view.width - this.view.margin.right)
-                .attr("y", this.view.cliparea.height / 2)
+                .attr("transform", "rotate(-90 " + x + "," + y + ")")
+                .attr("x", x).attr("y", y)
                 .text(y2_label);
         }
     }

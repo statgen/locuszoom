@@ -15,6 +15,8 @@
 
 LocusZoom.Instance = function(id, datasource, layout, state) {
 
+    this.initialized = false;
+
     this.id = id;
     this.parent = LocusZoom;
     
@@ -54,6 +56,9 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.svg != null){
         this.svg.attr("width", this.view.width).attr("height", this.view.height);
     }
+    if (this.initialized){
+        this.stackPanels();
+    }
     return this;
 };
 
@@ -65,7 +70,21 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
     var panel = new PanelClass();
     panel.parent = this;
     this._panels[panel.id] = panel;
+    this.stackPanels();
     return this._panels[panel.id];
+};
+
+// Automatically position panels vertically with equally proportioned heights
+LocusZoom.Instance.prototype.stackPanels = function(PanelClass){
+    var proportional_height = 1 / Object.keys(this._panels).length;
+    var discrete_height = this.view.height * proportional_height;
+    var panel_idx = 0;
+    for (var id in this._panels){
+        this._panels[id].view.proportional_height = proportional_height;
+        this._panels[id].setOrigin(0, panel_idx * discrete_height);
+        this._panels[id].setDimensions(this.view.width, discrete_height);
+        panel_idx++;
+    }
 };
 
 // Call initialize on all child panels
@@ -100,6 +119,9 @@ LocusZoom.Instance.prototype.initialize = function(){
     for (var id in this._panels){
         this._panels[id].initialize();
     }
+
+    // Flip the "initialized" bit
+    this.initialized = true;
 
     return this;
 
@@ -138,15 +160,11 @@ LocusZoom.DefaultInstance = function(){
     this.setDimensions(700,700);
   
     this.addPanel(LocusZoom.PositionsPanel)
-        .setOrigin(0, 0)
-        .setDimensions(700, 350)
         .setMargin(20, 20, 35, 50);
     this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
     //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
 
     this.addPanel(LocusZoom.GenesPanel)
-        .setOrigin(0, 350)
-        .setDimensions(700, 350)
         .setMargin(20, 20, 20, 50);
     this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
   
