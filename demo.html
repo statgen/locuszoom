@@ -100,6 +100,18 @@
       populateForms();
       $("#lz-1_hits").html(topHits.map(function(k) {return "<option>" + k + "</option>"}).join(""));
     };
+
+    function generateExportLink() {
+      var base64_svg = btoa(encodeURIComponent(d3.select(demo_instance.svg.node().parentNode).html()).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+      }));
+      d3.selectAll("#export a").remove();
+      d3.select("#export").append("a")
+        .attr("href-lang", "image/svg+xml")
+        .attr("href", "data:image/svg+xml;base64,\n" + base64_svg)
+        .attr("title", "locuszoom.svg")
+        .text("Download SVG");
+    }
   </script>
 </head>
 <body style="background-color: #CCCCCC; margin: 10px;" onload="initPage()">
@@ -120,6 +132,11 @@
       <td style="vertical-align:top">
         <h3>Top Hits</h3>
         <div id="tophits"></div>
+        <div>
+          <button onclick="generateExportLink()">Export SVG</button>
+        </div>
+        <div id="export" style="margin-top: 10px; font-weight: 700;">
+        </div>
       </td>
     </tr>
   </table>
