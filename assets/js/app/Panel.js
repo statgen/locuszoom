@@ -14,14 +14,20 @@
 */
 
 LocusZoom.Panel = function() { 
+
+    this.initialized = false;
     
     this.id     = null;
     this.parent = null;
-    this.svg    = null;
+    this.svg    = {};
     
     this.view = {
         width:  0,
         height: 0,
+        min_width: 0,
+        min_height: 0,
+        proportional_width: 1,
+        proportional_height: 1,
         origin: { x: 0, y: 0 },
         margin: { top: 0, right: 0, bottom: 0, left: 0 },
         cliparea: {
@@ -66,28 +72,45 @@ LocusZoom.Panel = function() {
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (typeof width  !== "undefined"){ this.view.width  = +width;  }
-    if (typeof height !== "undefined"){ this.view.height = +height; }
+    if (!isNaN(width) && width >= 0){
+        this.view.width = Math.max(Math.round(+width), this.view.min_width);
+    }
+    if (!isNaN(height) && height >= 0){
+        this.view.height = Math.max(Math.round(+height), this.view.min_height);
+    }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
+    if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (typeof x !== "undefined"){ this.view.origin.x = +x; }
-    if (typeof y !== "undefined"){ this.view.origin.y = +y; }
+    if (!isNaN(x) && x >= 0){ this.view.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.view.width); }
+    if (!isNaN(y) && y >= 0){ this.view.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.view.height); }
+    if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
-    if (typeof top    !== "undefined"){ this.view.margin.top    = +top;    }
-    if (typeof right  !== "undefined"){ this.view.margin.right  = +right;  }
-    if (typeof bottom !== "undefined"){ this.view.margin.bottom = +bottom; }
-    if (typeof left   !== "undefined"){ this.view.margin.left   = +left;   }
+    if (!isNaN(top)    && top    >= 0){ this.view.margin.top    = Math.max(Math.round(+top),    0); }
+    if (!isNaN(right)  && right  >= 0){ this.view.margin.right  = Math.max(Math.round(+right),  0); }
+    if (!isNaN(bottom) && bottom >= 0){ this.view.margin.bottom = Math.max(Math.round(+bottom), 0); }
+    if (!isNaN(left)   && left   >= 0){ this.view.margin.left   = Math.max(Math.round(+left),   0); }
+    if (this.view.margin.top + this.view.margin.bottom > this.view.height){
+        var extra = Math.floor(((this.view.margin.top + this.view.margin.bottom) - this.view.height) / 2);
+        this.view.margin.top -= extra;
+        this.view.margin.bottom -= extra;
+    }
+    if (this.view.margin.left + this.view.margin.right > this.view.width){
+        var extra = Math.floor(((this.view.margin.left + this.view.margin.right) - this.view.width) / 2);
+        this.view.margin.left -= extra;
+        this.view.margin.right -= extra;
+    }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
     this.view.cliparea.origin.x = this.view.margin.left;
     this.view.cliparea.origin.y = this.view.margin.top;
+    if (this.initialized){ this.render(); }
     return this;
 };
 
@@ -95,24 +118,21 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
-    var container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.curtain")
-        .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
+    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
+        .attr("id", this.getBaseId() + ".panel_container");
         
     // Append clip path to the parent svg element
-    container.append("clipPath")
-        .attr("id", this.getBaseId() + ".clip")
-        .append("rect")
-        .attr("width", this.view.width)
-        .attr("height", this.view.height);
+    var clipPath = this.svg.container.append("clipPath")
+        .attr("id", this.getBaseId() + ".clip");
+    this.svg.clipRect = clipPath.append("rect");
     
     // Append svg group for rendering all panel child elements, clipped by the clip path
-    this.svg = container.append("g")
+    this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
     // Append a curtain element with svg element and drop/raise methods
-    var panel_curtain_svg = container.append("g")
+    var panel_curtain_svg = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".curtain")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)")
         .attr("class", "lz-curtain").style("display", "none");
@@ -137,36 +157,33 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+    // Initialize Axes
+    this.svg.x_axis = this.svg.group.append("g").attr("class", "lz-x lz-axis");
+    if (this.axes.x.render){
+        this.svg.x_axis_label = this.svg.x_axis.append("text")
+            .attr("class", "lz-x lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+    this.svg.y1_axis = this.svg.group.append("g").attr("class", "lz-y lz-y1 lz-axis");
+    if (this.axes.y1.render){
+        this.svg.y1_axis_label = this.svg.y1_axis.append("text")
+            .attr("class", "lz-y1 lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+    this.svg.y2_axis = this.svg.group.append("g").attr("class", "lz-y lz-y2 lz-axis");
+    if (this.axes.y2.render){
+        this.svg.y2_axis_label = this.svg.y2_axis.append("text")
+            .attr("class", "lz-y2 lz-axis lz-label")
+            .attr("text-anchor", "middle");
+    }
+
     // Initialize child Data Layers
     for (var id in this._data_layers){
         this._data_layers[id].initialize();
     }
 
-    // Initialize Axes
-    if (this.axes.x.render){
-        this.state.x_scale = d3.scale.linear().domain([0,1]).range([0, this.view.cliparea.width]);
-        this.state.x_axis  = d3.svg.axis().scale(this.state.x_scale).orient("bottom");
-        this.svg.append("g")
-            .attr("class", "lz-x lz-axis")
-            .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
-            .call(this.state.x_axis);
-    }
-    if (this.axes.y1.render){
-        this.state.y1_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
-        this.state.y1_axis  = d3.svg.axis().scale(this.state.y1_scale).orient("left");
-        this.svg.append("g")
-            .attr("class", "lz-y lz-y1 lz-axis")
-            .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
-            .call(this.state.y1_axis);
-    }
-    if (this.axes.y2.render){
-        this.state.y2_scale = d3.scale.linear().domain([0,1]).range([this.view.cliparea.height, 0]).nice();
-        this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale).orient("right");
-        this.svg.append("g")
-            .attr("class", "lz-y lz-y2 lz-axis")
-            .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
-            .call(this.state.y2_axis);
-    }
+    // Flip the "initialized" bit
+    this.initialized = true;
 
     return this;
     
@@ -205,9 +222,15 @@ LocusZoom.Panel.prototype.reMap = function(){
 
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(){  
+LocusZoom.Panel.prototype.render = function(){
 
-    // Generate extents and scales.
+    // Position the panel container
+    this.svg.container.attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
+
+    // Set size on the clip rect
+    this.svg.clipRect.attr("width", this.view.width).attr("height", this.view.height);
+
+    // Generate extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
         this.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.view.cliparea.width/120, true);
@@ -215,7 +238,6 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.view.cliparea.width]);
     }
-    // Pad out y scales for pretty ticks, regardless of axis rendering
     if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
         this.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent);
@@ -235,87 +257,66 @@ LocusZoom.Panel.prototype.render = function(){
     if (this.axes.x.render){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
-            .orient("bottom")
-            .tickValues(this.axes.x.ticks)
+            .orient("bottom").tickValues(this.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
-        this.svg.selectAll("g .lz-x.lz-axis").call(this.state.x_axis);
+        this.svg.x_axis
+            .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
+            .call(this.state.x_axis);
         if (this.axes.x.label != null){
+            
             var x_label = this.axes.x.label;
-            if (typeof this.axes.x.label == "function"){
-                x_label = this.axes.x.label();
-            }
-            if (this.svg.select("text.lz-x.lz-axis.lz-label")[0][0] == null){
-                this.svg.select("g .lz-x.lz-axis").append("text")
-                    .attr("class", "lz-x lz-axis lz-label")
-                    .attr("text-anchor", "middle")
-                    .attr("x", this.view.cliparea.width / 2)
-                    .attr("y", 33);
-            }
-            this.svg.select("text.lz-x.lz-axis.lz-label").text(x_label);
+            if (typeof this.axes.x.label == "function"){ x_label = this.axes.x.label(); }
+            this.svg.x_axis_label
+                .attr("x", this.view.cliparea.width / 2)
+                .attr("y", this.view.margin.bottom * 0.95)
+                .text(x_label);
         }
     }
 
     if (this.axes.y1.render){
         this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
             .orient("left").tickValues(this.axes.y1.ticks);
-        this.svg.selectAll("g .lz-y.lz-y1.lz-axis").call(this.state.y1_axis);
+        this.svg.y1_axis
+            .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
+            .call(this.state.y1_axis);
         if (this.axes.y1.label != null){
             var y1_label = this.axes.y1.label;
-            if (typeof this.axes.y1.label == "function"){
-                y1_label = this.axes.y1.label();
-            }
-            if (this.svg.select("text.lz-y1.lz-axis.lz-label")[0][0] == null){
-                this.svg.select("g .lz-y1.lz-axis").append("text")
-                    .attr("class", "lz-y1 lz-axis lz-label")
-                    .attr("text-anchor", "middle")
-                    .attr("transform", "rotate(-90 " + -28 + "," + (this.view.cliparea.height / 2) + ")")
-                    .attr("x", -28)
-                    .attr("y", this.view.cliparea.height / 2);
-            }
-            this.svg.select("text.lz-y1.lz-axis.lz-label").text(y1_label);
+            if (typeof this.axes.y1.label == "function"){ y1_label = this.axes.y1.label(); }
+            var x = this.view.margin.left * -0.55;
+            var y = this.view.cliparea.height / 2;
+            this.svg.y1_axis_label
+                .attr("transform", "rotate(-90 " + x + "," + y + ")")
+                .attr("x", x).attr("y", y)
+                .text(y1_label);
         }
     }
 
     if (this.axes.y2.render){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
             .orient("left").tickValues(this.axes.y2.ticks);
-        this.svg.selectAll("g .lz-y.lz-y2.lz-axis").call(this.state.y2_axis);
+        this.svg.y2_axis
+            .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
+            .call(this.state.y2_axis);
+        if (this.axes.y2.label != null){
+            var y2_label = this.axes.y2.label;
+            if (typeof this.axes.y2.label == "function"){ y2_label = this.axes.y2.label(); }
+            var x = this.view.margin.right * 0.55;
+            var y = this.view.cliparea.height / 2;
+            this.svg.y2_axis_label
+                .attr("transform", "rotate(-90 " + x + "," + y + ")")
+                .attr("x", x).attr("y", y)
+                .text(y2_label);
+        }
     }
     
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
         if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].prerender().render();
+            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
         }
     }
 
     return this;
-    
-    // Set zoom
-    /*
-    this.view.zoom = d3.behavior.zoom()
-        .scaleExtent([1, 1])
-        .x(this.view.xscale)
-        .on("zoom", function() {
-            svg.select(".datum").attr("d", line)
-            console.log("zooming");
-        });
-    this.svg.call(this.view.zoom);
-    */
-    
-    // Set drag
-    /*
-    this.drag = d3.behavior.drag()
-        .on("drag", function() {
-            var stage = d3.select("#"+this.id+" g.stage");
-            var transform = d3.transform(stage.attr("transform"));
-            transform.translate[0] += d3.event.dx;
-            stage.attr("transform", transform.toString());
-        }).on("dragend", function() {
-            // mapTo new values
-        });
-    this.svg.call(this.drag);
-    */    
     
 };
 
@@ -327,7 +328,10 @@ LocusZoom.Panel.prototype.render = function(){
 LocusZoom.PositionsPanel = function(){
   
     LocusZoom.Panel.apply(this, arguments);   
+
     this.id = "positions";
+    this.view.min_width = 300;
+    this.view.min_height = 200;
 
     this.axes.x.render = true;
     this.axes.x.label = function(){
@@ -358,7 +362,10 @@ LocusZoom.PositionsPanel.prototype = new LocusZoom.Panel();
 LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
+
     this.id = "genes";
+    this.view.min_width = 300;
+    this.view.min_height = 200;
 
     this.xExtent = function(){
         return d3.extent([this.parent.state.start, this.parent.state.end]);

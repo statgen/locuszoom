@@ -70,8 +70,22 @@ describe('LocusZoom.Instance', function(){
             this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
             this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
-        it('should allow for inializing itself', function(){
+        it('should enforce minimum dimensions based on its panels', function(){
+            var positions_panel = this.instance.addPanel(LocusZoom.PositionsPanel);
+            var genes_panel = this.instance.addPanel(LocusZoom.GenesPanel);
+            var calculated_min_width = Math.max(positions_panel.view.min_width, genes_panel.view.min_width);
+            var calculated_min_height = positions_panel.view.min_height + genes_panel.view.min_height;
+            assert.equal(this.instance.view.min_width, calculated_min_width);
+            assert.equal(this.instance.view.min_height, calculated_min_height);
+            this.instance.view.width.should.not.be.lessThan(this.instance.view.min_width);
+            this.instance.view.height.should.not.be.lessThan(this.instance.view.min_height);
+        });
+        it('should track whether it\'s initialized', function(){
             this.instance.initialize.should.be.a.Function;
+            assert.equal(this.instance.initialized, false);
+            d3.select("body").append("div").attr("id", "another_instance_id");
+            var another_instance = LocusZoom.populate("#another_instance_id");
+            assert.equal(another_instance.initialized, true);
         });
         it('should allow for mapping to new coordinates', function(){
             this.instance.mapTo.should.be.a.Function;
@@ -82,12 +96,43 @@ describe('LocusZoom.Instance', function(){
         });
     });
     describe("SVG Composition", function() {
-        describe("Curtain", function() {
+        describe("UI Layer", function() {
             beforeEach(function(){
                 d3.select("body").append("div").attr("id", "instance_id");
                 this.instance = LocusZoom.populate("#instance_id");
             });
-            it('last child should be a curtain element', function(){
+            it('second-to-last child should be a ui group element', function(){
+                var childNodes = this.instance.svg.node().childNodes.length;
+                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("instance_id.ui");
+                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("class").should.be.exactly("lz-ui");
+            });
+            it('should have a ui object with ui svg selectors', function(){
+                this.instance.ui.should.be.an.Object;
+                this.instance.ui.svg.should.be.an.Object;
+                assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#instance_id\\.ui").html());
+                assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+            });
+            it('should be hidden by default', function(){
+                assert.equal(this.instance.ui.svg.style("display"), "none");
+            });
+            it('should have a method that shows the UI layer', function(){
+                this.instance.ui.show.should.be.a.Function;
+                this.instance.ui.show();
+                assert.equal(this.instance.ui.svg.style("display"), "");
+            });
+            it('should have a method that hides the UI layer', function(){
+                this.instance.ui.hide.should.be.a.Function;
+                this.instance.ui.show();
+                this.instance.ui.hide();
+                assert.equal(this.instance.ui.svg.style("display"), "none");
+            });
+        });
+        describe("Curtain Layer", function() {
+            beforeEach(function(){
+                d3.select("body").append("div").attr("id", "instance_id");
+                this.instance = LocusZoom.populate("#instance_id");
+            });
+            it('last child should be a curtain group element', function(){
                 d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
                 d3.select(this.instance.svg.node().lastChild).attr("class").should.be.exactly("lz-curtain");
             });
@@ -95,6 +140,9 @@ describe('LocusZoom.Instance', function(){
                 this.instance.curtain.should.be.an.Object;
                 this.instance.curtain.svg.should.be.an.Object;
                 assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#instance_id\\.curtain").html());
+            });
+            it('should be hidden by default', function(){
+                assert.equal(this.instance.curtain.svg.style("display"), "none");
             });
             it('should have a method that drops the curtain', function(){
                 this.instance.curtain.drop.should.be.a.Function;
