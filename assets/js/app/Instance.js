@@ -125,11 +125,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         vertical: mouse_guide_vertical_svg,
         horizontal: mouse_guide_horizontal_svg
     };
-    this.svg.on("mousemove", function(){
-        var coords = d3.mouse(this.svg.node());
-        this.mouse_guide.vertical.attr("x", coords[0]);
-        this.mouse_guide.horizontal.attr("y", coords[1]);
-    }.bind(this));
 
     // Create an element/layer for containing various UI items
     var ui_svg = this.svg.append("g")
@@ -216,6 +211,13 @@ LocusZoom.Instance.prototype.initialize = function(){
         if (!this.ui.is_resize_dragging){
             this.ui.hide();
         }
+        this.mouse_guide.vertical.attr("x", -1);
+        this.mouse_guide.horizontal.attr("y", -1);
+    }.bind(this));
+    this.svg.on("mousemove", function(){
+        var coords = d3.mouse(this.svg.node());
+        this.mouse_guide.vertical.attr("x", coords[0]);
+        this.mouse_guide.horizontal.attr("y", coords[1]);
     }.bind(this));
     
     // Flip the "initialized" bit
