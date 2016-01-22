@@ -49,11 +49,11 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
 // Set the view dimensions for this instance. If an SVG exists, update its dimensions
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-    if (!isNaN(width)){
-        this.view.width = Math.max(Math.round(+width),0);
+    if (!isNaN(width) && width >= 0){
+        this.view.width = Math.max(Math.round(+width), this.view.min_width);
     }
-    if (!isNaN(height)){
-        this.view.height = Math.max(Math.round(+height),0);
+    if (!isNaN(height) && height >= 0){
+        this.view.height = Math.max(Math.round(+height), this.view.min_height);
     }
     if (this.svg != null){
         this.svg.attr("width", this.view.width).attr("height", this.view.height);

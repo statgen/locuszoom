@@ -2,7 +2,7 @@
 
 /**
   Instance.js Tests
-  Test composition of the LocusZoom.Instance object and its base classes
+  Test composition of the LocusZoom.Panel object and its base classes
 */
 
 var jsdom = require('mocha-jsdom');
@@ -33,8 +33,122 @@ describe('LocusZoom.Panel', function(){
 
     // Tests
     it("creates an object for its name space", function() {
-        should.exist(LocusZoom.Instance);
+        should.exist(LocusZoom.Panel);
     });
+
+    describe("Constructor", function() {
+        beforeEach(function() {
+            this.panel = new LocusZoom.Panel();
+        });
+        it("returns an object", function() {
+            this.panel.should.be.an.Object;
+        });
+        it('should have an id', function(){
+            this.panel.should.have.property('id');
+        });
+        it('should have an object for tracking state', function(){
+            this.panel.should.have.property('state').which.is.an.Object;
+        });
+        it('should have an object for tracking data layers', function(){
+            this.panel.should.have.property('_data_layers').which.is.an.Object;
+        });
+        it('should track dimensions, margins, and positioning with a view object', function(){
+            this.panel.should.have.property('view').which.is.an.Object;
+            this.panel.view.width.should.be.a.Number;
+            this.panel.view.height.should.be.a.Number;
+            this.panel.view.min_width.should.be.a.Number;
+            this.panel.view.min_height.should.be.a.Number;
+            this.panel.view.proportional_width.should.be.a.Number;
+            this.panel.view.proportional_height.should.be.a.Number;
+            this.panel.view.origin.should.be.an.Object;
+            this.panel.view.origin.should.have.property('x').which.is.a.Number
+            this.panel.view.origin.should.have.property('y').which.is.a.Number;
+            this.panel.view.margin.should.be.an.Object;
+            this.panel.view.margin.should.have.property('top').which.is.a.Number
+            this.panel.view.margin.should.have.property('right').which.is.a.Number;
+            this.panel.view.margin.should.have.property('bottom').which.is.a.Number;
+            this.panel.view.margin.should.have.property('left').which.is.a.Number;
+            this.panel.view.cliparea.should.be.an.Object;
+            this.panel.view.cliparea.should.have.property('width').which.is.a.Number
+            this.panel.view.cliparea.should.have.property('height').which.is.a.Number;
+            this.panel.view.cliparea.should.have.property('origin').which.is.an.Object;
+            this.panel.view.cliparea.origin.should.have.property('x').which.is.a.Number;
+            this.panel.view.cliparea.origin.should.have.property('y').which.is.a.Number;
+        });
+    });
+
+    describe("Geometry methods", function() {
+        beforeEach(function(){
+            d3.select("body").append("div").attr("id", "instance_id");
+            this.instance = LocusZoom.populate("#instance_id");
+            this.panel = this.instance._panels.positions;
+        });
+        it('should allow changing dimensions', function(){
+            this.panel.setDimensions(840, 560);
+            this.panel.view.should.have.property('width').which.is.exactly(840);
+            this.panel.view.should.have.property('height').which.is.exactly(560);
+            this.panel.setDimensions(675.3, -50);
+            this.panel.view.should.have.property('width').which.is.exactly(675);
+            this.panel.view.should.have.property('height').which.is.exactly(560);
+            this.panel.setDimensions("q", 942);
+            this.panel.view.should.have.property('width').which.is.exactly(675);
+            this.panel.view.should.have.property('height').which.is.exactly(942);
+        });
+        it('should enforce minimum dimensions', function(){
+            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
+            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
+            this.panel.setDimensions(this.panel.view.min_width / 2, 0);
+            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
+            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
+            this.panel.setDimensions(0, this.panel.view.min_height / 2);
+            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
+            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
+        });
+        it('should allow setting origin only within the instance dimensions', function(){
+            this.instance.setDimensions(500, 600);
+            this.panel.setOrigin(20, 50);
+            this.panel.view.origin.x.should.be.exactly(20);
+            this.panel.view.origin.y.should.be.exactly(50);
+            this.panel.setOrigin(0, 0);
+            this.panel.view.origin.x.should.be.exactly(0);
+            this.panel.view.origin.y.should.be.exactly(0);
+            this.panel.setOrigin("q", { foo: "bar" });
+            this.panel.view.origin.x.should.be.exactly(0);
+            this.panel.view.origin.y.should.be.exactly(0);
+            this.panel.setOrigin(700, 800);
+            this.panel.view.origin.x.should.be.exactly(500);
+            this.panel.view.origin.y.should.be.exactly(600);
+        });
+        it('should allow setting margin, which sets cliparea origin and dimensions', function(){
+            this.panel.setMargin(1, 2, 3, 4);
+            this.panel.view.margin.top.should.be.exactly(1);
+            this.panel.view.margin.right.should.be.exactly(2);
+            this.panel.view.margin.bottom.should.be.exactly(3);
+            this.panel.view.margin.left.should.be.exactly(4);
+            this.panel.view.cliparea.origin.x.should.be.exactly(4);
+            this.panel.view.cliparea.origin.y.should.be.exactly(1);
+            this.panel.view.cliparea.width.should.be.exactly(this.panel.view.width - (2 + 4));
+            this.panel.view.cliparea.height.should.be.exactly(this.panel.view.height - (1 + 3));
+            this.panel.setMargin(0, "12", -17, {foo: "bar"});
+            this.panel.view.margin.top.should.be.exactly(0);
+            this.panel.view.margin.right.should.be.exactly(12);
+            this.panel.view.margin.bottom.should.be.exactly(3);
+            this.panel.view.margin.left.should.be.exactly(4);
+            this.panel.view.cliparea.origin.x.should.be.exactly(4);
+            this.panel.view.cliparea.origin.y.should.be.exactly(0);
+            this.panel.view.cliparea.width.should.be.exactly(this.panel.view.width - (12 + 4));
+            this.panel.view.cliparea.height.should.be.exactly(this.panel.view.height - (0 + 3));
+        });
+        it('should prevent margins from overlapping', function(){
+            this.panel.setDimensions(500, 500);
+            this.panel.setMargin(700, 1000, 900, 800);
+            this.panel.view.margin.should.have.property('top').which.is.exactly(150);
+            this.panel.view.margin.should.have.property('right').which.is.exactly(350);
+            this.panel.view.margin.should.have.property('bottom').which.is.exactly(350);
+            this.panel.view.margin.should.have.property('left').which.is.exactly(150);
+        });
+    });
+
     describe("SVG Composition", function() {
         describe("Curtain", function() {
             beforeEach(function(){

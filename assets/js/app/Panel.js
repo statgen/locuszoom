@@ -72,8 +72,12 @@ LocusZoom.Panel = function() {
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (typeof width  !== "undefined"){ this.view.width  = +width;  }
-    if (typeof height !== "undefined"){ this.view.height = +height; }
+    if (!isNaN(width) && width >= 0){
+        this.view.width = Math.max(Math.round(+width), this.view.min_width);
+    }
+    if (!isNaN(height) && height >= 0){
+        this.view.height = Math.max(Math.round(+height), this.view.min_height);
+    }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
     if (this.initialized){ this.render(); }
@@ -81,17 +85,27 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (typeof x !== "undefined"){ this.view.origin.x = +x; }
-    if (typeof y !== "undefined"){ this.view.origin.y = +y; }
+    if (!isNaN(x) && x >= 0){ this.view.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.view.width); }
+    if (!isNaN(y) && y >= 0){ this.view.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.view.height); }
     if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
-    if (typeof top    !== "undefined"){ this.view.margin.top    = +top;    }
-    if (typeof right  !== "undefined"){ this.view.margin.right  = +right;  }
-    if (typeof bottom !== "undefined"){ this.view.margin.bottom = +bottom; }
-    if (typeof left   !== "undefined"){ this.view.margin.left   = +left;   }
+    if (!isNaN(top)    && top    >= 0){ this.view.margin.top    = Math.max(Math.round(+top),    0); }
+    if (!isNaN(right)  && right  >= 0){ this.view.margin.right  = Math.max(Math.round(+right),  0); }
+    if (!isNaN(bottom) && bottom >= 0){ this.view.margin.bottom = Math.max(Math.round(+bottom), 0); }
+    if (!isNaN(left)   && left   >= 0){ this.view.margin.left   = Math.max(Math.round(+left),   0); }
+    if (this.view.margin.top + this.view.margin.bottom > this.view.height){
+        var extra = Math.floor(((this.view.margin.top + this.view.margin.bottom) - this.view.height) / 2);
+        this.view.margin.top -= extra;
+        this.view.margin.bottom -= extra;
+    }
+    if (this.view.margin.left + this.view.margin.right > this.view.width){
+        var extra = Math.floor(((this.view.margin.left + this.view.margin.right) - this.view.width) / 2);
+        this.view.margin.left -= extra;
+        this.view.margin.right -= extra;
+    }
     this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
     this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
     this.view.cliparea.origin.x = this.view.margin.left;
