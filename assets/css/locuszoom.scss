@@ -28,6 +28,22 @@ svg.#{$namespace}-locuszoom {
     stroke: rgba(45,45,45,0.85);
     stroke-width: 1;
     cursor: nwse-resize;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle:hover {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle_dragging {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round;
   }
 
   .#{$namespace}-axis path,

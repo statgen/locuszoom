@@ -151,9 +151,11 @@ LocusZoom.Instance.prototype.initialize = function(){
             var resize_drag = d3.behavior.drag();
             //resize_drag.origin(function() { return this; });
             resize_drag.on("dragstart", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
                 this.toggleMouseovers(false);
             }.bind(this));
             resize_drag.on("dragend", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
                 this.toggleMouseovers(true);
             }.bind(this));
             resize_drag.on("drag", function(){
@@ -165,7 +167,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         },
         render: function(){
             this.resize_handle
-                .attr("transform", "translate(" + (this.parent.view.width - 16) + ", " + (this.parent.view.height - 16) + ")");
+                .attr("transform", "translate(" + (this.parent.view.width - 17) + ", " + (this.parent.view.height - 17) + ")");
         }
     };
     this.ui.initialize();

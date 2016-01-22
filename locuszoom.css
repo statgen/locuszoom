@@ -18,7 +18,19 @@ svg.lz-locuszoom {
     fill: rgba(210, 210, 210, 0.85);
     stroke: rgba(45, 45, 45, 0.85);
     stroke-width: 1;
-    cursor: nwse-resize; }
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-ui-resize_handle:hover {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-ui-resize_handle_dragging {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
