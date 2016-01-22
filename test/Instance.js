@@ -70,6 +70,16 @@ describe('LocusZoom.Instance', function(){
             this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
             this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
+        it('should enforce minimum dimensions based on its panels', function(){
+            var positions_panel = this.instance.addPanel(LocusZoom.PositionsPanel);
+            var genes_panel = this.instance.addPanel(LocusZoom.GenesPanel);
+            var calculated_min_width = Math.max(positions_panel.view.min_width, genes_panel.view.min_width);
+            var calculated_min_height = positions_panel.view.min_height + genes_panel.view.min_height;
+            assert.equal(this.instance.view.min_width, calculated_min_width);
+            assert.equal(this.instance.view.min_height, calculated_min_height);
+            this.instance.view.width.should.not.be.lessThan(this.instance.view.min_width);
+            this.instance.view.height.should.not.be.lessThan(this.instance.view.min_height);
+        });
         it('should track whether it\'s initialized', function(){
             this.instance.initialize.should.be.a.Function;
             assert.equal(this.instance.initialized, false);

@@ -24,6 +24,8 @@ LocusZoom.Panel = function() {
     this.view = {
         width:  0,
         height: 0,
+        min_width: 0,
+        min_height: 0,
         proportional_width: 1,
         proportional_height: 1,
         origin: { x: 0, y: 0 },
@@ -312,7 +314,10 @@ LocusZoom.Panel.prototype.render = function(){
 LocusZoom.PositionsPanel = function(){
   
     LocusZoom.Panel.apply(this, arguments);   
+
     this.id = "positions";
+    this.view.min_width = 300;
+    this.view.min_height = 200;
 
     this.axes.x.render = true;
     this.axes.x.label = function(){
@@ -343,7 +348,10 @@ LocusZoom.PositionsPanel.prototype = new LocusZoom.Panel();
 LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
+
     this.id = "genes";
+    this.view.min_width = 300;
+    this.view.min_height = 200;
 
     this.xExtent = function(){
         return d3.extent([this.parent.state.start, this.parent.state.end]);

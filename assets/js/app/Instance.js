@@ -35,7 +35,9 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     // The view property contains parameters that define the physical space of the entire LocusZoom object
     this.view = {
         width: 0,
-        height: 0
+        height: 0,
+        min_width: 0,
+        min_height: 0
     };
 
     // LocusZoom.Data.Requester
@@ -75,8 +77,27 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
     return this._panels[panel.id];
 };
 
-// Automatically position panels vertically with equally proportioned heights
+// Automatically position panels based on panel positioning rules and values
+// Default behavior: position panels vertically with equally proportioned heights
+// In all cases: bubble minimum panel dimensions up from panels to enforce minimum instance dimensions
 LocusZoom.Instance.prototype.stackPanels = function(){
+
+    // First set/enforce minimum instance dimensions based on current panels
+    var panel_min_widths = [];
+    var panel_min_heights = [];
+    for (var id in this._panels){
+        panel_min_widths.push(this._panels[id].view.min_width);
+        panel_min_heights.push(this._panels[id].view.min_height);
+    }
+    this.view.min_width = Math.max.apply(null, panel_min_widths);
+    this.view.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    if (this.view.width < this.view.min_width || this.view.height < this.view.min_height){
+        this.setDimensions(Math.max(this.view.width, this.view.min_width),
+                           Math.max(this.view.height, this.view.min_height));
+        return;
+    }
+
+    // Next set proportional and discrete heights of panels
     var proportional_height = 1 / Object.keys(this._panels).length;
     var discrete_height = this.view.height * proportional_height;
     var panel_idx = 0;
@@ -86,6 +107,7 @@ LocusZoom.Instance.prototype.stackPanels = function(){
         this._panels[id].setDimensions(this.view.width, discrete_height);
         panel_idx++;
     }
+
 };
 
 // Call initialize on all child panels
