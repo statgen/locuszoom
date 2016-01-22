@@ -144,9 +144,6 @@ describe('LocusZoom.Instance', function(){
                 this.instance.ui.hide();
                 assert.equal(this.instance.ui.svg.style("display"), "none");
             });
-            it('should have a method for toggling mouseovers', function(){
-                this.instance.ui.toggleMouseovers.should.be.a.Function;
-            });
         });
         describe("Curtain Layer", function() {
             beforeEach(function(){
