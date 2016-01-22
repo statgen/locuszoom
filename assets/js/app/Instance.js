@@ -15,6 +15,8 @@
 
 LocusZoom.Instance = function(id, datasource, layout, state) {
 
+    this.initialized = false;
+
     this.id = id;
     this.parent = LocusZoom;
     
@@ -33,7 +35,9 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     // The view property contains parameters that define the physical space of the entire LocusZoom object
     this.view = {
         width: 0,
-        height: 0
+        height: 0,
+        min_width: 0,
+        min_height: 0
     };
 
     // LocusZoom.Data.Requester
@@ -45,14 +49,18 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
 // Set the view dimensions for this instance. If an SVG exists, update its dimensions
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-    if (!isNaN(width)){
-        this.view.width = Math.max(Math.round(+width),0);
+    if (!isNaN(width) && width >= 0){
+        this.view.width = Math.max(Math.round(+width), this.view.min_width);
     }
-    if (!isNaN(height)){
-        this.view.height = Math.max(Math.round(+height),0);
+    if (!isNaN(height) && height >= 0){
+        this.view.height = Math.max(Math.round(+height), this.view.min_height);
     }
     if (this.svg != null){
         this.svg.attr("width", this.view.width).attr("height", this.view.height);
+    }
+    if (this.initialized){
+        this.ui.render();
+        this.stackPanels();
     }
     return this;
 };
@@ -65,11 +73,104 @@ LocusZoom.Instance.prototype.addPanel = function(PanelClass){
     var panel = new PanelClass();
     panel.parent = this;
     this._panels[panel.id] = panel;
+    this.stackPanels();
     return this._panels[panel.id];
+};
+
+// Automatically position panels based on panel positioning rules and values
+// Default behavior: position panels vertically with equally proportioned heights
+// In all cases: bubble minimum panel dimensions up from panels to enforce minimum instance dimensions
+LocusZoom.Instance.prototype.stackPanels = function(){
+
+    // First set/enforce minimum instance dimensions based on current panels
+    var panel_min_widths = [];
+    var panel_min_heights = [];
+    for (var id in this._panels){
+        panel_min_widths.push(this._panels[id].view.min_width);
+        panel_min_heights.push(this._panels[id].view.min_height);
+    }
+    this.view.min_width = Math.max.apply(null, panel_min_widths);
+    this.view.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    if (this.view.width < this.view.min_width || this.view.height < this.view.min_height){
+        this.setDimensions(Math.max(this.view.width, this.view.min_width),
+                           Math.max(this.view.height, this.view.min_height));
+        return;
+    }
+
+    // Next set proportional and discrete heights of panels
+    var proportional_height = 1 / Object.keys(this._panels).length;
+    var discrete_height = this.view.height * proportional_height;
+    var panel_idx = 0;
+    for (var id in this._panels){
+        this._panels[id].view.proportional_height = proportional_height;
+        this._panels[id].setOrigin(0, panel_idx * discrete_height);
+        this._panels[id].setDimensions(this.view.width, discrete_height);
+        panel_idx++;
+    }
+
 };
 
 // Call initialize on all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+
+    // Create an element/layer for containing various UI items
+    var ui_svg = this.svg.append("g")
+        .attr("class", "lz-ui").attr("id", this.id + ".ui")
+        .style("display", "none");
+    this.ui = {
+        svg: ui_svg,
+        parent: this,
+        show: function(){
+            this.svg.style("display", null);
+        },
+        hide: function(){
+            this.svg.style("display", "none");
+        },
+        toggleMouseovers: function(bool){
+            if (bool){
+                this.svg.on("mouseover", function(){
+                    this.ui.show();
+                }.bind(this))
+                .on("mouseout", function(){
+                    this.ui.hide();
+                }.bind(this));
+            } else {
+                this.svg.on("mouseover", null);
+                this.svg.on("mouseout", null);
+            }
+        }.bind(this),
+        initialize: function(){
+            // Set mouse events
+            this.toggleMouseovers(true);
+            // Resize handle
+            this.resize_handle = this.svg.append("g")
+                .attr("id", this.parent.id + ".ui.resize_handle")
+            this.resize_handle.append("path")
+                .attr("class", "lz-ui-resize_handle")
+                .attr("d", "M 0,16, L 16,0, L 16,16 Z");
+            var resize_drag = d3.behavior.drag();
+            //resize_drag.origin(function() { return this; });
+            resize_drag.on("dragstart", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
+                this.toggleMouseovers(false);
+            }.bind(this));
+            resize_drag.on("dragend", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
+                this.toggleMouseovers(true);
+            }.bind(this));
+            resize_drag.on("drag", function(){
+                this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
+            }.bind(this.parent));
+            this.resize_handle.call(resize_drag);
+            // Render all UI elements
+            this.render();
+        },
+        render: function(){
+            this.resize_handle
+                .attr("transform", "translate(" + (this.parent.view.width - 17) + ", " + (this.parent.view.height - 17) + ")");
+        }
+    };
+    this.ui.initialize();
 
     // Create the curtain object with svg element and drop/raise methods
     var curtain_svg = this.svg.append("g")
@@ -100,6 +201,9 @@ LocusZoom.Instance.prototype.initialize = function(){
     for (var id in this._panels){
         this._panels[id].initialize();
     }
+
+    // Flip the "initialized" bit
+    this.initialized = true;
 
     return this;
 
@@ -138,15 +242,11 @@ LocusZoom.DefaultInstance = function(){
     this.setDimensions(700,700);
   
     this.addPanel(LocusZoom.PositionsPanel)
-        .setOrigin(0, 0)
-        .setDimensions(700, 350)
         .setMargin(20, 20, 35, 50);
     this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
     //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
 
     this.addPanel(LocusZoom.GenesPanel)
-        .setOrigin(0, 350)
-        .setDimensions(700, 350)
         .setMargin(20, 20, 20, 50);
     this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
   
