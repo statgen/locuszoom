@@ -120,28 +120,14 @@ LocusZoom.Instance.prototype.initialize = function(){
     this.ui = {
         svg: ui_svg,
         parent: this,
+        is_resize_dragging: false,
         show: function(){
             this.svg.style("display", null);
         },
         hide: function(){
             this.svg.style("display", "none");
         },
-        toggleMouseovers: function(bool){
-            if (bool){
-                this.svg.on("mouseover", function(){
-                    this.ui.show();
-                }.bind(this))
-                .on("mouseout", function(){
-                    this.ui.hide();
-                }.bind(this));
-            } else {
-                this.svg.on("mouseover", null);
-                this.svg.on("mouseout", null);
-            }
-        }.bind(this),
         initialize: function(){
-            // Set mouse events
-            this.toggleMouseovers(true);
             // Resize handle
             this.resize_handle = this.svg.append("g")
                 .attr("id", this.parent.id + ".ui.resize_handle")
@@ -152,11 +138,11 @@ LocusZoom.Instance.prototype.initialize = function(){
             //resize_drag.origin(function() { return this; });
             resize_drag.on("dragstart", function(){
                 this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                this.toggleMouseovers(false);
+                this.is_resize_dragging = true;
             }.bind(this));
             resize_drag.on("dragend", function(){
                 this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                this.toggleMouseovers(true);
+                this.is_resize_dragging = false;
             }.bind(this));
             resize_drag.on("drag", function(){
                 this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
@@ -202,6 +188,18 @@ LocusZoom.Instance.prototype.initialize = function(){
         this._panels[id].initialize();
     }
 
+    // Define instance/svg level mouse events
+    this.svg.on("mouseover", function(){
+        if (!this.ui.is_resize_dragging){
+            this.ui.show();
+        }
+    }.bind(this));
+    this.svg.on("mouseout", function(){
+        if (!this.ui.is_resize_dragging){
+            this.ui.hide();
+        }
+    }.bind(this));
+    
     // Flip the "initialized" bit
     this.initialized = true;
 
