@@ -96,6 +96,24 @@ describe('LocusZoom.Instance', function(){
         });
     });
     describe("SVG Composition", function() {
+        describe("Mouse Guide Layer", function() {
+            beforeEach(function(){
+                d3.select("body").append("div").attr("id", "instance_id");
+                this.instance = LocusZoom.populate("#instance_id");
+            });
+            it('first child should be a mouse guide layer group element', function(){
+                d3.select(this.instance.svg.node().firstChild).attr("id").should.be.exactly("instance_id.mouse_guide");
+            });
+            it('should have a mouse guide object with mouse guide svg selectors', function(){
+                this.instance.mouse_guide.should.be.an.Object;
+                this.instance.mouse_guide.svg.should.be.an.Object;
+                assert.equal(this.instance.mouse_guide.svg.html(), this.instance.svg.select("#instance_id\\.mouse_guide").html());
+                this.instance.mouse_guide.vertical.should.be.an.Object;
+                assert.equal(this.instance.mouse_guide.vertical.html(), this.instance.svg.select("#instance_id\\.mouse_guide rect.lz-mouse_guide-vertical").html());
+                this.instance.mouse_guide.horizontal.should.be.an.Object;
+                assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#instance_id\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
+            });
+        });
         describe("UI Layer", function() {
             beforeEach(function(){
                 d3.select("body").append("div").attr("id", "instance_id");
