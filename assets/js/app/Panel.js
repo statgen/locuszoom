@@ -211,13 +211,12 @@ LocusZoom.Panel.prototype.reMap = function(){
         this.data_promises.push(this._data_layers[id].reMap());
     }
     // When all finished trigger a render
-    Q.all(this.data_promises).then(function(){
+    return Q.all(this.data_promises).then(function(){
         this.render();
     }.bind(this), function(error){
         console.log(error);
         this.curtain.drop(error);
     }.bind(this));
-    return this;
 };
 
 

@@ -24,6 +24,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
     // The _panels property stores child panel instances
     this._panels = {};
+    this.remap_promises = [];
     
     // The state property stores any instance-wide parameters subject to change via user input
     this.state = state || {
@@ -243,10 +244,8 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.render();
         },
         setBase64SVG: function(){
-            // Pull the contents of the locuszoom stylesheet into a 
             // Insert a hidden div, clone the node into that so we can modify it with d3
-            var container = d3.select(this.parent.svg.node().parentNode.parentNode)
-                .append("div").style("display", "none")
+            var container = this.div.append("div").style("display", "none")
                 .html(d3.select(this.parent.svg.node().parentNode).html());
             // Remove unnecessary elements
             container.selectAll("g.lz-curtain").remove();
@@ -255,7 +254,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             // Pull the svg into a string and add the contents of the locuszoom stylesheet
             // Don't add this with d3 because it will escape the CDATA declaration incorrectly
             var initial_html = d3.select(container.select("svg").node().parentNode).html();
-            var style_def = "<style type=\"text/css\"><![CDATA[\n" + this.css_string + "\n]]></style>";
+            var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
             var insert_at = initial_html.indexOf('>') + 1;
             initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
             // Delete the container node
@@ -314,10 +313,19 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     this.state.start = +start;
     this.state.end   = +end;
 
-    // Trigger reMap on each Panel
+    this.remap_promises = [];
+    // Trigger reMap on each Panel Layer
     for (var id in this._panels){
-        this._panels[id].reMap();
+        this.remap_promises.push(this._panels[id].reMap());
     }
+
+    // When all finished update download SVG link
+    Q.all(this.remap_promises).then(function(){
+        this.controls.setBase64SVG();
+    }.bind(this), function(error){
+        console.log(error);
+        this.curtain.drop(error);
+    }.bind(this));
 
     return this;
     
