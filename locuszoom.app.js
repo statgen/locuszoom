@@ -754,7 +754,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         setBase64SVG: function(){
             // Insert a hidden div, clone the node into that so we can modify it with d3
             var container = this.div.append("div").style("display", "none")
-                .html(d3.select(this.parent.svg.node().parentNode).html());
+                .html(this.parent.svg.node().outerHTML);
             // Remove unnecessary elements
             container.selectAll("g.lz-curtain").remove();
             container.selectAll("g.lz-ui").remove();
