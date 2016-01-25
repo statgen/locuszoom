@@ -1,3 +1,18 @@
+.lz-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px; }
+  .lz-locuszoom-controls .lz-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px; }
+  .lz-locuszoom-controls .lz-controls-button:hover {
+    cursor: pointer;
+    background-color: #CECECE; }
+
 .lz-locuszoom {
   background-color: #FFFFFF;
   border: none;
