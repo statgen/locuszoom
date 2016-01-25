@@ -1,60 +1,60 @@
-svg.lz-locuszoom {
+.lz-locuszoom {
   background-color: #FFFFFF;
   border: none;
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px; }
-  svg.lz-locuszoom .lz-curtain rect {
+  .lz-locuszoom .lz-curtain rect {
     fill: rgba(210, 210, 210, 0.85);
     width: 100%;
     height: 100%; }
-  svg.lz-locuszoom .lz-curtain text, svg.lz-locuszoom .lz-curtain tspan {
+  .lz-locuszoom .lz-curtain text, .lz-locuszoom .lz-curtain tspan {
     fill: black;
     font-weight: 600;
     font-size: 14px;
     text-anchor: start;
     alignment-baseline: hanging; }
-  svg.lz-locuszoom .lz-ui-resize_handle {
+  .lz-locuszoom .lz-ui-resize_handle {
     fill: rgba(210, 210, 210, 0.85);
     stroke: rgba(45, 45, 45, 0.85);
     stroke-width: 1;
     cursor: nwse-resize;
     stroke-linejoin: round; }
-  svg.lz-locuszoom .lz-ui-resize_handle:hover {
+  .lz-locuszoom .lz-ui-resize_handle:hover {
     fill: #d2d2d2;
     stroke: #2d2d2d;
     stroke-width: 2;
     stroke-linejoin: round; }
-  svg.lz-locuszoom .lz-ui-resize_handle_dragging {
+  .lz-locuszoom .lz-ui-resize_handle_dragging {
     fill: #d2d2d2;
     stroke: #2d2d2d;
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round; }
-  svg.lz-locuszoom .lz-axis path,
-  svg.lz-locuszoom .lz-axis line {
+  .lz-locuszoom .lz-axis path,
+  .lz-locuszoom .lz-axis line {
     fill: none;
     stroke: black;
     shape-rendering: crispEdges; }
-  svg.lz-locuszoom .lz-axis .lz-label {
+  .lz-locuszoom .lz-axis .lz-label {
     font-size: 12px;
     font-weight: 600; }
-  svg.lz-locuszoom circle.lz-position {
+  .lz-locuszoom circle.lz-position {
     stroke: #181818;
     stroke-width: 1; }
-  svg.lz-locuszoom circle.lz-position:hover {
+  .lz-locuszoom circle.lz-position:hover {
     stroke: #484848;
     stroke-width: 3; }
-  svg.lz-locuszoom circle.lz-position.lz-selected {
+  .lz-locuszoom circle.lz-position.lz-selected {
     stroke-width: 4; }
-  svg.lz-locuszoom circle.lz-position.lz-selected:hover {
+  .lz-locuszoom circle.lz-position.lz-selected:hover {
     stroke-width: 4; }
-  svg.lz-locuszoom text.lz-gene.lz-label {
+  .lz-locuszoom text.lz-gene.lz-label {
     font-style: italic;
     font-size: 12px; }
-  svg.lz-locuszoom rect.lz-gene.lz-boundary {
+  .lz-locuszoom rect.lz-gene.lz-boundary {
     stroke: #000099;
     stroke-width: 1; }
-  svg.lz-locuszoom rect.lz-gene.lz-exon {
+  .lz-locuszoom rect.lz-gene.lz-exon {
     stroke: #000099;
     stroke-width: 1; }
