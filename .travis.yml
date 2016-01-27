@@ -8,7 +8,7 @@ before_script:
   - npm install mocha should jsdom mocha-jsdom
 
 script:
-    gulp
+    gulp test
 
 notifications:
   email:
