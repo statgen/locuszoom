@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2"
+    version: "0.2.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -14,7 +14,11 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
     var inst = new layout(id, datasource, layout, state);
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
-        .append("svg").attr("id", id + "_svg").attr("class", "lz-locuszoom");
+        .append("svg")
+        .attr("version", "1.1")
+        .attr("xmlns", "http://www.w3.org/2000/svg")
+        //.attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+        .attr("id", id + "_svg").attr("class", "lz-locuszoom");
     inst.setDimensions();
     // Initialize all panels
     inst.initialize();

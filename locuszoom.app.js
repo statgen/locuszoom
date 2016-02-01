@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2"
+    version: "0.2.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -28,7 +28,11 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
     var inst = new layout(id, datasource, layout, state);
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
-        .append("svg").attr("id", id + "_svg").attr("class", "lz-locuszoom");
+        .append("svg")
+        .attr("version", "1.1")
+        .attr("xmlns", "http://www.w3.org/2000/svg")
+        //.attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
+        .attr("id", id + "_svg").attr("class", "lz-locuszoom");
     inst.setDimensions();
     // Initialize all panels
     inst.initialize();
@@ -528,6 +532,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
     // The _panels property stores child panel instances
     this._panels = {};
+    this.remap_promises = [];
     
     // The state property stores any instance-wide parameters subject to change via user input
     this.state = state || {
@@ -564,6 +569,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     }
     if (this.initialized){
         this.ui.render();
+        this.controls.render();
         this.stackPanels();
     }
     return this;
@@ -614,8 +620,21 @@ LocusZoom.Instance.prototype.stackPanels = function(){
 
 };
 
-// Call initialize on all child panels
+// Create all instance-level objects, initialize all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+
+    // Create an element/layer for containing mouse guides
+    var mouse_guide_svg = this.svg.append("g")
+        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
+    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
+    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
+    this.mouse_guide = {
+        svg: mouse_guide_svg,
+        vertical: mouse_guide_vertical_svg,
+        horizontal: mouse_guide_horizontal_svg
+    };
 
     // Create an element/layer for containing various UI items
     var ui_svg = this.svg.append("g")
@@ -647,6 +666,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             resize_drag.on("dragend", function(){
                 this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
                 this.is_resize_dragging = false;
+                this.parent.controls.setBase64SVG();
             }.bind(this));
             resize_drag.on("drag", function(){
                 this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
@@ -687,6 +707,80 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+    // Create an HTML div for top-level instance controls below the instance (adjacent in the DOM)
+    var controls_div = d3.select(this.svg.node().parentNode).append("div")
+        .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
+    this.controls = {
+        div: controls_div,
+        parent: this,
+        initialize: function(){
+            // Links
+            this.links = this.div.append("div")
+                .attr("id", this.parent.id + ".controls.links")
+                .style("float", "left");
+            // Download SVG button
+            this.download_svg_button = this.links.append("a")
+                .attr("class", "lz-controls-button")
+                .attr("href-lang", "image/svg+xml")
+                .attr("title", "Download SVG as locuszoom.svg")
+                .attr("download", "locuszoom.svg")
+                .text("Download SVG");
+            // Dimensions
+            this.dimensions = this.div.append("div")
+                .attr("class", "lz-controls-info")
+                .attr("id", this.parent.id + ".controls.dimensions")
+                .style("float", "right");
+            // Clear
+            this.clear = this.div.append("div")
+                .attr("id", this.parent.id + ".controls.clear")
+                .style("clear", "both");
+            // Cache the contents of the LocusZoom stylesheet in a string for use in updating download links
+            this.css_string = "";
+            for (var stylesheet in Object.keys(document.styleSheets)){
+                if (   document.styleSheets[stylesheet].cssRules.length
+                    && document.styleSheets[stylesheet].cssRules[0].cssText != "undefined"
+                    && document.styleSheets[stylesheet].cssRules[0].cssText.indexOf(".lz-locuszoom") == 0){
+                    for (var rule in document.styleSheets[stylesheet].cssRules){
+                        if (typeof document.styleSheets[stylesheet].cssRules[rule].cssText != "undefined"){
+                            this.css_string += document.styleSheets[stylesheet].cssRules[rule].cssText + " ";
+                        }
+                    }
+                    break;
+                }
+            }
+            // Render all controls elements
+            this.render();
+        },
+        setBase64SVG: function(){
+            // Insert a hidden div, clone the node into that so we can modify it with d3
+            var container = this.div.append("div").style("display", "none")
+                .html(this.parent.svg.node().outerHTML);
+            // Remove unnecessary elements
+            container.selectAll("g.lz-curtain").remove();
+            container.selectAll("g.lz-ui").remove();
+            container.selectAll("g.lz-mouse_guide").remove();
+            // Pull the svg into a string and add the contents of the locuszoom stylesheet
+            // Don't add this with d3 because it will escape the CDATA declaration incorrectly
+            var initial_html = d3.select(container.select("svg").node().parentNode).html();
+            var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
+            var insert_at = initial_html.indexOf('>') + 1;
+            initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
+            // Delete the container node
+            container.remove();      
+            // Base64-encode the string
+            var base64_svg = btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode('0x' + p1);
+            }));
+            // Apply Base64-encoded string to the download button's href
+            this.download_svg_button.attr("href", "data:image/svg+xml;base64,\n" + base64_svg);
+        },
+        render: function(){
+            this.div.attr("width", this.parent.view.width);
+            this.dimensions.text(this.parent.view.width + "px × " + this.parent.view.height + "px");
+        }
+    };
+    this.controls.initialize();
+
     // Initialize all panels
     for (var id in this._panels){
         this._panels[id].initialize();
@@ -702,6 +796,13 @@ LocusZoom.Instance.prototype.initialize = function(){
         if (!this.ui.is_resize_dragging){
             this.ui.hide();
         }
+        this.mouse_guide.vertical.attr("x", -1);
+        this.mouse_guide.horizontal.attr("y", -1);
+    }.bind(this));
+    this.svg.on("mousemove", function(){
+        var coords = d3.mouse(this.svg.node());
+        this.mouse_guide.vertical.attr("x", coords[0]);
+        this.mouse_guide.horizontal.attr("y", coords[1]);
     }.bind(this));
     
     // Flip the "initialized" bit
@@ -720,10 +821,19 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     this.state.start = +start;
     this.state.end   = +end;
 
-    // Trigger reMap on each Panel
+    this.remap_promises = [];
+    // Trigger reMap on each Panel Layer
     for (var id in this._panels){
-        this._panels[id].reMap();
+        this.remap_promises.push(this._panels[id].reMap());
     }
+
+    // When all finished update download SVG link
+    Q.all(this.remap_promises).then(function(){
+        this.controls.setBase64SVG();
+    }.bind(this), function(error){
+        console.log(error);
+        this.curtain.drop(error);
+    }.bind(this));
 
     return this;
     
@@ -972,13 +1082,12 @@ LocusZoom.Panel.prototype.reMap = function(){
         this.data_promises.push(this._data_layers[id].reMap());
     }
     // When all finished trigger a render
-    Q.all(this.data_promises).then(function(){
+    return Q.all(this.data_promises).then(function(){
         this.render();
     }.bind(this), function(error){
         console.log(error);
         this.curtain.drop(error);
     }.bind(this));
-    return this;
 };
 
 
