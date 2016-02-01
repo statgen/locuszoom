@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2"
+    version: "0.2.1"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -614,8 +614,21 @@ LocusZoom.Instance.prototype.stackPanels = function(){
 
 };
 
-// Call initialize on all child panels
+// Create all instance-level objects, initialize all child panels
 LocusZoom.Instance.prototype.initialize = function(){
+
+    // Create an element/layer for containing mouse guides
+    var mouse_guide_svg = this.svg.append("g")
+        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
+    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
+    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
+    this.mouse_guide = {
+        svg: mouse_guide_svg,
+        vertical: mouse_guide_vertical_svg,
+        horizontal: mouse_guide_horizontal_svg
+    };
 
     // Create an element/layer for containing various UI items
     var ui_svg = this.svg.append("g")
@@ -702,6 +715,13 @@ LocusZoom.Instance.prototype.initialize = function(){
         if (!this.ui.is_resize_dragging){
             this.ui.hide();
         }
+        this.mouse_guide.vertical.attr("x", -1);
+        this.mouse_guide.horizontal.attr("y", -1);
+    }.bind(this));
+    this.svg.on("mousemove", function(){
+        var coords = d3.mouse(this.svg.node());
+        this.mouse_guide.vertical.attr("x", coords[0]);
+        this.mouse_guide.horizontal.attr("y", coords[1]);
     }.bind(this));
     
     // Flip the "initialized" bit

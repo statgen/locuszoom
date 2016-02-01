@@ -23,6 +23,20 @@ svg.#{$namespace}-locuszoom {
     }
   }
 
+  .#{$namespace}-mouse_guide {
+    rect {
+      fill: rgba(210,210,210,0.85);
+    }
+    rect.#{$namespace}-mouse_guide-vertical {
+      width: 1px;
+      height: 100%;
+    }
+    rect.#{$namespace}-mouse_guide-horizontal {
+      width: 100%;
+      height: 1px;
+    }
+  }
+
   .#{$namespace}-ui-resize_handle {
     fill: rgba(210,210,210,0.85);
     stroke: rgba(45,45,45,0.85);
