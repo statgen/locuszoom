@@ -3,7 +3,7 @@ $namespace: "lz";
 svg.#{$namespace}-locuszoom {
 
   background-color: #FFFFFF;
-  border: 1px solid black;
+  border: none;
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px;
@@ -21,6 +21,29 @@ svg.#{$namespace}-locuszoom {
       text-anchor: start;
       alignment-baseline: hanging;
     }
+  }
+
+  .#{$namespace}-ui-resize_handle {
+    fill: rgba(210,210,210,0.85);
+    stroke: rgba(45,45,45,0.85);
+    stroke-width: 1;
+    cursor: nwse-resize;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle:hover {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle_dragging {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round;
   }
 
   .#{$namespace}-axis path,

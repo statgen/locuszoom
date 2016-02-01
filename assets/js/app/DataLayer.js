@@ -15,9 +15,11 @@
 
 LocusZoom.DataLayer = function() { 
 
+    this.initialized = false;
+
     this.id     = null;
     this.parent = null;
-    this.svg    = null;
+    this.svg    = {};
 
     this.fields = [];
     this.data = [];
@@ -59,28 +61,37 @@ LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
     return this;
 };
 
-// Initialize a panel
+// Initialize a data layer
 LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
-    var container = this.parent.svg.append("g")
-        .attr("id", this.getBaseId() + ".data_layer_container")
-        .attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.container = this.parent.svg.group.append("g")
+        .attr("id", this.getBaseId() + ".data_layer_container");
         
     // Append clip path to the container element
-    container.append("clipPath")
+    this.svg.clipRect = this.svg.container.append("clipPath")
         .attr("id", this.getBaseId() + ".clip")
-        .append("rect")
-        .attr("width", this.parent.view.cliparea.width)
-        .attr("height", this.parent.view.cliparea.height);
+        .append("rect");
     
     // Append svg group for rendering all data layer elements, clipped by the clip path
-    this.svg = container.append("g")
+    this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".data_layer")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
+    // Flip the "initialized" bit
+    this.initialized = true;
+
+    return this;
+
 };
 
+LocusZoom.DataLayer.prototype.draw = function(){
+    this.svg.container.attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.clipRect
+        .attr("width", this.parent.view.cliparea.width)
+        .attr("height", this.parent.view.cliparea.height);
+    return this;
+}
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
@@ -115,7 +126,7 @@ LocusZoom.PositionsDataLayer = function(){
         var that = this;
         var clicker = function() {
             var me = d3.select(this);
-            that.svg.selectAll("circle.lz-position").classed({"lz-selected": false});
+            that.svg.group.selectAll("circle.lz-position").classed({"lz-selected": false});
             if (that.parent.parent.state.ldrefvar != me.attr("id")){
                 me.classed({"lz-selected": true});
                 that.parent.parent.state.ldrefvar = me.attr("id");
@@ -123,8 +134,8 @@ LocusZoom.PositionsDataLayer = function(){
                 that.parent.parent.state.ldrefvar = null;
             }
         };
-        this.svg.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
-        this.svg
+        this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
+        this.svg.group
             .selectAll("circle.lz-position")
             .data(this.data)
             .enter().append("circle")
@@ -174,7 +185,7 @@ LocusZoom.RecombinationRateDataLayer = function(){
     this.fields = [];
 
     this.render = function(){
-        this.svg.selectAll("*").remove();
+        this.svg.group.selectAll("*").remove();
     };
        
     return this;
@@ -287,10 +298,10 @@ LocusZoom.GenesDataLayer = function(){
     };
 
     this.render = function(){
-        this.svg.selectAll("*").remove();
+        this.svg.group.selectAll("*").remove();
 
         // Render gene groups
-        this.svg.selectAll("g.lz-gene").data(this.data).enter()
+        this.svg.group.selectAll("g.lz-gene").data(this.data).enter()
             .append("g")
             .attr("class", "lz-gene")
             .attr("id", function(d){ return d.gene_name; })

@@ -1,6 +1,6 @@
 svg.lz-locuszoom {
   background-color: #FFFFFF;
-  border: 1px solid black;
+  border: none;
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px; }
@@ -14,6 +14,23 @@ svg.lz-locuszoom {
     font-size: 14px;
     text-anchor: start;
     alignment-baseline: hanging; }
+  svg.lz-locuszoom .lz-ui-resize_handle {
+    fill: rgba(210, 210, 210, 0.85);
+    stroke: rgba(45, 45, 45, 0.85);
+    stroke-width: 1;
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-ui-resize_handle:hover {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-ui-resize_handle_dragging {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
