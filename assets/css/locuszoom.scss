@@ -1,0 +1,126 @@
+$namespace: "lz";
+
+.#{$namespace}-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px;
+  .#{$namespace}-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+  }
+  .#{$namespace}-controls-button:hover {
+    cursor: pointer;
+    background-color: #CECECE;
+  }
+}
+
+.#{$namespace}-locuszoom {
+
+  background-color: #FFFFFF;
+  border: none;
+  cursor: move;
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 10px;
+
+  .#{$namespace}-curtain {
+    rect {
+      fill: rgba(210,210,210,0.85);
+      width: 100%;
+      height: 100%;
+    }
+    text, tspan {
+      fill: rgb(0,0,0);
+      font-weight: 600;
+      font-size: 14px;
+      text-anchor: start;
+      alignment-baseline: hanging;
+    }
+  }
+
+  .#{$namespace}-mouse_guide {
+    rect {
+      fill: rgba(210,210,210,0.85);
+    }
+    rect.#{$namespace}-mouse_guide-vertical {
+      width: 1px;
+      height: 100%;
+    }
+    rect.#{$namespace}-mouse_guide-horizontal {
+      width: 100%;
+      height: 1px;
+    }
+  }
+
+  .#{$namespace}-ui-resize_handle {
+    fill: rgba(210,210,210,0.85);
+    stroke: rgba(45,45,45,0.85);
+    stroke-width: 1;
+    cursor: nwse-resize;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle:hover {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-ui-resize_handle_dragging {
+    fill: rgba(210,210,210,1);
+    stroke: rgba(45,45,45,1);
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round;
+  }
+
+  .#{$namespace}-axis path,
+  .#{$namespace}-axis line {
+  	fill: none;
+  	stroke: black;
+  	shape-rendering: crispEdges;
+  }
+
+  .#{$namespace}-axis .#{$namespace}-label {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  circle.#{$namespace}-position {
+    stroke: #181818;
+    stroke-width: 1;
+  }
+
+  circle.#{$namespace}-position:hover {
+    stroke: #484848;
+    stroke-width: 3;
+  }
+
+  circle.#{$namespace}-position.#{$namespace}-selected {
+    stroke-width: 4;
+  }
+
+  circle.#{$namespace}-position.#{$namespace}-selected:hover {
+    stroke-width: 4;
+  }
+
+  text.#{$namespace}-gene.#{$namespace}-label {
+    font-style: italic;
+    font-size: 12px;
+  }
+
+  rect.#{$namespace}-gene.#{$namespace}-boundary {
+    stroke: #000099;
+    stroke-width: 1;
+  }
+
+  rect.#{$namespace}-gene.#{$namespace}-exon {
+    stroke: #000099;
+    stroke-width: 1;
+  }
+
+}

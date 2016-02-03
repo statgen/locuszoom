@@ -1,0 +1,15 @@
+language: node_js
+
+node_js:
+  - "4.2"
+
+before_script:
+  - npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha gulp-sass gulp-wrap yargs
+  - npm install mocha should jsdom mocha-jsdom
+
+script:
+    gulp test
+
+notifications:
+  email:
+    - chriclrk@umich.edu
