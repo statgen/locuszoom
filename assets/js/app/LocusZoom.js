@@ -57,16 +57,16 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
     return instances;
 };
 
-// Format a number as a Megabase value, limiting to two decimal places unless sufficiently small
-LocusZoom.formatMegabase = function(p){
+// Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
+LocusZoom.positionIntToString = function(p){
     var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
-//parse numbers like 5Mb and 1.4kB 
-LocusZoom.parsePosition = function(x) {
-    var val = x.toUpperCase();
-    val = val.replace(",","");
+// Convert a string position to an integer (e.g. "5.8 Mb" => 58000000)
+LocusZoom.positionStringToInt = function(p) {
+    var val = p.toUpperCase();
+    val = val.replace(/,/g, "");
     var suffixre = /([KMG])[B]*$/;
     var suffix = suffixre.exec(val);
     var mult = 1;
@@ -95,16 +95,16 @@ LocusZoom.parsePositionQuery = function(x) {
     var match = chrposoff.exec(x);
     if (match) {
         if (match[3] == "+") {
-            var center = LocusZoom.parsePosition(match[2]);
-            var offset = LocusZoom.parsePosition(match[4]);
+            var center = LocusZoom.positionStringToInt(match[2]);
+            var offset = LocusZoom.positionStringToInt(match[4]);
             return {chr:match[1], start:center-offset, end:center+offset};
         } else {
-            return {chr:match[1], start:LocusZoom.parsePosition(match[2]), end:LocusZoom.parsePosition(match[4])};
+            return {chr:match[1], start:LocusZoom.positionStringToInt(match[2]), end:LocusZoom.positionStringToInt(match[4])};
         }
     }
     match = chrpos.exec(x);
     if (match) {
-        return {chr:match[1], position:LocusZoom.parsePosition(match[2])};
+        return {chr:match[1], position:LocusZoom.positionStringToInt(match[2])};
     };
     return null;
 }

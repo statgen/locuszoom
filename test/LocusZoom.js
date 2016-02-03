@@ -38,14 +38,22 @@ describe('LocusZoom', function(){
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
         });
-        it('should have a method for formatting numbers as megabases', function(){
-            LocusZoom.formatMegabase.should.be.a.Function;
-            assert.equal(LocusZoom.formatMegabase(1),          "0.000001");
-            assert.equal(LocusZoom.formatMegabase(1000),       "0.001");
-            assert.equal(LocusZoom.formatMegabase(4567),       "0.005");
-            assert.equal(LocusZoom.formatMegabase(1000000),    "1.00");
-            assert.equal(LocusZoom.formatMegabase(23423456),   "23.42");
-            assert.equal(LocusZoom.formatMegabase(1896335235), "1896.34");
+        it('should have a method for converting an integer position to a string', function(){
+            LocusZoom.positionIntToString.should.be.a.Function;
+            assert.equal(LocusZoom.positionIntToString(1),          "0.000001");
+            assert.equal(LocusZoom.positionIntToString(1000),       "0.001");
+            assert.equal(LocusZoom.positionIntToString(4567),       "0.005");
+            assert.equal(LocusZoom.positionIntToString(1000000),    "1.00");
+            assert.equal(LocusZoom.positionIntToString(23423456),   "23.42");
+            assert.equal(LocusZoom.positionIntToString(1896335235), "1896.34");
+        });
+        it('should have a method for converting a string position to an integer', function(){
+            LocusZoom.positionStringToInt.should.be.a.Function;
+            assert.equal(LocusZoom.positionStringToInt("5Mb"), 5000000);
+            assert.equal(LocusZoom.positionStringToInt("1.4Kb"), 1400);
+            assert.equal(LocusZoom.positionStringToInt("26.420Mb"), 26420000);
+            assert.equal(LocusZoom.positionStringToInt("13"), 13);
+            assert.equal(LocusZoom.positionStringToInt("73,054,882"), 73054882);
         });
         it('should have a method for generating pretty ticks', function(){
             LocusZoom.prettyTicks.should.be.a.Function;
