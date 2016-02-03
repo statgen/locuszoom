@@ -258,7 +258,7 @@ LocusZoom.Panel.prototype.render = function(){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
             .orient("bottom").tickValues(this.axes.x.ticks)
-            .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
+            .tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
         this.svg.x_axis
             .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
             .call(this.state.x_axis);
