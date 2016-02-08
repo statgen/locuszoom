@@ -68,12 +68,27 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by panel class
-LocusZoom.Instance.prototype.addPanel = function(PanelClass){
+// Optionally take an id string (use base ID on panel class if not provided)
+// Ensure panel has a unique ID as it is added.
+LocusZoom.Instance.prototype.addPanel = function(PanelClass, id){
     if (typeof PanelClass !== "function"){
-        return false;
+        throw "Invalid PanelClass passed to LocusZoom.Instance.prototype.addPanel()";
     }
     var panel = new PanelClass();
     panel.parent = this;
+    if (typeof id !== "string"){
+        panel.id = panel.base_id;
+    } else {
+        panel.base_id = id;
+        panel.id = id;
+    }
+    if (typeof this._panels[panel.id] == "object"){
+        var inc = 0;
+        while (typeof this._panels[panel.base_id + "_" + inc] == "object"){
+            inc++;
+        }
+        panel.id = panel.base_id + "_" + inc;
+    }
     this._panels[panel.id] = panel;
     this.stackPanels();
     return this._panels[panel.id];

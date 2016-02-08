@@ -71,16 +71,16 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
     return instances;
 };
 
-// Format a number as a Megabase value, limiting to two decimal places unless sufficiently small
-LocusZoom.formatMegabase = function(p){
+// Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
+LocusZoom.positionIntToString = function(p){
     var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
-//parse numbers like 5Mb and 1.4kB 
-LocusZoom.parsePosition = function(x) {
-    var val = x.toUpperCase();
-    val = val.replace(",","");
+// Convert a string position to an integer (e.g. "5.8 Mb" => 58000000)
+LocusZoom.positionStringToInt = function(p) {
+    var val = p.toUpperCase();
+    val = val.replace(/,/g, "");
     var suffixre = /([KMG])[B]*$/;
     var suffix = suffixre.exec(val);
     var mult = 1;
@@ -109,16 +109,16 @@ LocusZoom.parsePositionQuery = function(x) {
     var match = chrposoff.exec(x);
     if (match) {
         if (match[3] == "+") {
-            var center = LocusZoom.parsePosition(match[2]);
-            var offset = LocusZoom.parsePosition(match[4]);
+            var center = LocusZoom.positionStringToInt(match[2]);
+            var offset = LocusZoom.positionStringToInt(match[4]);
             return {chr:match[1], start:center-offset, end:center+offset};
         } else {
-            return {chr:match[1], start:LocusZoom.parsePosition(match[2]), end:LocusZoom.parsePosition(match[4])};
+            return {chr:match[1], start:LocusZoom.positionStringToInt(match[2]), end:LocusZoom.positionStringToInt(match[4])};
         }
     }
     match = chrpos.exec(x);
     if (match) {
-        return {chr:match[1], position:LocusZoom.parsePosition(match[2])};
+        return {chr:match[1], position:LocusZoom.positionStringToInt(match[2])};
     };
     return null;
 }
@@ -576,12 +576,25 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by panel class
-LocusZoom.Instance.prototype.addPanel = function(PanelClass){
+LocusZoom.Instance.prototype.addPanel = function(PanelClass, id){
     if (typeof PanelClass !== "function"){
-        return false;
+        throw "Invalid PanelClass passed to LocusZoom.Instance.prototype.addPanel()";
     }
     var panel = new PanelClass();
     panel.parent = this;
+    if (typeof id !== "string"){
+        panel.id = panel.base_id;
+    } else {
+        panel.base_id = id;
+        panel.id = id;
+    }
+    if (typeof this._panels[panel.id] == "object"){
+        var inc = 0;
+        while (typeof this._panels[panel.base_id + "_" + inc] == "object"){
+            inc++;
+        }
+        panel.id = panel.base_id + "_" + inc;
+    }
     this._panels[panel.id] = panel;
     this.stackPanels();
     return this._panels[panel.id];
@@ -1128,7 +1141,7 @@ LocusZoom.Panel.prototype.render = function(){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
             .orient("bottom").tickValues(this.axes.x.ticks)
-            .tickFormat(function(d) { return LocusZoom.formatMegabase(d); });
+            .tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
         this.svg.x_axis
             .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
             .call(this.state.x_axis);
@@ -1199,7 +1212,7 @@ LocusZoom.PositionsPanel = function(){
   
     LocusZoom.Panel.apply(this, arguments);   
 
-    this.id = "positions";
+    this.base_id = "positions";
     this.view.min_width = 300;
     this.view.min_height = 200;
 
@@ -1233,7 +1246,7 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
 
-    this.id = "genes";
+    this.base_id = "genes";
     this.view.min_width = 300;
     this.view.min_height = 200;
 

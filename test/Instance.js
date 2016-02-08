@@ -70,6 +70,16 @@ describe('LocusZoom.Instance', function(){
             this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
             this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
+        it('should allow for adding panels with arbitrary ids', function(){
+            var panel = this.instance.addPanel(LocusZoom.PositionsPanel, "foo");
+            this.instance._panels.should.have.property("foo").which.is.exactly(panel);
+        });
+        it('should allow for adding arbitrarily many panels of the same type', function(){
+            this.instance.addPanel(LocusZoom.PositionsPanel);
+            this.instance.addPanel(LocusZoom.PositionsPanel);
+            this.instance.addPanel(LocusZoom.PositionsPanel);
+            Object.keys(this.instance._panels).should.have.length(3);
+        });
         it('should enforce minimum dimensions based on its panels', function(){
             var positions_panel = this.instance.addPanel(LocusZoom.PositionsPanel);
             var genes_panel = this.instance.addPanel(LocusZoom.GenesPanel);
