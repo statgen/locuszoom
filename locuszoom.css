@@ -8,10 +8,22 @@
     background-color: #D8D8D8;
     color: #333333;
     border: 1px solid #333333;
-    border-radius: 4px; }
+    border-radius: 4px;
+    pointer-events: auto; }
   .lz-locuszoom-controls .lz-controls-button:hover {
     cursor: pointer;
     background-color: #CECECE; }
+  .lz-locuszoom-controls .lz-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #999999;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    pointer-events: none; }
+  .lz-locuszoom-controls .lz-controls-button-disabled:hover {
+    cursor: wait;
+    background-color: #D8D8D8; }
 
 .lz-locuszoom {
   background-color: #FFFFFF;
