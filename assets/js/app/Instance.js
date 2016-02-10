@@ -1,4 +1,4 @@
-/* global LocusZoom */
+/* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -250,7 +250,7 @@ LocusZoom.Instance.prototype.createUILayer = function(){
         initialize: function(){
             // Resize handle
             this.resize_handle = this.svg.append("g")
-                .attr("id", this.parent.id + ".ui.resize_handle")
+                .attr("id", this.parent.id + ".ui.resize_handle");
             this.resize_handle.append("path")
                 .attr("class", "lz-ui-resize_handle")
                 .attr("d", "M 0,16, L 16,0, L 16,16 Z");
@@ -355,13 +355,13 @@ LocusZoom.Instance.prototype.createControls = function(){
                 // Don't add this with d3 because it will escape the CDATA declaration incorrectly
                 var initial_html = d3.select(container.select("svg").node().parentNode).html();
                 var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
-                var insert_at = initial_html.indexOf('>') + 1;
+                var insert_at = initial_html.indexOf(">") + 1;
                 initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
                 // Delete the container node
                 container.remove();
                 // Base64-encode the string and return it
                 return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                    return String.fromCharCode('0x' + p1);
+                    return String.fromCharCode("0x" + p1);
                 }));
             }.bind(this));
         },
@@ -371,7 +371,7 @@ LocusZoom.Instance.prototype.createControls = function(){
         }
     };
     this.controls.initialize();
-}
+};
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
