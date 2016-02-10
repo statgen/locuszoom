@@ -41,6 +41,9 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
         min_height: 0
     };
 
+    // Boolean to set whether or not to show controls area
+    this.show_controls = false;
+
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
     
@@ -61,7 +64,9 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     }
     if (this.initialized){
         this.ui.render();
-        this.controls.render();
+        if (this.show_controls){
+            this.controls.render();
+        }
         this.stackPanels();
     }
     return this;
@@ -115,163 +120,15 @@ LocusZoom.Instance.prototype.stackPanels = function(){
 // Create all instance-level objects, initialize all child panels
 LocusZoom.Instance.prototype.initialize = function(){
 
-    // Create an element/layer for containing mouse guides
-    var mouse_guide_svg = this.svg.append("g")
-        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
-    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
-    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
-    this.mouse_guide = {
-        svg: mouse_guide_svg,
-        vertical: mouse_guide_vertical_svg,
-        horizontal: mouse_guide_horizontal_svg
-    };
+    // Create required layers
+    this.createMouseGuidesLayer();
+    this.createUILayer();
+    this.createCurtainLayer();
 
-    // Create an element/layer for containing various UI items
-    var ui_svg = this.svg.append("g")
-        .attr("class", "lz-ui").attr("id", this.id + ".ui")
-        .style("display", "none");
-    this.ui = {
-        svg: ui_svg,
-        parent: this,
-        is_resize_dragging: false,
-        show: function(){
-            this.svg.style("display", null);
-        },
-        hide: function(){
-            this.svg.style("display", "none");
-        },
-        initialize: function(){
-            // Resize handle
-            this.resize_handle = this.svg.append("g")
-                .attr("id", this.parent.id + ".ui.resize_handle")
-            this.resize_handle.append("path")
-                .attr("class", "lz-ui-resize_handle")
-                .attr("d", "M 0,16, L 16,0, L 16,16 Z");
-            var resize_drag = d3.behavior.drag();
-            //resize_drag.origin(function() { return this; });
-            resize_drag.on("dragstart", function(){
-                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                this.is_resize_dragging = true;
-            }.bind(this));
-            resize_drag.on("dragend", function(){
-                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                this.is_resize_dragging = false;
-                this.parent.controls.setBase64SVG();
-            }.bind(this));
-            resize_drag.on("drag", function(){
-                this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
-            }.bind(this.parent));
-            this.resize_handle.call(resize_drag);
-            // Render all UI elements
-            this.render();
-        },
-        render: function(){
-            this.resize_handle
-                .attr("transform", "translate(" + (this.parent.view.width - 17) + ", " + (this.parent.view.height - 17) + ")");
-        }
-    };
-    this.ui.initialize();
-
-    // Create the curtain object with svg element and drop/raise methods
-    var curtain_svg = this.svg.append("g")
-        .attr("class", "lz-curtain").style("display", "none")
-        .attr("id", this.id + ".curtain");
-    this.curtain = {
-        svg: curtain_svg,
-        drop: function(message){
-            this.svg.style("display", null);
-            if (typeof message != "undefined"){
-                this.svg.select("text").selectAll("tspan").remove();
-                message.split("\n").forEach(function(line){
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "1.5em").text(line);
-                }.bind(this));
-            }
-        },
-        raise: function(){
-            this.svg.style("display", "none");
-        }
-    };
-    this.curtain.svg.append("rect");
-    this.curtain.svg.append("text")
-        .attr("id", this.id + ".curtain_text")
-        .attr("x", "1em").attr("y", "0em");
-
-    // Create an HTML div for top-level instance controls below the instance (adjacent in the DOM)
-    var controls_div = d3.select(this.svg.node().parentNode).append("div")
-        .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
-    this.controls = {
-        div: controls_div,
-        parent: this,
-        initialize: function(){
-            // Links
-            this.links = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.links")
-                .style("float", "left");
-            // Download SVG button
-            this.download_svg_button = this.links.append("a")
-                .attr("class", "lz-controls-button")
-                .attr("href-lang", "image/svg+xml")
-                .attr("title", "Download SVG as locuszoom.svg")
-                .attr("download", "locuszoom.svg")
-                .text("Download SVG");
-            // Dimensions
-            this.dimensions = this.div.append("div")
-                .attr("class", "lz-controls-info")
-                .attr("id", this.parent.id + ".controls.dimensions")
-                .style("float", "right");
-            // Clear
-            this.clear = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.clear")
-                .style("clear", "both");
-            // Cache the contents of the LocusZoom stylesheet in a string for use in updating download links
-            this.css_string = "";
-            for (var stylesheet in Object.keys(document.styleSheets)){
-                if (   document.styleSheets[stylesheet].cssRules.length
-                    && document.styleSheets[stylesheet].cssRules[0].cssText != "undefined"
-                    && document.styleSheets[stylesheet].cssRules[0].cssText.indexOf(".lz-locuszoom") == 0){
-                    for (var rule in document.styleSheets[stylesheet].cssRules){
-                        if (typeof document.styleSheets[stylesheet].cssRules[rule].cssText != "undefined"){
-                            this.css_string += document.styleSheets[stylesheet].cssRules[rule].cssText + " ";
-                        }
-                    }
-                    break;
-                }
-            }
-            // Render all controls elements
-            this.render();
-        },
-        setBase64SVG: function(){
-            // Insert a hidden div, clone the node into that so we can modify it with d3
-            var container = this.div.append("div").style("display", "none")
-                .html(this.parent.svg.node().outerHTML);
-            // Remove unnecessary elements
-            container.selectAll("g.lz-curtain").remove();
-            container.selectAll("g.lz-ui").remove();
-            container.selectAll("g.lz-mouse_guide").remove();
-            // Pull the svg into a string and add the contents of the locuszoom stylesheet
-            // Don't add this with d3 because it will escape the CDATA declaration incorrectly
-            var initial_html = d3.select(container.select("svg").node().parentNode).html();
-            var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
-            var insert_at = initial_html.indexOf('>') + 1;
-            initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
-            // Delete the container node
-            container.remove();      
-            // Base64-encode the string
-            var base64_svg = btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
-            // Apply Base64-encoded string to the download button's href
-            this.download_svg_button.attr("href", "data:image/svg+xml;base64,\n" + base64_svg);
-        },
-        render: function(){
-            this.div.attr("width", this.parent.view.width);
-            this.dimensions.text(this.parent.view.width + "px × " + this.parent.view.height + "px");
-        }
-    };
-    this.controls.initialize();
+    // Create optional layers and elements
+    if (this.show_controls){
+        this.createControls();
+    }
 
     // Initialize all panels
     for (var id in this._panels){
@@ -321,7 +178,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     // When all finished update download SVG link
     Q.all(this.remap_promises).then(function(){
-        this.controls.setBase64SVG();
+        if (this.parent.show_controls){
+            this.parent.controls.svg_changed = true;
+        }
     }.bind(this), function(error){
         console.log(error);
         this.curtain.drop(error);
@@ -330,6 +189,189 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     return this;
     
 };
+
+// Create an element/layer for the curtain object with drop/raise methods
+LocusZoom.Instance.prototype.createCurtainLayer = function(){
+    var curtain_svg = this.svg.append("g")
+        .attr("class", "lz-curtain").style("display", "none")
+        .attr("id", this.id + ".curtain");
+    this.curtain = {
+        svg: curtain_svg,
+        drop: function(message){
+            this.svg.style("display", null);
+            if (typeof message != "undefined"){
+                this.svg.select("text").selectAll("tspan").remove();
+                message.split("\n").forEach(function(line){
+                    this.svg.select("text").append("tspan")
+                        .attr("x", "1em").attr("dy", "1.5em").text(line);
+                }.bind(this));
+            }
+        },
+        raise: function(){
+            this.svg.style("display", "none");
+        }
+    };
+    this.curtain.svg.append("rect");
+    this.curtain.svg.append("text")
+        .attr("id", this.id + ".curtain_text")
+        .attr("x", "1em").attr("y", "0em");
+};
+
+// Create an element/layer for containing mouse guides
+LocusZoom.Instance.prototype.createMouseGuidesLayer = function(){
+    var mouse_guide_svg = this.svg.append("g")
+        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
+    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
+    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
+        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
+    this.mouse_guide = {
+        svg: mouse_guide_svg,
+        vertical: mouse_guide_vertical_svg,
+        horizontal: mouse_guide_horizontal_svg
+    };
+};
+
+// Create an element/layer for containing various UI items
+LocusZoom.Instance.prototype.createUILayer = function(){
+    var ui_svg = this.svg.append("g")
+        .attr("class", "lz-ui").attr("id", this.id + ".ui")
+        .style("display", "none");
+    this.ui = {
+        svg: ui_svg,
+        parent: this,
+        is_resize_dragging: false,
+        show: function(){
+            this.svg.style("display", null);
+        },
+        hide: function(){
+            this.svg.style("display", "none");
+        },
+        initialize: function(){
+            // Resize handle
+            this.resize_handle = this.svg.append("g")
+                .attr("id", this.parent.id + ".ui.resize_handle")
+            this.resize_handle.append("path")
+                .attr("class", "lz-ui-resize_handle")
+                .attr("d", "M 0,16, L 16,0, L 16,16 Z");
+            var resize_drag = d3.behavior.drag();
+            //resize_drag.origin(function() { return this; });
+            resize_drag.on("dragstart", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
+                this.is_resize_dragging = true;
+            }.bind(this));
+            resize_drag.on("dragend", function(){
+                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
+                this.is_resize_dragging = false;
+                if (this.parent.show_controls){
+                    this.parent.controls.svg_changed = true;
+                }
+            }.bind(this));
+            resize_drag.on("drag", function(){
+                this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
+            }.bind(this.parent));
+            this.resize_handle.call(resize_drag);
+            // Render all UI elements
+            this.render();
+        },
+        render: function(){
+            this.resize_handle
+                .attr("transform", "translate(" + (this.parent.view.width - 17) + ", " + (this.parent.view.height - 17) + ")");
+        }
+    };
+    this.ui.initialize();
+};
+
+// Create a "controls" area adjacent to the SVG in the DOM for instance-level HTML control elements
+LocusZoom.Instance.prototype.createControls = function(){
+    var controls_div = d3.select(this.svg.node().parentNode).append("div")
+        .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
+    this.controls = {
+        div: controls_div,
+        parent: this,
+        svg_changed: true,
+        initialize: function(){
+            // Links
+            this.links = this.div.append("div")
+                .attr("id", this.parent.id + ".controls.links")
+                .style("float", "left");
+            // Download SVG button
+            this.download_svg_button = this.links.append("a")
+                .attr("class", "lz-controls-button")
+                .attr("href-lang", "image/svg+xml")
+                .attr("title", "Download SVG as locuszoom.svg")
+                .attr("download", "locuszoom.svg")
+                .text("Download SVG")
+                .on("mouseover", function() {
+                    if (this.svg_changed){
+                        this.download_svg_button
+                            .attr("class", "lz-controls-button-disabled")
+                            .text("Preparing SVG");
+                        this.generateBase64SVG().then(function(base64_string){
+                            this.download_svg_button.attr("href", "data:image/svg+xml;base64,\n" + base64_string);
+                            this.download_svg_button
+                                .attr("class", "lz-controls-button")
+                                .text("Download SVG");
+                            this.svg_changed = false;
+                        }.bind(this));
+                    }
+                }.bind(this));
+            // Dimensions
+            this.dimensions = this.div.append("div")
+                .attr("class", "lz-controls-info")
+                .attr("id", this.parent.id + ".controls.dimensions")
+                .style("float", "right");
+            // Clear
+            this.clear = this.div.append("div")
+                .attr("id", this.parent.id + ".controls.clear")
+                .style("clear", "both");
+            // Cache the contents of the LocusZoom stylesheet in a string for use in updating download links
+            this.css_string = "";
+            for (var stylesheet in Object.keys(document.styleSheets)){
+                if (   document.styleSheets[stylesheet].cssRules.length
+                    && document.styleSheets[stylesheet].cssRules[0].cssText != "undefined"
+                    && document.styleSheets[stylesheet].cssRules[0].cssText.indexOf(".lz-locuszoom") == 0){
+                    for (var rule in document.styleSheets[stylesheet].cssRules){
+                        if (typeof document.styleSheets[stylesheet].cssRules[rule].cssText != "undefined"){
+                            this.css_string += document.styleSheets[stylesheet].cssRules[rule].cssText + " ";
+                        }
+                    }
+                    break;
+                }
+            }
+            // Render all controls elements
+            this.render();
+        },
+        generateBase64SVG: function(){
+            return Q.fcall(function () {
+                // Insert a hidden div, clone the node into that so we can modify it with d3
+                var container = this.div.append("div").style("display", "none")
+                    .html(this.parent.svg.node().outerHTML);
+                // Remove unnecessary elements
+                container.selectAll("g.lz-curtain").remove();
+                container.selectAll("g.lz-ui").remove();
+                container.selectAll("g.lz-mouse_guide").remove();
+                // Pull the svg into a string and add the contents of the locuszoom stylesheet
+                // Don't add this with d3 because it will escape the CDATA declaration incorrectly
+                var initial_html = d3.select(container.select("svg").node().parentNode).html();
+                var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
+                var insert_at = initial_html.indexOf('>') + 1;
+                initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
+                // Delete the container node
+                container.remove();
+                // Base64-encode the string and return it
+                return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                    return String.fromCharCode('0x' + p1);
+                }));
+            }.bind(this));
+        },
+        render: function(){
+            this.div.attr("width", this.parent.view.width);
+            this.dimensions.text(this.parent.view.width + "px × " + this.parent.view.height + "px");
+        }
+    };
+    this.controls.initialize();
+}
 
 
 /******************
@@ -342,6 +384,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 LocusZoom.DefaultInstance = function(){
 
     LocusZoom.Instance.apply(this, arguments);
+
+    this.show_controls = true;
 
     this.setDimensions(700,700);
   
