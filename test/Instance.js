@@ -104,6 +104,14 @@ describe('LocusZoom.Instance', function(){
             this.instance.state.start.should.be.exactly(400000);
             this.instance.state.end.should.be.exactly(500000);
         });
+        it('should allow for refreshing data without mapping to new coordinates', function(){
+            this.instance.refresh.should.be.a.Function;
+            this.instance.mapTo(10, 400000, 500000);
+            this.instance.refresh();
+            this.instance.state.chr.should.be.exactly(10);
+            this.instance.state.start.should.be.exactly(400000);
+            this.instance.state.end.should.be.exactly(500000);
+        });
     });
     describe("SVG Composition", function() {
         describe("Mouse Guide Layer", function() {

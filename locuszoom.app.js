@@ -852,6 +852,10 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     
 };
 
+// Refresh an instance's data from sources without changing position
+LocusZoom.Instance.prototype.refresh = function(){
+    this.mapTo(this.state.chr, this.state.start, this.state.end);
+}
 
 /******************
   Default Instance
