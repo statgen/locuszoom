@@ -328,7 +328,7 @@ LocusZoom.PositionsPanel = function(){
   
     LocusZoom.Panel.apply(this, arguments);   
 
-    this.id = "positions";
+    this.base_id = "positions";
     this.view.min_width = 300;
     this.view.min_height = 200;
 
@@ -362,7 +362,7 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
 
-    this.id = "genes";
+    this.base_id = "genes";
     this.view.min_width = 300;
     this.view.min_height = 200;
 

@@ -576,12 +576,25 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by panel class
-LocusZoom.Instance.prototype.addPanel = function(PanelClass){
+LocusZoom.Instance.prototype.addPanel = function(PanelClass, id){
     if (typeof PanelClass !== "function"){
-        return false;
+        throw "Invalid PanelClass passed to LocusZoom.Instance.prototype.addPanel()";
     }
     var panel = new PanelClass();
     panel.parent = this;
+    if (typeof id !== "string"){
+        panel.id = panel.base_id;
+    } else {
+        panel.base_id = id;
+        panel.id = id;
+    }
+    if (typeof this._panels[panel.id] == "object"){
+        var inc = 0;
+        while (typeof this._panels[panel.base_id + "_" + inc] == "object"){
+            inc++;
+        }
+        panel.id = panel.base_id + "_" + inc;
+    }
     this._panels[panel.id] = panel;
     this.stackPanels();
     return this._panels[panel.id];
@@ -1203,7 +1216,7 @@ LocusZoom.PositionsPanel = function(){
   
     LocusZoom.Panel.apply(this, arguments);   
 
-    this.id = "positions";
+    this.base_id = "positions";
     this.view.min_width = 300;
     this.view.min_height = 200;
 
@@ -1237,7 +1250,7 @@ LocusZoom.GenesPanel = function(){
     
     LocusZoom.Panel.apply(this, arguments);
 
-    this.id = "genes";
+    this.base_id = "genes";
     this.view.min_width = 300;
     this.view.min_height = 200;
 
