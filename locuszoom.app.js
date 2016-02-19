@@ -569,7 +569,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     }
     if (this.initialized){
         this.ui.render();
-        this.controls.render();
         this.stackPanels();
     }
     return this;
@@ -679,7 +678,6 @@ LocusZoom.Instance.prototype.initialize = function(){
             resize_drag.on("dragend", function(){
                 this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
                 this.is_resize_dragging = false;
-                this.parent.controls.setBase64SVG();
             }.bind(this));
             resize_drag.on("drag", function(){
                 this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
@@ -720,6 +718,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+<<<<<<< HEAD
     // Create an HTML div for top-level instance controls below the instance (adjacent in the DOM)
     var controls_div = d3.select(this.svg.node().parentNode).append("div")
         .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
@@ -794,6 +793,8 @@ LocusZoom.Instance.prototype.initialize = function(){
     };
     this.controls.initialize();
 
+=======
+>>>>>>> parent of 83139de... remove button from demo, work into a new "controls" element adjacent to SVG
     // Initialize all panels
     for (var id in this._panels){
         this._panels[id].initialize();
