@@ -341,11 +341,13 @@ LocusZoom.PositionsPanel = function(){
     this.axes.y1.label = "-log10 p-value";
     
     this.xExtent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
+        var layer = this._data_layers.positions;
+        return d3.extent(layer.data, function(d) { return +d[layer.xfield]; } );
     };
     
     this.y1Extent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
+        var layer = this._data_layers.positions;
+        return d3.extent(layer.data, function(d) { return +d[layer.yfield] * 1.05; } );
     };
     
     return this;
