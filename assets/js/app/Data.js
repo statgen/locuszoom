@@ -139,6 +139,7 @@ LocusZoom.Data.AssociationSource = function(init) {
             if (fields.indexOf(x)==-1) {
                 fields.unshift(x);
                 outnames.unshift(x);
+                trans.unshift(null);
             }
         });
         return function (chain) {
