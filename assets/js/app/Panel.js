@@ -342,12 +342,12 @@ LocusZoom.PositionsPanel = function(){
     
     this.xExtent = function(){
         var layer = this._data_layers.positions;
-        return d3.extent(layer.data, function(d) { return +d[layer.xfield]; } );
+        return d3.extent(layer.data, function(d) { return +d[layer.x_field]; } );
     };
     
     this.y1Extent = function(){
         var layer = this._data_layers.positions;
-        return d3.extent(layer.data, function(d) { return +d[layer.yfield] * 1.05; } );
+        return d3.extent(layer.data, function(d) { return +d[layer.y_field] * 1.05; } );
     };
     
     return this;
