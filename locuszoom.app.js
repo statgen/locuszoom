@@ -575,6 +575,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by panel class
+// Optionally take an id string (use base ID on panel class if not provided)
+// Ensure panel has a unique ID as it is added.
 LocusZoom.Instance.prototype.addPanel = function(PanelClass, id){
     if (typeof PanelClass !== "function"){
         throw "Invalid PanelClass passed to LocusZoom.Instance.prototype.addPanel()";
@@ -718,83 +720,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
-<<<<<<< HEAD
-    // Create an HTML div for top-level instance controls below the instance (adjacent in the DOM)
-    var controls_div = d3.select(this.svg.node().parentNode).append("div")
-        .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
-    this.controls = {
-        div: controls_div,
-        parent: this,
-        initialize: function(){
-            // Links
-            this.links = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.links")
-                .style("float", "left");
-            // Download SVG button
-            this.download_svg_button = this.links.append("a")
-                .attr("class", "lz-controls-button")
-                .attr("href-lang", "image/svg+xml")
-                .attr("title", "Download SVG as locuszoom.svg")
-                .attr("download", "locuszoom.svg")
-                .text("Download SVG");
-            // Dimensions
-            this.dimensions = this.div.append("div")
-                .attr("class", "lz-controls-info")
-                .attr("id", this.parent.id + ".controls.dimensions")
-                .style("float", "right");
-            // Clear
-            this.clear = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.clear")
-                .style("clear", "both");
-            // Cache the contents of the LocusZoom stylesheet in a string for use in updating download links
-            this.css_string = "";
-            for (var stylesheet in Object.keys(document.styleSheets)){
-                if (   document.styleSheets[stylesheet].cssRules.length
-                    && document.styleSheets[stylesheet].cssRules[0].cssText != "undefined"
-                    && document.styleSheets[stylesheet].cssRules[0].cssText.indexOf(".lz-locuszoom") == 0){
-                    for (var rule in document.styleSheets[stylesheet].cssRules){
-                        if (typeof document.styleSheets[stylesheet].cssRules[rule].cssText != "undefined"){
-                            this.css_string += document.styleSheets[stylesheet].cssRules[rule].cssText + " ";
-                        }
-                    }
-                    break;
-                }
-            }
-            // Render all controls elements
-            this.render();
-        },
-        setBase64SVG: function(){
-            // Insert a hidden div, clone the node into that so we can modify it with d3
-            var container = this.div.append("div").style("display", "none")
-                .html(this.parent.svg.node().outerHTML);
-            // Remove unnecessary elements
-            container.selectAll("g.lz-curtain").remove();
-            container.selectAll("g.lz-ui").remove();
-            container.selectAll("g.lz-mouse_guide").remove();
-            // Pull the svg into a string and add the contents of the locuszoom stylesheet
-            // Don't add this with d3 because it will escape the CDATA declaration incorrectly
-            var initial_html = d3.select(container.select("svg").node().parentNode).html();
-            var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
-            var insert_at = initial_html.indexOf('>') + 1;
-            initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
-            // Delete the container node
-            container.remove();      
-            // Base64-encode the string
-            var base64_svg = btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            }));
-            // Apply Base64-encoded string to the download button's href
-            this.download_svg_button.attr("href", "data:image/svg+xml;base64,\n" + base64_svg);
-        },
-        render: function(){
-            this.div.attr("width", this.parent.view.width);
-            this.dimensions.text(this.parent.view.width + "px × " + this.parent.view.height + "px");
-        }
-    };
-    this.controls.initialize();
-
-=======
->>>>>>> parent of 83139de... remove button from demo, work into a new "controls" element adjacent to SVG
     // Initialize all panels
     for (var id in this._panels){
         this._panels[id].initialize();
