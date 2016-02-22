@@ -296,7 +296,7 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
             var field = parts[2];
-            var trans = LocusZoom.Data.getTransformation(parts[3]);
+            var trans = LocusZoom.Data.Transformations.getTransformation(parts[3]);
             if (typeof requests[ns] =="undefined") {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }
@@ -513,20 +513,38 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.LDSource,
     LocusZoom.Data.GeneSource];
 
-
-// This function expects a string of transformations
+// This class is a singleton designed to store and 
+// retrieve transformations
+// Field transformations are specified 
 // in the form "|name1|name2" and returns a proper
 // js function to perform the transformation
-LocusZoom.Data.getTransformation = function(x) {
-    if (x) {
-        var getfun = function(x) {
-            var fun = LocusZoom.Data.KnownTransformations[x];
-            if (fun)  {
-                return fun;
-            } else {
-                throw("transformation " + x + " not found");
-            }
-        };
+LocusZoom.Data.Transformations = (function() {
+    var obj = {};
+    var known = {
+        "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
+    };
+
+    var getTrans = function(x) {
+        if (!x) {
+            return null;
+        }
+        var fun = known[x];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + x + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(x) {
+        return getTrans(x);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
         var funs = [];
         var fun;
         var re = /\|([^\|]+)/g;
@@ -535,24 +553,54 @@ LocusZoom.Data.getTransformation = function(x) {
             funs.push(result[1]);
         }
         if (funs.length==1) {
-            return getfun(funs[0]);
+            return parseTrans(funs[0]);
         } else if (funs.length > 1) {
             return function(x) {
                 var val = x;
                 for(var i = 0; i<funs.length; i++) {
-                    val = getfun(funs[i])(val);
+                    val = parseTrans(funs[i])(val);
                 }
                 return val;
             };
         }
-    } 
-    return null;    
-};
+        return null;
+    };
 
-// This of known transformations (thus it can be extended)
-LocusZoom.Data.KnownTransformations = {
-    "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
-};
+    //accept both "|name" and "name"
+    obj.getTransformation = function(x) {
+        if (x && x.substring(0,1)=="|") {
+            return parseTransString(x);
+        } else {
+            return parseTrans(x);
+        }
+    };
+
+    obj.setTransformation = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                known[name] = fn;
+            } else {
+                delete known[name];
+            }
+        }
+    };
+
+    obj.addTransformation = function(name, fn) {
+        if (known.name) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.setTransfomation(name, fn);
+        }
+    };
+
+    obj.listTransformations = function() {
+        return Object.keys(known);
+    };
+
+    return obj;
+})();
 
 /* global LocusZoom */
 /* eslint-env browser */
