@@ -13,13 +13,16 @@
 
 */
 
-LocusZoom.DataLayer = function() { 
+LocusZoom.DataLayer = function(layout) {
 
     this.initialized = false;
 
     this.id     = null;
     this.parent = null;
     this.svg    = {};
+
+    this.layout = layout || {};
+    if (this.layout.id){ this.id = this.layout.id; }
 
     this.fields = [];
     this.data = [];
@@ -44,21 +47,35 @@ LocusZoom.DataLayer = function() {
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
+
+    this.initializeLayout();
     
     return this;
 
 };
 
-LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
-    if (typeof y === "undefined"){
-        y = 1;
-    }
-    if (y !== 1 && y !== 2){
-        return false;
-    } else {
-        this.parent.axes["y" + y + "_data_layer_id"] = this.id;
-    }
-    return this;
+/*
+PANEL
+
+positions
+
+    this.xExtent = function(){
+        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
+    };
+    
+    this.y1Extent = function(){
+        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
+    };
+
+genes
+
+    this.xExtent = function(){
+        return d3.extent([this.parent.state.start, this.parent.state.end]);
+    };
+*/
+
+LocusZoom.DataLayer.prototype.initializeLayout = function(){
+    // nothing yet...
 };
 
 // Initialize a data layer
@@ -86,10 +103,10 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 };
 
 LocusZoom.DataLayer.prototype.draw = function(){
-    this.svg.container.attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
     this.svg.clipRect
-        .attr("width", this.parent.view.cliparea.width)
-        .attr("height", this.parent.view.cliparea.height);
+        .attr("width", this.parent.layout.cliparea.width)
+        .attr("height", this.parent.layout.cliparea.height);
     return this;
 }
 
@@ -111,7 +128,6 @@ LocusZoom.DataLayer.prototype.reMap = function(){
 LocusZoom.PositionsDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);  
-    this.id = "positions";
     this.fields = ["id","position","pvalue","refAllele","ld:state"];
 
     this.postget = function(){
@@ -181,7 +197,6 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
 LocusZoom.RecombinationRateDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "recombination_rate";
     this.fields = [];
 
     this.render = function(){
@@ -201,7 +216,6 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
 LocusZoom.GenesDataLayer = function(){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "genes";
     this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;

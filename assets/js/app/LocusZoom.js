@@ -3,15 +3,17 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2.2"
+    version: "0.3.0"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
+
     // Initialize a new Instance
-    var inst = new layout(id, datasource, layout, state);
+    var inst = new LocusZoom.Instance(id, datasource, layout, state);
+
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
         .append("svg")
@@ -37,7 +39,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         selector = ".lz-instance";
     }
     if (typeof layout === "undefined"){
-        layout = LocusZoom.DefaultInstance;
+        layout = LocusZoom.DefaultLayout;
     }
     if (typeof state === "undefined"){
         state = {};
@@ -206,4 +208,64 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.send(body);
     } 
     return response.promise;
+};
+
+// Default Layout
+LocusZoom.DefaultLayout = {
+    width: 700,
+    height: 700,
+    min_width: 100,
+    min_height: 100,
+    panels: {
+        positions: {
+            origin: { x: 0, y: 0 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            axes: {
+                x: {
+                    label_function: "chromosome"
+                },
+                y1: {
+                    label: "-log10 p-value"
+                }
+            },
+            data_layers: [
+                {
+                    id: "positions",
+                    class: "PositionsDataLayer",
+                    y1: {
+                        data: "log10pval",
+                        floor: 0,
+                        upper_buffer: 0.05
+                    },
+                    color: {
+                        method: "numeric_cut_points",
+                        cuts: 5,
+                        colors: []
+                    }
+                }
+            ]
+        },
+        genes: {
+            origin: { x: 0, y: 350 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            data_layers: [
+                {
+                    id: "genes",
+                    class: "GenesDataLayer"
+                }
+            ]
+        }
+    }
 };
