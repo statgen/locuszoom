@@ -224,6 +224,13 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
+// Default State
+LocusZoom.DefaultState = {
+    chr: 0,
+    start: 0,
+    end: 0
+};
+
 // Default Layout
 LocusZoom.DefaultLayout = {
     width: 700,
@@ -599,11 +606,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.layout = layout || LocusZoom.DefaultLayout;
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || {
-        chr: 0,
-        start: 0,
-        end: 0
-    };
+    this.state = state || LocusZoom.DefaultState;
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -632,7 +635,8 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 
 }
 
-// Set the layout dimensions for this instance. If an SVG exists, update its dimensions
+// Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
+// If any arguments are missing, use values stored in the layout. Keep everything in agreement.
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (!isNaN(width) && width >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
@@ -1190,7 +1194,11 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     // Render axes and labels
-    if (this.layout.axes.x.render){
+    var canRenderAxis = function(axis){
+        return (typeof this.state[axis + "_scale"] == "function" && !isNaN(this.state[axis + "_scale"](0)));
+    }.bind(this);
+    
+    if (this.layout.axes.x.render && canRenderAxis("x")){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
             .orient("bottom").tickValues(this.layout.axes.x.ticks)
@@ -1211,7 +1219,7 @@ LocusZoom.Panel.prototype.render = function(){
         }
     }
 
-    if (this.layout.axes.y1.render){
+    if (this.layout.axes.y1.render && canRenderAxis("y1")){
         this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
             .orient("left").tickValues(this.layout.axes.y1.ticks);
         this.svg.y1_axis
@@ -1232,7 +1240,7 @@ LocusZoom.Panel.prototype.render = function(){
         }
     }
 
-    if (this.layout.axes.y2.render){
+    if (this.layout.axes.y2.render && canRenderAxis("y2")){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
             .orient("left").tickValues(this.layout.axes.y2.ticks);
         this.svg.y2_axis
