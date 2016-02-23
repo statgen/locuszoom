@@ -29,11 +29,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.layout = layout || LocusZoom.DefaultLayout;
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || {
-        chr: 0,
-        start: 0,
-        end: 0
-    };
+    this.state = state || LocusZoom.DefaultState;
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -62,7 +58,8 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 
 }
 
-// Set the layout dimensions for this instance. If an SVG exists, update its dimensions
+// Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
+// If any arguments are missing, use values stored in the layout. Keep everything in agreement.
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (!isNaN(width) && width >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);

@@ -38,6 +38,9 @@ describe('LocusZoom', function(){
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
         });
+        it('should have a default layout', function(){
+            LocusZoom.should.have.property('DefaultLayout').which.is.an.Object;
+        });
         it('should have a method for converting an integer position to a string', function(){
             LocusZoom.positionIntToString.should.be.a.Function;
             assert.equal(LocusZoom.positionIntToString(1),          "0.000001");

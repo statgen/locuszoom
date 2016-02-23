@@ -44,25 +44,32 @@ describe('LocusZoom.Instance', function(){
         it('should have an id', function(){
             this.instance.should.have.property('id').which.is.a.String;
         });
-        it('should point to LocusZoom with parent', function(){
-            this.instance.should.have.property('parent').which.is.exactly(LocusZoom);
+        it('should have a layout which is DefaultLayout', function(){
+            this.instance.should.have.property('layout').which.is.exactly(LocusZoom.DefaultLayout);
+        });
+        it('should have a state which is DefaultState', function(){
+            this.instance.should.have.property('state').which.is.exactly(LocusZoom.DefaultState);
         });
     });
     describe("Configuration API", function() {
         beforeEach(function() {
             d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = new LocusZoom.Instance("instance_id");
+            this.instance = LocusZoom.populate("#instance_id");
         });
-        it('should allow changing width and height', function(){
+        it('should allow setting dimensions, bounded by layout minimums', function(){
+            console.log(this.instance.layout);
+            this.instance.setDimensions(563, 681);
+            this.instance.layout.should.have.property('width').which.is.exactly(563);
+            this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.setDimensions(1320.3, -50);
+            this.instance.layout.should.have.property('width').which.is.exactly(1320);
+            this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.setDimensions("q", 0);
+            this.instance.layout.should.have.property('width').which.is.exactly(1320);
+            this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
             this.instance.setDimensions(0, 0);
-            this.instance.view.should.have.property('width').which.is.exactly(0);
-            this.instance.view.should.have.property('height').which.is.exactly(0);
-            this.instance.setDimensions(100.3, -50);
-            this.instance.view.should.have.property('width').which.is.exactly(100);
-            this.instance.view.should.have.property('height').which.is.exactly(0);
-            this.instance.setDimensions("q", 75);
-            this.instance.view.should.have.property('width').which.is.exactly(100);
-            this.instance.view.should.have.property('height').which.is.exactly(75);
+            this.instance.layout.should.have.property('width').which.is.exactly(LocusZoom.DefaultLayout.min_width);
+            this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
         });
         it('should allow for adding panels', function(){
             this.instance.addPanel.should.be.a.Function;
@@ -83,12 +90,12 @@ describe('LocusZoom.Instance', function(){
         it('should enforce minimum dimensions based on its panels', function(){
             var positions_panel = this.instance.addPanel(LocusZoom.PositionsPanel);
             var genes_panel = this.instance.addPanel(LocusZoom.GenesPanel);
-            var calculated_min_width = Math.max(positions_panel.view.min_width, genes_panel.view.min_width);
-            var calculated_min_height = positions_panel.view.min_height + genes_panel.view.min_height;
-            assert.equal(this.instance.view.min_width, calculated_min_width);
-            assert.equal(this.instance.view.min_height, calculated_min_height);
-            this.instance.view.width.should.not.be.lessThan(this.instance.view.min_width);
-            this.instance.view.height.should.not.be.lessThan(this.instance.view.min_height);
+            var calculated_min_width = Math.max(positions_panel.layout.min_width, genes_panel.layout.min_width);
+            var calculated_min_height = positions_panel.layout.min_height + genes_panel.layout.min_height;
+            assert.equal(this.instance.layout.min_width, calculated_min_width);
+            assert.equal(this.instance.layout.min_height, calculated_min_height);
+            this.instance.layout.width.should.not.be.lessThan(this.instance.layout.min_width);
+            this.instance.layout.height.should.not.be.lessThan(this.instance.layout.min_height);
         });
         it('should track whether it\'s initialized', function(){
             this.instance.initialize.should.be.a.Function;

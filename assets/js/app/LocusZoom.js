@@ -210,6 +210,13 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
+// Default State
+LocusZoom.DefaultState = {
+    chr: 0,
+    start: 0,
+    end: 0
+};
+
 // Default Layout
 LocusZoom.DefaultLayout = {
     width: 700,
