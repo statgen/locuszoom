@@ -120,14 +120,69 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     return promise;
 };
 
+/****************
+  Color Functions
+  Singleton for accessing/storing functions to apply different color schemes to data sets
+*/
+
+LocusZoom.DataLayer.ColorFunctions = (function() {
+    var obj = {};
+    var functions = {
+        "numeric_cut": function(parameters, value){
+            var breaks = parameters.breaks;
+            var colors = parameters.colors;
+            if (value == null || isNaN(+value)){
+                return (parameters.null_color ? parameters.null_color : colors[0]);
+            }
+            var threshold = breaks.reduce(function(prev, curr){
+                return (+value >= prev && +value < curr ? prev : curr);
+            });
+            return colors[breaks.indexOf(threshold)];
+        }
+    };
+
+    obj.getColor = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            return functions[name](parameters, value);
+        } else {
+            throw("color function [" + name + "] not found");
+        }
+    };
+
+    obj.setColorFunction = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.addColorFunction = function(name, fn) {
+        if (functions.name) {
+            throw("color function already exists with name: " + name);
+        } else {
+            obj.setColorFunction(name, fn);
+        }
+    };
+
+    obj.listColorFunctions = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
 
 /*********************
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(){
+LocusZoom.PositionsDataLayer = function(layout){
 
-    LocusZoom.DataLayer.apply(this, arguments);  
+    LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = ["id","position","pvalue","refAllele","ld:state"];
 
     this.postget = function(){
@@ -159,29 +214,12 @@ LocusZoom.PositionsDataLayer = function(){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.getColor(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
-    };
-
-    // TODO: abstract out to a Color Scale class and support arbitrarily many scales that can be substituted out per user input
-    this.fillColor = function(pval){
-        var getCutter = function(breaks) {
-            var fn = function(x) {
-                if (x == null || isNaN(x)){ return 0; }
-                for(var i = 0; i < breaks.length; i++) {
-                    if (x < breaks[i]) break;
-                }
-                return i;
-            };
-            return fn;
-        };
-        var cutter = getCutter([0,.2,.4,.6,.8]);
-        var fill = ["#B8B8B8","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
-        return fill;
     };
        
     return this;
@@ -194,9 +232,10 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(){
+LocusZoom.RecombinationRateDataLayer = function(layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = [];
 
     this.render = function(){
@@ -213,9 +252,10 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(){
+LocusZoom.GenesDataLayer = function(layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;

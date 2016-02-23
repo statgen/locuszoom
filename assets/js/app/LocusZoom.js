@@ -251,9 +251,12 @@ LocusZoom.DefaultLayout = {
                         upper_buffer: 0.05
                     },
                     color: {
-                        method: "numeric_cut_points",
-                        cuts: 5,
-                        colors: []
+                        function: "numeric_cut",
+                        parameters: {
+                            breaks: [0,.2,.4,.6,.8],
+                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_color: "#B8B8B8"
+                        }
                     }
                 }
             ]

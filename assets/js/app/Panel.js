@@ -388,7 +388,11 @@ LocusZoom.Panel.prototype.render = function(){
     
 };
 
-// Singleton for defining axis label functions with respect to a panel's state
+/****************
+  Label Functions
+  Singleton for defining axis label functions with respect to a panel's state
+*/
+
 LocusZoom.Panel.LabelFunctions = (function() {
     var obj = {};
     var functions = {

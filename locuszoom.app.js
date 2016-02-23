@@ -265,9 +265,12 @@ LocusZoom.DefaultLayout = {
                         upper_buffer: 0.05
                     },
                     color: {
-                        method: "numeric_cut_points",
-                        cuts: 5,
-                        colors: []
+                        function: "numeric_cut",
+                        parameters: {
+                            breaks: [0,.2,.4,.6,.8],
+                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_color: "#B8B8B8"
+                        }
                     }
                 }
             ]
@@ -598,8 +601,8 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     
     this.svg = null;
 
-    // The _panels property stores child panel instances
-    this._panels = {};
+    // The panels property stores child panel instances
+    this.panels = {};
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
@@ -659,7 +662,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    if (typeof this._panels[id] !== "undefined"){
+    if (typeof this.panels[id] !== "undefined"){
         throw "Cannot create panel with id [" + id + "]; panel with that id already exists";
     }
     if (typeof layout !== "object"){
@@ -667,9 +670,9 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     }
     var panel = new LocusZoom.Panel(id, layout);
     panel.parent = this;
-    this._panels[panel.id] = panel;
+    this.panels[panel.id] = panel;
     this.stackPanels();
-    return this._panels[panel.id];
+    return this.panels[panel.id];
 };
 
 // Automatically position panels based on panel positioning rules and values
@@ -680,9 +683,9 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     // First set/enforce minimum instance dimensions based on current panels
     var panel_min_widths = [];
     var panel_min_heights = [];
-    for (var id in this._panels){
-        panel_min_widths.push(this._panels[id].layout.min_width);
-        panel_min_heights.push(this._panels[id].layout.min_height);
+    for (var id in this.panels){
+        panel_min_widths.push(this.panels[id].layout.min_width);
+        panel_min_heights.push(this.panels[id].layout.min_height);
     }
     this.layout.min_width = Math.max.apply(null, panel_min_widths);
     this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
@@ -693,13 +696,13 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     }
 
     // Next set proportional and discrete heights of panels
-    var proportional_height = 1 / Object.keys(this._panels).length;
+    var proportional_height = 1 / Object.keys(this.panels).length;
     var discrete_height = this.layout.height * proportional_height;
     var panel_idx = 0;
-    for (var id in this._panels){
-        this._panels[id].layout.proportional_height = proportional_height;
-        this._panels[id].setOrigin(0, panel_idx * discrete_height);
-        this._panels[id].setDimensions(this.layout.width, discrete_height);
+    for (var id in this.panels){
+        this.panels[id].layout.proportional_height = proportional_height;
+        this.panels[id].setOrigin(0, panel_idx * discrete_height);
+        this.panels[id].setDimensions(this.layout.width, discrete_height);
         panel_idx++;
     }
 
@@ -792,8 +795,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("x", "1em").attr("y", "0em");
 
     // Initialize all panels
-    for (var id in this._panels){
-        this._panels[id].initialize();
+    for (var id in this.panels){
+        this.panels[id].initialize();
     }
 
     // Define instance/svg level mouse events
@@ -833,8 +836,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
-    for (var id in this._panels){
-        this.remap_promises.push(this._panels[id].reMap());
+    for (var id in this.panels){
+        this.remap_promises.push(this.panels[id].reMap());
     }
 
     // When all finished update download SVG link
@@ -892,7 +895,7 @@ LocusZoom.Panel = function(id, layout) {
 
     this.state = {};
     
-    this._data_layers = {};
+    this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
@@ -1071,8 +1074,8 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Initialize child Data Layers
-    for (var id in this._data_layers){
-        this._data_layers[id].initialize();
+    for (var id in this.data_layers){
+        this.data_layers[id].initialize();
     }
 
     // Flip the "initialized" bit
@@ -1091,7 +1094,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     if (typeof layout.id !== "string"){
         throw "Invalid data layer id in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    if (typeof this._data_layers[layout.id] !== "undefined"){
+    if (typeof this.data_layers[layout.id] !== "undefined"){
         throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
     }
     if (typeof LocusZoom[layout.class] !== "function"){
@@ -1099,7 +1102,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     }
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
-    this._data_layers[data_layer.id] = data_layer;
+    this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // Y axis extent(s)
@@ -1112,7 +1115,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
         }
     }.bind(this));
 
-    return this._data_layers[data_layer.id];
+    return this.data_layers[data_layer.id];
 };
 
 
@@ -1120,8 +1123,8 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
 LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
-    for (var id in this._data_layers){
-        this.data_promises.push(this._data_layers[id].reMap());
+    for (var id in this.data_layers){
+        this.data_promises.push(this.data_layers[id].reMap());
     }
     // When all finished trigger a render
     return Q.all(this.data_promises).then(function(){
@@ -1236,7 +1239,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
         if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
+            this.data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
         }
     }
 
@@ -1244,7 +1247,11 @@ LocusZoom.Panel.prototype.render = function(){
     
 };
 
-// Singleton for defining axis label functions with respect to a panel's state
+/****************
+  Label Functions
+  Singleton for defining axis label functions with respect to a panel's state
+*/
+
 LocusZoom.Panel.LabelFunctions = (function() {
     var obj = {};
     var functions = {
@@ -1407,14 +1414,69 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     return promise;
 };
 
+/****************
+  Color Functions
+  Singleton for accessing/storing functions to apply different color schemes to data sets
+*/
+
+LocusZoom.DataLayer.ColorFunctions = (function() {
+    var obj = {};
+    var functions = {
+        "numeric_cut": function(parameters, value){
+            var breaks = parameters.breaks;
+            var colors = parameters.colors;
+            if (value == null || isNaN(+value)){
+                return (parameters.null_color ? parameters.null_color : colors[0]);
+            }
+            var threshold = breaks.reduce(function(prev, curr){
+                return (+value >= prev && +value < curr ? prev : curr);
+            });
+            return colors[breaks.indexOf(threshold)];
+        }
+    };
+
+    obj.getColor = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            return functions[name](parameters, value);
+        } else {
+            throw("color function [" + name + "] not found");
+        }
+    };
+
+    obj.setColorFunction = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.addColorFunction = function(name, fn) {
+        if (functions.name) {
+            throw("color function already exists with name: " + name);
+        } else {
+            obj.setColorFunction(name, fn);
+        }
+    };
+
+    obj.listColorFunctions = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
 
 /*********************
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(){
+LocusZoom.PositionsDataLayer = function(layout){
 
-    LocusZoom.DataLayer.apply(this, arguments);  
+    LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = ["id","position","pvalue","refAllele","ld:state"];
 
     this.postget = function(){
@@ -1446,7 +1508,7 @@ LocusZoom.PositionsDataLayer = function(){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.getColor(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
@@ -1481,9 +1543,10 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(){
+LocusZoom.RecombinationRateDataLayer = function(layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = [];
 
     this.render = function(){
@@ -1500,9 +1563,10 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(){
+LocusZoom.GenesDataLayer = function(layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
     this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;
