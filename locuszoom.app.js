@@ -56,7 +56,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         layout = LocusZoom.DefaultLayout;
     }
     if (typeof state === "undefined"){
-        state = {};
+        state = LocusZoom.DefaultState;
     }
     var instance;
     d3.select(selector).each(function(){
@@ -75,7 +75,7 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
 LocusZoom.positionIntToString = function(p){
-    var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
+    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
@@ -854,34 +854,6 @@ LocusZoom.Instance.prototype.refresh = function(){
     this.mapTo(this.state.chr, this.state.start, this.state.end);
 }
 
-/******************
-  Default Instance
-  - During alpha development this class definition can serve as a functional draft of the API
-  - The default instance should therefore have/do "one of everything" (however possible)
-  - Ultimately the default instance should stand up the most commonly configured LZ use case
-*/
-/*
-LocusZoom.DefaultInstance = function(){
-
-    LocusZoom.Instance.apply(this, arguments);
-
-    this.setDimensions(700,700);
-  
-    this.addPanel(LocusZoom.PositionsPanel)
-        .setMargin(20, 20, 35, 50);
-    this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
-    //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
-
-    this.addPanel(LocusZoom.GenesPanel)
-        .setMargin(20, 20, 20, 50);
-    this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
-  
-    return this;
-  
-};
-LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
-*/
-
 /* global LocusZoom,d3 */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -1312,62 +1284,6 @@ LocusZoom.Panel.LabelFunctions = (function() {
     return obj;
 })();
 
-
-/*
-  Positions Panel
-
-
-LocusZoom.PositionsPanel = function(){
-  
-    LocusZoom.Panel.apply(this, arguments);   
-
-    this.base_id = "positions";
-    this.view.min_width = 300;
-    this.view.min_height = 200;
-
-    this.axes.x.render = true;
-    this.axes.x.label = function(){
-        return "Chromosome " + this.parent.state.chr + " (Mb)";
-    }.bind(this);
-
-    this.axes.y1.render = true;
-    this.axes.y1.label = "-log10 p-value";
-    
-    this.xExtent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
-    };
-    
-    this.y1Extent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
-    };
-    
-    return this;
-};
-
-LocusZoom.PositionsPanel.prototype = new LocusZoom.Panel();
-
-
-
-  Genes Panel
-
-
-LocusZoom.GenesPanel = function(){
-    
-    LocusZoom.Panel.apply(this, arguments);
-
-    this.base_id = "genes";
-    this.view.min_width = 300;
-    this.view.min_height = 200;
-
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
-    };
-  
-    return this;
-};
-
-LocusZoom.GenesPanel.prototype = new LocusZoom.Panel();
-*/
 
 /* global LocusZoom,d3 */
 /* eslint-env browser */

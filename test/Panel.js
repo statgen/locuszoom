@@ -25,9 +25,8 @@ describe('LocusZoom.Panel', function(){
              ]
     });
 
-    // Reset DOM and LocusZoom singleton after each test
+    // Reset DOM after each test
     afterEach(function(){
-        LocusZoom._instances = {};
         d3.select("body").selectAll("*").remove();
     });
 
@@ -183,6 +182,60 @@ describe('LocusZoom.Panel', function(){
                     assert.equal(this.instance._panels[panel_id].curtain.svg.style("display"), "none");
                 }.bind(this));
             });
+        });
+    });
+
+    describe("Label Functions", function() {
+        beforeEach(function(){
+            d3.select("body").append("div").attr("id", "instance_id");
+            this.instance = LocusZoom.populate("#instance_id");
+        });
+        it('Panel should have a LabelFunctions singleton', function(){
+            LocusZoom.Panel.should.have.property('LabelFunctions').which.is.an.Object;
+        });
+        it('should have a method to list available label functions', function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property('listLabelFunctions').which.is.a.Function;
+            var returned_list = LocusZoom.Panel.LabelFunctions.listLabelFunctions();
+            var expected_list = ["chromosome"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it('should have a method to generate a label by function name', function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property('getLabel').which.is.a.Function;
+            var returned_label = LocusZoom.Panel.LabelFunctions.getLabel("chromosome", this.instance.state);
+            var expected_label = "Chromosome 0 (Mb)";
+            assert.equal(returned_label, expected_label);
+        });
+        it('should have a method to add a label function', function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property('addLabelFunction').which.is.a.Function;
+            var foo = function(state){ return "start: " + state.start; };
+            LocusZoom.Panel.LabelFunctions.addLabelFunction("foo", foo);
+            var returned_list = LocusZoom.Panel.LabelFunctions.listLabelFunctions();
+            var expected_list = ["chromosome", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_label = LocusZoom.Panel.LabelFunctions.getLabel("foo", this.instance.state);
+            var expected_label = "start: 0";
+            assert.equal(returned_label, expected_label);
+        });
+        it('should have a method to change or delete existing label functions', function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property('setLabelFunction').which.is.a.Function;
+            var foo_new = function(state){ return "end: " + state.end; };
+            LocusZoom.Panel.LabelFunctions.setLabelFunction("foo", foo_new);
+            var returned_list = LocusZoom.Panel.LabelFunctions.listLabelFunctions();
+            var expected_list = ["chromosome", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_label = LocusZoom.Panel.LabelFunctions.getLabel("foo", this.instance.state);
+            var expected_label = "end: 0";
+            assert.equal(returned_label, expected_label);
+            LocusZoom.Panel.LabelFunctions.setLabelFunction("foo", this.instance.state);
+            var returned_list = LocusZoom.Panel.LabelFunctions.listLabelFunctions();
+            var expected_list = ["chromosome"];
+        });
+        it('should throw an exception if passed a function name that has not been defined', function(){
+            try {
+                LocusZoom.Panel.LabelFunctions.getLabel("nonexistent", this.instance.state);
+            } catch (error){
+                assert.ok(error);
+            }
         });
     });
 

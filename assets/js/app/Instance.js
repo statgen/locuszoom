@@ -276,31 +276,3 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 LocusZoom.Instance.prototype.refresh = function(){
     this.mapTo(this.state.chr, this.state.start, this.state.end);
 }
-
-/******************
-  Default Instance
-  - During alpha development this class definition can serve as a functional draft of the API
-  - The default instance should therefore have/do "one of everything" (however possible)
-  - Ultimately the default instance should stand up the most commonly configured LZ use case
-*/
-/*
-LocusZoom.DefaultInstance = function(){
-
-    LocusZoom.Instance.apply(this, arguments);
-
-    this.setDimensions(700,700);
-  
-    this.addPanel(LocusZoom.PositionsPanel)
-        .setMargin(20, 20, 35, 50);
-    this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
-    //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
-
-    this.addPanel(LocusZoom.GenesPanel)
-        .setMargin(20, 20, 20, 50);
-    this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
-  
-    return this;
-  
-};
-LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
-*/

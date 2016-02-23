@@ -42,7 +42,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         layout = LocusZoom.DefaultLayout;
     }
     if (typeof state === "undefined"){
-        state = {};
+        state = LocusZoom.DefaultState;
     }
     var instance;
     d3.select(selector).each(function(){
@@ -61,7 +61,7 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
 LocusZoom.positionIntToString = function(p){
-    var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
+    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
