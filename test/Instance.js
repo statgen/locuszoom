@@ -73,20 +73,20 @@ describe('LocusZoom.Instance', function(){
         it('should allow for adding arbitrarily many panels', function(){
             this.instance.addPanel.should.be.a.Function;
             var panel = this.instance.addPanel("panel_1", {});
-            this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
-            this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
+            this.instance.panels.should.have.property(panel.id).which.is.exactly(panel);
+            this.instance.panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
             var panel = this.instance.addPanel("panel_2", {});
-            this.instance._panels.should.have.property(panel.id).which.is.exactly(panel);
-            this.instance._panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
+            this.instance.panels.should.have.property(panel.id).which.is.exactly(panel);
+            this.instance.panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
         it('should enforce minimum dimensions based on its panels', function(){
             this.instance.setDimensions(0, 0);
             var calculated_min_width = 0;
             var calculated_min_height = 0;
             var panel;
-            for (panel in this.instance._panels){
-                calculated_min_width = Math.max(calculated_min_width, this.instance._panels[panel].layout.min_width);
-                calculated_min_height += this.instance._panels[panel].layout.min_height;
+            for (panel in this.instance.panels){
+                calculated_min_width = Math.max(calculated_min_width, this.instance.panels[panel].layout.min_width);
+                calculated_min_height += this.instance.panels[panel].layout.min_height;
             }
             assert.equal(this.instance.layout.min_width, calculated_min_width);
             assert.equal(this.instance.layout.min_height, calculated_min_height);

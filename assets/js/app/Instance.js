@@ -21,8 +21,8 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     
     this.svg = null;
 
-    // The _panels property stores child panel instances
-    this._panels = {};
+    // The panels property stores child panel instances
+    this.panels = {};
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
@@ -82,7 +82,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    if (typeof this._panels[id] !== "undefined"){
+    if (typeof this.panels[id] !== "undefined"){
         throw "Cannot create panel with id [" + id + "]; panel with that id already exists";
     }
     if (typeof layout !== "object"){
@@ -90,9 +90,9 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     }
     var panel = new LocusZoom.Panel(id, layout);
     panel.parent = this;
-    this._panels[panel.id] = panel;
+    this.panels[panel.id] = panel;
     this.stackPanels();
-    return this._panels[panel.id];
+    return this.panels[panel.id];
 };
 
 // Automatically position panels based on panel positioning rules and values
@@ -103,9 +103,9 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     // First set/enforce minimum instance dimensions based on current panels
     var panel_min_widths = [];
     var panel_min_heights = [];
-    for (var id in this._panels){
-        panel_min_widths.push(this._panels[id].layout.min_width);
-        panel_min_heights.push(this._panels[id].layout.min_height);
+    for (var id in this.panels){
+        panel_min_widths.push(this.panels[id].layout.min_width);
+        panel_min_heights.push(this.panels[id].layout.min_height);
     }
     this.layout.min_width = Math.max.apply(null, panel_min_widths);
     this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
@@ -116,13 +116,13 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     }
 
     // Next set proportional and discrete heights of panels
-    var proportional_height = 1 / Object.keys(this._panels).length;
+    var proportional_height = 1 / Object.keys(this.panels).length;
     var discrete_height = this.layout.height * proportional_height;
     var panel_idx = 0;
-    for (var id in this._panels){
-        this._panels[id].layout.proportional_height = proportional_height;
-        this._panels[id].setOrigin(0, panel_idx * discrete_height);
-        this._panels[id].setDimensions(this.layout.width, discrete_height);
+    for (var id in this.panels){
+        this.panels[id].layout.proportional_height = proportional_height;
+        this.panels[id].setOrigin(0, panel_idx * discrete_height);
+        this.panels[id].setDimensions(this.layout.width, discrete_height);
         panel_idx++;
     }
 
@@ -215,8 +215,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("x", "1em").attr("y", "0em");
 
     // Initialize all panels
-    for (var id in this._panels){
-        this._panels[id].initialize();
+    for (var id in this.panels){
+        this.panels[id].initialize();
     }
 
     // Define instance/svg level mouse events
@@ -256,8 +256,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
-    for (var id in this._panels){
-        this.remap_promises.push(this._panels[id].reMap());
+    for (var id in this.panels){
+        this.remap_promises.push(this.panels[id].reMap());
     }
 
     // When all finished update download SVG link

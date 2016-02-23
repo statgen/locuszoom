@@ -36,7 +36,7 @@ LocusZoom.Panel = function(id, layout) {
 
     this.state = {};
     
-    this._data_layers = {};
+    this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
@@ -215,8 +215,8 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Initialize child Data Layers
-    for (var id in this._data_layers){
-        this._data_layers[id].initialize();
+    for (var id in this.data_layers){
+        this.data_layers[id].initialize();
     }
 
     // Flip the "initialized" bit
@@ -235,7 +235,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     if (typeof layout.id !== "string"){
         throw "Invalid data layer id in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    if (typeof this._data_layers[layout.id] !== "undefined"){
+    if (typeof this.data_layers[layout.id] !== "undefined"){
         throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
     }
     if (typeof LocusZoom[layout.class] !== "function"){
@@ -243,7 +243,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     }
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
-    this._data_layers[data_layer.id] = data_layer;
+    this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // Y axis extent(s)
@@ -256,7 +256,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
         }
     }.bind(this));
 
-    return this._data_layers[data_layer.id];
+    return this.data_layers[data_layer.id];
 };
 
 
@@ -264,8 +264,8 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
 LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
-    for (var id in this._data_layers){
-        this.data_promises.push(this._data_layers[id].reMap());
+    for (var id in this.data_layers){
+        this.data_promises.push(this.data_layers[id].reMap());
     }
     // When all finished trigger a render
     return Q.all(this.data_promises).then(function(){
@@ -380,7 +380,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Render data layers by z-index
     for (var z_index in this.data_layer_ids_by_z_index){
         if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
+            this.data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
         }
     }
 
