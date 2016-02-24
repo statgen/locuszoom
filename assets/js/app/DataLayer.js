@@ -40,10 +40,6 @@ LocusZoom.DataLayer = function(layout) {
         return this;
     };
 
-    this.state = {
-        z_index: null
-    };
-
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
@@ -135,23 +131,38 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
                 return (parameters.null_color ? parameters.null_color : colors[0]);
             }
             var threshold = breaks.reduce(function(prev, curr){
-                return (+value >= prev && +value < curr ? prev : curr);
+                if (+value < prev || (+value >= prev && +value < curr)){
+                    return prev;
+                } else {
+                    return curr;
+                }
             });
             return colors[breaks.indexOf(threshold)];
+        },
+        "categorical_cut": function(parameters, value){
+            if (parameters.categories.indexOf(value) != -1){
+                return parameters.colors[parameters.categories.indexOf(value)];
+            } else {
+                return (parameters.null_color ? parameters.null_color : parameters.colors[0]); 
+            }
         }
     };
 
-    obj.getColor = function(name, parameters, value) {
+    obj.get = function(name, parameters, value) {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            return functions[name](parameters, value);
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
         } else {
             throw("color function [" + name + "] not found");
         }
     };
 
-    obj.setColorFunction = function(name, fn) {
+    obj.set = function(name, fn) {
         if (fn) {
             functions[name] = fn;
         } else {
@@ -159,15 +170,15 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
         }
     };
 
-    obj.addColorFunction = function(name, fn) {
+    obj.add = function(name, fn) {
         if (functions.name) {
             throw("color function already exists with name: " + name);
         } else {
-            obj.setColorFunction(name, fn);
+            obj.set(name, fn);
         }
     };
 
-    obj.listColorFunctions = function() {
+    obj.list = function() {
         return Object.keys(functions);
     };
 

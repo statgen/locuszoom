@@ -267,7 +267,7 @@ LocusZoom.DefaultLayout = {
                     color: {
                         function: "numeric_cut",
                         parameters: {
-                            breaks: [0,.2,.4,.6,.8],
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_color: "#B8B8B8"
                         }
@@ -1182,7 +1182,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.state.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.x.label_function, this.parent.state);
+            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -1201,7 +1201,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.state.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.y1.label_function, this.parent.state);
+            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -1222,7 +1222,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.state.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.y2.label_function, this.parent.state);
+            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
@@ -1255,20 +1255,30 @@ LocusZoom.Panel.prototype.render = function(){
 LocusZoom.Panel.LabelFunctions = (function() {
     var obj = {};
     var functions = {
-        "chromosome": function(state) { return "Chromosome " + state.chr + " (Mb)"; }
+        "chromosome": function(state) {
+            if (!isNaN(+state.chr)){ 
+                return "Chromosome " + state.chr + " (Mb)";
+            } else {
+                return "Chromosome (Mb)";
+            }
+        }
     };
 
-    obj.getLabel = function(name, state) {
+    obj.get = function(name, state) {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            return functions[name](state);
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
         } else {
             throw("label function [" + name + "] not found");
         }
     };
 
-    obj.setLabelFunction = function(name, fn) {
+    obj.set = function(name, fn) {
         if (fn) {
             functions[name] = fn;
         } else {
@@ -1276,15 +1286,15 @@ LocusZoom.Panel.LabelFunctions = (function() {
         }
     };
 
-    obj.addLabelFunction = function(name, fn) {
+    obj.add = function(name, fn) {
         if (functions.name) {
             throw("label function already exists with name: " + name);
         } else {
-            obj.setLabelFunction(name, fn);
+            obj.set(name, fn);
         }
     };
 
-    obj.listLabelFunctions = function() {
+    obj.list = function() {
         return Object.keys(functions);
     };
 
@@ -1332,10 +1342,6 @@ LocusZoom.DataLayer = function(layout) {
     // the panel has access to it (e.g. to generate x/y scales), but before rendering
     this.prerender = function(){
         return this;
-    };
-
-    this.state = {
-        z_index: null
     };
 
     this.getBaseId = function(){
@@ -1429,23 +1435,38 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
                 return (parameters.null_color ? parameters.null_color : colors[0]);
             }
             var threshold = breaks.reduce(function(prev, curr){
-                return (+value >= prev && +value < curr ? prev : curr);
+                if (+value < prev || (+value >= prev && +value < curr)){
+                    return prev;
+                } else {
+                    return curr;
+                }
             });
             return colors[breaks.indexOf(threshold)];
+        },
+        "categorical_cut": function(parameters, value){
+            if (parameters.categories.indexOf(value) != -1){
+                return parameters.colors[parameters.categories.indexOf(value)];
+            } else {
+                return (parameters.null_color ? parameters.null_color : parameters.colors[0]); 
+            }
         }
     };
 
-    obj.getColor = function(name, parameters, value) {
+    obj.get = function(name, parameters, value) {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            return functions[name](parameters, value);
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
         } else {
             throw("color function [" + name + "] not found");
         }
     };
 
-    obj.setColorFunction = function(name, fn) {
+    obj.set = function(name, fn) {
         if (fn) {
             functions[name] = fn;
         } else {
@@ -1453,15 +1474,15 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
         }
     };
 
-    obj.addColorFunction = function(name, fn) {
+    obj.add = function(name, fn) {
         if (functions.name) {
             throw("color function already exists with name: " + name);
         } else {
-            obj.setColorFunction(name, fn);
+            obj.set(name, fn);
         }
     };
 
-    obj.listColorFunctions = function() {
+    obj.list = function() {
         return Object.keys(functions);
     };
 
@@ -1514,23 +1535,6 @@ LocusZoom.PositionsDataLayer = function(layout){
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
-    };
-
-    // TODO: abstract out to a Color Scale class and support arbitrarily many scales that can be substituted out per user input
-    this.fillColor = function(pval){
-        var getCutter = function(breaks) {
-            var fn = function(x) {
-                if (x == null || isNaN(x)){ return 0; }
-                for(var i = 0; i < breaks.length; i++) {
-                    if (x < breaks[i]) break;
-                }
-                return i;
-            };
-            return fn;
-        };
-        var cutter = getCutter([0,.2,.4,.6,.8]);
-        var fill = ["#B8B8B8","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
-        return fill;
     };
        
     return this;

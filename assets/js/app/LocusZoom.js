@@ -253,7 +253,7 @@ LocusZoom.DefaultLayout = {
                     color: {
                         function: "numeric_cut",
                         parameters: {
-                            breaks: [0,.2,.4,.6,.8],
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_color: "#B8B8B8"
                         }

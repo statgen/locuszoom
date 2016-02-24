@@ -323,7 +323,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.state.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.x.label_function, this.parent.state);
+            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -342,7 +342,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.state.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.y1.label_function, this.parent.state);
+            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -363,7 +363,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.state.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.getLabel(this.layout.axes.y2.label_function, this.parent.state);
+            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
@@ -396,20 +396,30 @@ LocusZoom.Panel.prototype.render = function(){
 LocusZoom.Panel.LabelFunctions = (function() {
     var obj = {};
     var functions = {
-        "chromosome": function(state) { return "Chromosome " + state.chr + " (Mb)"; }
+        "chromosome": function(state) {
+            if (!isNaN(+state.chr)){ 
+                return "Chromosome " + state.chr + " (Mb)";
+            } else {
+                return "Chromosome (Mb)";
+            }
+        }
     };
 
-    obj.getLabel = function(name, state) {
+    obj.get = function(name, state) {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            return functions[name](state);
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
         } else {
             throw("label function [" + name + "] not found");
         }
     };
 
-    obj.setLabelFunction = function(name, fn) {
+    obj.set = function(name, fn) {
         if (fn) {
             functions[name] = fn;
         } else {
@@ -417,15 +427,15 @@ LocusZoom.Panel.LabelFunctions = (function() {
         }
     };
 
-    obj.addLabelFunction = function(name, fn) {
+    obj.add = function(name, fn) {
         if (functions.name) {
             throw("label function already exists with name: " + name);
         } else {
-            obj.setLabelFunction(name, fn);
+            obj.set(name, fn);
         }
     };
 
-    obj.listLabelFunctions = function() {
+    obj.list = function() {
         return Object.keys(functions);
     };
 

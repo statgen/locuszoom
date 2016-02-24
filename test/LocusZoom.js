@@ -69,7 +69,7 @@ describe('LocusZoom', function(){
         it('should have a method for adding instances to a div by ID', function(){
             d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.addInstanceToDivById.should.be.a.Function;
-            var instance = LocusZoom.addInstanceToDivById("instance_id", Object(), LocusZoom.DefaultInstance);
+            var instance = LocusZoom.addInstanceToDivById("instance_id", Object());
             instance.should.be.an.Object;
             instance.id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
