@@ -37,6 +37,7 @@ LocusZoom.Panel = function(id, layout) {
     this.state = {};
     
     this.data_layers = {};
+    this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
     this.xExtent  = null;
@@ -243,6 +244,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
+    this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
     if (layout.y_axis){
@@ -370,10 +372,10 @@ LocusZoom.Panel.prototype.render = function(){
                 .text(y2_label);
         }
     }
-    
-    // Render data layers in order defined in the layout
-    this.layout.data_layers.forEach(function(data_layer){
-        this.data_layers[data_layer.id].draw().prerender().render();
+
+    // Render data layers in order by z-index
+    this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+        this.data_layers[data_layer_id].draw().prerender().render();
     }.bind(this));
 
     return this;

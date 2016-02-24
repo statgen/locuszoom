@@ -44,11 +44,14 @@ describe('LocusZoom.Instance', function(){
         it('should have an id', function(){
             this.instance.should.have.property('id').which.is.a.String;
         });
-        it('should have a layout which is DefaultLayout', function(){
-            this.instance.should.have.property('layout').which.is.exactly(LocusZoom.DefaultLayout);
+        it('should have a layout which is (superficially) a copy of DefaultLayout', function(){
+            assert.equal(this.instance.layout.width, LocusZoom.DefaultLayout.width);
+            assert.equal(this.instance.layout.height, LocusZoom.DefaultLayout.height);
+            assert.equal(this.instance.layout.min_width, LocusZoom.DefaultLayout.min_width);
+            assert.equal(this.instance.layout.min_height, LocusZoom.DefaultLayout.min_height);
         });
-        it('should have a state which is DefaultState', function(){
-            this.instance.should.have.property('state').which.is.exactly(LocusZoom.DefaultState);
+        it('should have a state which is a copy of DefaultState', function(){
+            assert.deepEqual(this.instance.state, LocusZoom.DefaultState);
         });
     });
     describe("Configuration API", function() {

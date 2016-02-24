@@ -39,10 +39,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         selector = ".lz-instance";
     }
     if (typeof layout === "undefined"){
-        layout = LocusZoom.DefaultLayout;
+        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     }
     if (typeof state === "undefined"){
-        state = LocusZoom.DefaultState;
+        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     }
     var instance;
     d3.select(selector).each(function(){
@@ -221,8 +221,8 @@ LocusZoom.DefaultState = {
 LocusZoom.DefaultLayout = {
     width: 700,
     height: 700,
-    min_width: 100,
-    min_height: 100,
+    min_width: 300,
+    min_height: 400,
     panels: {
         positions: {
             origin: { x: 0, y: 0 },
@@ -249,7 +249,7 @@ LocusZoom.DefaultLayout = {
                         axis: 1,
                         data: "log10pval",
                         floor: 0,
-                        upper_buffer: 0.5
+                        upper_buffer: 0.05
                     },
                     color: {
                         function: "numeric_cut",

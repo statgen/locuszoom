@@ -53,10 +53,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         selector = ".lz-instance";
     }
     if (typeof layout === "undefined"){
-        layout = LocusZoom.DefaultLayout;
+        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     }
     if (typeof state === "undefined"){
-        state = LocusZoom.DefaultState;
+        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     }
     var instance;
     d3.select(selector).each(function(){
@@ -235,8 +235,8 @@ LocusZoom.DefaultState = {
 LocusZoom.DefaultLayout = {
     width: 700,
     height: 700,
-    min_width: 100,
-    min_height: 100,
+    min_width: 300,
+    min_height: 400,
     panels: {
         positions: {
             origin: { x: 0, y: 0 },
@@ -263,7 +263,7 @@ LocusZoom.DefaultLayout = {
                         axis: 1,
                         data: "log10pval",
                         floor: 0,
-                        upper_buffer: 0.5
+                        upper_buffer: 0.05
                     },
                     color: {
                         function: "numeric_cut",
@@ -607,10 +607,10 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = layout || LocusZoom.DefaultLayout;
+    this.layout = layout || JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || LocusZoom.DefaultState;
+    this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -688,8 +688,12 @@ LocusZoom.Instance.prototype.stackPanels = function(){
         panel_min_widths.push(this.panels[id].layout.min_width);
         panel_min_heights.push(this.panels[id].layout.min_height);
     }
-    this.layout.min_width = Math.max.apply(null, panel_min_widths);
-    this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    if (panel_min_widths.length){
+        this.layout.min_width = Math.max.apply(null, panel_min_widths);
+    }
+    if (panel_min_heights.length){
+        this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    }
     if (this.layout.width < this.layout.min_width || this.layout.height < this.layout.min_height){
         this.setDimensions(Math.max(this.layout.width, this.layout.min_width),
                            Math.max(this.layout.height, this.layout.min_height));
@@ -897,6 +901,7 @@ LocusZoom.Panel = function(id, layout) {
     this.state = {};
     
     this.data_layers = {};
+    this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
     this.xExtent  = null;
@@ -1103,6 +1108,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
+    this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
     if (layout.y_axis){
@@ -1230,10 +1236,10 @@ LocusZoom.Panel.prototype.render = function(){
                 .text(y2_label);
         }
     }
-    
-    // Render data layers in order defined in the layout
-    this.layout.data_layers.forEach(function(data_layer){
-        this.data_layers[data_layer.id].draw().prerender().render();
+
+    // Render data layers in order by z-index
+    this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+        this.data_layers[data_layer_id].draw().prerender().render();
     }.bind(this));
 
     return this;

@@ -26,10 +26,10 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = layout || LocusZoom.DefaultLayout;
+    this.layout = layout || JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || LocusZoom.DefaultState;
+    this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -107,8 +107,12 @@ LocusZoom.Instance.prototype.stackPanels = function(){
         panel_min_widths.push(this.panels[id].layout.min_width);
         panel_min_heights.push(this.panels[id].layout.min_height);
     }
-    this.layout.min_width = Math.max.apply(null, panel_min_widths);
-    this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    if (panel_min_widths.length){
+        this.layout.min_width = Math.max.apply(null, panel_min_widths);
+    }
+    if (panel_min_heights.length){
+        this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    }
     if (this.layout.width < this.layout.min_width || this.layout.height < this.layout.min_height){
         this.setDimensions(Math.max(this.layout.width, this.layout.min_width),
                            Math.max(this.layout.height, this.layout.min_height));
