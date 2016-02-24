@@ -72,7 +72,7 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
             var field = parts[2];
-            var trans = LocusZoom.Data.Transformations.getTransformation(parts[3]);
+            var trans = LocusZoom.Data.Transformations.get(parts[3]);
             if (typeof requests[ns] =="undefined") {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }
@@ -343,7 +343,7 @@ LocusZoom.Data.Transformations = (function() {
     };
 
     //accept both "|name" and "name"
-    obj.getTransformation = function(x) {
+    obj.get = function(x) {
         if (x && x.substring(0,1)=="|") {
             return parseTransString(x);
         } else {
@@ -351,7 +351,7 @@ LocusZoom.Data.Transformations = (function() {
         }
     };
 
-    obj.setTransformation = function(name, fn) {
+    obj.set = function(name, fn) {
         if (name.substring(0,1)=="|") {
             throw("transformation name should not start with a pipe");
         } else {
@@ -363,15 +363,15 @@ LocusZoom.Data.Transformations = (function() {
         }
     };
 
-    obj.addTransformation = function(name, fn) {
+    obj.add = function(name, fn) {
         if (known.name) {
             throw("transformation already exists with name: " + name);
         } else {
-            obj.setTransfomation(name, fn);
+            obj.set(name, fn);
         }
     };
 
-    obj.listTransformations = function() {
+    obj.list = function() {
         return Object.keys(known);
     };
 
