@@ -259,10 +259,11 @@ LocusZoom.DefaultLayout = {
                 {
                     id: "positions",
                     class: "PositionsDataLayer",
-                    y1: {
+                    y_axis: {
+                        axis: 1,
                         data: "log10pval",
                         floor: 0,
-                        upper_buffer: 0.05
+                        upper_buffer: 0.5
                     },
                     color: {
                         function: "numeric_cut",
@@ -896,7 +897,6 @@ LocusZoom.Panel = function(id, layout) {
     this.state = {};
     
     this.data_layers = {};
-    this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
     this.xExtent  = null;
@@ -1103,17 +1103,12 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
-    this.data_layer_ids_by_z_index.push(data_layer.id);
 
-    // Y axis extent(s)
-    ["y1","y2"].forEach(function(y_axis){
-        if (typeof layout[y_axis] == "object"){
-            var extent = y_axis + "Extent";
-            this[extent] = function(){
-                return d3.extent(data_layer.data, function(d) { return +d.log10pval * 1.05; } );
-            };
-        }
-    }.bind(this));
+    // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
+    if (layout.y_axis){
+        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
+        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+    }
 
     return this.data_layers[data_layer.id];
 };
@@ -1145,7 +1140,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Set size on the clip rect
     this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
 
-    // Generate extents and scales
+    // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
         this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.layout.cliparea.width/120, true);
@@ -1236,12 +1231,10 @@ LocusZoom.Panel.prototype.render = function(){
         }
     }
     
-    // Render data layers by z-index
-    for (var z_index in this.data_layer_ids_by_z_index){
-        if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this.data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
-        }
-    }
+    // Render data layers in order defined in the layout
+    this.layout.data_layers.forEach(function(data_layer){
+        this.data_layers[data_layer.id].draw().prerender().render();
+    }.bind(this));
 
     return this;
     
@@ -1347,35 +1340,24 @@ LocusZoom.DataLayer = function(layout) {
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
-
-    this.initializeLayout();
     
     return this;
 
 };
 
-/*
-PANEL
-
-positions
-
-    this.xExtent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
-    };
-    
-    this.y1Extent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
-    };
-
-genes
-
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
-    };
-*/
-
-LocusZoom.DataLayer.prototype.initializeLayout = function(){
-    // nothing yet...
+// Generate a y-axis extent functions based on the layout
+LocusZoom.DataLayer.prototype.getYExtent = function(){
+    return function(){
+        var extent = d3.extent(this.data, function(d) {
+            var val = +d[this.layout.y_axis.data];
+            if (!isNaN(this.layout.y_axis.ceiling)){ val = Math.min(val, this.layout.y_axis.ceiling); }
+            if (!isNaN(this.layout.y_axis.floor)){ val = Math.max(val, this.layout.y_axis.floor); }
+            return val;
+        }.bind(this));
+        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
+        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        return extent;
+    }.bind(this);
 };
 
 // Initialize a data layer
@@ -1529,7 +1511,7 @@ LocusZoom.PositionsDataLayer = function(layout){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.getColor(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })

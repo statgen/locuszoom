@@ -245,10 +245,11 @@ LocusZoom.DefaultLayout = {
                 {
                     id: "positions",
                     class: "PositionsDataLayer",
-                    y1: {
+                    y_axis: {
+                        axis: 1,
                         data: "log10pval",
                         floor: 0,
-                        upper_buffer: 0.05
+                        upper_buffer: 0.5
                     },
                     color: {
                         function: "numeric_cut",

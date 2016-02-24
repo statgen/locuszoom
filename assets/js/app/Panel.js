@@ -37,7 +37,6 @@ LocusZoom.Panel = function(id, layout) {
     this.state = {};
     
     this.data_layers = {};
-    this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
     this.xExtent  = null;
@@ -244,17 +243,12 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     var data_layer = new LocusZoom[layout.class](layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
-    this.data_layer_ids_by_z_index.push(data_layer.id);
 
-    // Y axis extent(s)
-    ["y1","y2"].forEach(function(y_axis){
-        if (typeof layout[y_axis] == "object"){
-            var extent = y_axis + "Extent";
-            this[extent] = function(){
-                return d3.extent(data_layer.data, function(d) { return +d.log10pval * 1.05; } );
-            };
-        }
-    }.bind(this));
+    // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
+    if (layout.y_axis){
+        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
+        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+    }
 
     return this.data_layers[data_layer.id];
 };
@@ -286,7 +280,7 @@ LocusZoom.Panel.prototype.render = function(){
     // Set size on the clip rect
     this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
 
-    // Generate extents and scales
+    // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
         this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.layout.cliparea.width/120, true);
@@ -377,12 +371,10 @@ LocusZoom.Panel.prototype.render = function(){
         }
     }
     
-    // Render data layers by z-index
-    for (var z_index in this.data_layer_ids_by_z_index){
-        if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this.data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
-        }
-    }
+    // Render data layers in order defined in the layout
+    this.layout.data_layers.forEach(function(data_layer){
+        this.data_layers[data_layer.id].draw().prerender().render();
+    }.bind(this));
 
     return this;
     

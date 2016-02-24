@@ -43,35 +43,24 @@ LocusZoom.DataLayer = function(layout) {
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
-
-    this.initializeLayout();
     
     return this;
 
 };
 
-/*
-PANEL
-
-positions
-
-    this.xExtent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.position; } );
-    };
-    
-    this.y1Extent = function(){
-        return d3.extent(this._data_layers.positions.data, function(d) { return +d.log10pval * 1.05; } );
-    };
-
-genes
-
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
-    };
-*/
-
-LocusZoom.DataLayer.prototype.initializeLayout = function(){
-    // nothing yet...
+// Generate a y-axis extent functions based on the layout
+LocusZoom.DataLayer.prototype.getYExtent = function(){
+    return function(){
+        var extent = d3.extent(this.data, function(d) {
+            var val = +d[this.layout.y_axis.data];
+            if (!isNaN(this.layout.y_axis.ceiling)){ val = Math.min(val, this.layout.y_axis.ceiling); }
+            if (!isNaN(this.layout.y_axis.floor)){ val = Math.max(val, this.layout.y_axis.floor); }
+            return val;
+        }.bind(this));
+        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
+        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        return extent;
+    }.bind(this);
 };
 
 // Initialize a data layer
@@ -225,7 +214,7 @@ LocusZoom.PositionsDataLayer = function(layout){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
-            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.getColor(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
