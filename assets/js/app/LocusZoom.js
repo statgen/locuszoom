@@ -247,7 +247,7 @@ LocusZoom.DefaultLayout = {
                     class: "PositionsDataLayer",
                     y_axis: {
                         axis: 1,
-                        data: "log10pval",
+                        data: "pvalue|neglog10",
                         floor: 0,
                         upper_buffer: 0.05
                     },

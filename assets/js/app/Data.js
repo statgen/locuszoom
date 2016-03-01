@@ -66,21 +66,19 @@ LocusZoom.Data.Requester = function(sources) {
 
     function split_requests(fields) {
         var requests = {};
-        fields.forEach(function(field) {
-            var parts = field.split(/\:(.*)/);
-            if (parts.length==1) {
-                if (typeof requests["base"] == "undefined") {
-                    requests.base = {names:[], fields:[]};
-                }
-                requests.base.names.push(field);
-                requests.base.fields.push(field);
-            } else {
-                if (typeof requests[parts[0]] =="undefined") {
-                    requests[parts[0]] = {names:[], fields:[]};
-                }
-                requests[parts[0]].names.push(field);
-                requests[parts[0]].fields.push(parts[1]);
+        // Regular expressopn finds namespace:field|trans
+        var re = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/;
+        fields.forEach(function(raw) {
+            var parts = re.exec(raw);
+            var ns = parts[1] || "base";
+            var field = parts[2];
+            var trans = LocusZoom.Data.Transformations.get(parts[3]);
+            if (typeof requests[ns] =="undefined") {
+                requests[ns] = {outnames:[], fields:[], trans:[]};
             }
+            requests[ns].outnames.push(raw);
+            requests[ns].fields.push(field);
+            requests[ns].trans.push(trans);
         });
         return requests;
     }
@@ -91,7 +89,8 @@ LocusZoom.Data.Requester = function(sources) {
             if (!sources.getSource(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
-            return sources.getSource(key).getData(state, requests[key].fields, requests[key].names);
+            return sources.getSource(key).getData(state, requests[key].fields, 
+                requests[key].outnames, requests[key].trans);
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
@@ -120,10 +119,10 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
 };
-LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames) {
+LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
     return function (chain) {
         return this.getRequest(state, chain, fields).then(function(resp) {
-            return this.parseResponse(resp, chain, fields, outnames);
+            return this.parseResponse(resp, chain, fields, outnames, trans);
         }.bind(this));
     }.bind(this);
 };
@@ -135,16 +134,17 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
 LocusZoom.Data.AssociationSource = function(init) {
     this.parseInit(init);
     
-    this.getData = function(state, fields, outnames) {
+    this.getData = function(state, fields, outnames, trans) {
         ["id","position"].forEach(function(x) {
             if (fields.indexOf(x)==-1) {
                 fields.unshift(x);
                 outnames.unshift(x);
+                trans.unshift(null);
             }
         });
         return function (chain) {
             return this.getRequest(state, chain).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames);
+                return this.parseResponse(resp, chain, fields, outnames, trans);
             }.bind(this));
         }.bind(this);
     };
@@ -158,7 +158,7 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
         " and position ge " + state.start +
         " and position le " + state.end;
 };
-LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var x = resp.data;
     var records = [];
     fields.forEach(function(f) {
@@ -167,7 +167,11 @@ LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain,
     for(var i = 0; i < x.position.length; i++) {
         var record = {};
         for(var j=0; j<fields.length; j++) {
-            record[outnames[j]] = x[fields[j]][i];
+            var val = x[fields[j]][i];
+            if (trans && trans[j]) {
+                val = trans[j](val);
+            }
+            record[outnames[j]] = val;
         }
         records.push(record);
     }
@@ -178,14 +182,17 @@ LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
 LocusZoom.Data.LDSource = function(init) {
     this.parseInit(init);
+    if (!this.params.pvaluefield) {
+        this.params.pvaluefield = "pvalue|neglog10";
+    }
 
-    this.getData = function(state, fields, outnames) {
+    this.getData = function(state, fields, outnames, trans) {
         if (fields.length>1) {
             throw("LD currently only supports one field");
         }
         return function (chain) {
             return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames);
+                return this.parseResponse(resp, chain, fields, outnames, trans);
             }.bind(this));
         }.bind(this);
     };
@@ -193,16 +200,17 @@ LocusZoom.Data.LDSource = function(init) {
 LocusZoom.Data.LDSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.LDSource.prototype.constructor = LocusZoom.Data.LDSource;
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
-    var findSmallestPvalue = function(x, pval) {
+    var findExtremeValue = function(x, pval, sign) {
         pval = pval || "pvalue";
-        var smVal = x[0][pval], smIdx=0;
+        sign = sign || 1;
+        var extremeVal = x[0][pval], extremeIdx=0;
         for(var i=1; i<x.length; i++) {
-            if (x[i][pval] < smVal) {
-                smVal = x[i][pval];
-                smIdx = i;
+            if (x[i][pval] * sign > extremeVal) {
+                extremeVal = x[i][pval] * sign;
+                extremeIdx = i;
             }
         }
-        return smIdx;
+        return extremeIdx;
     };
 
     var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
@@ -214,7 +222,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         if ( !chain.body ) {
             throw("No association data found to find best pvalue");
         }
-        refVar = chain.body[findSmallestPvalue(chain.body)].id;
+        refVar = chain.body[findExtremeValue(chain.body, this.params.pvaluefield)].id;
     }
     if (!chain.header) {chain.header = {};}
     chain.header.ldrefvar = refVar;
@@ -249,10 +257,10 @@ LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 LocusZoom.Data.GeneSource = function(init) {
     this.parseInit(init);
 
-    this.getData = function(state, fields, outnames) {
+    this.getData = function(state, fields, outnames, trans) {
         return function (chain) {
             return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames);
+                return this.parseResponse(resp, chain, fields, outnames, trans);
             }.bind(this));
         }.bind(this);
     };
@@ -281,3 +289,91 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.LDSource,
     LocusZoom.Data.GeneSource];
 
+// This class is a singleton designed to store and 
+// retrieve transformations
+// Field transformations are specified 
+// in the form "|name1|name2" and returns a proper
+// js function to perform the transformation
+LocusZoom.Data.Transformations = (function() {
+    var obj = {};
+    var known = {
+        "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
+    };
+
+    var getTrans = function(x) {
+        if (!x) {
+            return null;
+        }
+        var fun = known[x];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + x + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(x) {
+        return getTrans(x);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var fun;
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(x) {
+        if (x && x.substring(0,1)=="|") {
+            return parseTransString(x);
+        } else {
+            return parseTrans(x);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                known[name] = fn;
+            } else {
+                delete known[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (known.name) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(known);
+    };
+
+    return obj;
+})();

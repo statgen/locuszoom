@@ -183,12 +183,11 @@ LocusZoom.PositionsDataLayer = function(layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
-    this.fields = ["id","position","pvalue","refAllele","ld:state"];
+    this.fields = ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"];
 
     this.postget = function(){
         this.data.map(function(d, i){
             this.data[i].ld = +d["ld:state"];
-            this.data[i].log10pval = -Math.log(d.pvalue) / Math.LN10;
         }.bind(this));
         return this;
     };
@@ -212,8 +211,8 @@ LocusZoom.PositionsDataLayer = function(layout){
             .enter().append("circle")
             .attr("class", "lz-position")
             .attr("id", function(d){ return d.id; })
-            .attr("cx", function(d){ return this.parent.state.x_scale(d.position); }.bind(this))
-            .attr("cy", function(d){ return this.parent.state.y1_scale(d.log10pval); }.bind(this))
+            .attr("cx", function(d){ return this.parent.state.x_scale(d["position"]); }.bind(this))
+            .attr("cy", function(d){ return this.parent.state.y1_scale(d["pvalue|neglog10"]); }.bind(this))
             .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
