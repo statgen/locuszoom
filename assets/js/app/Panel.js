@@ -375,7 +375,7 @@ LocusZoom.Panel.prototype.render = function(){
 
     // Render data layers in order by z-index
     this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
-        this.data_layers[data_layer_id].draw().prerender().render();
+        this.data_layers[data_layer_id].draw().render();
     }.bind(this));
 
     return this;

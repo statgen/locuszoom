@@ -28,18 +28,6 @@ LocusZoom.DataLayer = function(layout) {
     this.data = [];
     this.metadata = {};
 
-    // afterget is an automatic method called after data is acquired but before
-    // the parent panel works with it (e.g. to generate x/y scales)
-    this.postget = function(){
-        return this;
-    };
-
-    // prerender is an automatic method called after data is aqcuired and after
-    // the panel has access to it (e.g. to generate x/y scales), but before rendering
-    this.prerender = function(){
-        return this;
-    };
-
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
@@ -100,7 +88,6 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
-        this.postget();
     }.bind(this));
     return promise;
 };
@@ -185,13 +172,6 @@ LocusZoom.PositionsDataLayer = function(layout){
     this.layout = layout;
     this.fields = ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"];
 
-    this.postget = function(){
-        this.data.map(function(d, i){
-            this.data[i].ld = +d["ld:state"];
-        }.bind(this));
-        return this;
-    };
-
     this.render = function(){
         var that = this;
         var clicker = function() {
@@ -213,7 +193,7 @@ LocusZoom.PositionsDataLayer = function(layout){
             .attr("id", function(d){ return d.id; })
             .attr("cx", function(d){ return this.parent.state.x_scale(d["position"]); }.bind(this))
             .attr("cy", function(d){ return this.parent.state.y1_scale(d["pvalue|neglog10"]); }.bind(this))
-            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d.ld); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d["ld:state"]); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
@@ -263,7 +243,7 @@ LocusZoom.GenesDataLayer = function(layout){
 
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
-    this.prerender = function(){
+    this.assignTracks = function(){
 
         // Reinitialize metadata
         this.metadata.tracks = 1;
@@ -351,6 +331,9 @@ LocusZoom.GenesDataLayer = function(layout){
     };
 
     this.render = function(){
+
+        this.assignTracks();
+
         this.svg.group.selectAll("*").remove();
 
         // Render gene groups
