@@ -127,23 +127,30 @@ LocusZoom.parsePositionQuery = function(x) {
 
 // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
 // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
-// Optionally specify n for a "target" number of ticks. Will not necessarily be the number of ticks you get! Defaults to 5.
-LocusZoom.prettyTicks = function(range, n, internal_only){
-    if (typeof n == "undefined" || isNaN(parseInt(n))){
-  	    n = 5;
+//
+// clip_range - string, optional - default "neither"
+// First and last generated ticks may extend beyond the range. Set this to "low", "high", "both", or
+// "neither" to clip the first (low) or last (high) tick to be inside the range or allow them to extend beyond.
+// e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
+// last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
+//
+// target_tick_count - integer, optional - default 5
+// Specify a "target" number of ticks. Will not necessarily be the number of ticks you get, but should be
+// pretty close. Defaults to 5.
+
+LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
+    if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
+  	    target_tick_count = 5;
     }
-    n = parseInt(n);
-    if (typeof internal_only == "undefined"){
-        internal_only = false;
-    }
+    target_tick_count = parseInt(target_tick_count);
     
-    var min_n = n / 3;
+    var min_n = target_tick_count / 3;
     var shrink_sml = 0.75;
     var high_u_bias = 1.5;
     var u5_bias = 0.5 + 1.5 * high_u_bias;
     
     var d = Math.abs(range[0] - range[1]);
-    var c = d / n;
+    var c = d / target_tick_count;
     if ((Math.log(d) / Math.LN10) < -2){
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
@@ -181,8 +188,13 @@ LocusZoom.prettyTicks = function(range, n, internal_only){
     }
     ticks.push(i);
     
-    if (internal_only){
+    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) == -1){
+        clip_range = "neither";
+    }
+    if (clip_range == "low" || clip_range == "both"){
         if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+    }
+    if (clip_range == "high" || clip_range == "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
     
@@ -255,9 +267,8 @@ LocusZoom.DefaultLayout = {
                     label: "-log10 p-value"
                 }
             },
-            data_layers: [
-                {
-                    id: "positions",
+            data_layers: {
+                positions: {
                     class: "PositionsDataLayer",
                     y_axis: {
                         axis: 1,
@@ -274,7 +285,7 @@ LocusZoom.DefaultLayout = {
                         }
                     }
                 }
-            ]
+            }
         },
         genes: {
             origin: { x: 0, y: 350 },
@@ -285,12 +296,11 @@ LocusZoom.DefaultLayout = {
             proportional_width: 1,
             proportional_height: 0.5,
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
-            data_layers: [
-                {
-                    id: "genes",
+            data_layers: {
+                genes: {
                     class: "GenesDataLayer"
                 }
-            ]
+            }
         }
     }
 };
@@ -1044,13 +1054,15 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
                 render: false,
                 ticks:  [],
                 label:  null,
-                label_function: null
+                label_function: null,
+                data_layer_id: null
             };
         } else {
             this.layout.axes[axis].render = true;
             this.layout.axes[axis].ticks = this.layout.axes[axis].ticks || [];
             this.layout.axes[axis].label = this.layout.axes[axis].label || null;
             this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
+            this.layout.axes[axis].data_layer_id = this.layout.axes[axis].data_layer_id || null;
         }
     }.bind(this));
 
@@ -1061,9 +1073,10 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Add data layers (which define y extents)
     if (typeof this.layout.data_layers == "object"){
-        this.layout.data_layers.forEach(function(layout){
-            this.addDataLayer(layout);
-        }.bind(this));
+        var data_layer_id;
+        for (data_layer_id in this.layout.data_layers){
+            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
+        }
     }
 
 };
@@ -1188,20 +1201,20 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(layout){
-    if (typeof layout !== "object"){
-        throw "Invalid data layer layout passed to LocusZoom.Instance.prototype.addDataLayer()";
+LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+    if (typeof id !== "string"){
+        throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    if (typeof layout.id !== "string"){
-        throw "Invalid data layer id in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
+    if (typeof layout !== "object"){
+        throw "Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
     if (typeof this.data_layers[layout.id] !== "undefined"){
         throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
     }
-    if (typeof LocusZoom[layout.class] !== "function"){
+    if (typeof layout.class !== "string" || typeof LocusZoom[layout.class] !== "function"){
         throw "Invalid data layer class in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    var data_layer = new LocusZoom[layout.class](layout);
+    var data_layer = new LocusZoom[layout.class](id, layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
@@ -1210,6 +1223,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     if (layout.y_axis){
         var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
         this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+        this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
     }
 
     return this.data_layers[data_layer.id];
@@ -1236,6 +1250,19 @@ LocusZoom.Panel.prototype.reMap = function(){
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
 
+    // Using the associated data layer axis layout declaration for floor, ceiling, upper, and lower buffer
+    // determine the correct clip_range value to pass to prettyTicks (e.g. "low", "high", "both", or "neither")
+    var clip_range = function(layout, axis){
+        var clip_value = "neither";
+        if (layout.axes[axis].data_layer_id){
+            var axis_layout = layout.data_layers[layout.axes[axis].data_layer_id].y_axis;
+            if (typeof axis_layout.floor == "number"){ clip_value = "low"; }
+            if (typeof axis_layout.ceiling == "number"){ clip_value = "high"; }
+            if (typeof axis_layout.floor == "number" && typeof axis_layout.ceiling == "number"){ clip_value = "both"; }
+        }
+        return clip_value;
+    }
+
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
 
@@ -1245,21 +1272,21 @@ LocusZoom.Panel.prototype.render = function(){
     // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
-        this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.layout.cliparea.width/120, true);
+        this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, "both", this.layout.cliparea.width/120);
         this.state.x_scale = d3.scale.linear()
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
             .range([0, this.layout.cliparea.width]);
     }
     if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
-        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent);
+        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent, clip_range(this.layout, "y1"));
         this.state.y1_scale = d3.scale.linear()
             .domain([this.layout.axes.y1.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y1.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);
     }
     if (typeof this.y2Extent == "function"){
         this.state.y2_extent = this.y2Extent();
-        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent);
+        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent, clip_range(this.layout, "y2"));
         this.state.y2_scale = d3.scale.linear()
             .domain([this.layout.axes.y2.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y2.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);
@@ -1412,16 +1439,15 @@ LocusZoom.Panel.LabelFunctions = (function() {
 
 */
 
-LocusZoom.DataLayer = function(layout) {
+LocusZoom.DataLayer = function(id, layout) {
 
     this.initialized = false;
 
-    this.id     = null;
+    this.id     = id;
     this.parent = null;
     this.svg    = {};
 
     this.layout = layout || {};
-    if (this.layout.id){ this.id = this.layout.id; }
 
     this.fields = [];
     this.data = [];
@@ -1439,13 +1465,14 @@ LocusZoom.DataLayer = function(layout) {
 LocusZoom.DataLayer.prototype.getYExtent = function(){
     return function(){
         var extent = d3.extent(this.data, function(d) {
-            var val = +d[this.layout.y_axis.data];
-            if (!isNaN(this.layout.y_axis.ceiling)){ val = Math.min(val, this.layout.y_axis.ceiling); }
-            if (!isNaN(this.layout.y_axis.floor)){ val = Math.max(val, this.layout.y_axis.floor); }
-            return val;
+            return +d[this.layout.y_axis.data];
         }.bind(this));
+        // Apply upper/lower buffers, if applicable
         if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
         if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        // Apply floor/ceiling, if applicable
+        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
+        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
         return extent;
     }.bind(this);
 };
@@ -1565,7 +1592,7 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(layout){
+LocusZoom.PositionsDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -1610,7 +1637,7 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(layout){
+LocusZoom.RecombinationRateDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -1630,7 +1657,7 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(layout){
+LocusZoom.GenesDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;

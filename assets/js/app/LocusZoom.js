@@ -113,23 +113,30 @@ LocusZoom.parsePositionQuery = function(x) {
 
 // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
 // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
-// Optionally specify n for a "target" number of ticks. Will not necessarily be the number of ticks you get! Defaults to 5.
-LocusZoom.prettyTicks = function(range, n, internal_only){
-    if (typeof n == "undefined" || isNaN(parseInt(n))){
-  	    n = 5;
+//
+// clip_range - string, optional - default "neither"
+// First and last generated ticks may extend beyond the range. Set this to "low", "high", "both", or
+// "neither" to clip the first (low) or last (high) tick to be inside the range or allow them to extend beyond.
+// e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
+// last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
+//
+// target_tick_count - integer, optional - default 5
+// Specify a "target" number of ticks. Will not necessarily be the number of ticks you get, but should be
+// pretty close. Defaults to 5.
+
+LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
+    if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
+  	    target_tick_count = 5;
     }
-    n = parseInt(n);
-    if (typeof internal_only == "undefined"){
-        internal_only = false;
-    }
+    target_tick_count = parseInt(target_tick_count);
     
-    var min_n = n / 3;
+    var min_n = target_tick_count / 3;
     var shrink_sml = 0.75;
     var high_u_bias = 1.5;
     var u5_bias = 0.5 + 1.5 * high_u_bias;
     
     var d = Math.abs(range[0] - range[1]);
-    var c = d / n;
+    var c = d / target_tick_count;
     if ((Math.log(d) / Math.LN10) < -2){
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
@@ -167,8 +174,13 @@ LocusZoom.prettyTicks = function(range, n, internal_only){
     }
     ticks.push(i);
     
-    if (internal_only){
+    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) == -1){
+        clip_range = "neither";
+    }
+    if (clip_range == "low" || clip_range == "both"){
         if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+    }
+    if (clip_range == "high" || clip_range == "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
     
@@ -241,9 +253,8 @@ LocusZoom.DefaultLayout = {
                     label: "-log10 p-value"
                 }
             },
-            data_layers: [
-                {
-                    id: "positions",
+            data_layers: {
+                positions: {
                     class: "PositionsDataLayer",
                     y_axis: {
                         axis: 1,
@@ -260,7 +271,7 @@ LocusZoom.DefaultLayout = {
                         }
                     }
                 }
-            ]
+            }
         },
         genes: {
             origin: { x: 0, y: 350 },
@@ -271,12 +282,11 @@ LocusZoom.DefaultLayout = {
             proportional_width: 1,
             proportional_height: 0.5,
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
-            data_layers: [
-                {
-                    id: "genes",
+            data_layers: {
+                genes: {
                     class: "GenesDataLayer"
                 }
-            ]
+            }
         }
     }
 };

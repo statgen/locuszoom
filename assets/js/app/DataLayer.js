@@ -13,16 +13,15 @@
 
 */
 
-LocusZoom.DataLayer = function(layout) {
+LocusZoom.DataLayer = function(id, layout) {
 
     this.initialized = false;
 
-    this.id     = null;
+    this.id     = id;
     this.parent = null;
     this.svg    = {};
 
     this.layout = layout || {};
-    if (this.layout.id){ this.id = this.layout.id; }
 
     this.fields = [];
     this.data = [];
@@ -40,13 +39,14 @@ LocusZoom.DataLayer = function(layout) {
 LocusZoom.DataLayer.prototype.getYExtent = function(){
     return function(){
         var extent = d3.extent(this.data, function(d) {
-            var val = +d[this.layout.y_axis.data];
-            if (!isNaN(this.layout.y_axis.ceiling)){ val = Math.min(val, this.layout.y_axis.ceiling); }
-            if (!isNaN(this.layout.y_axis.floor)){ val = Math.max(val, this.layout.y_axis.floor); }
-            return val;
+            return +d[this.layout.y_axis.data];
         }.bind(this));
+        // Apply upper/lower buffers, if applicable
         if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
         if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        // Apply floor/ceiling, if applicable
+        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
+        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
         return extent;
     }.bind(this);
 };
@@ -166,7 +166,7 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(layout){
+LocusZoom.PositionsDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -211,7 +211,7 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(layout){
+LocusZoom.RecombinationRateDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -231,7 +231,7 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(layout){
+LocusZoom.GenesDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
