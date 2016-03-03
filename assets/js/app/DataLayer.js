@@ -165,66 +165,70 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
 
 
 /*********************
-  Positions Data Layer
+  Scatter Data Layer
+  Implements a standard scatter plot
 */
 
-LocusZoom.PositionsDataLayer = function(id, layout){
+LocusZoom.ScatterDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
 
+    // Apply defaults to the layout where missing
+    this.layout.size == this.layout.size || 4;
+    this.layout.color == this.layout.color || "#888888";
+    if (this.layout.y_axis && this.layout.y_axis.axis != 1 && this.layout.y_axis.axis != 2){
+        this.layout.y_axis.axis = 1;
+    }
+
     this.render = function(){
-        var that = this;
-        var clicker = function() {
-            var me = d3.select(this);
-            that.svg.group.selectAll("circle.lz-position").classed({"lz-selected": false});
-            if (that.parent.parent.state.ldrefvar != me.attr("id")){
-                me.classed({"lz-selected": true});
-                that.parent.parent.state.ldrefvar = me.attr("id");
-            } else {
-                that.parent.parent.state.ldrefvar = null;
-            }
-        };
         this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
-        this.svg.group
-            .selectAll("circle.lz-position")
+        var selection = this.svg.group
+            .selectAll("circle.lz-data_layer-scatter")
             .data(this.data)
-            .enter().append("circle")
-            .attr("class", "lz-position")
-            .attr("id", function(d){ return d.id; })
-            .attr("cx", function(d){ return this.parent.state.x_scale(d["position"]); }.bind(this))
-            .attr("cy", function(d){ return this.parent.state.y1_scale(d["pvalue|neglog10"]); }.bind(this))
-            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d["ld:state"]); }.bind(this))
-            .on("click", clicker)
-            .attr("r", 4) // This should be scaled dynamically somehow
-            .style({ cursor: "pointer" })
-            .append("svg:title")
-            .text(function(d) { return d.id; });
+            .enter().append("circle") // Todo: make shape definable in layout; support a few different shapes
+            .attr("class", "lz-data_layer-scatter")
+            .attr("r", this.layout.size)
+            .style({ cursor: "pointer" });
+        // Apply x position
+        if (this.layout.x_axis && this.layout.x_axis.data){
+            selection.attr("cx", function(d){
+                return this.parent.state.x_scale(d[this.layout.x_axis.data]);
+            }.bind(this));
+        }
+        // Apply y position
+        if (this.layout.y_axis && this.layout.y_axis.data){
+            selection.attr("cy", function(d){
+                return this.parent.state["y"+this.layout.y_axis.axis+"_scale"](d[this.layout.y_axis.data]);
+            }.bind(this));
+        }
+        // Apply id (if included in fields)
+        if (this.layout.fields.indexOf("id") != -1){
+            selection.attr("id", function(d){ return d.id; });
+        }
+        // Apply color
+        if (this.layout.color){
+            if (typeof this.layout.color == "string"){
+                selection.attr("fill", this.layout.color);
+            } else if (this.layout.color.function && this.layout.color.data) {
+                selection.attr("fill", function(d){
+                    return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function,
+                                                                  this.layout.color.parameters || {},
+                                                                  d[this.layout.color.data]);
+                }.bind(this));
+            }
+        }
+        // Apply title (basic mouseover label)
+        if (this.layout.label_data){
+            selection.append("svg:title")
+                .text(function(d) { return d[this.layout.label_data]; }.bind(this));
+        }
     };
        
     return this;
 };
 
-LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
-
-
-/*********************
-  Recombination Rate Data Layer
-*/
-
-LocusZoom.RecombinationRateDataLayer = function(id, layout){
-
-    LocusZoom.DataLayer.apply(this, arguments);
-    this.layout = layout;
-
-    this.render = function(){
-        this.svg.group.selectAll("*").remove();
-    };
-       
-    return this;
-};
-
-LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
+LocusZoom.ScatterDataLayer.prototype = new LocusZoom.DataLayer();
 
 
 /*********************
