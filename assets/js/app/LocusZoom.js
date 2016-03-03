@@ -292,7 +292,11 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 genes: {
                     class: "GenesDataLayer",
-                    fields: ["gene:gene"]
+                    fields: ["gene:gene"],
+                    track_height: 40,
+                    label_font_size: 12,
+                    track_vertical_spacing: 8,
+                    label_vertical_spacing: 4,
                 }
             }
         }

@@ -58,8 +58,7 @@
   .lz-locuszoom circle.lz-data_layer-scatter.lz-selected:hover {
     stroke-width: 4; }
   .lz-locuszoom text.lz-gene.lz-label {
-    font-style: italic;
-    font-size: 12px; }
+    font-style: italic; }
   .lz-locuszoom rect.lz-gene.lz-boundary {
     stroke: #000099;
     stroke-width: 1; }

@@ -306,7 +306,11 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 genes: {
                     class: "GenesDataLayer",
-                    fields: ["gene:gene"]
+                    fields: ["gene:gene"],
+                    track_height: 40,
+                    label_font_size: 12,
+                    track_vertical_spacing: 8,
+                    label_vertical_spacing: 4,
                 }
             }
         }
@@ -1618,6 +1622,7 @@ LocusZoom.ScatterDataLayer = function(id, layout){
         this.layout.y_axis.axis = 1;
     }
 
+    // Implement the main render function
     this.render = function(){
         this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         var selection = this.svg.group
@@ -1670,6 +1675,7 @@ LocusZoom.ScatterDataLayer.prototype = new LocusZoom.DataLayer();
 
 /*********************
   Genes Data Layer
+  Implements a data layer that will render gene tracks
 */
 
 LocusZoom.GenesDataLayer = function(id, layout){
@@ -1677,6 +1683,12 @@ LocusZoom.GenesDataLayer = function(id, layout){
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
 
+    // Apply defaults to the layout where missing
+    this.layout.track_height = this.layout.track_height || 40;
+    this.layout.label_font_size = this.layout.label_font_size || 12;
+    this.layout.track_vertical_spacing = this.layout.track_vertical_spacing || 8;
+    this.layout.label_vertical_spacing = this.layout.label_vertical_spacing || 4;
+    
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
     this.metadata.min_display_range_width = 80; // minimum width in pixels for a gene, to allow enough room for its label
@@ -1770,6 +1782,7 @@ LocusZoom.GenesDataLayer = function(id, layout){
         return this;
     };
 
+    // Implement the main render function
     this.render = function(){
 
         this.assignTracks();
@@ -1789,7 +1802,17 @@ LocusZoom.GenesDataLayer = function(id, layout){
                     .attr("class", "lz-gene lz-boundary")
                     .attr("id", function(d){ return d.gene_name; })
                     .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
-                    .attr("y", function(d){ return (d.track * 40) - 20; }) // Arbitrary track height; should be dynamic
+                    .attr("y", function(d){
+                        var exon_height = this.parent.layout.track_height
+                            - this.parent.layout.track_vertical_spacing
+                            - this.parent.layout.label_font_size
+                            - this.parent.layout.label_vertical_spacing;
+                        return ((d.track-1) * this.parent.layout.track_height)
+                            + (this.parent.layout.track_vertical_spacing / 2)
+                            + this.parent.layout.label_font_size
+                            + this.parent.layout.label_vertical_spacing
+                            + (Math.max(exon_height, 3) / 2);
+                    }.bind(gene)) // Arbitrary track height; should be dynamic
                     .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(gene.parent))
                     .attr("height", 1) // This should be scaled dynamically somehow
                     .attr("fill", "#000099")
@@ -1810,8 +1833,13 @@ LocusZoom.GenesDataLayer = function(id, layout){
                             return d.display_range.end;
                         }
                     })
-                    .attr("y", function(d){ return (d.track * 40) - 30; })
+                    .attr("y", function(d){
+                        return ((d.track-1) * this.parent.layout.track_height)
+                            + (this.parent.layout.track_vertical_spacing / 2)
+                            + this.parent.layout.label_font_size;
+                    }.bind(gene))
                     .attr("text-anchor", function(d){ return d.display_range.text_anchor; })
+                    .style("font-size", gene.parent.layout.label_font_size)
                     .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
 
                 // Render exons (first transcript only, for now)
@@ -1825,11 +1853,21 @@ LocusZoom.GenesDataLayer = function(id, layout){
                             .attr("class", "lz-gene lz-exon")
                             .attr("id", function(d){ return d.exon_id; })
                             .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
-                            .attr("y", function(){ return (this.track * 40) - 26; }.bind(gene)) // Arbitrary track height
+                            .attr("y", function(){
+                                return ((this.track-1) * this.parent.layout.track_height)
+                                    + (this.parent.layout.track_vertical_spacing / 2)
+                                    + this.parent.layout.label_font_size
+                                    + this.parent.layout.label_vertical_spacing;
+                            }.bind(gene))
                             .attr("width", function(d){
                                 return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
                             }.bind(gene.parent))
-                            .attr("height", 12) // This should be scaled dynamically somehow
+                            .attr("height", function(d){
+                                return this.parent.layout.track_height
+                                    - this.parent.layout.track_vertical_spacing
+                                    - this.parent.layout.label_font_size
+                                    - this.parent.layout.label_vertical_spacing;
+                            }.bind(gene))
                             .attr("fill", "#000099")
                             .style({ cursor: "pointer" });
 
