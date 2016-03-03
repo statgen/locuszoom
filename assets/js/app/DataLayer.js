@@ -21,9 +21,11 @@ LocusZoom.DataLayer = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
-    this.layout = layout || {};
+    this.layout = layout || {
+        class: "DataLayer",
+        fields: []
+    };
 
-    this.fields = [];
     this.data = [];
     this.metadata = {};
 
@@ -85,7 +87,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
-    var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
+    var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
     }.bind(this));
@@ -170,7 +172,6 @@ LocusZoom.PositionsDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
-    this.fields = ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"];
 
     this.render = function(){
         var that = this;
@@ -215,7 +216,6 @@ LocusZoom.RecombinationRateDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
-    this.fields = [];
 
     this.render = function(){
         this.svg.group.selectAll("*").remove();
@@ -235,7 +235,6 @@ LocusZoom.GenesDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
-    this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
