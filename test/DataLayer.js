@@ -45,9 +45,6 @@ describe('LocusZoom.DataLayer', function(){
         it('should have an id', function(){
             this.datalayer.should.have.property('id');
         });
-        it('should have an array for fields', function(){
-            this.datalayer.should.have.property('fields').which.is.an.Array;
-        });
         it('should have an array for caching data', function(){
             this.datalayer.should.have.property('data').which.is.an.Array;
         });

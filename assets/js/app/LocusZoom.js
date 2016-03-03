@@ -256,6 +256,7 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 positions: {
                     class: "PositionsDataLayer",
+                    fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
                     y_axis: {
                         axis: 1,
                         data: "pvalue|neglog10",
@@ -284,7 +285,8 @@ LocusZoom.DefaultLayout = {
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {
-                    class: "GenesDataLayer"
+                    class: "GenesDataLayer",
+                    fields: ["gene:gene"]
                 }
             }
         }
