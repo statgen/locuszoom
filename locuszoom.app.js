@@ -1634,8 +1634,6 @@ LocusZoom.ScatterDataLayer = function(id, layout){
                 var x = this.parent.state.x_scale(d[this.layout.x_axis.field]);
                 var y_scale = "y"+this.layout.y_axis.axis+"_scale";
                 var y = this.parent.state[y_scale](d[this.layout.y_axis.field]);
-                console.log(this.layout.y_axis);
-                console.log(y);
                 return "translate(" + x + "," + y + ")";
             }.bind(this))
             .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
@@ -1692,11 +1690,22 @@ LocusZoom.GenesDataLayer = function(id, layout){
     
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
-    this.metadata.min_display_range_width = 80; // minimum width in pixels for a gene, to allow enough room for its label
+    this.metadata.horizontal_padding = 4; // pixels to pad on either side of a gene or label when determining collisions
 
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
     this.assignTracks = function(){
+
+        // Function to get the width in pixels of a label given the text and layout attributes
+        this.getLabelWidth = function(gene_name, font_size){
+            var temp_text = this.svg.group.append("text")
+                .attr("x", 0).attr("y", 0).attr("class", "lz-gene lz-label")
+                .style("font-size", font_size)
+                .text(gene_name + "→");
+            var label_width = temp_text.node().getBBox().width;
+            temp_text.node().remove();
+            return label_width;
+        };
 
         // Reinitialize metadata
         this.metadata.tracks = 1;
@@ -1710,24 +1719,30 @@ LocusZoom.GenesDataLayer = function(id, layout){
                 start: this.parent.state.x_scale(Math.max(d.start, this.parent.parent.state.start)),
                 end:   this.parent.state.x_scale(Math.min(d.end, this.parent.parent.state.end))
             };
+            this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
             this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
             this.data[g].display_range.text_anchor = "middle";
-            if (this.data[g].display_range.width < this.metadata.min_display_range_width){
+            if (this.data[g].display_range.width < this.data[g].display_range.label_width){
                 if (d.start < this.parent.parent.state.start){
-                    this.data[g].display_range.end = this.data[g].display_range.start + this.metadata.min_display_range_width;
+                    this.data[g].display_range.end = this.data[g].display_range.start
+                        + this.data[g].display_range.label_width
+                        + this.metadata.horizontal_padding;
                     this.data[g].display_range.text_anchor = "start";
                 } else if (d.end > this.parent.parent.state.end){
-                    this.data[g].display_range.start = this.data[g].display_range.end - this.metadata.min_display_range_width;
+                    this.data[g].display_range.start = this.data[g].display_range.end
+                        - this.data[g].display_range.label_width
+                        - this.metadata.horizontal_padding;
                     this.data[g].display_range.text_anchor = "end";
                 } else {
-                    var centered_margin = (this.metadata.min_display_range_width - this.data[g].display_range.width) / 2;
+                    var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
+                        + this.metadata.horizontal_padding;
                     if ((this.data[g].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
                         this.data[g].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
-                        this.data[g].display_range.end = this.data[g].display_range.start + this.metadata.min_display_range_width;
+                        this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "start";
                     } else if ((this.data[g].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
                         this.data[g].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
-                        this.data[g].display_range.start = this.data[g].display_range.end - this.metadata.min_display_range_width;
+                        this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "end";
                     } else {
                         this.data[g].display_range.start -= centered_margin;
