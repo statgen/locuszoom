@@ -13,33 +13,19 @@
 
 */
 
-LocusZoom.DataLayer = function() { 
+LocusZoom.DataLayer = function(id, layout) {
 
     this.initialized = false;
 
-    this.id     = null;
+    this.id     = id;
     this.parent = null;
     this.svg    = {};
+
+    this.layout = layout || {};
 
     this.fields = [];
     this.data = [];
     this.metadata = {};
-
-    // afterget is an automatic method called after data is acquired but before
-    // the parent panel works with it (e.g. to generate x/y scales)
-    this.postget = function(){
-        return this;
-    };
-
-    // prerender is an automatic method called after data is aqcuired and after
-    // the panel has access to it (e.g. to generate x/y scales), but before rendering
-    this.prerender = function(){
-        return this;
-    };
-
-    this.state = {
-        z_index: null
-    };
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
@@ -49,16 +35,20 @@ LocusZoom.DataLayer = function() {
 
 };
 
-LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
-    if (typeof y === "undefined"){
-        y = 1;
-    }
-    if (y !== 1 && y !== 2){
-        return false;
-    } else {
-        this.parent.axes["y" + y + "_data_layer_id"] = this.id;
-    }
-    return this;
+// Generate a y-axis extent functions based on the layout
+LocusZoom.DataLayer.prototype.getYExtent = function(){
+    return function(){
+        var extent = d3.extent(this.data, function(d) {
+            return +d[this.layout.y_axis.data];
+        }.bind(this));
+        // Apply upper/lower buffers, if applicable
+        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
+        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        // Apply floor/ceiling, if applicable
+        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
+        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
+        return extent;
+    }.bind(this);
 };
 
 // Initialize a data layer
@@ -86,10 +76,10 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 };
 
 LocusZoom.DataLayer.prototype.draw = function(){
-    this.svg.container.attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
     this.svg.clipRect
-        .attr("width", this.parent.view.cliparea.width)
-        .attr("height", this.parent.view.cliparea.height);
+        .attr("width", this.parent.layout.cliparea.width)
+        .attr("height", this.parent.layout.cliparea.height);
     return this;
 }
 
@@ -98,30 +88,89 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
-        this.postget();
     }.bind(this));
     return promise;
 };
+
+/****************
+  Color Functions
+  Singleton for accessing/storing functions to apply different color schemes to data sets
+*/
+
+LocusZoom.DataLayer.ColorFunctions = (function() {
+    var obj = {};
+    var functions = {
+        "numeric_cut": function(parameters, value){
+            var breaks = parameters.breaks;
+            var colors = parameters.colors;
+            if (value == null || isNaN(+value)){
+                return (parameters.null_color ? parameters.null_color : colors[0]);
+            }
+            var threshold = breaks.reduce(function(prev, curr){
+                if (+value < prev || (+value >= prev && +value < curr)){
+                    return prev;
+                } else {
+                    return curr;
+                }
+            });
+            return colors[breaks.indexOf(threshold)];
+        },
+        "categorical_cut": function(parameters, value){
+            if (parameters.categories.indexOf(value) != -1){
+                return parameters.colors[parameters.categories.indexOf(value)];
+            } else {
+                return (parameters.null_color ? parameters.null_color : parameters.colors[0]); 
+            }
+        }
+    };
+
+    obj.get = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
+        } else {
+            throw("color function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions.name) {
+            throw("color function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
 
 
 /*********************
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(){
+LocusZoom.PositionsDataLayer = function(id, layout){
 
-    LocusZoom.DataLayer.apply(this, arguments);  
-    this.id = "positions";
-    this.x_field = "position";
-    this.y_field = "pvalue|neglog10";
-    this.fields = ["id", this.x_field, this.y_field, "refAllele", "ld:state"];
-
-    this.postget = function(){
-        this.data.map(function(d, i){
-            this.data[i].ld = +d["ld:state"];
-        }.bind(this));
-        return this;
-    };
+    LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
+    this.fields = ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"];
 
     this.render = function(){
         var that = this;
@@ -142,31 +191,14 @@ LocusZoom.PositionsDataLayer = function(){
             .enter().append("circle")
             .attr("class", "lz-position")
             .attr("id", function(d){ return d.id; })
-            .attr("cx", function(d){ return this.parent.state.x_scale(d[this.x_field]); }.bind(this))
-            .attr("cy", function(d){ return this.parent.state.y1_scale(d[this.y_field]); }.bind(this))
-            .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
+            .attr("cx", function(d){ return this.parent.state.x_scale(d["position"]); }.bind(this))
+            .attr("cy", function(d){ return this.parent.state.y1_scale(d["pvalue|neglog10"]); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d["ld:state"]); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
-    };
-
-    // TODO: abstract out to a Color Scale class and support arbitrarily many scales that can be substituted out per user input
-    this.fillColor = function(pval){
-        var getCutter = function(breaks) {
-            var fn = function(x) {
-                if (x == null || isNaN(x)){ return 0; }
-                for(var i = 0; i < breaks.length; i++) {
-                    if (x < breaks[i]) break;
-                }
-                return i;
-            };
-            return fn;
-        };
-        var cutter = getCutter([0,.2,.4,.6,.8]);
-        var fill = ["#B8B8B8","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
-        return fill;
     };
        
     return this;
@@ -179,10 +211,10 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(){
+LocusZoom.RecombinationRateDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "recombination_rate";
+    this.layout = layout;
     this.fields = [];
 
     this.render = function(){
@@ -199,10 +231,10 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(){
+LocusZoom.GenesDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "genes";
+    this.layout = layout;
     this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;
@@ -211,7 +243,7 @@ LocusZoom.GenesDataLayer = function(){
 
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
-    this.prerender = function(){
+    this.assignTracks = function(){
 
         // Reinitialize metadata
         this.metadata.tracks = 1;
@@ -299,6 +331,9 @@ LocusZoom.GenesDataLayer = function(){
     };
 
     this.render = function(){
+
+        this.assignTracks();
+
         this.svg.group.selectAll("*").remove();
 
         // Render gene groups

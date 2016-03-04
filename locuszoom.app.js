@@ -17,15 +17,17 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2.2"
+    version: "0.3.0"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
+
     // Initialize a new Instance
-    var inst = new layout(id, datasource, layout, state);
+    var inst = new LocusZoom.Instance(id, datasource, layout, state);
+
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
         .append("svg")
@@ -51,10 +53,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         selector = ".lz-instance";
     }
     if (typeof layout === "undefined"){
-        layout = LocusZoom.DefaultInstance;
+        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     }
     if (typeof state === "undefined"){
-        state = {};
+        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     }
     var instance;
     d3.select(selector).each(function(){
@@ -73,7 +75,7 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
 LocusZoom.positionIntToString = function(p){
-    var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
+    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
@@ -125,23 +127,30 @@ LocusZoom.parsePositionQuery = function(x) {
 
 // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
 // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
-// Optionally specify n for a "target" number of ticks. Will not necessarily be the number of ticks you get! Defaults to 5.
-LocusZoom.prettyTicks = function(range, n, internal_only){
-    if (typeof n == "undefined" || isNaN(parseInt(n))){
-  	    n = 5;
+//
+// clip_range - string, optional - default "neither"
+// First and last generated ticks may extend beyond the range. Set this to "low", "high", "both", or
+// "neither" to clip the first (low) or last (high) tick to be inside the range or allow them to extend beyond.
+// e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
+// last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
+//
+// target_tick_count - integer, optional - default 5
+// Specify a "target" number of ticks. Will not necessarily be the number of ticks you get, but should be
+// pretty close. Defaults to 5.
+
+LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
+    if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
+  	    target_tick_count = 5;
     }
-    n = parseInt(n);
-    if (typeof internal_only == "undefined"){
-        internal_only = false;
-    }
+    target_tick_count = parseInt(target_tick_count);
     
-    var min_n = n / 3;
+    var min_n = target_tick_count / 3;
     var shrink_sml = 0.75;
     var high_u_bias = 1.5;
     var u5_bias = 0.5 + 1.5 * high_u_bias;
     
     var d = Math.abs(range[0] - range[1]);
-    var c = d / n;
+    var c = d / target_tick_count;
     if ((Math.log(d) / Math.LN10) < -2){
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
@@ -179,8 +188,13 @@ LocusZoom.prettyTicks = function(range, n, internal_only){
     }
     ticks.push(i);
     
-    if (internal_only){
+    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) == -1){
+        clip_range = "neither";
+    }
+    if (clip_range == "low" || clip_range == "both"){
         if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+    }
+    if (clip_range == "high" || clip_range == "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
     
@@ -220,6 +234,75 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.send(body);
     } 
     return response.promise;
+};
+
+// Default State
+LocusZoom.DefaultState = {
+    chr: 0,
+    start: 0,
+    end: 0
+};
+
+// Default Layout
+LocusZoom.DefaultLayout = {
+    width: 700,
+    height: 700,
+    min_width: 300,
+    min_height: 400,
+    panels: {
+        positions: {
+            origin: { x: 0, y: 0 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            axes: {
+                x: {
+                    label_function: "chromosome"
+                },
+                y1: {
+                    label: "-log10 p-value"
+                }
+            },
+            data_layers: {
+                positions: {
+                    class: "PositionsDataLayer",
+                    y_axis: {
+                        axis: 1,
+                        data: "pvalue|neglog10",
+                        floor: 0,
+                        upper_buffer: 0.05
+                    },
+                    color: {
+                        function: "numeric_cut",
+                        parameters: {
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_color: "#B8B8B8"
+                        }
+                    }
+                }
+            }
+        },
+        genes: {
+            origin: { x: 0, y: 350 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            data_layers: {
+                genes: {
+                    class: "GenesDataLayer"
+                }
+            }
+        }
+    }
 };
 
 /* global LocusZoom,Q */
@@ -612,8 +695,8 @@ LocusZoom.Data.Transformations = (function() {
 
   LocusZoom.Instance Class
 
-  An instance is an independent LocusZoom object. Many instances can exist simultaneously
-  on a single page, each having its own data caching, configuration, and state.
+  An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
+  on a single page, each having its own layout, data sources, and state.
 
 */
 
@@ -622,46 +705,57 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.initialized = false;
 
     this.id = id;
-    this.parent = LocusZoom;
     
     this.svg = null;
 
-    // The _panels property stores child panel instances
-    this._panels = {};
+    // The panels property stores child panel instances
+    this.panels = {};
     this.remap_promises = [];
+
+    // The layout is a serializable object used to describe the composition of the instance
+    this.layout = layout || JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     
     // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || {
-        chr: 0,
-        start: 0,
-        end: 0
-    };
+    this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     
-    // The view property contains parameters that define the physical space of the entire LocusZoom object
-    this.view = {
-        width: 0,
-        height: 0,
-        min_width: 0,
-        min_height: 0
-    };
-
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
-    
+
+    // Initialize the layout (should this happen in initialize()?)
+    this.initializeLayout();
+
     return this;
   
 };
 
-// Set the view dimensions for this instance. If an SVG exists, update its dimensions
+LocusZoom.Instance.prototype.initializeLayout = function(){
+
+    // Set instance dimensions or fall back to default values
+    this.layout.width      = this.layout.width      || LocusZoom.DefaultLayout.width;
+    this.layout.height     = this.layout.height     || LocusZoom.DefaultLayout.height;
+    this.layout.min_width  = this.layout.min_width  || LocusZoom.DefaultLayout.min_width;
+    this.layout.min_height = this.layout.min_height || LocusZoom.DefaultLayout.min_height;
+    this.setDimensions();
+
+    // Add panels
+    var panel_id;
+    for (panel_id in this.layout.panels){
+        this.addPanel(panel_id, this.layout.panels[panel_id]);
+    }
+
+}
+
+// Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
+// If any arguments are missing, use values stored in the layout. Keep everything in agreement.
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (!isNaN(width) && width >= 0){
-        this.view.width = Math.max(Math.round(+width), this.view.min_width);
+        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
     }
     if (!isNaN(height) && height >= 0){
-        this.view.height = Math.max(Math.round(+height), this.view.min_height);
+        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
     }
     if (this.svg != null){
-        this.svg.attr("width", this.view.width).attr("height", this.view.height);
+        this.svg.attr("width", this.layout.width).attr("height", this.layout.height);
     }
     if (this.initialized){
         this.ui.render();
@@ -670,31 +764,22 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     return this;
 };
 
-// Create a new panel by panel class
-// Optionally take an id string (use base ID on panel class if not provided)
-// Ensure panel has a unique ID as it is added.
-LocusZoom.Instance.prototype.addPanel = function(PanelClass, id){
-    if (typeof PanelClass !== "function"){
-        throw "Invalid PanelClass passed to LocusZoom.Instance.prototype.addPanel()";
-    }
-    var panel = new PanelClass();
-    panel.parent = this;
+// Create a new panel by id and panel class
+LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
-        panel.id = panel.base_id;
-    } else {
-        panel.base_id = id;
-        panel.id = id;
+        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    if (typeof this._panels[panel.id] == "object"){
-        var inc = 0;
-        while (typeof this._panels[panel.base_id + "_" + inc] == "object"){
-            inc++;
-        }
-        panel.id = panel.base_id + "_" + inc;
+    if (typeof this.panels[id] !== "undefined"){
+        throw "Cannot create panel with id [" + id + "]; panel with that id already exists";
     }
-    this._panels[panel.id] = panel;
+    if (typeof layout !== "object"){
+        throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
+    }
+    var panel = new LocusZoom.Panel(id, layout);
+    panel.parent = this;
+    this.panels[panel.id] = panel;
     this.stackPanels();
-    return this._panels[panel.id];
+    return this.panels[panel.id];
 };
 
 // Automatically position panels based on panel positioning rules and values
@@ -705,26 +790,30 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     // First set/enforce minimum instance dimensions based on current panels
     var panel_min_widths = [];
     var panel_min_heights = [];
-    for (var id in this._panels){
-        panel_min_widths.push(this._panels[id].view.min_width);
-        panel_min_heights.push(this._panels[id].view.min_height);
+    for (var id in this.panels){
+        panel_min_widths.push(this.panels[id].layout.min_width);
+        panel_min_heights.push(this.panels[id].layout.min_height);
     }
-    this.view.min_width = Math.max.apply(null, panel_min_widths);
-    this.view.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
-    if (this.view.width < this.view.min_width || this.view.height < this.view.min_height){
-        this.setDimensions(Math.max(this.view.width, this.view.min_width),
-                           Math.max(this.view.height, this.view.min_height));
+    if (panel_min_widths.length){
+        this.layout.min_width = Math.max.apply(null, panel_min_widths);
+    }
+    if (panel_min_heights.length){
+        this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
+    }
+    if (this.layout.width < this.layout.min_width || this.layout.height < this.layout.min_height){
+        this.setDimensions(Math.max(this.layout.width, this.layout.min_width),
+                           Math.max(this.layout.height, this.layout.min_height));
         return;
     }
 
     // Next set proportional and discrete heights of panels
-    var proportional_height = 1 / Object.keys(this._panels).length;
-    var discrete_height = this.view.height * proportional_height;
+    var proportional_height = 1 / Object.keys(this.panels).length;
+    var discrete_height = this.layout.height * proportional_height;
     var panel_idx = 0;
-    for (var id in this._panels){
-        this._panels[id].view.proportional_height = proportional_height;
-        this._panels[id].setOrigin(0, panel_idx * discrete_height);
-        this._panels[id].setDimensions(this.view.width, discrete_height);
+    for (var id in this.panels){
+        this.panels[id].layout.proportional_height = proportional_height;
+        this.panels[id].setOrigin(0, panel_idx * discrete_height);
+        this.panels[id].setDimensions(this.layout.width, discrete_height);
         panel_idx++;
     }
 
@@ -778,7 +867,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                 this.is_resize_dragging = false;
             }.bind(this));
             resize_drag.on("drag", function(){
-                this.setDimensions(this.view.width + d3.event.dx, this.view.height + d3.event.dy);
+                this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
             }.bind(this.parent));
             this.resize_handle.call(resize_drag);
             // Render all UI elements
@@ -786,7 +875,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         },
         render: function(){
             this.resize_handle
-                .attr("transform", "translate(" + (this.parent.view.width - 17) + ", " + (this.parent.view.height - 17) + ")");
+                .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
         }
     };
     this.ui.initialize();
@@ -817,8 +906,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("x", "1em").attr("y", "0em");
 
     // Initialize all panels
-    for (var id in this._panels){
-        this._panels[id].initialize();
+    for (var id in this.panels){
+        this.panels[id].initialize();
     }
 
     // Define instance/svg level mouse events
@@ -858,8 +947,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
-    for (var id in this._panels){
-        this.remap_promises.push(this._panels[id].reMap());
+    for (var id in this.panels){
+        this.remap_promises.push(this.panels[id].reMap());
     }
 
     // When all finished update download SVG link
@@ -879,35 +968,6 @@ LocusZoom.Instance.prototype.refresh = function(){
     this.mapTo(this.state.chr, this.state.start, this.state.end);
 }
 
-/******************
-  Default Instance
-  - During alpha development this class definition can serve as a functional draft of the API
-  - The default instance should therefore have/do "one of everything" (however possible)
-  - Ultimately the default instance should stand up the most commonly configured LZ use case
-*/
-
-LocusZoom.DefaultInstance = function(){
-
-    LocusZoom.Instance.apply(this, arguments);
-
-    this.setDimensions(700,700);
-  
-    this.addPanel(LocusZoom.PositionsPanel)
-        .setMargin(20, 20, 35, 50);
-    this._panels.positions.addDataLayer(LocusZoom.PositionsDataLayer).attachToYAxis(1);
-    //this._panels.positions.addDataLayer(LocusZoom.RecombinationRateDataLayer).attachToYAxis(2);
-
-    this.addPanel(LocusZoom.GenesPanel)
-        .setMargin(20, 20, 20, 50);
-    this._panels.genes.addDataLayer(LocusZoom.GenesDataLayer);
-  
-    return this;
-  
-};
-
-LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
-
-
 /* global LocusZoom,d3 */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -923,15 +983,15 @@ LocusZoom.DefaultInstance.prototype = new LocusZoom.Instance();
 
 */
 
-LocusZoom.Panel = function() { 
+LocusZoom.Panel = function(id, layout) { 
 
     this.initialized = false;
     
-    this.id     = null;
+    this.id     = id;
     this.parent = null;
     this.svg    = {};
-    
-    this.view = {
+
+    this.layout = layout || {
         width:  0,
         height: 0,
         min_width: 0,
@@ -939,33 +999,16 @@ LocusZoom.Panel = function() {
         proportional_width: 1,
         proportional_height: 1,
         origin: { x: 0, y: 0 },
-        margin: { top: 0, right: 0, bottom: 0, left: 0 },
-        cliparea: {
-            width: 0,
-            height: 0,
-            origin: { x: 0, y: 0 }
-        }
+        margin: { top: 0, right: 0, bottom: 0, left: 0 }
     };
+    this.layout.cliparea = this.layout.cliparea || {};
+    this.layout.cliparea.origin = this.layout.cliparea.origin || {};
 
     this.state = {};
     
-    this._data_layers = {};
+    this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
-
-    this.axes = {
-        x:  { render:        false,
-              ticks:         [],
-              label:         null },
-        y1: { render:        false,
-              data_layer_id: null,
-              ticks:         [],
-              label:         null },
-        y2: { render:        false,
-              data_layer_id: null,
-              ticks:         [],
-              label:         null }
-    };
 
     this.xExtent  = null;
     this.y1Extent = null;
@@ -976,50 +1019,107 @@ LocusZoom.Panel = function() {
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
     };
+
+    // Initialize the layout (should this happen in initialize()?)
+    this.initializeLayout();
     
     return this;
     
 };
 
+LocusZoom.Panel.prototype.initializeLayout = function(){
+
+    // Set panel dimensions, origin, and margin or fall back to default values
+    this.layout.width      = this.layout.width      || 0;
+    this.layout.height     = this.layout.height     || 0;
+    this.layout.min_width  = this.layout.min_width  || 0;
+    this.layout.min_height = this.layout.min_height || 0;
+    this.layout.proportional_width = this.layout.proportional_width || 1;
+    this.layout.proportional_height = this.layout.proportional_height || 1;
+    if (typeof this.layout.origin != "object"){ this.layout.origin = { x: 0, y: 0 }; }
+    if (typeof this.layout.margin != "object"){ this.layout.margin = { top: 0, right: 0, bottom: 0, left: 0 }; }
+    this.layout.margin.top    = this.layout.margin.top    || 0;
+    this.layout.margin.right  = this.layout.margin.right  || 0;
+    this.layout.margin.bottom = this.layout.margin.bottom || 0;
+    this.layout.margin.left   = this.layout.margin.left   || 0;
+    this.setDimensions();
+    this.setOrigin();
+    this.setMargin();
+
+    // Set panel axes
+    if (typeof this.layout.axes !== "object"){ this.layout.axes = {}; }
+    ["x", "y1", "y2"].forEach(function(axis){
+        if (!this.layout.axes[axis]){
+            this.layout.axes[axis] = {
+                render: false,
+                ticks:  [],
+                label:  null,
+                label_function: null,
+                data_layer_id: null
+            };
+        } else {
+            this.layout.axes[axis].render = true;
+            this.layout.axes[axis].ticks = this.layout.axes[axis].ticks || [];
+            this.layout.axes[axis].label = this.layout.axes[axis].label || null;
+            this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
+            this.layout.axes[axis].data_layer_id = this.layout.axes[axis].data_layer_id || null;
+        }
+    }.bind(this));
+
+    // x extent (todo: make this definable from the layout object somehow?)
+    this.xExtent = function(){
+        return d3.extent([this.parent.state.start, this.parent.state.end]);
+    };
+
+    // Add data layers (which define y extents)
+    if (typeof this.layout.data_layers == "object"){
+        var data_layer_id;
+        for (data_layer_id in this.layout.data_layers){
+            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
+        }
+    }
+
+};
+
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
     if (!isNaN(width) && width >= 0){
-        this.view.width = Math.max(Math.round(+width), this.view.min_width);
+        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
     }
     if (!isNaN(height) && height >= 0){
-        this.view.height = Math.max(Math.round(+height), this.view.min_height);
+        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
     }
-    this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
-    this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
+    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
+    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
     if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (!isNaN(x) && x >= 0){ this.view.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.view.width); }
-    if (!isNaN(y) && y >= 0){ this.view.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.view.height); }
+    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.layout.width); }
+    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.layout.height); }
     if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
-    if (!isNaN(top)    && top    >= 0){ this.view.margin.top    = Math.max(Math.round(+top),    0); }
-    if (!isNaN(right)  && right  >= 0){ this.view.margin.right  = Math.max(Math.round(+right),  0); }
-    if (!isNaN(bottom) && bottom >= 0){ this.view.margin.bottom = Math.max(Math.round(+bottom), 0); }
-    if (!isNaN(left)   && left   >= 0){ this.view.margin.left   = Math.max(Math.round(+left),   0); }
-    if (this.view.margin.top + this.view.margin.bottom > this.view.height){
-        var extra = Math.floor(((this.view.margin.top + this.view.margin.bottom) - this.view.height) / 2);
-        this.view.margin.top -= extra;
-        this.view.margin.bottom -= extra;
+    if (!isNaN(top)    && top    >= 0){ this.layout.margin.top    = Math.max(Math.round(+top),    0); }
+    if (!isNaN(right)  && right  >= 0){ this.layout.margin.right  = Math.max(Math.round(+right),  0); }
+    if (!isNaN(bottom) && bottom >= 0){ this.layout.margin.bottom = Math.max(Math.round(+bottom), 0); }
+    if (!isNaN(left)   && left   >= 0){ this.layout.margin.left   = Math.max(Math.round(+left),   0); }
+    if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height){
+        var extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
+        this.layout.margin.top -= extra;
+        this.layout.margin.bottom -= extra;
     }
-    if (this.view.margin.left + this.view.margin.right > this.view.width){
-        var extra = Math.floor(((this.view.margin.left + this.view.margin.right) - this.view.width) / 2);
-        this.view.margin.left -= extra;
-        this.view.margin.right -= extra;
+    if (this.layout.margin.left + this.layout.margin.right > this.layout.width){
+        var extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
+        this.layout.margin.left -= extra;
+        this.layout.margin.right -= extra;
     }
-    this.view.cliparea.width = this.view.width - (this.view.margin.left + this.view.margin.right);
-    this.view.cliparea.height = this.view.height - (this.view.margin.top + this.view.margin.bottom);
-    this.view.cliparea.origin.x = this.view.margin.left;
-    this.view.cliparea.origin.y = this.view.margin.top;
+    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
+    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    this.layout.cliparea.origin.x = this.layout.margin.left;
+    this.layout.cliparea.origin.y = this.layout.margin.top;
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -1069,27 +1169,27 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g").attr("class", "lz-x lz-axis");
-    if (this.axes.x.render){
+    if (this.layout.axes.x.render){
         this.svg.x_axis_label = this.svg.x_axis.append("text")
             .attr("class", "lz-x lz-axis lz-label")
             .attr("text-anchor", "middle");
     }
     this.svg.y1_axis = this.svg.group.append("g").attr("class", "lz-y lz-y1 lz-axis");
-    if (this.axes.y1.render){
+    if (this.layout.axes.y1.render){
         this.svg.y1_axis_label = this.svg.y1_axis.append("text")
             .attr("class", "lz-y1 lz-axis lz-label")
             .attr("text-anchor", "middle");
     }
     this.svg.y2_axis = this.svg.group.append("g").attr("class", "lz-y lz-y2 lz-axis");
-    if (this.axes.y2.render){
+    if (this.layout.axes.y2.render){
         this.svg.y2_axis_label = this.svg.y2_axis.append("text")
             .attr("class", "lz-y2 lz-axis lz-label")
             .attr("text-anchor", "middle");
     }
 
     // Initialize child Data Layers
-    for (var id in this._data_layers){
-        this._data_layers[id].initialize();
+    for (var id in this.data_layers){
+        this.data_layers[id].initialize();
     }
 
     // Flip the "initialized" bit
@@ -1100,16 +1200,33 @@ LocusZoom.Panel.prototype.initialize = function(){
 };
 
 
-// Create a new data layer by data layer class
-LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
-    if (typeof DataLayerClass !== "function"){
-        return false;
+// Create a new data layer by layout object
+LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+    if (typeof id !== "string"){
+        throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    var data_layer = new DataLayerClass();
+    if (typeof layout !== "object"){
+        throw "Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()";
+    }
+    if (typeof this.data_layers[layout.id] !== "undefined"){
+        throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
+    }
+    if (typeof layout.class !== "string" || typeof LocusZoom[layout.class] !== "function"){
+        throw "Invalid data layer class in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
+    }
+    var data_layer = new LocusZoom[layout.class](id, layout);
     data_layer.parent = this;
-    this._data_layers[data_layer.id] = data_layer;
+    this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
-    return this._data_layers[data_layer.id];
+
+    // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
+    if (layout.y_axis){
+        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
+        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+        this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
+    }
+
+    return this.data_layers[data_layer.id];
 };
 
 
@@ -1117,8 +1234,8 @@ LocusZoom.Panel.prototype.addDataLayer = function(DataLayerClass){
 LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
-    for (var id in this._data_layers){
-        this.data_promises.push(this._data_layers[id].reMap());
+    for (var id in this.data_layers){
+        this.data_promises.push(this.data_layers[id].reMap());
     }
     // When all finished trigger a render
     return Q.all(this.data_promises).then(function(){
@@ -1133,66 +1250,88 @@ LocusZoom.Panel.prototype.reMap = function(){
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
 
+    // Using the associated data layer axis layout declaration for floor, ceiling, upper, and lower buffer
+    // determine the correct clip_range value to pass to prettyTicks (e.g. "low", "high", "both", or "neither")
+    var clip_range = function(layout, axis){
+        var clip_value = "neither";
+        if (layout.axes[axis].data_layer_id){
+            var axis_layout = layout.data_layers[layout.axes[axis].data_layer_id].y_axis;
+            if (typeof axis_layout.floor == "number"){ clip_value = "low"; }
+            if (typeof axis_layout.ceiling == "number"){ clip_value = "high"; }
+            if (typeof axis_layout.floor == "number" && typeof axis_layout.ceiling == "number"){ clip_value = "both"; }
+        }
+        return clip_value;
+    }
+
     // Position the panel container
-    this.svg.container.attr("transform", "translate(" + this.view.origin.x +  "," + this.view.origin.y + ")");
+    this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
 
     // Set size on the clip rect
-    this.svg.clipRect.attr("width", this.view.width).attr("height", this.view.height);
+    this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
 
-    // Generate extents and scales
+    // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){
         this.state.x_extent = this.xExtent();
-        this.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, this.view.cliparea.width/120, true);
+        this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, "both", this.layout.cliparea.width/120);
         this.state.x_scale = d3.scale.linear()
             .domain([this.state.x_extent[0], this.state.x_extent[1]])
-            .range([0, this.view.cliparea.width]);
+            .range([0, this.layout.cliparea.width]);
     }
     if (typeof this.y1Extent == "function"){
         this.state.y1_extent = this.y1Extent();
-        this.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent);
+        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent, clip_range(this.layout, "y1"));
         this.state.y1_scale = d3.scale.linear()
-            .domain([this.axes.y1.ticks[0], this.axes.y1.ticks[this.axes.y1.ticks.length-1]])
-            .range([this.view.cliparea.height, 0]);
+            .domain([this.layout.axes.y1.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y1.ticks.length-1]])
+            .range([this.layout.cliparea.height, 0]);
     }
     if (typeof this.y2Extent == "function"){
         this.state.y2_extent = this.y2Extent();
-        this.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent);
+        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent, clip_range(this.layout, "y2"));
         this.state.y2_scale = d3.scale.linear()
-            .domain([this.axes.y2.ticks[0], this.axes.y1.ticks[this.axes.y2.ticks.length-1]])
-            .range([this.view.cliparea.height, 0]);
+            .domain([this.layout.axes.y2.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y2.ticks.length-1]])
+            .range([this.layout.cliparea.height, 0]);
     }
 
     // Render axes and labels
-    if (this.axes.x.render){
+    var canRenderAxis = function(axis){
+        return (typeof this.state[axis + "_scale"] == "function" && !isNaN(this.state[axis + "_scale"](0)));
+    }.bind(this);
+    
+    if (this.layout.axes.x.render && canRenderAxis("x")){
         this.state.x_axis = d3.svg.axis()
             .scale(this.state.x_scale)
-            .orient("bottom").tickValues(this.axes.x.ticks)
+            .orient("bottom").tickValues(this.layout.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
         this.svg.x_axis
-            .attr("transform", "translate(" + this.view.margin.left + "," + (this.view.height - this.view.margin.bottom) + ")")
+            .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.state.x_axis);
-        if (this.axes.x.label != null){
-            
-            var x_label = this.axes.x.label;
-            if (typeof this.axes.x.label == "function"){ x_label = this.axes.x.label(); }
+        if (this.layout.axes.x.label_function){
+            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
+        }
+        if (this.layout.axes.x.label != null){
+            var x_label = this.layout.axes.x.label;
+            if (typeof this.layout.axes.x.label == "function"){ x_label = this.layout.axes.x.label(); }
             this.svg.x_axis_label
-                .attr("x", this.view.cliparea.width / 2)
-                .attr("y", this.view.margin.bottom * 0.95)
+                .attr("x", this.layout.cliparea.width / 2)
+                .attr("y", this.layout.margin.bottom * 0.95)
                 .text(x_label);
         }
     }
 
-    if (this.axes.y1.render){
+    if (this.layout.axes.y1.render && canRenderAxis("y1")){
         this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
-            .orient("left").tickValues(this.axes.y1.ticks);
+            .orient("left").tickValues(this.layout.axes.y1.ticks);
         this.svg.y1_axis
-            .attr("transform", "translate(" + this.view.margin.left + "," + this.view.margin.top + ")")
+            .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.state.y1_axis);
-        if (this.axes.y1.label != null){
-            var y1_label = this.axes.y1.label;
-            if (typeof this.axes.y1.label == "function"){ y1_label = this.axes.y1.label(); }
-            var x = this.view.margin.left * -0.55;
-            var y = this.view.cliparea.height / 2;
+        if (this.layout.axes.y1.label_function){
+            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
+        }
+        if (this.layout.axes.y1.label != null){
+            var y1_label = this.layout.axes.y1.label;
+            if (typeof this.layout.axes.y1.label == "function"){ y1_label = this.layout.axes.y1.label(); }
+            var x = this.layout.margin.left * -0.55;
+            var y = this.layout.cliparea.height / 2;
             this.svg.y1_axis_label
                 .attr("transform", "rotate(-90 " + x + "," + y + ")")
                 .attr("x", x).attr("y", y)
@@ -1200,92 +1339,90 @@ LocusZoom.Panel.prototype.render = function(){
         }
     }
 
-    if (this.axes.y2.render){
+    if (this.layout.axes.y2.render && canRenderAxis("y2")){
         this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
-            .orient("left").tickValues(this.axes.y2.ticks);
+            .orient("left").tickValues(this.layout.axes.y2.ticks);
         this.svg.y2_axis
-            .attr("transform", "translate(" + (this.view.width - this.view.margin.right) + "," + this.view.margin.top + ")")
+            .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.state.y2_axis);
-        if (this.axes.y2.label != null){
-            var y2_label = this.axes.y2.label;
-            if (typeof this.axes.y2.label == "function"){ y2_label = this.axes.y2.label(); }
-            var x = this.view.margin.right * 0.55;
-            var y = this.view.cliparea.height / 2;
+        if (this.layout.axes.y2.label_function){
+            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
+        }
+        if (this.layout.axes.y2.label != null){
+            var y2_label = this.layout.axes.y2.label;
+            if (typeof this.layout.axes.y2.label == "function"){ y2_label = this.layout.axes.y2.label(); }
+            var x = this.layout.margin.right * 0.55;
+            var y = this.layout.cliparea.height / 2;
             this.svg.y2_axis_label
                 .attr("transform", "rotate(-90 " + x + "," + y + ")")
                 .attr("x", x).attr("y", y)
                 .text(y2_label);
         }
     }
+
+    // Render data layers in order by z-index
+    this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+        this.data_layers[data_layer_id].draw().render();
+    }.bind(this));
+
+    return this;
     
-    // Render data layers by z-index
-    for (var z_index in this.data_layer_ids_by_z_index){
-        if (this.data_layer_ids_by_z_index.hasOwnProperty(z_index)){
-            this._data_layers[this.data_layer_ids_by_z_index[z_index]].draw().prerender().render();
+};
+
+/****************
+  Label Functions
+  Singleton for defining axis label functions with respect to a panel's state
+*/
+
+LocusZoom.Panel.LabelFunctions = (function() {
+    var obj = {};
+    var functions = {
+        "chromosome": function(state) {
+            if (!isNaN(+state.chr)){ 
+                return "Chromosome " + state.chr + " (Mb)";
+            } else {
+                return "Chromosome (Mb)";
+            }
         }
-    }
-
-    return this;
-    
-};
-
-
-/*****************
-  Positions Panel
-*/
-
-LocusZoom.PositionsPanel = function(){
-  
-    LocusZoom.Panel.apply(this, arguments);   
-
-    this.base_id = "positions";
-    this.view.min_width = 300;
-    this.view.min_height = 200;
-
-    this.axes.x.render = true;
-    this.axes.x.label = function(){
-        return "Chromosome " + this.parent.state.chr + " (Mb)";
-    }.bind(this);
-
-    this.axes.y1.render = true;
-    this.axes.y1.label = "-log10 p-value";
-    
-    this.xExtent = function(){
-        var layer = this._data_layers.positions;
-        return d3.extent(layer.data, function(d) { return +d[layer.x_field]; } );
     };
-    
-    this.y1Extent = function(){
-        var layer = this._data_layers.positions;
-        return d3.extent(layer.data, function(d) { return +d[layer.y_field] * 1.05; } );
+
+    obj.get = function(name, state) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
+        } else {
+            throw("label function [" + name + "] not found");
+        }
     };
-    
-    return this;
-};
 
-LocusZoom.PositionsPanel.prototype = new LocusZoom.Panel();
-
-
-/*************
-  Genes Panel
-*/
-
-LocusZoom.GenesPanel = function(){
-    
-    LocusZoom.Panel.apply(this, arguments);
-
-    this.base_id = "genes";
-    this.view.min_width = 300;
-    this.view.min_height = 200;
-
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
     };
-  
-    return this;
-};
 
-LocusZoom.GenesPanel.prototype = new LocusZoom.Panel();
+    obj.add = function(name, fn) {
+        if (functions.name) {
+            throw("label function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
 
 /* global LocusZoom,d3 */
 /* eslint-env browser */
@@ -1302,33 +1439,19 @@ LocusZoom.GenesPanel.prototype = new LocusZoom.Panel();
 
 */
 
-LocusZoom.DataLayer = function() { 
+LocusZoom.DataLayer = function(id, layout) {
 
     this.initialized = false;
 
-    this.id     = null;
+    this.id     = id;
     this.parent = null;
     this.svg    = {};
+
+    this.layout = layout || {};
 
     this.fields = [];
     this.data = [];
     this.metadata = {};
-
-    // afterget is an automatic method called after data is acquired but before
-    // the parent panel works with it (e.g. to generate x/y scales)
-    this.postget = function(){
-        return this;
-    };
-
-    // prerender is an automatic method called after data is aqcuired and after
-    // the panel has access to it (e.g. to generate x/y scales), but before rendering
-    this.prerender = function(){
-        return this;
-    };
-
-    this.state = {
-        z_index: null
-    };
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
@@ -1338,16 +1461,20 @@ LocusZoom.DataLayer = function() {
 
 };
 
-LocusZoom.DataLayer.prototype.attachToYAxis = function(y){
-    if (typeof y === "undefined"){
-        y = 1;
-    }
-    if (y !== 1 && y !== 2){
-        return false;
-    } else {
-        this.parent.axes["y" + y + "_data_layer_id"] = this.id;
-    }
-    return this;
+// Generate a y-axis extent functions based on the layout
+LocusZoom.DataLayer.prototype.getYExtent = function(){
+    return function(){
+        var extent = d3.extent(this.data, function(d) {
+            return +d[this.layout.y_axis.data];
+        }.bind(this));
+        // Apply upper/lower buffers, if applicable
+        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
+        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        // Apply floor/ceiling, if applicable
+        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
+        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
+        return extent;
+    }.bind(this);
 };
 
 // Initialize a data layer
@@ -1375,10 +1502,10 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 };
 
 LocusZoom.DataLayer.prototype.draw = function(){
-    this.svg.container.attr("transform", "translate(" + this.parent.view.cliparea.origin.x +  "," + this.parent.view.cliparea.origin.y + ")");
+    this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
     this.svg.clipRect
-        .attr("width", this.parent.view.cliparea.width)
-        .attr("height", this.parent.view.cliparea.height);
+        .attr("width", this.parent.layout.cliparea.width)
+        .attr("height", this.parent.layout.cliparea.height);
     return this;
 }
 
@@ -1387,30 +1514,89 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
-        this.postget();
     }.bind(this));
     return promise;
 };
+
+/****************
+  Color Functions
+  Singleton for accessing/storing functions to apply different color schemes to data sets
+*/
+
+LocusZoom.DataLayer.ColorFunctions = (function() {
+    var obj = {};
+    var functions = {
+        "numeric_cut": function(parameters, value){
+            var breaks = parameters.breaks;
+            var colors = parameters.colors;
+            if (value == null || isNaN(+value)){
+                return (parameters.null_color ? parameters.null_color : colors[0]);
+            }
+            var threshold = breaks.reduce(function(prev, curr){
+                if (+value < prev || (+value >= prev && +value < curr)){
+                    return prev;
+                } else {
+                    return curr;
+                }
+            });
+            return colors[breaks.indexOf(threshold)];
+        },
+        "categorical_cut": function(parameters, value){
+            if (parameters.categories.indexOf(value) != -1){
+                return parameters.colors[parameters.categories.indexOf(value)];
+            } else {
+                return (parameters.null_color ? parameters.null_color : parameters.colors[0]); 
+            }
+        }
+    };
+
+    obj.get = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
+        } else {
+            throw("color function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions.name) {
+            throw("color function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
 
 
 /*********************
   Positions Data Layer
 */
 
-LocusZoom.PositionsDataLayer = function(){
+LocusZoom.PositionsDataLayer = function(id, layout){
 
-    LocusZoom.DataLayer.apply(this, arguments);  
-    this.id = "positions";
-    this.x_field = "position";
-    this.y_field = "pvalue|neglog10";
-    this.fields = ["id", this.x_field, this.y_field, "refAllele", "ld:state"];
-
-    this.postget = function(){
-        this.data.map(function(d, i){
-            this.data[i].ld = +d["ld:state"];
-        }.bind(this));
-        return this;
-    };
+    LocusZoom.DataLayer.apply(this, arguments);
+    this.layout = layout;
+    this.fields = ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"];
 
     this.render = function(){
         var that = this;
@@ -1431,31 +1617,14 @@ LocusZoom.PositionsDataLayer = function(){
             .enter().append("circle")
             .attr("class", "lz-position")
             .attr("id", function(d){ return d.id; })
-            .attr("cx", function(d){ return this.parent.state.x_scale(d[this.x_field]); }.bind(this))
-            .attr("cy", function(d){ return this.parent.state.y1_scale(d[this.y_field]); }.bind(this))
-            .attr("fill", function(d){ return this.fillColor(d.ld); }.bind(this))
+            .attr("cx", function(d){ return this.parent.state.x_scale(d["position"]); }.bind(this))
+            .attr("cy", function(d){ return this.parent.state.y1_scale(d["pvalue|neglog10"]); }.bind(this))
+            .attr("fill", function(d){ return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function, this.layout.color.parameters, d["ld:state"]); }.bind(this))
             .on("click", clicker)
             .attr("r", 4) // This should be scaled dynamically somehow
             .style({ cursor: "pointer" })
             .append("svg:title")
             .text(function(d) { return d.id; });
-    };
-
-    // TODO: abstract out to a Color Scale class and support arbitrarily many scales that can be substituted out per user input
-    this.fillColor = function(pval){
-        var getCutter = function(breaks) {
-            var fn = function(x) {
-                if (x == null || isNaN(x)){ return 0; }
-                for(var i = 0; i < breaks.length; i++) {
-                    if (x < breaks[i]) break;
-                }
-                return i;
-            };
-            return fn;
-        };
-        var cutter = getCutter([0,.2,.4,.6,.8]);
-        var fill = ["#B8B8B8","#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"][ cutter(pval) ];
-        return fill;
     };
        
     return this;
@@ -1468,10 +1637,10 @@ LocusZoom.PositionsDataLayer.prototype = new LocusZoom.DataLayer();
   Recombination Rate Data Layer
 */
 
-LocusZoom.RecombinationRateDataLayer = function(){
+LocusZoom.RecombinationRateDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "recombination_rate";
+    this.layout = layout;
     this.fields = [];
 
     this.render = function(){
@@ -1488,10 +1657,10 @@ LocusZoom.RecombinationRateDataLayer.prototype = new LocusZoom.DataLayer();
   Genes Data Layer
 */
 
-LocusZoom.GenesDataLayer = function(){
+LocusZoom.GenesDataLayer = function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.id = "genes";
+    this.layout = layout;
     this.fields = ["gene:gene"];
 
     this.metadata.tracks = 1;
@@ -1500,7 +1669,7 @@ LocusZoom.GenesDataLayer = function(){
 
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
-    this.prerender = function(){
+    this.assignTracks = function(){
 
         // Reinitialize metadata
         this.metadata.tracks = 1;
@@ -1588,6 +1757,9 @@ LocusZoom.GenesDataLayer = function(){
     };
 
     this.render = function(){
+
+        this.assignTracks();
+
         this.svg.group.selectAll("*").remove();
 
         // Render gene groups

@@ -21,7 +21,8 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
 var test_js_files = ["./test/LocusZoom.js",
                      "./test/Data.js",
                      "./test/Instance.js",
-                     "./test/Panel.js"
+                     "./test/Panel.js",
+                     "./test/DataLayer.js"
                     ];
 
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
