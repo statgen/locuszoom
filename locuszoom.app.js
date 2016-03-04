@@ -270,27 +270,28 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 positions: {
                     class: "ScatterDataLayer",
+                    point_shape: "triangle-up",
+                    point_size: 32,
+                    point_label_field: "id",
                     fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
-                        data: "position"
+                        field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        data: "pvalue|neglog10",
+                        field: "pvalue|neglog10",
                         floor: 0,
                         upper_buffer: 0.05
                     },
                     color: {
-                        data: "ld:state",
+                        field: "ld:state",
                         function: "numeric_cut",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_color: "#B8B8B8"
                         }
-                    },
-                    size: 4,
-                    label_data: "id"
+                    }
                 }
             }
         },
@@ -1482,7 +1483,7 @@ LocusZoom.DataLayer = function(id, layout) {
 LocusZoom.DataLayer.prototype.getYExtent = function(){
     return function(){
         var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout.y_axis.data];
+            return +d[this.layout.y_axis.field];
         }.bind(this));
         // Apply upper/lower buffers, if applicable
         if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
@@ -1616,7 +1617,8 @@ LocusZoom.ScatterDataLayer = function(id, layout){
     this.layout = layout;
 
     // Apply defaults to the layout where missing
-    this.layout.size == this.layout.size || 4;
+    this.layout.point_size == this.layout.point_size || 4;
+    this.layout.point_shape == this.layout.point_shape || "circle";
     this.layout.color == this.layout.color || "#888888";
     if (this.layout.y_axis && this.layout.y_axis.axis != 1 && this.layout.y_axis.axis != 2){
         this.layout.y_axis.axis = 1;
@@ -1626,44 +1628,45 @@ LocusZoom.ScatterDataLayer = function(id, layout){
     this.render = function(){
         this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
         var selection = this.svg.group
-            .selectAll("circle.lz-data_layer-scatter")
+            .selectAll("path.lz-data_layer-scatter")
             .data(this.data)
-            .enter().append("circle") // Todo: make shape definable in layout; support a few different shapes
+            .enter().append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("r", this.layout.size)
+            .attr("transform", function(d) {
+                var x = this.parent.state.x_scale(d[this.layout.x_axis.field]);
+                var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+                var y = this.parent.state[y_scale](d[this.layout.y_axis.field]);
+                console.log(this.layout.y_axis);
+                console.log(y);
+                return "translate(" + x + "," + y + ")";
+            }.bind(this))
+            .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
             .style({ cursor: "pointer" });
-        // Apply x position
-        if (this.layout.x_axis && this.layout.x_axis.data){
-            selection.attr("cx", function(d){
-                return this.parent.state.x_scale(d[this.layout.x_axis.data]);
-            }.bind(this));
-        }
-        // Apply y position
-        if (this.layout.y_axis && this.layout.y_axis.data){
-            selection.attr("cy", function(d){
-                return this.parent.state["y"+this.layout.y_axis.axis+"_scale"](d[this.layout.y_axis.data]);
-            }.bind(this));
-        }
         // Apply id (if included in fields)
         if (this.layout.fields.indexOf("id") != -1){
             selection.attr("id", function(d){ return d.id; });
         }
         // Apply color
         if (this.layout.color){
-            if (typeof this.layout.color == "string"){
-                selection.attr("fill", this.layout.color);
-            } else if (this.layout.color.function && this.layout.color.data) {
-                selection.attr("fill", function(d){
-                    return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function,
-                                                                  this.layout.color.parameters || {},
-                                                                  d[this.layout.color.data]);
-                }.bind(this));
+            switch (typeof this.layout.color){
+                case "string":
+                    selection.attr("fill", this.layout.color);
+                    break;
+                case "object":
+                    if (this.layout.color.function && this.layout.color.field) {
+                        selection.attr("fill", function(d){
+                            return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function,
+                                                                          this.layout.color.parameters || {},
+                                                                          d[this.layout.color.field]);
+                        }.bind(this));
+                    }
+                    break;
             }
         }
         // Apply title (basic mouseover label)
-        if (this.layout.label_data){
+        if (this.layout.point_label_field){
             selection.append("svg:title")
-                .text(function(d) { return d[this.layout.label_data]; }.bind(this));
+                .text(function(d) { return d[this.layout.point_label_field]; }.bind(this));
         }
     };
        

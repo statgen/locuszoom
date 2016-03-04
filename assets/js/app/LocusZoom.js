@@ -256,27 +256,28 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 positions: {
                     class: "ScatterDataLayer",
+                    point_shape: "circle",
+                    point_size: 32,
+                    point_label_field: "id",
                     fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
-                        data: "position"
+                        field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        data: "pvalue|neglog10",
+                        field: "pvalue|neglog10",
                         floor: 0,
                         upper_buffer: 0.05
                     },
                     color: {
-                        data: "ld:state",
+                        field: "ld:state",
                         function: "numeric_cut",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_color: "#B8B8B8"
                         }
-                    },
-                    size: 4,
-                    label_data: "id"
+                    }
                 }
             }
         },

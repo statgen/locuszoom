@@ -72,21 +72,21 @@ $namespace: "lz";
     font-weight: 600;
   }
 
-  circle.#{$namespace}-data_layer-scatter {
+  path.#{$namespace}-data_layer-scatter {
     stroke: #181818;
     stroke-width: 1;
   }
 
-  circle.#{$namespace}-data_layer-scatter:hover {
+  path.#{$namespace}-data_layer-scatter:hover {
     stroke: #484848;
     stroke-width: 3;
   }
 
-  circle.#{$namespace}-data_layer-scatter.#{$namespace}-selected {
+  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected {
     stroke-width: 4;
   }
 
-  circle.#{$namespace}-data_layer-scatter.#{$namespace}-selected:hover {
+  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected:hover {
     stroke-width: 4;
   }
 
