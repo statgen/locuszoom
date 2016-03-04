@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.0"
+    version: "0.3.1"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -271,11 +271,11 @@ LocusZoom.DefaultLayout = {
                     },
                     color: {
                         field: "ld:state",
-                        function: "numeric_cut",
+                        scale_function: "numerical_cut",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
-                            null_color: "#B8B8B8"
+                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_value: "#B8B8B8"
                         }
                     }
                 }

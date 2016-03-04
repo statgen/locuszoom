@@ -95,18 +95,19 @@ LocusZoom.DataLayer.prototype.reMap = function(){
 };
 
 /****************
-  Color Functions
-  Singleton for accessing/storing functions to apply different color schemes to data sets
+  Scale Functions
+  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
 */
 
-LocusZoom.DataLayer.ColorFunctions = (function() {
+LocusZoom.DataLayer.ScaleFunctions = (function() {
     var obj = {};
     var functions = {
-        "numeric_cut": function(parameters, value){
+        "numerical_cut": function(parameters, value){
             var breaks = parameters.breaks;
-            var colors = parameters.colors;
+            var values = parameters.values;
             if (value == null || isNaN(+value)){
-                return (parameters.null_color ? parameters.null_color : colors[0]);
+                return (parameters.null_value ? parameters.null_value : values[0]);
             }
             var threshold = breaks.reduce(function(prev, curr){
                 if (+value < prev || (+value >= prev && +value < curr)){
@@ -115,13 +116,13 @@ LocusZoom.DataLayer.ColorFunctions = (function() {
                     return curr;
                 }
             });
-            return colors[breaks.indexOf(threshold)];
+            return values[breaks.indexOf(threshold)];
         },
         "categorical_cut": function(parameters, value){
             if (parameters.categories.indexOf(value) != -1){
-                return parameters.colors[parameters.categories.indexOf(value)];
+                return parameters.values[parameters.categories.indexOf(value)];
             } else {
-                return (parameters.null_color ? parameters.null_color : parameters.colors[0]); 
+                return (parameters.null_value ? parameters.null_value : parameters.values[0]); 
             }
         }
     };
@@ -211,9 +212,9 @@ LocusZoom.ScatterDataLayer = function(id, layout){
                     selection.attr("fill", this.layout.color);
                     break;
                 case "object":
-                    if (this.layout.color.function && this.layout.color.field) {
+                    if (this.layout.color.scale_function && this.layout.color.field) {
                         selection.attr("fill", function(d){
-                            return LocusZoom.DataLayer.ColorFunctions.get(this.layout.color.function,
+                            return LocusZoom.DataLayer.ScaleFunctions.get(this.layout.color.scale_function,
                                                                           this.layout.color.parameters || {},
                                                                           d[this.layout.color.field]);
                         }.bind(this));

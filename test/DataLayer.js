@@ -56,98 +56,98 @@ describe('LocusZoom.DataLayer', function(){
         });
     });
 
-    describe("Color Functions", function() {
-        it('LocusZoom.DataLayer should have a ColorFunctions singleton', function(){
-            LocusZoom.DataLayer.should.have.property('ColorFunctions').which.is.an.Object;
+    describe("Scale Functions", function() {
+        it('LocusZoom.DataLayer should have a ScaleFunctions singleton', function(){
+            LocusZoom.DataLayer.should.have.property('ScaleFunctions').which.is.an.Object;
         });
-        it('should have a method to list available color functions', function(){
-            LocusZoom.DataLayer.ColorFunctions.should.have.property('list').which.is.a.Function;
-            var returned_list = LocusZoom.DataLayer.ColorFunctions.list();
-            var expected_list = ["numeric_cut", "categorical_cut"];
+        it('should have a method to list available scale functions', function(){
+            LocusZoom.DataLayer.ScaleFunctions.should.have.property('list').which.is.a.Function;
+            var returned_list = LocusZoom.DataLayer.ScaleFunctions.list();
+            var expected_list = ["numerical_cut", "categorical_cut"];
             assert.deepEqual(returned_list, expected_list);
         });
-        it('should have a general method to get a color by function name', function(){
-            LocusZoom.DataLayer.ColorFunctions.should.have.property('get').which.is.a.Function;
+        it('should have a general method to get a scale by function name', function(){
+            LocusZoom.DataLayer.ScaleFunctions.should.have.property('get').which.is.a.Function;
         });
-        it('should have a method to add a color function', function(){
-            LocusZoom.DataLayer.ColorFunctions.should.have.property('add').which.is.a.Function;
+        it('should have a method to add a scale function', function(){
+            LocusZoom.DataLayer.ScaleFunctions.should.have.property('add').which.is.a.Function;
             var foo = function(parameters, value){ return "#000000"; };
-            LocusZoom.DataLayer.ColorFunctions.add("foo", foo);
-            var returned_list = LocusZoom.DataLayer.ColorFunctions.list();
-            var expected_list = ["numeric_cut", "categorical_cut", "foo"];
+            LocusZoom.DataLayer.ScaleFunctions.add("foo", foo);
+            var returned_list = LocusZoom.DataLayer.ScaleFunctions.list();
+            var expected_list = ["numerical_cut", "categorical_cut", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_color = LocusZoom.DataLayer.ColorFunctions.get("foo", {}, 0);
-            var expected_color = "#000000";
-            assert.equal(returned_color, expected_color);
+            var returned_value = LocusZoom.DataLayer.ScaleFunctions.get("foo", {}, 0);
+            var expected_value = "#000000";
+            assert.equal(returned_value, expected_value);
         });
-        it('should have a method to change or delete existing color functions', function(){
-            LocusZoom.DataLayer.ColorFunctions.should.have.property('set').which.is.a.Function;
+        it('should have a method to change or delete existing scale functions', function(){
+            LocusZoom.DataLayer.ScaleFunctions.should.have.property('set').which.is.a.Function;
             var foo_new = function(parameters, value){ return "#FFFFFF"; };
-            LocusZoom.DataLayer.ColorFunctions.set("foo", foo_new);
-            var returned_list = LocusZoom.DataLayer.ColorFunctions.list();
-            var expected_list = ["numeric_cut", "categorical_cut", "foo"];
+            LocusZoom.DataLayer.ScaleFunctions.set("foo", foo_new);
+            var returned_list = LocusZoom.DataLayer.ScaleFunctions.list();
+            var expected_list = ["numerical_cut", "categorical_cut", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_color = LocusZoom.DataLayer.ColorFunctions.get("foo", {}, 0);
-            var expected_color = "#FFFFFF";
-            assert.equal(returned_color, expected_color);
-            LocusZoom.DataLayer.ColorFunctions.set("foo");
-            var returned_list = LocusZoom.DataLayer.ColorFunctions.list();
-            var expected_list = ["numeric_cut", "categorical_cut"];
+            var returned_value = LocusZoom.DataLayer.ScaleFunctions.get("foo", {}, 0);
+            var expected_value = "#FFFFFF";
+            assert.equal(returned_value, expected_value);
+            LocusZoom.DataLayer.ScaleFunctions.set("foo");
+            var returned_list = LocusZoom.DataLayer.ScaleFunctions.list();
+            var expected_list = ["numerical_cut", "categorical_cut"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should throw an exception if passed a function name that has not been defined', function(){
             try {
-                LocusZoom.DataLayer.ColorFunctions.get("nonexistent", this.instance.state);
+                LocusZoom.DataLayer.ScaleFunctions.get("nonexistent", this.instance.state);
             } catch (error){
                 assert.ok(error);
             }
         });
-        describe("numeric_cut", function() {
-            it('should work with arbitrarily many breaks/colors', function(){
+        describe("numerical_cut", function() {
+            it('should work with arbitrarily many breaks/values', function(){
                 var parameters = {
                     breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                    colors: ["color0", "color0.2", "color0.4", "color0.6", "color0.8"],
-                    null_color: "null_color"
+                    values: ["value0", "value0.2", "value0.4", "value0.6", "value0.8"],
+                    null_value: "null_value"
                 };
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 0), "color0");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, -12), "color0");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 0.35), "color0.2");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 0.79999999), "color0.6");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 3246), "color0.8");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, "foo"), "null_color");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters), "null_color");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 0), "value0");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, -12), "value0");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 0.35), "value0.2");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 0.79999999), "value0.6");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 3246), "value0.8");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, "foo"), "null_value");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters), "null_value");
                 var parameters = {
                     breaks: [-167, -46, 15, 23, 76.8, 952],
-                    colors: ["color-167", "color-46", "color15", "color23", "color76.8", "color952"]
+                    values: ["value-167", "value-46", "value15", "value23", "value76.8", "value952"]
                 };
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, -50000), "color-167");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 0), "color-46");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 76.799999999), "color23");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, 481329), "color952");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters, "foo"), "color-167");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("numeric_cut", parameters), "color-167");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, -50000), "value-167");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 0), "value-46");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 76.799999999), "value23");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, 481329), "value952");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters, "foo"), "value-167");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("numerical_cut", parameters), "value-167");
             });
         });
         describe("categorical_cut", function() {
-            it('should work with arbitrarily many categories/colors', function(){
+            it('should work with arbitrarily many categories/values', function(){
                 var parameters = {
                     categories: ["dog", "cat", "hippo", "marmoset"],
-                    colors: ["color-dog", "color-cat", "color-hippo", "color-marmoset"],
-                    null_color: "null_color"
+                    values: ["value-dog", "value-cat", "value-hippo", "value-marmoset"],
+                    null_value: "null_value"
                 };
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, "dog"), "color-dog");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, "hippo"), "color-hippo");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, "CAT"), "null_color");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, 53), "null_color");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters), "null_color");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, "dog"), "value-dog");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, "hippo"), "value-hippo");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, "CAT"), "null_value");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, 53), "null_value");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters), "null_value");
                 var parameters = {
                     categories: ["oxygen", "fluorine", "tungsten"],
-                    colors: ["color-oxygen", "color-fluorine", "color-tungsten"]
+                    values: ["value-oxygen", "value-fluorine", "value-tungsten"]
                 };
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, "fluorine"), "color-fluorine");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, 135), "color-oxygen");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters, ["tungten"]), "color-oxygen");
-                assert.equal(LocusZoom.DataLayer.ColorFunctions.get("categorical_cut", parameters), "color-oxygen");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, "fluorine"), "value-fluorine");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, 135), "value-oxygen");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters, ["tungsten"]), "value-oxygen");
+                assert.equal(LocusZoom.DataLayer.ScaleFunctions.get("categorical_cut", parameters), "value-oxygen");
             });
         });
     });
