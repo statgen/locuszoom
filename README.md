@@ -28,8 +28,7 @@ LocusZoom requires three distinct initialization values:
 LocusZoom is a tool for visualizing data, so data sources must be defined. Defining a data source can be done as follows:
 
 ```javascript
-var ds = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"]);
-LocusZoom.populate("#foo", ds);
+var datasource = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"]);
 ```
 
 Presently only HTTP/S endpoints are supported for data sources. See [Issue #38](https://github.com/statgen/locuszoom/issues/38) for discussion on adding support for local file data sources.
@@ -75,7 +74,7 @@ You can optionally specify the state (data query) for LocusZoom by setting a `da
 <div id="foo" data-region="10:114550452-115067678"></div>
 ```
 
-### Populating arbitrarily many divs with LocusZoom plots at once
+#### Populating arbitrarily many divs with LocusZoom plots at once
 
 `LocusZoom.populate()` will only populate the first matching HTML element for the provided selector. If you instead ant to populate arbitrarily many elements that all match to a single selector that can be done using `LocusZoom.populateAll()` like so:
 

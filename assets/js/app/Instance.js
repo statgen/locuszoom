@@ -1,4 +1,4 @@
-/* global LocusZoom */
+/* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -34,7 +34,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
 
-    // Initialize the layout (should this happen in initialize()?)
+    // Initialize the layout
     this.initializeLayout();
 
     return this;
@@ -56,7 +56,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         this.addPanel(panel_id, this.layout.panels[panel_id]);
     }
 
-}
+};
 
 // Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
 // If any arguments are missing, use values stored in the layout. Keep everything in agreement.
@@ -100,10 +100,12 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
 // In all cases: bubble minimum panel dimensions up from panels to enforce minimum instance dimensions
 LocusZoom.Instance.prototype.stackPanels = function(){
 
+    var id;
+
     // First set/enforce minimum instance dimensions based on current panels
     var panel_min_widths = [];
     var panel_min_heights = [];
-    for (var id in this.panels){
+    for (id in this.panels){
         panel_min_widths.push(this.panels[id].layout.min_width);
         panel_min_heights.push(this.panels[id].layout.min_height);
     }
@@ -123,7 +125,7 @@ LocusZoom.Instance.prototype.stackPanels = function(){
     var proportional_height = 1 / Object.keys(this.panels).length;
     var discrete_height = this.layout.height * proportional_height;
     var panel_idx = 0;
-    for (var id in this.panels){
+    for (id in this.panels){
         this.panels[id].layout.proportional_height = proportional_height;
         this.panels[id].setOrigin(0, panel_idx * discrete_height);
         this.panels[id].setDimensions(this.layout.width, discrete_height);
@@ -165,7 +167,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         initialize: function(){
             // Resize handle
             this.resize_handle = this.svg.append("g")
-                .attr("id", this.parent.id + ".ui.resize_handle")
+                .attr("id", this.parent.id + ".ui.resize_handle");
             this.resize_handle.append("path")
                 .attr("class", "lz-ui-resize_handle")
                 .attr("d", "M 0,16, L 16,0, L 16,16 Z");
@@ -279,4 +281,4 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
     this.mapTo(this.state.chr, this.state.start, this.state.end);
-}
+};

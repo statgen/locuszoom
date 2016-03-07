@@ -1,4 +1,4 @@
-/* global LocusZoom,d3 */
+/* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -50,7 +50,7 @@ LocusZoom.Panel = function(id, layout) {
         return this.parent.id + "." + this.id;
     };
 
-    // Initialize the layout (should this happen in initialize()?)
+    // Initialize the layout
     this.initializeLayout();
     
     return this;
@@ -132,17 +132,18 @@ LocusZoom.Panel.prototype.setOrigin = function(x, y){
 };
 
 LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
+    var extra;
     if (!isNaN(top)    && top    >= 0){ this.layout.margin.top    = Math.max(Math.round(+top),    0); }
     if (!isNaN(right)  && right  >= 0){ this.layout.margin.right  = Math.max(Math.round(+right),  0); }
     if (!isNaN(bottom) && bottom >= 0){ this.layout.margin.bottom = Math.max(Math.round(+bottom), 0); }
     if (!isNaN(left)   && left   >= 0){ this.layout.margin.left   = Math.max(Math.round(+left),   0); }
     if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height){
-        var extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
+        extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
         this.layout.margin.top -= extra;
         this.layout.margin.bottom -= extra;
     }
     if (this.layout.margin.left + this.layout.margin.right > this.layout.width){
-        var extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
+        extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
         this.layout.margin.left -= extra;
         this.layout.margin.right -= extra;
     }
@@ -291,7 +292,7 @@ LocusZoom.Panel.prototype.render = function(){
             if (typeof axis_layout.floor == "number" && typeof axis_layout.ceiling == "number"){ clip_value = "both"; }
         }
         return clip_value;
-    }
+    };
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
@@ -360,11 +361,11 @@ LocusZoom.Panel.prototype.render = function(){
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
             if (typeof this.layout.axes.y1.label == "function"){ y1_label = this.layout.axes.y1.label(); }
-            var x = this.layout.margin.left * -0.55;
-            var y = this.layout.cliparea.height / 2;
+            var y1_label_x = this.layout.margin.left * -0.55;
+            var y1_label_y = this.layout.cliparea.height / 2;
             this.svg.y1_axis_label
-                .attr("transform", "rotate(-90 " + x + "," + y + ")")
-                .attr("x", x).attr("y", y)
+                .attr("transform", "rotate(-90 " + y1_label_x + "," + y1_label_y + ")")
+                .attr("x", y1_label_x).attr("y", y1_label_y)
                 .text(y1_label);
         }
     }
@@ -381,11 +382,11 @@ LocusZoom.Panel.prototype.render = function(){
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
             if (typeof this.layout.axes.y2.label == "function"){ y2_label = this.layout.axes.y2.label(); }
-            var x = this.layout.margin.right * 0.55;
-            var y = this.layout.cliparea.height / 2;
+            var y2_label_x = this.layout.margin.right * 0.55;
+            var y2_label_y = this.layout.cliparea.height / 2;
             this.svg.y2_axis_label
-                .attr("transform", "rotate(-90 " + x + "," + y + ")")
-                .attr("x", x).attr("y", y)
+                .attr("transform", "rotate(-90 " + y2_label_x + "," + y2_label_y + ")")
+                .attr("x", y2_label_x).attr("y", y2_label_y)
                 .text(y2_label);
         }
     }

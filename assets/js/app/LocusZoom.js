@@ -1,4 +1,4 @@
-/* global d3,Q,LocusZoom */
+/* global d3,Q */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -31,7 +31,7 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
         inst.mapTo(+region[0], +region[1], +region[2]);
     }
     return inst;
-}
+};
     
 // Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(selector, datasource, layout, state) {
@@ -84,7 +84,7 @@ LocusZoom.positionStringToInt = function(p) {
     }
     val = Number(val) * mult;
     return val;
-}
+};
 
 // Parse region queries that look like
 // chr:start-end
@@ -107,9 +107,9 @@ LocusZoom.parsePositionQuery = function(x) {
     match = chrpos.exec(x);
     if (match) {
         return {chr:match[1], position:LocusZoom.positionStringToInt(match[2])};
-    };
+    }
     return null;
-}
+};
 
 // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
 // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
@@ -126,7 +126,7 @@ LocusZoom.parsePositionQuery = function(x) {
 
 LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
-  	    target_tick_count = 5;
+        target_tick_count = 5;
     }
     target_tick_count = parseInt(target_tick_count);
     
@@ -159,11 +159,11 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     }
     
     var ticks = [];
+    var i;
     if (range[0] <= unit){
-        var i = 0;
+        i = 0;
     } else {
-        var i = Math.floor(range[0]/unit)*unit;
-        i = parseFloat(i.toFixed(base_toFixed));
+        i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     }
     while (i < range[1]){
         ticks.push(i);

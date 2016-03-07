@@ -1,4 +1,4 @@
-/* global LocusZoom,d3 */
+/* global d3,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -81,7 +81,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
         .attr("width", this.parent.layout.cliparea.width)
         .attr("height", this.parent.layout.cliparea.height);
     return this;
-}
+};
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
