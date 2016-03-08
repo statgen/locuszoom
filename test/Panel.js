@@ -25,9 +25,8 @@ describe('LocusZoom.Panel', function(){
              ]
     });
 
-    // Reset DOM and LocusZoom singleton after each test
+    // Reset DOM after each test
     afterEach(function(){
-        LocusZoom._instances = {};
         d3.select("body").selectAll("*").remove();
     });
 
@@ -50,30 +49,30 @@ describe('LocusZoom.Panel', function(){
             this.panel.should.have.property('state').which.is.an.Object;
         });
         it('should have an object for tracking data layers', function(){
-            this.panel.should.have.property('_data_layers').which.is.an.Object;
+            this.panel.should.have.property('data_layers').which.is.an.Object;
         });
-        it('should track dimensions, margins, and positioning with a view object', function(){
-            this.panel.should.have.property('view').which.is.an.Object;
-            this.panel.view.width.should.be.a.Number;
-            this.panel.view.height.should.be.a.Number;
-            this.panel.view.min_width.should.be.a.Number;
-            this.panel.view.min_height.should.be.a.Number;
-            this.panel.view.proportional_width.should.be.a.Number;
-            this.panel.view.proportional_height.should.be.a.Number;
-            this.panel.view.origin.should.be.an.Object;
-            this.panel.view.origin.should.have.property('x').which.is.a.Number
-            this.panel.view.origin.should.have.property('y').which.is.a.Number;
-            this.panel.view.margin.should.be.an.Object;
-            this.panel.view.margin.should.have.property('top').which.is.a.Number
-            this.panel.view.margin.should.have.property('right').which.is.a.Number;
-            this.panel.view.margin.should.have.property('bottom').which.is.a.Number;
-            this.panel.view.margin.should.have.property('left').which.is.a.Number;
-            this.panel.view.cliparea.should.be.an.Object;
-            this.panel.view.cliparea.should.have.property('width').which.is.a.Number
-            this.panel.view.cliparea.should.have.property('height').which.is.a.Number;
-            this.panel.view.cliparea.should.have.property('origin').which.is.an.Object;
-            this.panel.view.cliparea.origin.should.have.property('x').which.is.a.Number;
-            this.panel.view.cliparea.origin.should.have.property('y').which.is.a.Number;
+        it('should track dimensions, margins, and positioning with a layout object', function(){
+            this.panel.should.have.property('layout').which.is.an.Object;
+            this.panel.layout.width.should.be.a.Number;
+            this.panel.layout.height.should.be.a.Number;
+            this.panel.layout.min_width.should.be.a.Number;
+            this.panel.layout.min_height.should.be.a.Number;
+            this.panel.layout.proportional_width.should.be.a.Number;
+            this.panel.layout.proportional_height.should.be.a.Number;
+            this.panel.layout.origin.should.be.an.Object;
+            this.panel.layout.origin.should.have.property('x').which.is.a.Number
+            this.panel.layout.origin.should.have.property('y').which.is.a.Number;
+            this.panel.layout.margin.should.be.an.Object;
+            this.panel.layout.margin.should.have.property('top').which.is.a.Number
+            this.panel.layout.margin.should.have.property('right').which.is.a.Number;
+            this.panel.layout.margin.should.have.property('bottom').which.is.a.Number;
+            this.panel.layout.margin.should.have.property('left').which.is.a.Number;
+            this.panel.layout.cliparea.should.be.an.Object;
+            this.panel.layout.cliparea.should.have.property('width').which.is.a.Number
+            this.panel.layout.cliparea.should.have.property('height').which.is.a.Number;
+            this.panel.layout.cliparea.should.have.property('origin').which.is.an.Object;
+            this.panel.layout.cliparea.origin.should.have.property('x').which.is.a.Number;
+            this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
         });
     });
 
@@ -81,71 +80,71 @@ describe('LocusZoom.Panel', function(){
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "instance_id");
             this.instance = LocusZoom.populate("#instance_id");
-            this.panel = this.instance._panels.positions;
+            this.panel = this.instance.panels.positions;
         });
         it('should allow changing dimensions', function(){
             this.panel.setDimensions(840, 560);
-            this.panel.view.should.have.property('width').which.is.exactly(840);
-            this.panel.view.should.have.property('height').which.is.exactly(560);
+            this.panel.layout.should.have.property('width').which.is.exactly(840);
+            this.panel.layout.should.have.property('height').which.is.exactly(560);
             this.panel.setDimensions(675.3, -50);
-            this.panel.view.should.have.property('width').which.is.exactly(675);
-            this.panel.view.should.have.property('height').which.is.exactly(560);
+            this.panel.layout.should.have.property('width').which.is.exactly(675);
+            this.panel.layout.should.have.property('height').which.is.exactly(560);
             this.panel.setDimensions("q", 942);
-            this.panel.view.should.have.property('width').which.is.exactly(675);
-            this.panel.view.should.have.property('height').which.is.exactly(942);
+            this.panel.layout.should.have.property('width').which.is.exactly(675);
+            this.panel.layout.should.have.property('height').which.is.exactly(942);
         });
         it('should enforce minimum dimensions', function(){
-            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
-            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
-            this.panel.setDimensions(this.panel.view.min_width / 2, 0);
-            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
-            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
-            this.panel.setDimensions(0, this.panel.view.min_height / 2);
-            this.panel.view.width.should.not.be.lessThan(this.panel.view.min_width);
-            this.panel.view.height.should.not.be.lessThan(this.panel.view.min_height);
+            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
+            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
+            this.panel.setDimensions(this.panel.layout.min_width / 2, 0);
+            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
+            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
+            this.panel.setDimensions(0, this.panel.layout.min_height / 2);
+            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
+            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
         });
         it('should allow setting origin only within the instance dimensions', function(){
             this.instance.setDimensions(500, 600);
             this.panel.setOrigin(20, 50);
-            this.panel.view.origin.x.should.be.exactly(20);
-            this.panel.view.origin.y.should.be.exactly(50);
+            this.panel.layout.origin.x.should.be.exactly(20);
+            this.panel.layout.origin.y.should.be.exactly(50);
             this.panel.setOrigin(0, 0);
-            this.panel.view.origin.x.should.be.exactly(0);
-            this.panel.view.origin.y.should.be.exactly(0);
+            this.panel.layout.origin.x.should.be.exactly(0);
+            this.panel.layout.origin.y.should.be.exactly(0);
             this.panel.setOrigin("q", { foo: "bar" });
-            this.panel.view.origin.x.should.be.exactly(0);
-            this.panel.view.origin.y.should.be.exactly(0);
+            this.panel.layout.origin.x.should.be.exactly(0);
+            this.panel.layout.origin.y.should.be.exactly(0);
             this.panel.setOrigin(700, 800);
-            this.panel.view.origin.x.should.be.exactly(500);
-            this.panel.view.origin.y.should.be.exactly(600);
+            this.panel.layout.origin.x.should.be.exactly(500);
+            this.panel.layout.origin.y.should.be.exactly(600);
         });
         it('should allow setting margin, which sets cliparea origin and dimensions', function(){
             this.panel.setMargin(1, 2, 3, 4);
-            this.panel.view.margin.top.should.be.exactly(1);
-            this.panel.view.margin.right.should.be.exactly(2);
-            this.panel.view.margin.bottom.should.be.exactly(3);
-            this.panel.view.margin.left.should.be.exactly(4);
-            this.panel.view.cliparea.origin.x.should.be.exactly(4);
-            this.panel.view.cliparea.origin.y.should.be.exactly(1);
-            this.panel.view.cliparea.width.should.be.exactly(this.panel.view.width - (2 + 4));
-            this.panel.view.cliparea.height.should.be.exactly(this.panel.view.height - (1 + 3));
+            this.panel.layout.margin.top.should.be.exactly(1);
+            this.panel.layout.margin.right.should.be.exactly(2);
+            this.panel.layout.margin.bottom.should.be.exactly(3);
+            this.panel.layout.margin.left.should.be.exactly(4);
+            this.panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.panel.layout.cliparea.origin.y.should.be.exactly(1);
+            this.panel.layout.cliparea.width.should.be.exactly(this.panel.layout.width - (2 + 4));
+            this.panel.layout.cliparea.height.should.be.exactly(this.panel.layout.height - (1 + 3));
             this.panel.setMargin(0, "12", -17, {foo: "bar"});
-            this.panel.view.margin.top.should.be.exactly(0);
-            this.panel.view.margin.right.should.be.exactly(12);
-            this.panel.view.margin.bottom.should.be.exactly(3);
-            this.panel.view.margin.left.should.be.exactly(4);
-            this.panel.view.cliparea.origin.x.should.be.exactly(4);
-            this.panel.view.cliparea.origin.y.should.be.exactly(0);
-            this.panel.view.cliparea.width.should.be.exactly(this.panel.view.width - (12 + 4));
-            this.panel.view.cliparea.height.should.be.exactly(this.panel.view.height - (0 + 3));
+            this.panel.layout.margin.top.should.be.exactly(0);
+            this.panel.layout.margin.right.should.be.exactly(12);
+            this.panel.layout.margin.bottom.should.be.exactly(3);
+            this.panel.layout.margin.left.should.be.exactly(4);
+            this.panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.panel.layout.cliparea.origin.y.should.be.exactly(0);
+            this.panel.layout.cliparea.width.should.be.exactly(this.panel.layout.width - (12 + 4));
+            this.panel.layout.cliparea.height.should.be.exactly(this.panel.layout.height - (0 + 3));
         });
         it('should prevent margins from overlapping', function(){
             this.panel.setDimensions(500, 500);
             this.panel.setMargin(700, 1000, 900, 800);
-            this.panel.view.margin.should.have.property('top').which.is.exactly(150);
-            this.panel.view.margin.should.have.property('right').which.is.exactly(350);
-            this.panel.view.margin.should.have.property('bottom').which.is.exactly(350);
-            this.panel.view.margin.should.have.property('left').which.is.exactly(150);
+            this.panel.layout.margin.should.have.property('top').which.is.exactly(150);
+            this.panel.layout.margin.should.have.property('right').which.is.exactly(350);
+            this.panel.layout.margin.should.have.property('bottom').which.is.exactly(350);
+            this.panel.layout.margin.should.have.property('left').which.is.exactly(150);
         });
     });
 
@@ -156,32 +155,95 @@ describe('LocusZoom.Panel', function(){
                 this.instance = LocusZoom.populate("#instance_id");
             });
             it('last child of each panel container should be a curtain element', function(){
-                Object.keys(this.instance._panels).forEach(function(panel_id){
-                    d3.select(this.instance._panels[panel_id].svg.group.node().parentNode.lastChild).attr("id").should.be.exactly("instance_id." + panel_id + ".curtain");
-                    d3.select(this.instance._panels[panel_id].svg.group.node().parentNode.lastChild).attr("class").should.be.exactly("lz-curtain");
+                Object.keys(this.instance.panels).forEach(function(panel_id){
+                    d3.select(this.instance.panels[panel_id].svg.group.node().parentNode.lastChild).attr("id").should.be.exactly("instance_id." + panel_id + ".curtain");
+                    d3.select(this.instance.panels[panel_id].svg.group.node().parentNode.lastChild).attr("class").should.be.exactly("lz-curtain");
                 }.bind(this));
             });
             it('each panel should have a curtain object with stored svg selector', function(){
-                Object.keys(this.instance._panels).forEach(function(panel_id){
-                    this.instance._panels[panel_id].curtain.should.be.an.Object;
-                    this.instance._panels[panel_id].curtain.svg.should.be.an.Object;
-                    assert.equal(this.instance._panels[panel_id].curtain.svg.html(), this.instance.svg.select("#instance_id\\." + panel_id + "\\.curtain").html());
+                Object.keys(this.instance.panels).forEach(function(panel_id){
+                    this.instance.panels[panel_id].curtain.should.be.an.Object;
+                    this.instance.panels[panel_id].curtain.svg.should.be.an.Object;
+                    assert.equal(this.instance.panels[panel_id].curtain.svg.html(), this.instance.svg.select("#instance_id\\." + panel_id + "\\.curtain").html());
                 }.bind(this));
             });
             it('each panel curtain should have a method that drops the curtain', function(){
-                Object.keys(this.instance._panels).forEach(function(panel_id){
-                    this.instance._panels[panel_id].curtain.drop.should.be.a.Function;
-                    this.instance._panels[panel_id].curtain.drop();
-                    assert.equal(this.instance._panels[panel_id].curtain.svg.style("display"), "");
+                Object.keys(this.instance.panels).forEach(function(panel_id){
+                    this.instance.panels[panel_id].curtain.drop.should.be.a.Function;
+                    this.instance.panels[panel_id].curtain.drop();
+                    assert.equal(this.instance.panels[panel_id].curtain.svg.style("display"), "");
                 }.bind(this));
             });
             it('each panel curtain should have a method that raises the curtain', function(){
-                Object.keys(this.instance._panels).forEach(function(panel_id){
-                    this.instance._panels[panel_id].curtain.raise.should.be.a.Function;
-                    this.instance._panels[panel_id].curtain.drop();
-                    this.instance._panels[panel_id].curtain.raise();
-                    assert.equal(this.instance._panels[panel_id].curtain.svg.style("display"), "none");
+                Object.keys(this.instance.panels).forEach(function(panel_id){
+                    this.instance.panels[panel_id].curtain.raise.should.be.a.Function;
+                    this.instance.panels[panel_id].curtain.drop();
+                    this.instance.panels[panel_id].curtain.raise();
+                    assert.equal(this.instance.panels[panel_id].curtain.svg.style("display"), "none");
                 }.bind(this));
+            });
+        });
+    });
+
+    describe("Label Functions", function() {
+        beforeEach(function(){
+            d3.select("body").append("div").attr("id", "instance_id");
+            this.instance = LocusZoom.populate("#instance_id");
+        });
+        it("LocusZoom.Panel should have a LabelFunctions singleton", function(){
+            LocusZoom.Panel.should.have.property("LabelFunctions").which.is.an.Object;
+        });
+        it("should have a method to list available label functions", function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property("list").which.is.a.Function;
+            var returned_list = LocusZoom.Panel.LabelFunctions.list();
+            var expected_list = ["chromosome"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should have a general method to get a function or execute it for a result", function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property("get").which.is.a.Function;
+            LocusZoom.Panel.LabelFunctions.get("chromosome").should.be.a.Function;
+            var returned_label = LocusZoom.Panel.LabelFunctions.get("chromosome", this.instance.state);
+            var expected_label = "Chromosome 0 (Mb)";
+            assert.equal(returned_label, expected_label);
+        });
+        it("should have a method to add a label function", function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property("add").which.is.a.Function;
+            var foo = function(state){ return "start: " + state.start; };
+            LocusZoom.Panel.LabelFunctions.add("foo", foo);
+            var returned_list = LocusZoom.Panel.LabelFunctions.list();
+            var expected_list = ["chromosome", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_label = LocusZoom.Panel.LabelFunctions.get("foo", this.instance.state);
+            var expected_label = "start: 0";
+            assert.equal(returned_label, expected_label);
+        });
+        it("should have a method to change or delete existing label functions", function(){
+            LocusZoom.Panel.LabelFunctions.should.have.property("set").which.is.a.Function;
+            var foo_new = function(state){ return "end: " + state.end; };
+            LocusZoom.Panel.LabelFunctions.set("foo", foo_new);
+            var returned_list = LocusZoom.Panel.LabelFunctions.list();
+            var expected_list = ["chromosome", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_label = LocusZoom.Panel.LabelFunctions.get("foo", this.instance.state);
+            var expected_label = "end: 0";
+            assert.equal(returned_label, expected_label);
+            LocusZoom.Panel.LabelFunctions.set("foo");
+            var returned_list = LocusZoom.Panel.LabelFunctions.list();
+            var expected_list = ["chromosome"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should throw an exception if passed a function name that has not been defined", function(){
+            try {
+                LocusZoom.Panel.LabelFunctions.getLabel("nonexistent", this.instance.state);
+            } catch (error){
+                assert.ok(error);
+            }
+        });
+        describe("choromosome", function() {
+            it('should return a chromosome label for any state', function(){
+                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", { chr: 10, start: 1, end: 2}), "Chromosome 10 (Mb)");
+                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", { chr: "foo", start: 1, end: 2}), "Chromosome (Mb)");
+                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", {}), "Chromosome (Mb)");
             });
         });
     });

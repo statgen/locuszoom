@@ -17,11 +17,18 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/DataLayer.js"
                    ];
 
+// Test suites. Should be able to be executed in any order.
 var test_js_files = ["./test/LocusZoom.js",
                      "./test/Data.js",
                      "./test/Instance.js",
-                     "./test/Panel.js"
+                     "./test/Panel.js",
+                     "./test/DataLayer.js"
                     ];
+
+// Vendor libraries. These are *only* libraries necessary for implementing the plugin.
+// Any vendor libraries needed solely for testing should not appear in this list.
+var vendor_js_files = ["./assets/js/vendor/d3.min.js",
+                       "./assets/js/vendor/q.min.js"];
 
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task("js", function() {
@@ -78,7 +85,7 @@ gulp.task("app_js", ["test"], function() {
 
 // Concatenate vendor js files into a single vendor file
 gulp.task("vendor_js", function() {
-    gulp.src("./assets/js/vendor/*.js")
+    gulp.src(vendor_js_files)
         .pipe(concat("locuszoom.vendor.min.js"))
         .pipe(gulp.dest("."))
         .on("end", function() {

@@ -1,17 +1,19 @@
-/* global d3,Q,LocusZoom */
+/* global d3,Q */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.2.2"
+    version: "0.3.0"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
 // NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
 //       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
 LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
+
     // Initialize a new Instance
-    var inst = new layout(id, datasource, layout, state);
+    var inst = new LocusZoom.Instance(id, datasource, layout, state);
+
     // Add an SVG to the div and set its dimensions
     inst.svg = d3.select("div#" + id)
         .append("svg")
@@ -29,7 +31,7 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
         inst.mapTo(+region[0], +region[1], +region[2]);
     }
     return inst;
-}
+};
     
 // Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(selector, datasource, layout, state) {
@@ -37,10 +39,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         selector = ".lz-instance";
     }
     if (typeof layout === "undefined"){
-        layout = LocusZoom.DefaultInstance;
+        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
     }
     if (typeof state === "undefined"){
-        state = {};
+        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
     }
     var instance;
     d3.select(selector).each(function(){
@@ -59,7 +61,7 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
 LocusZoom.positionIntToString = function(p){
-    var places = Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2);
+    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
     return "" + (p / Math.pow(10, 6)).toFixed(places);
 };
 
@@ -82,7 +84,7 @@ LocusZoom.positionStringToInt = function(p) {
     }
     val = Number(val) * mult;
     return val;
-}
+};
 
 // Parse region queries that look like
 // chr:start-end
@@ -105,29 +107,36 @@ LocusZoom.parsePositionQuery = function(x) {
     match = chrpos.exec(x);
     if (match) {
         return {chr:match[1], position:LocusZoom.positionStringToInt(match[2])};
-    };
+    }
     return null;
-}
+};
 
 // Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
 // Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
-// Optionally specify n for a "target" number of ticks. Will not necessarily be the number of ticks you get! Defaults to 5.
-LocusZoom.prettyTicks = function(range, n, internal_only){
-    if (typeof n == "undefined" || isNaN(parseInt(n))){
-  	    n = 5;
+//
+// clip_range - string, optional - default "neither"
+// First and last generated ticks may extend beyond the range. Set this to "low", "high", "both", or
+// "neither" to clip the first (low) or last (high) tick to be inside the range or allow them to extend beyond.
+// e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
+// last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
+//
+// target_tick_count - integer, optional - default 5
+// Specify a "target" number of ticks. Will not necessarily be the number of ticks you get, but should be
+// pretty close. Defaults to 5.
+
+LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
+    if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
+        target_tick_count = 5;
     }
-    n = parseInt(n);
-    if (typeof internal_only == "undefined"){
-        internal_only = false;
-    }
+    target_tick_count = parseInt(target_tick_count);
     
-    var min_n = n / 3;
+    var min_n = target_tick_count / 3;
     var shrink_sml = 0.75;
     var high_u_bias = 1.5;
     var u5_bias = 0.5 + 1.5 * high_u_bias;
     
     var d = Math.abs(range[0] - range[1]);
-    var c = d / n;
+    var c = d / target_tick_count;
     if ((Math.log(d) / Math.LN10) < -2){
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
@@ -150,11 +159,11 @@ LocusZoom.prettyTicks = function(range, n, internal_only){
     }
     
     var ticks = [];
+    var i;
     if (range[0] <= unit){
-        var i = 0;
+        i = 0;
     } else {
-        var i = Math.floor(range[0]/unit)*unit;
-        i = parseFloat(i.toFixed(base_toFixed));
+        i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     }
     while (i < range[1]){
         ticks.push(i);
@@ -165,8 +174,13 @@ LocusZoom.prettyTicks = function(range, n, internal_only){
     }
     ticks.push(i);
     
-    if (internal_only){
+    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) == -1){
+        clip_range = "neither";
+    }
+    if (clip_range == "low" || clip_range == "both"){
         if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+    }
+    if (clip_range == "high" || clip_range == "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
     
@@ -206,4 +220,73 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.send(body);
     } 
     return response.promise;
+};
+
+// Default State
+LocusZoom.DefaultState = {
+    chr: 0,
+    start: 0,
+    end: 0
+};
+
+// Default Layout
+LocusZoom.DefaultLayout = {
+    width: 700,
+    height: 700,
+    min_width: 300,
+    min_height: 400,
+    panels: {
+        positions: {
+            origin: { x: 0, y: 0 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            axes: {
+                x: {
+                    label_function: "chromosome"
+                },
+                y1: {
+                    label: "-log10 p-value"
+                }
+            },
+            data_layers: {
+                positions: {
+                    class: "PositionsDataLayer",
+                    y_axis: {
+                        axis: 1,
+                        data: "pvalue|neglog10",
+                        floor: 0,
+                        upper_buffer: 0.05
+                    },
+                    color: {
+                        function: "numeric_cut",
+                        parameters: {
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_color: "#B8B8B8"
+                        }
+                    }
+                }
+            }
+        },
+        genes: {
+            origin: { x: 0, y: 350 },
+            width:      700,
+            height:     350,
+            min_width:  300,
+            min_height: 200,
+            proportional_width: 1,
+            proportional_height: 0.5,
+            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            data_layers: {
+                genes: {
+                    class: "GenesDataLayer"
+                }
+            }
+        }
+    }
 };

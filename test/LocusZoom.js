@@ -25,7 +25,7 @@ describe('LocusZoom', function(){
              ]
     });
 
-    // Reset DOM and LocusZoom singleton after each test
+    // Reset DOM after each test
     afterEach(function(){
         d3.select("body").selectAll("*").remove();
     });
@@ -37,6 +37,9 @@ describe('LocusZoom', function(){
     describe("Singleton", function() {
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
+        });
+        it('should have a default layout', function(){
+            LocusZoom.should.have.property('DefaultLayout').which.is.an.Object;
         });
         it('should have a method for converting an integer position to a string', function(){
             LocusZoom.positionIntToString.should.be.a.Function;
@@ -60,13 +63,13 @@ describe('LocusZoom', function(){
             assert.deepEqual(LocusZoom.prettyTicks([0, 10]), [0, 2, 4, 6, 8, 10]);
             assert.deepEqual(LocusZoom.prettyTicks([14, 67]), [10, 20, 30, 40, 50, 60, 70]);
             assert.deepEqual(LocusZoom.prettyTicks([0.01, 0.23]), [0, 0.05, 0.10, 0.15, 0.20, 0.25]);
-            assert.deepEqual(LocusZoom.prettyTicks([1, 21], 10), [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
-            assert.deepEqual(LocusZoom.prettyTicks([1, 9], 5, true), [2, 4, 6, 8]);
+            assert.deepEqual(LocusZoom.prettyTicks([1, 21], "low", 10), [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
+            assert.deepEqual(LocusZoom.prettyTicks([1, 9], "high"), [0, 2, 4, 6, 8]);
         });
         it('should have a method for adding instances to a div by ID', function(){
             d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.addInstanceToDivById.should.be.a.Function;
-            var instance = LocusZoom.addInstanceToDivById("instance_id", Object(), LocusZoom.DefaultInstance);
+            var instance = LocusZoom.addInstanceToDivById("instance_id", Object());
             instance.should.be.an.Object;
             instance.id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
