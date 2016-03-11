@@ -216,15 +216,17 @@ LocusZoom.DataLayers = (function() {
 LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.layout = layout;
 
-    // Apply defaults to the layout where missing
-    this.layout.point_size == this.layout.point_size || 4;
-    this.layout.point_shape == this.layout.point_shape || "circle";
-    this.layout.color == this.layout.color || "#888888";
-    if (this.layout.y_axis && this.layout.y_axis.axis != 1 && this.layout.y_axis.axis != 2){
-        this.layout.y_axis.axis = 1;
+    this.DefaultLayout = {
+        point_size: 40,
+        point_shape: "circle",
+        color: "#888888",
+        y_axis: {
+            axis: 1
+        }
     }
+
+    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
     // Implement the main render function
     this.render = function(){
@@ -281,13 +283,15 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 LocusZoom.DataLayers.add("genes", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.layout = layout;
 
-    // Apply defaults to the layout where missing
-    this.layout.track_height = this.layout.track_height || 40;
-    this.layout.label_font_size = this.layout.label_font_size || 12;
-    this.layout.track_vertical_spacing = this.layout.track_vertical_spacing || 8;
-    this.layout.label_vertical_spacing = this.layout.label_vertical_spacing || 4;
+    this.DefaultLayout = {
+        track_height: 40,
+        label_font_size: 12,
+        track_vertical_spacing: 8,
+        label_vertical_spacing: 4
+    }
+
+    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset

@@ -21,10 +21,7 @@ LocusZoom.DataLayer = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
-    this.layout = layout || {
-        class: "DataLayer",
-        fields: []
-    };
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
 
     this.data = [];
     this.metadata = {};
@@ -35,6 +32,11 @@ LocusZoom.DataLayer = function(id, layout) {
     
     return this;
 
+};
+
+LocusZoom.DataLayer.DefaultLayout = {
+    type: "",
+    fields: []
 };
 
 // Generate a y-axis extent functions based on the layout

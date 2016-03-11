@@ -21,18 +21,7 @@ LocusZoom.Panel = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
-    this.layout = layout || {
-        width:  0,
-        height: 0,
-        min_width: 0,
-        min_height: 0,
-        proportional_width: 1,
-        proportional_height: 1,
-        origin: { x: 0, y: 0 },
-        margin: { top: 0, right: 0, bottom: 0, left: 0 }
-    };
-    this.layout.cliparea = this.layout.cliparea || {};
-    this.layout.cliparea.origin = this.layout.cliparea.origin || {};
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     this.state = {};
     
@@ -57,21 +46,26 @@ LocusZoom.Panel = function(id, layout) {
     
 };
 
+LocusZoom.Panel.DefaultLayout = {
+    width:  0,
+    height: 0,
+    min_width: 0,
+    min_height: 0,
+    proportional_width: 1,
+    proportional_height: 1,
+    origin: { x: 0, y: 0 },
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    cliparea: {
+        height: 0,
+        width: 0,
+        origin: { x: 0, y: 0 }
+    }    
+}
+
+
 LocusZoom.Panel.prototype.initializeLayout = function(){
 
-    // Set panel dimensions, origin, and margin or fall back to default values
-    this.layout.width      = this.layout.width      || 0;
-    this.layout.height     = this.layout.height     || 0;
-    this.layout.min_width  = this.layout.min_width  || 0;
-    this.layout.min_height = this.layout.min_height || 0;
-    this.layout.proportional_width = this.layout.proportional_width || 1;
-    this.layout.proportional_height = this.layout.proportional_height || 1;
-    if (typeof this.layout.origin != "object"){ this.layout.origin = { x: 0, y: 0 }; }
-    if (typeof this.layout.margin != "object"){ this.layout.margin = { top: 0, right: 0, bottom: 0, left: 0 }; }
-    this.layout.margin.top    = this.layout.margin.top    || 0;
-    this.layout.margin.right  = this.layout.margin.right  || 0;
-    this.layout.margin.bottom = this.layout.margin.bottom || 0;
-    this.layout.margin.left   = this.layout.margin.left   || 0;
+    // Set panel dimensions, origin, and margin
     this.setDimensions();
     this.setOrigin();
     this.setMargin();

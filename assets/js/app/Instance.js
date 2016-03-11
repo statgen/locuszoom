@@ -26,7 +26,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = layout || JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
     
     // The state property stores any instance-wide parameters subject to change via user input
     this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
@@ -43,11 +43,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
 
-    // Set instance dimensions or fall back to default values
-    this.layout.width      = this.layout.width      || LocusZoom.DefaultLayout.width;
-    this.layout.height     = this.layout.height     || LocusZoom.DefaultLayout.height;
-    this.layout.min_width  = this.layout.min_width  || LocusZoom.DefaultLayout.min_width;
-    this.layout.min_height = this.layout.min_height || LocusZoom.DefaultLayout.min_height;
+    // Set instance dimensions
     this.setDimensions();
 
     // Add panels

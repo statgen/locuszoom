@@ -50,10 +50,10 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
 // Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector === "undefined"){
-        selector = ".lz-instance";
+        throw ("LocusZoom.populate selector not defined");
     }
     if (typeof layout === "undefined"){
-        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
+        layout = {};
     }
     if (typeof state === "undefined"){
         state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
@@ -236,6 +236,38 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
+// Merge two layout objects
+// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+// Ensures that all values defined in the second layout are at least present in the first
+// Favors values defined in the first layout if values are defined in both but different
+LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
+    if (typeof custom_layout != "object" || typeof default_layout != "object"){
+        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+    }
+    for (var property in default_layout) {
+        if (!default_layout.hasOwnProperty(property)){ continue; }
+        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity
+        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+        var default_type = typeof default_layout[property];
+        // Unsupported property types: throw an exception
+        if (custom_type == "function" || default_type == "function"){
+            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
+        }
+        // Undefined custom value: pull the default value
+        if (custom_type == "undefined"){
+            custom_layout[property] = default_layout[property];
+            continue;
+        }
+        // Both values are objects: merge recursively
+        if (custom_type == "object" && default_type == "object"){
+            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
+            continue;
+        }
+    }
+    return custom_layout;
+}
+
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
@@ -271,7 +303,7 @@ LocusZoom.DefaultLayout = {
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
-                    point_size: 32,
+                    point_size: 40,
                     point_label_field: "id",
                     fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
@@ -726,7 +758,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = layout || JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
     
     // The state property stores any instance-wide parameters subject to change via user input
     this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
@@ -743,11 +775,7 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
 
-    // Set instance dimensions or fall back to default values
-    this.layout.width      = this.layout.width      || LocusZoom.DefaultLayout.width;
-    this.layout.height     = this.layout.height     || LocusZoom.DefaultLayout.height;
-    this.layout.min_width  = this.layout.min_width  || LocusZoom.DefaultLayout.min_width;
-    this.layout.min_height = this.layout.min_height || LocusZoom.DefaultLayout.min_height;
+    // Set instance dimensions
     this.setDimensions();
 
     // Add panels
@@ -1006,18 +1034,7 @@ LocusZoom.Panel = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
-    this.layout = layout || {
-        width:  0,
-        height: 0,
-        min_width: 0,
-        min_height: 0,
-        proportional_width: 1,
-        proportional_height: 1,
-        origin: { x: 0, y: 0 },
-        margin: { top: 0, right: 0, bottom: 0, left: 0 }
-    };
-    this.layout.cliparea = this.layout.cliparea || {};
-    this.layout.cliparea.origin = this.layout.cliparea.origin || {};
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     this.state = {};
     
@@ -1042,21 +1059,26 @@ LocusZoom.Panel = function(id, layout) {
     
 };
 
+LocusZoom.Panel.DefaultLayout = {
+    width:  0,
+    height: 0,
+    min_width: 0,
+    min_height: 0,
+    proportional_width: 1,
+    proportional_height: 1,
+    origin: { x: 0, y: 0 },
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    cliparea: {
+        height: 0,
+        width: 0,
+        origin: { x: 0, y: 0 }
+    }    
+}
+
+
 LocusZoom.Panel.prototype.initializeLayout = function(){
 
-    // Set panel dimensions, origin, and margin or fall back to default values
-    this.layout.width      = this.layout.width      || 0;
-    this.layout.height     = this.layout.height     || 0;
-    this.layout.min_width  = this.layout.min_width  || 0;
-    this.layout.min_height = this.layout.min_height || 0;
-    this.layout.proportional_width = this.layout.proportional_width || 1;
-    this.layout.proportional_height = this.layout.proportional_height || 1;
-    if (typeof this.layout.origin != "object"){ this.layout.origin = { x: 0, y: 0 }; }
-    if (typeof this.layout.margin != "object"){ this.layout.margin = { top: 0, right: 0, bottom: 0, left: 0 }; }
-    this.layout.margin.top    = this.layout.margin.top    || 0;
-    this.layout.margin.right  = this.layout.margin.right  || 0;
-    this.layout.margin.bottom = this.layout.margin.bottom || 0;
-    this.layout.margin.left   = this.layout.margin.left   || 0;
+    // Set panel dimensions, origin, and margin
     this.setDimensions();
     this.setOrigin();
     this.setMargin();
@@ -1408,10 +1430,7 @@ LocusZoom.DataLayer = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
-    this.layout = layout || {
-        class: "DataLayer",
-        fields: []
-    };
+    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
 
     this.data = [];
     this.metadata = {};
@@ -1422,6 +1441,11 @@ LocusZoom.DataLayer = function(id, layout) {
     
     return this;
 
+};
+
+LocusZoom.DataLayer.DefaultLayout = {
+    type: "",
+    fields: []
 };
 
 // Generate a y-axis extent functions based on the layout
@@ -1699,15 +1723,17 @@ LocusZoom.DataLayers = (function() {
 LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.layout = layout;
 
-    // Apply defaults to the layout where missing
-    this.layout.point_size == this.layout.point_size || 4;
-    this.layout.point_shape == this.layout.point_shape || "circle";
-    this.layout.color == this.layout.color || "#888888";
-    if (this.layout.y_axis && this.layout.y_axis.axis != 1 && this.layout.y_axis.axis != 2){
-        this.layout.y_axis.axis = 1;
+    this.DefaultLayout = {
+        point_size: 40,
+        point_shape: "circle",
+        color: "#888888",
+        y_axis: {
+            axis: 1
+        }
     }
+
+    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
     // Implement the main render function
     this.render = function(){
@@ -1764,13 +1790,15 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 LocusZoom.DataLayers.add("genes", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
-    this.layout = layout;
 
-    // Apply defaults to the layout where missing
-    this.layout.track_height = this.layout.track_height || 40;
-    this.layout.label_font_size = this.layout.label_font_size || 12;
-    this.layout.track_vertical_spacing = this.layout.track_vertical_spacing || 8;
-    this.layout.label_vertical_spacing = this.layout.label_vertical_spacing || 4;
+    this.DefaultLayout = {
+        track_height: 40,
+        label_font_size: 12,
+        track_vertical_spacing: 8,
+        label_vertical_spacing: 4
+    }
+
+    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset

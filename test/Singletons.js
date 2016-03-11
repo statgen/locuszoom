@@ -10,7 +10,7 @@ var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
 
-describe('LocusZoom', function(){
+describe('LocusZoom Child Singletons', function(){
 
     // Load all javascript files
     jsdom({

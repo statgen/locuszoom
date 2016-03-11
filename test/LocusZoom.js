@@ -10,7 +10,7 @@ var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
 
-describe('LocusZoom', function(){
+describe('LocusZoom Core', function(){
 
     // Load all javascript files
     jsdom({
@@ -35,13 +35,17 @@ describe('LocusZoom', function(){
     it("creates an object for its name space", function() {
         should.exist(LocusZoom);
     });
-    describe("Singleton", function() {
+
+    describe("LocusZoom Core Singleton", function() {
+
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
         });
+
         it('should have a default layout', function(){
             LocusZoom.should.have.property('DefaultLayout').which.is.an.Object;
         });
+
         it('should have a method for converting an integer position to a string', function(){
             LocusZoom.positionIntToString.should.be.a.Function;
             assert.equal(LocusZoom.positionIntToString(1),          "0.000001");
@@ -51,6 +55,7 @@ describe('LocusZoom', function(){
             assert.equal(LocusZoom.positionIntToString(23423456),   "23.42");
             assert.equal(LocusZoom.positionIntToString(1896335235), "1896.34");
         });
+
         it('should have a method for converting a string position to an integer', function(){
             LocusZoom.positionStringToInt.should.be.a.Function;
             assert.equal(LocusZoom.positionStringToInt("5Mb"), 5000000);
@@ -59,6 +64,7 @@ describe('LocusZoom', function(){
             assert.equal(LocusZoom.positionStringToInt("13"), 13);
             assert.equal(LocusZoom.positionStringToInt("73,054,882"), 73054882);
         });
+
         it('should have a method for generating pretty ticks', function(){
             LocusZoom.prettyTicks.should.be.a.Function;
             assert.deepEqual(LocusZoom.prettyTicks([0, 10]), [0, 2, 4, 6, 8, 10]);
@@ -67,6 +73,7 @@ describe('LocusZoom', function(){
             assert.deepEqual(LocusZoom.prettyTicks([1, 21], "low", 10), [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
             assert.deepEqual(LocusZoom.prettyTicks([1, 9], "high"), [0, 2, 4, 6, 8]);
         });
+
         it('should have a method for adding instances to a div by ID', function(){
             d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.addInstanceToDivById.should.be.a.Function;
@@ -79,6 +86,7 @@ describe('LocusZoom', function(){
             instance.svg.should.be.an.Object;
             assert.equal(instance.svg.html(), svg_selector.html());
         });
+
         it('should have a method for populating divs with instances by class name', function(){
             d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
             d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
@@ -93,6 +101,7 @@ describe('LocusZoom', function(){
                 assert.equal(instances[i].svg.html(), svg_selector.html());
             });
         });
+
         describe("Position Queries", function() {
             it('should have a parsePositionQuery function', function() {
                 LocusZoom.parsePositionQuery.should.be.a.Function;
@@ -121,9 +130,110 @@ describe('LocusZoom', function(){
                 test.should.have.property("position",5500);
             });
         });
+
         it('should have a method for creating a CORS promise', function(){
             LocusZoom.createCORSPromise.should.be.a.Function;
         });
+
+        describe("Merge Layouts", function() {
+            beforeEach(function(){
+                this.default_layout = {
+                    scalar_1: 123,
+                    scalar_2: "foo",
+                    array_of_scalars: [ 4, 5, 6 ],
+                    nested_object: {
+                        property_1: {
+                            alpha: 0,
+                            bravo: "foo",
+                            charlie: ["delta", "echo"],
+                            foxtrot: {
+                                golf: "bar",
+                                hotel: ["india", "juliet", "kilo"]
+                            }
+                        },
+                        property_2: false,
+                        property_3: true
+                    }
+                };
+            });
+            it('should have a method for merging two layouts', function(){
+                LocusZoom.mergeLayouts.should.be.a.Function;
+            });
+            it('should throw an exception if either argument is not an object', function(){
+                (function(){
+                    LocusZoom.mergeLayouts();
+                }).should.throw();
+                (function(){
+                    LocusZoom.mergeLayouts({});
+                }).should.throw();
+                (function(){
+                    LocusZoom.mergeLayouts({}, "");
+                }).should.throw();
+                (function(){
+                    LocusZoom.mergeLayouts(0, {});
+                }).should.throw();
+                (function(){
+                    LocusZoom.mergeLayouts(function(){}, {});
+                }).should.throw();
+            });
+            it('should return the passed default layout if provided an empty layout', function(){
+                var returned_layout = LocusZoom.mergeLayouts({}, this.default_layout);
+                assert.deepEqual(returned_layout, this.default_layout);
+            });
+            it('should copy top-level values', function(){
+                var custom_layout = { custom_property: "foo" };
+                var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
+                expected_layout.custom_property = "foo";
+                var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
+                assert.deepEqual(returned_layout, expected_layout);
+            });
+            it('should copy deeply-nested values', function(){
+                var custom_layout = { nested_object: { property_1: { foxtrot: { sierra: "tango" } } } };
+                var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
+                expected_layout.nested_object.property_1.foxtrot.sierra = "tango";
+                var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
+                assert.deepEqual(returned_layout, expected_layout);
+            });
+            it('should not overwrite array values in the first with any values from the second', function(){
+                var custom_layout = {
+                    array_of_scalars: [ 1, 2, 3 ],
+                    nested_object: {
+                        property_1: {
+                            charlie: ["whiskey", "xray"]
+                        },
+                        property_2: true
+                    }
+                };
+                var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
+                expected_layout.array_of_scalars = [ 1, 2, 3 ];
+                expected_layout.nested_object.property_1.charlie = ["whiskey", "xray"];
+                expected_layout.nested_object.property_2 = true;
+                var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
+                assert.deepEqual(returned_layout, expected_layout);
+            });
+            it('should allow for the first layout to override any value in the second regardless of type', function(){
+                var custom_layout = {
+                    array_of_scalars: "number",
+                    nested_object: {
+                        property_1: {
+                            foxtrot: false
+                        },
+                        property_3: {
+                            nested: {
+                                something: [ "foo" ]
+                            }
+                        }
+                    }
+                };
+                var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
+                expected_layout.array_of_scalars = "number";
+                expected_layout.nested_object.property_1.foxtrot = false;
+                expected_layout.nested_object.property_3 = { nested: { something: [ "foo" ] } };
+                var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
+                assert.deepEqual(returned_layout, expected_layout);
+            });
+        });
+
         
     });
 
