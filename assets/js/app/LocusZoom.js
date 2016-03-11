@@ -255,7 +255,7 @@ LocusZoom.DefaultLayout = {
             },
             data_layers: {
                 positions: {
-                    class: "ScatterDataLayer",
+                    type: "scatter",
                     point_shape: "circle",
                     point_size: 32,
                     point_label_field: "id",
@@ -271,7 +271,7 @@ LocusZoom.DefaultLayout = {
                     },
                     color: {
                         field: "ld:state",
-                        scale_function: "numerical_cut",
+                        scale_function: "numerical_bin",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
@@ -292,7 +292,7 @@ LocusZoom.DefaultLayout = {
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {
-                    class: "GenesDataLayer",
+                    type: "genes",
                     fields: ["gene:gene"],
                     track_height: 40,
                     label_font_size: 12,

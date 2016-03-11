@@ -21,7 +21,8 @@ describe('LocusZoom.Instance', function(){
                fs.readFileSync('./assets/js/app/Data.js'),
                fs.readFileSync('./assets/js/app/Instance.js'),
                fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js')
+               fs.readFileSync('./assets/js/app/DataLayer.js'),
+               fs.readFileSync('./assets/js/app/Singletons.js')
              ]
     });
 

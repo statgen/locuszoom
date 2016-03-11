@@ -269,7 +269,7 @@ LocusZoom.DefaultLayout = {
             },
             data_layers: {
                 positions: {
-                    class: "ScatterDataLayer",
+                    type: "scatter",
                     point_shape: "circle",
                     point_size: 32,
                     point_label_field: "id",
@@ -285,7 +285,7 @@ LocusZoom.DefaultLayout = {
                     },
                     color: {
                         field: "ld:state",
-                        scale_function: "numerical_cut",
+                        scale_function: "numerical_bin",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
@@ -306,7 +306,7 @@ LocusZoom.DefaultLayout = {
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {
-                    class: "GenesDataLayer",
+                    type: "genes",
                     fields: ["gene:gene"],
                     track_height: 40,
                     label_font_size: 12,
@@ -1227,10 +1227,10 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     if (typeof this.data_layers[layout.id] !== "undefined"){
         throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
     }
-    if (typeof layout.class !== "string" || typeof LocusZoom[layout.class] !== "function"){
-        throw "Invalid data layer class in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
+    if (typeof layout.type !== "string"){
+        throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    var data_layer = new LocusZoom[layout.class](id, layout);
+    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout);
     data_layer.parent = this;
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
@@ -1322,7 +1322,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.state.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
+            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -1341,7 +1341,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.state.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
+            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -1362,7 +1362,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.state.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.Panel.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
+            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
@@ -1384,61 +1384,6 @@ LocusZoom.Panel.prototype.render = function(){
     return this;
     
 };
-
-/****************
-  Label Functions
-  Singleton for defining axis label functions with respect to a panel's state
-*/
-
-LocusZoom.Panel.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {
-        "chromosome": function(state) {
-            if (!isNaN(+state.chr)){ 
-                return "Chromosome " + state.chr + " (Mb)";
-            } else {
-                return "Chromosome (Mb)";
-            }
-        }
-    };
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions.name) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
 
 /* global d3,LocusZoom */
 /* eslint-env browser */
@@ -1536,38 +1481,92 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     return promise;
 };
 
-/****************
-  Scale Functions
-  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
-  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Singletons
+
+  LocusZoom has various singleton objects that are used for registering functions or classes.
+  These objects provide safe, standard methods to redefine or delete existing functions/classes
+  as well as define new custom functions/classes to be used in a plot.
+
 */
 
-LocusZoom.DataLayer.ScaleFunctions = (function() {
+
+/****************
+  Label Functions
+
+  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
+*/
+
+LocusZoom.LabelFunctions = (function() {
     var obj = {};
-    var functions = {
-        "numerical_cut": function(parameters, value){
-            var breaks = parameters.breaks;
-            var values = parameters.values;
-            if (value == null || isNaN(+value)){
-                return (parameters.null_value ? parameters.null_value : values[0]);
-            }
-            var threshold = breaks.reduce(function(prev, curr){
-                if (+value < prev || (+value >= prev && +value < curr)){
-                    return prev;
-                } else {
-                    return curr;
-                }
-            });
-            return values[breaks.indexOf(threshold)];
-        },
-        "categorical_cut": function(parameters, value){
-            if (parameters.categories.indexOf(value) != -1){
-                return parameters.values[parameters.categories.indexOf(value)];
+    var functions = {};
+
+    obj.get = function(name, state) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof state == "undefined"){
+                return functions[name];
             } else {
-                return (parameters.null_value ? parameters.null_value : parameters.values[0]); 
+                return functions[name](state);
             }
+        } else {
+            throw("label function [" + name + "] not found");
         }
     };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions.name) {
+            throw("label function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Label function for "Chromosome # (Mb)" where # comes from state
+LocusZoom.LabelFunctions.add("chromosome", function(state){
+    if (!isNaN(+state.chr)){ 
+        return "Chromosome " + state.chr + " (Mb)";
+    } else {
+        return "Chromosome (Mb)";
+    }
+});
+
+
+/****************
+  Scale Functions
+
+  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+
+  All scale functions must accept an object of parameters and a value to process.
+*/
+
+LocusZoom.ScaleFunctions = (function() {
+    var obj = {};
+    var functions = {};
 
     obj.get = function(name, parameters, value) {
         if (!name) {
@@ -1606,13 +1605,98 @@ LocusZoom.DataLayer.ScaleFunctions = (function() {
     return obj;
 })();
 
+// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
+LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
+    var breaks = parameters.breaks;
+    var values = parameters.values;
+    if (value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : values[0]);
+    }
+    var threshold = breaks.reduce(function(prev, curr){
+        if (+value < prev || (+value >= prev && +value < curr)){
+            return prev;
+        } else {
+            return curr;
+        }
+            });
+    return values[breaks.indexOf(threshold)];
+});
+
+// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
+    if (parameters.categories.indexOf(value) != -1){
+        return parameters.values[parameters.categories.indexOf(value)];
+    } else {
+        return (parameters.null_value ? parameters.null_value : parameters.values[0]); 
+    }
+});
+
+
+/************************
+  Data Layer Subclasses
+
+  The abstract Data Layer class has general methods and properties that apply universally to all Data Layers
+  Specific data layer subclasses (e.g. a scatter plot, a line plot, gene visualization, etc.) must be defined
+  and registered with this singleton to be accessible.
+
+  All new Data Layer subclasses must be defined by accepting an id string and a layout object.
+  Singleton for storing available Data Layer classes as well as updating existing and/or registering new ones
+*/
+
+LocusZoom.DataLayers = (function() {
+    var obj = {};
+    var datalayers = {};
+
+    obj.get = function(name, id, layout) {
+        if (!name) {
+            return null;
+        } else if (datalayers[name]) {
+            if (typeof id == "undefined" || typeof layout == "undefined"){
+                throw("id or layout argument missing for data layer [" + name + "]");
+            } else {
+                return new datalayers[name](id, layout);
+            }
+        } else {
+            throw("data layer [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, datalayer) {
+        if (datalayer) {
+            if (typeof datalayer != "function"){
+                throw("unable to set data layer [" + name + "], argument provided is not a function");
+            } else {
+                datalayers[name] = datalayer;
+                datalayers[name].prototype = new LocusZoom.DataLayer();
+            }
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, datalayer) {
+        if (datalayers[name]) {
+            throw("data layer already exists with name: " + name);
+        } else {
+            obj.set(name, datalayer);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(datalayers);
+    };
+
+    return obj;
+})();
+
+
 
 /*********************
   Scatter Data Layer
   Implements a standard scatter plot
 */
 
-LocusZoom.ScatterDataLayer = function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -1654,9 +1738,9 @@ LocusZoom.ScatterDataLayer = function(id, layout){
                 case "object":
                     if (this.layout.color.scale_function && this.layout.color.field) {
                         selection.attr("fill", function(d){
-                            return LocusZoom.DataLayer.ScaleFunctions.get(this.layout.color.scale_function,
-                                                                          this.layout.color.parameters || {},
-                                                                          d[this.layout.color.field]);
+                            return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
+                                                                this.layout.color.parameters || {},
+                                                                d[this.layout.color.field]);
                         }.bind(this));
                     }
                     break;
@@ -1670,17 +1754,14 @@ LocusZoom.ScatterDataLayer = function(id, layout){
     };
        
     return this;
-};
-
-LocusZoom.ScatterDataLayer.prototype = new LocusZoom.DataLayer();
-
+});
 
 /*********************
   Genes Data Layer
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.GenesDataLayer = function(id, layout){
+LocusZoom.DataLayers.add("genes", function(id, layout){
 
     LocusZoom.DataLayer.apply(this, arguments);
     this.layout = layout;
@@ -1897,9 +1978,7 @@ LocusZoom.GenesDataLayer = function(id, layout){
     };
        
     return this;
-};
-
-LocusZoom.GenesDataLayer.prototype = new LocusZoom.DataLayer();
+});
 
 
         if (typeof define === "function" && define.amd){

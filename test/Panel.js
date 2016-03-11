@@ -21,7 +21,8 @@ describe('LocusZoom.Panel', function(){
                fs.readFileSync('./assets/js/app/Data.js'),
                fs.readFileSync('./assets/js/app/Instance.js'),
                fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js')
+               fs.readFileSync('./assets/js/app/DataLayer.js'),
+               fs.readFileSync('./assets/js/app/Singletons.js')
              ]
     });
 
@@ -181,69 +182,6 @@ describe('LocusZoom.Panel', function(){
                     this.instance.panels[panel_id].curtain.raise();
                     assert.equal(this.instance.panels[panel_id].curtain.svg.style("display"), "none");
                 }.bind(this));
-            });
-        });
-    });
-
-    describe("Label Functions", function() {
-        beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
-        });
-        it("LocusZoom.Panel should have a LabelFunctions singleton", function(){
-            LocusZoom.Panel.should.have.property("LabelFunctions").which.is.an.Object;
-        });
-        it("should have a method to list available label functions", function(){
-            LocusZoom.Panel.LabelFunctions.should.have.property("list").which.is.a.Function;
-            var returned_list = LocusZoom.Panel.LabelFunctions.list();
-            var expected_list = ["chromosome"];
-            assert.deepEqual(returned_list, expected_list);
-        });
-        it("should have a general method to get a function or execute it for a result", function(){
-            LocusZoom.Panel.LabelFunctions.should.have.property("get").which.is.a.Function;
-            LocusZoom.Panel.LabelFunctions.get("chromosome").should.be.a.Function;
-            var returned_label = LocusZoom.Panel.LabelFunctions.get("chromosome", this.instance.state);
-            var expected_label = "Chromosome 0 (Mb)";
-            assert.equal(returned_label, expected_label);
-        });
-        it("should have a method to add a label function", function(){
-            LocusZoom.Panel.LabelFunctions.should.have.property("add").which.is.a.Function;
-            var foo = function(state){ return "start: " + state.start; };
-            LocusZoom.Panel.LabelFunctions.add("foo", foo);
-            var returned_list = LocusZoom.Panel.LabelFunctions.list();
-            var expected_list = ["chromosome", "foo"];
-            assert.deepEqual(returned_list, expected_list);
-            var returned_label = LocusZoom.Panel.LabelFunctions.get("foo", this.instance.state);
-            var expected_label = "start: 0";
-            assert.equal(returned_label, expected_label);
-        });
-        it("should have a method to change or delete existing label functions", function(){
-            LocusZoom.Panel.LabelFunctions.should.have.property("set").which.is.a.Function;
-            var foo_new = function(state){ return "end: " + state.end; };
-            LocusZoom.Panel.LabelFunctions.set("foo", foo_new);
-            var returned_list = LocusZoom.Panel.LabelFunctions.list();
-            var expected_list = ["chromosome", "foo"];
-            assert.deepEqual(returned_list, expected_list);
-            var returned_label = LocusZoom.Panel.LabelFunctions.get("foo", this.instance.state);
-            var expected_label = "end: 0";
-            assert.equal(returned_label, expected_label);
-            LocusZoom.Panel.LabelFunctions.set("foo");
-            var returned_list = LocusZoom.Panel.LabelFunctions.list();
-            var expected_list = ["chromosome"];
-            assert.deepEqual(returned_list, expected_list);
-        });
-        it("should throw an exception if passed a function name that has not been defined", function(){
-            try {
-                LocusZoom.Panel.LabelFunctions.getLabel("nonexistent", this.instance.state);
-            } catch (error){
-                assert.ok(error);
-            }
-        });
-        describe("choromosome", function() {
-            it('should return a chromosome label for any state', function(){
-                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", { chr: 10, start: 1, end: 2}), "Chromosome 10 (Mb)");
-                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", { chr: "foo", start: 1, end: 2}), "Chromosome (Mb)");
-                assert.equal(LocusZoom.Panel.LabelFunctions.get("chromosome", {}), "Chromosome (Mb)");
             });
         });
     });
