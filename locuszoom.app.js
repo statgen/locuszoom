@@ -487,6 +487,8 @@ LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain,
 };
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
+// Linkage Disequilibrium (LD) Data Source ----------------------------
+
 LocusZoom.Data.LDSource = function(init) {
     this.parseInit(init);
     if (!this.params.pvaluefield) {
@@ -561,6 +563,8 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
 };
 LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
+//Gene Data Source --------------------------
+
 LocusZoom.Data.GeneSource = function(init) {
     this.parseInit(init);
 
@@ -585,6 +589,33 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 };
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
+// Conditinal P-Value Data Source --------------------------
+
+LocusZoom.Data.ConditionalSource = function(init) {
+    this.parseInit(init);
+};
+LocusZoom.Data.ConditionalSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
+LocusZoom.Data.ConditionalSource.prototype.constructor = LocusZoom.Data.ConditionalSource;
+LocusZoom.Data.ConditionalSource.SOURCE_NAME = "ConditionLZ";
+
+LocusZoom.Data.ConditionalSource.prototype.getURL = function(state, chain, fields) {
+    var analysis = state.analysis || chain.header.analysis || this.params.analysis || 4;
+    var condVar = fields[0];
+    if ( condVar == "state" ) {
+        condVar = state.condvar || chain.header.condvar || this.params.condvar;
+    }
+    if (!chain.header) {chain.header = {};}
+    chain.header.condvar = condVar;
+    return this.url + "results/?filter=analysis eq " + analysis  + 
+        " and chromosome2 eq '" + state.chr + "'" + 
+        " and position2 ge " + state.start + 
+        " and position2 le " + state.end + 
+        " and variant1 eq '" + condVar + "'";  
+};
+LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    //return {header: chain.header, body: resp.data};
+};
+
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
     response.resolve(Array.prototype.slice.call(arguments));
@@ -594,7 +625,8 @@ LocusZoom.createResolvedPromise = function() {
 LocusZoom.KnownDataSources = [
     LocusZoom.Data.AssociationSource,
     LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource];
+    LocusZoom.Data.GeneSource,
+    LocusZoom.Data.ConditionalSource];
 
 // This class is a singleton designed to store and 
 // retrieve transformations
