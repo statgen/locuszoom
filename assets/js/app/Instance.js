@@ -262,16 +262,20 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
         this.remap_promises.push(this.panels[id].reMap());
     }
 
-    // When all finished update download SVG link
-    Q.all(this.remap_promises).then(function(){
-        this.controls.setBase64SVG();
-    }.bind(this), function(error){
-        console.log(error);
-        this.curtain.drop(error);
-    }.bind(this));
+    Q.all(this.remap_promises)
+        .then(this.mapToComplete)
+        .catch(function(error){
+            console.log(error);
+            this.curtain.drop(error);
+        }.bind(this));
 
     return this;
     
+};
+
+// Logic to fire when an instance has finished mapping to a new region
+LocusZoom.Instance.prototype.mapToComplete = function(){
+    // no actions defined!
 };
 
 // Refresh an instance's data from sources without changing position

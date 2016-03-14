@@ -46,9 +46,6 @@ describe('LocusZoom.Panel', function(){
         it('should have an id', function(){
             this.panel.should.have.property('id');
         });
-        it('should have an object for tracking state', function(){
-            this.panel.should.have.property('state').which.is.an.Object;
-        });
         it('should have an object for tracking data layers', function(){
             this.panel.should.have.property('data_layers').which.is.an.Object;
         });

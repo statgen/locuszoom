@@ -256,7 +256,7 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
         }
         // Undefined custom value: pull the default value
         if (custom_type == "undefined"){
-            custom_layout[property] = default_layout[property];
+            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
             continue;
         }
         // Both values are objects: merge recursively
@@ -994,16 +994,20 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
         this.remap_promises.push(this.panels[id].reMap());
     }
 
-    // When all finished update download SVG link
-    Q.all(this.remap_promises).then(function(){
-        this.controls.setBase64SVG();
-    }.bind(this), function(error){
-        console.log(error);
-        this.curtain.drop(error);
-    }.bind(this));
+    Q.all(this.remap_promises)
+        .then(this.mapToComplete)
+        .catch(function(error){
+            console.log(error);
+            this.curtain.drop(error);
+        }.bind(this));
 
     return this;
     
+};
+
+// Logic to fire when an instance has finished mapping to a new region
+LocusZoom.Instance.prototype.mapToComplete = function(){
+    // no actions defined!
 };
 
 // Refresh an instance's data from sources without changing position
@@ -1035,8 +1039,6 @@ LocusZoom.Panel = function(id, layout) {
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
-
-    this.state = {};
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
@@ -1045,8 +1047,6 @@ LocusZoom.Panel = function(id, layout) {
     this.xExtent  = null;
     this.y1Extent = null;
     this.y2Extent = null;
-    
-    this.renderData = function(){};
 
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
@@ -1072,7 +1072,12 @@ LocusZoom.Panel.DefaultLayout = {
         height: 0,
         width: 0,
         origin: { x: 0, y: 0 }
-    }    
+    },
+    axes: {
+        x:  {},
+        y1: {},
+        y2: {}
+    }            
 }
 
 
@@ -1083,17 +1088,11 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.setOrigin();
     this.setMargin();
 
-    // Set panel axes
-    if (typeof this.layout.axes !== "object"){ this.layout.axes = {}; }
+    // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
-        if (!this.layout.axes[axis]){
-            this.layout.axes[axis] = {
-                render: false,
-                ticks:  [],
-                label:  null,
-                label_function: null,
-                data_layer_id: null
-            };
+        if (JSON.stringify(this.layout.axes[axis]) == JSON.stringify({})){
+            // The default layout sets the axis to an empty object, so set its render boolean here
+            this.layout.axes[axis].render = false;
         } else {
             this.layout.axes[axis].render = true;
             this.layout.axes[axis].ticks = this.layout.axes[axis].ticks || [];
@@ -1126,7 +1125,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
     }
     this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);    
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -1158,6 +1157,9 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
+
+    //console.log(this.layout);
+
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -1276,12 +1278,14 @@ LocusZoom.Panel.prototype.reMap = function(){
         this.data_promises.push(this.data_layers[id].reMap());
     }
     // When all finished trigger a render
-    return Q.all(this.data_promises).then(function(){
-        this.render();
-    }.bind(this), function(error){
-        console.log(error);
-        this.curtain.drop(error);
-    }.bind(this));
+    return Q.all(this.data_promises)
+        .then(function(){
+            this.render();
+        }.bind(this))
+        .catch(function(error){
+            console.log(error);
+            this.curtain.drop(error);
+        }.bind(this));
 };
 
 
@@ -1309,40 +1313,40 @@ LocusZoom.Panel.prototype.render = function(){
 
     // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){
-        this.state.x_extent = this.xExtent();
-        this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.state.x_extent, "both", this.layout.cliparea.width/120);
-        this.state.x_scale = d3.scale.linear()
-            .domain([this.state.x_extent[0], this.state.x_extent[1]])
+        this.x_extent = this.xExtent();
+        this.layout.axes.x.ticks = LocusZoom.prettyTicks(this.x_extent, "both", this.layout.cliparea.width/120);
+        this.x_scale = d3.scale.linear()
+            .domain([this.x_extent[0], this.x_extent[1]])
             .range([0, this.layout.cliparea.width]);
     }
     if (typeof this.y1Extent == "function"){
-        this.state.y1_extent = this.y1Extent();
-        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.state.y1_extent, clip_range(this.layout, "y1"));
-        this.state.y1_scale = d3.scale.linear()
+        this.y1_extent = this.y1Extent();
+        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.y1_extent, clip_range(this.layout, "y1"));
+        this.y1_scale = d3.scale.linear()
             .domain([this.layout.axes.y1.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y1.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);
     }
     if (typeof this.y2Extent == "function"){
-        this.state.y2_extent = this.y2Extent();
-        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.state.y2_extent, clip_range(this.layout, "y2"));
-        this.state.y2_scale = d3.scale.linear()
+        this.y2_extent = this.y2Extent();
+        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.y2_extent, clip_range(this.layout, "y2"));
+        this.y2_scale = d3.scale.linear()
             .domain([this.layout.axes.y2.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y2.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);
     }
 
     // Render axes and labels
     var canRenderAxis = function(axis){
-        return (typeof this.state[axis + "_scale"] == "function" && !isNaN(this.state[axis + "_scale"](0)));
+        return (typeof this[axis + "_scale"] == "function" && !isNaN(this[axis + "_scale"](0)));
     }.bind(this);
     
     if (this.layout.axes.x.render && canRenderAxis("x")){
-        this.state.x_axis = d3.svg.axis()
-            .scale(this.state.x_scale)
+        this.x_axis = d3.svg.axis()
+            .scale(this.x_scale)
             .orient("bottom").tickValues(this.layout.axes.x.ticks)
             .tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
         this.svg.x_axis
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
-            .call(this.state.x_axis);
+            .call(this.x_axis);
         if (this.layout.axes.x.label_function){
             this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
         }
@@ -1357,11 +1361,11 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     if (this.layout.axes.y1.render && canRenderAxis("y1")){
-        this.state.y1_axis = d3.svg.axis().scale(this.state.y1_scale)
+        this.y1_axis = d3.svg.axis().scale(this.y1_scale)
             .orient("left").tickValues(this.layout.axes.y1.ticks);
         this.svg.y1_axis
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
-            .call(this.state.y1_axis);
+            .call(this.y1_axis);
         if (this.layout.axes.y1.label_function){
             this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
         }
@@ -1378,11 +1382,11 @@ LocusZoom.Panel.prototype.render = function(){
     }
 
     if (this.layout.axes.y2.render && canRenderAxis("y2")){
-        this.state.y2_axis  = d3.svg.axis().scale(this.state.y2_scale)
+        this.y2_axis  = d3.svg.axis().scale(this.y2_scale)
             .orient("left").tickValues(this.layout.axes.y2.ticks);
         this.svg.y2_axis
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
-            .call(this.state.y2_axis);
+            .call(this.y2_axis);
         if (this.layout.axes.y2.label_function){
             this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
         }
@@ -1744,9 +1748,9 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .enter().append("path")
             .attr("class", "lz-data_layer-scatter")
             .attr("transform", function(d) {
-                var x = this.parent.state.x_scale(d[this.layout.x_axis.field]);
+                var x = this.parent.x_scale(d[this.layout.x_axis.field]);
                 var y_scale = "y"+this.layout.y_axis.axis+"_scale";
-                var y = this.parent.state[y_scale](d[this.layout.y_axis.field]);
+                var y = this.parent[y_scale](d[this.layout.y_axis.field]);
                 return "translate(" + x + "," + y + ")";
             }.bind(this))
             .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
@@ -1828,8 +1832,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[g].display_range = {
-                start: this.parent.state.x_scale(Math.max(d.start, this.parent.parent.state.start)),
-                end:   this.parent.state.x_scale(Math.min(d.end, this.parent.parent.state.end))
+                start: this.parent.x_scale(Math.max(d.start, this.parent.parent.state.start)),
+                end:   this.parent.x_scale(Math.min(d.end, this.parent.parent.state.end))
             };
             this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
             this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
@@ -1848,12 +1852,12 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 } else {
                     var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
                         + this.metadata.horizontal_padding;
-                    if ((this.data[g].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
-                        this.data[g].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
+                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.parent.parent.state.start)){
+                        this.data[g].display_range.start = this.parent.x_scale(this.parent.parent.state.start);
                         this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "start";
-                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
-                        this.data[g].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
+                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.parent.parent.state.end)) {
+                        this.data[g].display_range.end = this.parent.x_scale(this.parent.parent.state.end);
                         this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "end";
                     } else {
@@ -1866,8 +1870,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             // Convert and stash display range values into domain values
             // (domain: values in terms of the data set, e.g. megabases)
             this.data[g].display_domain = {
-                start: this.parent.state.x_scale.invert(this.data[g].display_range.start),
-                end:   this.parent.state.x_scale.invert(this.data[g].display_range.end)
+                start: this.parent.x_scale.invert(this.data[g].display_range.start),
+                end:   this.parent.x_scale.invert(this.data[g].display_range.end)
             };
             this.data[g].display_domain.width = this.data[g].display_domain.end - this.data[g].display_domain.start;
 
@@ -1929,7 +1933,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                     .data([gene]).enter().append("rect")
                     .attr("class", "lz-gene lz-boundary")
                     .attr("id", function(d){ return d.gene_name; })
-                    .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){
                         var exon_height = this.parent.layout.track_height
                             - this.parent.layout.track_vertical_spacing
@@ -1941,7 +1945,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             + this.parent.layout.label_vertical_spacing
                             + (Math.max(exon_height, 3) / 2);
                     }.bind(gene)) // Arbitrary track height; should be dynamic
-                    .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("width", function(d){ return this.parent.x_scale(d.end) - this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("height", 1) // This should be scaled dynamically somehow
                     .attr("fill", "#000099")
                     .style({ cursor: "pointer" })
@@ -1980,7 +1984,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             .data(gene.transcripts[0].exons).enter().append("rect")
                             .attr("class", "lz-gene lz-exon")
                             .attr("id", function(d){ return d.exon_id; })
-                            .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                            .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                             .attr("y", function(){
                                 return ((this.track-1) * this.parent.layout.track_height)
                                     + (this.parent.layout.track_vertical_spacing / 2)
@@ -1988,7 +1992,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                                     + this.parent.layout.label_vertical_spacing;
                             }.bind(gene))
                             .attr("width", function(d){
-                                return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
+                                return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
                             }.bind(gene.parent))
                             .attr("height", function(d){
                                 return this.parent.layout.track_height

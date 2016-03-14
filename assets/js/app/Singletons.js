@@ -237,9 +237,9 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .enter().append("path")
             .attr("class", "lz-data_layer-scatter")
             .attr("transform", function(d) {
-                var x = this.parent.state.x_scale(d[this.layout.x_axis.field]);
+                var x = this.parent.x_scale(d[this.layout.x_axis.field]);
                 var y_scale = "y"+this.layout.y_axis.axis+"_scale";
-                var y = this.parent.state[y_scale](d[this.layout.y_axis.field]);
+                var y = this.parent[y_scale](d[this.layout.y_axis.field]);
                 return "translate(" + x + "," + y + ")";
             }.bind(this))
             .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
@@ -321,8 +321,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[g].display_range = {
-                start: this.parent.state.x_scale(Math.max(d.start, this.parent.parent.state.start)),
-                end:   this.parent.state.x_scale(Math.min(d.end, this.parent.parent.state.end))
+                start: this.parent.x_scale(Math.max(d.start, this.parent.parent.state.start)),
+                end:   this.parent.x_scale(Math.min(d.end, this.parent.parent.state.end))
             };
             this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
             this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
@@ -341,12 +341,12 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 } else {
                     var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
                         + this.metadata.horizontal_padding;
-                    if ((this.data[g].display_range.start - centered_margin) < this.parent.state.x_scale(this.parent.parent.state.start)){
-                        this.data[g].display_range.start = this.parent.state.x_scale(this.parent.parent.state.start);
+                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.parent.parent.state.start)){
+                        this.data[g].display_range.start = this.parent.x_scale(this.parent.parent.state.start);
                         this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "start";
-                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.state.x_scale(this.parent.parent.state.end)) {
-                        this.data[g].display_range.end = this.parent.state.x_scale(this.parent.parent.state.end);
+                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.parent.parent.state.end)) {
+                        this.data[g].display_range.end = this.parent.x_scale(this.parent.parent.state.end);
                         this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "end";
                     } else {
@@ -359,8 +359,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             // Convert and stash display range values into domain values
             // (domain: values in terms of the data set, e.g. megabases)
             this.data[g].display_domain = {
-                start: this.parent.state.x_scale.invert(this.data[g].display_range.start),
-                end:   this.parent.state.x_scale.invert(this.data[g].display_range.end)
+                start: this.parent.x_scale.invert(this.data[g].display_range.start),
+                end:   this.parent.x_scale.invert(this.data[g].display_range.end)
             };
             this.data[g].display_domain.width = this.data[g].display_domain.end - this.data[g].display_domain.start;
 
@@ -422,7 +422,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                     .data([gene]).enter().append("rect")
                     .attr("class", "lz-gene lz-boundary")
                     .attr("id", function(d){ return d.gene_name; })
-                    .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){
                         var exon_height = this.parent.layout.track_height
                             - this.parent.layout.track_vertical_spacing
@@ -434,7 +434,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             + this.parent.layout.label_vertical_spacing
                             + (Math.max(exon_height, 3) / 2);
                     }.bind(gene)) // Arbitrary track height; should be dynamic
-                    .attr("width", function(d){ return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                    .attr("width", function(d){ return this.parent.x_scale(d.end) - this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("height", 1) // This should be scaled dynamically somehow
                     .attr("fill", "#000099")
                     .style({ cursor: "pointer" })
@@ -473,7 +473,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             .data(gene.transcripts[0].exons).enter().append("rect")
                             .attr("class", "lz-gene lz-exon")
                             .attr("id", function(d){ return d.exon_id; })
-                            .attr("x", function(d){ return this.parent.state.x_scale(d.start); }.bind(gene.parent))
+                            .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                             .attr("y", function(){
                                 return ((this.track-1) * this.parent.layout.track_height)
                                     + (this.parent.layout.track_vertical_spacing / 2)
@@ -481,7 +481,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                                     + this.parent.layout.label_vertical_spacing;
                             }.bind(gene))
                             .attr("width", function(d){
-                                return this.parent.state.x_scale(d.end) - this.parent.state.x_scale(d.start);
+                                return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
                             }.bind(gene.parent))
                             .attr("height", function(d){
                                 return this.parent.layout.track_height
