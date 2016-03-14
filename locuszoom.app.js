@@ -374,7 +374,7 @@ LocusZoom.Data.Requester = function(sources) {
     function split_requests(fields) {
         var requests = {};
         // Regular expressopn finds namespace:field|trans
-        var re = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/;
+        var re = /^(?:([^:]+):)?([^\|]*)(\|.+)*$/;
         fields.forEach(function(raw) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
@@ -593,10 +593,11 @@ LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
 LocusZoom.Data.ConditionalSource = function(init) {
     this.parseInit(init);
+    this.params.teststat = "scoreTestStat";
 };
 LocusZoom.Data.ConditionalSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.ConditionalSource.prototype.constructor = LocusZoom.Data.ConditionalSource;
-LocusZoom.Data.ConditionalSource.SOURCE_NAME = "ConditionLZ";
+LocusZoom.Data.ConditionalSource.SOURCE_NAME = "ConditionalLZ";
 
 LocusZoom.Data.ConditionalSource.prototype.getURL = function(state, chain, fields) {
     var analysis = state.analysis || chain.header.analysis || this.params.analysis || 4;
@@ -606,14 +607,73 @@ LocusZoom.Data.ConditionalSource.prototype.getURL = function(state, chain, field
     }
     if (!chain.header) {chain.header = {};}
     chain.header.condvar = condVar;
-    return this.url + "results/?filter=analysis eq " + analysis  + 
-        " and chromosome2 eq '" + state.chr + "'" + 
+    return this.url + "results/?filter=analysis in " + analysis  + 
+        " and chromosome2 in '" + state.chr + "'" + 
         " and position2 ge " + state.start + 
         " and position2 le " + state.end + 
-        " and variant1 eq '" + condVar + "'";  
+        " and chromosome1 in '" + state.chr + "'" + 
+        " and position1 ge " + state.start + 
+        " and position1 le " + state.end;  
 };
-LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    //return {header: chain.header, body: resp.data};
+LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    var V_XX = [];
+    var V_XZ = [];
+    var V_ZZ = 0;
+    var U_Z = 0;
+    var i=0, j=0, k=0;
+    var condIdx = -1;
+
+    //extract relevant score statistics
+    //assumes that response is sorted by pos1, pos2 
+    //assumes that chain sorted by position
+    //assumes no duplicated positions
+    while (i < chain.body.length && j < resp.data.position2.length) {
+        if (chain.body[i].position === resp.data.position1[j]) {
+            if (resp.data.variant_name1[j] === resp.data.variant_name2[j]) {
+                V_XX[i] = resp.data.statistic[j];
+                if (resp.data.variant_name1[j] === chain.header.condvar) {
+                    V_ZZ = resp.data.statistic[j];
+                    U_Z = chain.body[i][this.params.teststat];
+                    condIdx = i;
+                }
+            }
+            if (resp.data.variant_name2[j] == chain.header.condvar) {
+                V_XZ[i] = resp.data.statistic[j];
+            } else if (resp.data.variant_name1[j] === chain.header.condvar) {
+                while (chain.body[i+k].position < resp.data.position2[j]) {
+                    k++;
+                }
+                if (chain.body[i+k].position === resp.data.position2[j]) {
+                    V_XZ[i+k] = resp.data.statistic[j];
+                }
+            }
+            j++;
+        } else if (chain.body[i].position < resp.data.position1[j]) {
+            i++;
+        } else {
+            j++;
+        }
+    }
+
+    //calculate conditional score statistic
+    for(i = 0; i< chain.body.length; i++) {
+        var U_XgZ = chain.body[i][this.params.teststat] - V_XZ[i] / V_ZZ * U_Z;
+        var V_XgZ = V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i];
+        var T = U_XgZ / Math.sqrt(V_XgZ);
+        var p = 2*LocusZoom.jStat.normalCDF(-Math.abs(T),0,1);
+        if (trans && trans[0]) {
+            chain.body[i][outnames[0]] = trans[0](p);
+        } else {
+            chain.body[i][outnames[0]] = p;
+        }
+        chain.body[i].V_XX = V_XX[i];
+        chain.body[i].V_XZ = V_XZ[i];
+        chain.body[i].condT = T;
+        chain.body[i].origT = chain.body[i][this.params.teststat]/ Math.sqrt(V_XX[i]);
+        chain.header.condindex = condIdx;
+    }
+
+    return chain;   
 };
 
 LocusZoom.createResolvedPromise = function() {
@@ -716,6 +776,50 @@ LocusZoom.Data.Transformations = (function() {
 
     return obj;
 })();
+
+
+// jStat functions originally from 
+// https://github.com/jstat/jstat/tree/master/src
+LocusZoom.jStat = {};
+
+LocusZoom.jStat.normalCDF = function(x, mean, std) {
+    return 0.5 * (1 + LocusZoom.jStat.erf((x - mean) / Math.sqrt(2 * std * std)));
+};
+
+LocusZoom.jStat.erf = function erf(x) {
+    var cof = [-1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
+        -9.561514786808631e-3, -9.46595344482036e-4, 3.66839497852761e-4,
+        4.2523324806907e-5, -2.0278578112534e-5, -1.624290004647e-6,
+        1.303655835580e-6, 1.5626441722e-8, -8.5238095915e-8,
+        6.529054439e-9, 5.059343495e-9, -9.91364156e-10,
+        -2.27365122e-10, 9.6467911e-11, 2.394038e-12,
+        -6.886027e-12, 8.94487e-13, 3.13092e-13,
+        -1.12708e-13, 3.81e-16, 7.106e-15,
+        -1.523e-15, -9.4e-17, 1.21e-16,
+        -2.8e-17];
+    var j = cof.length - 1;
+    var isneg = false;
+    var d = 0;
+    var dd = 0;
+    var t, ty, tmp, res;
+
+    if (x < 0) {
+        x = -x;
+        isneg = true;
+    }
+
+    t = 2 / (2 + x);
+    ty = 4 * t - 2;
+
+    for(; j > 0; j--) {
+        tmp = d;
+        d = ty * d - dd + cof[j];
+        dd = tmp;
+    }
+
+    res = t * Math.exp(-x * x + 0.5 * (cof[0] + ty * d) - dd);
+    return isneg ? res - 1 : 1 - res;
+};
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
