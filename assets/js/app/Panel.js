@@ -61,8 +61,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     }            
-}
-
+};
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
 

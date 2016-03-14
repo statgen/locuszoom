@@ -266,7 +266,7 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
         }
     }
     return custom_layout;
-}
+};
 
 // Default State
 LocusZoom.DefaultState = {
@@ -343,7 +343,7 @@ LocusZoom.DefaultLayout = {
                     track_height: 40,
                     label_font_size: 12,
                     track_vertical_spacing: 8,
-                    label_vertical_spacing: 4,
+                    label_vertical_spacing: 4
                 }
             }
         }
@@ -1078,8 +1078,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     }            
-}
-
+};
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
 
@@ -1646,7 +1645,7 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
         } else {
             return curr;
         }
-            });
+    });
     return values[breaks.indexOf(threshold)];
 });
 
@@ -1698,7 +1697,7 @@ LocusZoom.DataLayers = (function() {
                 datalayers[name].prototype = new LocusZoom.DataLayer();
             }
         } else {
-            delete functions[name];
+            delete datalayers[name];
         }
     };
 
@@ -1735,7 +1734,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         y_axis: {
             axis: 1
         }
-    }
+    };
 
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
@@ -1762,18 +1761,18 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         // Apply color
         if (this.layout.color){
             switch (typeof this.layout.color){
-                case "string":
-                    selection.attr("fill", this.layout.color);
-                    break;
-                case "object":
-                    if (this.layout.color.scale_function && this.layout.color.field) {
-                        selection.attr("fill", function(d){
-                            return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
-                                                                this.layout.color.parameters || {},
-                                                                d[this.layout.color.field]);
-                        }.bind(this));
-                    }
-                    break;
+            case "string":
+                selection.attr("fill", this.layout.color);
+                break;
+            case "object":
+                if (this.layout.color.scale_function && this.layout.color.field) {
+                    selection.attr("fill", function(d){
+                        return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
+                                                            this.layout.color.parameters || {},
+                                                            d[this.layout.color.field]);
+                    }.bind(this));
+                }
+                break;
             }
         }
         // Apply title (basic mouseover label)
@@ -1800,7 +1799,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         label_font_size: 12,
         track_vertical_spacing: 8,
         label_vertical_spacing: 4
-    }
+    };
 
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     
@@ -1994,7 +1993,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             .attr("width", function(d){
                                 return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
                             }.bind(gene.parent))
-                            .attr("height", function(d){
+                            .attr("height", function(){
                                 return this.parent.layout.track_height
                                     - this.parent.layout.track_vertical_spacing
                                     - this.parent.layout.label_font_size

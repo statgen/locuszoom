@@ -252,7 +252,7 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
         }
     }
     return custom_layout;
-}
+};
 
 // Default State
 LocusZoom.DefaultState = {
@@ -329,7 +329,7 @@ LocusZoom.DefaultLayout = {
                     track_height: 40,
                     label_font_size: 12,
                     track_vertical_spacing: 8,
-                    label_vertical_spacing: 4,
+                    label_vertical_spacing: 4
                 }
             }
         }
