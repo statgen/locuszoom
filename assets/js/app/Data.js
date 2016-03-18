@@ -287,6 +287,7 @@ LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 LocusZoom.Data.ConditionalSource = function(init) {
     this.parseInit(init);
     this.params.teststat = "scoreTestStat";
+    this.params.Nstat = "N";
 };
 LocusZoom.Data.ConditionalSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.ConditionalSource.prototype.constructor = LocusZoom.Data.ConditionalSource;
@@ -350,8 +351,10 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
 
     //calculate conditional score statistic
     for(i = 0; i< chain.body.length; i++) {
-        var U_XgZ = chain.body[i][this.params.teststat] - V_XZ[i] / V_ZZ * U_Z;
-        var V_XgZ = V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i];
+        var U_x = chain.body[i][this.params.teststat];
+        var N = chain.body[i][this.params.Nstat] || 2000; //TODO: REMOVE 2000 
+        var U_XgZ = U_x - V_XZ[i] / V_ZZ * U_Z;
+        var V_XgZ = N * (V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i]);
         var T = U_XgZ / Math.sqrt(V_XgZ);
         var p = 2*LocusZoom.jStat.normalCDF(-Math.abs(T),0,1);
         if (trans && trans[0]) {
