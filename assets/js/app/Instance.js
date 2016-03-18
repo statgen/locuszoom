@@ -28,8 +28,8 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     // The layout is a serializable object used to describe the composition of the instance
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
     
-    // The state property stores any instance-wide parameters subject to change via user input
-    this.state = state || JSON.parse(JSON.stringify(LocusZoom.DefaultState));
+    // The state property stores any parameters subject to change via user input
+    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -49,7 +49,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     // Add panels
     var panel_id;
     for (panel_id in this.layout.panels){
-        this.addPanel(panel_id, this.layout.panels[panel_id]);
+        this.addPanel(panel_id, this.layout.panels[panel_id], this.state.panels[panel_id]);
     }
 
 };
@@ -74,7 +74,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by id and panel class
-LocusZoom.Instance.prototype.addPanel = function(id, layout){
+LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
@@ -84,9 +84,17 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof layout !== "object"){
         throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    var panel = new LocusZoom.Panel(id, layout);
+
+    // Create the Panel and set its parent
+    var panel = new LocusZoom.Panel(id, layout, state);
     panel.parent = this;
+
+    // Apply the Panel's state to the parent's state
+    panel.parent.state.panels[panel.id] = panel.state;
+    
+    // Store the Panel on the Instance
     this.panels[panel.id] = panel;
+
     this.stackPanels();
     return this.panels[panel.id];
 };

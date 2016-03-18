@@ -13,7 +13,7 @@
 
 */
 
-LocusZoom.DataLayer = function(id, layout) {
+LocusZoom.DataLayer = function(id, layout, state) {
 
     this.initialized = false;
 
@@ -22,6 +22,8 @@ LocusZoom.DataLayer = function(id, layout) {
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+
+    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DataLayer.DefaultState);
 
     this.data = [];
     this.metadata = {};
@@ -32,6 +34,9 @@ LocusZoom.DataLayer = function(id, layout) {
     
     return this;
 
+};
+
+LocusZoom.DataLayer.DefaultState = {
 };
 
 LocusZoom.DataLayer.DefaultLayout = {

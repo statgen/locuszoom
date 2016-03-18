@@ -77,41 +77,46 @@ $namespace: "lz";
     stroke-width: 1;
   }
 
-  path.#{$namespace}-data_layer-scatter:hover {
-    stroke: #484848;
+  path.#{$namespace}-data_layer-scatter-hovered {
+    stroke: #181818;
     stroke-width: 3;
   }
 
-  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected {
+  path.#{$namespace}-data_layer-scatter-selected {
+    stroke: #181818;
     stroke-width: 4;
   }
 
-  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected:hover {
-    stroke-width: 4;
-  }
-
-  g.#{$namespace}-gene {
+  g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }
 
-  text.#{$namespace}-gene.#{$namespace}-label {
+  text.#{$namespace}-data_layer-gene.#{$namespace}-label {
     font-style: italic;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-bounding_box {
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box {
     fill: rgba(220,220,220,0);
+    stroke-width: 0;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-bounding_box:hover {
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-hovered {
+    fill: rgba(230,230,230,1);
+    stroke-width: 0;
+  }
+
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-selected {
     fill: rgba(220,220,220,1);
+    stroke: #181818;
+    stroke-width: 1;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-boundary {
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
     stroke: #000099;
     stroke-width: 1;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-exon {
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
     stroke: #000099;
     stroke-width: 1;
   }

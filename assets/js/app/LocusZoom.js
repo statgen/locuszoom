@@ -258,7 +258,8 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
 LocusZoom.DefaultState = {
     chr: 0,
     start: 0,
-    end: 0
+    end: 0,
+    panels: {}
 };
 
 // Default Layout
@@ -326,10 +327,6 @@ LocusZoom.DefaultLayout = {
                 genes: {
                     type: "genes",
                     fields: ["gene:gene"],
-                    track_height: 40,
-                    label_font_size: 12,
-                    track_vertical_spacing: 8,
-                    label_vertical_spacing: 4,
                     html_modules: {
                         info_box: {
                             divs: [

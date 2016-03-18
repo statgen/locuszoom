@@ -50,24 +50,29 @@
   .lz-locuszoom path.lz-data_layer-scatter {
     stroke: #181818;
     stroke-width: 1; }
-  .lz-locuszoom path.lz-data_layer-scatter:hover {
-    stroke: #484848;
+  .lz-locuszoom path.lz-data_layer-scatter-hovered {
+    stroke: #181818;
     stroke-width: 3; }
-  .lz-locuszoom path.lz-data_layer-scatter.lz-selected {
+  .lz-locuszoom path.lz-data_layer-scatter-selected {
+    stroke: #181818;
     stroke-width: 4; }
-  .lz-locuszoom path.lz-data_layer-scatter.lz-selected:hover {
-    stroke-width: 4; }
-  .lz-locuszoom g.lz-gene {
+  .lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
-  .lz-locuszoom text.lz-gene.lz-label {
+  .lz-locuszoom text.lz-data_layer-gene.lz-label {
     font-style: italic; }
-  .lz-locuszoom rect.lz-gene.lz-bounding_box {
-    fill: rgba(220, 220, 220, 0); }
-  .lz-locuszoom rect.lz-gene.lz-bounding_box:hover {
-    fill: gainsboro; }
-  .lz-locuszoom rect.lz-gene.lz-boundary {
+  .lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box {
+    fill: rgba(220, 220, 220, 0);
+    stroke-width: 0; }
+  .lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box-hovered {
+    fill: #e6e6e6;
+    stroke-width: 0; }
+  .lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box-selected {
+    fill: gainsboro;
+    stroke: #181818;
+    stroke-width: 1; }
+  .lz-locuszoom rect.lz-data_layer-gene.lz-boundary {
     stroke: #000099;
     stroke-width: 1; }
-  .lz-locuszoom rect.lz-gene.lz-exon {
+  .lz-locuszoom rect.lz-data_layer-gene.lz-exon {
     stroke: #000099;
     stroke-width: 1; }

@@ -51,9 +51,6 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.instance.layout.min_width, LocusZoom.DefaultLayout.min_width);
             assert.equal(this.instance.layout.min_height, LocusZoom.DefaultLayout.min_height);
         });
-        it('should have a state which is a copy of DefaultState', function(){
-            assert.deepEqual(this.instance.state, LocusZoom.DefaultState);
-        });
     });
     describe("Configuration API", function() {
         beforeEach(function() {
