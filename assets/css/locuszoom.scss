@@ -37,6 +37,12 @@ $namespace: "lz";
     }
   }
 
+  .#{$namespace}-html_module-info_box {
+    position: absolute;
+    border: 1px solid #181818;
+    border-radius: 3px;
+  }
+
   .#{$namespace}-ui-resize_handle {
     fill: rgba(210,210,210,0.85);
     stroke: rgba(45,45,45,0.85);

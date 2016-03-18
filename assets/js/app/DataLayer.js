@@ -27,6 +27,7 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
     this.data = [];
     this.metadata = {};
+    this.html_modules = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;

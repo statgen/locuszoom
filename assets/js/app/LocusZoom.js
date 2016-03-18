@@ -328,7 +328,8 @@ LocusZoom.DefaultLayout = {
                     type: "genes",
                     fields: ["gene:gene"],
                     html_modules: {
-                        info_box: {
+                        tooltip: {
+                            html_module: "info_box",
                             divs: [
                                 { html: "Gene Name: {gene_name}" },
                                 { html: "Gene ID: {gene_id}" },
