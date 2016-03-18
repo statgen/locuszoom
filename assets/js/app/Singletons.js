@@ -287,8 +287,9 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
     this.DefaultLayout = {
         track_height: 40,
         label_font_size: 12,
-        track_vertical_spacing: 8,
-        label_vertical_spacing: 4
+        track_vertical_spacing: 12,
+        label_vertical_spacing: 4,
+        bounding_box_padding: 6
     };
 
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -416,6 +417,29 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             .attr("class", "lz-gene")
             .attr("id", function(d){ return d.gene_name; })
             .each(function(gene){
+
+                // Render gene bounding box
+                d3.select(this).selectAll("rect.lz-gene").filter(".lz-bounding_box")
+                    .data([gene]).enter().append("rect")
+                    .attr("class", "lz-gene lz-bounding_box")
+                    .attr("x", function(d){
+                        return d.display_range.start - this.layout.bounding_box_padding;
+                    }.bind(gene.parent))
+                    .attr("y", function(d){
+                        return ((d.track-1) * this.layout.track_height)
+                            + this.layout.track_vertical_spacing
+                            - this.layout.bounding_box_padding;
+                    }.bind(gene.parent))
+                    .attr("width", function(d){
+                        return d.display_range.width + 2 * this.layout.bounding_box_padding;
+                    }.bind(gene.parent))
+                    .attr("height", function(d){
+                        return this.layout.track_height
+                            - this.layout.track_vertical_spacing
+                            + 2 * this.layout.bounding_box_padding;
+                    }.bind(gene.parent))
+                    .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
+                    .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
 
                 // Render gene boundaries
                 d3.select(this).selectAll("rect.lz-gene").filter(".lz-boundary")

@@ -90,8 +90,20 @@ $namespace: "lz";
     stroke-width: 4;
   }
 
+  g.#{$namespace}-gene {
+    cursor: pointer;
+  }
+
   text.#{$namespace}-gene.#{$namespace}-label {
     font-style: italic;
+  }
+
+  rect.#{$namespace}-gene.#{$namespace}-bounding_box {
+    fill: rgba(220,220,220,0);
+  }
+
+  rect.#{$namespace}-gene.#{$namespace}-bounding_box:hover {
+    fill: rgba(220,220,220,1);
   }
 
   rect.#{$namespace}-gene.#{$namespace}-boundary {

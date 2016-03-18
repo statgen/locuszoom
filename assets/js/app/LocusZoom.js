@@ -329,7 +329,16 @@ LocusZoom.DefaultLayout = {
                     track_height: 40,
                     label_font_size: 12,
                     track_vertical_spacing: 8,
-                    label_vertical_spacing: 4
+                    label_vertical_spacing: 4,
+                    html_modules: {
+                        info_box: {
+                            divs: [
+                                { html: "Gene Name: {gene_name}" },
+                                { html: "Gene ID: {gene_id}" },
+                                { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\">EXAC Page</a>" }
+                            ]
+                        }
+                    }
                 }
             }
         }
