@@ -285,11 +285,19 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
     LocusZoom.DataLayer.apply(this, arguments);
 
     this.DefaultLayout = {
-        track_height: 40,
         label_font_size: 12,
-        track_vertical_spacing: 8,
-        label_vertical_spacing: 4
+        label_exon_spacing: 4,
+        exon_height: 16,
+        track_vertical_spacing: 10
     };
+    
+    // Helper function to sum layout values to derive total height for a single gene track
+    this.getTrackHeight = function(){
+        return this.layout.label_font_size
+            + this.layout.label_exon_spacing
+            + this.layout.exon_height
+            + this.layout.track_vertical_spacing;
+    }
 
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     
@@ -424,15 +432,10 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                     .attr("id", function(d){ return d.gene_name; })
                     .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){
-                        var exon_height = this.parent.layout.track_height
-                            - this.parent.layout.track_vertical_spacing
-                            - this.parent.layout.label_font_size
-                            - this.parent.layout.label_vertical_spacing;
-                        return ((d.track-1) * this.parent.layout.track_height)
-                            + (this.parent.layout.track_vertical_spacing / 2)
+                        return ((d.track-1) * this.parent.getTrackHeight())
                             + this.parent.layout.label_font_size
-                            + this.parent.layout.label_vertical_spacing
-                            + (Math.max(exon_height, 3) / 2);
+                            + this.parent.layout.label_exon_spacing
+                            + (Math.max(this.parent.layout.exon_height, 3) / 2);
                     }.bind(gene)) // Arbitrary track height; should be dynamic
                     .attr("width", function(d){ return this.parent.x_scale(d.end) - this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("height", 1) // This should be scaled dynamically somehow
@@ -455,8 +458,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                         }
                     })
                     .attr("y", function(d){
-                        return ((d.track-1) * this.parent.layout.track_height)
-                            + (this.parent.layout.track_vertical_spacing / 2)
+                        return ((d.track-1) * this.parent.getTrackHeight())
                             + this.parent.layout.label_font_size;
                     }.bind(gene))
                     .attr("text-anchor", function(d){ return d.display_range.text_anchor; })
@@ -475,19 +477,15 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                             .attr("id", function(d){ return d.exon_id; })
                             .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                             .attr("y", function(){
-                                return ((this.track-1) * this.parent.layout.track_height)
-                                    + (this.parent.layout.track_vertical_spacing / 2)
+                                return ((this.track-1) * this.parent.getTrackHeight())
                                     + this.parent.layout.label_font_size
-                                    + this.parent.layout.label_vertical_spacing;
+                                    + this.parent.layout.label_exon_spacing;
                             }.bind(gene))
                             .attr("width", function(d){
                                 return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
                             }.bind(gene.parent))
                             .attr("height", function(){
-                                return this.parent.layout.track_height
-                                    - this.parent.layout.track_vertical_spacing
-                                    - this.parent.layout.label_font_size
-                                    - this.parent.layout.label_vertical_spacing;
+                                return this.parent.layout.exon_height;
                             }.bind(gene))
                             .attr("fill", "#000099")
                             .style({ cursor: "pointer" });
