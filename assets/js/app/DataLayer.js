@@ -65,16 +65,42 @@ LocusZoom.DataLayer = function(id, layout, state) {
         }
         if (this.tooltips[id]){
             this.tooltips[id].remove();
+            delete this.tooltips[id];
+        }
+    };
+    this.destroyAllTooltips = function(){
+        var id;
+        for (id in this.tooltips){
+            this.tooltips[id].remove();
+            delete this.tooltips[id];
         }
     };
     this.positionTooltip = function(d, id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
         }
+        // Position the div itself
         this.tooltips[id]
             .style("left", (d3.event.pageX) + "px")			 
 				    .style("top", (d3.event.pageY) + "px");
-    }
+        // Connect to click site with an arrow in the top left
+        this.tooltips[id].append("div")
+            .style("position", "absolute")
+            .attr("class", "lz-data_layer-tooltip-arrow_top_left")
+            .style("left", "-1px")			 
+				    .style("top", "-1px");
+        
+    };
+
+    // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
+    // (useful for custom reimplementations this.positionTooltip())
+    this.getPageOrigin = function(){
+        var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
+        return {
+            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
+            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top,
+        };
+    };
     
     return this;
 
@@ -138,6 +164,8 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
+    this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
+                               // and then recreated if returning to visibility
     var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;

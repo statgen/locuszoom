@@ -1,6 +1,7 @@
 $namespace: "lz";
-
-.#{$namespace}-locuszoom {
+$tooltip_arrow_width: "7";
+  
+svg.#{$namespace}-locuszoom {
 
   background-color: #FFFFFF;
   border: none;
@@ -130,9 +131,79 @@ $namespace: "lz";
 }
 
 div.#{$namespace}-data_layer-tooltip {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
   position: absolute;
-  padding: 4px;
+  padding: 6px;
   background: rgba(235,235,235,1);
   border: 1px solid #181818;
   border-radius: 4px;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_up {
+  width: 0; 
+  height: 0; 
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #181818;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_down {
+  width: 0; 
+  height: 0; 
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-top: #{$tooltip_arrow_width}px solid #181818;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_right {
+  width: 0; 
+  height: 0; 
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #181818;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_left {
+  width: 0; 
+  height: 0; 
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #181818; 
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_left {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid #181818;
+  border-left: #{$tooltip_arrow_width}px solid #181818;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_right {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid #181818;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #181818;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #181818;
+  border-bottom: #{$tooltip_arrow_width}px solid #181818;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #181818;
+  border-right: #{$tooltip_arrow_width}px solid #181818;
 }

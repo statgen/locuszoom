@@ -235,6 +235,51 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     this.state = LocusZoom.mergeLayouts(state, this.DefaultState);
 
+    // Reimplement the positionTooltip() method to be scatte-specific
+    this.positionTooltip = function(d, id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        var arrow_width = 7; // as defined in the default stylesheet
+        var stroke_width = 1; // as defined in the default stylesheet
+        var page_origin = this.getPageOrigin();
+        var x_center = this.parent.x_scale(d[this.layout.x_axis.field]);
+        var y_scale  = "y"+this.layout.y_axis.axis+"_scale";
+        var y_center = this.parent[y_scale](d[this.layout.y_axis.field]);
+        var tooltip_box = this.tooltips[id].node().getBoundingClientRect();
+        // Position horizontally on the left or the right depending on which side of the plot the point is on
+        var offset = Math.sqrt(this.layout.point_size / Math.PI);
+        if (x_center <= this.parent.layout.width / 2){
+            var left = page_origin.x + x_center + offset + arrow_width + stroke_width;
+            var arrow_type = "arrow_left";
+            var arrow_left = -1 * (arrow_width + stroke_width);
+        } else {
+            var left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
+            var arrow_type = "arrow_right";
+            var arrow_left = tooltip_box.width - stroke_width;
+        }
+        // Position vertically centered unless we're at the top or bottom of the plot
+        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+        if (y_center - (tooltip_box.height / 2) <= 0){
+            var top = page_origin.y + y_center - (1.5 * arrow_width);
+            var arrow_top = 0;
+        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){
+            var top = page_origin.y + y_center + arrow_width - tooltip_box.height;
+            var arrow_top = tooltip_box.height - (2 * arrow_width);
+        } else {
+            var top = page_origin.y + y_center - (tooltip_box.height / 2);
+            var arrow_top = (tooltip_box.height / 2) - arrow_width;
+        }        
+        // Apply positions to the main div
+        this.tooltips[id].style("left", left + "px").style("top", top + "px");
+        // Connect to click site with a left or right arrow
+        this.tooltips[id].append("div")
+            .style("position", "absolute")
+            .attr("class", "lz-data_layer-tooltip-" + arrow_type)
+            .style("left", arrow_left + "px")			 
+				    .style("top", arrow_top + "px");
+    };
+
     // Implement the main render function
     this.render = function(){
         this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
@@ -273,18 +318,21 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                 break;
             }
         }
-        // Apply selectable
+
+        // Apply selectable, tooltip, etc
         if (this.layout.selectable && (this.layout.fields.indexOf("id") != -1)){
             selection.on("mouseover", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-hovered");
+                    if (this.layout.tooltip){ this.createTooltip(d, id); }
                 }
             }.bind(this))
             .on("mouseout", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter");
+                    if (this.layout.tooltip){ this.destroyTooltip(id); }
                 }
             }.bind(this))
             .on("click", function(d){
@@ -295,6 +343,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                 } else {
                     if (this.state.selected_id != null){
                         d3.select("#" + this.state.selected_id).attr("class", "lz-data_layer-scatter");
+                        if (this.layout.tooltip){ this.destroyTooltip(this.state.selected_id); }
                     }
                     this.state.selected_id = id;
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-selected");
@@ -305,11 +354,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                 d3.select("#" + this.state.selected_id).attr("class", "lz-data_layer-scatter-selected");
             }
         }
-        // Apply title (basic mouseover label)
-        if (this.layout.point_label_field){
-            selection.append("svg:title")
-                .text(function(d) { return d[this.layout.point_label_field]; }.bind(this));
-        }
+        
     };
        
     return this;
@@ -571,7 +616,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
 
             });
 
-        // Apply selectable
+        // Apply selectable, tooltip, etc.
         if (this.layout.selectable){
             selection.on("mouseover", function(d){
                 var id = 'g' + d.gene_name.replace(/\W/g,'');
@@ -599,7 +644,6 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                     }
                     this.state.selected_id = id;
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
-                    
                 }
 
             }.bind(this));
@@ -607,7 +651,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
             if (this.state.selected_id != null){
                 d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
             }
-        }        
+        }
     };
        
     return this;
