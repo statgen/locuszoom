@@ -27,11 +27,54 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
     this.data = [];
     this.metadata = {};
-    this.html_modules = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
+
+    // Tooltip methods
+    this.tooltips = {};
+    this.createTooltip = function(d, id){
+        if (typeof this.layout.tooltip != "object"){
+            throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
+        }
+        if (typeof id != "string"){
+            throw ("Unable to create tooltip: id is not a string");
+        }
+        this.tooltips[id] = d3.select(this.parent.parent.svg.node().parentNode).append("div")
+            .attr("class", "lz-data_layer-tooltip")
+            .attr("id", this.parent.getBaseId() + ".tooltip." + id);
+        if (this.layout.tooltip.html){
+            this.tooltips[id].html(LocusZoom.parseFields(d, this.layout.tooltip.html));
+        } else if (this.layout.tooltip.divs){
+            var i, div, selection;
+            for (i in this.layout.tooltip.divs){
+                div = this.layout.tooltip.divs[i];
+                selection = this.tooltips[id].append("div");
+                if (div.id){ selection.attr("id", div.id); }
+                if (div.class){ selection.attr("class", div.class); }
+                if (div.style){ selection.style(div.style); }
+                if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
+            }
+        }
+        this.positionTooltip(d, id);
+    };
+    this.destroyTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to destroy tooltip: id is not a string");
+        }
+        if (this.tooltips[id]){
+            this.tooltips[id].remove();
+        }
+    };
+    this.positionTooltip = function(d, id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        this.tooltips[id]
+            .style("left", (d3.event.pageX) + "px")			 
+				    .style("top", (d3.event.pageY) + "px");
+    }
     
     return this;
 

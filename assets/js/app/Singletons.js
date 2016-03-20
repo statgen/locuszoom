@@ -577,12 +577,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                 var id = 'g' + d.gene_name.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
+                    if (this.layout.tooltip){ this.createTooltip(d, id); }
                 }
             }.bind(this))
             .on("mouseout", function(d){
                 var id = 'g' + d.gene_name.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                    if (this.layout.tooltip){ this.destroyTooltip(id); }
                 }
             }.bind(this))
             .on("click", function(d){
@@ -593,104 +595,20 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                 } else {
                     if (this.state.selected_id != null){
                         d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                        if (this.layout.tooltip){ this.destroyTooltip(this.state.selected_id); }
                     }
                     this.state.selected_id = id;
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                    
                 }
-                // Render/update Info Box HTML module here somehow
+
             }.bind(this));
             // Apply existing selection from state
             if (this.state.selected_id != null){
                 d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
             }
-        }
-
-        // Define and Initialize and undefined HTML modules
-        if (this.layout.html_modules){
-            var id;
-            for (id in this.layout.html_modules){
-                if (!this.html_modules[id]){
-                    var params = {
-                        id: id,
-                        parent: this,
-                        layout: this.layout.html_modules[id]
-                    };
-                    this.html_modules[id] = LocusZoom.HTMLModules.get(this.layout.html_modules[id].html_module, params);
-                }
-            }
-        }
-        
+        }        
     };
        
-    return this;
-});
-
-
-/****************
-  HTML Modules
-
-  These functions will generate an arbitrary HTML module for rendering HTML elements adjacent to an Instance
-*/
-
-LocusZoom.HTMLModules = (function() {
-    var obj = {};
-    var modules = {};
-
-    obj.get = function(name, params) {
-        if (!name) {
-            return null;
-        } else if (modules[name]) {
-            if (typeof params == "undefined" || typeof params.parent == "undefined" || typeof params.layout == "undefined" || typeof params.id == "undefined"){
-                console.log(params);
-                return modules[name];
-            } else {
-                return modules[name](params);
-            }
-        } else {
-            throw("HTML Module [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, module) {
-        if (module) {
-            modules[name] = module;
-        } else {
-            delete modules[name];
-        }
-    };
-
-    obj.add = function(name, module) {
-        if (modules.name) {
-            throw("HTML Module already exists with name: " + name);
-        } else {
-            obj.set(name, module);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(modules);
-    };
-
-    return obj;
-})();
-
-// HTML Module for Info Box, a generic floating element that can be filled with info
-// (e.g. a tooltip on a selected piece of data)
-LocusZoom.HTMLModules.add("info_box", function(params){
-
-    this.id = params.id;
-    this.parent = params.parent;
-
-    this.DefaultLayout = {};
-    this.layout = LocusZoom.mergeLayouts(params.layout, this.DefaultLayout);
-    
-    this.initialize = function(){
-        d3.select(this.parent.parent.parent.svg.node().parentNode).append("div")
-            .attr("class", "lz-html_module-" + this.layout.html_module)
-            .attr("id", this.parent.getBaseId() + "." + this.id);
-    };
-
-    this.initialize();
-
     return this;
 });

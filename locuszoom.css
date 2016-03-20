@@ -80,3 +80,10 @@
   .lz-locuszoom rect.lz-data_layer-gene.lz-exon {
     stroke: #000099;
     stroke-width: 1; }
+
+div.lz-data_layer-tooltip {
+  position: absolute;
+  padding: 4px;
+  background: #ebebeb;
+  border: 1px solid #181818;
+  border-radius: 4px; }

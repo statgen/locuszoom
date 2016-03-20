@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.1"
+    version: "0.3.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -268,6 +268,17 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Replace placeholders in an html string with field values defined in a data object
+LocusZoom.parseFields = function (data, html) {
+    var re;
+    for (var field in data) {
+        if (!data.hasOwnProperty(field)){ continue; }
+        re = new RegExp("\\{" + field + "\\}","g");
+        html = html.replace(re, data[field]);
+    }
+    return html;
+};
+    
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
@@ -324,6 +335,12 @@ LocusZoom.DefaultLayout = {
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_value: "#B8B8B8"
                         }
+                    },
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{id}</strong>" },
+                            { html: "Ref. Allele: <strong>{refAllele}</strong>" }
+                        ]
                     }
                 }
             }
@@ -341,15 +358,12 @@ LocusZoom.DefaultLayout = {
                 genes: {
                     type: "genes",
                     fields: ["gene:gene"],
-                    html_modules: {
-                        tooltip: {
-                            html_module: "info_box",
-                            divs: [
-                                { html: "Gene Name: {gene_name}" },
-                                { html: "Gene ID: {gene_id}" },
-                                { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\">EXAC Page</a>" }
-                            ]
-                        }
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{gene_name}</strong>" },
+                            { html: "Gene ID: <strong>{gene_id}</strong>" },
+                            { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\" target=\"_new\">EXAC Page</a>" }
+                        ]
                     }
                 }
             }
@@ -1469,11 +1483,54 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
     this.data = [];
     this.metadata = {};
-    this.html_modules = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
+
+    // Tooltip methods
+    this.tooltips = {};
+    this.createTooltip = function(d, id){
+        if (typeof this.layout.tooltip != "object"){
+            throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
+        }
+        if (typeof id != "string"){
+            throw ("Unable to create tooltip: id is not a string");
+        }
+        this.tooltips[id] = d3.select(this.parent.parent.svg.node().parentNode).append("div")
+            .attr("class", "lz-data_layer-tooltip")
+            .attr("id", this.parent.getBaseId() + ".tooltip." + id);
+        if (this.layout.tooltip.html){
+            this.tooltips[id].html(LocusZoom.parseFields(d, this.layout.tooltip.html));
+        } else if (this.layout.tooltip.divs){
+            var i, div, selection;
+            for (i in this.layout.tooltip.divs){
+                div = this.layout.tooltip.divs[i];
+                selection = this.tooltips[id].append("div");
+                if (div.id){ selection.attr("id", div.id); }
+                if (div.class){ selection.attr("class", div.class); }
+                if (div.style){ selection.style(div.style); }
+                if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
+            }
+        }
+        this.positionTooltip(d, id);
+    };
+    this.destroyTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to destroy tooltip: id is not a string");
+        }
+        if (this.tooltips[id]){
+            this.tooltips[id].remove();
+        }
+    };
+    this.positionTooltip = function(d, id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        this.tooltips[id]
+            .style("left", (d3.event.pageX) + "px")			 
+				    .style("top", (d3.event.pageY) + "px");
+    }
     
     return this;
 
@@ -2123,12 +2180,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                 var id = 'g' + d.gene_name.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
+                    if (this.layout.tooltip){ this.createTooltip(d, id); }
                 }
             }.bind(this))
             .on("mouseout", function(d){
                 var id = 'g' + d.gene_name.replace(/\W/g,'');
                 if (this.state.selected_id != id){
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                    if (this.layout.tooltip){ this.destroyTooltip(id); }
                 }
             }.bind(this))
             .on("click", function(d){
@@ -2139,120 +2198,21 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                 } else {
                     if (this.state.selected_id != null){
                         d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                        if (this.layout.tooltip){ this.destroyTooltip(this.state.selected_id); }
                     }
                     this.state.selected_id = id;
                     d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                    
                 }
-                // Render Info Box HTML module
-                /*
-                  html_modules: {
-                        info_box: {
-                            divs: [
-                                { html: "Gene Name: {gene_name}" },
-                                { html: "Gene ID: {gene_id}" },
-                                { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\">EXAC Page</a>" }
-                            ]
-                        }
-                    }
-                */
-                if (this.layout.html_modules.info_box){
-                    var id = this.getBaseId() + ".info_box";
-                    console.log(d3.select("#" + id));
-                }
+
             }.bind(this));
             // Apply existing selection from state
             if (this.state.selected_id != null){
                 d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
             }
-        }
-
-        // Define and Initialize and undefined HTML modules
-        if (this.layout.html_modules){
-            var id;
-            for (id in this.layout.html_modules){
-                if (!this.html_modules[id]){
-                    var params = {
-                        id: id,
-                        parent: this,
-                        layout: this.layout.html_modules[id]
-                    };
-                    this.html_modules[id] = LocusZoom.HTMLModules.get(this.layout.html_modules[id].html_module, params);
-                }
-            }
-        }
-        
+        }        
     };
        
-    return this;
-});
-
-
-/****************
-  HTML Modules
-
-  These functions will generate an arbitrary HTML module for rendering HTML elements adjacent to an Instance
-*/
-
-LocusZoom.HTMLModules = (function() {
-    var obj = {};
-    var modules = {};
-
-    obj.get = function(name, params) {
-        if (!name) {
-            return null;
-        } else if (modules[name]) {
-            if (typeof params == "undefined" || typeof params.parent == "undefined" || typeof params.layout == "undefined" || typeof params.id == "undefined"){
-                console.log(params);
-                return modules[name];
-            } else {
-                return modules[name](params);
-            }
-        } else {
-            throw("HTML Module [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, module) {
-        if (module) {
-            modules[name] = module;
-        } else {
-            delete modules[name];
-        }
-    };
-
-    obj.add = function(name, module) {
-        if (modules.name) {
-            throw("HTML Module already exists with name: " + name);
-        } else {
-            obj.set(name, module);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(modules);
-    };
-
-    return obj;
-})();
-
-// HTML Module for Info Box, a generic floating element that can be filled with info
-// (e.g. a tooltip on a selected piece of data)
-LocusZoom.HTMLModules.add("info_box", function(params){
-
-    this.id = params.id;
-    this.parent = params.parent;
-
-    this.DefaultLayout = {};
-    this.layout = LocusZoom.mergeLayouts(params.layout, this.DefaultLayout);
-    
-    this.initialize = function(){
-        d3.select(this.parent.parent.parent.svg.node().parentNode).append("div")
-            .attr("class", "lz-html_module-" + this.layout.html_module)
-            .attr("id", this.parent.getBaseId() + "." + this.id);
-    };
-
-    this.initialize();
-
     return this;
 });
 

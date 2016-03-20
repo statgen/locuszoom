@@ -128,3 +128,11 @@ $namespace: "lz";
   }
 
 }
+
+div.#{$namespace}-data_layer-tooltip {
+  position: absolute;
+  padding: 4px;
+  background: rgba(235,235,235,1);
+  border: 1px solid #181818;
+  border-radius: 4px;
+}

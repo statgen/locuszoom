@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.1"
+    version: "0.3.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -254,6 +254,17 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Replace placeholders in an html string with field values defined in a data object
+LocusZoom.parseFields = function (data, html) {
+    var re;
+    for (var field in data) {
+        if (!data.hasOwnProperty(field)){ continue; }
+        re = new RegExp("\\{" + field + "\\}","g");
+        html = html.replace(re, data[field]);
+    }
+    return html;
+};
+    
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
@@ -310,6 +321,12 @@ LocusZoom.DefaultLayout = {
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_value: "#B8B8B8"
                         }
+                    },
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{id}</strong>" },
+                            { html: "Ref. Allele: <strong>{refAllele}</strong>" }
+                        ]
                     }
                 }
             }
@@ -327,15 +344,12 @@ LocusZoom.DefaultLayout = {
                 genes: {
                     type: "genes",
                     fields: ["gene:gene"],
-                    html_modules: {
-                        tooltip: {
-                            html_module: "info_box",
-                            divs: [
-                                { html: "Gene Name: {gene_name}" },
-                                { html: "Gene ID: {gene_id}" },
-                                { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\">EXAC Page</a>" }
-                            ]
-                        }
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{gene_name}</strong>" },
+                            { html: "Gene ID: <strong>{gene_id}</strong>" },
+                            { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={gene_name}\" target=\"_new\">EXAC Page</a>" }
+                        ]
                     }
                 }
             }
