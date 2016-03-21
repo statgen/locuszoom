@@ -1,6 +1,8 @@
 $namespace: "lz";
+$default_black: "rgba(24, 24, 24, 1)";
+$default_black_shadow: "rgba(24, 24, 24, 0.4)";
 $tooltip_arrow_width: "7";
-  
+
 svg.#{$namespace}-locuszoom {
 
   background-color: #FFFFFF;
@@ -8,6 +10,10 @@ svg.#{$namespace}-locuszoom {
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px;
+
+  rect.#{$namespace}-clickarea {
+    fill: transparent;
+  }
 
   .#{$namespace}-curtain {
     rect {
@@ -40,7 +46,7 @@ svg.#{$namespace}-locuszoom {
 
   .#{$namespace}-html_module-info_box {
     position: absolute;
-    border: 1px solid #181818;
+    border: 1px solid #{$default_black};
     border-radius: 3px;
   }
 
@@ -80,17 +86,17 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-scatter {
-    stroke: #181818;
+    stroke: #{$default_black};
     stroke-width: 1;
   }
 
   path.#{$namespace}-data_layer-scatter-hovered {
-    stroke: #181818;
+    stroke: #{$default_black};
     stroke-width: 3;
   }
 
   path.#{$namespace}-data_layer-scatter-selected {
-    stroke: #181818;
+    stroke: #{$default_black};
     stroke-width: 4;
   }
 
@@ -103,28 +109,28 @@ svg.#{$namespace}-locuszoom {
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box {
-    fill: rgba(220,220,220,0);
+    fill: transparent;
     stroke-width: 0;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-hovered {
-    fill: rgba(230,230,230,1);
+    fill: rgba(54, 54, 150, 0.1);
     stroke-width: 0;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-selected {
-    fill: rgba(220,220,220,1);
-    stroke: #181818;
+    fill: rgba(54, 54, 150, 0.15);
+    stroke: #{$default_black};
     stroke-width: 1;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
-    stroke: #000099;
+    stroke: rgba(54, 54, 150, 1);
     stroke-width: 1;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
-    stroke: #000099;
+    stroke: rgba(54, 54, 150, 1);
     stroke-width: 1;
   }
 
@@ -136,8 +142,9 @@ div.#{$namespace}-data_layer-tooltip {
   position: absolute;
   padding: 6px;
   background: rgba(235,235,235,1);
-  border: 1px solid #181818;
+  border: 1px solid #{$default_black};
   border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_up {
@@ -145,7 +152,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_up {
   height: 0; 
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
-  border-bottom: #{$tooltip_arrow_width}px solid #181818;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_down {
@@ -153,7 +160,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_down {
   height: 0; 
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
-  border-top: #{$tooltip_arrow_width}px solid #181818;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_right {
@@ -161,7 +168,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_right {
   height: 0; 
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
-  border-left: #{$tooltip_arrow_width}px solid #181818;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_left {
@@ -169,14 +176,14 @@ div.#{$namespace}-data_layer-tooltip-arrow_left {
   height: 0; 
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
-  border-right: #{$tooltip_arrow_width}px solid #181818; 
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black}; 
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_left {
   width: 0; 
   height: 0;
-  border-top: #{$tooltip_arrow_width}px solid #181818;
-  border-left: #{$tooltip_arrow_width}px solid #181818;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
 }
@@ -184,18 +191,18 @@ div.#{$namespace}-data_layer-tooltip-arrow_top_left {
 div.#{$namespace}-data_layer-tooltip-arrow_top_right {
   width: 0; 
   height: 0;
-  border-top: #{$tooltip_arrow_width}px solid #181818;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
-  border-right: #{$tooltip_arrow_width}px solid #181818;
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
   width: 0; 
   height: 0;
   border-top: #{$tooltip_arrow_width}px solid transparent;
-  border-left: #{$tooltip_arrow_width}px solid #181818;
-  border-bottom: #{$tooltip_arrow_width}px solid #181818;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
   border-right: #{$tooltip_arrow_width}px solid transparent;
 }
 
@@ -204,6 +211,6 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   height: 0;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid transparent;
-  border-bottom: #{$tooltip_arrow_width}px solid #181818;
-  border-right: #{$tooltip_arrow_width}px solid #181818;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
 }

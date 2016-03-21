@@ -235,13 +235,14 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     this.state = LocusZoom.mergeLayouts(state, this.DefaultState);
 
-    // Reimplement the positionTooltip() method to be scatte-specific
+    // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(d, id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
         }
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
+        var border_radius = 6; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var x_center = this.parent.x_scale(d[this.layout.x_axis.field]);
         var y_scale  = "y"+this.layout.y_axis.axis+"_scale";
@@ -251,22 +252,22 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
         var offset = Math.sqrt(this.layout.point_size / Math.PI);
         if (x_center <= this.parent.layout.width / 2){
             var left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-            var arrow_type = "arrow_left";
+            var arrow_type = "left";
             var arrow_left = -1 * (arrow_width + stroke_width);
         } else {
             var left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-            var arrow_type = "arrow_right";
+            var arrow_type = "right";
             var arrow_left = tooltip_box.width - stroke_width;
         }
         // Position vertically centered unless we're at the top or bottom of the plot
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        if (y_center - (tooltip_box.height / 2) <= 0){
-            var top = page_origin.y + y_center - (1.5 * arrow_width);
-            var arrow_top = 0;
-        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){
-            var top = page_origin.y + y_center + arrow_width - tooltip_box.height;
-            var arrow_top = tooltip_box.height - (2 * arrow_width);
-        } else {
+        if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+            var top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
+            var arrow_top = border_radius;
+        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+            var top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
+            var arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+        } else { // vertically centered
             var top = page_origin.y + y_center - (tooltip_box.height / 2);
             var arrow_top = (tooltip_box.height / 2) - arrow_width;
         }        
@@ -275,7 +276,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
         // Connect to click site with a left or right arrow
         this.tooltips[id].append("div")
             .style("position", "absolute")
-            .attr("class", "lz-data_layer-tooltip-" + arrow_type)
+            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
             .style("left", arrow_left + "px")			 
 				    .style("top", arrow_top + "px");
     };
@@ -614,44 +615,106 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
 
                     });
 
+                // Render gene click area
+                var clickarea = d3.select(this).selectAll("rect").filter(".lz-clickarea")
+                    .data([gene]).enter().append("rect")
+                    .attr("class", "lz-clickarea")
+                    .attr("id", function(d){
+                        return 'g' + d.gene_name.replace(/\W/g,'') + "_clickarea";
+                    }.bind(gene))
+                    .attr("x", function(d){
+                        return d.display_range.start;
+                    }.bind(gene.parent))
+                    .attr("y", function(d){
+                        return ((d.track-1) * this.getTrackHeight());
+                    }.bind(gene.parent))
+                    .attr("width", function(d){
+                        return d.display_range.width;
+                    }.bind(gene.parent))
+                    .attr("height", function(d){
+                        return this.getTrackHeight() - this.layout.track_vertical_spacing;
+                    }.bind(gene.parent))
+                    .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
+                    .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
+
+                // Apply selectable, tooltip, etc. to clickarea
+                if (gene.parent.layout.selectable){
+                    clickarea
+                        .on("mouseover", function(d){
+                            var id = 'g' + d.gene_name.replace(/\W/g,'');
+                            if (this.state.selected_id != id){
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
+                                if (this.layout.tooltip){ this.createTooltip(d, id); }
+                            }
+                        }.bind(gene.parent))
+                        .on("mouseout", function(d){
+                            var id = 'g' + d.gene_name.replace(/\W/g,'');
+                            if (this.state.selected_id != id){
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                                if (this.layout.tooltip){ this.destroyTooltip(id); }
+                            }
+                        }.bind(gene.parent))
+                        .on("click", function(d){
+                            var id = 'g' + d.gene_name.replace(/\W/g,'');
+                            if (this.state.selected_id == id){
+                                this.state.selected_id = null;
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
+                            } else {
+                                if (this.state.selected_id != null){
+                                    d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                                    if (this.layout.tooltip){ this.destroyTooltip(this.state.selected_id); }
+                                }
+                                this.state.selected_id = id;
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                            }
+                        }.bind(gene.parent));
+                    // Apply existing selection from state
+                    if (gene.parent.state.selected_id != null){
+                        d3.select("#" + gene.parent.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                    }
+                }
+
             });
 
-        // Apply selectable, tooltip, etc.
-        if (this.layout.selectable){
-            selection.on("mouseover", function(d){
-                var id = 'g' + d.gene_name.replace(/\W/g,'');
-                if (this.state.selected_id != id){
-                    d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
-                    if (this.layout.tooltip){ this.createTooltip(d, id); }
-                }
-            }.bind(this))
-            .on("mouseout", function(d){
-                var id = 'g' + d.gene_name.replace(/\W/g,'');
-                if (this.state.selected_id != id){
-                    d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                    if (this.layout.tooltip){ this.destroyTooltip(id); }
-                }
-            }.bind(this))
-            .on("click", function(d){
-                var id = 'g' + d.gene_name.replace(/\W/g,'');
-                if (this.state.selected_id == id){
-                    this.state.selected_id = null;
-                    d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
-                } else {
-                    if (this.state.selected_id != null){
-                        d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                        if (this.layout.tooltip){ this.destroyTooltip(this.state.selected_id); }
-                    }
-                    this.state.selected_id = id;
-                    d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
-                }
+    };
 
-            }.bind(this));
-            // Apply existing selection from state
-            if (this.state.selected_id != null){
-                d3.select("#" + this.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
-            }
+    // Reimplement the positionTooltip() method to be gene-specific
+    this.positionTooltip = function(d, id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
         }
+        var arrow_width = 7; // as defined in the default stylesheet
+        var stroke_width = 1; // as defined in the default stylesheet
+        var page_origin = this.getPageOrigin();
+        var tooltip_box = this.tooltips[id].node().getBoundingClientRect();
+        var gene_bbox = d3.select("#g" + d.gene_name.replace(/\W/g,'')).node().getBBox();
+        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        // Position horizontally: attempt to center on the portion of the gene that's visible,
+        // pad to either side if bumping up against the edge of the data layer
+        var gene_center_x = ((d.display_range.start + d.display_range.end) / 2) - (this.layout.bounding_box_padding / 2);
+        var offset_right = Math.max((tooltip_box.width / 2) - gene_center_x, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + gene_center_x - data_layer_width, 0);
+        var left = page_origin.x + gene_center_x - (tooltip_box.width / 2) - offset_left + offset_right;
+        var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right;
+        // Position vertically below the gene unless there's insufficient space
+        if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (gene_bbox.y + gene_bbox.height)){
+            var top = page_origin.y + gene_bbox.y - (tooltip_box.height + stroke_width + arrow_width);
+            var arrow_type = "down";
+            var arrow_top = tooltip_box.height - stroke_width;
+        } else {
+            var top = page_origin.y + gene_bbox.y + gene_bbox.height + stroke_width + arrow_width;
+            var arrow_type = "up";
+            var arrow_top = 0 - stroke_width - arrow_width;
+        }
+        // Apply positions to the main div
+        this.tooltips[id].style("left", left + "px").style("top", top + "px");
+        // Connect to click site with an up or down arrow
+        this.tooltips[id].append("div")
+            .style("position", "absolute")
+            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
+            .style("left", arrow_left + "px")			 
+				    .style("top", arrow_top + "px");
     };
        
     return this;

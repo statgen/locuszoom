@@ -96,9 +96,11 @@ LocusZoom.DataLayer = function(id, layout, state) {
     // (useful for custom reimplementations this.positionTooltip())
     this.getPageOrigin = function(){
         var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
+        var x_scroll = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_scroll = document.documentElement.scrollTop || document.body.scrollTop;
         return {
-            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
-            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top,
+            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left + x_scroll,
+            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll,
         };
     };
     
