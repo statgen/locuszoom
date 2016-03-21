@@ -41,56 +41,69 @@ LocusZoom.DataLayer = function(id, layout, state) {
         if (typeof id != "string"){
             throw ("Unable to create tooltip: id is not a string");
         }
-        this.tooltips[id] = d3.select(this.parent.parent.svg.node().parentNode).append("div")
-            .attr("class", "lz-data_layer-tooltip")
-            .attr("id", this.parent.getBaseId() + ".tooltip." + id);
+        this.tooltips[id] = {
+            data: d,
+            arrow: null,
+            selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
+                .attr("class", "lz-data_layer-tooltip")
+                .attr("id", this.parent.getBaseId() + ".tooltip." + id)
+        }
         if (this.layout.tooltip.html){
-            this.tooltips[id].html(LocusZoom.parseFields(d, this.layout.tooltip.html));
+            this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         } else if (this.layout.tooltip.divs){
             var i, div, selection;
             for (i in this.layout.tooltip.divs){
                 div = this.layout.tooltip.divs[i];
-                selection = this.tooltips[id].append("div");
+                selection = this.tooltips[id].selector.append("div");
                 if (div.id){ selection.attr("id", div.id); }
                 if (div.class){ selection.attr("class", div.class); }
                 if (div.style){ selection.style(div.style); }
                 if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
             }
         }
-        this.positionTooltip(d, id);
+        this.positionTooltip(id);
     };
     this.destroyTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to destroy tooltip: id is not a string");
         }
         if (this.tooltips[id]){
-            this.tooltips[id].remove();
+            if (typeof this.tooltips[id].selector == "object"){
+                this.tooltips[id].selector.remove();
+            }
             delete this.tooltips[id];
         }
     };
     this.destroyAllTooltips = function(){
         var id;
         for (id in this.tooltips){
-            this.tooltips[id].remove();
-            delete this.tooltips[id];
+            this.destroyTooltip(id);
         }
     };
-    this.positionTooltip = function(d, id){
+    this.positionTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
         }
         // Position the div itself
-        this.tooltips[id]
+        this.tooltips[id].selector
             .style("left", (d3.event.pageX) + "px")			 
 				    .style("top", (d3.event.pageY) + "px");
-        // Connect to click site with an arrow in the top left
-        this.tooltips[id].append("div")
-            .style("position", "absolute")
-            .attr("class", "lz-data_layer-tooltip-arrow_top_left")
+        // Create / update position on arrow connecting tooltip to data
+        if (!this.tooltips[id].arrow){
+            this.tooltips[id].arrow = this.tooltips[id].selector.append("div")
+                .style("position", "absolute")
+                .attr("class", "lz-data_layer-tooltip-arrow_top_left");
+        }
+        this.tooltips[id].arrow
             .style("left", "-1px")			 
 				    .style("top", "-1px");
-        
     };
+    this.positionAllTooltips = function(){
+        var id;
+        for (id in this.tooltips){
+            this.positionTooltip(id);
+        }
+    }
 
     // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
     // (useful for custom reimplementations this.positionTooltip())
@@ -161,6 +174,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
     this.svg.clipRect
         .attr("width", this.parent.layout.cliparea.width)
         .attr("height", this.parent.layout.cliparea.height);
+    this.positionAllTooltips();
     return this;
 };
 
