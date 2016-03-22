@@ -78,12 +78,16 @@ describe('LocusZoom Child Singletons', function(){
             var expected_list = ["chromosome"];
             assert.deepEqual(returned_list, expected_list);
         });
-        it("should throw an exception if passed a function name that has not been defined", function(){
-            try {
-                LocusZoom.LabelFunctions.getLabel("nonexistent", this.instance.state);
-            } catch (error){
-                assert.ok(error);
-            }
+        it("should throw an exception if asked to get a function that has not been defined", function(){
+            assert.throws(function(){
+                LocusZoom.LabelFunctions.get("nonexistent", this.instance.state);
+            });
+        });
+        it('should throw an exception when adding a new label function with an already in use name', function(){
+            assert.throws(function(){
+                var foo = function(state){ return "end: " + state.end; };
+                LocusZoom.LabelFunctions.add("chromosome", foo);
+            });
         });
         describe("choromosome", function() {
             it('should return a chromosome label for any state', function(){
@@ -133,12 +137,16 @@ describe('LocusZoom Child Singletons', function(){
             var expected_list = ["numerical_bin", "categorical_bin"];
             assert.deepEqual(returned_list, expected_list);
         });
-        it('should throw an exception if passed a function name that has not been defined', function(){
-            try {
+        it('should throw an exception if asked to get a function that has not been defined', function(){
+            assert.throws(function(){
                 LocusZoom.ScaleFunctions.get("nonexistent", this.instance.state);
-            } catch (error){
-                assert.ok(error);
-            }
+            });
+        });
+        it('should throw an exception when adding a new scale function with an already in use name', function(){
+            assert.throws(function(){
+                var foo = function(parameters, value){ return "#FFFFFF"; };
+                LocusZoom.ScaleFunctions.add("categorical_bin", foo);
+            });
         });
         describe("numerical_bin", function() {
             it('should work with arbitrarily many breaks/values', function(){
@@ -186,6 +194,93 @@ describe('LocusZoom Child Singletons', function(){
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, 135), "value-oxygen");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, ["tungsten"]), "value-oxygen");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters), "value-oxygen");
+            });
+        });
+    });
+
+    describe("Data Layers", function() {
+        it('LocusZoom should have a DataLayers singleton', function(){
+            LocusZoom.should.have.property('DataLayers').which.is.an.Object;
+        });
+       it('should have a method to list available data layers', function(){
+            LocusZoom.DataLayers.should.have.property('list').which.is.a.Function;
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "genes"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it('should have a general method to get a data layer by name', function(){
+            LocusZoom.DataLayers.should.have.property('get').which.is.a.Function;
+        });
+        it('should have a method to add a data layer', function(){
+            LocusZoom.DataLayers.should.have.property('add').which.is.a.Function;
+            var foo = function(id, layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = {};
+                this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+                this.render = function(){ return "foo"; };
+                return this;
+            };
+            LocusZoom.DataLayers.add("foo", foo);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "genes", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", "bar", {});
+            var expected_value = new foo("bar", {});
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+        });
+        it('should have a method to change or delete existing data layers', function(){
+            LocusZoom.DataLayers.should.have.property('set').which.is.a.Function;
+            var foo_new = function(id, layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = { foo: "bar" };
+                this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+                this.render = function(){ return "bar"; };
+                return this;
+            };
+            LocusZoom.DataLayers.set("foo", foo_new);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "genes", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", "baz", {});
+            var expected_value = new foo_new("baz", {});
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+            LocusZoom.DataLayers.set("foo");
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "genes"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it('should throw an exception if asked to get a function that has not been defined', function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("nonexistent", this.instance.state);
+            });
+        });
+        it('should throw an exception when trying to add a new data layer that is not a function', function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.add("nonfunction", "foo");
+            });
+        });
+        it('should throw an exception when adding a new data layer with an already in use name', function(){
+            assert.throws(function(){
+                var foo = function(id, layout){
+                    LocusZoom.DataLayer.apply(this, arguments);
+                    this.DefaultLayout = {};
+                    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+                    this.render = function(){ return "foo"; };
+                    return this;
+                };
+                LocusZoom.DataLayers.add("scatter", "foo");
+            });
+        });
+        it('should throw an exception if asked to get a data layer without passing both an ID and a layout', function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter");
+            });
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter", "foo");
             });
         });
     });

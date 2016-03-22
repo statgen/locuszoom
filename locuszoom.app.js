@@ -1695,7 +1695,7 @@ LocusZoom.LabelFunctions = (function() {
     };
 
     obj.add = function(name, fn) {
-        if (functions.name) {
+        if (functions[name]) {
             throw("label function already exists with name: " + name);
         } else {
             obj.set(name, fn);
@@ -1742,7 +1742,7 @@ LocusZoom.ScaleFunctions = (function() {
                 return functions[name](parameters, value);
             }
         } else {
-            throw("color function [" + name + "] not found");
+            throw("scale function [" + name + "] not found");
         }
     };
 
@@ -1755,8 +1755,8 @@ LocusZoom.ScaleFunctions = (function() {
     };
 
     obj.add = function(name, fn) {
-        if (functions.name) {
-            throw("color function already exists with name: " + name);
+        if (functions[name]) {
+            throw("scale function already exists with name: " + name);
         } else {
             obj.set(name, fn);
         }
