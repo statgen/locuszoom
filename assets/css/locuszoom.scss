@@ -72,27 +72,26 @@ $namespace: "lz";
     font-weight: 600;
   }
 
-  circle.#{$namespace}-position {
+  path.#{$namespace}-data_layer-scatter {
     stroke: #181818;
     stroke-width: 1;
   }
 
-  circle.#{$namespace}-position:hover {
+  path.#{$namespace}-data_layer-scatter:hover {
     stroke: #484848;
     stroke-width: 3;
   }
 
-  circle.#{$namespace}-position.#{$namespace}-selected {
+  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected {
     stroke-width: 4;
   }
 
-  circle.#{$namespace}-position.#{$namespace}-selected:hover {
+  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected:hover {
     stroke-width: 4;
   }
 
   text.#{$namespace}-gene.#{$namespace}-label {
     font-style: italic;
-    font-size: 12px;
   }
 
   rect.#{$namespace}-gene.#{$namespace}-boundary {
