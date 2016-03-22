@@ -162,31 +162,35 @@ LocusZoom.Instance.prototype.initialize = function(){
         },
         initialize: function(){
             // Resize handle
-            this.resize_handle = this.svg.append("g")
-                .attr("id", this.parent.id + ".ui.resize_handle");
-            this.resize_handle.append("path")
-                .attr("class", "lz-ui-resize_handle")
-                .attr("d", "M 0,16, L 16,0, L 16,16 Z");
-            var resize_drag = d3.behavior.drag();
-            //resize_drag.origin(function() { return this; });
-            resize_drag.on("dragstart", function(){
-                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                this.is_resize_dragging = true;
-            }.bind(this));
-            resize_drag.on("dragend", function(){
-                this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                this.is_resize_dragging = false;
-            }.bind(this));
-            resize_drag.on("drag", function(){
-                this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
-            }.bind(this.parent));
-            this.resize_handle.call(resize_drag);
+            if (this.parent.layout.resizable == "manual"){
+                this.resize_handle = this.svg.append("g")
+                    .attr("id", this.parent.id + ".ui.resize_handle");
+                this.resize_handle.append("path")
+                    .attr("class", "lz-ui-resize_handle")
+                    .attr("d", "M 0,16, L 16,0, L 16,16 Z");
+                var resize_drag = d3.behavior.drag();
+                //resize_drag.origin(function() { return this; });
+                resize_drag.on("dragstart", function(){
+                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
+                    this.is_resize_dragging = true;
+                }.bind(this));
+                resize_drag.on("dragend", function(){
+                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
+                    this.is_resize_dragging = false;
+                }.bind(this));
+                resize_drag.on("drag", function(){
+                    this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
+                }.bind(this.parent));
+                this.resize_handle.call(resize_drag);
+            }
             // Render all UI elements
             this.render();
         },
         render: function(){
-            this.resize_handle
-                .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
+            if (this.parent.layout.resizable == "manual"){
+                this.resize_handle
+                    .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
+            }
         }
     };
     this.ui.initialize();
