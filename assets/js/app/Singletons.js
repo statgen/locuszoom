@@ -399,7 +399,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
             + this.layout.label_exon_spacing
             + this.layout.exon_height
             + this.layout.track_vertical_spacing;
-    }
+    };
     
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset

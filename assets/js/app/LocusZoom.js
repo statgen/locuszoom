@@ -38,12 +38,6 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector === "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
-    if (typeof layout === "undefined"){
-        layout = {};
-    }
-    if (typeof state === "undefined"){
-        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
-    }
     var instance;
     d3.select(selector).each(function(){
         instance = LocusZoom.addInstanceToDivById(this.id, datasource, layout, state);

@@ -271,19 +271,14 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
     }
 
     Q.all(this.remap_promises)
-        .then(this.mapToComplete)
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
-        }.bind(this));
+        }.bind(this))
+        .done();
 
     return this;
     
-};
-
-// Logic to fire when an instance has finished mapping to a new region
-LocusZoom.Instance.prototype.mapToComplete = function(){
-    // no actions defined!
 };
 
 // Refresh an instance's data from sources without changing position

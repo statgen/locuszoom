@@ -10,7 +10,7 @@ var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
 
-describe('LocusZoom Child Singletons', function(){
+describe('LocusZoom Singletons', function(){
 
     // Load all javascript files
     jsdom({
@@ -281,6 +281,31 @@ describe('LocusZoom Child Singletons', function(){
             });
             assert.throws(function(){
                 LocusZoom.DataLayers.get("scatter", "foo");
+            });
+        });
+        describe("predefined data layers", function() {
+            beforeEach(function(){
+                this.list = LocusZoom.DataLayers.list();
+            });
+            it('should each take its ID from the arguments provided', function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, "foo", {});
+                    assert.equal(foo.id, "foo");
+                });
+            });
+            it('should each take its layout from the arguments provided and mergit with a built-in DefaultLayout', function(){
+                this.list.forEach(function(name){
+                    var layout = { test: 123 };
+                    var foo = new LocusZoom.DataLayers.get(name, "foo", layout);
+                    var expected_layout = LocusZoom.mergeLayouts(layout, foo.DefaultLayout);
+                    assert.deepEqual(foo.layout, expected_layout);
+                });
+            });
+            it('should each implement a render function', function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, "foo", {});
+                    foo.should.have.property("render").which.is.a.Function;
+                });
             });
         });
     });
