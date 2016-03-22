@@ -234,6 +234,52 @@ describe('LocusZoom Core', function(){
             });
         });
 
+        describe("Parse Fields", function() {
+            it('should have a parseFields function', function() {
+                LocusZoom.parseFields.should.be.a.Function;
+            });
+            it('should require that data be present and be an object', function() {
+                assert.throws(function(){
+                    LocusZoom.parseFields("foo", "html");
+                });
+                assert.throws(function(){
+                    LocusZoom.parseFields(123, "html");
+                });
+            });
+            it('should require that html be present and be a string', function() {
+                assert.throws(function(){
+                    LocusZoom.parseFields({}, {});
+                });
+                assert.throws(function(){
+                    LocusZoom.parseFields({}, 123);
+                });
+                assert.throws(function(){
+                    LocusZoom.parseFields({}, null);
+                });
+            });
+            it('should return html untouched if passed a null or empty data object', function() {
+                assert.equal(LocusZoom.parseFields(null, "foo"), "foo");
+                assert.equal(LocusZoom.parseFields({}, "foo"), "foo");
+            });
+            it("should parse every matching scalar field from a data object into the html string", function() {
+                var data, html, expected_value, returned_value;
+                data = { field1: 123, field2: "foo" };
+                html = "<strong>{{field1}} and {{field2}}</strong>";
+                expected_value = "<strong>123 and foo</strong>";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+                html = "<strong>{{field1}} and {{field2}} or {{field1}}{{field1}}</strong>";
+                expected_value = "<strong>123 and foo or 123123</strong>";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
+            it("should skip parsing of non-scalar fields but not throw an error", function() {
+                var data, html, expected_value, returned_value;
+                data = { field1: 123, field2: "foo", field3: { foo: "bar" }, field4: [ 4, 5, 6 ], field5: true, field6: NaN };
+                html = "<strong>{{field1}}, {{field2}}, {{field3}}, {{field4}}, {{field5}}, {{field6}}</strong>";
+                expected_value = "<strong>123, foo, {{field3}}, {{field4}}, true, NaN</strong>";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
+        });
+
         
     });
 
