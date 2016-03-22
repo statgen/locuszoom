@@ -297,7 +297,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
             + this.layout.label_exon_spacing
             + this.layout.exon_height
             + this.layout.track_vertical_spacing;
-    }
+    };
 
     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
     
