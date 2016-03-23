@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.2"
+    version: "0.3.3"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -270,7 +270,7 @@ LocusZoom.DefaultLayout = {
     height: 700,
     min_width: 300,
     min_height: 400,
-    resizable: false,
+    resizable: "manual",
     panels: {
         positions: {
             origin: { x: 0, y: 0 },
