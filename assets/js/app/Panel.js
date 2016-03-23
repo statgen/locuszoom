@@ -92,12 +92,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
         }
     }.bind(this));
 
-    // x extent (todo: make this definable from the layout object somehow?)
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
-    };
-
-    // Add data layers (which define y extents)
+    // Add data layers (which define x and y extents)
     if (typeof this.layout.data_layers == "object"){
         var data_layer_id;
         for (data_layer_id in this.layout.data_layers){
@@ -256,10 +251,18 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
-    // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
+    // Generate xExtent function (defaults to the state range defined by "start" and "end")
+    if (layout.x_axis){
+        this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
+    } else {
+        this.xExtent = function(){
+            return d3.extent([this.parent.state.start, this.parent.state.end]);
+        };
+    }
+    // Generate the yExtent function
     if (layout.y_axis){
         var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
-        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
         this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
     }
 

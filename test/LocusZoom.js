@@ -72,6 +72,8 @@ describe('LocusZoom Core', function(){
             assert.deepEqual(LocusZoom.prettyTicks([0.01, 0.23]), [0, 0.05, 0.10, 0.15, 0.20, 0.25]);
             assert.deepEqual(LocusZoom.prettyTicks([1, 21], "low", 10), [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22]);
             assert.deepEqual(LocusZoom.prettyTicks([1, 9], "high"), [0, 2, 4, 6, 8]);
+            assert.deepEqual(LocusZoom.prettyTicks([-18, 76]), [-20, 0, 20, 40, 60, 80]);
+            assert.deepEqual(LocusZoom.prettyTicks([-187, 762]), [-200, 0, 200, 400, 600, 800]);
         });
 
         it('should have a method for adding instances to a div by ID', function(){

@@ -151,7 +151,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     
     var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
     var base_toFixed = 0;
-    if (base < 1){
+    if (base < 1 && base != 0){
         base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
     }
     
@@ -167,12 +167,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     }
     
     var ticks = [];
-    var i;
-    if (range[0] <= unit){
-        i = 0;
-    } else {
-        i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
-    }
+    var i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     while (i < range[1]){
         ticks.push(i);
         i += unit;
@@ -1135,12 +1130,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
         }
     }.bind(this));
 
-    // x extent (todo: make this definable from the layout object somehow?)
-    this.xExtent = function(){
-        return d3.extent([this.parent.state.start, this.parent.state.end]);
-    };
-
-    // Add data layers (which define y extents)
+    // Add data layers (which define x and y extents)
     if (typeof this.layout.data_layers == "object"){
         var data_layer_id;
         for (data_layer_id in this.layout.data_layers){
@@ -1299,10 +1289,18 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
-    // If the layout specifies a y axis then generate y axis extent function for the appropriate axis (default to y1)
+    // Generate xExtent function (defaults to the state range defined by "start" and "end")
+    if (layout.x_axis){
+        this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
+    } else {
+        this.xExtent = function(){
+            return d3.extent([this.parent.state.start, this.parent.state.end]);
+        };
+    }
+    // Generate the yExtent function
     if (layout.y_axis){
         var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
-        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getYExtent();
+        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
         this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
     }
 
@@ -1583,17 +1581,19 @@ LocusZoom.DataLayer.DefaultLayout = {
 };
 
 // Generate a y-axis extent functions based on the layout
-LocusZoom.DataLayer.prototype.getYExtent = function(){
+LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+    var axis = dimension + "_axis";
     return function(){
         var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout.y_axis.field];
+            return +d[this.layout[axis].field];
         }.bind(this));
         // Apply upper/lower buffers, if applicable
-        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
-        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        var original_extent_span = extent[1] - extent[0];
+        if (!isNaN(this.layout[axis].lower_buffer)){ extent[0] -= original_extent_span * this.layout[axis].lower_buffer; }
+        if (!isNaN(this.layout[axis].upper_buffer)){ extent[1] += original_extent_span * this.layout[axis].upper_buffer; }
         // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
-        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
+        if (!isNaN(this.layout[axis].floor)){ extent[0] = Math.max(extent[0], this.layout[axis].floor); }
+        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = Math.min(extent[1], this.layout[axis].ceiling); }
         return extent;
     }.bind(this);
 };
