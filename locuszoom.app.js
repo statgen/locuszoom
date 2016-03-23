@@ -659,7 +659,7 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
     //calculate conditional score statistic
     for(i = 0; i< chain.body.length; i++) {
         var U_x = chain.body[i][this.params.teststat];
-        var N = chain.body[i][this.params.Nstat] || 2000; //TODO: REMOVE 2000 
+        var N = chain.body[i][this.params.Nstat] || 9994; //TODO: REMOVE 9994 
         var U_XgZ = U_x - V_XZ[i] / V_ZZ * U_Z;
         var V_XgZ = N * (V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i]);
         var T = U_XgZ / Math.sqrt(V_XgZ);
@@ -669,10 +669,7 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
         } else {
             chain.body[i][outnames[0]] = p;
         }
-        chain.body[i].V_XX = V_XX[i];
-        chain.body[i].V_XZ = V_XZ[i];
-        chain.body[i].condT = T;
-        chain.body[i].origT = chain.body[i][this.params.teststat]/ Math.sqrt(V_XX[i]);
+        chain.body[i].condScoreTestStat = T;
         chain.header.condindex = condIdx;
     }
 

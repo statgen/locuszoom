@@ -288,6 +288,7 @@ LocusZoom.Data.ConditionalSource = function(init) {
     this.parseInit(init);
     this.params.teststat = "scoreTestStat";
     this.params.Nstat = "N";
+    this.params.defaultN = 9994; //TODO: Remove 9994
 };
 LocusZoom.Data.ConditionalSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.ConditionalSource.prototype.constructor = LocusZoom.Data.ConditionalSource;
@@ -312,8 +313,10 @@ LocusZoom.Data.ConditionalSource.prototype.getURL = function(state, chain, field
 LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var V_XX = [];
     var V_XZ = [];
+    var N_x = [];
     var V_ZZ = 0;
     var U_Z = 0;
+    var N_z = 0;
     var i=0, j=0, k=0;
     var condIdx = -1;
 
@@ -325,9 +328,11 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
         if (chain.body[i].position === resp.data.position1[j]) {
             if (resp.data.variant_name1[j] === resp.data.variant_name2[j]) {
                 V_XX[i] = resp.data.statistic[j];
+                N_X[i] = chain.body[i][this.params.NStat] || this.params.defaultN;
                 if (resp.data.variant_name1[j] === chain.header.condvar) {
                     V_ZZ = resp.data.statistic[j];
                     U_Z = chain.body[i][this.params.teststat];
+                    N_Z = N_X[i];
                     condIdx = i;
                 }
             }
@@ -352,9 +357,9 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
     //calculate conditional score statistic
     for(i = 0; i< chain.body.length; i++) {
         var U_x = chain.body[i][this.params.teststat];
-        var N = chain.body[i][this.params.Nstat] || 2000; //TODO: REMOVE 2000 
         var U_XgZ = U_x - V_XZ[i] / V_ZZ * U_Z;
-        var V_XgZ = N * (V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i]);
+        //assumes that both Y~X and Y~Z have same N
+        var V_XgZ = N_X[i] * (V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i]);
         var T = U_XgZ / Math.sqrt(V_XgZ);
         var p = 2*LocusZoom.jStat.normalCDF(-Math.abs(T),0,1);
         if (trans && trans[0]) {
@@ -362,10 +367,7 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
         } else {
             chain.body[i][outnames[0]] = p;
         }
-        chain.body[i].V_XX = V_XX[i];
-        chain.body[i].V_XZ = V_XZ[i];
-        chain.body[i].condT = T;
-        chain.body[i].origT = chain.body[i][this.params.teststat]/ Math.sqrt(V_XX[i]);
+        chain.body[i].condScoreTestStat = T;
         chain.header.condindex = condIdx;
     }
 
