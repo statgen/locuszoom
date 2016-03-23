@@ -276,15 +276,18 @@ LocusZoom.DefaultLayout = {
     height: 700,
     min_width: 300,
     min_height: 400,
+    resizable: "manual",
+    aspect_ratio: 1,
     panels: {
         positions: {
-            origin: { x: 0, y: 0 },
             width:      700,
             height:     350,
+            origin: { x: 0, y: 0 },
             min_width:  300,
             min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0 },
             margin: { top: 20, right: 20, bottom: 35, left: 50 },
             axes: {
                 x: {
@@ -329,13 +332,14 @@ LocusZoom.DefaultLayout = {
             }
         },
         genes: {
-            origin: { x: 0, y: 350 },
             width:      700,
             height:     350,
+            origin: { x: 0, y: 350 },
             min_width:  300,
             min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {

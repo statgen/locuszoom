@@ -214,3 +214,10 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
   border-right: #{$tooltip_arrow_width}px solid #{$default_black};
 }
+
+.#{$namespace}-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden;
+}
+

@@ -156,7 +156,9 @@ describe('LocusZoom.Instance', function(){
                 this.instance.ui.should.be.an.Object;
                 this.instance.ui.svg.should.be.an.Object;
                 assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#instance_id\\.ui").html());
-                assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+                if (this.instance.layout.resizable == "manual"){
+                    assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+                }
             });
             it('should be hidden by default', function(){
                 assert.equal(this.instance.ui.svg.style("display"), "none");

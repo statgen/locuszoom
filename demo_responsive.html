@@ -9,16 +9,46 @@
   <script src="locuszoom.vendor.min.js" type="text/javascript"></script>
   <script src="locuszoom.app.js" type="text/javascript"></script>
   <link rel="stylesheet" type="text/css" href="locuszoom.css"/>
+</head>
+<body style="background-color: #CCCCCC; margin: 10px;" onload="initPage()">
+  <div style="padding-bottom: 10px;">
+    <h3 style="display: inline; padding-right: 30px;">LocusZoom Responsive Demo</h3>
+    <form style="display: inline;">
+      <label for="lz-1_region">Region: </label>
+      <input type="text" size="25" id="lz-1_region">
+      <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
+    </form>
+  </div>
+  <div style="padding-bottom: 10px;">
+    <div id="tophits"></div>
+  </div>
+  <div id="lz-1" class="lz-container-responsive" data-region="10:114550452-115067678"></div>
 
   <script type="text/javascript">
-    var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
-    var ds = new LocusZoom.DataSources();
-    ds.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
-    ds.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
-    ds.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
 
-    // Variable to store our demo instance
-    var demo_instance;
+    // Define LocusZoom Data Sources object
+    var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
+    var data_sources = new LocusZoom.DataSources();
+    data_sources.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
+    data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
+    data_sources.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
+
+    // Define custom LocusZoom layout object.
+    // This will be merged with the default layout (LocusZoom.DefaultLayout)
+    // so we only need to specify the values we want to change.
+    var layout = {
+      resizable: "responsive",
+      aspect_ratio: (16/9),
+    };
+
+    // Populate the div with a LocusZoom plot
+    var demo_instance = LocusZoom.populate("#lz-1", data_sources, layout);
+
+    /**********************************************************************************
+     All of the following code sets up an example form with top hit buttons to jump to
+     different regions in the plot, as an example of some ways to build an app around
+     a single LocusZoom plot.
+    **********************************************************************************/
 
     var topHits = [
       ["16:53819169", "FTO"],
@@ -89,40 +119,17 @@
     }
 
     function listHits() {
-      $("#tophits").empty().append("<ul>").children(0).append(topHits.map(function(e) {
-        return "<li><a href='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
+      $("#tophits").empty().append(topHits.map(function(e) {
+        return "<button onclick='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </button>";
       }))
     }
 
     function initPage() {
       listHits();
-      demo_instance = LocusZoom.populate(".lz-instance", ds);
       populateForms();
-      $("#lz-1_hits").html(topHits.map(function(k) {return "<option>" + k + "</option>"}).join(""));
     };
 
   </script>
-</head>
-<body style="background-color: #CCCCCC; margin: 10px;" onload="initPage()">
-  <table border="0" cellspacing="10">
-    <tr>
-      <td>
-        <div>
-          <form>
-            <b>lz-1</b> &middot;
-            <label for="lz-1_region">Region: </label>
-            <input type="text" size=25 id="lz-1_region">
-            <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
-          </form>
-          <br>
-        </div>
-        <div id="lz-1" class="lz-instance" data-region="10:114550452-115067678" style="width: 100%; position: relative; display: inline-block; vertical-align: top; overflow:hidden; padding-bottom: 100%;"></div>
-      </td>
-      <td style="vertical-align:top">
-        <h3>Top Hits</h3>
-        <div id="tophits"></div>
-      </td>
-    </tr>
-  </table>
+
 </body>
 </html>

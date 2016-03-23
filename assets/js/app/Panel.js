@@ -53,11 +53,12 @@ LocusZoom.Panel.DefaultState = {
 LocusZoom.Panel.DefaultLayout = {
     width:  0,
     height: 0,
+    origin: { x: 0, y: 0 },
     min_width: 0,
     min_height: 0,
     proportional_width: 1,
     proportional_height: 1,
-    origin: { x: 0, y: 0 },
+    proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     cliparea: {
         height: 0,
