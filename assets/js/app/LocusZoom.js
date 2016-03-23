@@ -137,7 +137,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     
     var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
     var base_toFixed = 0;
-    if (base < 1){
+    if (base < 1 && base != 0){
         base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
     }
     
@@ -153,12 +153,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     }
     
     var ticks = [];
-    var i;
-    if (range[0] <= unit){
-        i = 0;
-    } else {
-        i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
-    }
+    var i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     while (i < range[1]){
         ticks.push(i);
         i += unit;
