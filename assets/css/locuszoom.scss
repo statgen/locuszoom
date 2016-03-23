@@ -105,3 +105,9 @@ $namespace: "lz";
   }
 
 }
+
+.#{$namespace}-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden;
+}
