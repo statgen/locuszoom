@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.1"
+    version: "0.3.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
