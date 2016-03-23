@@ -40,17 +40,19 @@ LocusZoom.DataLayer.DefaultLayout = {
 };
 
 // Generate a y-axis extent functions based on the layout
-LocusZoom.DataLayer.prototype.getYExtent = function(){
+LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+    var axis = dimension + "_axis";
     return function(){
         var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout.y_axis.field];
+            return +d[this.layout[axis].field];
         }.bind(this));
         // Apply upper/lower buffers, if applicable
-        if (!isNaN(this.layout.y_axis.lower_buffer)){ extent[0] *= 1 - this.layout.y_axis.lower_buffer; }
-        if (!isNaN(this.layout.y_axis.upper_buffer)){ extent[1] *= 1 + this.layout.y_axis.upper_buffer; }
+        var original_extent_span = extent[1] - extent[0];
+        if (!isNaN(this.layout[axis].lower_buffer)){ extent[0] -= original_extent_span * this.layout[axis].lower_buffer; }
+        if (!isNaN(this.layout[axis].upper_buffer)){ extent[1] += original_extent_span * this.layout[axis].upper_buffer; }
         // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout.y_axis.floor)){ extent[0] = Math.max(extent[0], this.layout.y_axis.floor); }
-        if (!isNaN(this.layout.y_axis.ceiling)){ extent[1] = Math.min(extent[1], this.layout.y_axis.ceiling); }
+        if (!isNaN(this.layout[axis].floor)){ extent[0] = Math.max(extent[0], this.layout[axis].floor); }
+        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = Math.min(extent[1], this.layout[axis].ceiling); }
         return extent;
     }.bind(this);
 };
