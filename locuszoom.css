@@ -47,19 +47,18 @@
   .lz-locuszoom .lz-axis .lz-label {
     font-size: 12px;
     font-weight: 600; }
-  .lz-locuszoom circle.lz-position {
+  .lz-locuszoom path.lz-data_layer-scatter {
     stroke: #181818;
     stroke-width: 1; }
-  .lz-locuszoom circle.lz-position:hover {
+  .lz-locuszoom path.lz-data_layer-scatter:hover {
     stroke: #484848;
     stroke-width: 3; }
-  .lz-locuszoom circle.lz-position.lz-selected {
+  .lz-locuszoom path.lz-data_layer-scatter.lz-selected {
     stroke-width: 4; }
-  .lz-locuszoom circle.lz-position.lz-selected:hover {
+  .lz-locuszoom path.lz-data_layer-scatter.lz-selected:hover {
     stroke-width: 4; }
   .lz-locuszoom text.lz-gene.lz-label {
-    font-style: italic;
-    font-size: 12px; }
+    font-style: italic; }
   .lz-locuszoom rect.lz-gene.lz-boundary {
     stroke: #000099;
     stroke-width: 1; }

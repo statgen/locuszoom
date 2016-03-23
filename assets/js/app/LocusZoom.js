@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.0"
+    version: "0.3.2"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -36,13 +36,7 @@ LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
 // Automatically detect divs by class and populate them with default LocusZoom instances
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector === "undefined"){
-        selector = ".lz-instance";
-    }
-    if (typeof layout === "undefined"){
-        layout = JSON.parse(JSON.stringify(LocusZoom.DefaultLayout));
-    }
-    if (typeof state === "undefined"){
-        state = JSON.parse(JSON.stringify(LocusZoom.DefaultState));
+        throw ("LocusZoom.populate selector not defined");
     }
     var instance;
     d3.select(selector).each(function(){
@@ -143,7 +137,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     
     var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
     var base_toFixed = 0;
-    if (base < 1){
+    if (base < 1 && base != 0){
         base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
     }
     
@@ -159,12 +153,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     }
     
     var ticks = [];
-    var i;
-    if (range[0] <= unit){
-        i = 0;
-    } else {
-        i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
-    }
+    var i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     while (i < range[1]){
         ticks.push(i);
         i += unit;
@@ -222,6 +211,38 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
+// Merge two layout objects
+// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+// Ensures that all values defined in the second layout are at least present in the first
+// Favors values defined in the first layout if values are defined in both but different
+LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
+    if (typeof custom_layout != "object" || typeof default_layout != "object"){
+        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+    }
+    for (var property in default_layout) {
+        if (!default_layout.hasOwnProperty(property)){ continue; }
+        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity
+        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+        var default_type = typeof default_layout[property];
+        // Unsupported property types: throw an exception
+        if (custom_type == "function" || default_type == "function"){
+            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
+        }
+        // Undefined custom value: pull the default value
+        if (custom_type == "undefined"){
+            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+            continue;
+        }
+        // Both values are objects: merge recursively
+        if (custom_type == "object" && default_type == "object"){
+            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
+            continue;
+        }
+    }
+    return custom_layout;
+};
+
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
@@ -255,19 +276,27 @@ LocusZoom.DefaultLayout = {
             },
             data_layers: {
                 positions: {
-                    class: "PositionsDataLayer",
+                    type: "scatter",
+                    point_shape: "circle",
+                    point_size: 40,
+                    point_label_field: "id",
+                    fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
+                    x_axis: {
+                        field: "position"
+                    },
                     y_axis: {
                         axis: 1,
-                        data: "pvalue|neglog10",
+                        field: "pvalue|neglog10",
                         floor: 0,
                         upper_buffer: 0.05
                     },
                     color: {
-                        function: "numeric_cut",
+                        field: "ld:state",
+                        scale_function: "numerical_bin",
                         parameters: {
                             breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            colors: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
-                            null_color: "#B8B8B8"
+                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            null_value: "#B8B8B8"
                         }
                     }
                 }
@@ -284,7 +313,8 @@ LocusZoom.DefaultLayout = {
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {
-                    class: "GenesDataLayer"
+                    type: "genes",
+                    fields: ["gene:gene"]
                 }
             }
         }
