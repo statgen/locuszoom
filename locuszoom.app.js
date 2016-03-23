@@ -359,7 +359,7 @@ LocusZoom.DefaultLayout = {
                         divs: [
                             { html: "<strong>{{gene_name}}</strong>" },
                             { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={{gene_name}}\" target=\"_new\">EXAC Page</a>" }
+                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">EXAC Page</a>" }
                         ]
                     }
                 }
@@ -2069,6 +2069,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
         this.metadata.gene_track_index = { 1: [] };
 
         this.data.map(function(d, g){
+
+            // If necessary, split combined gene id / version fields into discrete fields.
+            // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
+            if (this.data[g].gene_id && this.data[g].gene_id.indexOf('.')){
+                var split = this.data[g].gene_id.split('.');
+                this.data[g].gene_id = split[0];
+                this.data[g].gene_version = split[1];
+            }
 
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)

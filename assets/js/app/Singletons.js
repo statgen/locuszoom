@@ -426,6 +426,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
 
         this.data.map(function(d, g){
 
+            // If necessary, split combined gene id / version fields into discrete fields.
+            // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
+            if (this.data[g].gene_id && this.data[g].gene_id.indexOf('.')){
+                var split = this.data[g].gene_id.split('.');
+                this.data[g].gene_id = split[0];
+                this.data[g].gene_version = split[1];
+            }
+
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[g].display_range = {

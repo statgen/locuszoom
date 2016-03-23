@@ -345,7 +345,7 @@ LocusZoom.DefaultLayout = {
                         divs: [
                             { html: "<strong>{{gene_name}}</strong>" },
                             { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/awesome?query={{gene_name}}\" target=\"_new\">EXAC Page</a>" }
+                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">EXAC Page</a>" }
                         ]
                     }
                 }
