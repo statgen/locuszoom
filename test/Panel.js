@@ -113,8 +113,8 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.origin.x.should.be.exactly(0);
             this.panel.layout.origin.y.should.be.exactly(0);
             this.panel.setOrigin(700, 800);
-            this.panel.layout.origin.x.should.be.exactly(500);
-            this.panel.layout.origin.y.should.be.exactly(600);
+            this.panel.layout.origin.x.should.be.exactly(400);
+            this.panel.layout.origin.y.should.be.exactly(225);
         });
         it('should allow setting margin, which sets cliparea origin and dimensions', function(){
             this.panel.setMargin(1, 2, 3, 4);
