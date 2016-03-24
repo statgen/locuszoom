@@ -77,10 +77,10 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     // Set the layout height to a discrete value, by passed argument or responsive logic using the aspect ratio
     if (!isNaN(height) && height >= 0){
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    } else if (this.svg && this.layout.resizable == "responsive"){
+    } else if (this.layout.resizable == "responsive"){
         this.layout.height = this.layout.width / this.layout.aspect_ratio;
     }
-    // Keep aspect ratio in agreement with width and height
+    // Keep aspect ratio and dimensions in agreement
     this.layout.aspect_ratio = this.layout.width / this.layout.height;
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
