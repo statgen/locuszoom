@@ -26,7 +26,7 @@
           </form>
           <br>
         </div>
-        <div id="lz-1" class="lz-instance" data-region="10:114550452-115067678" style="width: 100%; position: relative; display: inline-block; vertical-align: top; overflow:hidden; padding-bottom: 100%;"></div>
+        <div id="lz-1" class="lz-locuszoom-container" data-region="10:114550452-115067678"></div>
       </td>
       <td style="vertical-align:top">
         <h3>Top Hits</h3>
@@ -44,8 +44,15 @@
     data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
     data_sources.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
 
+    // Define custom LocusZoom layout object to allow manual resizing.
+    // This will be merged with the default layout (LocusZoom.DefaultLayout)
+    // so we only need to specify the values we want to change.
+    var layout = {
+      resizable: "manual"
+    };
+
     // Populate the div with a LocusZoom plot using the default layout
-    var demo_instance = LocusZoom.populate("#lz-1", data_sources);
+    var demo_instance = LocusZoom.populate("#lz-1", data_sources, layout);
 
     /**********************************************************************************
      All of the following code sets up an example form with top hit buttons to jump to

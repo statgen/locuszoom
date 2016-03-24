@@ -37,16 +37,8 @@
     data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
     data_sources.addSource("gene", ["GeneLZ", apiBase + "annotation/genes/"]);
 
-    // Define custom LocusZoom layout object.
-    // This will be merged with the default layout (LocusZoom.DefaultLayout)
-    // so we only need to specify the values we want to change.
-    var layout = {
-      resizable: "responsive",
-      aspect_ratio: (16/9),
-    };
-
     // Populate the div with a LocusZoom plot
-    var demo_instance = LocusZoom.populate("#lz-1", data_sources, layout);
+    var demo_instance = LocusZoom.populate("#lz-1", data_sources);
 
     /**********************************************************************************
      All of the following code sets up an example form with top hit buttons to jump to

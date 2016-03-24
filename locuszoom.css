@@ -153,6 +153,10 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   border-bottom: 7px solid rgba(24, 24, 24, 1);
   border-right: 7px solid rgba(24, 24, 24, 1); }
 
+.lz-container {
+  display: inline-block;
+  overflow: hidden; }
+
 .lz-container-responsive {
   width: 100%;
   display: inline-block;

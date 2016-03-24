@@ -286,19 +286,19 @@ LocusZoom.DefaultState = {
 
 // Default Layout
 LocusZoom.DefaultLayout = {
-    width: 700,
-    height: 700,
-    min_width: 300,
-    min_height: 400,
-    resizable: "manual",
-    aspect_ratio: 1,
+    width: 800,
+    height: 450,
+    min_width: 400,
+    min_height: 225,
+    resizable: "responsive",
+    aspect_ratio: (16/9),
     panels: {
         positions: {
-            width:      700,
-            height:     350,
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 0 },
-            min_width:  300,
-            min_height: 200,
+            min_width:  400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
@@ -346,11 +346,11 @@ LocusZoom.DefaultLayout = {
             }
         },
         genes: {
-            width:      700,
-            height:     350,
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 350 },
-            min_width:  300,
-            min_height: 200,
+            min_width: 400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
@@ -800,6 +800,18 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
 
+    // Sanity check layout values
+    // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
+    if (isNaN(this.layout.width) || this.layout.width <= 0){
+        throw ("Instance layout parameter `width` must be a positive number");
+    }
+    if (isNaN(this.layout.height) || this.layout.height <= 0){
+        throw ("Instance layout parameter `width` must be a positive number");
+    }
+    if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0){
+        throw ("Instance layout parameter `aspect_ratio` must be a positive number");
+    }
+
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
     if (this.layout.resizable == "responsive"){
         this.window_onresize = d3.select(window).on("resize.lz-"+this.id, function(){
@@ -832,9 +844,13 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     // Override discrete values if resizing responsively
     if (this.layout.resizable == "responsive"){
         if (this.svg){
-            this.layout.width = this.svg.node().parentNode.getBoundingClientRect().width;
+            this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
         }
         this.layout.height = this.layout.width / this.layout.aspect_ratio;
+        if (this.layout.height < this.layout.min_height){
+            this.layout.height = this.layout.min_height;
+            this.layout.width  = this.layout.height * this.layout.aspect_ratio;
+        }
     }
     // Keep aspect ratio in agreement with dimensions
     this.layout.aspect_ratio = this.layout.width / this.layout.height;
