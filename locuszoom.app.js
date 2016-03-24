@@ -822,20 +822,21 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 // Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
 // If any arguments are missing, use values stored in the layout. Keep everything in agreement.
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-    // Set the layout width to a discrete value, by passed argument or responsive logic
+    // Set discrete layout dimensions based on arguments
     if (!isNaN(width) && width >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
-    } else if (this.svg && this.layout.resizable == "responsive"){
-        this.layout.width = this.svg.node().parentNode.getBoundingClientRect().width;
     }
-    // Set the layout height to a discrete value, by passed argument or responsive logic using the aspect ratio
     if (!isNaN(height) && height >= 0){
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    } else if (this.layout.resizable == "responsive"){
+    }
+    // Override discrete values if resizing responsively
+    if (this.layout.resizable == "responsive"){
+        if (this.svg){
+            this.layout.width = this.svg.node().parentNode.getBoundingClientRect().width;
+        }
         this.layout.height = this.layout.width / this.layout.aspect_ratio;
     }
-    console.log(this.layout);
-    // Keep aspect ratio and dimensions in agreement
+    // Keep aspect ratio in agreement with dimensions
     this.layout.aspect_ratio = this.layout.width / this.layout.height;
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
@@ -853,8 +854,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.initialized){
         this.ui.render();
     }
-    console.log(this.layout);
-    console.log("DONE");
     return this;
 };
 
