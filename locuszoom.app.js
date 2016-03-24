@@ -834,6 +834,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     } else if (this.svg && this.layout.resizable == "responsive"){
         this.layout.height = this.layout.width / this.layout.aspect_ratio;
     }
+    // Keep aspect ratio in agreement with width and height
+    this.layout.aspect_ratio = this.layout.width / this.layout.height;
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
         if (this.layout.resizable == "responsive"){

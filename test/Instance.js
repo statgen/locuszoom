@@ -61,15 +61,19 @@ describe('LocusZoom.Instance', function(){
             this.instance.setDimensions(563, 681);
             this.instance.layout.should.have.property('width').which.is.exactly(563);
             this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.layout.should.have.property('aspect_ratio').which.is.exactly(563/681);
             this.instance.setDimensions(1320.3, -50);
             this.instance.layout.should.have.property('width').which.is.exactly(1320);
             this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.layout.should.have.property('aspect_ratio').which.is.exactly(1320/681);
             this.instance.setDimensions("q", 0);
             this.instance.layout.should.have.property('width').which.is.exactly(1320);
             this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.should.have.property('aspect_ratio').which.is.exactly(1320/LocusZoom.DefaultLayout.min_height);
             this.instance.setDimensions(0, 0);
             this.instance.layout.should.have.property('width').which.is.exactly(LocusZoom.DefaultLayout.min_width);
             this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.should.have.property('aspect_ratio').which.is.exactly(LocusZoom.DefaultLayout.min_width/LocusZoom.DefaultLayout.min_height);
         });
         it('should allow for adding arbitrarily many panels', function(){
             this.instance.addPanel.should.be.a.Function;
