@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.2"
+    version: "0.3.3"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -252,19 +252,22 @@ LocusZoom.DefaultState = {
 
 // Default Layout
 LocusZoom.DefaultLayout = {
-    width: 700,
-    height: 700,
-    min_width: 300,
-    min_height: 400,
+    width: 800,
+    height: 450,
+    min_width: 400,
+    min_height: 225,
+    resizable: "responsive",
+    aspect_ratio: (16/9),
     panels: {
         positions: {
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 0 },
-            width:      700,
-            height:     350,
-            min_width:  300,
-            min_height: 200,
+            min_width:  400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0 },
             margin: { top: 20, right: 20, bottom: 35, left: 50 },
             axes: {
                 x: {
@@ -303,13 +306,14 @@ LocusZoom.DefaultLayout = {
             }
         },
         genes: {
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 350 },
-            width:      700,
-            height:     350,
-            min_width:  300,
-            min_height: 200,
+            min_width: 400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {

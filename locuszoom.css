@@ -65,3 +65,12 @@
   .lz-locuszoom rect.lz-gene.lz-exon {
     stroke: #000099;
     stroke-width: 1; }
+
+.lz-container {
+  display: inline-block;
+  overflow: hidden; }
+
+.lz-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden; }
