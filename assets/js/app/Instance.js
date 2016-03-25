@@ -249,11 +249,15 @@ LocusZoom.Instance.prototype.initialize = function(){
         drop: function(message){
             this.svg.style("display", null);
             if (typeof message != "undefined"){
-                this.svg.select("text").selectAll("tspan").remove();
-                message.split("\n").forEach(function(line){
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "1.5em").text(line);
-                }.bind(this));
+                try {
+                    this.svg.select("text").selectAll("tspan").remove();
+                    message.split("\n").forEach(function(line){
+                        this.svg.select("text").append("tspan")
+                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+                    }.bind(this));
+                } catch (e){
+                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                }
             }
         },
         raise: function(){
