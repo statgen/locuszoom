@@ -4,7 +4,9 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 [![Build Status](https://api.travis-ci.org/statgen/locuszoom.svg?branch=master)](https://api.travis-ci.org/statgen/locuszoom)
 
-## Usage
+See [API Reference](https://github.com/statgen/locuszoom/wiki/API-Reference) if already up and running or the introduction below.
+
+## Making a LocusZoom Plot
 
 ### JavaScript / CSS Includes
 
@@ -19,13 +21,9 @@ The page you build that embeds the LocusZoom plugin must include the following r
 * `locuszoom.css`  
   This is the primary stylesheet. It is namespaced so as not to conflict with any other styles defined on the same page.
 
-### Initialization Values
+### Defining Data Sources
 
-LocusZoom requires three distinct initialization values:
-
-#### Data Sources
-
-LocusZoom is a tool for visualizing data, so data sources must be defined. Defining a data source can be done as follows:
+Creating a LocusZoom plot requires only one initialization value: **Data Sources**. This is an objects that describes where data comes from and how to get it. Defining Data Sources can be done as follows:
 
 ```javascript
 var datasource = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ", "http://myapi.com/"]);
@@ -33,19 +31,11 @@ var datasource = (new LocusZoom.DataSources()).addSource("base",["AssociationLZ"
 
 Presently only HTTP/S endpoints are supported for data sources. See [Issue #38](https://github.com/statgen/locuszoom/issues/38) for discussion on adding support for local file data sources.
 
-#### Layout
+### Putting it Together with `LocusZoom.populate()`
 
-A layout is a serializable JSON object that describes the makeup of a LocusZoom plot. This includes pixel dimensions, definitions of which panels and nested data layers to include and their relative orientations, etc. If not supplied, a built-in `DefaultLayout` will be used.
+With includes included and data sources defined `LocusZoom.populate()` will accept a CSS selectors string to populate the first matching element with a plot.
 
-#### State
-
-The state object describes the current query against the data sources. Only supply this when wanting to jump to a specific spot in data when a LocusZoom plot is initialized, otherwise the built-in `DefaultState` will be used.
-
-### Putting it together in a basic example
-
-With includes included and data sources defined `LocusZoom.populate()` will accept a selector to populate a matching element with a plot.
-
-This basic example, with functioning data sources, would generate a page with the default LocusZoom layout:
+This basic example, with a functioning data source, would generate a page with the default LocusZoom layout:
 
 ```html
 <html>
@@ -64,19 +54,41 @@ This basic example, with functioning data sources, would generate a page with th
 </html>
 ```
 
+### Other Ways To Make a LocusZoom Plot
+
+#### Defining a Layout
+
+A Layout is a serializable JSON object that describes how a LocusZoom plot will present data. This includes things like chart types and colors, dimensions for visual elements and regions of the plot, etc.
+
+If not supplied, a built-in `DefaultLayout` will be used. Any layout supplied will be merged with the `DefaultLayout`, so tweaking the default plot is as easy as only describing the values to change. For instance, to get a default plot with specific dimensions:
+
+```javascript
+var layout = { width: 1024, height: 768 };
+var plot = LocusZoom.populate("#plot", datasource, layout); 
+```
+
+#### Predefining State by Building a State Object
+
+A State is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the State object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization.
+
+```javascript
+var state = { chr: 6, start: 20379709, end: 20979709 };
+var plot = LocusZoom.populate("#plot", datasource, layout, state); 
+```
+
 Refer to `demo.html` to see a more sophisticated example of how to embed LocusZoom into a page, including adding other HTML elements to provide interactivity.
 
-#### Predefining state with the div's `data-region`
+#### Predefining State With `data-region`
 
-You can optionally specify the state (data query) for LocusZoom by setting a `data-region` attribute of the div before populating it, like so:
+You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the continaing element before populating it, like so:
 
 ```html
 <div id="foo" data-region="10:114550452-115067678"></div>
 ```
 
-#### Populating arbitrarily many divs with LocusZoom plots at once
+#### Making Many LocusZoom Plots at Once
 
-`LocusZoom.populate()` will only populate the first matching HTML element for the provided selector. If you instead ant to populate arbitrarily many elements that all match to a single selector that can be done using `LocusZoom.populateAll()` like so:
+`LocusZoom.populate()` will only populate the first matching HTML element for the provided selector string. To populate all matching elements for a single selector string use `LocusZoom.populateAll()` like so:
 
 ```html
 <div class="plot" id="plot_1"></div>
