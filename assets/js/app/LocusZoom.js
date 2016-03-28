@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.3"
+    version: "0.3.4"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -243,11 +243,31 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Replace placeholders in an html string with field values defined in a data object
+// Only works on scalar values! Will ignore non-scalars.
+LocusZoom.parseFields = function (data, html) {
+    if (typeof data != "object"){
+        throw ("LocusZoom.parseFields invalid arguments: data is not an object");
+    }
+    if (typeof html != "string"){
+        throw ("LocusZoom.parseFields invalid arguments: html is not a string");
+    }
+    var re;
+    for (var field in data) {
+        if (!data.hasOwnProperty(field)){ continue; }
+        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
+        re = new RegExp("\\{\\{" + field + "\\}\\}","g");
+        html = html.replace(re, data[field]);
+    }
+    return html;
+};
+    
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
     start: 0,
-    end: 0
+    end: 0,
+    panels: {}
 };
 
 // Default Layout
@@ -301,6 +321,12 @@ LocusZoom.DefaultLayout = {
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_value: "#B8B8B8"
                         }
+                    },
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{{id}}</strong>" },
+                            { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
+                        ]
                     }
                 }
             }
@@ -318,7 +344,14 @@ LocusZoom.DefaultLayout = {
             data_layers: {
                 genes: {
                     type: "genes",
-                    fields: ["gene:gene"]
+                    fields: ["gene:gene"],
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{{gene_name}}</strong>" },
+                            { html: "Gene ID: <strong>{{gene_id}}</strong>" },
+                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">EXAC Page</a>" }
+                        ]
+                    }
                 }
             }
         }

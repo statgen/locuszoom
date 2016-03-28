@@ -13,7 +13,7 @@
 
 */
 
-LocusZoom.Panel = function(id, layout) { 
+LocusZoom.Panel = function(id, layout, state) { 
 
     this.initialized = false;
     
@@ -21,7 +21,11 @@ LocusZoom.Panel = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
+    // The layout is a serializable object used to describe the composition of the Panel
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+
+    // The state property stores any parameters subject to change via user input
+    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.Panel.DefaultState);
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
@@ -40,6 +44,10 @@ LocusZoom.Panel = function(id, layout) {
     
     return this;
     
+};
+
+LocusZoom.Panel.DefaultState = {
+    data_layers: {}   
 };
 
 LocusZoom.Panel.DefaultLayout = {
@@ -89,7 +97,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     if (typeof this.layout.data_layers == "object"){
         var data_layer_id;
         for (data_layer_id in this.layout.data_layers){
-            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
+            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id], this.state.data_layers[data_layer_id]);
         }
     }
 
@@ -223,7 +231,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -236,8 +244,15 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     if (typeof layout.type !== "string"){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout);
+
+    // Create the Data Layer and set its parent 
+    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, state);
     data_layer.parent = this;
+
+    // Apply the Data Layer's state to the parent's state
+    data_layer.parent.state.data_layers[data_layer.id] = data_layer.state;
+
+    // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
