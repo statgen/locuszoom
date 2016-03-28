@@ -400,6 +400,10 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
             + this.layout.exon_height
             + this.layout.track_vertical_spacing;
     };
+
+    // A gene may have arbitrarily many transcripts, but this data layer isn't set up to render them yet.
+    // Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
+    this.transcript_idx = 0;
     
     this.metadata.tracks = 1;
     this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
@@ -433,6 +437,9 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                 this.data[g].gene_id = split[0];
                 this.data[g].gene_version = split[1];
             }
+
+            // Stash the transcript ID on the parent gene
+            this.data[g].transcript_id = this.data[g].transcripts[this.transcript_idx].transcript_id;
 
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
@@ -607,9 +614,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                     .data([gene]).enter().append("g")
                     .attr("class", "lz-data_layer-gene lz-exons")
                     .each(function(gene){
-
                         d3.select(this).selectAll("rect.lz-data_layer-gene").filter(".lz-exon")
-                            .data(gene.transcripts[0].exons).enter().append("rect")
+                            .data(gene.transcripts[gene.parent.transcript_idx].exons).enter().append("rect")
                             .attr("class", "lz-data_layer-gene lz-exon")
                             .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                             .attr("y", function(){
@@ -626,7 +632,6 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                             }.bind(gene))
                             .attr("fill", "#000099")
                             .style({ cursor: "pointer" });
-
                     });
 
                 // Render gene click area

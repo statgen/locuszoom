@@ -303,7 +303,7 @@ LocusZoom.DefaultLayout = {
                     point_shape: "circle",
                     point_size: 40,
                     point_label_field: "id",
-                    fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
+                    fields: ["id", "position", "pvalue", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
                         field: "position"
                     },
@@ -347,9 +347,10 @@ LocusZoom.DefaultLayout = {
                     fields: ["gene:gene"],
                     tooltip: {
                         divs: [
-                            { html: "<strong>{{gene_name}}</strong>" },
+                            { html: "<strong><i>{{gene_name}}</i></strong>" },
                             { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">EXAC Page</a>" }
+                            { html: "Transcript ID: <strong>{{transcript_id}}</strong>" },
+                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>" }
                         ]
                     }
                 }
