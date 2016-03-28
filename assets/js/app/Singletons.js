@@ -72,6 +72,117 @@ LocusZoom.LabelFunctions.add("chromosome", function(state){
 });
 
 
+/**************************
+  Transformation Functions
+
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+
+  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+
+  All transformation functions must accept an object of parameters and a value to process.
+*/
+LocusZoom.TransformationFunctions = (function() {
+    var obj = {};
+    var transformations = {};
+
+    var getTrans = function(name) {
+        if (!name) {
+            return null;
+        }
+        var fun = transformations[name];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + name + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(name) {
+        return getTrans(name);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var fun;
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(name) {
+        if (name && name.substring(0,1)=="|") {
+            return parseTransString(name);
+        } else {
+            return parseTrans(name);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                transformations[name] = fn;
+            } else {
+                delete transformations[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (transformations[name]) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(transformations);
+    };
+
+    return obj;
+})();
+
+LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    if (Math.abs(x) > 1){
+        var log = Math.ceil(Math.log(x) / Math.LN10);
+    } else {
+        var log = Math.floor(Math.log(x) / Math.LN10);
+    }
+    if (Math.abs(log) <= 3){
+        return x.toFixed(3);
+    } else {
+        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+    }
+});
+
+
+
 /****************
   Scale Functions
 

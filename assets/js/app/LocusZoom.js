@@ -256,7 +256,7 @@ LocusZoom.parseFields = function (data, html) {
     for (var field in data) {
         if (!data.hasOwnProperty(field)){ continue; }
         if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
-        re = new RegExp("\\{\\{" + field + "\\}\\}","g");
+        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
         html = html.replace(re, data[field]);
     }
     return html;
@@ -303,7 +303,7 @@ LocusZoom.DefaultLayout = {
                     point_shape: "circle",
                     point_size: 40,
                     point_label_field: "id",
-                    fields: ["id", "position", "pvalue", "pvalue|neglog10", "refAllele", "ld:state"],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
                         field: "position"
                     },
@@ -325,6 +325,7 @@ LocusZoom.DefaultLayout = {
                     tooltip: {
                         divs: [
                             { html: "<strong>{{id}}</strong>" },
+                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     }

@@ -98,6 +98,75 @@ describe('LocusZoom Singletons', function(){
         });
     });
 
+    describe("Transformation Functions", function() {
+        it("LocusZoom should have a TransformationFunctions singleton", function(){
+            LocusZoom.should.have.property("TransformationFunctions").which.is.an.Object;
+        });
+        it("should have a method to list available label functions", function(){
+            LocusZoom.TransformationFunctions.should.have.property("list").which.is.a.Function;
+            var returned_list = LocusZoom.TransformationFunctions.list();
+            var expected_list = ["neglog10", "scinotation"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should have a general method to get a function or execute it for a result", function(){
+            LocusZoom.TransformationFunctions.should.have.property("get").which.is.a.Function;
+            LocusZoom.TransformationFunctions.get("neglog10").should.be.a.Function;
+        });
+        it("should have a method to add a transformation function", function(){
+            LocusZoom.TransformationFunctions.should.have.property("add").which.is.a.Function;
+            var foo = function(x){ return x + 1; };
+            LocusZoom.TransformationFunctions.add("foo", foo);
+            var returned_list = LocusZoom.TransformationFunctions.list();
+            var expected_list = ["neglog10", "scinotation", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.TransformationFunctions.get("foo")(2);
+            var expected_value = 3;
+            assert.equal(returned_value, expected_value);
+        });
+        it("should have a method to change or delete existing transformation functions", function(){
+            LocusZoom.TransformationFunctions.should.have.property("set").which.is.a.Function;
+            var foo_new = function(x){ return x * 2; };
+            LocusZoom.TransformationFunctions.set("foo", foo_new);
+            var returned_list = LocusZoom.TransformationFunctions.list();
+            var expected_list = ["neglog10", "scinotation", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.TransformationFunctions.get("foo")(4);
+            var expected_value = 8;
+            assert.equal(returned_value, expected_value);
+            LocusZoom.TransformationFunctions.set("foo");
+            var returned_list = LocusZoom.TransformationFunctions.list();
+            var expected_list = ["neglog10", "scinotation"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should throw an exception if asked to get a function that has not been defined", function(){
+            assert.throws(function(){
+                LocusZoom.TransformationFunctions.get("nonexistent");
+            });
+        });
+        it('should throw an exception when adding a new transformation function with an already in use name', function(){
+            assert.throws(function(){
+                var foo = function(x){ return x / 4; };
+                LocusZoom.TransformationFunctions.add("neglog10", foo);
+            });
+        });
+        describe("neglog10", function() {
+            it('should return negative log 10 values for any value', function(){
+                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(1), 0);
+                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(10), -1);
+                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(0.001), 2.9999999999999996);
+                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(0.0000324), 4.489454989793387);
+            });
+        });
+        describe("scinotation", function() {
+            it('should return scientific notation for any value', function(){
+                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(1), "1.000");
+                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(0.0562435), "0.056");
+                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(14000), "1.40 × 10^4");
+                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(0.0000002436246), "2.44 × 10^-7");
+            });
+        });
+    });
+
     describe("Scale Functions", function() {
         it('LocusZoom should have a ScaleFunctions singleton', function(){
             LocusZoom.should.have.property('ScaleFunctions').which.is.an.Object;

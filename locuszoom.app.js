@@ -270,7 +270,7 @@ LocusZoom.parseFields = function (data, html) {
     for (var field in data) {
         if (!data.hasOwnProperty(field)){ continue; }
         if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
-        re = new RegExp("\\{\\{" + field + "\\}\\}","g");
+        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
         html = html.replace(re, data[field]);
     }
     return html;
@@ -317,7 +317,7 @@ LocusZoom.DefaultLayout = {
                     point_shape: "circle",
                     point_size: 40,
                     point_label_field: "id",
-                    fields: ["id", "position", "pvalue", "pvalue|neglog10", "refAllele", "ld:state"],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
                         field: "position"
                     },
@@ -339,6 +339,7 @@ LocusZoom.DefaultLayout = {
                     tooltip: {
                         divs: [
                             { html: "<strong>{{id}}</strong>" },
+                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     }
@@ -447,7 +448,7 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
             var field = parts[2];
-            var trans = LocusZoom.Data.Transformations.get(parts[3]);
+            var trans = LocusZoom.TransformationFunctions.get(parts[3]);
             if (typeof requests[ns] =="undefined") {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }
@@ -662,96 +663,8 @@ LocusZoom.createResolvedPromise = function() {
 LocusZoom.KnownDataSources = [
     LocusZoom.Data.AssociationSource,
     LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource];
-
-// This class is a singleton designed to store and 
-// retrieve transformations
-// Field transformations are specified 
-// in the form "|name1|name2" and returns a proper
-// js function to perform the transformation
-LocusZoom.Data.Transformations = (function() {
-    var obj = {};
-    var known = {
-        "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
-    };
-
-    var getTrans = function(x) {
-        if (!x) {
-            return null;
-        }
-        var fun = known[x];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + x + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(x) {
-        return getTrans(x);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var fun;
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(x) {
-        if (x && x.substring(0,1)=="|") {
-            return parseTransString(x);
-        } else {
-            return parseTrans(x);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                known[name] = fn;
-            } else {
-                delete known[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (known.name) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(known);
-    };
-
-    return obj;
-})();
+    LocusZoom.Data.GeneSource
+];
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
@@ -1769,6 +1682,117 @@ LocusZoom.LabelFunctions.add("chromosome", function(state){
         return "Chromosome (Mb)";
     }
 });
+
+
+/**************************
+  Transformation Functions
+
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+
+  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+
+  All transformation functions must accept an object of parameters and a value to process.
+*/
+LocusZoom.TransformationFunctions = (function() {
+    var obj = {};
+    var transformations = {};
+
+    var getTrans = function(name) {
+        if (!name) {
+            return null;
+        }
+        var fun = transformations[name];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + name + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(name) {
+        return getTrans(name);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var fun;
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(name) {
+        if (name && name.substring(0,1)=="|") {
+            return parseTransString(name);
+        } else {
+            return parseTrans(name);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                transformations[name] = fn;
+            } else {
+                delete transformations[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (transformations[name]) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(transformations);
+    };
+
+    return obj;
+})();
+
+LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    if (Math.abs(x) > 1){
+        var log = Math.ceil(Math.log(x) / Math.LN10);
+    } else {
+        var log = Math.floor(Math.log(x) / Math.LN10);
+    }
+    if (Math.abs(log) <= 3){
+        return x.toFixed(3);
+    } else {
+        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+    }
+});
+
 
 
 /****************

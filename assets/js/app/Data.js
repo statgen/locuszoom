@@ -72,7 +72,7 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
             var field = parts[2];
-            var trans = LocusZoom.Data.Transformations.get(parts[3]);
+            var trans = LocusZoom.TransformationFunctions.get(parts[3]);
             if (typeof requests[ns] =="undefined") {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }
@@ -287,93 +287,5 @@ LocusZoom.createResolvedPromise = function() {
 LocusZoom.KnownDataSources = [
     LocusZoom.Data.AssociationSource,
     LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource];
-
-// This class is a singleton designed to store and 
-// retrieve transformations
-// Field transformations are specified 
-// in the form "|name1|name2" and returns a proper
-// js function to perform the transformation
-LocusZoom.Data.Transformations = (function() {
-    var obj = {};
-    var known = {
-        "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
-    };
-
-    var getTrans = function(x) {
-        if (!x) {
-            return null;
-        }
-        var fun = known[x];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + x + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(x) {
-        return getTrans(x);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var fun;
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(x) {
-        if (x && x.substring(0,1)=="|") {
-            return parseTransString(x);
-        } else {
-            return parseTrans(x);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                known[name] = fn;
-            } else {
-                delete known[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (known.name) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(known);
-    };
-
-    return obj;
-})();
+    LocusZoom.Data.GeneSource
+];
