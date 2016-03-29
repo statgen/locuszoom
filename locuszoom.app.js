@@ -733,6 +733,9 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
             var clientRect = this.svg.node().parentNode.getBoundingClientRect();
             this.setDimensions(clientRect.width, clientRect.height);
         }.bind(this));
+        // Forcing one additional setDimensions() call after the page is loaded clears up
+        // any disagreements between the initial layout and the loaded responsive container's size
+        d3.select(window).on("load.lz-"+this.id, function(){ this.setDimensions(); }.bind(this));
     }
 
     // Set instance dimensions
