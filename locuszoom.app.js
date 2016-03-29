@@ -303,6 +303,7 @@ LocusZoom.DefaultLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
                     label_function: "chromosome"
@@ -1195,8 +1196,13 @@ LocusZoom.Panel.prototype.initialize = function(){
     };
     this.curtain.svg.append("rect");
     this.curtain.svg.append("text")
-        .attr("id", this.id + ".curtain_text")
+        .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
+
+    // If the layout defines an inner border render it before rendering axes
+    if (this.layout.inner_border){
+        this.inner_border = this.svg.group.append("rect");
+    }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g").attr("class", "lz-x lz-axis");
@@ -1316,6 +1322,17 @@ LocusZoom.Panel.prototype.render = function(){
 
     // Set size on the clip rect
     this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
+
+    // Set and position the inner border, if necessary
+    if (this.layout.inner_border){
+        this.inner_border
+            .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
+            .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
+            .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
+            .style({ "fill": "transparent",
+                     "stroke-width": 1,
+                     "stroke": this.layout.inner_border });
+    }
 
     // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){

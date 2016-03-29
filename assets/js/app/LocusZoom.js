@@ -289,6 +289,7 @@ LocusZoom.DefaultLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
                     label_function: "chromosome"
