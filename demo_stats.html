@@ -1,0 +1,91 @@
+<html>
+<head>
+<script type="text/javascript">var LocusZoom = {};</script>
+<script src="assets/js/app/Rstats.js" data-cover></script>
+
+<script type="text/javascript">
+  function init() {
+		var funs = [
+			["dnorm", "x:n:0,mu:n:0,sigma:n:1,give_log:b:false"],
+			["pnorm", "x:n:0,mu:n:0,sigma:n:1,lower_tail:b:true, give_log:b:false"],
+			["pchisq", "x:n:1,df:n:1,lower_tail:b:true,give_log:b:false"],
+			["pgamma", "q:n:0,shape:n:1,scale:n:1,lower_tail:b:true, give_log:b:false"],
+			["dpois", "x:n:0,lambda:n:1,give_log:b:false"]
+		];
+
+		var div = document.getElementById("functionlist");
+
+		funs.forEach(function(fd) {
+			var name = fd[0];
+			var params = fd[1].split(",");
+
+			var fdiv = document.createElement("div");
+			var header = document.createElement("h3");
+			header.textContent = name;
+			fdiv.appendChild(header);
+
+			var re = /(\w+)(?::(\w+)(?::(\w+))?)?/;
+			var pl = [];
+
+			params.forEach(function(p) {
+				var parts = re.exec(p);
+				var pname = parts[1];
+				var ptype = parts[2] || "n";
+				var pdefault = parts[3];
+				// name:
+				fdiv.appendChild(document.createTextNode(" " + pname + ": "));
+				var input;
+				if (ptype=="n") {
+					//numeric input
+					input = document.createElement("input");
+					input.setAttribute("size",5);
+					if (pdefault) {
+						input.setAttribute("value",pdefault);
+					};
+				} else if (ptype=="b") {
+					//boolean input (true/false)
+					input = document.createElement("select");
+					["true","false"].forEach(function(v) {
+						var opt = document.createElement("option");
+						opt.textContent = v;
+						if (v == pdefault) {
+							opt.setAttribute("selected","TRUE");
+						}
+						input.appendChild(opt);
+					});
+				}
+				//keep track of input boxes to get values later
+				pl.push(input);
+				fdiv.appendChild(input);
+			});
+			// [run] button
+			var submit = document.createElement("button");
+			submit.textContent = "run";
+			// place for output
+			var result = document.createElement("span");
+
+			//click even to run the function
+			submit.onclick = function() {
+				var params = pl.map(function(x) {return x.value});
+				result.textContent = LocusZoom.Stats[name].apply(null, params);
+			};
+
+			fdiv.appendChild(document.createTextNode(" "))
+			fdiv.appendChild(submit);
+			fdiv.appendChild(document.createTextNode(" "))
+			fdiv.appendChild(result);
+
+			div.appendChild(fdiv);
+
+
+		});
+		}
+</script>
+</head>
+<body onload="init()">
+<h1>Rstats.js</h1>
+<p>JavaScript port of a subset of functions from the libRmath stand alone library</p>
+<div id="functionlist"></div>
+</body>
+</html>
+
