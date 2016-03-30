@@ -150,19 +150,29 @@ describe('LocusZoom Singletons', function(){
             });
         });
         describe("neglog10", function() {
-            it('should return negative log 10 values for any value', function(){
-                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(1), 0);
-                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(10), -1);
-                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(0.001), 2.9999999999999996);
-                assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(0.0000324), 4.489454989793387);
+            var tests = [
+                { arg: 1,         expected: 0 },
+                { arg: 10,        expected: -1 },
+                { arg: 0.001,     expected: 2.9999999999999996 },
+                { arg: 0.0000324, expected: 4.489454989793387 }
+            ];
+            tests.forEach(function(test) {
+                it('should return correct negative log 10 for ' + test.arg, function() {
+                    assert.equal(LocusZoom.TransformationFunctions.get("neglog10")(test.arg), test.expected);
+                });
             });
         });
         describe("scinotation", function() {
-            it('should return scientific notation for any value', function(){
-                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(1), "1.000");
-                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(0.0562435), "0.056");
-                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(14000), "1.40 × 10^4");
-                assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(0.0000002436246), "2.44 × 10^-7");
+            var tests = [
+                { arg: 1,               expected: "1.000" },
+                { arg: 0.0562435,       expected: "0.056" },
+                { arg: 14000,           expected: "1.40 × 10^4" },
+                { arg: 0.0000002436246, expected: "2.44 × 10^-7" }
+            ];
+            tests.forEach(function(test) {
+                it('should return correct scientific notation for ' + test.arg, function() {
+                    assert.equal(LocusZoom.TransformationFunctions.get("scinotation")(test.arg), test.expected);
+                });
             });
         });
     });
