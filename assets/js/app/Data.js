@@ -313,7 +313,7 @@ LocusZoom.Data.ConditionalSource.prototype.getURL = function(state, chain, field
 LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var V_XX = [];
     var V_XZ = [];
-    var N_x = [];
+    var N_X = [];
     var V_ZZ = 0;
     var U_Z = 0;
     var N_z = 0;
@@ -361,13 +361,13 @@ LocusZoom.Data.ConditionalSource.prototype.parseResponse = function(resp, chain,
         //assumes that both Y~X and Y~Z have same N
         var V_XgZ = N_X[i] * (V_XX[i] - V_XZ[i] / V_ZZ * V_XZ[i]);
         var T = U_XgZ / Math.sqrt(V_XgZ);
-        var p = 2*LocusZoom.jStat.normalCDF(-Math.abs(T),0,1);
+        var p = LocusZoom.Stats.pchisq(T*T,1,0,0);
         if (trans && trans[0]) {
             chain.body[i][outnames[0]] = trans[0](p);
         } else {
             chain.body[i][outnames[0]] = p;
         }
-        chain.body[i].condScoreTestStat = T;
+        //chain.body[i].condScoreTestStat = T;
         chain.header.condindex = condIdx;
     }
 
