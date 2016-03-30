@@ -15,7 +15,8 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/Instance.js",
                     "./assets/js/app/Panel.js",
                     "./assets/js/app/DataLayer.js",
-                    "./assets/js/app/Singletons.js"
+                    "./assets/js/app/Singletons.js",
+                    "./assets/js/app/Rstats.js"
                    ];
 
 // Test suites. Should be able to be executed in any order.
@@ -24,7 +25,8 @@ var test_js_files = ["./test/LocusZoom.js",
                      "./test/Instance.js",
                      "./test/Panel.js",
                      "./test/DataLayer.js",
-                     "./test/Singletons.js"
+                     "./test/Singletons.js",
+                     "./test/Stats.js"
                     ];
 
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
