@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.4"
+    version: "0.3.5"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -645,7 +645,8 @@ LocusZoom.Data.GeneSource = function(init) {
 LocusZoom.Data.GeneSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.GeneSource.prototype.constructor = LocusZoom.Data.GeneSource;
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
-    return this.url + "?filter=source in 1" + 
+    var source = state.source || chain.header.source || this.params.source || 2;
+    return this.url + "?filter=source in " + source +
         " and chrom eq '" + state.chr + "'" + 
         " and start le " + state.end +
         " and end ge " + state.start;
