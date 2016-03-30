@@ -13,7 +13,7 @@
 
 */
 
-LocusZoom.Panel = function(id, layout) { 
+LocusZoom.Panel = function(id, layout, state) { 
 
     this.initialized = false;
     
@@ -21,7 +21,11 @@ LocusZoom.Panel = function(id, layout) {
     this.parent = null;
     this.svg    = {};
 
+    // The layout is a serializable object used to describe the composition of the Panel
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+
+    // The state property stores any parameters subject to change via user input
+    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.Panel.DefaultState);
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
@@ -42,14 +46,19 @@ LocusZoom.Panel = function(id, layout) {
     
 };
 
+LocusZoom.Panel.DefaultState = {
+    data_layers: {}   
+};
+
 LocusZoom.Panel.DefaultLayout = {
     width:  0,
     height: 0,
+    origin: { x: 0, y: 0 },
     min_width: 0,
     min_height: 0,
     proportional_width: 1,
     proportional_height: 1,
-    origin: { x: 0, y: 0 },
+    proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     cliparea: {
         height: 0,
@@ -88,7 +97,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     if (typeof this.layout.data_layers == "object"){
         var data_layer_id;
         for (data_layer_id in this.layout.data_layers){
-            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
+            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id], this.state.data_layers[data_layer_id]);
         }
     }
 
@@ -168,11 +177,15 @@ LocusZoom.Panel.prototype.initialize = function(){
         drop: function(message){
             this.svg.style("display", null);
             if (typeof message != "undefined"){
-                this.svg.select("text").selectAll("tspan").remove();
-                message.split("\n").forEach(function(line){
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "1.5em").text(line);
-                }.bind(this));
+                try {
+                    this.svg.select("text").selectAll("tspan").remove();
+                    message.split("\n").forEach(function(line){
+                        this.svg.select("text").append("tspan")
+                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+                    }.bind(this));
+                } catch (e){
+                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                }
             }
         },
         raise: function(){
@@ -181,8 +194,13 @@ LocusZoom.Panel.prototype.initialize = function(){
     };
     this.curtain.svg.append("rect");
     this.curtain.svg.append("text")
-        .attr("id", this.id + ".curtain_text")
+        .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
+
+    // If the layout defines an inner border render it before rendering axes
+    if (this.layout.inner_border){
+        this.inner_border = this.svg.group.append("rect");
+    }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g").attr("class", "lz-x lz-axis");
@@ -218,7 +236,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -231,8 +249,15 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     if (typeof layout.type !== "string"){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
-    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout);
+
+    // Create the Data Layer and set its parent 
+    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, state);
     data_layer.parent = this;
+
+    // Apply the Data Layer's state to the parent's state
+    data_layer.parent.state.data_layers[data_layer.id] = data_layer.state;
+
+    // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
@@ -295,6 +320,17 @@ LocusZoom.Panel.prototype.render = function(){
 
     // Set size on the clip rect
     this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
+
+    // Set and position the inner border, if necessary
+    if (this.layout.inner_border){
+        this.inner_border
+            .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
+            .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
+            .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
+            .style({ "fill": "transparent",
+                     "stroke-width": 1,
+                     "stroke": this.layout.inner_border });
+    }
 
     // Generate discrete extents and scales
     if (typeof this.xExtent == "function"){

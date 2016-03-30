@@ -21,7 +21,8 @@ describe('LocusZoom Data', function(){
                fs.readFileSync('./assets/js/app/Data.js'),
                fs.readFileSync('./assets/js/app/Instance.js'),
                fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js')
+               fs.readFileSync('./assets/js/app/DataLayer.js'),
+               fs.readFileSync('./assets/js/app/Singletons.js')
              ]
     });
 
@@ -84,7 +85,7 @@ describe('LocusZoom Data', function(){
             should.exist(ds.getSource("t1"));
             should.exist(ds.getSource("t2"));
         });
-        it('should pass in initiization values as object', function() {
+        it('should pass in initialization values as object', function() {
             var ds = new LocusZoom.DataSources();
             ds.setSources({"t1": ["test1", {a:10}], "t2": ["test2", {b:20}]});
             ds.keys().should.have.length(2);
@@ -96,6 +97,7 @@ describe('LocusZoom Data', function(){
             ds.getSource("t2").init.b.should.equal(20);
         });
     });
+
 });
 
 

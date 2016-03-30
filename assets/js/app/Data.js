@@ -72,7 +72,7 @@ LocusZoom.Data.Requester = function(sources) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
             var field = parts[2];
-            var trans = LocusZoom.Data.Transformations.get(parts[3]);
+            var trans = LocusZoom.TransformationFunctions.get(parts[3]);
             if (typeof requests[ns] =="undefined") {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }
@@ -272,7 +272,8 @@ LocusZoom.Data.GeneSource = function(init) {
 LocusZoom.Data.GeneSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.GeneSource.prototype.constructor = LocusZoom.Data.GeneSource;
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
-    return this.url + "?filter=source in 1" + 
+    var source = state.source || chain.header.source || this.params.source || 2;
+    return this.url + "?filter=source in " + source +
         " and chrom eq '" + state.chr + "'" + 
         " and start le " + state.end +
         " and end ge " + state.start;
@@ -386,135 +387,3 @@ LocusZoom.KnownDataSources = [
     LocusZoom.Data.GeneSource,
     LocusZoom.Data.ConditionalSource];
 
-// This class is a singleton designed to store and 
-// retrieve transformations
-// Field transformations are specified 
-// in the form "|name1|name2" and returns a proper
-// js function to perform the transformation
-LocusZoom.Data.Transformations = (function() {
-    var obj = {};
-    var known = {
-        "neglog10": function(x) {return -Math.log(x) / Math.LN10;} 
-    };
-
-    var getTrans = function(x) {
-        if (!x) {
-            return null;
-        }
-        var fun = known[x];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + x + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(x) {
-        return getTrans(x);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var fun;
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(x) {
-        if (x && x.substring(0,1)=="|") {
-            return parseTransString(x);
-        } else {
-            return parseTrans(x);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                known[name] = fn;
-            } else {
-                delete known[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (known.name) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(known);
-    };
-
-    return obj;
-})();
-
-
-// jStat functions originally from 
-// https://github.com/jstat/jstat/tree/master/src
-LocusZoom.jStat = {};
-
-LocusZoom.jStat.normalCDF = function(x, mean, std) {
-    return 0.5 * (1 + LocusZoom.jStat.erf((x - mean) / Math.sqrt(2 * std * std)));
-};
-
-LocusZoom.jStat.erf = function erf(x) {
-    var cof = [-1.3026537197817094, 6.4196979235649026e-1, 1.9476473204185836e-2,
-        -9.561514786808631e-3, -9.46595344482036e-4, 3.66839497852761e-4,
-        4.2523324806907e-5, -2.0278578112534e-5, -1.624290004647e-6,
-        1.303655835580e-6, 1.5626441722e-8, -8.5238095915e-8,
-        6.529054439e-9, 5.059343495e-9, -9.91364156e-10,
-        -2.27365122e-10, 9.6467911e-11, 2.394038e-12,
-        -6.886027e-12, 8.94487e-13, 3.13092e-13,
-        -1.12708e-13, 3.81e-16, 7.106e-15,
-        -1.523e-15, -9.4e-17, 1.21e-16,
-        -2.8e-17];
-    var j = cof.length - 1;
-    var isneg = false;
-    var d = 0;
-    var dd = 0;
-    var t, ty, tmp, res;
-
-    if (x < 0) {
-        x = -x;
-        isneg = true;
-    }
-
-    t = 2 / (2 + x);
-    ty = 4 * t - 2;
-
-    for(; j > 0; j--) {
-        tmp = d;
-        d = ty * d - dd + cof[j];
-        dd = tmp;
-    }
-
-    res = t * Math.exp(-x * x + 0.5 * (cof[0] + ty * d) - dd);
-    return isneg ? res - 1 : 1 - res;
-};

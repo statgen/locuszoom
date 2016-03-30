@@ -1,12 +1,19 @@
 $namespace: "lz";
+$default_black: "rgba(24, 24, 24, 1)";
+$default_black_shadow: "rgba(24, 24, 24, 0.4)";
+$tooltip_arrow_width: "7";
 
-.#{$namespace}-locuszoom {
+svg.#{$namespace}-locuszoom {
 
   background-color: #FFFFFF;
   border: none;
   cursor: move;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px;
+
+  rect.#{$namespace}-clickarea {
+    fill: transparent;
+  }
 
   .#{$namespace}-curtain {
     rect {
@@ -35,6 +42,12 @@ $namespace: "lz";
       width: 100%;
       height: 1px;
     }
+  }
+
+  .#{$namespace}-html_module-info_box {
+    position: absolute;
+    border: 1px solid #{$default_black};
+    border-radius: 3px;
   }
 
   .#{$namespace}-ui-resize_handle {
@@ -73,35 +86,143 @@ $namespace: "lz";
   }
 
   path.#{$namespace}-data_layer-scatter {
-    stroke: #181818;
+    stroke: #{$default_black};
     stroke-width: 1;
   }
 
-  path.#{$namespace}-data_layer-scatter:hover {
-    stroke: #484848;
+  path.#{$namespace}-data_layer-scatter-hovered {
+    stroke: #{$default_black};
     stroke-width: 3;
   }
 
-  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected {
+  path.#{$namespace}-data_layer-scatter-selected {
+    stroke: #{$default_black};
     stroke-width: 4;
   }
 
-  path.#{$namespace}-data_layer-scatter.#{$namespace}-selected:hover {
-    stroke-width: 4;
+  g.#{$namespace}-data_layer-gene {
+    cursor: pointer;
   }
 
-  text.#{$namespace}-gene.#{$namespace}-label {
+  text.#{$namespace}-data_layer-gene.#{$namespace}-label {
     font-style: italic;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-boundary {
-    stroke: #000099;
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box {
+    fill: transparent;
+    stroke-width: 0;
+  }
+
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-hovered {
+    fill: rgba(54, 54, 150, 0.1);
+    stroke-width: 0;
+  }
+
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-selected {
+    fill: rgba(54, 54, 150, 0.15);
+    stroke: #{$default_black};
     stroke-width: 1;
   }
 
-  rect.#{$namespace}-gene.#{$namespace}-exon {
-    stroke: #000099;
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
+    stroke: rgba(54, 54, 150, 1);
+    stroke-width: 1;
+  }
+
+  rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
+    stroke: rgba(54, 54, 150, 1);
     stroke-width: 1;
   }
 
 }
+
+div.#{$namespace}-data_layer-tooltip {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: rgba(235,235,235,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_up {
+  width: 0; 
+  height: 0; 
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_down {
+  width: 0; 
+  height: 0; 
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_right {
+  width: 0; 
+  height: 0; 
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_left {
+  width: 0; 
+  height: 0; 
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black}; 
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_left {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_right {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
+  width: 0; 
+  height: 0;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+.#{$namespace}-container {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.#{$namespace}-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden;
+}
+

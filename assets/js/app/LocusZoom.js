@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.2"
+    version: "0.3.5"
 };
 
 // Create a new instance by instance class and attach it to a div by ID
@@ -243,29 +243,53 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Replace placeholders in an html string with field values defined in a data object
+// Only works on scalar values! Will ignore non-scalars.
+LocusZoom.parseFields = function (data, html) {
+    if (typeof data != "object"){
+        throw ("LocusZoom.parseFields invalid arguments: data is not an object");
+    }
+    if (typeof html != "string"){
+        throw ("LocusZoom.parseFields invalid arguments: html is not a string");
+    }
+    var re;
+    for (var field in data) {
+        if (!data.hasOwnProperty(field)){ continue; }
+        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
+        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
+        html = html.replace(re, data[field]);
+    }
+    return html;
+};
+    
 // Default State
 LocusZoom.DefaultState = {
     chr: 0,
     start: 0,
-    end: 0
+    end: 0,
+    panels: {}
 };
 
 // Default Layout
 LocusZoom.DefaultLayout = {
-    width: 700,
-    height: 700,
-    min_width: 300,
-    min_height: 400,
+    width: 800,
+    height: 450,
+    min_width: 400,
+    min_height: 225,
+    resizable: "responsive",
+    aspect_ratio: (16/9),
     panels: {
         positions: {
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 0 },
-            width:      700,
-            height:     350,
-            min_width:  300,
-            min_height: 200,
+            min_width:  400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0 },
             margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
                     label_function: "chromosome"
@@ -280,7 +304,7 @@ LocusZoom.DefaultLayout = {
                     point_shape: "circle",
                     point_size: 40,
                     point_label_field: "id",
-                    fields: ["id", "position", "pvalue|neglog10", "refAllele", "ld:state"],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
                         field: "position"
                     },
@@ -298,23 +322,39 @@ LocusZoom.DefaultLayout = {
                             values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
                             null_value: "#B8B8B8"
                         }
+                    },
+                    tooltip: {
+                        divs: [
+                            { html: "<strong>{{id}}</strong>" },
+                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
+                            { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
+                        ]
                     }
                 }
             }
         },
         genes: {
+            width: 800,
+            height: 225,
             origin: { x: 0, y: 350 },
-            width:      700,
-            height:     350,
-            min_width:  300,
-            min_height: 200,
+            min_width: 400,
+            min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
+            proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
             data_layers: {
                 genes: {
                     type: "genes",
-                    fields: ["gene:gene"]
+                    fields: ["gene:gene"],
+                    tooltip: {
+                        divs: [
+                            { html: "<strong><i>{{gene_name}}</i></strong>" },
+                            { html: "Gene ID: <strong>{{gene_id}}</strong>" },
+                            { html: "Transcript ID: <strong>{{transcript_id}}</strong>" },
+                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>" }
+                        ]
+                    }
                 }
             }
         }

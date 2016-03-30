@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <title>LocusZoom Plugin Demo</title>
@@ -14,45 +15,30 @@
 </head>
 
 <body style="background-color: #CCCCCC; margin: 10px;" onload="initPage()">
-  <table border="0" cellspacing="10">
-    <tr>
-      <td>
-        <div>
-          <form>
-            <b>lz-1</b> &middot;
-            <label for="lz-1_region">Region: </label>
-            <input type="text" size=25 id="lz-1_region">
-            <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
-          </form>
-          <br>
-        </div>
-        <div id="lz-1" class="lz-locuszoom-container" data-region="10:114550452-115067678"></div>
-      </td>
-      <td style="vertical-align:top">
-        <h3>Top Hits</h3>
-        <div id="tophits"></div>
-      </td>
-    </tr>
-  </table>
+  <div style="padding-bottom: 10px;">
+    <h3 style="display: inline; padding-right: 30px;">LocusZoom Responsive Demo</h3>
+    <form style="display: inline;">
+      <label for="lz-1_region">Region: </label>
+      <input type="text" size="25" id="lz-1_region">
+      <input type="button" id="lz-1_submit" value="Go" onClick="handleFormSubmit('lz-1');" />
+    </form>
+  </div>
+  <div style="padding-bottom: 10px;">
+    <div id="tophits"></div>
+  </div>
+  <div id="lz-1" class="lz-container-responsive" data-region="10:114550452-115067678"></div>
 
   <script type="text/javascript">
 
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources();
-    data_sources.addSource("base", ["AssociationLZ", {url: apiBase + "single/", params: {analysis: 3}}]);
+    data_sources.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
     data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
     data_sources.addSource("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
 
-    // Define custom LocusZoom layout object to allow manual resizing.
-    // This will be merged with the default layout (LocusZoom.DefaultLayout)
-    // so we only need to specify the values we want to change.
-    var layout = {
-      resizable: "manual"
-    };
-
-    // Populate the div with a LocusZoom plot using the default layout
-    var demo_instance = LocusZoom.populate("#lz-1", data_sources, layout);
+    // Populate the div with a LocusZoom plot
+    var demo_instance = LocusZoom.populate("#lz-1", data_sources);
 
     /**********************************************************************************
      All of the following code sets up an example form with top hit buttons to jump to
@@ -129,15 +115,14 @@
     }
 
     function listHits() {
-      $("#tophits").empty().append("<ul>").children(0).append(topHits.map(function(e) {
-        return "<li><a href='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
+      $("#tophits").empty().append(topHits.map(function(e) {
+        return "<button onclick='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </button>";
       }))
     }
 
     function initPage() {
       listHits();
       populateForms();
-      $("#lz-1_hits").html(topHits.map(function(k) {return "<option>" + k + "</option>"}).join(""));
     };
 
   </script>

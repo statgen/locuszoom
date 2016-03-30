@@ -51,28 +51,30 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.instance.layout.min_width, LocusZoom.DefaultLayout.min_width);
             assert.equal(this.instance.layout.min_height, LocusZoom.DefaultLayout.min_height);
         });
-        it('should have a state which is a copy of DefaultState', function(){
-            assert.deepEqual(this.instance.state, LocusZoom.DefaultState);
-        });
     });
     describe("Configuration API", function() {
         beforeEach(function() {
             d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
+            var layout = { resizable: "manual" };
+            this.instance = LocusZoom.populate("#instance_id", {}, layout);
         });
         it('should allow setting dimensions, bounded by layout minimums', function(){
             this.instance.setDimensions(563, 681);
-            this.instance.layout.should.have.property('width').which.is.exactly(563);
-            this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.layout.width.should.be.exactly(563);
+            this.instance.layout.height.should.be.exactly(681);
+            this.instance.layout.aspect_ratio.should.be.exactly(563/681);
             this.instance.setDimensions(1320.3, -50);
-            this.instance.layout.should.have.property('width').which.is.exactly(1320);
-            this.instance.layout.should.have.property('height').which.is.exactly(681);
+            this.instance.layout.width.should.be.exactly(1320);
+            this.instance.layout.height.should.be.exactly(681);
+            this.instance.layout.aspect_ratio.should.be.exactly(1320/681);
             this.instance.setDimensions("q", 0);
-            this.instance.layout.should.have.property('width').which.is.exactly(1320);
-            this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.width.should.be.exactly(1320);
+            this.instance.layout.height.should.be.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.aspect_ratio.should.be.exactly(1320/LocusZoom.DefaultLayout.min_height);
             this.instance.setDimensions(0, 0);
-            this.instance.layout.should.have.property('width').which.is.exactly(LocusZoom.DefaultLayout.min_width);
-            this.instance.layout.should.have.property('height').which.is.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.width.should.be.exactly(LocusZoom.DefaultLayout.min_width);
+            this.instance.layout.height.should.be.exactly(LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.aspect_ratio.should.be.exactly(LocusZoom.DefaultLayout.min_width/LocusZoom.DefaultLayout.min_height);
         });
         it('should allow for adding arbitrarily many panels', function(){
             this.instance.addPanel.should.be.a.Function;
@@ -96,6 +98,63 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.instance.layout.min_height, calculated_min_height);
             this.instance.layout.width.should.not.be.lessThan(this.instance.layout.min_width);
             this.instance.layout.height.should.not.be.lessThan(this.instance.layout.min_height);
+        });
+        it('should allow for responsively setting dimensions using a predefined aspect ratio', function(){
+            this.instance = LocusZoom.populate("#instance_id", {}, { aspect_ratio: 2 });
+            this.instance.layout.aspect_ratio.should.be.exactly(2);
+            assert.equal(this.instance.layout.width/this.instance.layout.height, 2);
+            this.instance.setDimensions(2000);
+            this.instance.layout.aspect_ratio.should.be.exactly(2);
+            assert.equal(this.instance.layout.width/this.instance.layout.height, 2);
+            this.instance.setDimensions(900, 900);
+            this.instance.layout.aspect_ratio.should.be.exactly(2);
+            assert.equal(this.instance.layout.width/this.instance.layout.height, 2);
+        });
+        it('should allow for responsively positioning panels using a proportional dimensions', function(){
+            var responsive_layout = {
+                resizable: "responsive",
+                aspect_ratio: 2,
+                panels: {
+                    positions: { proportional_width: 1, proportional_height: 0.6 },
+                    genes:     { proportional_width: 1, proportional_height: 0.4 }
+                }
+            };
+            this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            assert.equal(this.instance.layout.panels.positions.height/this.instance.layout.height, 0.6);
+            assert.equal(this.instance.layout.panels.genes.height/this.instance.layout.height, 0.4);
+            this.instance.setDimensions(2000);
+            assert.equal(this.instance.layout.panels.positions.height/this.instance.layout.height, 0.6);
+            assert.equal(this.instance.layout.panels.genes.height/this.instance.layout.height, 0.4);
+            this.instance.setDimensions(900, 900);
+            assert.equal(this.instance.layout.panels.positions.height/this.instance.layout.height, 0.6);
+            assert.equal(this.instance.layout.panels.genes.height/this.instance.layout.height, 0.4);
+            this.instance.setDimensions(100, 100);
+            assert.equal(this.instance.layout.panels.positions.height/this.instance.layout.height, 0.6);
+            assert.equal(this.instance.layout.panels.genes.height/this.instance.layout.height, 0.4);
+        });
+        it('should not allow for a non-numerical / non-positive predefined dimensions', function(){
+            assert.throws(function(){ this.instance = LocusZoom.populate("#instance_id", {}, { width: 0, height: 0 }) });
+            assert.throws(function(){ this.instance = LocusZoom.populate("#instance_id", {}, { width: 20, height: -20 }) });
+            assert.throws(function(){ this.instance = LocusZoom.populate("#instance_id", {}, { width: "foo", height: 40 }) });
+            assert.throws(function(){ this.instance = LocusZoom.populate("#instance_id", {}, { width: 60, height: [1,2] }) });
+        });
+        it('should not allow for a non-numerical / non-positive predefined aspect ratio', function(){
+            assert.throws(function(){
+                var responsive_layout = { resizable: "responsive", aspect_ratio: 0 };
+                this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            });
+            assert.throws(function(){
+                var responsive_layout = { resizable: "responsive", aspect_ratio: -1 };
+                this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            });
+            assert.throws(function(){
+                var responsive_layout = { resizable: "responsive", aspect_ratio: "foo" };
+                this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            });
+            assert.throws(function(){
+                var responsive_layout = { resizable: "responsive", aspect_ratio: [1,2,3] };
+                this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            });
         });
         it('should track whether it\'s initialized', function(){
             this.instance.initialize.should.be.a.Function;
@@ -159,7 +218,9 @@ describe('LocusZoom.Instance', function(){
                 this.instance.ui.should.be.an.Object;
                 this.instance.ui.svg.should.be.an.Object;
                 assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#instance_id\\.ui").html());
-                assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+                if (this.instance.layout.resizable == "manual"){
+                    assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+                }
             });
             it('should be hidden by default', function(){
                 assert.equal(this.instance.ui.svg.style("display"), "none");
