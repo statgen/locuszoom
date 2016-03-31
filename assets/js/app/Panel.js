@@ -198,7 +198,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             this.svg.style("display", "none");
         }
     };
-    this.curtain.svg.append("rect");
+    this.curtain.svg.append("rect").attr("width", "100%").attr("height", "100%");
     this.curtain.svg.append("text")
         .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
