@@ -1593,8 +1593,8 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
         if (!isNaN(this.layout[axis].lower_buffer)){ extent[0] -= original_extent_span * this.layout[axis].lower_buffer; }
         if (!isNaN(this.layout[axis].upper_buffer)){ extent[1] += original_extent_span * this.layout[axis].upper_buffer; }
         // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = Math.max(extent[0], this.layout[axis].floor); }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = Math.min(extent[1], this.layout[axis].ceiling); }
+        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
+        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
         return extent;
     }.bind(this);
 };
