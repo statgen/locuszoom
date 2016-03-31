@@ -183,6 +183,12 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.svg.select("text").append("tspan")
                             .attr("x", "1em").attr("dy", "1.5em").text(line);
                     }.bind(this));
+                    this.svg.select("text").append("tspan")
+                        .attr("x", "1em").attr("dy", "2.5em")
+                        .attr("class", "dismiss").text("Dismiss")
+                        .on("click", function(){
+                            this.raise();
+                        }.bind(this));
                 } catch (e){
                     console.warn("LocusZoom tried to render an error message but it's not a string:", message);
                 }

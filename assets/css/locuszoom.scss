@@ -28,6 +28,10 @@ svg.#{$namespace}-locuszoom {
       text-anchor: start;
       alignment-baseline: hanging;
     }
+    tspan.dismiss {
+      fill: rgb(49,112,143);
+      cursor: pointer;
+    }
   }
 
   .#{$namespace}-mouse_guide {

@@ -16,6 +16,9 @@ svg.lz-locuszoom {
     font-size: 14px;
     text-anchor: start;
     alignment-baseline: hanging; }
+  svg.lz-locuszoom .lz-curtain tspan.dismiss {
+    fill: #31708f;
+    cursor: pointer; }
   svg.lz-locuszoom .lz-mouse_guide rect {
     fill: rgba(210, 210, 210, 0.85); }
   svg.lz-locuszoom .lz-mouse_guide rect.lz-mouse_guide-vertical {
