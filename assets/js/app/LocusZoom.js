@@ -3,48 +3,48 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.5"
-};
-
-// Create a new instance by instance class and attach it to a div by ID
-// NOTE: if no InstanceClass is passed then the instance will use the Intance base class.
-//       The DefaultInstance class must be passed explicitly just as any other class that extends Instance.
-LocusZoom.addInstanceToDivById = function(id, datasource, layout, state){
-
-    // Initialize a new Instance
-    var inst = new LocusZoom.Instance(id, datasource, layout, state);
-
-    // Add an SVG to the div and set its dimensions
-    inst.svg = d3.select("div#" + id)
-        .append("svg")
-        .attr("version", "1.1")
-        .attr("xmlns", "http://www.w3.org/2000/svg")
-        //.attr("xmlns:xlink", "http://www.w3.org/1999/xlink")
-        .attr("id", id + "_svg").attr("class", "lz-locuszoom");
-    inst.setDimensions();
-    // Initialize all panels
-    inst.initialize();
-    // Detect data-region and map to it if necessary
-    if (typeof inst.svg.node().parentNode.dataset !== "undefined"
-        && typeof inst.svg.node().parentNode.dataset.region !== "undefined"){
-        var region = inst.svg.node().parentNode.dataset.region.split(/\D/);
-        inst.mapTo(+region[0], +region[1], +region[2]);
-    }
-    return inst;
+    version: "0.3.6"
 };
     
-// Automatically detect divs by class and populate them with default LocusZoom instances
+// Populate a single element with a LocusZoom instance.
+// selector can be a string for a DOM Query or a d3 selector.
 LocusZoom.populate = function(selector, datasource, layout, state) {
-    if (typeof selector === "undefined"){
+    if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
     var instance;
-    d3.select(selector).each(function(){
-        instance = LocusZoom.addInstanceToDivById(this.id, datasource, layout, state);
+    d3.select(selector).call(function(container){
+        // Require each containing element have an ID. If one isn't present, create one.
+        if (typeof this.node().id == "undefined"){
+            var iterator = 0;
+            while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
+            this.attr("id", "#lz-" + iterator);
+        }
+        // Create the instance
+        instance = new LocusZoom.Instance(this.node().id, datasource, layout, state);
+        // Add an SVG to the div and set its dimensions
+        instance.svg = d3.select("div#" + instance.id)
+            .append("svg")
+            .attr("version", "1.1")
+            .attr("xmlns", "http://www.w3.org/2000/svg")
+            .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
+        instance.setDimensions();
+        // Initialize the instance
+        instance.initialize();
+        // Detect data-region and fill in state values if present
+        if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
+            instance.state = LocusZoom.mergeLayouts(LocusZoom.parsePositionQuery(this.node().dataset.region), instance.state);
+        }
+        // If the instance has defined data sources then trigger its first mapping based on state values
+        if (typeof datasource == "object" && Object.keys(datasource).length){
+            instance.refresh();
+        }
     });
     return instance;
 };
 
+// Populate arbitrarily many elements each with a LocusZoom instance
+// using a common datasource, layout, and/or state
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
     var instances = [];
     d3.selectAll(selector).each(function(d,i) {
@@ -93,14 +93,25 @@ LocusZoom.parsePositionQuery = function(x) {
         if (match[3] == "+") {
             var center = LocusZoom.positionStringToInt(match[2]);
             var offset = LocusZoom.positionStringToInt(match[4]);
-            return {chr:match[1], start:center-offset, end:center+offset};
+            return {
+                chr:match[1],
+                start: center - offset,
+                end: center + offset
+            };
         } else {
-            return {chr:match[1], start:LocusZoom.positionStringToInt(match[2]), end:LocusZoom.positionStringToInt(match[4])};
+            return {
+                chr: match[1],
+                start: LocusZoom.positionStringToInt(match[2]),
+                end: LocusZoom.positionStringToInt(match[4])
+            };
         }
     }
     match = chrpos.exec(x);
     if (match) {
-        return {chr:match[1], position:LocusZoom.positionStringToInt(match[2])};
+        return {
+            chr:match[1],
+            position: LocusZoom.positionStringToInt(match[2])
+        };
     }
     return null;
 };

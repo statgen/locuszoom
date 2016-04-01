@@ -76,10 +76,10 @@ describe('LocusZoom Core', function(){
             assert.deepEqual(LocusZoom.prettyTicks([-187, 762]), [-200, 0, 200, 400, 600, 800]);
         });
 
-        it('should have a method for adding instances to a div by ID', function(){
+        it('should have a method for populating a single element with a LocusZoom instance', function(){
             d3.select("body").append("div").attr("id", "instance_id");
-            LocusZoom.addInstanceToDivById.should.be.a.Function;
-            var instance = LocusZoom.addInstanceToDivById("instance_id", Object());
+            LocusZoom.populate.should.be.a.Function;
+            var instance = LocusZoom.populate("#instance_id", {});
             instance.should.be.an.Object;
             instance.id.should.be.exactly("instance_id");
             var svg_selector = d3.select('div#instance_id svg');
@@ -89,10 +89,10 @@ describe('LocusZoom Core', function(){
             assert.equal(instance.svg.html(), svg_selector.html());
         });
 
-        it('should have a method for populating divs with instances by class name', function(){
+        it('should have a method for populating arbitrarily many elements with LocusZoom instances', function(){
             d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
             d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
-            LocusZoom.populate.should.be.a.Function;
+            LocusZoom.populateAll.should.be.a.Function;
             var instances = LocusZoom.populateAll("div.lz");
             d3.selectAll('div.lz').each(function(d, i){
                 var div_selector = d3.select(this);
