@@ -7,6 +7,17 @@
 
   <script src="https://code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+  <style>
+    textarea {
+      width: 100%;
+      max-width: 100%;
+      min-height: 40px;
+      background-color: white;
+    }
+    textarea.error {
+      background-color: #F7DADA;
+    }
+  </style>
 
   <!-- Necessary includes for LocusZoom -->
   <script src="locuszoom.vendor.min.js" type="text/javascript"></script>
@@ -27,7 +38,7 @@
         <div class="u-pull-right">
           <a class="button" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">API Reference</a>
           <button>Reset Plot</button>
-          <button class="button-primary">Apply Layout &amp; State</button>
+          <button class="button-primary" onClick="updatePlot();">Apply Layout &amp; State</button>
         </div>
       </div>
     </div>
@@ -35,10 +46,10 @@
     <div class="row">
       
       <div class="six columns">
-        <h5>Layout</h5>
-        <textarea id="plot_builder_layout" style="width: 100%; max-width: 100%; min-height: 40px; height: 260px;"></textarea>
-        <h5>State</h5>
-        <textarea id="plot_builder_state" style="width: 100%; max-width: 100%; min-height: 40px; height: 120px;"></textarea>
+        <h5>Layout <small id="layout_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
+        <textarea id="layout" style="height: 260px;"></textarea>
+        <h5>State <small id="state_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
+        <textarea id="state" style="height: 120px;"></textarea>
       </div>
 
       <div class="six columns">
@@ -60,8 +71,33 @@
 
     // Populate the div with a LocusZoom plot
     var plot = LocusZoom.populate("#lz-1", data_sources);
-    $("#plot_builder_layout").text(JSON.stringify(plot.layout, null, "  "));
-    $("#plot_builder_state").text(JSON.stringify(plot.state, null, "  "));
+    $("#layout").val(JSON.stringify(plot.layout, null, "  "));
+    $("#state").val(JSON.stringify(plot.state, null, "  "));
+
+    function updatePlot(){
+      var layout = null;
+      var state = null;
+      $("#layout").removeClass("error");
+      $("#layout_message").html("");
+      $("#state").removeClass("error");
+      $("#state_message").html("");
+      try {
+        layout = JSON.parse($("#layout").val());
+      } catch (e) {
+        $("#layout").addClass("error");
+        $("#layout_message").html("Invalid JSON");
+      }
+      try {
+        state = JSON.parse($("#state").val());
+      } catch (e) {
+        $("#state").addClass("error");
+        $("#state_message").html("Invalid JSON");
+      }
+      if (layout == null || state == null){ return; }
+      
+      console.log(layout);
+      console.log(state);
+    }
 
   </script>
 
