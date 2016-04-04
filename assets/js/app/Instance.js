@@ -26,7 +26,13 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
+    // If no layout was passed, use the Standard Layout
+    // Otherwise merge whatever was passed with the Default Layout
+    if (typeof layout == "undefined"){
+        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
+    } else {
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+    }
     
     // The state property stores any parameters subject to change via user input
     this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);

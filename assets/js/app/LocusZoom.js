@@ -12,6 +12,8 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
+    // Empty the selector of any existing content
+    d3.select(selector).html("");
     var instance;
     d3.select(selector).call(function(container){
         // Require each containing element have an ID. If one isn't present, create one.
@@ -283,6 +285,17 @@ LocusZoom.DefaultState = {
 
 // Default Layout
 LocusZoom.DefaultLayout = {
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {}
+};
+
+// Standard Layout
+LocusZoom.StandardLayout = {
     width: 800,
     height: 450,
     min_width: 400,
@@ -354,6 +367,7 @@ LocusZoom.DefaultLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            axes: {},
             data_layers: {
                 genes: {
                     type: "genes",
