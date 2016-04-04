@@ -29,7 +29,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     // Empty the selector of any existing content
     d3.select(selector).html("");
     var instance;
-    d3.select(selector).call(function(container){
+    d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
             var iterator = 0;
@@ -49,7 +49,11 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         instance.initialize();
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
-            instance.state = LocusZoom.mergeLayouts(LocusZoom.parsePositionQuery(this.node().dataset.region), instance.state);
+            var region = LocusZoom.parsePositionQuery(this.node().dataset.region);
+            var attr;
+            for (attr in region){
+                instance.state[attr] = region[attr];
+            }
         }
         // If the instance has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
@@ -730,13 +734,29 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     }
     
     // The state property stores any parameters subject to change via user input
+    // At this step pre-parse layouts for panels and data layers and make sure they're all present in the state
     this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
+    var panel_id, data_layer_id;
+    for (panel_id in this.layout.panels){
+        this.state.panels[panel_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id] || {}, LocusZoom.Panel.DefaultState);
+        for (data_layer_id in this.layout.panels[panel_id].data_layers){
+            this.state.panels[panel_id].data_layers[data_layer_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id].data_layers[data_layer_id] || {}, LocusZoom.DataLayer.DefaultState);
+        }
+    }
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
 
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
+
+    // onUpdate - user defineable function that can be triggered whenever the layout or state are updated
+    this.onUpdate = null;
+    this.triggerOnUpdate = function(){
+        if (typeof this.onUpdate == "function"){
+            this.onUpdate();
+        }
+    };
 
     // Initialize the layout
     this.initializeLayout();
@@ -820,6 +840,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.initialized){
         this.ui.render();
     }
+    this.triggerOnUpdate();
     return this;
 };
 
@@ -838,9 +859,6 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(id, layout, state);
     panel.parent = this;
-
-    // Apply the Panel's state to the parent's state
-    panel.parent.state.panels[panel.id] = panel.state;
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -1030,7 +1048,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this))
-        .done();
+        .done(this.triggerOnUpdate);
 
     return this;
     
@@ -1080,6 +1098,10 @@ LocusZoom.Panel = function(id, layout, state) {
 
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
+    };
+
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
     };
 
     // Initialize the layout
@@ -1186,8 +1208,6 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
-
-    //console.log(this.layout);
 
     if (this.initialized){ this.render(); }
     return this;
@@ -1302,9 +1322,6 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     // Create the Data Layer and set its parent 
     var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, state);
     data_layer.parent = this;
-
-    // Apply the Data Layer's state to the parent's state
-    data_layer.parent.state.data_layers[data_layer.id] = data_layer.state;
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
@@ -1513,6 +1530,10 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    };
+
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
     };
 
     // Tooltip methods
@@ -2142,6 +2163,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                     this.state.selected_id = id;
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-selected");
                 }
+                this.triggerOnUpdate();
             }.bind(this));
             // Apply existing selection from state
             if (this.state.selected_id != null){
@@ -2473,6 +2495,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                                 this.state.selected_id = id;
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
                             }
+                            this.triggerOnUpdate();
                         }.bind(gene.parent));
                     // Apply existing selection from state
                     if (gene.parent.state.selected_id != null){

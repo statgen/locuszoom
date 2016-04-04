@@ -466,6 +466,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                     this.state.selected_id = id;
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-selected");
                 }
+                this.triggerOnUpdate();
             }.bind(this));
             // Apply existing selection from state
             if (this.state.selected_id != null){
@@ -797,6 +798,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                                 this.state.selected_id = id;
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
                             }
+                            this.triggerOnUpdate();
                         }.bind(gene.parent));
                     // Apply existing selection from state
                     if (gene.parent.state.selected_id != null){

@@ -69,10 +69,19 @@
     data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
     data_sources.addSource("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
 
+    var plot;
+
     function resetPlot(){
-      var plot = LocusZoom.populate("#plot", data_sources);
-      $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-      $("#state").val(JSON.stringify(plot.state, null, "  "));
+      plot = LocusZoom.populate("#plot", data_sources);
+      applyOnUpdate();
+      plot.onUpdate();
+    }
+
+    function applyOnUpdate(){
+      plot.onUpdate = function(){
+        $("#layout").val(JSON.stringify(plot.layout, null, "  "));
+        $("#state").val(JSON.stringify(plot.state, null, "  "));
+      };
     }
     
     function updatePlot(){
@@ -96,11 +105,10 @@
       }
       if (layout == null || state == null){ return; }
       plot = LocusZoom.populate("#plot", data_sources, layout, state);
-      $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-      $("#state").val(JSON.stringify(plot.state, null, "  "));
+      applyOnUpdate();
     }
 
-    resetPlot();
+    resetPlot();    
 
   </script>
 

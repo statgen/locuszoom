@@ -32,6 +32,10 @@ LocusZoom.DataLayer = function(id, layout, state) {
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
 
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
+    };
+
     // Tooltip methods
     this.tooltips = {};
     this.createTooltip = function(d, id){
