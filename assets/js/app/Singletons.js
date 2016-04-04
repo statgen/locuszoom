@@ -472,7 +472,11 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
             }.bind(this));
             // Apply existing selection from state
             if (this.state.selected_id != null){
-                d3.select("#" + this.state.selected_id).attr("class", "lz-data_layer-scatter-selected");
+                var selected_id = this.state.selected_id;
+                this.state.selected_id = null;
+                var d = d3.select("#" + selected_id).datum();
+                d3.select("#" + selected_id).on("mouseover")(d);
+                d3.select("#" + selected_id).on("click")(d);
             }
         }
         
@@ -804,7 +808,11 @@ LocusZoom.DataLayers.add("genes", function(id, layout, state){
                         }.bind(gene.parent));
                     // Apply existing selection from state
                     if (gene.parent.state.selected_id != null){
-                        d3.select("#" + gene.parent.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                        var selected_id = gene.parent.state.selected_id + "_clickarea";
+                        gene.parent.state.selected_id = null;
+                        var d = d3.select("#" + selected_id).datum();
+                        d3.select("#" + selected_id).on("mouseover")(d);
+                        d3.select("#" + selected_id).on("click")(d);
                     }
                 }
 
