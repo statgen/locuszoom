@@ -15,7 +15,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     // Empty the selector of any existing content
     d3.select(selector).html("");
     var instance;
-    d3.select(selector).call(function(container){
+    d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
             var iterator = 0;
@@ -35,7 +35,11 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         instance.initialize();
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
-            instance.state = LocusZoom.mergeLayouts(LocusZoom.parsePositionQuery(this.node().dataset.region), instance.state);
+            var region = LocusZoom.parsePositionQuery(this.node().dataset.region);
+            var attr;
+            for (attr in region){
+                instance.state[attr] = region[attr];
+            }
         }
         // If the instance has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){

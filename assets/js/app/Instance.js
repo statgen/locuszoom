@@ -35,13 +35,29 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     }
     
     // The state property stores any parameters subject to change via user input
+    // At this step pre-parse layouts for panels and data layers and make sure they're all present in the state
     this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
+    var panel_id, data_layer_id;
+    for (panel_id in this.layout.panels){
+        this.state.panels[panel_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id] || {}, LocusZoom.Panel.DefaultState);
+        for (data_layer_id in this.layout.panels[panel_id].data_layers){
+            this.state.panels[panel_id].data_layers[data_layer_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id].data_layers[data_layer_id] || {}, LocusZoom.DataLayer.DefaultState);
+        }
+    }
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
 
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
+
+    // onUpdate - user defineable function that can be triggered whenever the layout or state are updated
+    this.onUpdate = null;
+    this.triggerOnUpdate = function(){
+        if (typeof this.onUpdate == "function"){
+            this.onUpdate();
+        }
+    };
 
     // Initialize the layout
     this.initializeLayout();
@@ -125,6 +141,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.initialized){
         this.ui.render();
     }
+    this.triggerOnUpdate();
     return this;
 };
 
@@ -143,9 +160,6 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(id, layout, state);
     panel.parent = this;
-
-    // Apply the Panel's state to the parent's state
-    panel.parent.state.panels[panel.id] = panel.state;
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -335,7 +349,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this))
-        .done();
+        .done(this.triggerOnUpdate);
 
     return this;
     

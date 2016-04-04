@@ -39,6 +39,10 @@ LocusZoom.Panel = function(id, layout, state) {
         return this.parent.id + "." + this.id;
     };
 
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
+    };
+
     // Initialize the layout
     this.initializeLayout();
     
@@ -143,8 +147,6 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
-
-    //console.log(this.layout);
 
     if (this.initialized){ this.render(); }
     return this;
@@ -259,9 +261,6 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
     // Create the Data Layer and set its parent 
     var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, state);
     data_layer.parent = this;
-
-    // Apply the Data Layer's state to the parent's state
-    data_layer.parent.state.data_layers[data_layer.id] = data_layer.state;
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
