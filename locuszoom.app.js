@@ -26,6 +26,8 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
+    // Empty the selector of any existing content
+    d3.select(selector).html("");
     var instance;
     d3.select(selector).call(function(container){
         // Require each containing element have an ID. If one isn't present, create one.
@@ -297,6 +299,17 @@ LocusZoom.DefaultState = {
 
 // Default Layout
 LocusZoom.DefaultLayout = {
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {}
+};
+
+// Standard Layout
+LocusZoom.StandardLayout = {
     width: 800,
     height: 450,
     min_width: 400,
@@ -368,6 +381,7 @@ LocusZoom.DefaultLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            axes: {},
             data_layers: {
                 genes: {
                     type: "genes",
@@ -707,7 +721,13 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
+    // If no layout was passed, use the Standard Layout
+    // Otherwise merge whatever was passed with the Default Layout
+    if (typeof layout == "undefined"){
+        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
+    } else {
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+    }
     
     // The state property stores any parameters subject to change via user input
     this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
@@ -1104,7 +1124,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
-        if (JSON.stringify(this.layout.axes[axis]) == JSON.stringify({})){
+        if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false){
             // The default layout sets the axis to an empty object, so set its render boolean here
             this.layout.axes[axis].render = false;
         } else {

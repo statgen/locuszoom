@@ -81,7 +81,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
-        if (JSON.stringify(this.layout.axes[axis]) == JSON.stringify({})){
+        if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false){
             // The default layout sets the axis to an empty object, so set its render boolean here
             this.layout.axes[axis].render = false;
         } else {

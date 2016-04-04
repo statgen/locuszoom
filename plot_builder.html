@@ -37,7 +37,7 @@
       <div class="eight columns">
         <div class="u-pull-right">
           <a class="button" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">API Reference</a>
-          <button>Reset Plot</button>
+          <button onclick="resetPlot();">Reset Plot</button>
           <button class="button-primary" onClick="updatePlot();">Apply Layout &amp; State</button>
         </div>
       </div>
@@ -53,7 +53,7 @@
       </div>
 
       <div class="six columns">
-        <div id="lz-1" class="lz-container-responsive" data-region="10:114550452-115067678"></div>
+        <div id="plot" class="lz-container-responsive" data-region="10:114550452-115067678"></div>
       </div>
 
     </div>
@@ -69,11 +69,12 @@
     data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
     data_sources.addSource("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
 
-    // Populate the div with a LocusZoom plot
-    var plot = LocusZoom.populate("#lz-1", data_sources);
-    $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-    $("#state").val(JSON.stringify(plot.state, null, "  "));
-
+    function resetPlot(){
+      var plot = LocusZoom.populate("#plot", data_sources);
+      $("#layout").val(JSON.stringify(plot.layout, null, "  "));
+      $("#state").val(JSON.stringify(plot.state, null, "  "));
+    }
+    
     function updatePlot(){
       var layout = null;
       var state = null;
@@ -94,10 +95,12 @@
         $("#state_message").html("Invalid JSON");
       }
       if (layout == null || state == null){ return; }
-      
-      console.log(layout);
-      console.log(state);
+      plot = LocusZoom.populate("#plot", data_sources, layout, state);
+      $("#layout").val(JSON.stringify(plot.layout, null, "  "));
+      $("#state").val(JSON.stringify(plot.state, null, "  "));
     }
+
+    resetPlot();
 
   </script>
 
