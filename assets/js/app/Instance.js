@@ -9,11 +9,11 @@
   LocusZoom.Instance Class
 
   An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
-  on a single page, each having its own layout, data sources, and state.
+  on a single page, each having its own layout.
 
 */
 
-LocusZoom.Instance = function(id, datasource, layout, state) {
+LocusZoom.Instance = function(id, datasource, layout) {
 
     this.initialized = false;
 
@@ -29,20 +29,9 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
+        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.DefaultLayout);
     } else {
         this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
-    }
-    
-    // The state property stores any parameters subject to change via user input
-    // At this step pre-parse layouts for panels and data layers and make sure they're all present in the state
-    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
-    var panel_id, data_layer_id;
-    for (panel_id in this.layout.panels){
-        this.state.panels[panel_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id] || {}, LocusZoom.Panel.DefaultState);
-        for (data_layer_id in this.layout.panels[panel_id].data_layers){
-            this.state.panels[panel_id].data_layers[data_layer_id] = LocusZoom.mergeLayouts(this.state.panels[panel_id].data_layers[data_layer_id] || {}, LocusZoom.DataLayer.DefaultState);
-        }
     }
     
     // LocusZoom.Data.Requester
@@ -97,7 +86,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     // Add panels
     var panel_id;
     for (panel_id in this.layout.panels){
-        this.addPanel(panel_id, this.layout.panels[panel_id], this.state.panels[panel_id]);
+        this.addPanel(panel_id, this.layout.panels[panel_id]);
     }
 
 };
@@ -334,9 +323,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.state.chr   = +chr;
-    this.state.start = +start;
-    this.state.end   = +end;
+    this.layout.state.chr   = +chr;
+    this.layout.state.start = +start;
+    this.layout.state.end   = +end;
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
@@ -349,7 +338,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this))
-        .done(this.triggerOnUpdate);
+        .done(function(){
+            this.triggerOnUpdate()
+        }.bind(this));
 
     return this;
     
@@ -357,5 +348,5 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.mapTo(this.state.chr, this.state.start, this.state.end);
+    this.mapTo(this.layout.state.chr, this.layout.state.start, this.layout.state.end);
 };

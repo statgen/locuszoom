@@ -13,7 +13,7 @@
 
 */
 
-LocusZoom.DataLayer = function(id, layout, state) {
+LocusZoom.DataLayer = function(id, layout) {
 
     this.initialized = false;
 
@@ -22,8 +22,6 @@ LocusZoom.DataLayer = function(id, layout, state) {
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
-
-    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DataLayer.DefaultState);
 
     this.data = [];
     this.metadata = {};
@@ -125,9 +123,6 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
 };
 
-LocusZoom.DataLayer.DefaultState = {
-};
-
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
     fields: []
@@ -188,7 +183,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
 LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
-    var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.layout.fields); //,"ld:best"
+    var promise = this.parent.parent.lzd.getData(this.parent.parent.layout.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
     }.bind(this));
