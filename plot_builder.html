@@ -31,25 +31,25 @@
   <div style="max-width: 100%; clear: both; margin: 0;">
 
     <div class="row">
-      <div class="four columns">
-        <h2>LocusZoom Plot Builder</h2>
-      </div>
-      <div class="eight columns">
-        <div class="u-pull-right">
-          <a class="button" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">API Reference</a>
-          <button onclick="resetPlot();">Reset Plot</button>
-          <button class="button-primary" onClick="updatePlot();">Apply Layout &amp; State</button>
-        </div>
-      </div>
+      <h2>LocusZoom Plot Builder</h2>
     </div>
     
     <div class="row">
       
       <div class="six columns">
-        <h5>Layout <small id="layout_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
-        <textarea id="layout" style="height: 260px;"></textarea>
-        <h5>State <small id="state_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
-        <textarea id="state" style="height: 120px;"></textarea>
+        <textarea id="layout" style="height: 460px;"></textarea>
+        <div class="row">
+          <div class="four columns">
+            <h5>Layout <small id="layout_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
+          </div>
+          <div class="eight columns">
+            <div class="u-pull-right">
+              <a class="button" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">API Reference</a>
+              <button onclick="resetPlot();">Reset Plot</button>
+              <button class="button-primary" onClick="updatePlot();">Apply Layout</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="six columns">
@@ -74,13 +74,11 @@
     function resetPlot(){
       plot = LocusZoom.populate("#plot", data_sources);
       applyOnUpdate();
-      plot.onUpdate();
     }
 
     function applyOnUpdate(){
       plot.onUpdate = function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-        $("#state").val(JSON.stringify(plot.state, null, "  "));
       };
     }
     
@@ -89,22 +87,14 @@
       var state = null;
       $("#layout").removeClass("error");
       $("#layout_message").html("");
-      $("#state").removeClass("error");
-      $("#state_message").html("");
       try {
         layout = JSON.parse($("#layout").val());
       } catch (e) {
         $("#layout").addClass("error");
         $("#layout_message").html("Invalid JSON");
+        return;
       }
-      try {
-        state = JSON.parse($("#state").val());
-      } catch (e) {
-        $("#state").addClass("error");
-        $("#state_message").html("Invalid JSON");
-      }
-      if (layout == null || state == null){ return; }
-      plot = LocusZoom.populate("#plot", data_sources, layout, state);
+      plot = LocusZoom.populate("#plot", data_sources, layout);
       applyOnUpdate();
     }
 

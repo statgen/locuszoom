@@ -48,8 +48,8 @@ describe('LocusZoom Singletons', function(){
         it("should have a general method to get a function or execute it for a result", function(){
             LocusZoom.LabelFunctions.should.have.property("get").which.is.a.Function;
             LocusZoom.LabelFunctions.get("chromosome").should.be.a.Function;
-            var returned_label = LocusZoom.LabelFunctions.get("chromosome", this.instance.state);
-            var expected_label = "Chromosome 0 (Mb)";
+            var returned_label = LocusZoom.LabelFunctions.get("chromosome", { chr: 17, start: 40 });
+            var expected_label = "Chromosome 17 (Mb)";
             assert.equal(returned_label, expected_label);
         });
         it("should have a method to add a label function", function(){
@@ -59,8 +59,8 @@ describe('LocusZoom Singletons', function(){
             var returned_list = LocusZoom.LabelFunctions.list();
             var expected_list = ["chromosome", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_label = LocusZoom.LabelFunctions.get("foo", this.instance.state);
-            var expected_label = "start: 0";
+            var returned_label = LocusZoom.LabelFunctions.get("foo", { start: 20 });
+            var expected_label = "start: 20";
             assert.equal(returned_label, expected_label);
         });
         it("should have a method to change or delete existing label functions", function(){
@@ -70,8 +70,8 @@ describe('LocusZoom Singletons', function(){
             var returned_list = LocusZoom.LabelFunctions.list();
             var expected_list = ["chromosome", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_label = LocusZoom.LabelFunctions.get("foo", this.instance.state);
-            var expected_label = "end: 0";
+            var returned_label = LocusZoom.LabelFunctions.get("foo", { start: 20, end: 50 });
+            var expected_label = "end: 50";
             assert.equal(returned_label, expected_label);
             LocusZoom.LabelFunctions.set("foo");
             var returned_list = LocusZoom.LabelFunctions.list();
@@ -80,7 +80,7 @@ describe('LocusZoom Singletons', function(){
         });
         it("should throw an exception if asked to get a function that has not been defined", function(){
             assert.throws(function(){
-                LocusZoom.LabelFunctions.get("nonexistent", this.instance.state);
+                LocusZoom.LabelFunctions.get("nonexistent", {});
             });
         });
         it('should throw an exception when adding a new label function with an already in use name', function(){
@@ -218,7 +218,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.ScaleFunctions.get("nonexistent", this.instance.state);
+                LocusZoom.ScaleFunctions.get("nonexistent", this.instance.layout.state);
             });
         });
         it('should throw an exception when adding a new scale function with an already in use name', function(){
@@ -334,7 +334,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.DataLayers.get("nonexistent", this.instance.state);
+                LocusZoom.DataLayers.get("nonexistent", this.instance.layout.state);
             });
         });
         it('should throw an exception when trying to add a new data layer that is not a function', function(){
