@@ -411,6 +411,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, state){
                 var x = this.parent.x_scale(d[this.layout.x_axis.field]);
                 var y_scale = "y"+this.layout.y_axis.axis+"_scale";
                 var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+                if (isNaN(x)){ x = -1000; }
+                if (isNaN(y)){ y = -1000; }
                 return "translate(" + x + "," + y + ")";
             }.bind(this))
             .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
