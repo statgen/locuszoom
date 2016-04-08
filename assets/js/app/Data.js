@@ -274,8 +274,71 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
         " and start le " + state.end +
         " and end ge " + state.start;
 };
+LocusZoom.Data.GeneSource.prototype.findTranscriptPositions = function(data, transName) {
+    var transData;
+    for(var g=0; g < data.length && !transData; g++) {
+        for (var t=0; t < data[g].transcripts.length; t++) {
+            if (data[g].transcripts[t].transcript_id==transName) {
+                transData = {
+                    start: data[g].transcripts[t].start,
+                    end: data[g].transcripts[t].end,
+                    exonStarts: [],
+                    exonEnds: []
+                };
+                data[g].transcripts[t].exons.forEach(function(ex) {
+                    transData.exonStarts.push(ex.start);
+                    transData.exonEnds.push(ex.end);
+                });
+                break;
+            }
+        }
+    }
+    return transData;
+};
+LocusZoom.Data.GeneSource.prototype.annotateOverlap = function(data, positions, outname) {
+    var between = function(x, a, b) {return x>=a && x<=b;};
+    //assuming exon positions are sorted and non-overlaping
+    var exid = 0;
+    for(var i=0; i < data.length; i++) {
+        var pos = data[i].position;
+        if (positions && between(pos, positions.start, positions.end)) {
+            //jump to "next" exon
+            while(exid < positions.exonEnds.length && pos > positions.exonEnds[exid]) {exid++;}
+            if( between(pos, positions.exonStarts[exid], positions.exonEnds[exid])) {
+                data[i][outname] = 2;
+            } else {
+                data[i][outname] = 1;
+            }
+        } else {
+            //trans not found or not in transcript
+            data[i][outname] = 0;
+        }
+    }
+};
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    return {header: chain.header, body: resp.data};
+    if (fields.length==1 & fields[0]=="gene") { 
+        //raw dump of gene info for genes panel 
+        return {header: chain.header, body: resp.data};
+    } else {
+        //should match "type(parameter)" where parameters are optional
+        var fregex = /([^()]+)(?:\(([^()]+)\))?/;
+        for (var f=0; f < fields.length; f++) {
+            var field = fields[f];
+            var outname = outnames[f];
+            var matches =  fregex.exec(field);
+            if ( matches[1] == "transanno" ) {
+                var transName = matches[2];
+                if (!transName) {throw("missing required transcript for transanno: " + field);}
+                if (!chain.body.length) {return chain;}
+                var transData = this.findTranscriptPositions(resp.data, transName);
+                //merge info into chain
+                this.annotateOverlap(chain.body, transData, outname);
+            } else {
+                throw("unrecognized gene field: " + field);
+            }
+        }
+        return chain;
+    }
 };
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
