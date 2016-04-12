@@ -22,7 +22,7 @@ var LocusZoom = {
     
 // Populate a single element with a LocusZoom instance.
 // selector can be a string for a DOM Query or a d3 selector.
-LocusZoom.populate = function(selector, datasource, layout, state) {
+LocusZoom.populate = function(selector, datasource, layout) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
@@ -70,10 +70,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
 
 // Populate arbitrarily many elements each with a LocusZoom instance
 // using a common datasource, layout, and/or state
-LocusZoom.populateAll = function(selector, datasource, layout, state) {
+LocusZoom.populateAll = function(selector, datasource, layout) {
     var instances = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        instances[i] = LocusZoom.populate(this, datasource, layout);
     });
     return instances;
 };
@@ -1111,6 +1111,9 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
+    state: {
+        data_layers: {}   
+    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -1429,7 +1432,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
+            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.layout.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -1448,7 +1451,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
+            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.layout.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -1469,7 +1472,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
+            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.layout.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
@@ -2027,6 +2030,9 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
+        state: {
+            selected_id: null
+        },
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
@@ -2165,7 +2171,6 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 this.triggerOnUpdate();
             }.bind(this));
             // Apply existing selection from state
-            console.log(this.state[this.state_id]);
             if (this.state[this.state_id].selected != null){
                 var selected_id = this.state[this.state_id].selected;
                 this.state[this.state_id].selected = null;
@@ -2189,6 +2194,9 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
+        state: {
+            selected_id: null
+        },
         label_font_size: 12,
         label_exon_spacing: 4,
         exon_height: 16,

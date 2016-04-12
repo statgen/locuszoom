@@ -8,7 +8,7 @@ var LocusZoom = {
     
 // Populate a single element with a LocusZoom instance.
 // selector can be a string for a DOM Query or a d3 selector.
-LocusZoom.populate = function(selector, datasource, layout, state) {
+LocusZoom.populate = function(selector, datasource, layout) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
@@ -56,10 +56,10 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
 
 // Populate arbitrarily many elements each with a LocusZoom instance
 // using a common datasource, layout, and/or state
-LocusZoom.populateAll = function(selector, datasource, layout, state) {
+LocusZoom.populateAll = function(selector, datasource, layout) {
     var instances = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        instances[i] = LocusZoom.populate(this, datasource, layout);
     });
     return instances;
 };
