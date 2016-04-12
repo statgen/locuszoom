@@ -1023,9 +1023,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.layout.state.chr   = +chr;
-    this.layout.state.start = +start;
-    this.layout.state.end   = +end;
+    this.state.chr   = +chr;
+    this.state.start = +start;
+    this.state.end   = +end;
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
@@ -1048,7 +1048,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.mapTo(this.layout.state.chr, this.layout.state.start, this.layout.state.end);
+    this.mapTo(this.state.chr, this.state.start, this.state.end);
 };
 
 /* global d3,Q,LocusZoom */
@@ -1432,7 +1432,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.layout.state);
+            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -1451,7 +1451,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.layout.state);
+            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -1472,7 +1472,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.layout.state);
+            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;
@@ -2266,20 +2266,20 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[g].display_range = {
-                start: this.parent.x_scale(Math.max(d.start, this.parent.parent.layout.state.start)),
-                end:   this.parent.x_scale(Math.min(d.end, this.parent.parent.layout.state.end))
+                start: this.parent.x_scale(Math.max(d.start, this.state.start)),
+                end:   this.parent.x_scale(Math.min(d.end, this.state.end))
             };
             this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
             this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
             // Determine label text anchor (default to middle)
             this.data[g].display_range.text_anchor = "middle";
             if (this.data[g].display_range.width < this.data[g].display_range.label_width){
-                if (d.start < this.parent.parent.layout.state.start){
+                if (d.start < this.state.start){
                     this.data[g].display_range.end = this.data[g].display_range.start
                         + this.data[g].display_range.label_width
                         + this.metadata.horizontal_padding;
                     this.data[g].display_range.text_anchor = "start";
-                } else if (d.end > this.parent.parent.layout.state.end){
+                } else if (d.end > this.state.end){
                     this.data[g].display_range.start = this.data[g].display_range.end
                         - this.data[g].display_range.label_width
                         - this.metadata.horizontal_padding;
@@ -2287,12 +2287,12 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 } else {
                     var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
                         + this.metadata.horizontal_padding;
-                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.parent.parent.layout.state.start)){
-                        this.data[g].display_range.start = this.parent.x_scale(this.parent.parent.layout.state.start);
+                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.state.start)){
+                        this.data[g].display_range.start = this.parent.x_scale(this.state.start);
                         this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "start";
-                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.parent.parent.layout.state.end)) {
-                        this.data[g].display_range.end = this.parent.x_scale(this.parent.parent.layout.state.end);
+                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
+                        this.data[g].display_range.end = this.parent.x_scale(this.state.end);
                         this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "end";
                     } else {

@@ -218,7 +218,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.ScaleFunctions.get("nonexistent", this.instance.layout.state);
+                LocusZoom.ScaleFunctions.get("nonexistent", this.instance.state);
             });
         });
         it('should throw an exception when adding a new scale function with an already in use name', function(){
@@ -334,7 +334,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.DataLayers.get("nonexistent", this.instance.layout.state);
+                LocusZoom.DataLayers.get("nonexistent", this.instance.state);
             });
         });
         it('should throw an exception when trying to add a new data layer that is not a function', function(){

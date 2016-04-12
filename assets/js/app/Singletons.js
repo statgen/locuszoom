@@ -564,20 +564,20 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
             this.data[g].display_range = {
-                start: this.parent.x_scale(Math.max(d.start, this.parent.parent.layout.state.start)),
-                end:   this.parent.x_scale(Math.min(d.end, this.parent.parent.layout.state.end))
+                start: this.parent.x_scale(Math.max(d.start, this.state.start)),
+                end:   this.parent.x_scale(Math.min(d.end, this.state.end))
             };
             this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
             this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
             // Determine label text anchor (default to middle)
             this.data[g].display_range.text_anchor = "middle";
             if (this.data[g].display_range.width < this.data[g].display_range.label_width){
-                if (d.start < this.parent.parent.layout.state.start){
+                if (d.start < this.state.start){
                     this.data[g].display_range.end = this.data[g].display_range.start
                         + this.data[g].display_range.label_width
                         + this.metadata.horizontal_padding;
                     this.data[g].display_range.text_anchor = "start";
-                } else if (d.end > this.parent.parent.layout.state.end){
+                } else if (d.end > this.state.end){
                     this.data[g].display_range.start = this.data[g].display_range.end
                         - this.data[g].display_range.label_width
                         - this.metadata.horizontal_padding;
@@ -585,12 +585,12 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 } else {
                     var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
                         + this.metadata.horizontal_padding;
-                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.parent.parent.layout.state.start)){
-                        this.data[g].display_range.start = this.parent.x_scale(this.parent.parent.layout.state.start);
+                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.state.start)){
+                        this.data[g].display_range.start = this.parent.x_scale(this.state.start);
                         this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "start";
-                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.parent.parent.layout.state.end)) {
-                        this.data[g].display_range.end = this.parent.x_scale(this.parent.parent.layout.state.end);
+                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
+                        this.data[g].display_range.end = this.parent.x_scale(this.state.end);
                         this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
                         this.data[g].display_range.text_anchor = "end";
                     } else {

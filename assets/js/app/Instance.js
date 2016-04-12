@@ -325,9 +325,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.layout.state.chr   = +chr;
-    this.layout.state.start = +start;
-    this.layout.state.end   = +end;
+    this.state.chr   = +chr;
+    this.state.start = +start;
+    this.state.end   = +end;
 
     this.remap_promises = [];
     // Trigger reMap on each Panel Layer
@@ -350,5 +350,5 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.mapTo(this.layout.state.chr, this.layout.state.start, this.layout.state.end);
+    this.mapTo(this.state.chr, this.state.start, this.state.end);
 };
