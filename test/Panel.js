@@ -37,8 +37,10 @@ describe('LocusZoom.Panel', function(){
     });
 
     describe("Constructor", function() {
-        beforeEach(function() {
-            this.panel = new LocusZoom.Panel();
+        beforeEach(function(){
+            d3.select("body").append("div").attr("id", "instance_id");
+            this.instance = LocusZoom.populate("#instance_id");
+            this.panel = this.instance.panels.positions;
         });
         it("returns an object", function() {
             this.panel.should.be.an.Object;

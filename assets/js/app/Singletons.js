@@ -275,14 +275,14 @@ LocusZoom.DataLayers = (function() {
     var obj = {};
     var datalayers = {};
 
-    obj.get = function(name, id, layout) {
+    obj.get = function(name, id, layout, parent) {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
             if (typeof id == "undefined" || typeof layout == "undefined"){
                 throw("id or layout argument missing for data layer [" + name + "]");
             } else {
-                return new datalayers[name](id, layout);
+                return new datalayers[name](id, layout, parent);
             }
         } else {
             throw("data layer [" + name + "] not found");
@@ -324,14 +324,10 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
-    LocusZoom.DataLayer.apply(this, arguments);
-
+    // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        state: {
-            selected_id: null
-        },
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
@@ -340,8 +336,10 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         },
         selectable: true
     };
+    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
-    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
 
     // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(id){
@@ -440,37 +438,37 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         if (this.layout.selectable && (this.layout.fields.indexOf("id") != -1)){
             selection.on("mouseover", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
-                if (this.layout.state.selected_id != id){
+                if (this.state[this.state_id].selected != id){
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-hovered");
                     if (this.layout.tooltip){ this.createTooltip(d, id); }
                 }
             }.bind(this))
             .on("mouseout", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
-                if (this.layout.state.selected_id != id){
+                if (this.state[this.state_id].selected != id){
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter");
                     if (this.layout.tooltip){ this.destroyTooltip(id); }
                 }
             }.bind(this))
             .on("click", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
-                if (this.layout.state.selected_id == id){
-                    this.layout.state.selected_id = null;
+                if (this.state[this.state_id].selected == id){
+                    this.state[this.state_id].selected = null;
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-hovered");
                 } else {
-                    if (this.layout.state.selected_id != null){
-                        d3.select("#" + this.layout.state.selected_id).attr("class", "lz-data_layer-scatter");
-                        if (this.layout.tooltip){ this.destroyTooltip(this.layout.state.selected_id); }
+                    if (this.state[this.state_id].selected != null){
+                        d3.select("#" + this.state[this.state_id].selected).attr("class", "lz-data_layer-scatter");
+                        if (this.layout.tooltip){ this.destroyTooltip(this.state[this.state_id].selected); }
                     }
-                    this.layout.state.selected_id = id;
+                    this.state[this.state_id].selected = id;
                     d3.select("#" + id).attr("class", "lz-data_layer-scatter-selected");
                 }
                 this.triggerOnUpdate();
             }.bind(this));
             // Apply existing selection from state
-            if (this.layout.state.selected_id != null){
-                var selected_id = this.layout.state.selected_id;
-                this.layout.state.selected_id = null;
+            if (this.state[this.state_id].selected != null){
+                var selected_id = this.state[this.state_id].selected;
+                this.state[this.state_id].selected = null;
                 var d = d3.select("#" + selected_id).datum();
                 d3.select("#" + selected_id).on("mouseover")(d);
                 d3.select("#" + selected_id).on("click")(d);
@@ -487,14 +485,10 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout){
+LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 
-    LocusZoom.DataLayer.apply(this, arguments);
-
+    // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        state: {
-            selected_id: null
-        },
         label_font_size: 12,
         label_exon_spacing: 4,
         exon_height: 16,
@@ -502,8 +496,10 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         track_vertical_spacing: 10,
         selectable: true
     };
+    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
-    this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
     
     // Helper function to sum layout values to derive total height for a single gene track
     this.getTrackHeight = function(){
@@ -774,37 +770,37 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                     clickarea
                         .on("mouseover", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.layout.state.selected_id != id){
+                            if (this.state[this.state_id].selected != id){
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
                                 if (this.layout.tooltip){ this.createTooltip(d, id); }
                             }
                         }.bind(gene.parent))
                         .on("mouseout", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.layout.state.selected_id != id){
+                            if (this.state[this.state_id].selected != id){
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
                                 if (this.layout.tooltip){ this.destroyTooltip(id); }
                             }
                         }.bind(gene.parent))
                         .on("click", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.layout.state.selected_id == id){
-                                this.layout.state.selected_id = null;
+                            if (this.state[this.state_id].selected == id){
+                                this.state[this.state_id].selected = null;
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
                             } else {
-                                if (this.layout.state.selected_id != null){
-                                    d3.select("#" + this.layout.state.selected_id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                                    if (this.layout.tooltip){ this.destroyTooltip(this.layout.state.selected_id); }
+                                if (this.state[this.state_id].selected != null){
+                                    d3.select("#" + this.state[this.state_id].selected + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                                    if (this.layout.tooltip){ this.destroyTooltip(this.state[this.state_id].selected); }
                                 }
-                                this.layout.state.selected_id = id;
+                                this.state[this.state_id].selected = id;
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
                             }
                             this.triggerOnUpdate();
                         }.bind(gene.parent));
                     // Apply existing selection from state
-                    if (gene.parent.layout.state.selected_id != null){
-                        var selected_id = gene.parent.layout.state.selected_id + "_clickarea";
-                        gene.parent.layout.state.selected_id = null;
+                    if (gene.parent.state[gene.parent.state_id].selected != null){
+                        var selected_id = gene.parent.state[gene.parent.state_id].selected + "_clickarea";
+                        gene.parent.state[gene.parent.state_id].selected = null;
                         var d = d3.select("#" + selected_id).datum();
                         d3.select("#" + selected_id).on("mouseover")(d);
                         d3.select("#" + selected_id).on("click")(d);

@@ -33,6 +33,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     } else {
         this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
     }
+
+    // Create a shortcut to the state in the layout on the instance
+    this.state = this.layout.state;
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
@@ -135,7 +138,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel by id and panel class
-LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
+LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
@@ -147,8 +150,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
     }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(id, layout, state);
-    panel.parent = this;
+    var panel = new LocusZoom.Panel(id, layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
