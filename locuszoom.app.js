@@ -2173,10 +2173,15 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             // Apply existing selection from state
             if (this.state[this.state_id].selected != null){
                 var selected_id = this.state[this.state_id].selected;
-                this.state[this.state_id].selected = null;
-                var d = d3.select("#" + selected_id).datum();
-                d3.select("#" + selected_id).on("mouseover")(d);
-                d3.select("#" + selected_id).on("click")(d);
+                if (d3.select("#" + selected_id).empty()){
+                    console.warn("Pre-defined state selection for " + this.state_id + " contains an ID that is not present on the plot: " + this.state[this.state_id].selected);
+                    this.state[this.state_id].selected = null;
+                } else {
+                    this.state[this.state_id].selected = null;
+                    var d = d3.select("#" + selected_id).datum();
+                    d3.select("#" + selected_id).on("mouseover")(d);
+                    d3.select("#" + selected_id).on("click")(d);
+                }
             }
         }
         
@@ -2508,10 +2513,15 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     // Apply existing selection from state
                     if (gene.parent.state[gene.parent.state_id].selected != null){
                         var selected_id = gene.parent.state[gene.parent.state_id].selected + "_clickarea";
-                        gene.parent.state[gene.parent.state_id].selected = null;
-                        var d = d3.select("#" + selected_id).datum();
-                        d3.select("#" + selected_id).on("mouseover")(d);
-                        d3.select("#" + selected_id).on("click")(d);
+                        if (d3.select("#" + selected_id).empty()){
+                            console.warn("Pre-defined state selection for " + gene.parent.state_id + " contains an ID that is not present on the plot: " + gene.parent.state[gene.parent.state_id].selected);
+                            gene.parent.state[gene.parent.state_id].selected = null;
+                        } else {
+                            gene.parent.state[gene.parent.state_id].selected = null;
+                            var d = d3.select("#" + selected_id).datum();
+                            d3.select("#" + selected_id).on("mouseover")(d);
+                            d3.select("#" + selected_id).on("click")(d);
+                        }
                     }
                 }
 
