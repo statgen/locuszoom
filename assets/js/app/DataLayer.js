@@ -61,7 +61,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             arrow: null,
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
-                .attr("id", this.parent.getBaseId() + ".tooltip." + id)
+                .attr("id", this.getBaseId() + ".tooltip." + id)
         }
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));

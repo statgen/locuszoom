@@ -1558,7 +1558,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             arrow: null,
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
-                .attr("id", this.parent.getBaseId() + ".tooltip." + id)
+                .attr("id", this.getBaseId() + ".tooltip." + id)
         }
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
@@ -2174,13 +2174,17 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             if (this.state[this.state_id].selected != null){
                 var selected_id = this.state[this.state_id].selected;
                 if (d3.select("#" + selected_id).empty()){
-                    console.warn("Pre-defined state selection for " + this.state_id + " contains an ID that is not present on the plot: " + this.state[this.state_id].selected);
+                    console.warn("State selection for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + this.state[this.state_id].selected);
                     this.state[this.state_id].selected = null;
                 } else {
-                    this.state[this.state_id].selected = null;
-                    var d = d3.select("#" + selected_id).datum();
-                    d3.select("#" + selected_id).on("mouseover")(d);
-                    d3.select("#" + selected_id).on("click")(d);
+                    if (this.tooltips[this.state[this.state_id].selected]){
+                        this.positionTooltip(this.state[this.state_id].selected);
+                    } else {
+                        this.state[this.state_id].selected = null;
+                        var d = d3.select("#" + selected_id).datum();
+                        d3.select("#" + selected_id).on("mouseover")(d);
+                        d3.select("#" + selected_id).on("click")(d);
+                    }
                 }
             }
         }
@@ -2514,13 +2518,17 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     if (gene.parent.state[gene.parent.state_id].selected != null){
                         var selected_id = gene.parent.state[gene.parent.state_id].selected + "_clickarea";
                         if (d3.select("#" + selected_id).empty()){
-                            console.warn("Pre-defined state selection for " + gene.parent.state_id + " contains an ID that is not present on the plot: " + gene.parent.state[gene.parent.state_id].selected);
+                            console.warn("Pre-defined state selection for " + gene.parent.state_id + " contains an ID that is not or is no longer present on the plot: " + gene.parent.state[gene.parent.state_id].selected);
                             gene.parent.state[gene.parent.state_id].selected = null;
                         } else {
-                            gene.parent.state[gene.parent.state_id].selected = null;
-                            var d = d3.select("#" + selected_id).datum();
-                            d3.select("#" + selected_id).on("mouseover")(d);
-                            d3.select("#" + selected_id).on("click")(d);
+                            if (gene.parent.tooltips[gene.parent.state[gene.parent.state_id].selected]){
+                                gene.parent.positionTooltip(gene.parent.state[gene.parent.state_id].selected);
+                            } else {
+                                gene.parent.state[gene.parent.state_id].selected = null;
+                                var d = d3.select("#" + selected_id).datum();
+                                d3.select("#" + selected_id).on("mouseover")(d);
+                                d3.select("#" + selected_id).on("click")(d);
+                            }
                         }
                     }
                 }
