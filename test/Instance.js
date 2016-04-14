@@ -45,17 +45,17 @@ describe('LocusZoom.Instance', function(){
         it('should have an id', function(){
             this.instance.should.have.property('id').which.is.a.String;
         });
-        it('should have a layout which is (superficially) a copy of DefaultLayout', function(){
-            assert.equal(this.instance.layout.width, LocusZoom.DefaultLayout.width);
-            assert.equal(this.instance.layout.height, LocusZoom.DefaultLayout.height);
-            assert.equal(this.instance.layout.min_width, LocusZoom.DefaultLayout.min_width);
-            assert.equal(this.instance.layout.min_height, LocusZoom.DefaultLayout.min_height);
+        it('should have a layout which is (superficially) a copy of StandardLayout', function(){
+            assert.equal(this.instance.layout.width, LocusZoom.StandardLayout.width);
+            assert.equal(this.instance.layout.height, LocusZoom.StandardLayout.height);
+            assert.equal(this.instance.layout.min_width, LocusZoom.StandardLayout.min_width);
+            assert.equal(this.instance.layout.min_height, LocusZoom.StandardLayout.min_height);
         });
     });
     describe("Configuration API", function() {
         beforeEach(function() {
             d3.select("body").append("div").attr("id", "instance_id");
-            var layout = { resizable: "manual" };
+            var layout = LocusZoom.mergeLayouts({ resizable: "manual" }, LocusZoom.StandardLayout);
             this.instance = LocusZoom.populate("#instance_id", {}, layout);
         });
         it('should allow setting dimensions, bounded by layout minimums', function(){
@@ -69,12 +69,12 @@ describe('LocusZoom.Instance', function(){
             this.instance.layout.aspect_ratio.should.be.exactly(1320/681);
             this.instance.setDimensions("q", 0);
             this.instance.layout.width.should.be.exactly(1320);
-            this.instance.layout.height.should.be.exactly(LocusZoom.DefaultLayout.min_height);
-            this.instance.layout.aspect_ratio.should.be.exactly(1320/LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
+            this.instance.layout.aspect_ratio.should.be.exactly(1320/LocusZoom.StandardLayout.min_height);
             this.instance.setDimensions(0, 0);
-            this.instance.layout.width.should.be.exactly(LocusZoom.DefaultLayout.min_width);
-            this.instance.layout.height.should.be.exactly(LocusZoom.DefaultLayout.min_height);
-            this.instance.layout.aspect_ratio.should.be.exactly(LocusZoom.DefaultLayout.min_width/LocusZoom.DefaultLayout.min_height);
+            this.instance.layout.width.should.be.exactly(LocusZoom.StandardLayout.min_width);
+            this.instance.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
+            this.instance.layout.aspect_ratio.should.be.exactly(LocusZoom.StandardLayout.min_width/LocusZoom.StandardLayout.min_height);
         });
         it('should allow for adding arbitrarily many panels', function(){
             this.instance.addPanel.should.be.a.Function;
@@ -86,7 +86,7 @@ describe('LocusZoom.Instance', function(){
             this.instance.panels[panel.id].should.have.property("parent").which.is.exactly(this.instance);
         });
         it('should enforce minimum dimensions based on its panels', function(){
-            this.instance.setDimensions(0, 0);
+            this.instance.setDimensions(1, 1);
             var calculated_min_width = 0;
             var calculated_min_height = 0;
             var panel;
@@ -100,7 +100,8 @@ describe('LocusZoom.Instance', function(){
             this.instance.layout.height.should.not.be.lessThan(this.instance.layout.min_height);
         });
         it('should allow for responsively setting dimensions using a predefined aspect ratio', function(){
-            this.instance = LocusZoom.populate("#instance_id", {}, { aspect_ratio: 2 });
+            var layout = LocusZoom.mergeLayouts({ aspect_ratio: 2 }, LocusZoom.StandardLayout);
+            this.instance = LocusZoom.populate("#instance_id", {}, layout);
             this.instance.layout.aspect_ratio.should.be.exactly(2);
             assert.equal(this.instance.layout.width/this.instance.layout.height, 2);
             this.instance.setDimensions(2000);
@@ -111,14 +112,14 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.instance.layout.width/this.instance.layout.height, 2);
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function(){
-            var responsive_layout = {
+            var responsive_layout = LocusZoom.mergeLayouts({
                 resizable: "responsive",
                 aspect_ratio: 2,
                 panels: {
                     positions: { proportional_width: 1, proportional_height: 0.6 },
                     genes:     { proportional_width: 1, proportional_height: 0.4 }
                 }
-            };
+            }, LocusZoom.StandardLayout);
             this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
             assert.equal(this.instance.layout.panels.positions.height/this.instance.layout.height, 0.6);
             assert.equal(this.instance.layout.panels.genes.height/this.instance.layout.height, 0.4);

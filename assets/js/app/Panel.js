@@ -13,19 +13,26 @@
 
 */
 
-LocusZoom.Panel = function(id, layout, state) { 
+LocusZoom.Panel = function(id, layout, parent) { 
 
     this.initialized = false;
     
     this.id     = id;
-    this.parent = null;
+    this.parent = parent || null;
     this.svg    = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
 
-    // The state property stores any parameters subject to change via user input
-    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.Panel.DefaultState);
+    // Define state parameters specific to this panel
+    if (this.parent){
+        this.state = this.parent.state;
+        this.state_id = this.id;
+        this.state[this.state_id] = this.state[this.state_id] || {};
+    } else {
+        this.state = null;
+        this.state_id = null;
+    }
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
@@ -39,6 +46,10 @@ LocusZoom.Panel = function(id, layout, state) {
         return this.parent.id + "." + this.id;
     };
 
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
+    };
+
     // Initialize the layout
     this.initializeLayout();
     
@@ -46,11 +57,10 @@ LocusZoom.Panel = function(id, layout, state) {
     
 };
 
-LocusZoom.Panel.DefaultState = {
-    data_layers: {}   
-};
-
 LocusZoom.Panel.DefaultLayout = {
+    state: {
+        data_layers: {}   
+    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -69,7 +79,7 @@ LocusZoom.Panel.DefaultLayout = {
         x:  {},
         y1: {},
         y2: {}
-    }            
+    }
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
@@ -81,7 +91,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
-        if (JSON.stringify(this.layout.axes[axis]) == JSON.stringify({})){
+        if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false){
             // The default layout sets the axis to an empty object, so set its render boolean here
             this.layout.axes[axis].render = false;
         } else {
@@ -97,7 +107,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     if (typeof this.layout.data_layers == "object"){
         var data_layer_id;
         for (data_layer_id in this.layout.data_layers){
-            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id], this.state.data_layers[data_layer_id]);
+            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
         }
     }
 
@@ -144,8 +154,6 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
 
-    //console.log(this.layout);
-
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -190,7 +198,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                             this.raise();
                         }.bind(this));
                 } catch (e){
-                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
                 }
             }
         },
@@ -242,7 +250,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
+LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -256,12 +264,8 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
 
-    // Create the Data Layer and set its parent 
-    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, state);
-    data_layer.parent = this;
-
-    // Apply the Data Layer's state to the parent's state
-    data_layer.parent.state.data_layers[data_layer.id] = data_layer.state;
+    // Create the Data Layer
+    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
@@ -272,7 +276,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout, state){
         this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
     } else {
         this.xExtent = function(){
-            return d3.extent([this.parent.state.start, this.parent.state.end]);
+            return d3.extent([this.state.start, this.state.end]);
         };
     }
     // Generate the yExtent function
@@ -375,7 +379,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
             .call(this.x_axis);
         if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.parent.state);
+            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.state);
         }
         if (this.layout.axes.x.label != null){
             var x_label = this.layout.axes.x.label;
@@ -394,7 +398,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
             .call(this.y1_axis);
         if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.parent.state);
+            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.state);
         }
         if (this.layout.axes.y1.label != null){
             var y1_label = this.layout.axes.y1.label;
@@ -415,7 +419,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
             .call(this.y2_axis);
         if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.parent.state);
+            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.state);
         }
         if (this.layout.axes.y2.label != null){
             var y2_label = this.layout.axes.y2.label;

@@ -13,23 +13,38 @@
 
 */
 
-LocusZoom.DataLayer = function(id, layout, state) {
+LocusZoom.DataLayer = function(id, layout, parent) {
 
     this.initialized = false;
 
     this.id     = id;
-    this.parent = null;
+    this.parent = parent || null;
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
 
-    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DataLayer.DefaultState);
+    // Define state parameters specific to this data layer
+    if (this.parent){
+        this.state = this.parent.state;
+        this.state_id = this.parent.id + "." + this.id;
+        this.state[this.state_id] = this.state[this.state_id] || {};
+        if (this.layout.selectable){
+            this.state[this.state_id].selected = this.state[this.state_id].selected || null;
+        }
+    } else {
+        this.state = null;
+        this.state_id = null;
+    }
 
     this.data = [];
     this.metadata = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    };
+
+    this.triggerOnUpdate = function(){
+        this.parent.triggerOnUpdate();
     };
 
     // Tooltip methods
@@ -46,7 +61,7 @@ LocusZoom.DataLayer = function(id, layout, state) {
             arrow: null,
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
-                .attr("id", this.parent.getBaseId() + ".tooltip." + id)
+                .attr("id", this.getBaseId() + ".tooltip." + id)
         }
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
@@ -121,9 +136,6 @@ LocusZoom.DataLayer = function(id, layout, state) {
 
 };
 
-LocusZoom.DataLayer.DefaultState = {
-};
-
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
     fields: []
@@ -184,7 +196,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
 LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
-    var promise = this.parent.parent.lzd.getData(this.parent.parent.state, this.layout.fields); //,"ld:best"
+    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
     }.bind(this));

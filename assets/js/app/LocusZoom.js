@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.6"
+    version: "0.3.7"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -12,8 +12,17 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
+    // Empty the selector of any existing content
+    d3.select(selector).html("");
+    // If state was passed as a fourth argument then merge it with layout (for backward compatibility)
+    if (typeof state != "undefined"){
+        console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
+        var stateful_layout = { state: state };
+        var base_layout = layout || {};
+        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+    }
     var instance;
-    d3.select(selector).call(function(container){
+    d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
             var iterator = 0;
@@ -21,7 +30,14 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             this.attr("id", "#lz-" + iterator);
         }
         // Create the instance
-        instance = new LocusZoom.Instance(this.node().id, datasource, layout, state);
+        instance = new LocusZoom.Instance(this.node().id, datasource, layout);
+        // Detect data-region and fill in state values if present
+        if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
+            var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
+            Object.keys(parsed_state).forEach(function(key){
+                instance.state[key] = parsed_state[key];
+            });
+        }
         // Add an SVG to the div and set its dimensions
         instance.svg = d3.select("div#" + instance.id)
             .append("svg")
@@ -31,10 +47,6 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         instance.setDimensions();
         // Initialize the instance
         instance.initialize();
-        // Detect data-region and fill in state values if present
-        if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
-            instance.state = LocusZoom.mergeLayouts(LocusZoom.parsePositionQuery(this.node().dataset.region), instance.state);
-        }
         // If the instance has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
             instance.refresh();
@@ -272,17 +284,22 @@ LocusZoom.parseFields = function (data, html) {
     }
     return html;
 };
-    
-// Default State
-LocusZoom.DefaultState = {
-    chr: 0,
-    start: 0,
-    end: 0,
-    panels: {}
-};
 
 // Default Layout
 LocusZoom.DefaultLayout = {
+    state: {},
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {}
+};
+
+// Standard Layout
+LocusZoom.StandardLayout = {
+    state: {},
     width: 800,
     height: 450,
     min_width: 400,
@@ -354,6 +371,7 @@ LocusZoom.DefaultLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            axes: {},
             data_layers: {
                 genes: {
                     type: "genes",

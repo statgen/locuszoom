@@ -9,11 +9,11 @@
   LocusZoom.Instance Class
 
   An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
-  on a single page, each having its own layout, data sources, and state.
+  on a single page, each having its own layout.
 
 */
 
-LocusZoom.Instance = function(id, datasource, layout, state) {
+LocusZoom.Instance = function(id, datasource, layout) {
 
     this.initialized = false;
 
@@ -26,16 +26,30 @@ LocusZoom.Instance = function(id, datasource, layout, state) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DefaultLayout);
-    
-    // The state property stores any parameters subject to change via user input
-    this.state = LocusZoom.mergeLayouts(state || {}, LocusZoom.DefaultState);
+    // If no layout was passed, use the Standard Layout
+    // Otherwise merge whatever was passed with the Default Layout
+    if (typeof layout == "undefined"){
+        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.DefaultLayout);
+    } else {
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+    }
+
+    // Create a shortcut to the state in the layout on the instance
+    this.state = this.layout.state;
     
     // LocusZoom.Data.Requester
     this.lzd = new LocusZoom.Data.Requester(datasource);
 
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
+
+    // onUpdate - user defineable function that can be triggered whenever the layout or state are updated
+    this.onUpdate = null;
+    this.triggerOnUpdate = function(){
+        if (typeof this.onUpdate == "function"){
+            this.onUpdate();
+        }
+    };
 
     // Initialize the layout
     this.initializeLayout();
@@ -75,7 +89,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     // Add panels
     var panel_id;
     for (panel_id in this.layout.panels){
-        this.addPanel(panel_id, this.layout.panels[panel_id], this.state.panels[panel_id]);
+        this.addPanel(panel_id, this.layout.panels[panel_id]);
     }
 
 };
@@ -119,11 +133,12 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.initialized){
         this.ui.render();
     }
+    this.triggerOnUpdate();
     return this;
 };
 
 // Create a new panel by id and panel class
-LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
+LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
     }
@@ -135,11 +150,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout, state){
     }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(id, layout, state);
-    panel.parent = this;
-
-    // Apply the Panel's state to the parent's state
-    panel.parent.state.panels[panel.id] = panel.state;
+    var panel = new LocusZoom.Panel(id, layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -265,7 +276,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                             this.raise();
                         }.bind(this));
                 } catch (e){
-                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
                 }
             }
         },
@@ -329,7 +340,9 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this))
-        .done();
+        .done(function(){
+            this.triggerOnUpdate()
+        }.bind(this));
 
     return this;
     
