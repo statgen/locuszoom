@@ -38,6 +38,14 @@ describe('LocusZoom Core', function(){
 
     describe("LocusZoom Core Singleton", function() {
 
+        beforeEach(function(){
+            d3.select("body").append("div").attr("id", "instance_id");
+        });
+
+        afterEach(function(){
+            d3.select("body").selectAll("*").remove();
+        });
+
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
         });
@@ -77,7 +85,6 @@ describe('LocusZoom Core', function(){
         });
 
         it('should have a method for populating a single element with a LocusZoom instance', function(){
-            d3.select("body").append("div").attr("id", "instance_id");
             LocusZoom.populate.should.be.a.Function;
             var instance = LocusZoom.populate("#instance_id", {});
             instance.should.be.an.Object;
@@ -102,6 +109,27 @@ describe('LocusZoom Core', function(){
                 instances[i].svg.should.be.an.Object;
                 assert.equal(instances[i].svg.html(), svg_selector.html());
             });
+        });
+
+        it('should allow for populating an element with a predefined layout and state as separate arguments (DEPRECATED)', function(){
+            var layout = { width: 200 };
+            var state = { chr: 10 };
+            var instance = LocusZoom.populate("#instance_id", {}, layout, state);
+            instance.layout.width.should.be.exactly(200);
+            instance.layout.state.chr.should.be.exactly(10);
+            assert.deepEqual(instance.state, instance.layout.state);
+        });
+
+        it('should allow for populating an instance with a predefined layout', function(){
+            LocusZoom.populate.should.be.a.Function;
+            var instance = LocusZoom.populate("#instance_id", {});
+            instance.should.be.an.Object;
+            instance.id.should.be.exactly("instance_id");
+            var svg_selector = d3.select('div#instance_id svg');
+            svg_selector.should.be.an.Object;
+            svg_selector.size().should.be.exactly(1);
+            instance.svg.should.be.an.Object;
+            assert.equal(instance.svg.html(), svg_selector.html());
         });
 
         describe("Position Queries", function() {

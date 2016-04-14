@@ -276,7 +276,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                             this.raise();
                         }.bind(this));
                 } catch (e){
-                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
                 }
             }
         },

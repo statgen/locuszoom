@@ -30,6 +30,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
     d3.select(selector).html("");
     // If state was passed as a fourth argument then merge it with layout (for backward compatibility)
     if (typeof state != "undefined"){
+        console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
         layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
@@ -73,7 +74,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
     var instances = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout);
+        instances[i] = LocusZoom.populate(this, datasource, layout, state);
     });
     return instances;
 };
@@ -974,7 +975,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                             this.raise();
                         }.bind(this));
                 } catch (e){
-                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
                 }
             }
         },
@@ -1251,7 +1252,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                             this.raise();
                         }.bind(this));
                 } catch (e){
-                    console.warn("LocusZoom tried to render an error message but it's not a string:", message);
+                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
                 }
             }
         },
