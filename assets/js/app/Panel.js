@@ -312,19 +312,6 @@ LocusZoom.Panel.prototype.reMap = function(){
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
 
-    // Using the associated data layer axis layout declaration for floor, ceiling, upper, and lower buffer
-    // determine the correct clip_range value to pass to prettyTicks (e.g. "low", "high", "both", or "neither")
-    var clip_range = function(layout, axis){
-        var clip_value = "neither";
-        if (layout.axes[axis].data_layer_id){
-            var axis_layout = layout.data_layers[layout.axes[axis].data_layer_id].y_axis;
-            if (typeof axis_layout.floor == "number"){ clip_value = "low"; }
-            if (typeof axis_layout.ceiling == "number"){ clip_value = "high"; }
-            if (typeof axis_layout.floor == "number" && typeof axis_layout.ceiling == "number"){ clip_value = "both"; }
-        }
-        return clip_value;
-    };
-
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
 
@@ -352,14 +339,14 @@ LocusZoom.Panel.prototype.render = function(){
     }
     if (typeof this.y1Extent == "function"){
         this.y1_extent = this.y1Extent();
-        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.y1_extent, clip_range(this.layout, "y1"));
+        this.layout.axes.y1.ticks = LocusZoom.prettyTicks(this.y1_extent);
         this.y1_scale = d3.scale.linear()
             .domain([this.layout.axes.y1.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y1.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);
     }
     if (typeof this.y2Extent == "function"){
         this.y2_extent = this.y2Extent();
-        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.y2_extent, clip_range(this.layout, "y2"));
+        this.layout.axes.y2.ticks = LocusZoom.prettyTicks(this.y2_extent);
         this.y2_scale = d3.scale.linear()
             .domain([this.layout.axes.y2.ticks[0], this.layout.axes.y1.ticks[this.layout.axes.y2.ticks.length-1]])
             .range([this.layout.cliparea.height, 0]);

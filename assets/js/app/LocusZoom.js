@@ -339,7 +339,8 @@ LocusZoom.StandardLayout = {
                         axis: 1,
                         field: "pvalue|neglog10",
                         floor: 0,
-                        upper_buffer: 0.05
+                        upper_buffer: 0.05,
+                        min_extent: [ 0, 10 ]
                     },
                     color: {
                         field: "ld:state",
