@@ -328,9 +328,6 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        state: {
-            selected_id: null
-        },
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
@@ -501,9 +498,6 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        state: {
-            selected_id: null
-        },
         label_font_size: 12,
         label_exon_spacing: 4,
         exon_height: 16,

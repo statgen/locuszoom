@@ -331,7 +331,6 @@ LocusZoom.StandardLayout = {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: 40,
-                    point_label_field: "id",
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     x_axis: {
                         field: "position"
