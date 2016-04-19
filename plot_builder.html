@@ -53,7 +53,7 @@
       </div>
 
       <div class="six columns">
-        <div id="plot" class="lz-container-responsive" data-region="10:114550452-115067678"></div>
+        <div id="plot" class="lz-container-responsive"></div>
       </div>
 
     </div>
@@ -72,7 +72,15 @@
     var plot;
 
     function resetPlot(){
-      plot = LocusZoom.populate("#plot", data_sources);
+      var initial_state = {
+                            state: {
+                              chr: 10,
+                              start: 114550452,
+                              end: 115067678
+                            }
+                          };
+      var base_layout = LocusZoom.mergeLayouts(initial_state, LocusZoom.StandardLayout);
+      plot = LocusZoom.populate("#plot", data_sources, base_layout);
       applyOnUpdate();
     }
 

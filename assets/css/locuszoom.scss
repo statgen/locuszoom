@@ -90,6 +90,7 @@ svg.#{$namespace}-locuszoom {
   path.#{$namespace}-data_layer-scatter {
     stroke: #{$default_black};
     stroke-width: 1;
+    cursor: pointer;
   }
 
   path.#{$namespace}-data_layer-scatter-hovered {
@@ -129,11 +130,13 @@ svg.#{$namespace}-locuszoom {
   rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
     stroke: rgba(54, 54, 150, 1);
     stroke-width: 1;
+    fill: #000099;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
     stroke: rgba(54, 54, 150, 1);
     stroke-width: 1;
+    fill: #000099;
   }
 
 }

@@ -2097,13 +2097,18 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
     // Implement the main render function
     this.render = function(){
-        this.svg.group.selectAll("*").remove(); // should this happen at all, or happen at the panel level?
+
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
-            .data(this.data)
-            .enter().append("path")
-            .attr("id", function(d){ return 's' + d.id.replace(/\W/g,''); })
-            .attr("class", "lz-data_layer-scatter")
+            .data(this.data);
+
+        // Create elements
+        selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-scatter");
+
+        // Update id, position, and shape
+        selection.attr("id", function(d){ return 's' + d.id.replace(/\W/g,''); })
             .attr("transform", function(d) {
                 var x = this.parent.x_scale(d[this.layout.x_axis.field]);
                 var y_scale = "y"+this.layout.y_axis.axis+"_scale";
@@ -2112,12 +2117,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 if (isNaN(y)){ y = -1000; }
                 return "translate(" + x + "," + y + ")";
             }.bind(this))
-            .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape))
-            .style({ cursor: "pointer" });
-        // Apply id (if included in fields)
-        if (this.layout.fields.indexOf("id") != -1){
-            selection.attr("id", function(d){ return 's' + d.id.replace(/\W/g,''); });
-        }
+            .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape));
+
         // Apply color
         if (this.layout.color){
             switch (typeof this.layout.color){
@@ -2167,11 +2168,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 }
                 this.triggerOnUpdate();
             }.bind(this));
-            // Apply existing selection from state
+
+            // Apply existing elements from state
             if (this.state[this.state_id].selected != null){
                 var selected_id = this.state[this.state_id].selected;
                 if (d3.select("#" + selected_id).empty()){
-                    console.warn("State selection for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + this.state[this.state_id].selected);
+                    console.warn("State elements for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + this.state[this.state_id].selected);
                     this.state[this.state_id].selected = null;
                 } else {
                     if (this.tooltips[this.state[this.state_id].selected]){
@@ -2185,6 +2187,9 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 }
             }
         }
+
+        // Remove old elements as needed
+        selection.exit().remove();
         
     };
        
@@ -2356,21 +2361,24 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 
         this.assignTracks();
 
-        this.svg.group.selectAll("*").remove();
-
         // Render gene groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-gene")
-            .data(this.data).enter()
-            .append("g")
-            .attr("class", "lz-data_layer-gene")
-            .attr("id", function(d){ return 'g' + d.gene_name.replace(/\W/g,''); })
+            .data(this.data);
+
+        selection.enter().append("g")
+            .attr("class", "lz-data_layer-gene");
+
+        selection.attr("id", function(d){ return 'g' + d.gene_name.replace(/\W/g,''); })
             .each(function(gene){
 
                 // Render gene bounding box
-                d3.select(this).selectAll("rect.lz-data_layer-gene").filter(".lz-bounding_box")
-                    .data([gene]).enter().append("rect")
+                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-gene")
+                    .filter(".lz-bounding_box").data([gene]);
+
+                bboxes.enter().append("rect")
                     .attr("class", "lz-data_layer-gene lz-bounding_box")
-                    .attr("id", function(d){
+
+                bboxes.attr("id", function(d){
                         return 'g' + d.gene_name.replace(/\W/g,'') + "_bounding_box";
                     }.bind(gene))
                     .attr("x", function(d){
@@ -2388,10 +2396,16 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
                     .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
 
+                bboxes.exit().remove();
+
                 // Render gene boundaries
-                d3.select(this).selectAll("rect.lz-data_layer-gene").filter(".lz-boundary")
-                    .data([gene]).enter().append("rect")
-                    .attr("class", "lz-data_layer-gene lz-boundary")
+                var boundaries = d3.select(this).selectAll("rect.lz-data_layer-gene")
+                    .filter(".lz-boundary").data([gene]);
+
+                boundaries.enter().append("rect")
+                    .attr("class", "lz-data_layer-gene lz-boundary");
+
+                boundaries
                     .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
                     .attr("y", function(d){
                         return ((d.track-1) * this.parent.getTrackHeight())
@@ -2399,19 +2413,19 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                             + this.parent.layout.label_font_size
                             + this.parent.layout.label_exon_spacing
                             + (Math.max(this.parent.layout.exon_height, 3) / 2);
-                    }.bind(gene)) // Arbitrary track height; should be dynamic
+                    }.bind(gene))
                     .attr("width", function(d){ return this.parent.x_scale(d.end) - this.parent.x_scale(d.start); }.bind(gene.parent))
-                    .attr("height", 1) // This should be scaled dynamically somehow
-                    .attr("fill", "#000099")
-                    .style({ cursor: "pointer" })
-                    .append("svg:title")
-                    .text(function(d) { return d.gene_name; });
+                    .attr("height", 1); // This should be scaled dynamically somehow
+
+                boundaries.exit().remove();
 
                 // Render gene labels
-                d3.select(this).selectAll("text.lz-data_layer-gene")
-                    .data([gene]).enter().append("text")
-                    .attr("class", "lz-data_layer-gene lz-label")
-                    .attr("x", function(d){
+                var labels = d3.select(this).selectAll("text.lz-data_layer-gene").data([gene]);
+
+                labels.enter().append("text")
+                    .attr("class", "lz-data_layer-gene lz-label");
+
+                labels.attr("x", function(d){
                         if (d.display_range.text_anchor == "middle"){
                             return d.display_range.start + (d.display_range.width / 2);
                         } else if (d.display_range.text_anchor == "start"){
@@ -2429,36 +2443,49 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     .style("font-size", gene.parent.layout.label_font_size)
                     .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
 
+                labels.exit().remove();
+
                 // Render exons (first transcript only, for now)
-                d3.select(this).selectAll("g.lz-data_layer-gene").filter(".lz-exons")
-                    .data([gene]).enter().append("g")
-                    .attr("class", "lz-data_layer-gene lz-exons")
-                    .each(function(gene){
-                        d3.select(this).selectAll("rect.lz-data_layer-gene").filter(".lz-exon")
-                            .data(gene.transcripts[gene.parent.transcript_idx].exons).enter().append("rect")
-                            .attr("class", "lz-data_layer-gene lz-exon")
-                            .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
-                            .attr("y", function(){
-                                return ((this.track-1) * this.parent.getTrackHeight())
-                                    + this.parent.layout.bounding_box_padding
-                                    + this.parent.layout.label_font_size
-                                    + this.parent.layout.label_exon_spacing;
-                            }.bind(gene))
-                            .attr("width", function(d){
-                                return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
-                            }.bind(gene.parent))
-                            .attr("height", function(){
-                                return this.parent.layout.exon_height;
-                            }.bind(gene))
-                            .attr("fill", "#000099")
-                            .style({ cursor: "pointer" });
-                    });
+                var exons = d3.select(this).selectAll("g.lz-data_layer-gene")
+                    .filter(".lz-exons").data([gene]);
+
+                exons.enter().append("g")
+                    .attr("class", "lz-data_layer-gene lz-exons");
+
+                exons.each(function(gene){
+                    var transcripts = d3.select(this).selectAll("rect.lz-data_layer-gene")
+                        .filter(".lz-exon").data(gene.transcripts[gene.parent.transcript_idx].exons)
+
+                    transcripts.enter().append("rect")
+                        .attr("class", "lz-data_layer-gene lz-exon");
+
+                    transcripts.attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
+                        .attr("y", function(){
+                            return ((this.track-1) * this.parent.getTrackHeight())
+                                + this.parent.layout.bounding_box_padding
+                                + this.parent.layout.label_font_size
+                                + this.parent.layout.label_exon_spacing;
+                        }.bind(gene))
+                        .attr("width", function(d){
+                            return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
+                        }.bind(gene.parent))
+                        .attr("height", function(){
+                            return this.parent.layout.exon_height;
+                        }.bind(gene));
+
+                    transcripts.exit().remove();
+                });
+
+                exons.exit().remove();
 
                 // Render gene click area
-                var clickarea = d3.select(this).selectAll("rect").filter(".lz-clickarea")
-                    .data([gene]).enter().append("rect")
-                    .attr("class", "lz-clickarea")
-                    .attr("id", function(d){
+                var clickareas = d3.select(this).selectAll("rect")
+                    .filter(".lz-clickarea").data([gene])
+
+                clickareas.enter().append("rect")
+                    .attr("class", "lz-clickarea");
+
+                clickareas.attr("id", function(d){
                         return 'g' + d.gene_name.replace(/\W/g,'') + "_clickarea";
                     }.bind(gene))
                     .attr("x", function(d){
@@ -2476,9 +2503,9 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
                     .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
 
-                // Apply selectable, tooltip, etc. to clickarea
+                // Apply selectable, tooltip, etc. to clickareas
                 if (gene.parent.layout.selectable){
-                    clickarea
+                    clickareas
                         .on("mouseover", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
                             if (this.state[this.state_id].selected != id){
@@ -2527,7 +2554,13 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                     }
                 }
 
+                // Remove old clickareas as needed
+                clickareas.exit().remove();
+
             });
+
+        // Remove old elements as needed
+        selection.exit().remove();
 
     };
 

@@ -56,7 +56,8 @@ svg.lz-locuszoom {
     font-weight: 600; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
     stroke: rgba(24, 24, 24, 1);
-    stroke-width: 1; }
+    stroke-width: 1;
+    cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-scatter-hovered {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 3; }
@@ -79,10 +80,12 @@ svg.lz-locuszoom {
     stroke-width: 1; }
   svg.lz-locuszoom rect.lz-data_layer-gene.lz-boundary {
     stroke: #363696;
-    stroke-width: 1; }
+    stroke-width: 1;
+    fill: #000099; }
   svg.lz-locuszoom rect.lz-data_layer-gene.lz-exon {
     stroke: #363696;
-    stroke-width: 1; }
+    stroke-width: 1;
+    fill: #000099; }
 
 div.lz-data_layer-tooltip {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
