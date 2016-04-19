@@ -320,7 +320,20 @@ LocusZoom.StandardLayout = {
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
-                    label_function: "chromosome"
+                    label_function: "chromosome",
+                    ticks: [
+                        {
+                            "x": 114600000,
+                            "text": "infectious disease",
+                            "style": { "fill": "#d43f3a", "text-anchor": "start" }
+                        },
+                        {
+                            "x": 114700000,
+                            "text": "foo bar something long",
+                            "style": { "fill": "#5cb85c", "text-anchor": "start" },
+                            "rotate": 50
+                        }
+                    ]
                 },
                 y1: {
                     label: "-log10 p-value"
