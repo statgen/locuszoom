@@ -17,6 +17,26 @@
     textarea.error {
       background-color: #F7DADA;
     }
+    .button-blue {
+      color: #FFF;
+      background-color: #69B8D1;
+      border-color: #69B8D1;
+    }
+    .button-green {
+      color: #FFF;
+      background-color: #69D177;
+      border-color: #69D177;
+    }
+    .button-red {
+      color: #FFF;
+      background-color: #D16A69;
+      border-color: #D16A69;
+    }
+    .button-yellow {
+      color: #FFF;
+      background-color: #C2BE67;
+      border-color: #C2BE67;
+    }
   </style>
 
   <!-- Necessary includes for LocusZoom -->
@@ -36,23 +56,17 @@
     
     <div class="row">
       
-      <div class="six columns">
+      <div id="layout_column" class="six columns">
         <textarea id="layout" style="height: 460px;"></textarea>
-        <div class="row">
-          <div class="four columns">
-            <h5>Layout <small id="layout_message" style="color: #AD2528; margin-left: 15px;"></small></h5>
-          </div>
-          <div class="eight columns">
-            <div class="u-pull-right">
-              <a class="button" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">API Reference</a>
-              <button onclick="resetPlot();">Reset Plot</button>
-              <button class="button-primary" onClick="updatePlot();">Apply Layout</button>
-            </div>
-          </div>
-        </div>
+        <br>
+        <button class="button-yellow" onclick="flip();">Flip</button>
+        <a class="button button-blue" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">Reference</a>
+        <button class="button-red" onclick="resetPlot();">Reset Plot</button>
+        <span style="margin: 0px 10px 0px 10px;">|</span>
+        <button class="button-green" onClick="updatePlot();">Apply Layout</button>
       </div>
 
-      <div class="six columns">
+      <div id="plot_column" class="six columns">
         <div id="plot" class="lz-container-responsive"></div>
       </div>
 
@@ -61,6 +75,16 @@
   </div>
 
   <script type="text/javascript">
+
+    // This function flips the page between layout and plot in two rows or two columns
+    function flip(){
+        if ($("div[id*='_column']").hasClass("six")){
+            $("div[id*='_column']").removeClass("six").addClass("twelve");
+        } else {
+            $("div[id*='_column']").removeClass("twelve").addClass("six");
+        }
+        plot.setDimensions();
+    }
 
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
@@ -106,7 +130,7 @@
       applyOnUpdate();
     }
 
-    resetPlot();    
+    resetPlot();
 
   </script>
 
