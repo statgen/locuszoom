@@ -62,7 +62,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
-        }
+        };
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         } else if (this.layout.tooltip.divs){
@@ -101,8 +101,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }
         // Position the div itself
         this.tooltips[id].selector
-            .style("left", (d3.event.pageX) + "px")			 
-				    .style("top", (d3.event.pageY) + "px");
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY) + "px");
         // Create / update position on arrow connecting tooltip to data
         if (!this.tooltips[id].arrow){
             this.tooltips[id].arrow = this.tooltips[id].selector.append("div")
@@ -110,15 +110,15 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 .attr("class", "lz-data_layer-tooltip-arrow_top_left");
         }
         this.tooltips[id].arrow
-            .style("left", "-1px")			 
-				    .style("top", "-1px");
+            .style("left", "-1px")
+            .style("top", "-1px");
     };
     this.positionAllTooltips = function(){
         var id;
         for (id in this.tooltips){
             this.positionTooltip(id);
         }
-    }
+    };
 
     // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
     // (useful for custom reimplementations this.positionTooltip())
@@ -128,7 +128,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         var y_scroll = document.documentElement.scrollTop || document.body.scrollTop;
         return {
             x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left + x_scroll,
-            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll,
+            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll
         };
     };
     

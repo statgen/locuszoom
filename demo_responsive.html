@@ -88,7 +88,7 @@
         start = +pos - 300000
         end = +pos + 300000
       }
-      demo_instance.mapTo(chr, start, end);
+      demo_instance.applyState({ chr: chr, start: start, end: end});
     }
 
     function jumpTo(region) {
@@ -101,8 +101,7 @@
         start = +pos - 300000
         end = +pos + 300000
       }
-      demo_instance.state.ldrefvar = "";
-      demo_instance.mapTo(chr, start, end);
+      demo_instance.applyState({ chr: chr, start: start, end: end, ldrefvar: ""});
       populateForms();
       return(false);
     }
