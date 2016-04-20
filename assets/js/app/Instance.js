@@ -321,7 +321,11 @@ LocusZoom.Instance.prototype.initialize = function(){
 };
 
 // Map an entire LocusZoom Instance to a new region
+// DEPRECATED: This method is specific to only accepting chromosome, start, and end.
+// LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
 LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
+
+    console.warn("Warning: use of LocusZoom.Instance.mapTo() is deprecated. Use LocusZoom.Instance.applyState() instead.");
 
     // Apply new state values
     // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
@@ -341,7 +345,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.triggerOnUpdate()
+            this.triggerOnUpdate();
         }.bind(this));
 
     return this;
@@ -350,5 +354,34 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.mapTo(this.state.chr, this.state.start, this.state.end);
+    this.applyState({});
+};
+
+// Update state values and trigger a pull for fresh data on all data sources for all data layers
+LocusZoom.Instance.prototype.applyState = function(new_state){
+
+    if (typeof new_state != "object"){
+        throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
+    }
+
+    for (var property in new_state) {
+        this.state[property] = new_state[property];
+    }
+
+    this.remap_promises = [];
+    for (var id in this.panels){
+        this.remap_promises.push(this.panels[id].reMap());
+    }
+
+    Q.all(this.remap_promises)
+        .catch(function(error){
+            console.log(error);
+            this.curtain.drop(error);
+        }.bind(this))
+        .done(function(){
+            this.triggerOnUpdate();
+        }.bind(this));
+
+    return this;
+    
 };
