@@ -2205,39 +2205,54 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d.id; });
 
-        // Create elements
+        // Create elements, apply class and ID
         selection.enter()
             .append("path")
-            .attr("class", "lz-data_layer-scatter");
+            .attr("class", "lz-data_layer-scatter")
+            .attr("id", function(d){ return "s" + d.id.replace(/\W/g,""); });
 
-        // Update id, position, and shape
-        selection.attr("id", function(d){ return "s" + d.id.replace(/\W/g,""); })
-            .attr("transform", function(d) {
-                var x = this.parent.x_scale(d[this.layout.x_axis.field]);
-                var y_scale = "y"+this.layout.y_axis.axis+"_scale";
-                var y = this.parent[y_scale](d[this.layout.y_axis.field]);
-                if (isNaN(x)){ x = -1000; }
-                if (isNaN(y)){ y = -1000; }
-                return "translate(" + x + "," + y + ")";
-            }.bind(this))
-            .attr("d", d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape));
-
-        // Apply color
+        // Generate new values (or functions for them) for position, color, and shape
+        var transform = function(d) {
+            var x = this.parent.x_scale(d[this.layout.x_axis.field]);
+            var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+            var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+            if (isNaN(x)){ x = -1000; }
+            if (isNaN(y)){ y = -1000; }
+            return "translate(" + x + "," + y + ")";
+        }.bind(this);
+        var fill;
         if (this.layout.color){
             switch (typeof this.layout.color){
             case "string":
-                selection.attr("fill", this.layout.color);
+                fill = this.layout.color;
                 break;
             case "object":
                 if (this.layout.color.scale_function && this.layout.color.field) {
-                    selection.attr("fill", function(d){
+                    fill = function(d){
                         return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
                                                             this.layout.color.parameters || {},
                                                             d[this.layout.color.field]);
-                    }.bind(this));
+                    }.bind(this);
                 }
                 break;
             }
+        }
+        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape)
+
+        // Apply position and color, using a transition if necessary
+        if (this.layout.transition){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("transform", transform)
+                .attr("fill", fill)
+                .attr("d", shape);
+        } else {
+            selection
+                .attr("transform", transform)
+                .attr("fill", fill)
+                .attr("d", shape);
         }
 
         // Apply selectable, tooltip, etc
