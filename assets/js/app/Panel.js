@@ -46,16 +46,6 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.y1_ticks = [];
     this.y2_ticks = [];
 
-    this.ticksAreAllNumbers = function(ticks){
-        var i;
-        for (i = 0; i < ticks.length; i++){
-            if (isNaN(ticks[i])){
-                return false;
-            }
-        }
-        return true;
-    }
-
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
     };
@@ -388,84 +378,15 @@ LocusZoom.Panel.prototype.render = function(){
     }.bind(this);
     
     if (this.layout.axes.x.render && canRenderAxis("x")){
-        this.x_axis = d3.svg.axis()
-            .scale(this.x_scale).orient("bottom");
-        if (this.ticksAreAllNumbers(this.x_ticks)){
-            this.x_axis.tickValues(this.x_ticks)
-                .tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
-        } else {
-            var ticks = this.x_ticks.map(function(t){
-                return(t.x);
-            });
-            this.x_axis.tickValues(ticks)
-                .tickFormat(function(t, i) { return this.x_ticks[i].text; }.bind(this));
-        }
-        this.svg.x_axis
-            .attr("transform", "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")")
-            .call(this.x_axis);
-        if (!this.ticksAreAllNumbers(this.x_ticks)){
-            var tick_selector = d3.selectAll("g#" + this.getBaseId().replace(".","\\.") + "\\.x_axis g.tick");
-            var panel = this;
-            tick_selector.each(function(d, i){
-                var translate = d3.select(this).attr("transform");
-                d3.select(this).select("text")
-                    .style(panel.x_ticks[i].style)
-                    .attr("transform", "rotate(" + panel.x_ticks[i].rotate + ")");
-            });
-        }
-        if (this.layout.axes.x.label_function){
-            this.layout.axes.x.label = LocusZoom.LabelFunctions.get(this.layout.axes.x.label_function, this.state);
-        }
-        if (this.layout.axes.x.label != null){
-            var x_label = this.layout.axes.x.label;
-            if (typeof this.layout.axes.x.label == "function"){ x_label = this.layout.axes.x.label(); }
-            this.svg.x_axis_label
-                .attr("x", this.layout.cliparea.width / 2)
-                .attr("y", this.layout.margin.bottom * 0.95)
-                .text(x_label);
-        }
+        this.renderAxis("x");
     }
 
     if (this.layout.axes.y1.render && canRenderAxis("y1")){
-        this.y1_axis = d3.svg.axis().scale(this.y1_scale)
-            .orient("left").tickValues(this.y1_ticks);
-        this.svg.y1_axis
-            .attr("transform", "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")")
-            .call(this.y1_axis);
-        if (this.layout.axes.y1.label_function){
-            this.layout.axes.y1.label = LocusZoom.LabelFunctions.get(this.layout.axes.y1.label_function, this.state);
-        }
-        if (this.layout.axes.y1.label != null){
-            var y1_label = this.layout.axes.y1.label;
-            if (typeof this.layout.axes.y1.label == "function"){ y1_label = this.layout.axes.y1.label(); }
-            var y1_label_x = this.layout.margin.left * -0.55;
-            var y1_label_y = this.layout.cliparea.height / 2;
-            this.svg.y1_axis_label
-                .attr("transform", "rotate(-90 " + y1_label_x + "," + y1_label_y + ")")
-                .attr("x", y1_label_x).attr("y", y1_label_y)
-                .text(y1_label);
-        }
+        this.renderAxis("y1");
     }
 
     if (this.layout.axes.y2.render && canRenderAxis("y2")){
-        this.y2_axis  = d3.svg.axis().scale(this.y2_scale)
-            .orient("left").tickValues(this.y2_ticks);
-        this.svg.y2_axis
-            .attr("transform", "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")")
-            .call(this.y2_axis);
-        if (this.layout.axes.y2.label_function){
-            this.layout.axes.y2.label = LocusZoom.LabelFunctions.get(this.layout.axes.y2.label_function, this.state);
-        }
-        if (this.layout.axes.y2.label != null){
-            var y2_label = this.layout.axes.y2.label;
-            if (typeof this.layout.axes.y2.label == "function"){ y2_label = this.layout.axes.y2.label(); }
-            var y2_label_x = this.layout.margin.right * 0.55;
-            var y2_label_y = this.layout.cliparea.height / 2;
-            this.svg.y2_axis_label
-                .attr("transform", "rotate(-90 " + y2_label_x + "," + y2_label_y + ")")
-                .attr("x", y2_label_x).attr("y", y2_label_y)
-                .text(y2_label);
-        }
+        this.renderAxis("y2");
     }
 
     // Render data layers in order by z-index
@@ -475,4 +396,102 @@ LocusZoom.Panel.prototype.render = function(){
 
     return this;
     
+};
+
+
+// Render ticks for a particular axis
+LocusZoom.Panel.prototype.renderAxis = function(axis){
+
+    if (["x", "y1", "y2"].indexOf(axis) == -1){
+        throw("Unable to render axis; invalid axis identifier: " + axis);
+    }
+
+    // Axis-specific values to plug in where needed
+    var axis_params = {
+        x: {
+            position: "translate(" + this.layout.margin.left + "," + (this.layout.height - this.layout.margin.bottom) + ")",
+            orientation: "bottom",
+            label_x: this.layout.cliparea.width / 2,
+            label_y: (this.layout.axes[axis].label_offset || 0),
+            label_rotate: null
+        },
+        y1: {
+            position: "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")",
+            orientation: "left",
+            label_x: (this.layout.axes[axis].label_offset || 0),
+            label_y: this.layout.cliparea.height / 2,
+            label_rotate: -90
+        },
+        y2: {
+            position: "translate(" + (this.layout.width - this.layout.margin.right) + "," + this.layout.margin.top + ")",
+            orientation: "right",
+            label_x: (this.layout.axes[axis].label_offset || 0),
+            label_y: this.layout.cliparea.height / 2,
+            label_rotate: -90
+        }
+    };
+
+    // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
+    var ticksAreAllNumbers = (function(ticks){
+        for (var i = 0; i < ticks.length; i++){
+            if (isNaN(ticks[i])){
+                return false;
+            }
+        }
+        return true;
+    })(this[axis+"_ticks"]);
+
+    // Initialize the axis; set scale and orientation
+    this[axis+"_axis"] = d3.svg.axis()
+        .scale(this[axis+"_scale"]).orient(axis_params[axis].orientation);
+
+    // Set tick values and format
+    if (ticksAreAllNumbers){
+        this[axis+"_axis"].tickValues(this[axis+"_ticks"]);
+        if (this.layout.axes[axis].tick_format == "region"){
+            this[axis+"_axis"].tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
+        }
+    } else {
+        var ticks = this[axis+"_ticks"].map(function(t){
+            return(t.x);
+        });
+        this[axis+"_axis"].tickValues(ticks)
+            .tickFormat(function(t, i) { return this[axis+"_ticks"][i].text; }.bind(this));
+    }
+
+    // Position the axis in the SVG and apply the axis construct
+    this.svg[axis+"_axis"]
+        .attr("transform", axis_params[axis].position)
+        .call(this[axis+"_axis"]);
+
+    // If necessary manually apply styles and transforms to ticks as specified by the layout
+    if (!ticksAreAllNumbers){
+        var tick_selector = d3.selectAll("g#" + this.getBaseId().replace(".","\\.") + "\\." + axis + "_axis g.tick");
+        var panel = this;
+        tick_selector.each(function(d, i){
+            var selector = d3.select(this).select("text");
+            if (panel[axis+"_ticks"][i].style){
+                selector.style(panel[axis+"_ticks"][i].style);
+            }
+            if (panel[axis+"_ticks"][i].transform){
+                selector.attr("transform", panel[axis+"_ticks"][i].transform);
+            }
+        });
+    }
+
+    // Render the axis label if necessary
+    var label = this.layout.axes[axis].label || null;
+    if (this.layout.axes[axis].label_function){
+        label = LocusZoom.LabelFunctions.get(this.layout.axes[axis].label_function, this.state);
+    }
+    if (label != null){
+        this.svg[axis+"_axis_label"]
+            .attr("x", axis_params[axis].label_x).attr("y", axis_params[axis].label_y)
+            .text(label);
+        if (axis_params[axis].label_rotate != null){
+            this.svg[axis+"_axis_label"]
+                .attr("transform", "rotate(" + axis_params[axis].label_rotate + " " + axis_params[axis].label_x + "," + axis_params[axis].label_y + ")");
+        }
+    }
+
 };

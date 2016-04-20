@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.7"
+    version: "0.3.8"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -321,22 +321,13 @@ LocusZoom.StandardLayout = {
             axes: {
                 x: {
                     label_function: "chromosome",
-                    ticks: [
-                        {
-                            "x": 114600000,
-                            "text": "infectious disease",
-                            "style": { "fill": "#d43f3a", "text-anchor": "start" }
-                        },
-                        {
-                            "x": 114700000,
-                            "text": "foo bar something long",
-                            "style": { "fill": "#5cb85c", "text-anchor": "start" },
-                            "rotate": 50
-                        }
-                    ]
+                    label_offset: 32,
+                    tick_format: "region",
+
                 },
                 y1: {
-                    label: "-log10 p-value"
+                    label: "-log10 p-value",
+                    label_offset: -28
                 }
             },
             data_layers: {
