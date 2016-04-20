@@ -2159,7 +2159,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
-            .data(this.data);
+            .data(this.data, function(d){ return d.id; });
 
         // Create elements
         selection.enter()
@@ -2201,7 +2201,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             selection.on("mouseover", function(d){
                 var id = 's' + d.id.replace(/\W/g,'');
                 if (this.state[this.state_id].selected != id){
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter-hovered");
+                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-hovered");
                     if (this.layout.tooltip){ this.createTooltip(d, id); }
                 }
             }.bind(this))
@@ -2216,14 +2216,14 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 var id = 's' + d.id.replace(/\W/g,'');
                 if (this.state[this.state_id].selected == id){
                     this.state[this.state_id].selected = null;
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter-hovered");
+                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-hovered");
                 } else {
                     if (this.state[this.state_id].selected != null){
                         d3.select("#" + this.state[this.state_id].selected).attr("class", "lz-data_layer-scatter");
                         if (this.layout.tooltip){ this.destroyTooltip(this.state[this.state_id].selected); }
                     }
                     this.state[this.state_id].selected = id;
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter-selected");
+                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-selected");
                 }
                 this.triggerOnUpdate();
             }.bind(this));
@@ -2289,9 +2289,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
     // Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
     this.transcript_idx = 0;
     
-    this.metadata.tracks = 1;
-    this.metadata.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
-    this.metadata.horizontal_padding = 4; // pixels to pad on either side of a gene or label when determining collisions
+    this.tracks = 1;
+    this.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
 
     // After we've loaded the genes interpret them to assign
     // each to a track so that they do not overlap in the view
@@ -2308,9 +2307,9 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
             return label_width;
         };
 
-        // Reinitialize metadata
-        this.metadata.tracks = 1;
-        this.metadata.gene_track_index = { 1: [] };
+        // Reinitialize some metadata
+        this.tracks = 1;
+        this.gene_track_index = { 1: [] };
 
         this.data.map(function(d, g){
 
@@ -2339,16 +2338,16 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 if (d.start < this.state.start){
                     this.data[g].display_range.end = this.data[g].display_range.start
                         + this.data[g].display_range.label_width
-                        + this.metadata.horizontal_padding;
+                        + this.layout.label_font_size;
                     this.data[g].display_range.text_anchor = "start";
                 } else if (d.end > this.state.end){
                     this.data[g].display_range.start = this.data[g].display_range.end
                         - this.data[g].display_range.label_width
-                        - this.metadata.horizontal_padding;
+                        - this.layout.label_font_size;
                     this.data[g].display_range.text_anchor = "end";
                 } else {
                     var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
-                        + this.metadata.horizontal_padding;
+                        + this.layout.label_font_size;
                     if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.state.start)){
                         this.data[g].display_range.start = this.parent.x_scale(this.state.start);
                         this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
@@ -2381,7 +2380,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
             var potential_track = 1;
             while (this.data[g].track == null){
                 var collision_on_potential_track = false;
-                this.metadata.gene_track_index[potential_track].map(function(placed_gene){
+                this.gene_track_index[potential_track].map(function(placed_gene){
                     if (!collision_on_potential_track){
                         var min_start = Math.min(placed_gene.display_range.start, this.display_range.start);
                         var max_end = Math.max(placed_gene.display_range.end, this.display_range.end);
@@ -2392,12 +2391,12 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 }.bind(this.data[g]));
                 if (!collision_on_potential_track){
                     this.data[g].track = potential_track;
-                    this.metadata.gene_track_index[potential_track].push(this.data[g]);
+                    this.gene_track_index[potential_track].push(this.data[g]);
                 } else {
                     potential_track++;
-                    if (potential_track > this.metadata.tracks){
-                        this.metadata.tracks = potential_track;
-                        this.metadata.gene_track_index[potential_track] = [];
+                    if (potential_track > this.tracks){
+                        this.tracks = potential_track;
+                        this.gene_track_index[potential_track] = [];
                     }
                 }
             }
@@ -2422,7 +2421,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 
         // Render gene groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-gene")
-            .data(this.data);
+            .data(this.data, function(d){ return d.gene_name; });
 
         selection.enter().append("g")
             .attr("class", "lz-data_layer-gene");
@@ -2430,107 +2429,126 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
         selection.attr("id", function(d){ return 'g' + d.gene_name.replace(/\W/g,''); })
             .each(function(gene){
 
+                var data_layer = gene.parent;
+
                 // Render gene bounding box
-                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-gene")
-                    .filter(".lz-bounding_box").data([gene]);
+                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-bounding_box")
+                    .filter(".lz-bounding_box").data([gene], function(d){ return d.gene_name + "_bbox"; });
 
                 bboxes.enter().append("rect")
                     .attr("class", "lz-data_layer-gene lz-bounding_box")
 
-                bboxes.attr("id", function(d){
+                bboxes
+                    .attr("id", function(d){
                         return 'g' + d.gene_name.replace(/\W/g,'') + "_bounding_box";
-                    }.bind(gene))
+                    })
                     .attr("x", function(d){
                         return d.display_range.start;
-                    }.bind(gene.parent))
+                    })
                     .attr("y", function(d){
-                        return ((d.track-1) * this.getTrackHeight());
-                    }.bind(gene.parent))
+                        return ((d.track-1) * data_layer.getTrackHeight());
+                    })
                     .attr("width", function(d){
                         return d.display_range.width;
-                    }.bind(gene.parent))
+                    })
                     .attr("height", function(d){
-                        return this.getTrackHeight() - this.layout.track_vertical_spacing;
-                    }.bind(gene.parent))
-                    .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
-                    .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
+                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                    })
+                    .attr("rx", function(d){
+                        return data_layer.layout.bounding_box_padding;
+                    })
+                    .attr("ry", function(d){
+                        return data_layer.layout.bounding_box_padding;
+                    });
 
                 bboxes.exit().remove();
 
                 // Render gene boundaries
-                var boundaries = d3.select(this).selectAll("rect.lz-data_layer-gene")
-                    .filter(".lz-boundary").data([gene]);
+                var boundaries = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-boundary")
+                    .filter(".lz-boundary").data([gene], function(d){ return d.gene_name + "_boundary"; });
 
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-gene lz-boundary");
 
                 boundaries
-                    .attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
+                    .attr("x", function(d){
+                        return data_layer.parent.x_scale(d.start);
+                    })
                     .attr("y", function(d){
-                        return ((d.track-1) * this.parent.getTrackHeight())
-                            + this.parent.layout.bounding_box_padding
-                            + this.parent.layout.label_font_size
-                            + this.parent.layout.label_exon_spacing
-                            + (Math.max(this.parent.layout.exon_height, 3) / 2);
-                    }.bind(gene))
-                    .attr("width", function(d){ return this.parent.x_scale(d.end) - this.parent.x_scale(d.start); }.bind(gene.parent))
+                        return ((d.track-1) * data_layer.getTrackHeight())
+                            + data_layer.layout.bounding_box_padding
+                            + data_layer.layout.label_font_size
+                            + data_layer.layout.label_exon_spacing
+                            + (Math.max(data_layer.layout.exon_height, 3) / 2);
+                    })
+                    .attr("width", function(d){
+                        return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                    })
                     .attr("height", 1); // This should be scaled dynamically somehow
 
                 boundaries.exit().remove();
 
                 // Render gene labels
-                var labels = d3.select(this).selectAll("text.lz-data_layer-gene").data([gene]);
+                var labels = d3.select(this).selectAll("text.lz-data_layer-gene.lz-label").data([gene], function(d){ return d.gene_name + "_label"; });
 
                 labels.enter().append("text")
                     .attr("class", "lz-data_layer-gene lz-label");
 
-                labels.attr("x", function(d){
+                labels
+                    .attr("x", function(d){
                         if (d.display_range.text_anchor == "middle"){
                             return d.display_range.start + (d.display_range.width / 2);
                         } else if (d.display_range.text_anchor == "start"){
-                            return d.display_range.start + this.layout.bounding_box_padding;
+                            return d.display_range.start + data_layer.layout.bounding_box_padding;
                         } else if (d.display_range.text_anchor == "end"){
-                            return d.display_range.end - this.layout.bounding_box_padding;
+                            return d.display_range.end - data_layer.layout.bounding_box_padding;
                         }
-                    }.bind(gene.parent))
+                    })
                     .attr("y", function(d){
-                        return ((d.track-1) * this.getTrackHeight())
-                            + this.layout.bounding_box_padding
-                            + this.layout.label_font_size;
-                    }.bind(gene.parent))
-                    .attr("text-anchor", function(d){ return d.display_range.text_anchor; })
-                    .style("font-size", gene.parent.layout.label_font_size)
-                    .text(function(d){ return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name; });
+                        return ((d.track-1) * data_layer.getTrackHeight())
+                            + data_layer.layout.bounding_box_padding
+                            + data_layer.layout.label_font_size;
+                    })
+                    .attr("text-anchor", function(d){
+                        return d.display_range.text_anchor;
+                    })
+                    .text(function(d){
+                        return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name;
+                    })
+                    .style("font-size", gene.parent.layout.label_font_size);
 
                 labels.exit().remove();
 
                 // Render exons (first transcript only, for now)
                 var exons = d3.select(this).selectAll("g.lz-data_layer-gene")
-                    .filter(".lz-exons").data([gene]);
+                    .filter(".lz-exons").data([gene], function(d){ return d.gene_name + "_exons"; });
 
                 exons.enter().append("g")
                     .attr("class", "lz-data_layer-gene lz-exons");
 
                 exons.each(function(gene){
-                    var transcripts = d3.select(this).selectAll("rect.lz-data_layer-gene")
-                        .filter(".lz-exon").data(gene.transcripts[gene.parent.transcript_idx].exons)
+                    var transcripts = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-exon")
+                        .filter(".lz-exon").data(gene.transcripts[gene.parent.transcript_idx].exons, function(d){ return d.exon_id; })
 
                     transcripts.enter().append("rect")
                         .attr("class", "lz-data_layer-gene lz-exon");
 
-                    transcripts.attr("x", function(d){ return this.parent.x_scale(d.start); }.bind(gene.parent))
+                    transcripts
+                        .attr("x", function(d){
+                            return data_layer.parent.x_scale(d.start);
+                        })
                         .attr("y", function(){
-                            return ((this.track-1) * this.parent.getTrackHeight())
-                                + this.parent.layout.bounding_box_padding
-                                + this.parent.layout.label_font_size
-                                + this.parent.layout.label_exon_spacing;
-                        }.bind(gene))
+                            return ((gene.track-1) * data_layer.getTrackHeight())
+                                + data_layer.layout.bounding_box_padding
+                                + data_layer.layout.label_font_size
+                                + data_layer.layout.label_exon_spacing;
+                        })
                         .attr("width", function(d){
-                            return this.parent.x_scale(d.end) - this.parent.x_scale(d.start);
-                        }.bind(gene.parent))
+                            return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                        })
                         .attr("height", function(){
-                            return this.parent.layout.exon_height;
-                        }.bind(gene));
+                            return data_layer.layout.exon_height;
+                        });
 
                     transcripts.exit().remove();
                 });
@@ -2538,62 +2556,70 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 exons.exit().remove();
 
                 // Render gene click area
-                var clickareas = d3.select(this).selectAll("rect")
-                    .filter(".lz-clickarea").data([gene])
+                var clickareas = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-clickarea")
+                    .filter(".lz-clickarea").data([gene], function(d){ return d.gene_name + "_clickarea"; })
 
                 clickareas.enter().append("rect")
-                    .attr("class", "lz-clickarea");
+                    .attr("class", "lz-data_layer-gene lz-clickarea");
 
-                clickareas.attr("id", function(d){
+                clickareas
+                    .attr("id", function(d){
                         return 'g' + d.gene_name.replace(/\W/g,'') + "_clickarea";
-                    }.bind(gene))
+                    })
                     .attr("x", function(d){
                         return d.display_range.start;
-                    }.bind(gene.parent))
+                    })
                     .attr("y", function(d){
-                        return ((d.track-1) * this.getTrackHeight());
-                    }.bind(gene.parent))
+                        return ((d.track-1) * data_layer.getTrackHeight());
+                    })
                     .attr("width", function(d){
                         return d.display_range.width;
-                    }.bind(gene.parent))
+                    })
                     .attr("height", function(d){
-                        return this.getTrackHeight() - this.layout.track_vertical_spacing;
-                    }.bind(gene.parent))
-                    .attr("rx", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent))
-                    .attr("ry", function(d){ return this.layout.bounding_box_padding; }.bind(gene.parent));
+                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                    })
+                    .attr("rx", function(d){
+                        return data_layer.layout.bounding_box_padding;
+                    })
+                    .attr("ry", function(d){
+                        return data_layer.layout.bounding_box_padding;
+                    });
+
+                // Remove old clickareas as needed
+                //clickareas.exit().remove();
 
                 // Apply selectable, tooltip, etc. to clickareas
                 if (gene.parent.layout.selectable){
                     clickareas
                         .on("mouseover", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.state[this.state_id].selected != id){
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
-                                if (this.layout.tooltip){ this.createTooltip(d, id); }
+                            if (data_layer.state[data_layer.state_id].selected != id){
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-hovered");
+                                if (data_layer.layout.tooltip){ data_layer.createTooltip(d, id); }
                             }
-                        }.bind(gene.parent))
+                        })
                         .on("mouseout", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.state[this.state_id].selected != id){
+                            if (data_layer.state[data_layer.state_id].selected != id){
                                 d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                                if (this.layout.tooltip){ this.destroyTooltip(id); }
+                                if (data_layer.layout.tooltip){ data_layer.destroyTooltip(id); }
                             }
-                        }.bind(gene.parent))
+                        })
                         .on("click", function(d){
                             var id = 'g' + d.gene_name.replace(/\W/g,'');
-                            if (this.state[this.state_id].selected == id){
-                                this.state[this.state_id].selected = null;
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-hovered");
+                            if (data_layer.state[data_layer.state_id].selected == id){
+                                data_layer.state[data_layer.state_id].selected = null;
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-hovered");
                             } else {
-                                if (this.state[this.state_id].selected != null){
-                                    d3.select("#" + this.state[this.state_id].selected + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                                    if (this.layout.tooltip){ this.destroyTooltip(this.state[this.state_id].selected); }
+                                if (data_layer.state[data_layer.state_id].selected != null){
+                                    d3.select("#" + data_layer.state[data_layer.state_id].selected + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
+                                    if (data_layer.layout.tooltip){ data_layer.destroyTooltip(data_layer.state[data_layer.state_id].selected); }
                                 }
-                                this.state[this.state_id].selected = id;
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box-selected");
+                                data_layer.state[data_layer.state_id].selected = id;
+                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-selected");
                             }
-                            this.triggerOnUpdate();
-                        }.bind(gene.parent));
+                            data_layer.triggerOnUpdate();
+                        });
                     // Apply existing selection from state
                     if (gene.parent.state[gene.parent.state_id].selected != null){
                         var selected_id = gene.parent.state[gene.parent.state_id].selected + "_clickarea";
@@ -2612,9 +2638,6 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                         }
                     }
                 }
-
-                // Remove old clickareas as needed
-                clickareas.exit().remove();
 
             });
 
