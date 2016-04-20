@@ -341,7 +341,7 @@ LocusZoom.StandardLayout = {
                 },
                 y1: {
                     label: "-log10 p-value",
-                    label_offset: -28
+                    label_offset: 28
                 }
             },
             data_layers: {
@@ -1476,7 +1476,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         y1: {
             position: "translate(" + this.layout.margin.left + "," + this.layout.margin.top + ")",
             orientation: "left",
-            label_x: (this.layout.axes[axis].label_offset || 0),
+            label_x: -1 * (this.layout.axes[axis].label_offset || 0),
             label_y: this.layout.cliparea.height / 2,
             label_rotate: -90
         },

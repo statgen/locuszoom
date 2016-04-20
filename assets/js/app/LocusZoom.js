@@ -327,7 +327,7 @@ LocusZoom.StandardLayout = {
                 },
                 y1: {
                     label: "-log10 p-value",
-                    label_offset: -28
+                    label_offset: 28
                 }
             },
             data_layers: {
