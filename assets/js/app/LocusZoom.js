@@ -362,6 +362,24 @@ LocusZoom.StandardLayout = {
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     }
+                },
+                significance: {
+                    type: "scatter",
+                    point_shape: "cross",
+                    point_size: 40,
+                    color: "red",
+                    fields: ["x", "y"],
+                    x_axis: {
+                        field: "x"
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "y"
+                    },
+                    static_data: [
+                        { "x": 114550452, "y": 5, id: "foo" },
+                        { "x": 115067678, "y": 5, id: "bar" }
+                    ]
                 }
             }
         },

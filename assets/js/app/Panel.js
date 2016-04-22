@@ -38,9 +38,9 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
-    this.xExtent  = null;
-    this.y1Extent = null;
-    this.y2Extent = null;
+    this.x_extent  = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -102,7 +102,6 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
             this.layout.axes[axis].render = true;
             this.layout.axes[axis].label = this.layout.axes[axis].label || null;
             this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
-            this.layout.axes[axis].data_layer_id = this.layout.axes[axis].data_layer_id || null;
         }
     }.bind(this));
 
@@ -257,6 +256,8 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+
+    // Sanity checks
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -270,27 +271,17 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
 
+    // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
+    if (typeof layout.y_axis == "object" && (typeof layout.y_axis.axis == "undefined" || [1,2].indexOf(layout.y_axis.axis) == -1)){
+        layout.y_axis.axis = 1;
+    }
+
     // Create the Data Layer
     var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
-
-    // Generate xExtent function (defaults to the state range defined by "start" and "end")
-    if (layout.x_axis){
-        this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
-    } else {
-        this.xExtent = function(){
-            return d3.extent([this.state.start, this.state.end]);
-        };
-    }
-    // Generate the yExtent function
-    if (layout.y_axis){
-        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
-        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
-        this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
-    }
 
     return this.data_layers[data_layer.id];
 };
@@ -314,6 +305,37 @@ LocusZoom.Panel.prototype.reMap = function(){
         }.bind(this));
 };
 
+// Iterate over data layers to generate panel axis extents
+LocusZoom.Panel.prototype.generateExtents = function(){
+
+    // Reset extents
+    this.x_extent = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
+
+    // Loop through the data layers
+    for (var id in this.data_layers){
+
+        var data_layer = this.data_layers[id];
+
+        // If defined, merge the x extent of the data layer with the panel's x extent
+        // If not defined but state has start and end values then default to that range
+        if (data_layer.layout.x_axis){
+            this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
+        } else if (!isNaN(this.state.start) && !isNaN(this.state.end)) {
+            this.x_extent = [this.state.start, this.state.end];
+        }
+
+        // If defined, merge the y extent of the data layer with the panel's appropriate y extent
+        if (data_layer.layout.y_axis){
+            var y_axis = "y" + data_layer.layout.y_axis.axis;
+            this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
+        }
+
+    }
+
+};
+
 
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
@@ -335,9 +357,11 @@ LocusZoom.Panel.prototype.render = function(){
                      "stroke": this.layout.inner_border });
     }
 
-    // Generate discrete extents, ticks, and scales
-    if (typeof this.xExtent == "function"){
-        this.x_extent = this.xExtent();
+    // Regenerate all extents
+    this.generateExtents();
+
+    // Generate ticks and scales using generated extents
+    if (this.x_extent){
         if (this.layout.axes.x.ticks){
             this.x_ticks = this.layout.axes.x.ticks;
         } else {
@@ -347,8 +371,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.x_extent[0], this.x_extent[1]])
             .range([0, this.layout.cliparea.width]);
     }
-    if (typeof this.y1Extent == "function"){
-        this.y1_extent = this.y1Extent();
+    if (this.y1_extent){
         if (this.layout.axes.y1.ticks){
             this.y1_ticks = this.layout.axes.y1.ticks;
         } else {
@@ -359,8 +382,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.y1_extent[0], this.y1_extent[1]])
             .range([this.layout.cliparea.height, 0]);
     }
-    if (typeof this.y2Extent == "function"){
-        this.y2_extent = this.y2Extent();
+    if (this.y_extent){
         if (this.layout.axes.y2.ticks){
             this.y2_ticks = this.layout.axes.y2.ticks;
         } else {

@@ -143,30 +143,32 @@ LocusZoom.DataLayer.DefaultLayout = {
 
 // Generate a y-axis extent functions based on the layout
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+
     var axis = dimension + "_axis";
-    return function(){
-        var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout[axis].field];
-        }.bind(this));
 
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
+    var extent = d3.extent(this.data, function(d) {
+        return +d[this.layout[axis].field];
+    }.bind(this));
 
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
-        }
+    // Apply upper/lower buffers, if applicable
+    var original_extent_span = extent[1] - extent[0];
+    if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
+    if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
 
-        // Generate a new base extent
-        extent = d3.extent(extent);
+    // Apply minimum extent
+    if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
+        extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+    }
 
-        // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
-        return extent;
-    }.bind(this);
+    // Generate a new base extent
+    extent = d3.extent(extent);
+
+    // Apply floor/ceiling, if applicable
+    if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
+    if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+
+    return extent;
+
 };
 
 // Initialize a data layer
@@ -204,11 +206,18 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
+
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
-    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
-    promise.then(function(new_data){
-        this.data = new_data.body;
-    }.bind(this));
-    return promise;
+
+    // Fetch new data for data layers without static data
+    if (this.layout.static_data){
+        this.data = this.layout.static_data;
+    } else {
+        var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+        promise.then(function(new_data){
+            this.data = new_data.body;
+        }.bind(this));
+        return promise;
+    }
 };
