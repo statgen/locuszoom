@@ -103,6 +103,12 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4;
   }
 
+  path.#{$namespace}-data_layer-line {
+    stroke: #{$default_black};
+    stroke-width: 1;
+    cursor: pointer;
+  }
+
   g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }

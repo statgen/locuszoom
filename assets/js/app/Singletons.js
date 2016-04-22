@@ -509,7 +509,76 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     };
        
     return this;
+
 });
+
+
+/*********************
+  Line Data Layer
+  Implements a standard line plot
+*/
+
+LocusZoom.DataLayers.add("line", function(id, layout, parent){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        style: {},
+        interpolate: "basis",
+        x_axis: { field: "x" },
+        y_axis: { field: "y", axis: 1 },
+        selectable: false
+    };
+    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Implement the main render function
+    this.render = function(){
+
+        var selection = this.svg.group
+            .selectAll("path.lz-data_layer-line")
+            .data([this.data]); //, function(d){ return d.x + "," + d.y; }
+
+        // Create elements, apply class and ID
+        selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-line");
+
+        // Generate the line
+        var panel = this.parent;
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var line = d3.svg.line()
+            .x(function(d) { return panel[x_scale](d[x_field]); })
+            .y(function(d) { return panel[y_scale](d[y_field]); })
+            .interpolate(this.layout.interpolate);
+
+        // Apply line and style
+        if (this.layout.transition){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("d", line)
+                .style(this.layout.style);
+        } else {
+            selection
+                .attr("d", line)
+                .style(this.layout.style);
+        }
+
+        // Remove old elements as needed
+        selection.exit().remove();
+        
+    };
+       
+    return this;
+
+});
+
 
 /*********************
   Genes Data Layer
@@ -940,4 +1009,5 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
     };
        
     return this;
+
 });

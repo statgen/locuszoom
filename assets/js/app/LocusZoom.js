@@ -331,6 +331,27 @@ LocusZoom.StandardLayout = {
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["x", "y"],
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "y"
+                    },
+                    static_data: [
+                        { "x": 0, "y": 5 },
+                        { "x": 3000000000, "y": 5 }
+                    ]
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
@@ -362,24 +383,6 @@ LocusZoom.StandardLayout = {
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     }
-                },
-                significance: {
-                    type: "scatter",
-                    point_shape: "cross",
-                    point_size: 40,
-                    color: "red",
-                    fields: ["x", "y"],
-                    x_axis: {
-                        field: "x"
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "y"
-                    },
-                    static_data: [
-                        { "x": 114550452, "y": 5, id: "foo" },
-                        { "x": 115067678, "y": 5, id: "bar" }
-                    ]
                 }
             }
         },

@@ -345,6 +345,27 @@ LocusZoom.StandardLayout = {
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["x", "y"],
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "y"
+                    },
+                    static_data: [
+                        { "x": 0, "y": 5 },
+                        { "x": 3000000000, "y": 5 }
+                    ]
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
@@ -376,24 +397,6 @@ LocusZoom.StandardLayout = {
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     }
-                },
-                significance: {
-                    type: "scatter",
-                    point_shape: "cross",
-                    point_size: 40,
-                    color: "red",
-                    fields: ["x", "y"],
-                    x_axis: {
-                        field: "x"
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "y"
-                    },
-                    static_data: [
-                        { "x": 114550452, "y": 5, id: "foo" },
-                        { "x": 115067678, "y": 5, id: "bar" }
-                    ]
                 }
             }
         },
@@ -1427,16 +1430,16 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
         var data_layer = this.data_layers[id];
 
-        // If defined, merge the x extent of the data layer with the panel's x extent
+        // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
         // If not defined but state has start and end values then default to that range
-        if (data_layer.layout.x_axis){
+        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
             this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
         } else if (!isNaN(this.state.start) && !isNaN(this.state.end)) {
             this.x_extent = [this.state.start, this.state.end];
         }
 
-        // If defined, merge the y extent of the data layer with the panel's appropriate y extent
-        if (data_layer.layout.y_axis){
+        // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
+        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled){
             var y_axis = "y" + data_layer.layout.y_axis.axis;
             this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
         }
@@ -2361,7 +2364,76 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     };
        
     return this;
+
 });
+
+
+/*********************
+  Line Data Layer
+  Implements a standard line plot
+*/
+
+LocusZoom.DataLayers.add("line", function(id, layout, parent){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        style: {},
+        interpolate: "basis",
+        x_axis: { field: "x" },
+        y_axis: { field: "y", axis: 1 },
+        selectable: false
+    };
+    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Implement the main render function
+    this.render = function(){
+
+        var selection = this.svg.group
+            .selectAll("path.lz-data_layer-line")
+            .data([this.data]); //, function(d){ return d.x + "," + d.y; }
+
+        // Create elements, apply class and ID
+        selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-line");
+
+        // Generate the line
+        var panel = this.parent;
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var line = d3.svg.line()
+            .x(function(d) { return panel[x_scale](d[x_field]); })
+            .y(function(d) { return panel[y_scale](d[y_field]); })
+            .interpolate(this.layout.interpolate);
+
+        // Apply line and style
+        if (this.layout.transition){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("d", line)
+                .style(this.layout.style);
+        } else {
+            selection
+                .attr("d", line)
+                .style(this.layout.style);
+        }
+
+        // Remove old elements as needed
+        selection.exit().remove();
+        
+    };
+       
+    return this;
+
+});
+
 
 /*********************
   Genes Data Layer
@@ -2792,6 +2864,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
     };
        
     return this;
+
 });
 
 
