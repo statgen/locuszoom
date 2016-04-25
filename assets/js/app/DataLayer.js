@@ -213,6 +213,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     // Fetch new data for data layers without static data
     if (this.layout.static_data){
         this.data = this.layout.static_data;
+        return Q.when(true);
     } else {
         var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
         promise.then(function(new_data){

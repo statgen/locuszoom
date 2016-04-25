@@ -323,7 +323,6 @@ LocusZoom.StandardLayout = {
                     label_function: "chromosome",
                     label_offset: 32,
                     tick_format: "region",
-
                 },
                 y1: {
                     label: "-log10 p-value",
