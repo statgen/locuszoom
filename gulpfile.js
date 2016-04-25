@@ -73,9 +73,9 @@ gulp.task("app_js", ["test"], function() {
             gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.js "));
         });
     gulp.src(app_js_files)
-        .pipe(uglify())
         .pipe(concat("locuszoom.app.min.js"))
         .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
+        .pipe(uglify())
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
