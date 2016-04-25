@@ -1,0 +1,76 @@
+.lz-locuszoom {
+  background-color: #FFFFFF;
+  border: none;
+  cursor: move;
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 10px; }
+  .lz-locuszoom .lz-curtain rect {
+    fill: rgba(210, 210, 210, 0.85);
+    width: 100%;
+    height: 100%; }
+  .lz-locuszoom .lz-curtain text, .lz-locuszoom .lz-curtain tspan {
+    fill: black;
+    font-weight: 600;
+    font-size: 14px;
+    text-anchor: start;
+    alignment-baseline: hanging; }
+  .lz-locuszoom .lz-mouse_guide rect {
+    fill: rgba(210, 210, 210, 0.85); }
+  .lz-locuszoom .lz-mouse_guide rect.lz-mouse_guide-vertical {
+    width: 1px;
+    height: 100%; }
+  .lz-locuszoom .lz-mouse_guide rect.lz-mouse_guide-horizontal {
+    width: 100%;
+    height: 1px; }
+  .lz-locuszoom .lz-ui-resize_handle {
+    fill: rgba(210, 210, 210, 0.85);
+    stroke: rgba(45, 45, 45, 0.85);
+    stroke-width: 1;
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
+  .lz-locuszoom .lz-ui-resize_handle:hover {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    stroke-linejoin: round; }
+  .lz-locuszoom .lz-ui-resize_handle_dragging {
+    fill: #d2d2d2;
+    stroke: #2d2d2d;
+    stroke-width: 2;
+    cursor: nwse-resize;
+    stroke-linejoin: round; }
+  .lz-locuszoom .lz-axis path,
+  .lz-locuszoom .lz-axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges; }
+  .lz-locuszoom .lz-axis .lz-label {
+    font-size: 12px;
+    font-weight: 600; }
+  .lz-locuszoom path.lz-data_layer-scatter {
+    stroke: #181818;
+    stroke-width: 1; }
+  .lz-locuszoom path.lz-data_layer-scatter:hover {
+    stroke: #484848;
+    stroke-width: 3; }
+  .lz-locuszoom path.lz-data_layer-scatter.lz-selected {
+    stroke-width: 4; }
+  .lz-locuszoom path.lz-data_layer-scatter.lz-selected:hover {
+    stroke-width: 4; }
+  .lz-locuszoom text.lz-gene.lz-label {
+    font-style: italic; }
+  .lz-locuszoom rect.lz-gene.lz-boundary {
+    stroke: #000099;
+    stroke-width: 1; }
+  .lz-locuszoom rect.lz-gene.lz-exon {
+    stroke: #000099;
+    stroke-width: 1; }
+
+.lz-container {
+  display: inline-block;
+  overflow: hidden; }
+
+.lz-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden; }
