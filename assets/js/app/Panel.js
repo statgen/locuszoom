@@ -317,14 +317,14 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
         // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
         // If not defined but state has start and end values then default to that range
-        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
+        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled && typeof data_layer.layout.x_axis.field == "string"){
             this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
         } else if (!isNaN(this.state.start) && !isNaN(this.state.end)) {
             this.x_extent = [this.state.start, this.state.end];
         }
 
         // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
-        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled){
+        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled && typeof data_layer.layout.y_axis.field == "string"){
             var y_axis = "y" + data_layer.layout.y_axis.axis;
             this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
         }
