@@ -299,18 +299,6 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-// Default Layout
-LocusZoom.DefaultLayout = {
-    state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
-    resizable: false,
-    aspect_ratio: 1,
-    panels: {}
-};
-
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -336,8 +324,7 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region",
-
+                    tick_format: "region"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -732,9 +719,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.Instance.DefaultLayout);
     } else {
-        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.Instance.DefaultLayout);
     }
 
     // Create a shortcut to the state in the layout on the instance
@@ -759,6 +746,18 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     return this;
   
+};
+
+// Default Layout
+LocusZoom.Instance.DefaultLayout = {
+    state: {},
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {}
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -1153,9 +1152,6 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    state: {
-        data_layers: {}   
-    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -1620,12 +1616,11 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.state[this.state_id].selected = this.state[this.state_id].selected || null;
         }
     } else {
-        this.state = null;
+        this.state = {};
         this.state_id = null;
     }
 
     this.data = [];
-    this.metadata = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
@@ -1726,11 +1721,18 @@ LocusZoom.DataLayer = function(id, layout, parent) {
 
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
-    fields: []
+    fields: [],
+    x_axis: {},
+    y_axis: {}
 };
 
-// Generate a y-axis extent functions based on the layout
+// Generate dimension extent function based on layout parameters
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+
+    if (["x", "y"].indexOf(dimension) == -1){
+        throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
+    }
+
     var axis = dimension + "_axis";
     return function(){
         var extent = d3.extent(this.data, function(d) {
@@ -2237,7 +2239,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 break;
             }
         }
-        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape)
+        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape);
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){

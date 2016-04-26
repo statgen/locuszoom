@@ -62,9 +62,6 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    state: {
-        data_layers: {}   
-    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },

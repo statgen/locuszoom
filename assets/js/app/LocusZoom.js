@@ -285,18 +285,6 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-// Default Layout
-LocusZoom.DefaultLayout = {
-    state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
-    resizable: false,
-    aspect_ratio: 1,
-    panels: {}
-};
-
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -322,8 +310,7 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region",
-
+                    tick_format: "region"
                 },
                 y1: {
                     label: "-log10 p-value",

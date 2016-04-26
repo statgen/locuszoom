@@ -35,6 +35,11 @@ describe('LocusZoom.Instance', function(){
     it("creates an object for its name space", function() {
         should.exist(LocusZoom.Instance);
     });
+
+    it("defines its layout defaults", function() {
+        LocusZoom.Instance.should.have.property('DefaultLayout').which.is.an.Object;
+    });
+
     describe("Constructor", function() {
         beforeEach(function() {
             this.instance = new LocusZoom.Instance("instance_id");
