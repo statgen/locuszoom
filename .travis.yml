@@ -6,6 +6,9 @@ before_script:
   gulp-wrap yargs
 - npm install mocha should jsdom mocha-jsdom
 script: gulp test
+branches:
+  only:
+    - master
 notifications:
   email:
   - chriclrk@umich.edu
