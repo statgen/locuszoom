@@ -67,16 +67,30 @@ describe('LocusZoom.DataLayer', function(){
         });
     });
 
+    describe("Static data pass-through", function() {
+        it("allows for defining persistent static data", function() {
+            this.layout = {
+                static_data: [
+                    { x: 1 }, { x: 2 }, { x: 3 }
+                ]
+            };
+            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer.reMap();
+            assert.deepEqual(this.datalayer.data, this.layout.static_data);
+        });
+    });
+
     describe("Extent generation", function() {
         it("has a method to generate an extent function for any axis", function() {
             this.datalayer = new LocusZoom.DataLayer("test", {});
             this.datalayer.getAxisExtent.should.be.a.Function;
         });
         it("throws an error on invalid axis identifiers", function() {
-            assert.throws(function(){ this.datalayer.getAxisExtent(); }.bind(this));
-            assert.throws(function(){ this.datalayer.getAxisExtent("foo"); }.bind(this));
-            assert.throws(function(){ this.datalayer.getAxisExtent(1); }.bind(this));
-            assert.throws(function(){ this.datalayer.getAxisExtent("y1"); }.bind(this));
+            var data_layer = new LocusZoom.DataLayer();
+            assert.throws(function(){ datalayer.getAxisExtent(); });
+            assert.throws(function(){ datalayer.getAxisExtent("foo"); });
+            assert.throws(function(){ datalayer.getAxisExtent(1); });
+            assert.throws(function(){ datalayer.getAxisExtent("y1"); });
         });
         it("generates an accurate extent array for arbitrary data sets", function() {
             this.layout = {
