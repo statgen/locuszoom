@@ -32,12 +32,11 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.state[this.state_id].selected = this.state[this.state_id].selected || null;
         }
     } else {
-        this.state = null;
+        this.state = {};
         this.state_id = null;
     }
 
     this.data = [];
-    this.metadata = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
@@ -138,11 +137,17 @@ LocusZoom.DataLayer = function(id, layout, parent) {
 
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
-    fields: []
+    fields: [],
+    x_axis: {},
+    y_axis: {}
 };
 
-// Generate a y-axis extent functions based on the layout
+// Generate dimension extent function based on layout parameters
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+
+    if (["x", "y"].indexOf(dimension) == -1){
+        throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
+    }
 
     var axis = dimension + "_axis";
 

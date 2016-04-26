@@ -36,7 +36,7 @@ describe('LocusZoom Core', function(){
         should.exist(LocusZoom);
     });
 
-    describe("LocusZoom Core Singleton", function() {
+    describe("LocusZoom Core", function() {
 
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "instance_id");
@@ -48,10 +48,6 @@ describe('LocusZoom Core', function(){
 
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
-        });
-
-        it('should have a default layout', function(){
-            LocusZoom.should.have.property('DefaultLayout').which.is.an.Object;
         });
 
         it('should have a method for converting an integer position to a string', function(){
