@@ -231,3 +231,35 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   overflow: hidden;
 }
 
+.#{$namespace}-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px;
+  .#{$namespace}-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+  }
+  .#{$namespace}-controls-button:hover {
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8
+  }
+  .#{$namespace}-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #999999;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .#{$namespace}-controls-button-disabled:hover {
+    cursor: wait;
+    background-color: #D8D8D8;
+  }
+}

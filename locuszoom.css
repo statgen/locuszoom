@@ -165,3 +165,31 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   width: 100%;
   display: inline-block;
   overflow: hidden; }
+
+.lz-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px; }
+  .lz-locuszoom-controls .lz-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto; }
+  .lz-locuszoom-controls .lz-controls-button:hover {
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8; }
+  .lz-locuszoom-controls .lz-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #999999;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    pointer-events: none; }
+  .lz-locuszoom-controls .lz-controls-button-disabled:hover {
+    cursor: wait;
+    background-color: #D8D8D8; }
