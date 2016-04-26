@@ -294,7 +294,11 @@ LocusZoom.DefaultLayout = {
     min_height: 1,
     resizable: false,
     aspect_ratio: 1,
-    panels: {}
+    panels: {},
+    controls: {
+        show: "onmouseover",
+        hide_delay: 500
+    }
 };
 
 // Standard Layout
