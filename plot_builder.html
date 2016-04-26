@@ -109,9 +109,9 @@
     }
 
     function applyOnUpdate(){
-      plot.onUpdate = function(){
+      plot.onUpdate(function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-      };
+      });
     }
     
     function updatePlot(){

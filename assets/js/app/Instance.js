@@ -43,19 +43,24 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
 
-    // onUpdate - user defineable function that can be triggered whenever the layout or state are updated
-    this.onUpdate = null;
-    this.triggerOnUpdate = function(){
-        if (typeof this.onUpdate == "function"){
-            this.onUpdate();
-        }
-    };
+    // Array of functions to call when the plot is updated
+    this.onUpdateFunctions = [];
 
     // Initialize the layout
     this.initializeLayout();
 
     return this;
   
+};
+
+LocusZoom.Instance.prototype.onUpdate = function(func){
+    if (typeof func == "undefined"){
+        for (func in this.onUpdateFunctions){
+            this.onUpdateFunctions[func]();
+        }
+    } else if (typeof func == "function") {
+        this.onUpdateFunctions.push(func);
+    }
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -133,7 +138,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     if (this.initialized){
         this.ui.render();
     }
-    this.triggerOnUpdate();
+    this.onUpdate();
     return this;
 };
 
@@ -455,7 +460,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.triggerOnUpdate();
+            this.onUpdate();
         }.bind(this));
 
     return this;
@@ -489,7 +494,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.triggerOnUpdate();
+            this.onUpdate();
         }.bind(this));
 
     return this;
