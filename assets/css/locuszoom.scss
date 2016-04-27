@@ -109,6 +109,12 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
+  path.#{$namespace}-data_layer-line-hitarea {
+    stroke: transparent;
+    stroke-width: 12px;
+    cursor: pointer;
+  }
+
   g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }

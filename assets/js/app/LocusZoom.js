@@ -323,8 +323,8 @@ LocusZoom.StandardLayout = {
                     fields: ["x", "y"],
                     style: {
                         "stroke": "#D3D3D3",
-                        "stroke-width": "3px"
-                        /* "stroke-dasharray": "10px 10px" */
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
                     },
                     x_axis: {
                         field: "x",
@@ -335,11 +335,11 @@ LocusZoom.StandardLayout = {
                         field: "y"
                     },
                     tooltip: {
-                        html: "significance"
+                        html: "Significance Threshold: 3 × 10^-5"
                     },
                     static_data: [
-                        { "x": 0, "y": 5 },
-                        { "x": 3000000000, "y": 5 }
+                        { "x": 0, "y": 4.522 },
+                        { "x": 2881033286, "y": 4.522 }
                     ]
                 },
                 positions: {

@@ -55,6 +55,10 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         if (typeof id != "string"){
             throw ("Unable to create tooltip: id is not a string");
         }
+        if (this.tooltips[id]){
+            this.positionTooltip(id);
+            return;
+        }
         this.tooltips[id] = {
             data: d,
             arrow: null,

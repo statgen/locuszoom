@@ -337,8 +337,8 @@ LocusZoom.StandardLayout = {
                     fields: ["x", "y"],
                     style: {
                         "stroke": "#D3D3D3",
-                        "stroke-width": "3px"
-                        /* "stroke-dasharray": "10px 10px" */
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
                     },
                     x_axis: {
                         field: "x",
@@ -349,11 +349,11 @@ LocusZoom.StandardLayout = {
                         field: "y"
                     },
                     tooltip: {
-                        html: "significance"
+                        html: "Significance Threshold: 3 × 10^-5"
                     },
                     static_data: [
-                        { "x": 0, "y": 5 },
-                        { "x": 3000000000, "y": 5 }
+                        { "x": 0, "y": 4.522 },
+                        { "x": 2881033286, "y": 4.522 }
                     ]
                 },
                 positions: {
@@ -1685,6 +1685,10 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         if (typeof id != "string"){
             throw ("Unable to create tooltip: id is not a string");
         }
+        if (this.tooltips[id]){
+            this.positionTooltip(id);
+            return;
+        }
         this.tooltips[id] = {
             data: d,
             arrow: null,
@@ -2405,6 +2409,8 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Var for storing the generated line function itself
     this.line = null;
 
+    this.tooltip_timeout = null;
+
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
@@ -2445,7 +2451,10 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         var offset_right = Math.max((tooltip_box.width / 2) - display.x, 0);
         var offset_left = Math.max((tooltip_box.width / 2) + display.x - data_layer_width, 0);
         var left = page_origin.x + display.x - (tooltip_box.width / 2) - offset_left + offset_right;
-        var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right;
+        var min_arrow_left = arrow_width / 2;
+        var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
+        var arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
+        arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
 
         // Position vertically above the line unless there's insufficient space
         var top, arrow_type, arrow_top;
@@ -2485,9 +2494,9 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         // Join data to the line selection
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-line")
-            .data([this.data]); //, function(d){ return d.x + "," + d.y; }
+            .data([this.data]);
 
-        // Create elements, apply class and ID
+        // Create path element, apply class
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-line");
@@ -2514,18 +2523,36 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
 
         // Apply tooltip, etc
         if (this.layout.tooltip){
-            selection.on("mouseover", function(d){
-                data_layer.mouse_event = this;
-                data_layer.createTooltip(d, data_layer.state_id);
-            })
-            .on("mousemove", function(){
-                data_layer.mouse_event = this;
-                data_layer.positionTooltip(data_layer.state_id);
-            })
-            .on("mouseout", function(){
-                data_layer.mouse_event = null;
-                data_layer.destroyTooltip(data_layer.state_id);
-            });
+            // Generate an overlaying transparent "hit area" line for more intuitive mouse events
+            var hitarea = this.svg.group
+                .selectAll("path.lz-data_layer-line-hitarea")
+                .data([this.data]);
+            hitarea.enter()
+                .append("path")
+                .attr("class", "lz-data_layer-line-hitarea");
+            var hitarea_line = d3.svg.line()
+                .x(function(d) { return panel[x_scale](d[x_field]); })
+                .y(function(d) { return panel[y_scale](d[y_field]); })
+                .interpolate(this.layout.interpolate);
+            hitarea
+                .attr("d", hitarea_line)
+                .on("mouseover", function(d){
+                    clearTimeout(data_layer.tooltip_timeout);
+                    data_layer.mouse_event = this;
+                    data_layer.createTooltip(d, data_layer.state_id);
+                })
+                .on("mousemove", function(){
+                    clearTimeout(data_layer.tooltip_timeout);
+                    data_layer.mouse_event = this;
+                    data_layer.positionTooltip(data_layer.state_id);
+                })
+                .on("mouseout", function(){
+                    data_layer.tooltip_timeout = setTimeout(function(){
+                        data_layer.mouse_event = null;
+                        data_layer.destroyTooltip(data_layer.state_id);
+                    }, 300);
+                });
+            hitarea.exit().remove();
         }
 
         // Remove old elements as needed

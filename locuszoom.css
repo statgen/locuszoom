@@ -68,6 +68,10 @@ svg.lz-locuszoom {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1;
     cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-line-hitarea {
+    stroke: transparent;
+    stroke-width: 12px;
+    cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
   svg.lz-locuszoom text.lz-data_layer-gene.lz-label {
