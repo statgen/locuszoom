@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.8"
+    version: "0.3.7"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -1707,11 +1707,20 @@ LocusZoom.DataLayer = function(id, layout, parent) {
     // (useful for custom reimplementations this.positionTooltip())
     this.getPageOrigin = function(){
         var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_scroll = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_scroll = document.documentElement.scrollTop || document.body.scrollTop;
+        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        var container = this.parent.parent.svg.node();
+        while (container.parentNode != null){
+            container = container.parentNode;
+            if (container != document && d3.select(container).style("position") != "static"){
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
         return {
-            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left + x_scroll,
-            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll
+            x: x_offset + bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
+            y: y_offset + bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top
         };
     };
     
