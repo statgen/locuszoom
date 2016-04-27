@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.8"
+    version: "0.3.7"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -299,22 +299,6 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-// Default Layout
-LocusZoom.DefaultLayout = {
-    state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
-    resizable: false,
-    aspect_ratio: 1,
-    panels: {},
-    controls: {
-        show: "onmouseover",
-        hide_delay: 500
-    }
-};
-
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -340,8 +324,7 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region",
-
+                    tick_format: "region"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -736,9 +719,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.Instance.DefaultLayout);
     } else {
-        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.Instance.DefaultLayout);
     }
 
     // Create a shortcut to the state in the layout on the instance
@@ -758,6 +741,22 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     return this;
   
+};
+
+// Default Layout
+LocusZoom.Instance.DefaultLayout = {
+    state: {},
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {},
+    controls: {
+        show: "onmouseover",
+        hide_delay: 500
+    }
 };
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
@@ -1272,9 +1271,6 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    state: {
-        data_layers: {}   
-    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -1488,7 +1484,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // Generate xExtent function (defaults to the state range defined by "start" and "end")
-    if (layout.x_axis){
+    if (layout.x_axis && typeof layout.x_axis.field == "string"){
         this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
     } else {
         this.xExtent = function(){
@@ -1496,7 +1492,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         };
     }
     // Generate the yExtent function
-    if (layout.y_axis){
+    if (layout.y_axis && typeof layout.y_axis.field == "string"){
         var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
         this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
         this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
@@ -1739,12 +1735,11 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.state[this.state_id].selected = this.state[this.state_id].selected || null;
         }
     } else {
-        this.state = null;
+        this.state = {};
         this.state_id = null;
     }
 
     this.data = [];
-    this.metadata = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
@@ -1831,11 +1826,20 @@ LocusZoom.DataLayer = function(id, layout, parent) {
     // (useful for custom reimplementations this.positionTooltip())
     this.getPageOrigin = function(){
         var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_scroll = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_scroll = document.documentElement.scrollTop || document.body.scrollTop;
+        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        var container = this.parent.parent.svg.node();
+        while (container.parentNode != null){
+            container = container.parentNode;
+            if (container != document && d3.select(container).style("position") != "static"){
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
         return {
-            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left + x_scroll,
-            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll
+            x: x_offset + bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
+            y: y_offset + bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top
         };
     };
     
@@ -1845,11 +1849,18 @@ LocusZoom.DataLayer = function(id, layout, parent) {
 
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
-    fields: []
+    fields: [],
+    x_axis: {},
+    y_axis: {}
 };
 
-// Generate a y-axis extent functions based on the layout
+// Generate dimension extent function based on layout parameters
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+
+    if (["x", "y"].indexOf(dimension) == -1){
+        throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
+    }
+
     var axis = dimension + "_axis";
     return function(){
         var extent = d3.extent(this.data, function(d) {
@@ -2356,7 +2367,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 break;
             }
         }
-        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape)
+        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape);
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){

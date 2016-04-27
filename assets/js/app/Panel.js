@@ -62,9 +62,6 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    state: {
-        data_layers: {}   
-    },
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -278,7 +275,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     this.data_layer_ids_by_z_index.push(data_layer.id);
 
     // Generate xExtent function (defaults to the state range defined by "start" and "end")
-    if (layout.x_axis){
+    if (layout.x_axis && typeof layout.x_axis.field == "string"){
         this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
     } else {
         this.xExtent = function(){
@@ -286,7 +283,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         };
     }
     // Generate the yExtent function
-    if (layout.y_axis){
+    if (layout.y_axis && typeof layout.y_axis.field == "string"){
         var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
         this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
         this.layout.axes[y_axis_name].data_layer_id = data_layer.id;

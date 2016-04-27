@@ -29,9 +29,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.Instance.DefaultLayout);
     } else {
-        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.Instance.DefaultLayout);
     }
 
     // Create a shortcut to the state in the layout on the instance
@@ -51,6 +51,22 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     return this;
   
+};
+
+// Default Layout
+LocusZoom.Instance.DefaultLayout = {
+    state: {},
+    width: 1,
+    height: 1,
+    min_width: 1,
+    min_height: 1,
+    resizable: false,
+    aspect_ratio: 1,
+    panels: {},
+    controls: {
+        show: "onmouseover",
+        hide_delay: 500
+    }
 };
 
 LocusZoom.Instance.prototype.onUpdate = function(func){

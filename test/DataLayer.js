@@ -36,6 +36,10 @@ describe('LocusZoom.DataLayer', function(){
         should.exist(LocusZoom.DataLayer);
     });
 
+    it("defines its layout defaults", function() {
+        LocusZoom.DataLayer.should.have.property('DefaultLayout').which.is.an.Object;
+    });
+
     describe("Constructor", function() {
         beforeEach(function() {
             this.datalayer = new LocusZoom.DataLayer();
@@ -54,6 +58,25 @@ describe('LocusZoom.DataLayer', function(){
         });
         it('should have a layout object', function(){
             this.datalayer.should.have.property('layout').which.is.an.Object;
+        });
+        it('should have a state object', function(){
+            this.datalayer.should.have.property('state').which.is.an.Object;
+        });
+        it('should have a tooltips object', function(){
+            this.datalayer.should.have.property('tooltips').which.is.an.Object;
+        });
+    });
+
+    describe("Extent generation", function() {
+        it("has a method to generate an extent function for any axis", function() {
+            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer.getAxisExtent.should.be.a.Function;
+        });
+        it("throws an error on invalid axis identifiers", function() {
+            assert.throws(function(){ this.datalayer.getAxisExtent(); }.bind(this));
+            assert.throws(function(){ this.datalayer.getAxisExtent("foo"); }.bind(this));
+            assert.throws(function(){ this.datalayer.getAxisExtent(1); }.bind(this));
+            assert.throws(function(){ this.datalayer.getAxisExtent("y1"); }.bind(this));
         });
     });
 
