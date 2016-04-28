@@ -348,6 +348,20 @@ LocusZoom.StandardLayout = {
                             { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
+                    },
+                    label: {
+                        text: "ID: {{id}}",
+                        filters: [
+                            {
+                                field: "pvalue|neglog10",
+                                operator: ">=",
+                                value: 50
+                            }
+                        ],
+                        style: {
+                            "font_size": "10px",
+                            "fill": "#666666"
+                        }
                     }
                 }
             }

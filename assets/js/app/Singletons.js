@@ -398,6 +398,10 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     // Implement the main render function
     this.render = function(){
 
+        var data_layer = this;
+        var x_scale = "x_scale";
+        var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d.id; });
@@ -410,13 +414,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Generate new values (or functions for them) for position, color, and shape
         var transform = function(d) {
-            var x = this.parent.x_scale(d[this.layout.x_axis.field]);
-            var y_scale = "y"+this.layout.y_axis.axis+"_scale";
-            var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
             if (isNaN(x)){ x = -1000; }
             if (isNaN(y)){ y = -1000; }
             return "translate(" + x + "," + y + ")";
-        }.bind(this);
+        };
         var fill;
         if (this.layout.color){
             switch (typeof this.layout.color){
@@ -424,12 +427,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 fill = this.layout.color;
                 break;
             case "object":
-                if (this.layout.color.scale_function && this.layout.color.field) {
+                if (data_layer.layout.color.scale_function && data_layer.layout.color.field) {
                     fill = function(d){
-                        return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
-                                                            this.layout.color.parameters || {},
-                                                            d[this.layout.color.field]);
-                    }.bind(this);
+                        return LocusZoom.ScaleFunctions.get(data_layer.layout.color.scale_function,
+                                                            data_layer.layout.color.parameters || {},
+                                                            d[data_layer.layout.color.field]);
+                    };
                 }
                 break;
             }
@@ -505,6 +508,76 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Generate labels (if defined)
+        if (this.layout.label){
+            var filtered_data = this.data.filter(function(d){
+                if (!data_layer.layout.label.filters){
+                    return true;
+                } else {
+                    // Start by assuming a match, run through all filters to test if not a match
+                    var match = true;
+                    data_layer.layout.label.filters.forEach(function(filter){
+                        switch (filter.operator){
+                        case "<":
+                            if (!(d[filter.field] < filter.value)){ match = false; }
+                            break;
+                        case "<=":
+                            if (!(d[filter.field] <= filter.value)){ match = false; }
+                            break;
+                        case ">":
+                            if (!(d[filter.field] > filter.value)){ match = false; }
+                            break;
+                        case ">=":
+                            if (!(d[filter.field] >= filter.value)){ match = false; }
+                            break;
+                        case "=":
+                            if (!(d[filter.field] == filter.value)){ match = false; }
+                            break;
+                        default:
+                            // If we got here the operator is not valid, so the filter should fail
+                            match = false;
+                            break;
+                        }
+                    });
+                    return match;
+                }
+            });
+            var label_groups = this.svg.group
+                .selectAll("g.lz-data_layer-scatter-label")
+                .data(filtered_data, function(d){ return d.id + "_label"; });
+            label_groups.enter()
+                .append("g")
+                .attr("class", "lz-data_layer-scatter-label");
+            label_groups
+                .each(function(datum){
+                    // Render label text
+                    var label_text = d3.select(this).selectAll("text.lz-data_layer-scatter-label")
+                        .data([datum], function(d){ return d.id + "_label_text"; });
+                    label_text.enter().append("text")
+                        .attr("class", "lz-data_layer-scatter-label");
+                    label_text
+                        .text(LocusZoom.parseFields(datum, data_layer.layout.label.text || ""))
+                        .style(data_layer.layout.label.style || {})
+                        .attr({
+                            "x": function(d){
+                                var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                                if (isNaN(x)){ x = -1000; }
+                                return x;
+                            },
+                            "y": function(d){
+                                var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                                if (isNaN(y)){ y = -1000; }
+                                return y;
+                            },
+                            "text-anchor": function(d){
+                                return "start";
+                            }
+                        });
+                    label_text.exit().remove();
+                });
+            label_groups.exit().remove();
+        }
         
     };
        
