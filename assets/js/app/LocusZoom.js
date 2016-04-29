@@ -350,7 +350,7 @@ LocusZoom.StandardLayout = {
                         ]
                     },
                     label: {
-                        text: "ID: {{id}}",
+                        text: "{{id}}",
                         filters: [
                             {
                                 field: "pvalue|neglog10",

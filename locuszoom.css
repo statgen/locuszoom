@@ -64,6 +64,12 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4; }
+  svg.lz-locuszoom text.lz-data_layer-scatter-label {
+    fill: rgba(24, 24, 24, 1);
+    alignment-baseline: middle; }
+  svg.lz-locuszoom line.lz-data_layer-scatter-label {
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1px; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
   svg.lz-locuszoom text.lz-data_layer-gene.lz-label {

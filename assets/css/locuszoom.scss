@@ -103,6 +103,16 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4;
   }
 
+  text.#{$namespace}-data_layer-scatter-label {
+    fill: #{$default_black};
+    alignment-baseline: middle;
+  }
+
+  line.#{$namespace}-data_layer-scatter-label {
+    stroke: #{$default_black};
+    stroke-width: 1px;
+  }
+
   g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }

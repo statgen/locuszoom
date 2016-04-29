@@ -364,7 +364,7 @@ LocusZoom.StandardLayout = {
                         ]
                     },
                     label: {
-                        text: "ID: {{id}}",
+                        text: "{{id}}",
                         filters: [
                             {
                                 field: "pvalue|neglog10",
@@ -2242,12 +2242,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Generate new values (or functions for them) for position, color, and shape
         var transform = function(d) {
-            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+            var x = this.parent[x_scale](d[this.layout.x_axis.field]);
+            var y = this.parent[y_scale](d[this.layout.y_axis.field]);
             if (isNaN(x)){ x = -1000; }
             if (isNaN(y)){ y = -1000; }
             return "translate(" + x + "," + y + ")";
-        };
+        }.bind(this);
         var fill;
         if (this.layout.color){
             switch (typeof this.layout.color){
@@ -2255,12 +2255,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 fill = this.layout.color;
                 break;
             case "object":
-                if (data_layer.layout.color.scale_function && data_layer.layout.color.field) {
+                if (this.layout.color.scale_function && this.layout.color.field) {
                     fill = function(d){
-                        return LocusZoom.ScaleFunctions.get(data_layer.layout.color.scale_function,
-                                                            data_layer.layout.color.parameters || {},
-                                                            d[data_layer.layout.color.field]);
-                    };
+                        return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
+                                                            this.layout.color.parameters || {},
+                                                            d[this.layout.color.field]);
+                    }.bind(this);
                 }
                 break;
             }
@@ -2371,42 +2371,123 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                     return match;
                 }
             });
-            var label_groups = this.svg.group
+            this.label_groups = this.svg.group
                 .selectAll("g.lz-data_layer-scatter-label")
                 .data(filtered_data, function(d){ return d.id + "_label"; });
-            label_groups.enter()
+            this.label_groups.enter()
                 .append("g")
                 .attr("class", "lz-data_layer-scatter-label");
-            label_groups
-                .each(function(datum){
-                    // Render label text
-                    var label_text = d3.select(this).selectAll("text.lz-data_layer-scatter-label")
-                        .data([datum], function(d){ return d.id + "_label_text"; });
-                    label_text.enter().append("text")
-                        .attr("class", "lz-data_layer-scatter-label");
-                    label_text
-                        .text(LocusZoom.parseFields(datum, data_layer.layout.label.text || ""))
-                        .style(data_layer.layout.label.style || {})
-                        .attr({
-                            "x": function(d){
-                                var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                                if (isNaN(x)){ x = -1000; }
-                                return x;
-                            },
-                            "y": function(d){
-                                var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                                if (isNaN(y)){ y = -1000; }
-                                return y;
-                            },
-                            "text-anchor": function(d){
-                                return "start";
-                            }
-                        });
-                    label_text.exit().remove();
+
+            // Render label text
+            this.label_texts = this.label_groups.append("text")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_texts
+                .text(function(d){
+                    return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
+                })
+                .style(data_layer.layout.label.style || {})
+                .attr({
+                    "x": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "text-anchor": function(d){
+                        return "start";
+                    }
+                });            
+            // Render label lines
+            this.label_lines = this.label_groups.append("line")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_lines
+                .attr({
+                    "x1": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y1": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "x2": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y2": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
                 });
-            label_groups.exit().remove();
+            this.label_groups.exit().remove();
         }
+
+        this.separate_labels();
         
+    };
+
+    // Function to space labels apart immediately after initial render
+    // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
+    this.separate_labels = function(){
+        var data_layer = this;
+        var alpha = 0.5;
+        var padding = 2;
+        var again = false;
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            y1 = da.attr("y");
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                // a & b are the same element and don't collide.
+                if (a == b) return;
+                db = d3.select(b);
+                // a & b are on opposite sides of the chart and
+                // don't collide
+                if (da.attr("text-anchor") != db.attr("text-anchor")) return;
+                // Determine if the  bounding rects for the two text elements collide
+                abound = da.node().getBoundingClientRect();
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*padding) &&
+                    abound.left + abound.width + (2*padding) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*padding) &&
+                    abound.height + abound.top + (2*padding) > bbound.top;
+                if (!collision) return;
+                
+                // If the labels collide, we'll push each
+                // of the two labels up and down a little bit.
+                again = true;
+                y2 = db.attr("y");
+                sign = abound.top < bbound.top ? 1 : -1;
+                adjust = sign * alpha;
+                da.attr("y",+y1 - adjust);
+                db.attr("y",+y2 + adjust);
+            });
+        });
+        // Adjust our line leaders here
+        // so that they follow the labels. 
+        if (again) {
+            labelElements = data_layer.label_texts[0];
+            data_layer.label_lines.attr("y2",function(d,i) {
+                labelForLine = d3.select(labelElements[i]);
+                return labelForLine.attr("y");
+            });
+            setTimeout(function(){
+                this.separate_labels()
+            }.bind(this), 20);
+        }
     };
        
     return this;
