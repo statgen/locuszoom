@@ -352,7 +352,13 @@ LocusZoom.StandardLayout = {
                     label: {
                         text: "{{id}}",
                         spacing: 4,
-                        lines: true,
+                        lines: {
+                            style: {
+                                "stroke-width": "1px",
+                                "stroke": "#333333",
+                                "stroke-dasharray": "1px 1px"
+                            }
+                        },
                         filters: [
                             {
                                 field: "pvalue|neglog10",
@@ -361,8 +367,8 @@ LocusZoom.StandardLayout = {
                             }
                         ],
                         style: {
-                            "font_size": "10px",
-                            "fill": "#666666"
+                            "font_size": "12px",
+                            "fill": "#333333"
                         }
                     }
                 }

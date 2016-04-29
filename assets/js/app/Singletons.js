@@ -402,26 +402,65 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     };
 
     // Function to flip labels from being anchored at the start of the text to the end
-    // Both to keep labels from running outside the data layer and
-    // also as a first pass on recursive separation
+    // Both to keep labels from running outside the data layer and  also as a first
+    // pass on recursive separation
     this.flip_labels = function(){
         var data_layer = this;
         var spacing = this.layout.label.spacing;
+        var handle_lines = Boolean(data_layer.layout.label.lines);
         var min_x = 2 * spacing;
         var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
+        var flip = function(dn, dnl){
+            var dnx = +dn.attr("x");
+            var text_swing = (2 * spacing) + (2 * Math.sqrt(data_layer.layout.point_size));
+            if (handle_lines){
+                var dnlx2 = +dnl.attr("x2");
+                var line_swing = spacing + (2 * Math.sqrt(data_layer.layout.point_size));
+            }
+            if (dn.style("text-anchor") == "start"){
+                dn.style("text-anchor", "end");
+                dn.attr("x", dnx - text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 - line_swing); }
+            } else {
+                dn.style("text-anchor", "start");
+                dn.attr("x", dnx + text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 + line_swing); }
+            }
+        };
+        // Flip any going over the right edge from the right side to the left side
+        // (all labels start on the right side)
         data_layer.label_texts.each(function (d, i) {
             a = this;
             da = d3.select(a);
             dax = +da.attr("x");
             abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x){
-                da.style("text-anchor", "end");
-                da.attr("x", dax - (2 * spacing) - (2 * Math.sqrt(data_layer.layout.point_size)));
-                var dl = d3.select(data_layer.label_lines[0][i]);
-                var dlx2 = +dl.attr("x2");
-                dlx2 -= spacing + (2 * Math.sqrt(data_layer.layout.point_size));
-                dl.attr("x2", dlx2);
+                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                flip(da, dal);
             }
+        });
+        // Second pass to flip any others that haven't flipped yet if they collide with another label
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            if (da.style("text-anchor") == "end") return;
+            dax = +da.attr("x");
+            abound = da.node().getBoundingClientRect();
+            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                db = d3.select(b);
+                dbx = +db.attr("x");
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
+                    abound.left + abound.width + (2*spacing) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*spacing) &&
+                    abound.height + abound.top + (2*spacing) > bbound.top;
+                if (collision){
+                    flip(da, dal);
+                }
+                return;
+            });
         });
     };
 
@@ -496,10 +535,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                     return label_line.attr("y");
                 });
             }
-            // Recurse
-            setTimeout(function(){
-                this.separate_labels();
-            }.bind(this), 1);
+            // After ~150 iterations we're probably beyond diminising returns, so stop recursing
+            if (this.seperate_iterations < 150){
+                setTimeout(function(){
+                    this.separate_labels();
+                }.bind(this), 1);
+            }
         }
     };
 
@@ -512,8 +553,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Generate labels first (if defined)
         if (this.layout.label){
-            var min_x = this.parent.layout.margin.left + this.layout.label.spacing;
-            var max_x = this.parent.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - this.layout.label.spacing;
+            // Apply filters to generate a filtered data set
             var filtered_data = this.data.filter(function(d){
                 if (!data_layer.layout.label.filters){
                     return true;
@@ -546,14 +586,15 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                     return match;
                 }
             });
+            // Render label groups
             this.label_groups = this.svg.group
                 .selectAll("g.lz-data_layer-scatter-label")
                 .data(filtered_data, function(d){ return d.id + "_label"; });
             this.label_groups.enter()
                 .append("g")
                 .attr("class", "lz-data_layer-scatter-label");
-
-            // Render label text
+            // Render label texts
+            if (this.label_texts){ this.label_texts.remove(); }
             this.label_texts = this.label_groups.append("text")
                 .attr("class", "lz-data_layer-scatter-label");
             this.label_texts
@@ -579,9 +620,11 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 });
             // Render label lines
             if (data_layer.layout.label.lines){
+                if (this.label_lines){ this.label_lines.remove(); }
                 this.label_lines = this.label_groups.append("line")
                     .attr("class", "lz-data_layer-scatter-label");
                 this.label_lines
+                    .style(data_layer.layout.label.lines.style || {})
                     .attr({
                         "x1": function(d){
                             var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
@@ -606,6 +649,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         },
                     });
             }
+            // Remove labels when they're no longer in the filtered data set
             this.label_groups.exit().remove();
         }
             
