@@ -2230,6 +2230,104 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
 
+        // Generate labels first (if defined)
+        if (this.layout.label){
+            var filtered_data = this.data.filter(function(d){
+                if (!data_layer.layout.label.filters){
+                    return true;
+                } else {
+                    // Start by assuming a match, run through all filters to test if not a match
+                    var match = true;
+                    data_layer.layout.label.filters.forEach(function(filter){
+                        switch (filter.operator){
+                        case "<":
+                            if (!(d[filter.field] < filter.value)){ match = false; }
+                            break;
+                        case "<=":
+                            if (!(d[filter.field] <= filter.value)){ match = false; }
+                            break;
+                        case ">":
+                            if (!(d[filter.field] > filter.value)){ match = false; }
+                            break;
+                        case ">=":
+                            if (!(d[filter.field] >= filter.value)){ match = false; }
+                            break;
+                        case "=":
+                            if (!(d[filter.field] == filter.value)){ match = false; }
+                            break;
+                        default:
+                            // If we got here the operator is not valid, so the filter should fail
+                            match = false;
+                            break;
+                        }
+                    });
+                    return match;
+                }
+            });
+            this.label_groups = this.svg.group
+                .selectAll("g.lz-data_layer-scatter-label")
+                .data(filtered_data, function(d){ return d.id + "_label"; });
+            this.label_groups.enter()
+                .append("g")
+                .attr("class", "lz-data_layer-scatter-label");
+
+            // Render label text
+            this.label_texts = this.label_groups.append("text")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_texts
+                .text(function(d){
+                    return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
+                })
+                .style(data_layer.layout.label.style || {})
+                .attr({
+                    "x": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                            + (1.5 * Math.sqrt(data_layer.layout.point_size)) + 2;
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "text-anchor": function(d){
+                        return "start";
+                    }
+                });            
+            // Render label lines
+            this.label_lines = this.label_groups.append("line")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_lines
+                .attr({
+                    "x1": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y1": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "x2": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                              + (1.5 * Math.sqrt(data_layer.layout.point_size));
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y2": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                });
+            this.label_groups.exit().remove();
+        }
+
+        // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d.id; });
@@ -2337,109 +2435,16 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         // Remove old elements as needed
         selection.exit().remove();
 
-        // Generate labels (if defined)
+        // Apply method to keep labels from overlapping each other
         if (this.layout.label){
-            var filtered_data = this.data.filter(function(d){
-                if (!data_layer.layout.label.filters){
-                    return true;
-                } else {
-                    // Start by assuming a match, run through all filters to test if not a match
-                    var match = true;
-                    data_layer.layout.label.filters.forEach(function(filter){
-                        switch (filter.operator){
-                        case "<":
-                            if (!(d[filter.field] < filter.value)){ match = false; }
-                            break;
-                        case "<=":
-                            if (!(d[filter.field] <= filter.value)){ match = false; }
-                            break;
-                        case ">":
-                            if (!(d[filter.field] > filter.value)){ match = false; }
-                            break;
-                        case ">=":
-                            if (!(d[filter.field] >= filter.value)){ match = false; }
-                            break;
-                        case "=":
-                            if (!(d[filter.field] == filter.value)){ match = false; }
-                            break;
-                        default:
-                            // If we got here the operator is not valid, so the filter should fail
-                            match = false;
-                            break;
-                        }
-                    });
-                    return match;
-                }
-            });
-            this.label_groups = this.svg.group
-                .selectAll("g.lz-data_layer-scatter-label")
-                .data(filtered_data, function(d){ return d.id + "_label"; });
-            this.label_groups.enter()
-                .append("g")
-                .attr("class", "lz-data_layer-scatter-label");
-
-            // Render label text
-            this.label_texts = this.label_groups.append("text")
-                .attr("class", "lz-data_layer-scatter-label");
-            this.label_texts
-                .text(function(d){
-                    return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
-                })
-                .style(data_layer.layout.label.style || {})
-                .attr({
-                    "x": function(d){
-                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(data_layer.layout.point_size);
-                        if (isNaN(x)){ x = -1000; }
-                        return x;
-                    },
-                    "y": function(d){
-                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
-                              + Math.sqrt(data_layer.layout.point_size);
-                        if (isNaN(y)){ y = -1000; }
-                        return y;
-                    },
-                    "text-anchor": function(d){
-                        return "start";
-                    }
-                });            
-            // Render label lines
-            this.label_lines = this.label_groups.append("line")
-                .attr("class", "lz-data_layer-scatter-label");
-            this.label_lines
-                .attr({
-                    "x1": function(d){
-                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                        if (isNaN(x)){ x = -1000; }
-                        return x;
-                    },
-                    "y1": function(d){
-                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)){ y = -1000; }
-                        return y;
-                    },
-                    "x2": function(d){
-                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(data_layer.layout.point_size);
-                        if (isNaN(x)){ x = -1000; }
-                        return x;
-                    },
-                    "y2": function(d){
-                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field])
-                              + Math.sqrt(data_layer.layout.point_size);
-                        if (isNaN(y)){ y = -1000; }
-                        return y;
-                    },
-                });
-            this.label_groups.exit().remove();
+            this.separate_labels();
         }
-
-        this.separate_labels();
         
     };
 
     // Function to space labels apart immediately after initial render
     // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
+    // TODO: Make labels also aware of data elements
     this.separate_labels = function(){
         var data_layer = this;
         var alpha = 0.5;
@@ -2472,8 +2477,31 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 y2 = db.attr("y");
                 sign = abound.top < bbound.top ? 1 : -1;
                 adjust = sign * alpha;
-                da.attr("y",+y1 - adjust);
-                db.attr("y",+y2 + adjust);
+                new_a_y = +y1 - adjust;
+                new_b_y = +y2 + adjust;
+                // Keep new values from extending outside the data layer
+                var min_y = 2 * padding;
+                var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * padding);
+                if (new_a_y - (abound.height/2) < min_y){
+                    delta = +y1 - new_a_y;
+                    new_a_y = +y1;
+                    new_b_y += delta;
+                } else if (new_b_y - (bbound.height/2) < min_y){
+                    delta = +y2 - new_b_y;
+                    new_b_y = +y2;
+                    new_a_y += delta;
+                }
+                if (new_a_y + (abound.height/2) > max_y){
+                    delta = new_a_y - +y1;
+                    new_a_y = +y1;
+                    new_b_y -= delta;
+                } else if (new_b_y + (bbound.height/2) > max_y){
+                    delta = new_b_y - +y2;
+                    new_b_y = +y2;
+                    new_a_y -= delta;
+                }
+                da.attr("y",new_a_y);
+                db.attr("y",new_b_y);
             });
         });
         // Adjust our line leaders here
@@ -2484,9 +2512,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 labelForLine = d3.select(labelElements[i]);
                 return labelForLine.attr("y");
             });
-            setTimeout(function(){
-                this.separate_labels()
-            }.bind(this), 20);
+            this.separate_labels();
         }
     };
        
