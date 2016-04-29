@@ -243,9 +243,6 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.data_layers[id].initialize();
     }
 
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
     
 };
@@ -294,6 +291,7 @@ LocusZoom.Panel.prototype.reMap = function(){
     // When all finished trigger a render
     return Q.all(this.data_promises)
         .then(function(){
+            this.initialized = true;
             this.render();
         }.bind(this))
         .catch(function(error){
@@ -316,15 +314,12 @@ LocusZoom.Panel.prototype.generateExtents = function(){
         var data_layer = this.data_layers[id];
 
         // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
-        // If not defined but state has start and end values then default to that range
-        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled && typeof data_layer.layout.x_axis.field == "string"){
+        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
             this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
-        } else if (!isNaN(this.state.start) && !isNaN(this.state.end)) {
-            this.x_extent = [this.state.start, this.state.end];
         }
 
         // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
-        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled && typeof data_layer.layout.y_axis.field == "string"){
+        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled){
             var y_axis = "y" + data_layer.layout.y_axis.axis;
             this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
         }

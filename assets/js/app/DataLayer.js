@@ -164,28 +164,47 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
-    var extent = d3.extent(this.data, function(d) {
-        return +d[this.layout[axis].field];
-    }.bind(this));
-
-    // Apply upper/lower buffers, if applicable
-    var original_extent_span = extent[1] - extent[0];
-    if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-    if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
-
-    // Apply minimum extent
-    if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-        extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
+        return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
 
-    // Generate a new base extent
-    extent = d3.extent(extent);
+    // If a field is defined for the axis and the data layer has data then generate the extent from the data set
+    if (this.layout[axis].field && this.data && this.data.length){
 
-    // Apply floor/ceiling, if applicable
-    if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-    if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+        var extent = d3.extent(this.data, function(d) {
+            return +d[this.layout[axis].field];
+        }.bind(this));
 
-    return extent;
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
+        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
+
+        // Apply minimum extent
+        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
+            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+        }
+
+        // Generate a new base extent
+        extent = d3.extent(extent);
+        
+        // Apply floor/ceiling, if applicable
+        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
+        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+
+        return extent;
+
+    }
+
+    // If this is for the x axis and no extent could be generated yet but state has a defined start and end
+    // then default to using the state-defined region as the extent
+    if (dimension == "x" && !isNaN(this.state.start) && !isNaN(this.state.end)) {
+        return [this.state.start, this.state.end];
+    }
+
+    // No conditions met for generating a valid extent, return an empty array
+    return [];
 
 };
 
@@ -205,9 +224,6 @@ LocusZoom.DataLayer.prototype.initialize = function(){
     this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".data_layer")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
-
-    // Flip the "initialized" bit
-    this.initialized = true;
 
     return this;
 
@@ -231,11 +247,13 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     // Fetch new data for data layers without static data
     if (this.layout.static_data){
         this.data = this.layout.static_data;
+        this.initialized = true;
         return Q.when(true);
     } else {
         var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
         promise.then(function(new_data){
             this.data = new_data.body;
+            this.initialized = true;
         }.bind(this));
         return promise;
     }
