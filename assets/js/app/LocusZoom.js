@@ -367,7 +367,7 @@ LocusZoom.StandardLayout = {
                             }
                         ],
                         style: {
-                            "font_size": "12px",
+                            "font-size": "12px",
                             "fill": "#333333"
                         }
                     }

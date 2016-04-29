@@ -381,7 +381,7 @@ LocusZoom.StandardLayout = {
                             }
                         ],
                         style: {
-                            "font_size": "12px",
+                            "font-size": "12px",
                             "fill": "#333333"
                         }
                     }
@@ -2294,6 +2294,11 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                     abound.height + abound.top + (2*spacing) > bbound.top;
                 if (collision){
                     flip(da, dal);
+                    // Double check that this flip didn't push the label past min_x. If it did, immediately flip back.
+                    dax = +da.attr("x");
+                    if (dax - abound.width - spacing < min_x){
+                        flip(da, dal);
+                    }
                 }
                 return;
             });
@@ -2394,29 +2399,33 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 if (!data_layer.layout.label.filters){
                     return true;
                 } else {
-                    // Start by assuming a match, run through all filters to test if not a match
+                    // Start by assuming a match, run through all filters to test if not a match on any one
                     var match = true;
                     data_layer.layout.label.filters.forEach(function(filter){
-                        switch (filter.operator){
-                        case "<":
-                            if (!(d[filter.field] < filter.value)){ match = false; }
-                            break;
-                        case "<=":
-                            if (!(d[filter.field] <= filter.value)){ match = false; }
-                            break;
-                        case ">":
-                            if (!(d[filter.field] > filter.value)){ match = false; }
-                            break;
-                        case ">=":
-                            if (!(d[filter.field] >= filter.value)){ match = false; }
-                            break;
-                        case "=":
-                            if (!(d[filter.field] == filter.value)){ match = false; }
-                            break;
-                        default:
-                            // If we got here the operator is not valid, so the filter should fail
+                        if (isNaN(d[filter.field])){
                             match = false;
-                            break;
+                        } else {
+                            switch (filter.operator){
+                            case "<":
+                                if (!(d[filter.field] < filter.value)){ match = false; }
+                                break;
+                            case "<=":
+                                if (!(d[filter.field] <= filter.value)){ match = false; }
+                                break;
+                            case ">":
+                                if (!(d[filter.field] > filter.value)){ match = false; }
+                                break;
+                            case ">=":
+                                if (!(d[filter.field] >= filter.value)){ match = false; }
+                                break;
+                            case "=":
+                                if (!(d[filter.field] == filter.value)){ match = false; }
+                                break;
+                            default:
+                                // If we got here the operator is not valid, so the filter should fail
+                                match = false;
+                                break;
+                            }
                         }
                     });
                     return match;
