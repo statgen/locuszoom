@@ -119,13 +119,25 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
 };
+
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
+    if (this.preGetData) {
+        var pre = this.preGetData(state, fields, outnames, trans);
+        if(this.pre) {
+            state = pre.state || state;
+            fields = pre.fields || fields;
+            outnames = pre.outnames || outnames;
+            trans = pre.trans || trans;
+        }
+    }
+
     return function (chain) {
         return this.getRequest(state, chain, fields).then(function(resp) {
             return this.parseResponse(resp, chain, fields, outnames, trans);
         }.bind(this));
     }.bind(this);
 };
+
 LocusZoom.Data.Source.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
         {url:this.url, params:this.params}];
@@ -133,8 +145,8 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
 
 LocusZoom.Data.AssociationSource = function(init) {
     this.parseInit(init);
-    
-    this.getData = function(state, fields, outnames, trans) {
+
+    this.preGetData = function(state, fields, outnames, trans) {
         ["id","position"].forEach(function(x) {
             if (fields.indexOf(x)==-1) {
                 fields.unshift(x);
@@ -142,13 +154,10 @@ LocusZoom.Data.AssociationSource = function(init) {
                 trans.unshift(null);
             }
         });
-        return function (chain) {
-            return this.getRequest(state, chain).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
+        return {fields: fields, outnames:outnames, trans:trans};
     };
 };
+
 LocusZoom.Data.AssociationSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.AssociationSource.prototype.constructor = LocusZoom.Data.AssociationSource;
 LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
@@ -186,15 +195,10 @@ LocusZoom.Data.LDSource = function(init) {
         this.params.pvaluefield = "pvalue|neglog10";
     }
 
-    this.getData = function(state, fields, outnames, trans) {
+    this.preGetData = function(state, fields) {
         if (fields.length>1) {
             throw("LD currently only supports one field");
         }
-        return function (chain) {
-            return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
     };
 };
 LocusZoom.Data.LDSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
@@ -256,14 +260,6 @@ LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
 LocusZoom.Data.GeneSource = function(init) {
     this.parseInit(init);
-
-    this.getData = function(state, fields, outnames, trans) {
-        return function (chain) {
-            return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
-    };
 };
 LocusZoom.Data.GeneSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.GeneSource.prototype.constructor = LocusZoom.Data.GeneSource;
@@ -281,8 +277,7 @@ LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
 LocusZoom.Data.RecombinationRateSource = function(init) {
     this.parseInit(init);
-
-}
+};
 LocusZoom.Data.RecombinationRateSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
 LocusZoom.Data.RecombinationRateSource.prototype.constructor = LocusZoom.Data.GeneSource;
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
