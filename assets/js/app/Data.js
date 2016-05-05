@@ -138,6 +138,58 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
     }.bind(this);
 };
 
+
+LocusZoom.Data.Source.prototype.parseResponse  = function(x, chain, fields, outnames, trans) {
+    var records = this.parseData(x.data || x, fields, outnames, trans);
+    var res = {header: chain.header || {}, body: records};
+    return res;
+};
+
+LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
+    var records = [];
+    fields.forEach(function(f, i) {
+        if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
+    });
+    var N = x[Object.keys(x)[1]].length;
+    for(var i = 0; i < N; i++) {
+        var record = {};
+        for(var j=0; j<fields.length; j++) {
+            var val = x[fields[j]][i];
+            if (trans && trans[j]) {
+                val = trans[j](val);
+            }
+            record[outnames[j]] = val;
+        }
+        records.push(record);
+    }
+    return records;
+};
+
+LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outnames, trans) {
+    var records = [];
+    var fieldFound = [];
+    for (var i = 0; i < x.length; i++) {
+        var record = {};
+        for (var j=0; j<fields.length; j++) {
+            var val = x[i][fields[j]];
+            if (typeof val != "undefined") {
+                fieldFound[j] = 1;
+            }
+            if (trans && trans[j]) {
+                val = trans[j](val);
+            }
+            record[outnames[j]] = val;
+        }
+        records.push(record);
+    }
+    fieldFound.forEach(function(v, i) {
+        if (!v) {throw "field " + fields[i] + " not found in response for " + outnames[i];}
+    });
+    return records;
+};
+
+LocusZoom.Data.Source.prototype.parseData = LocusZoom.Data.Source.prototype.parseArraysToObjects;
+
 LocusZoom.Data.Source.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
         {url:this.url, params:this.params}];
@@ -166,26 +218,6 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
         " and chromosome in  '" + state.chr + "'" +
         " and position ge " + state.start +
         " and position le " + state.end;
-};
-LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var x = resp.data;
-    var records = [];
-    fields.forEach(function(f) {
-        if (!(f in x)) {throw "field " + f + " not found in response";}
-    });
-    for(var i = 0; i < x.position.length; i++) {
-        var record = {};
-        for(var j=0; j<fields.length; j++) {
-            var val = x[fields[j]][i];
-            if (trans && trans[j]) {
-                val = trans[j](val);
-            }
-            record[outnames[j]] = val;
-        }
-        records.push(record);
-    }
-    var res = {header: chain.header || {}, body: records};
-    return res;
 };
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
@@ -286,9 +318,6 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         " and chrom eq '" + state.chr + "'" + 
         " and pos le " + state.end +
         " and pos ge " + state.start;
-};
-LocusZoom.Data.RecombinationRateSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    return {header: chain.header, body: resp.data};
 };
 LocusZoom.Data.RecombinationRateSource.SOURCE_NAME = "RecombLZ";
 
