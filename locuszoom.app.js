@@ -676,6 +676,25 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 };
 LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
 
+LocusZoom.Data.RecombinationRateSource = function(init) {
+    this.parseInit(init);
+
+}
+LocusZoom.Data.RecombinationRateSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
+LocusZoom.Data.RecombinationRateSource.prototype.constructor = LocusZoom.Data.GeneSource;
+LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
+    var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
+    return this.url + "?filter=id in " + source +
+        " and chrom eq '" + state.chr + "'" + 
+        " and pos le " + state.end +
+        " and pos ge " + state.start;
+};
+LocusZoom.Data.RecombinationRateSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    return {header: chain.header, body: resp.data};
+};
+LocusZoom.Data.RecombinationRateSource.SOURCE_NAME = "RecombLZ";
+
+
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
     response.resolve(Array.prototype.slice.call(arguments));
@@ -685,7 +704,8 @@ LocusZoom.createResolvedPromise = function() {
 LocusZoom.KnownDataSources = [
     LocusZoom.Data.AssociationSource,
     LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource
+    LocusZoom.Data.GeneSource,
+    LocusZoom.Data.RecombinationRateSource
 ];
 
 /* global d3,Q,LocusZoom */
