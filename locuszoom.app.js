@@ -616,7 +616,6 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
         " and position ge " + state.start +
         " and position le " + state.end;
 };
-//LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) ;
 LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
 LocusZoom.Data.LDSource = function(init) {
@@ -713,9 +712,9 @@ LocusZoom.Data.RecombinationRateSource.prototype.constructor = LocusZoom.Data.Ge
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
     var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
     return this.url + "?filter=id in " + source +
-        " and chrom eq '" + state.chr + "'" + 
-        " and pos le " + state.end +
-        " and pos ge " + state.start;
+        " and chromosome eq '" + state.chr + "'" + 
+        " and position le " + state.end +
+        " and position ge " + state.start;
 };
 LocusZoom.Data.RecombinationRateSource.SOURCE_NAME = "RecombLZ";
 
