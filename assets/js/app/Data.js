@@ -146,6 +146,8 @@ LocusZoom.Data.Source.prototype.parseResponse  = function(x, chain, fields, outn
 };
 
 LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
+    //intended for an object of arrays
+    //{"id":[1,2], "val":[5,10]}
     var records = [];
     fields.forEach(function(f, i) {
         if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
@@ -166,6 +168,8 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
 };
 
 LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outnames, trans) {
+    //intended for an array of objects
+    // [ {"id":1, "val":5}, {"id":2, "val":10}]
     var records = [];
     var fieldFound = [];
     for (var i = 0; i < x.length; i++) {
@@ -188,7 +192,13 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
     return records;
 };
 
-LocusZoom.Data.Source.prototype.parseData = LocusZoom.Data.Source.prototype.parseArraysToObjects;
+LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans) {
+    if (Array.isArray(x)) { 
+        return this.parseObjectsToObjects(x, fields, outnames, trans);
+    } else {
+        return this.parseArraysToObjects(x, fields, outnames, trans);
+    }
+};
 
 LocusZoom.Data.Source.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
