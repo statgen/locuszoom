@@ -406,6 +406,8 @@ LocusZoom.DataSources = function() {
     this.sources = {};
 };
 
+LocusZoom.KnownDataSources = [];
+
 LocusZoom.DataSources.prototype.addSource = function(ns, x) {
     function findKnownSource(x) {
         if (!LocusZoom.KnownDataSources) {return null;}
@@ -602,6 +604,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
     constructorFun.prototype.constructor = constructorFun;
     if(uniqueName) {
         constructorFun.SOURCE_NAME = uniqueName;
+        LocusZoom.KnownDataSources.push(constructorFun);
     }
     return constructorFun;
 };
@@ -736,12 +739,6 @@ LocusZoom.createResolvedPromise = function() {
     return response.promise;
 };
 
-LocusZoom.KnownDataSources = [
-    LocusZoom.Data.AssociationSource,
-    LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource,
-    LocusZoom.Data.RecombinationRateSource
-];
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
