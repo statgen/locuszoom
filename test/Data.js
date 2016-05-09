@@ -50,59 +50,59 @@ describe('LocusZoom Data', function(){
             var ds = new LocusZoom.DataSources();
             ds.addSource("t1", new TestSource1());
             ds.keys().should.have.length(1);
-            should.exist(ds.getSource("t1"));
+            should.exist(ds.get("t1"));
         });
         it("should add source via .addSource - array", function() {
             var ds = new LocusZoom.DataSources();
             ds.addSource("t1", ["test1"]);
             ds.keys().should.have.length(1);
-            should.exist(ds.getSource("t1"));
+            should.exist(ds.get("t1"));
         });
         it('should allow chainable adding', function() {
             var ds = new LocusZoom.DataSources();
-            ds.addSource("t1", new TestSource1()).addSource("t2", new TestSource1());
+            ds.add("t1", new TestSource1()).add("t2", new TestSource1());
             ds.keys().should.have.length(2);
         })
         it('should add sources via fromJSON() - object', function() {
             var ds = new LocusZoom.DataSources();
             ds.fromJSON({t1:  new TestSource1(), t2:  new TestSource2()});
             ds.keys().should.have.length(2);
-            should.exist(ds.getSource("t1"));
-            should.exist(ds.getSource("t2"));
+            should.exist(ds.get("t1"));
+            should.exist(ds.get("t2"));
         });
 
         it('should add sources via fromJSON() - array', function() {
             var ds = new LocusZoom.DataSources();
             ds.fromJSON({t1: ["test1"], t2: ["test2"]});
             ds.keys().should.have.length(2);
-            should.exist(ds.getSource("t1"));
-            should.exist(ds.getSource("t2"));
+            should.exist(ds.get("t1"));
+            should.exist(ds.get("t2"));
         });
         it('should add sources via fromJSON() - string (JSON)', function() {
             var ds = new LocusZoom.DataSources();
             ds.fromJSON('{"t1": ["test1"], "t2": ["test2"]}');
             ds.keys().should.have.length(2);
-            should.exist(ds.getSource("t1"));
-            should.exist(ds.getSource("t2"));
+            should.exist(ds.get("t1"));
+            should.exist(ds.get("t2"));
         });
         it('should pass in initialization values as object', function() {
             var ds = new LocusZoom.DataSources();
             ds.fromJSON({"t1": ["test1", {a:10}], "t2": ["test2", {b:20}]});
             ds.keys().should.have.length(2);
-            should.exist(ds.getSource("t1").init);
-            should.exist(ds.getSource("t1").init.a);
-            ds.getSource("t1").init.a.should.equal(10);
-            should.exist(ds.getSource("t2").init);
-            should.exist(ds.getSource("t2").init.b);
-            ds.getSource("t2").init.b.should.equal(20);
+            should.exist(ds.get("t1").init);
+            should.exist(ds.get("t1").init.a);
+            ds.get("t1").init.a.should.equal(10);
+            should.exist(ds.get("t2").init);
+            should.exist(ds.get("t2").init.b);
+            ds.get("t2").init.b.should.equal(20);
         });
-        it('should remove sources via removeSource', function() {
+        it('should remove sources via remove()', function() {
             var ds = new LocusZoom.DataSources();
             ds.fromJSON({t1:  new TestSource1(), t2:  new TestSource2()});
-            ds.removeSource("t1");
+            ds.remove("t1");
             ds.keys().should.have.length(1);
-            should.not.exist(ds.getSource("t1"));
-            should.exist(ds.getSource("t2"));
+            should.not.exist(ds.get("t1"));
+            should.exist(ds.get("t2"));
         });
     });
 
