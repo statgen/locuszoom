@@ -203,9 +203,10 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
 };
 
 LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
+    constructorFun = constructorFun || function() {};
     constructorFun.prototype = Object.create(LocusZoom.Data.Source.prototype);
     constructorFun.prototype.constructor = constructorFun;
-    if(uniqueName) {
+    if (uniqueName) {
         constructorFun.SOURCE_NAME = uniqueName;
         LocusZoom.KnownDataSources.push(constructorFun);
     }
