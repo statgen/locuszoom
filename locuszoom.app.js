@@ -738,6 +738,17 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         " and position ge " + state.start;
 };
 
+var StaticSource = LocusZoom.Data.Source.extend(function(data) {
+        this._data = data;
+},"StaticJSON")
+StaticSource.prototype.getRequest = function(state, chain, fields) {
+    return Q.fcall(function() {return this._data;}.bind(this));
+};
+StaticSource.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
+        this._data];
+}
+
 
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
