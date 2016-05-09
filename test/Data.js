@@ -96,6 +96,14 @@ describe('LocusZoom Data', function(){
             should.exist(ds.getSource("t2").init.b);
             ds.getSource("t2").init.b.should.equal(20);
         });
+        it('should remove sources via removeSource', function() {
+            var ds = new LocusZoom.DataSources();
+            ds.setSources({t1:  new TestSource1(), t2:  new TestSource2()});
+            ds.removeSource("t1");
+            ds.keys().should.have.length(1);
+            should.not.exist(ds.getSource("t1"));
+            should.exist(ds.getSource("t2"));
+        });
     });
 
 });
