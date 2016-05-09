@@ -78,7 +78,7 @@ LocusZoom.DataSources.prototype.remove = function(ns) {
     return this.set(ns, null);
 };
 
-LocusZoom.DataSources.prototype.setSources = function(x) {
+LocusZoom.DataSources.prototype.fromJSON = function(x) {
     if (typeof x === "string") {
         x = JSON.parse(x);
     }
