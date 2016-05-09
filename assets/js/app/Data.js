@@ -12,6 +12,10 @@ LocusZoom.DataSources = function() {
 LocusZoom.KnownDataSources = [];
 
 LocusZoom.DataSources.prototype.addSource = function(ns, x) {
+    return this.setSource(ns, x);
+};
+
+LocusZoom.DataSources.prototype.setSource = function(ns, x) {
     function findKnownSource(x) {
         if (!LocusZoom.KnownDataSources) {return null;}
         for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
@@ -33,7 +37,11 @@ LocusZoom.DataSources.prototype.addSource = function(ns, x) {
             throw("Unable to resolve " + x[0] + " data source");
         }
     } else {
-        this.sources[ns] = x;
+        if (x !== null) {
+            this.sources[ns] = x;
+        } else {
+            delete this.sources[ns];
+        }
     }
     return this;
 };
@@ -42,13 +50,17 @@ LocusZoom.DataSources.prototype.getSource = function(ns) {
     return this.sources[ns];
 };
 
+LocusZoom.DataSources.prototype.removeSource = function(ns) {
+    return this.setSource(ns, null);
+};
+
 LocusZoom.DataSources.prototype.setSources = function(x) {
     if (typeof x === "string") {
         x = JSON.parse(x);
     }
     var ds = this;
     Object.keys(x).forEach(function(ns) {
-        ds.addSource(ns, x[ns]);
+        ds.setSource(ns, x[ns]);
     });
     return ds;
 };
@@ -337,16 +349,17 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
-        this._data = data;
-},"StaticJSON")
+    this._data = data;
+},"StaticJSON");
+
 LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields) {
     return Q.fcall(function() {return this._data;}.bind(this));
 };
-LocusZoon.Data.StaticSource.prototype.toJSON = function() {
+
+LocusZoom.Data.StaticSource.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
         this._data];
-}
-
+};
 
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
