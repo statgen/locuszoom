@@ -221,7 +221,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    response.resolve(JSON.parse(xhr.responseText));
+                    try {
+                        var data = JSON.parse(xhr.responseText)
+                        response.resolve(data);
+                    } catch (err) {
+                        response.reject("Unable to parse JSON response:" + err);
+                    }
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
