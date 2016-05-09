@@ -15,17 +15,21 @@
 */
 
 /* A named collection of data sources used to draw a plot*/
-LocusZoom.KnownDataSources = [];
 
 LocusZoom.DataSources = function() {
     this.sources = {};
 };
 
 LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    return this.setSource(ns, x);
+    console.warn("Warning: .addSource() is depricated. Use .add() instead");
+    return this.add(ns, x);
 };
 
-LocusZoom.DataSources.prototype.setSource = function(ns, x) {
+LocusZoom.DataSources.prototype.add = function(ns, x) {
+    return this.set(ns, x);
+};
+
+LocusZoom.DataSources.prototype.set = function(ns, x) {
     function findKnownSource(x) {
         if (!LocusZoom.KnownDataSources) {return null;}
         for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
@@ -57,11 +61,21 @@ LocusZoom.DataSources.prototype.setSource = function(ns, x) {
 };
 
 LocusZoom.DataSources.prototype.getSource = function(ns) {
+    console.warn("Warning: .getSource() is depricated. Use .get() instead");
+    return this.get(ns);
+};
+
+LocusZoom.DataSources.prototype.get = function(ns) {
     return this.sources[ns];
 };
 
 LocusZoom.DataSources.prototype.removeSource = function(ns) {
-    return this.setSource(ns, null);
+    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
+    return this.remove(ns);
+};
+
+LocusZoom.DataSources.prototype.remove = function(ns) {
+    return this.set(ns, null);
 };
 
 LocusZoom.DataSources.prototype.setSources = function(x) {
@@ -70,7 +84,7 @@ LocusZoom.DataSources.prototype.setSources = function(x) {
     }
     var ds = this;
     Object.keys(x).forEach(function(ns) {
-        ds.setSource(ns, x[ns]);
+        ds.set(ns, x[ns]);
     });
     return ds;
 };

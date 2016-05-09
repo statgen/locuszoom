@@ -31,10 +31,10 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         var promises = Object.keys(requests).map(function(key) {
-            if (!sources.getSource(key)) {
+            if (!sources.get(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
-            return sources.getSource(key).getData(state, requests[key].fields, 
+            return sources.get(key).getData(state, requests[key].fields, 
                 requests[key].outnames, requests[key].trans);
         });
         //assume the fields are requested in dependent order
