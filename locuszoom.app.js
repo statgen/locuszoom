@@ -588,6 +588,9 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
     // [ {"id":1, "val":5}, {"id":2, "val":10}]
     var records = [];
     var fieldFound = [];
+    for (var k=0; k<fields.length; k++) { 
+        fieldFound[k] = 0;
+    }
     for (var i = 0; i < x.length; i++) {
         var record = {};
         for (var j=0; j<fields.length; j++) {
