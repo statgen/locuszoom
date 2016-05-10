@@ -162,13 +162,6 @@ describe('LocusZoom.Instance', function(){
                 this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
             });
         });
-        it('should track whether it\'s initialized', function(){
-            this.instance.initialize.should.be.a.Function;
-            assert.equal(this.instance.initialized, true);
-            d3.select("body").append("div").attr("id", "another_instance_id");
-            var another_instance = LocusZoom.populate("#another_instance_id");
-            assert.equal(another_instance.initialized, true);
-        });
         it('should allow for mapping to new coordinates', function(){
             /*
               // BUSTED - Need to mock data sources to make these tests work again!
