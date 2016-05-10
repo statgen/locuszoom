@@ -327,27 +327,23 @@ LocusZoom.StandardLayout = {
             data_layers: {
                 significance: {
                     type: "line",
-                    fields: ["x", "y"],
+                    fields: ["sig:x", "sig:y"],
                     style: {
                         "stroke": "#D3D3D3",
                         "stroke-width": "3px",
                         "stroke-dasharray": "10px 10px"
                     },
                     x_axis: {
-                        field: "x",
+                        field: "sig:x",
                         decoupled: true
                     },
                     y_axis: {
                         axis: 1,
-                        field: "y"
+                        field: "sig:y"
                     },
                     tooltip: {
                         html: "Significance Threshold: 3 × 10^-5"
-                    },
-                    static_data: [
-                        { "x": 0, "y": 4.522 },
-                        { "x": 2881033286, "y": 4.522 }
-                    ]
+                    }
                 },
                 positions: {
                     type: "scatter",

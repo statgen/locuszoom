@@ -244,17 +244,12 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
 
-    // Fetch new data for data layers without static data
-    if (this.layout.static_data){
-        this.data = this.layout.static_data;
+    // Fetch new data
+    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+    promise.then(function(new_data){
+        this.data = new_data.body;
         this.initialized = true;
-        return Q.when(true);
-    } else {
-        var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
-        promise.then(function(new_data){
-            this.data = new_data.body;
-            this.initialized = true;
-        }.bind(this));
-        return promise;
-    }
+    }.bind(this));
+    return promise;
+
 };

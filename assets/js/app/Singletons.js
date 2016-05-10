@@ -605,8 +605,10 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        style: {},
-        interpolate: "basis",
+        style: {
+            fill: "transparent"
+        },
+        interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
         selectable: false
@@ -640,17 +642,17 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
 
-        // Determine x/y coordinates for dispaly and data
+        // Determine x/y coordinates for display and data
         var x_field = this.layout.x_axis.field;
         var y_field = this.layout.y_axis.field;
         var x_scale = "x_scale";
         var y_scale = "y" + this.layout.y_axis.axis + "_scale";
         var display = { x: d3.mouse(this.mouse_event)[0], y: null };
         var data = { x: this.parent[x_scale].invert(display.x), y: null };
-        var bisect = d3.bisector(function(datum) { return datum.x; }).right;
-        var index = bisect(this.data, data.x);
-        var startDatum = this.data[index - 1];
-        var endDatum = this.data[index];
+        var bisect = d3.bisector(function(datum) { return datum[x_field]; }).left;
+        var index = bisect(this.data, data.x) - 1;
+        var startDatum = this.data[index];
+        var endDatum = this.data[index + 1];
         var interpolate = d3.interpolateNumber(startDatum[y_field], endDatum[y_field]);
         var range = endDatum[x_field] - startDatum[x_field];
         data.y = interpolate((data.x % range) / range);

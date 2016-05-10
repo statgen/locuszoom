@@ -341,27 +341,23 @@ LocusZoom.StandardLayout = {
             data_layers: {
                 significance: {
                     type: "line",
-                    fields: ["x", "y"],
+                    fields: ["sig:x", "sig:y"],
                     style: {
                         "stroke": "#D3D3D3",
                         "stroke-width": "3px",
                         "stroke-dasharray": "10px 10px"
                     },
                     x_axis: {
-                        field: "x",
+                        field: "sig:x",
                         decoupled: true
                     },
                     y_axis: {
                         axis: 1,
-                        field: "y"
+                        field: "sig:y"
                     },
                     tooltip: {
                         html: "Significance Threshold: 3 × 10^-5"
-                    },
-                    static_data: [
-                        { "x": 0, "y": 4.522 },
-                        { "x": 2881033286, "y": 4.522 }
-                    ]
+                    }
                 },
                 positions: {
                     type: "scatter",
@@ -1886,19 +1882,14 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
 
-    // Fetch new data for data layers without static data
-    if (this.layout.static_data){
-        this.data = this.layout.static_data;
+    // Fetch new data
+    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+    promise.then(function(new_data){
+        this.data = new_data.body;
         this.initialized = true;
-        return Q.when(true);
-    } else {
-        var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
-        promise.then(function(new_data){
-            this.data = new_data.body;
-            this.initialized = true;
-        }.bind(this));
-        return promise;
-    }
+    }.bind(this));
+    return promise;
+
 };
 
 /* global d3,LocusZoom */
@@ -2508,8 +2499,10 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        style: {},
-        interpolate: "basis",
+        style: {
+            fill: "transparent"
+        },
+        interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
         selectable: false
@@ -2543,17 +2536,17 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
 
-        // Determine x/y coordinates for dispaly and data
+        // Determine x/y coordinates for display and data
         var x_field = this.layout.x_axis.field;
         var y_field = this.layout.y_axis.field;
         var x_scale = "x_scale";
         var y_scale = "y" + this.layout.y_axis.axis + "_scale";
         var display = { x: d3.mouse(this.mouse_event)[0], y: null };
         var data = { x: this.parent[x_scale].invert(display.x), y: null };
-        var bisect = d3.bisector(function(datum) { return datum.x; }).right;
-        var index = bisect(this.data, data.x);
-        var startDatum = this.data[index - 1];
-        var endDatum = this.data[index];
+        var bisect = d3.bisector(function(datum) { return datum[x_field]; }).left;
+        var index = bisect(this.data, data.x) - 1;
+        var startDatum = this.data[index];
+        var endDatum = this.data[index + 1];
         var interpolate = d3.interpolateNumber(startDatum[y_field], endDatum[y_field]);
         var range = endDatum[x_field] - startDatum[x_field];
         data.y = interpolate((data.x % range) / range);
