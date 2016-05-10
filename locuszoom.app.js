@@ -235,7 +235,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    response.resolve(JSON.parse(xhr.responseText));
+                    try {
+                        var data = JSON.parse(xhr.responseText)
+                        response.resolve(data);
+                    } catch (err) {
+                        response.reject("Unable to parse JSON response:" + err);
+                    }
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -298,6 +303,8 @@ LocusZoom.parseFields = function (data, html) {
     }
     return html;
 };
+
+LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {
@@ -425,61 +432,6 @@ LocusZoom.StandardLayout = {
 
 "use strict";
 
-/* A named collection of data sources used to draw a plot*/
-LocusZoom.DataSources = function() {
-    this.sources = {};
-};
-
-LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    function findKnownSource(x) {
-        if (!LocusZoom.KnownDataSources) {return null;}
-        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
-            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
-                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
-            }
-            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
-                return LocusZoom.KnownDataSources[i];
-            }
-        }
-        return null;
-    }
-
-    if (Array.isArray(x)) {
-        var dsclass = findKnownSource(x[0]);
-        if (dsclass) {
-            this.sources[ns] = new dsclass(x[1]);
-        } else {
-            throw("Unable to resolve " + x[0] + " data source");
-        }
-    } else {
-        this.sources[ns] = x;
-    }
-    return this;
-};
-
-LocusZoom.DataSources.prototype.getSource = function(ns) {
-    return this.sources[ns];
-};
-
-LocusZoom.DataSources.prototype.setSources = function(x) {
-    if (typeof x === "string") {
-        x = JSON.parse(x);
-    }
-    var ds = this;
-    Object.keys(x).forEach(function(ns) {
-        ds.addSource(ns, x[ns]);
-    });
-    return ds;
-};
-
-LocusZoom.DataSources.prototype.keys = function() {
-    return Object.keys(this.sources);
-};
-
-LocusZoom.DataSources.prototype.toJSON = function() {
-    return this.sources;
-};
-
 LocusZoom.Data = LocusZoom.Data ||  {};
 
 
@@ -507,10 +459,10 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         var promises = Object.keys(requests).map(function(key) {
-            if (!sources.getSource(key)) {
+            if (!sources.get(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
-            return sources.getSource(key).getData(state, requests[key].fields, 
+            return sources.get(key).getData(state, requests[key].fields, 
                 requests[key].outnames, requests[key].trans);
         });
         //assume the fields are requested in dependent order
@@ -540,52 +492,41 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
 };
+
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
+    if (this.preGetData) {
+        var pre = this.preGetData(state, fields, outnames, trans);
+        if(this.pre) {
+            state = pre.state || state;
+            fields = pre.fields || fields;
+            outnames = pre.outnames || outnames;
+            trans = pre.trans || trans;
+        }
+    }
+
     return function (chain) {
         return this.getRequest(state, chain, fields).then(function(resp) {
             return this.parseResponse(resp, chain, fields, outnames, trans);
         }.bind(this));
     }.bind(this);
 };
-LocusZoom.Data.Source.prototype.toJSON = function() {
-    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
-        {url:this.url, params:this.params}];
+
+
+LocusZoom.Data.Source.prototype.parseResponse  = function(x, chain, fields, outnames, trans) {
+    var records = this.parseData(x.data || x, fields, outnames, trans);
+    var res = {header: chain.header || {}, body: records};
+    return res;
 };
 
-LocusZoom.Data.AssociationSource = function(init) {
-    this.parseInit(init);
-    
-    this.getData = function(state, fields, outnames, trans) {
-        ["id","position"].forEach(function(x) {
-            if (fields.indexOf(x)==-1) {
-                fields.unshift(x);
-                outnames.unshift(x);
-                trans.unshift(null);
-            }
-        });
-        return function (chain) {
-            return this.getRequest(state, chain).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
-    };
-};
-LocusZoom.Data.AssociationSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
-LocusZoom.Data.AssociationSource.prototype.constructor = LocusZoom.Data.AssociationSource;
-LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
-    var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
-    return this.url + "results/?filter=analysis in " + analysis  +
-        " and chromosome in  '" + state.chr + "'" +
-        " and position ge " + state.start +
-        " and position le " + state.end;
-};
-LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var x = resp.data;
+LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
+    //intended for an object of arrays
+    //{"id":[1,2], "val":[5,10]}
     var records = [];
-    fields.forEach(function(f) {
-        if (!(f in x)) {throw "field " + f + " not found in response";}
+    fields.forEach(function(f, i) {
+        if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
     });
-    for(var i = 0; i < x.position.length; i++) {
+    var N = x[Object.keys(x)[1]].length;
+    for(var i = 0; i < N; i++) {
         var record = {};
         for(var j=0; j<fields.length; j++) {
             var val = x[fields[j]][i];
@@ -596,30 +537,97 @@ LocusZoom.Data.AssociationSource.prototype.parseResponse = function(resp, chain,
         }
         records.push(record);
     }
-    var res = {header: chain.header || {}, body: records};
-    return res;
+    return records;
 };
-LocusZoom.Data.AssociationSource.SOURCE_NAME = "AssociationLZ";
 
-LocusZoom.Data.LDSource = function(init) {
+LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outnames, trans) {
+    //intended for an array of objects
+    // [ {"id":1, "val":5}, {"id":2, "val":10}]
+    var records = [];
+    var fieldFound = [];
+    for (var k=0; k<fields.length; k++) { 
+        fieldFound[k] = 0;
+    }
+    for (var i = 0; i < x.length; i++) {
+        var record = {};
+        for (var j=0; j<fields.length; j++) {
+            var val = x[i][fields[j]];
+            if (typeof val != "undefined") {
+                fieldFound[j] = 1;
+            }
+            if (trans && trans[j]) {
+                val = trans[j](val);
+            }
+            record[outnames[j]] = val;
+        }
+        records.push(record);
+    }
+    fieldFound.forEach(function(v, i) {
+        if (!v) {throw "field " + fields[i] + " not found in response for " + outnames[i];}
+    });
+    return records;
+};
+
+LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans) {
+    if (Array.isArray(x)) { 
+        return this.parseObjectsToObjects(x, fields, outnames, trans);
+    } else {
+        return this.parseArraysToObjects(x, fields, outnames, trans);
+    }
+};
+
+LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
+    constructorFun = constructorFun || function() {};
+    constructorFun.prototype = Object.create(LocusZoom.Data.Source.prototype);
+    constructorFun.prototype.constructor = constructorFun;
+    if (uniqueName) {
+        constructorFun.SOURCE_NAME = uniqueName;
+        LocusZoom.KnownDataSources.push(constructorFun);
+    }
+    return constructorFun;
+};
+
+LocusZoom.Data.Source.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
+        {url:this.url, params:this.params}];
+};
+
+LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "AssociationLZ");
+
+LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
+    ["id","position"].forEach(function(x) {
+        if (fields.indexOf(x)==-1) {
+            fields.unshift(x);
+            outnames.unshift(x);
+            trans.unshift(null);
+        }
+    });
+    return {fields: fields, outnames:outnames, trans:trans};
+};
+
+LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
+    var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
+    return this.url + "results/?filter=analysis in " + analysis  +
+        " and chromosome in  '" + state.chr + "'" +
+        " and position ge " + state.start +
+        " and position le " + state.end;
+};
+
+LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
     if (!this.params.pvaluefield) {
         this.params.pvaluefield = "pvalue|neglog10";
     }
+}, "LDLZ");
 
-    this.getData = function(state, fields, outnames, trans) {
-        if (fields.length>1) {
-            throw("LD currently only supports one field");
-        }
-        return function (chain) {
-            return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
-    };
+LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
+    if (fields.length>1) {
+        throw("LD currently only supports one field");
+    }
 };
-LocusZoom.Data.LDSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
-LocusZoom.Data.LDSource.prototype.constructor = LocusZoom.Data.LDSource;
+
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var findExtremeValue = function(x, pval, sign) {
         pval = pval || "pvalue";
@@ -654,6 +662,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         " and variant1 eq '" + refVar + "'" + 
         "&fields=chr,pos,rsquare";
 };
+
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     var leftJoin  = function(left, right, lfield, rfield) {
         var i=0, j=0;
@@ -673,21 +682,11 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
     leftJoin(chain.body, resp.data, outnames[0], "rsquare");
     return chain;   
 };
-LocusZoom.Data.LDSource.SOURCE_NAME = "LDLZ";
 
-LocusZoom.Data.GeneSource = function(init) {
+LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+}, "GeneLZ");
 
-    this.getData = function(state, fields, outnames, trans) {
-        return function (chain) {
-            return this.getRequest(state, chain, fields).then(function(resp) {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            }.bind(this));
-        }.bind(this);
-    };
-};
-LocusZoom.Data.GeneSource.prototype = Object.create(LocusZoom.Data.Source.prototype);
-LocusZoom.Data.GeneSource.prototype.constructor = LocusZoom.Data.GeneSource;
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
     var source = state.source || chain.header.source || this.params.source || 2;
     return this.url + "?filter=source in " + source +
@@ -698,7 +697,31 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     return {header: chain.header, body: resp.data};
 };
-LocusZoom.Data.GeneSource.SOURCE_NAME = "GeneLZ";
+
+LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "RecombLZ");
+
+LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
+    var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
+    return this.url + "?filter=id in " + source +
+        " and chromosome eq '" + state.chr + "'" + 
+        " and position le " + state.end +
+        " and position ge " + state.start;
+};
+
+LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
+    this._data = data;
+},"StaticJSON");
+
+LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields) {
+    return Q.fcall(function() {return this._data;}.bind(this));
+};
+
+LocusZoom.Data.StaticSource.prototype.toJSON = function() {
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
+        this._data];
+};
 
 LocusZoom.createResolvedPromise = function() {
     var response = Q.defer();
@@ -706,11 +729,6 @@ LocusZoom.createResolvedPromise = function() {
     return response.promise;
 };
 
-LocusZoom.KnownDataSources = [
-    LocusZoom.Data.AssociationSource,
-    LocusZoom.Data.LDSource,
-    LocusZoom.Data.GeneSource
-];
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
@@ -1898,6 +1916,89 @@ LocusZoom.DataLayer.prototype.reMap = function(){
   as well as define new custom functions/classes to be used in a plot.
 
 */
+
+/* A named collection of data sources used to draw a plot*/
+
+LocusZoom.DataSources = function() {
+    this.sources = {};
+};
+
+LocusZoom.DataSources.prototype.addSource = function(ns, x) {
+    console.warn("Warning: .addSource() is depricated. Use .add() instead");
+    return this.add(ns, x);
+};
+
+LocusZoom.DataSources.prototype.add = function(ns, x) {
+    return this.set(ns, x);
+};
+
+LocusZoom.DataSources.prototype.set = function(ns, x) {
+    function findKnownSource(x) {
+        if (!LocusZoom.KnownDataSources) {return null;}
+        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
+            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
+                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
+                return LocusZoom.KnownDataSources[i];
+            }
+        }
+        return null;
+    }
+
+    if (Array.isArray(x)) {
+        var dsclass = findKnownSource(x[0]);
+        if (dsclass) {
+            this.sources[ns] = new dsclass(x[1]);
+        } else {
+            throw("Unable to resolve " + x[0] + " data source");
+        }
+    } else {
+        if (x !== null) {
+            this.sources[ns] = x;
+        } else {
+            delete this.sources[ns];
+        }
+    }
+    return this;
+};
+
+LocusZoom.DataSources.prototype.getSource = function(ns) {
+    console.warn("Warning: .getSource() is depricated. Use .get() instead");
+    return this.get(ns);
+};
+
+LocusZoom.DataSources.prototype.get = function(ns) {
+    return this.sources[ns];
+};
+
+LocusZoom.DataSources.prototype.removeSource = function(ns) {
+    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
+    return this.remove(ns);
+};
+
+LocusZoom.DataSources.prototype.remove = function(ns) {
+    return this.set(ns, null);
+};
+
+LocusZoom.DataSources.prototype.fromJSON = function(x) {
+    if (typeof x === "string") {
+        x = JSON.parse(x);
+    }
+    var ds = this;
+    Object.keys(x).forEach(function(ns) {
+        ds.set(ns, x[ns]);
+    });
+    return ds;
+};
+
+LocusZoom.DataSources.prototype.keys = function() {
+    return Object.keys(this.sources);
+};
+
+LocusZoom.DataSources.prototype.toJSON = function() {
+    return this.sources;
+};
 
 
 /****************
