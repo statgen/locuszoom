@@ -103,6 +103,19 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4;
   }
 
+  path.#{$namespace}-data_layer-line {
+    stroke: #{$default_black};
+    stroke-width: 1;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-line-hitarea {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 12px;
+    cursor: pointer;
+  }
+
   g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }
@@ -153,40 +166,45 @@ div.#{$namespace}-data_layer-tooltip {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_up {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_down {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_right {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_left {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid #{$default_black}; 
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_left {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
@@ -194,8 +212,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_top_left {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_right {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
@@ -203,8 +222,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_top_right {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
@@ -212,8 +232,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};

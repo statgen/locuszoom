@@ -64,6 +64,15 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4; }
+  svg.lz-locuszoom path.lz-data_layer-line {
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1;
+    cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-line-hitarea {
+    fill: transparent;
+    stroke: transparent;
+    stroke-width: 12px;
+    cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
   svg.lz-locuszoom text.lz-data_layer-gene.lz-label {
@@ -100,6 +109,7 @@ div.lz-data_layer-tooltip {
 div.lz-data_layer-tooltip-arrow_up {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
   border-bottom: 7px solid rgba(24, 24, 24, 1); }
@@ -107,6 +117,7 @@ div.lz-data_layer-tooltip-arrow_up {
 div.lz-data_layer-tooltip-arrow_down {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
   border-top: 7px solid rgba(24, 24, 24, 1); }
@@ -114,6 +125,7 @@ div.lz-data_layer-tooltip-arrow_down {
 div.lz-data_layer-tooltip-arrow_right {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
   border-left: 7px solid rgba(24, 24, 24, 1); }
@@ -121,6 +133,7 @@ div.lz-data_layer-tooltip-arrow_right {
 div.lz-data_layer-tooltip-arrow_left {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
   border-right: 7px solid rgba(24, 24, 24, 1); }
@@ -128,6 +141,7 @@ div.lz-data_layer-tooltip-arrow_left {
 div.lz-data_layer-tooltip-arrow_top_left {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid rgba(24, 24, 24, 1);
   border-left: 7px solid rgba(24, 24, 24, 1);
   border-bottom: 7px solid transparent;
@@ -136,6 +150,7 @@ div.lz-data_layer-tooltip-arrow_top_left {
 div.lz-data_layer-tooltip-arrow_top_right {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid rgba(24, 24, 24, 1);
   border-left: 7px solid transparent;
   border-bottom: 7px solid transparent;
@@ -144,6 +159,7 @@ div.lz-data_layer-tooltip-arrow_top_right {
 div.lz-data_layer-tooltip-arrow_bottom_left {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid transparent;
   border-left: 7px solid rgba(24, 24, 24, 1);
   border-bottom: 7px solid rgba(24, 24, 24, 1);
@@ -152,6 +168,7 @@ div.lz-data_layer-tooltip-arrow_bottom_left {
 div.lz-data_layer-tooltip-arrow_bottom_right {
   width: 0;
   height: 0;
+  pointer-events: none;
   border-top: 7px solid transparent;
   border-left: 7px solid transparent;
   border-bottom: 7px solid rgba(24, 24, 24, 1);

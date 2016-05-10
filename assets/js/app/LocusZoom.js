@@ -325,6 +325,26 @@ LocusZoom.StandardLayout = {
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["sig:x", "sig:y"],
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "sig:x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "sig:y"
+                    },
+                    tooltip: {
+                        html: "Significance Threshold: 3 × 10^-5"
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",

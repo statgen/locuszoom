@@ -444,9 +444,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         }
     }.bind(this));
     
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
 
 };
@@ -476,6 +473,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+            this.initialized = true;
             this.onUpdate();
         }.bind(this));
 
@@ -510,6 +508,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+            this.initialized = true;
             this.onUpdate();
         }.bind(this));
 
