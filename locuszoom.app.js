@@ -1590,7 +1590,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
             .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
-            .style({ "fill": "transparent",
+            .style({ "fill": "none",
                      "stroke-width": 1,
                      "stroke": this.layout.inner_border });
     }
