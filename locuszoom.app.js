@@ -339,6 +339,26 @@ LocusZoom.StandardLayout = {
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["sig:x", "sig:y"],
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "sig:x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "sig:y"
+                    },
+                    tooltip: {
+                        html: "Significance Threshold: 3 × 10^-5"
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
@@ -1033,9 +1053,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         this.mouse_guide.horizontal.attr("y", coords[1]);
     }.bind(this));
     
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
 
 };
@@ -1065,6 +1082,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+            this.initialized = true;
             this.triggerOnUpdate();
         }.bind(this));
 
@@ -1099,6 +1117,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+            this.initialized = true;
             this.triggerOnUpdate();
         }.bind(this));
 
@@ -1146,9 +1165,9 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
-    this.xExtent  = null;
-    this.y1Extent = null;
-    this.y2Extent = null;
+    this.x_extent  = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -1207,7 +1226,6 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
             this.layout.axes[axis].render = true;
             this.layout.axes[axis].label = this.layout.axes[axis].label || null;
             this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
-            this.layout.axes[axis].data_layer_id = this.layout.axes[axis].data_layer_id || null;
         }
     }.bind(this));
 
@@ -1352,9 +1370,6 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.data_layers[id].initialize();
     }
 
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
     
 };
@@ -1362,6 +1377,8 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+
+    // Sanity checks
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -1375,27 +1392,17 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
 
+    // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
+    if (typeof layout.y_axis == "object" && (typeof layout.y_axis.axis == "undefined" || [1,2].indexOf(layout.y_axis.axis) == -1)){
+        layout.y_axis.axis = 1;
+    }
+
     // Create the Data Layer
     var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
     this.data_layer_ids_by_z_index.push(data_layer.id);
-
-    // Generate xExtent function (defaults to the state range defined by "start" and "end")
-    if (layout.x_axis && typeof layout.x_axis.field == "string"){
-        this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
-    } else {
-        this.xExtent = function(){
-            return d3.extent([this.state.start, this.state.end]);
-        };
-    }
-    // Generate the yExtent function
-    if (layout.y_axis && typeof layout.y_axis.field == "string"){
-        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
-        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
-        this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
-    }
 
     return this.data_layers[data_layer.id];
 };
@@ -1411,12 +1418,41 @@ LocusZoom.Panel.prototype.reMap = function(){
     // When all finished trigger a render
     return Q.all(this.data_promises)
         .then(function(){
+            this.initialized = true;
             this.render();
         }.bind(this))
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this));
+};
+
+// Iterate over data layers to generate panel axis extents
+LocusZoom.Panel.prototype.generateExtents = function(){
+
+    // Reset extents
+    this.x_extent = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
+
+    // Loop through the data layers
+    for (var id in this.data_layers){
+
+        var data_layer = this.data_layers[id];
+
+        // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
+        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
+            this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
+        }
+
+        // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
+        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled){
+            var y_axis = "y" + data_layer.layout.y_axis.axis;
+            this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
+        }
+
+    }
+
 };
 
 
@@ -1440,9 +1476,11 @@ LocusZoom.Panel.prototype.render = function(){
                      "stroke": this.layout.inner_border });
     }
 
-    // Generate discrete extents, ticks, and scales
-    if (typeof this.xExtent == "function"){
-        this.x_extent = this.xExtent();
+    // Regenerate all extents
+    this.generateExtents();
+
+    // Generate ticks and scales using generated extents
+    if (this.x_extent){
         if (this.layout.axes.x.ticks){
             this.x_ticks = this.layout.axes.x.ticks;
         } else {
@@ -1452,8 +1490,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.x_extent[0], this.x_extent[1]])
             .range([0, this.layout.cliparea.width]);
     }
-    if (typeof this.y1Extent == "function"){
-        this.y1_extent = this.y1Extent();
+    if (this.y1_extent){
         if (this.layout.axes.y1.ticks){
             this.y1_ticks = this.layout.axes.y1.ticks;
         } else {
@@ -1464,8 +1501,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.y1_extent[0], this.y1_extent[1]])
             .range([this.layout.cliparea.height, 0]);
     }
-    if (typeof this.y2Extent == "function"){
-        this.y2_extent = this.y2Extent();
+    if (this.y_extent){
         if (this.layout.axes.y2.ticks){
             this.y2_ticks = this.layout.axes.y2.ticks;
         } else {
@@ -1657,6 +1693,10 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         if (typeof id != "string"){
             throw ("Unable to create tooltip: id is not a string");
         }
+        if (this.tooltips[id]){
+            this.positionTooltip(id);
+            return;
+        }
         this.tooltips[id] = {
             data: d,
             arrow: null,
@@ -1761,7 +1801,15 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     }
 
     var axis = dimension + "_axis";
-    return function(){
+
+    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
+        return [+this.layout[axis].floor, +this.layout[axis].ceiling];
+    }
+
+    // If a field is defined for the axis and the data layer has data then generate the extent from the data set
+    if (this.layout[axis].field && this.data && this.data.length){
+
         var extent = d3.extent(this.data, function(d) {
             return +d[this.layout[axis].field];
         }.bind(this));
@@ -1778,12 +1826,24 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
         // Generate a new base extent
         extent = d3.extent(extent);
-
+        
         // Apply floor/ceiling, if applicable
         if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
         if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+
         return extent;
-    }.bind(this);
+
+    }
+
+    // If this is for the x axis and no extent could be generated yet but state has a defined start and end
+    // then default to using the state-defined region as the extent
+    if (dimension == "x" && !isNaN(this.state.start) && !isNaN(this.state.end)) {
+        return [this.state.start, this.state.end];
+    }
+
+    // No conditions met for generating a valid extent, return an empty array
+    return [];
+
 };
 
 // Initialize a data layer
@@ -1803,9 +1863,6 @@ LocusZoom.DataLayer.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".data_layer")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
 
 };
@@ -1821,13 +1878,18 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
+
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
+
+    // Fetch new data
     var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
+        this.initialized = true;
     }.bind(this));
     return promise;
+
 };
 
 /* global d3,LocusZoom */
@@ -2424,7 +2486,190 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     };
        
     return this;
+
 });
+
+
+/*********************
+  Line Data Layer
+  Implements a standard line plot
+*/
+
+LocusZoom.DataLayers.add("line", function(id, layout, parent){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        style: {
+            fill: "transparent"
+        },
+        interpolate: "linear",
+        x_axis: { field: "x" },
+        y_axis: { field: "y", axis: 1 },
+        selectable: false
+    };
+    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+
+    // Var for storing mouse events for use in tool tip positioning
+    this.mouse_event = null;
+
+    // Var for storing the generated line function itself
+    this.line = null;
+
+    this.tooltip_timeout = null;
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Reimplement the positionTooltip() method to be line-specific
+    this.positionTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        if (!this.tooltips[id]){
+            throw ("Unable to position tooltip: id does not point to a valid tooltip");
+        }
+        var tooltip = this.tooltips[id];
+        var arrow_width = 7; // as defined in the default stylesheet
+        var stroke_width = 1; // as defined in the default stylesheet
+        var page_origin = this.getPageOrigin();
+        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+
+        // Determine x/y coordinates for display and data
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var display = { x: d3.mouse(this.mouse_event)[0], y: null };
+        var data = { x: this.parent[x_scale].invert(display.x), y: null };
+        var bisect = d3.bisector(function(datum) { return datum[x_field]; }).left;
+        var index = bisect(this.data, data.x) - 1;
+        var startDatum = this.data[index];
+        var endDatum = this.data[index + 1];
+        var interpolate = d3.interpolateNumber(startDatum[y_field], endDatum[y_field]);
+        var range = endDatum[x_field] - startDatum[x_field];
+        data.y = interpolate((data.x % range) / range);
+        display.y = this.parent[y_scale](data.y);
+
+        // Position horizontally: attempt to center on the mouse's x coordinate
+        // pad to either side if bumping up against the edge of the data layer
+        var offset_right = Math.max((tooltip_box.width / 2) - display.x, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + display.x - data_layer_width, 0);
+        var left = page_origin.x + display.x - (tooltip_box.width / 2) - offset_left + offset_right;
+        var min_arrow_left = arrow_width / 2;
+        var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
+        var arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
+        arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
+
+        // Position vertically above the line unless there's insufficient space
+        var top, arrow_type, arrow_top;
+        if (tooltip_box.height + stroke_width + arrow_width < data_layer_height - display.y){
+            top = page_origin.y + display.y + stroke_width + arrow_width;
+            arrow_type = "up";
+            arrow_top = 0 - stroke_width - arrow_width;
+        } else {
+            top = page_origin.y + display.y - (tooltip_box.height + stroke_width + arrow_width);
+            arrow_type = "down";
+            arrow_top = tooltip_box.height - stroke_width;
+        }
+
+        // Apply positions to the main div
+        tooltip.selector.style("left", left + "px").style("top", top + "px");
+        // Create / update position on arrow connecting tooltip to data
+        if (!tooltip.arrow){
+            tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
+        }
+        tooltip.arrow
+            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
+            .style("left", arrow_left + "px")
+            .style("top", arrow_top + "px");
+    };
+
+    // Implement the main render function
+    this.render = function(){
+
+        // Several vars needed to be in scope
+        var data_layer = this;
+        var panel = this.parent;
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+
+        // Join data to the line selection
+        var selection = this.svg.group
+            .selectAll("path.lz-data_layer-line")
+            .data([this.data]);
+
+        // Create path element, apply class
+        selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-line");
+
+        // Generate the line
+        this.line = d3.svg.line()
+            .x(function(d) { return panel[x_scale](d[x_field]); })
+            .y(function(d) { return panel[y_scale](d[y_field]); })
+            .interpolate(this.layout.interpolate);
+
+        // Apply line and style
+        if (this.layout.transition){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("d", this.line)
+                .style(this.layout.style);
+        } else {
+            selection
+                .attr("d", this.line)
+                .style(this.layout.style);
+        }
+
+        // Apply tooltip, etc
+        if (this.layout.tooltip){
+            // Generate an overlaying transparent "hit area" line for more intuitive mouse events
+            var hitarea = this.svg.group
+                .selectAll("path.lz-data_layer-line-hitarea")
+                .data([this.data]);
+            hitarea.enter()
+                .append("path")
+                .attr("class", "lz-data_layer-line-hitarea");
+            var hitarea_line = d3.svg.line()
+                .x(function(d) { return panel[x_scale](d[x_field]); })
+                .y(function(d) { return panel[y_scale](d[y_field]); })
+                .interpolate(this.layout.interpolate);
+            hitarea
+                .attr("d", hitarea_line)
+                .on("mouseover", function(d){
+                    clearTimeout(data_layer.tooltip_timeout);
+                    data_layer.mouse_event = this;
+                    data_layer.createTooltip(d, data_layer.state_id);
+                })
+                .on("mousemove", function(){
+                    clearTimeout(data_layer.tooltip_timeout);
+                    data_layer.mouse_event = this;
+                    data_layer.positionTooltip(data_layer.state_id);
+                })
+                .on("mouseout", function(){
+                    data_layer.tooltip_timeout = setTimeout(function(){
+                        data_layer.mouse_event = null;
+                        data_layer.destroyTooltip(data_layer.state_id);
+                    }, 300);
+                });
+            hitarea.exit().remove();
+        }
+
+        // Remove old elements as needed
+        selection.exit().remove();
+        
+    };
+       
+    return this;
+
+});
+
 
 /*********************
   Genes Data Layer
@@ -2855,6 +3100,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
     };
        
     return this;
+
 });
 
 
