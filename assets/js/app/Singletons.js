@@ -14,6 +14,89 @@
 
 */
 
+/* A named collection of data sources used to draw a plot*/
+
+LocusZoom.DataSources = function() {
+    this.sources = {};
+};
+
+LocusZoom.DataSources.prototype.addSource = function(ns, x) {
+    console.warn("Warning: .addSource() is depricated. Use .add() instead");
+    return this.add(ns, x);
+};
+
+LocusZoom.DataSources.prototype.add = function(ns, x) {
+    return this.set(ns, x);
+};
+
+LocusZoom.DataSources.prototype.set = function(ns, x) {
+    function findKnownSource(x) {
+        if (!LocusZoom.KnownDataSources) {return null;}
+        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
+            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
+                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
+                return LocusZoom.KnownDataSources[i];
+            }
+        }
+        return null;
+    }
+
+    if (Array.isArray(x)) {
+        var dsclass = findKnownSource(x[0]);
+        if (dsclass) {
+            this.sources[ns] = new dsclass(x[1]);
+        } else {
+            throw("Unable to resolve " + x[0] + " data source");
+        }
+    } else {
+        if (x !== null) {
+            this.sources[ns] = x;
+        } else {
+            delete this.sources[ns];
+        }
+    }
+    return this;
+};
+
+LocusZoom.DataSources.prototype.getSource = function(ns) {
+    console.warn("Warning: .getSource() is depricated. Use .get() instead");
+    return this.get(ns);
+};
+
+LocusZoom.DataSources.prototype.get = function(ns) {
+    return this.sources[ns];
+};
+
+LocusZoom.DataSources.prototype.removeSource = function(ns) {
+    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
+    return this.remove(ns);
+};
+
+LocusZoom.DataSources.prototype.remove = function(ns) {
+    return this.set(ns, null);
+};
+
+LocusZoom.DataSources.prototype.fromJSON = function(x) {
+    if (typeof x === "string") {
+        x = JSON.parse(x);
+    }
+    var ds = this;
+    Object.keys(x).forEach(function(ns) {
+        ds.set(ns, x[ns]);
+    });
+    return ds;
+};
+
+LocusZoom.DataSources.prototype.keys = function() {
+    return Object.keys(this.sources);
+};
+
+LocusZoom.DataSources.prototype.toJSON = function() {
+    return this.sources;
+};
+
 
 /****************
   Label Functions
