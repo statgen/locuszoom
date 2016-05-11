@@ -221,7 +221,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    response.resolve(JSON.parse(xhr.responseText));
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        response.resolve(data);
+                    } catch (err) {
+                        response.reject("Unable to parse JSON response:" + err);
+                    }
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -285,17 +290,7 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-// Default Layout
-LocusZoom.DefaultLayout = {
-    state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
-    resizable: false,
-    aspect_ratio: 1,
-    panels: {}
-};
+LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {
@@ -322,8 +317,7 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region",
-
+                    tick_format: "region"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -331,6 +325,26 @@ LocusZoom.StandardLayout = {
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["sig:x", "sig:y"],
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "sig:x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "sig:y"
+                    },
+                    tooltip: {
+                        html: "Significance Threshold: 3 × 10^-5"
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",

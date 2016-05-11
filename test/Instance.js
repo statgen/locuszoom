@@ -35,6 +35,11 @@ describe('LocusZoom.Instance', function(){
     it("creates an object for its name space", function() {
         should.exist(LocusZoom.Instance);
     });
+
+    it("defines its layout defaults", function() {
+        LocusZoom.Instance.should.have.property('DefaultLayout').which.is.an.Object;
+    });
+
     describe("Constructor", function() {
         beforeEach(function() {
             this.instance = new LocusZoom.Instance("instance_id");
@@ -156,13 +161,6 @@ describe('LocusZoom.Instance', function(){
                 var responsive_layout = { resizable: "responsive", aspect_ratio: [1,2,3] };
                 this.instance = LocusZoom.populate("#instance_id", {}, responsive_layout);
             });
-        });
-        it('should track whether it\'s initialized', function(){
-            this.instance.initialize.should.be.a.Function;
-            assert.equal(this.instance.initialized, true);
-            d3.select("body").append("div").attr("id", "another_instance_id");
-            var another_instance = LocusZoom.populate("#another_instance_id");
-            assert.equal(another_instance.initialized, true);
         });
         it('should allow for mapping to new coordinates', function(){
             /*

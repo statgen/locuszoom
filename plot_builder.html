@@ -88,10 +88,12 @@
 
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
-    var data_sources = new LocusZoom.DataSources();
-    data_sources.addSource("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
-    data_sources.addSource("ld", ["LDLZ" ,apiBase + "pair/LD/"]);
-    data_sources.addSource("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
+    var data_sources = new LocusZoom.DataSources()
+      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}])
+      .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
+      //.add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+
 
     var plot;
 

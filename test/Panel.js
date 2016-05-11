@@ -36,6 +36,10 @@ describe('LocusZoom.Panel', function(){
         should.exist(LocusZoom.Panel);
     });
 
+    it("defines its layout defaults", function() {
+        LocusZoom.Panel.should.have.property('DefaultLayout').which.is.an.Object;
+    });
+
     describe("Constructor", function() {
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "instance_id");
