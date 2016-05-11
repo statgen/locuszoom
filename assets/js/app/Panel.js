@@ -286,7 +286,12 @@ LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
-        this.data_promises.push(this.data_layers[id].reMap());
+        try {
+            this.data_promises.push(this.data_layers[id].reMap());
+        } catch (error) {
+            console.log(error);
+            this.curtain.drop(error);
+        }
     }
     // When all finished trigger a render
     return Q.all(this.data_promises)
