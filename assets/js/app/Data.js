@@ -47,6 +47,10 @@ LocusZoom.Data.Requester = function(sources) {
     };
 };
 
+/**
+  Base Data Source Class
+  This can be extended with .extend() to create custom data sources
+*/
 LocusZoom.Data.Source = function() {};
 LocusZoom.Data.Source.prototype.parseInit = function(init) {
     if (typeof init === "string") {
@@ -164,6 +168,9 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
         {url:this.url, params:this.params}];
 };
 
+/**
+  Known Data Source for Association Data
+*/
 LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "AssociationLZ");
@@ -187,6 +194,9 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
         " and position le " + state.end;
 };
 
+/**
+  Known Data Source for LD Data
+*/
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
     if (!this.params.pvaluefield) {
@@ -255,6 +265,9 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
     return chain;   
 };
 
+/**
+  Known Data Source for Gene Data
+*/
 LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "GeneLZ");
@@ -270,6 +283,9 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
     return {header: chain.header, body: resp.data};
 };
 
+/**
+  Known Data Source for Recombination Rate Data
+*/
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "RecombLZ");
@@ -282,6 +298,9 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         " and position ge " + state.start;
 };
 
+/**
+  Known Data Source for Static JSON Data
+*/
 LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
     this._data = data;
 },"StaticJSON");
@@ -295,9 +314,4 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
         this._data];
 };
 
-LocusZoom.createResolvedPromise = function() {
-    var response = Q.defer();
-    response.resolve(Array.prototype.slice.call(arguments));
-    return response.promise;
-};
 

@@ -236,7 +236,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
                     try {
-                        var data = JSON.parse(xhr.responseText)
+                        var data = JSON.parse(xhr.responseText);
                         response.resolve(data);
                     } catch (err) {
                         response.reject("Unable to parse JSON response:" + err);
@@ -250,6 +250,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         body = typeof body !== "undefined" ? body : "";
         xhr.send(body);
     } 
+    return response.promise;
+};
+
+LocusZoom.createResolvedPromise = function() {
+    var response = Q.defer();
+    response.resolve(Array.prototype.slice.call(arguments));
     return response.promise;
 };
 
@@ -471,6 +477,10 @@ LocusZoom.Data.Requester = function(sources) {
     };
 };
 
+/**
+  Base Data Source Class
+  This can be extended with .extend() to create custom data sources
+*/
 LocusZoom.Data.Source = function() {};
 LocusZoom.Data.Source.prototype.parseInit = function(init) {
     if (typeof init === "string") {
@@ -588,6 +598,9 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
         {url:this.url, params:this.params}];
 };
 
+/**
+  Known Data Source for Association Data
+*/
 LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "AssociationLZ");
@@ -611,6 +624,9 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
         " and position le " + state.end;
 };
 
+/**
+  Known Data Source for LD Data
+*/
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
     if (!this.params.pvaluefield) {
@@ -679,6 +695,9 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
     return chain;   
 };
 
+/**
+  Known Data Source for Gene Data
+*/
 LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "GeneLZ");
@@ -694,6 +713,9 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
     return {header: chain.header, body: resp.data};
 };
 
+/**
+  Known Data Source for Recombination Rate Data
+*/
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "RecombLZ");
@@ -706,6 +728,9 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         " and position ge " + state.start;
 };
 
+/**
+  Known Data Source for Static JSON Data
+*/
 LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
     this._data = data;
 },"StaticJSON");
@@ -719,11 +744,6 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
         this._data];
 };
 
-LocusZoom.createResolvedPromise = function() {
-    var response = Q.defer();
-    response.resolve(Array.prototype.slice.call(arguments));
-    return response.promise;
-};
 
 
 /* global d3,Q,LocusZoom */
@@ -1097,8 +1117,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         },
         update: function(){
             this.div.attr("width", this.parent.layout.width);
-            var display_width = this.parent.layout.width.toString().indexOf('.') == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
-            var display_height = this.parent.layout.height.toString().indexOf('.') == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
+            var display_width = this.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
+            var display_height = this.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
             this.dimensions.text(display_width + "px × " + display_height + "px");
         },
         hide: function(){

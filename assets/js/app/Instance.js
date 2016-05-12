@@ -369,8 +369,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         },
         update: function(){
             this.div.attr("width", this.parent.layout.width);
-            var display_width = this.parent.layout.width.toString().indexOf('.') == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
-            var display_height = this.parent.layout.height.toString().indexOf('.') == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
+            var display_width = this.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
+            var display_height = this.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
             this.dimensions.text(display_width + "px × " + display_height + "px");
         },
         hide: function(){
