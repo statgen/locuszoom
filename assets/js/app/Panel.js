@@ -50,8 +50,8 @@ LocusZoom.Panel = function(id, layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.triggerOnUpdate = function(){
-        this.parent.triggerOnUpdate();
+    this.onUpdate = function(){
+        this.parent.onUpdate();
     };
 
     // Initialize the layout
@@ -349,7 +349,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
             .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
-            .style({ "fill": "transparent",
+            .style({ "fill": "none",
                      "stroke-width": 1,
                      "stroke": this.layout.inner_border });
     }
