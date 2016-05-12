@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.7"
+    version: "0.3.8"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -222,7 +222,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
                     try {
-                        var data = JSON.parse(xhr.responseText)
+                        var data = JSON.parse(xhr.responseText);
                         response.resolve(data);
                     } catch (err) {
                         response.reject("Unable to parse JSON response:" + err);

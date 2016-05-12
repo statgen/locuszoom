@@ -50,8 +50,8 @@ LocusZoom.Panel = function(id, layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.triggerOnUpdate = function(){
-        this.parent.triggerOnUpdate();
+    this.onUpdate = function(){
+        this.parent.onUpdate();
     };
 
     // Initialize the layout
@@ -286,7 +286,12 @@ LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
-        this.data_promises.push(this.data_layers[id].reMap());
+        try {
+            this.data_promises.push(this.data_layers[id].reMap());
+        } catch (error) {
+            console.log(error);
+            this.curtain.drop(error);
+        }
     }
     // When all finished trigger a render
     return Q.all(this.data_promises)
@@ -344,7 +349,7 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
             .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
-            .style({ "fill": "transparent",
+            .style({ "fill": "none",
                      "stroke-width": 1,
                      "stroke": this.layout.inner_border });
     }
