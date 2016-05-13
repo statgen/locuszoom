@@ -303,8 +303,6 @@ LocusZoom.StandardLayout = {
     state: {},
     width: 800,
     height: 450,
-    min_width: 400,
-    min_height: 225,
     resizable: "responsive",
     aspect_ratio: (16/9),
     panels: {
@@ -388,7 +386,7 @@ LocusZoom.StandardLayout = {
         genes: {
             width: 800,
             height: 225,
-            origin: { x: 0, y: 350 },
+            origin: { x: 0, y: 225 },
             min_width: 400,
             min_height: 112.5,
             proportional_width: 1,

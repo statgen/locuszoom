@@ -317,8 +317,6 @@ LocusZoom.StandardLayout = {
     state: {},
     width: 800,
     height: 450,
-    min_width: 400,
-    min_height: 225,
     resizable: "responsive",
     aspect_ratio: (16/9),
     panels: {
@@ -402,7 +400,7 @@ LocusZoom.StandardLayout = {
         genes: {
             width: 800,
             height: 225,
-            origin: { x: 0, y: 350 },
+            origin: { x: 0, y: 225 },
             min_width: 400,
             min_height: 112.5,
             proportional_width: 1,
@@ -769,8 +767,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     
     this.svg = null;
 
-    // The panels property stores child panel instances
     this.panels = {};
+    this.panel_ids_by_y_index = [];
+
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
@@ -817,6 +816,23 @@ LocusZoom.Instance.DefaultLayout = {
     }
 };
 
+// Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
+LocusZoom.Instance.prototype.sumProportional = function(dimension){
+    if (dimension != "height" && dimension != "width"){
+        throw ("Bad dimension value passed to LocusZoom.Instance.prototype.sumProportional");
+    }
+    var total = 0;
+    for (var id in this.panels){
+        // Ensure every panel contributing to the sum has a non-zero proportional dimension
+        if (!this.panels[id].layout["proportional_" + dimension]){
+            this.panels[id].layout["proportional_" + dimension] = 1 / Object.keys(this.panels).length;
+        }
+        total += this.panels[id].layout["proportional_" + dimension];
+    }
+    return total;
+};
+
+
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined"){
         for (func in this.onUpdateFunctions){
@@ -852,9 +868,6 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         d3.select(window).on("load.lz-"+this.id, function(){ this.setDimensions(); }.bind(this));
     }
 
-    // Set instance dimensions
-    this.setDimensions();
-
     // Add panels
     var panel_id;
     for (panel_id in this.layout.panels){
@@ -863,29 +876,71 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 
 };
 
-// Set the layout dimensions for this instance. If an SVG exists, update its dimensions.
-// If any arguments are missing, use values stored in the layout. Keep everything in agreement.
+/**
+  Set the dimensions for an instance.
+  This function works in two different ways:
+  1. If passed a discrete width and height:
+     * Adjust the instance to match those exact values (lower-bounded by minimum panel dimensions)
+     * Resize panels within the instance proportionally to match the new instance dimensions
+  2. If NOT passed discrete width and height:
+     * Assume panels within are sized and positioned correctly
+     * Calculate appropriate instance dimesions from panels contained within and update instance
+*/
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-    // Set discrete layout dimensions based on arguments
-    if (!isNaN(width) && width >= 0){
+
+    // Update minimum allowable width and height by aggregating minimums from panels.
+    var min_width = null;
+    var min_height = null;
+    for (var id in this.panels){
+        min_width = Math.max(min_width, this.panels[id].layout.min_width);
+        min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
+    }
+    this.layout.min_width = min_width;
+    this.layout.min_height = min_height;
+
+    // If width and height arguments were passed then adjust them against instance minimums if necessary.
+    // Then resize the instance and proportionally resize panels to fit inside the new instance dimensions.
+    if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
-    }
-    if (!isNaN(height) && height >= 0){
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    }
-    // Override discrete values if resizing responsively
-    if (this.layout.resizable == "responsive"){
-        if (this.svg){
-            this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
+        // Override discrete values if resizing responsively
+        if (this.layout.resizable == "responsive"){
+            if (this.svg){
+                this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
+            }
+            this.layout.height = this.layout.width / this.layout.aspect_ratio;
+            if (this.layout.height < this.layout.min_height){
+                this.layout.height = this.layout.min_height;
+                this.layout.width  = this.layout.height * this.layout.aspect_ratio;
+            }
         }
-        this.layout.height = this.layout.width / this.layout.aspect_ratio;
-        if (this.layout.height < this.layout.min_height){
-            this.layout.height = this.layout.min_height;
-            this.layout.width  = this.layout.height * this.layout.aspect_ratio;
+        // Resize/reposition panels to fit, update proportional origins if necessary
+        var y_offset = 0;
+        this.panel_ids_by_y_index.forEach(function(panel_id){
+            var panel_width = this.layout.width;
+            var panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
+            this.panels[panel_id].setDimensions(panel_width, panel_height);
+            this.panels[panel_id].setOrigin(0, y_offset);
+            this.panels[panel_id].layout.proportional_origin.x = 0;
+            this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
+            y_offset += panel_height;
+        }.bind(this));
+    }
+
+    // If width and height arguments were NOT passed then determine the instance dimensions
+    // by making it conform to panel dimensions, assuming panels are already positioned correctly.
+    else {
+        this.layout.width = 0;
+        this.layout.height = 0;
+        for (var id in this.panels){
+            this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
+            this.layout.height += this.panels[id].layout.height;
         }
     }
+
     // Keep aspect ratio in agreement with dimensions
     this.layout.aspect_ratio = this.layout.width / this.layout.height;
+
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
         if (this.layout.resizable == "responsive"){
@@ -896,17 +951,17 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.svg.attr("width", this.layout.width).attr("height", this.layout.height);
         }
     }
-    // Reposition all panels
-    this.positionPanels();
+
     // If the instance has been initialized then trigger some necessary render functions
     if (this.initialized){
         this.ui.render();
     }
+
     this.onUpdate();
     return this;
 };
 
-// Create a new panel by id and panel class
+// Create a new panel by id and layout
 LocusZoom.Instance.prototype.addPanel = function(id, layout){
     if (typeof id !== "string"){
         throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
@@ -923,39 +978,83 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
+    this.panel_ids_by_y_index.push(panel.id);
 
-    // Update minimum instance dimensions based on the minimum dimensions of all panels
-    // TODO: This logic assumes panels are always stacked vertically. More sophisticated
-    //       logic to handle arbitrary panel geometries needs to be supported.
-    var panel_min_widths = [];
-    var panel_min_heights = [];
-    for (id in this.panels){
-        panel_min_widths.push(this.panels[id].layout.min_width);
-        panel_min_heights.push(this.panels[id].layout.min_height);
+    // If not present, store the panel layout in the plot layout
+    if (typeof this.layout.panels[panel.id] == "undefined"){
+        this.layout.panels[panel.id] = this.panels[panel.id].layout;
     }
-    this.layout.min_width = Math.max.apply(null, panel_min_widths);
-    this.layout.min_height = panel_min_heights.reduce(function(a,b){ return a+b; });
 
-    // Call setDimensions() in case updated minimums need to be applied, which also calls positionPanels()
-    this.setDimensions();
+    // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
+    if (this.initialized){
+        this.positionPanels();
+    }
 
     return this.panels[panel.id];
 };
 
-// Automatically position panels based on panel positioning rules and values
-// If the plot is resizable then recalculate dimensions and position from proportional values
-LocusZoom.Instance.prototype.positionPanels = function(){
-    var id;
-    for (id in this.panels){
-        if (this.layout.resizable){
-            this.panels[id].layout.width = this.panels[id].layout.proportional_width * this.layout.width;
-            this.panels[id].layout.height = this.panels[id].layout.proportional_height * this.layout.height;
-            this.panels[id].layout.origin.x = this.panels[id].layout.proportional_origin.x * this.layout.width;
-            this.panels[id].layout.origin.y = this.panels[id].layout.proportional_origin.y * this.layout.height;
-        }
-        this.panels[id].setOrigin();
-        this.panels[id].setDimensions();
+// Remove panel by id
+LocusZoom.Instance.prototype.removePanel = function(id){
+    if (!this.panels[id]){
+        throw ("Unable to remove panel, ID not found: " + id);
     }
+
+    // Remove the svg container for the panel if it exists
+    if (this.panels[id].svg.container){
+        this.panels[id].svg.container.remove();
+    }
+
+    // Delete the panel and its presence in the layout
+    delete this.panels[id];
+    delete this.layout.panels[id];
+
+    // Remove the panel id from the y_index array
+    this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
+
+    // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
+    if (this.initialized){
+        this.positionPanels();
+    }
+
+    return this;
+};
+
+
+/**
+ Automatically position panels based on panel positioning rules and values.
+ Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
+
+ TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
+       Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
+       but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
+       That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
+*/
+LocusZoom.Instance.prototype.positionPanels = function(){
+    var total_proportional_height = this.sumProportional("height");
+    if (!total_proportional_height){
+        return this;
+    }
+
+    // Proportionally adjust all proportional heights to have a total value of 1
+    var proportional_adjustment = 1 / total_proportional_height;
+    for (var id in this.panels){
+        this.panels[id].layout.proportional_height *= proportional_adjustment;
+    }
+
+    // Update origins on all panels without changing current dimensions
+    var y_offset = 0;
+    this.panel_ids_by_y_index.forEach(function(panel_id){
+        this.panels[panel_id].setOrigin(0, y_offset);
+        this.panels[panel_id].layout.proportional_origin.x = 0;
+        y_offset += this.panels[panel_id].layout.height;
+    }.bind(this));
+    var calculated_instance_height = y_offset;
+    this.panel_ids_by_y_index.forEach(function(panel_id){
+        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_instance_height;
+    }.bind(this));
+
+    // Update dimensions on the instance to accomodate repositioned panels
+    this.setDimensions();
 };
 
 // Create all instance-level objects, initialize all child panels
@@ -982,6 +1081,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         svg: ui_svg,
         parent: this,
         is_resize_dragging: false,
+        panel_boundaries: {},
         show: function(){
             this.svg.style("display", null);
         },
@@ -989,7 +1089,13 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.svg.style("display", "none");
         },
         initialize: function(){
-            // Resize handle
+            // Initialize panel boundaries
+            /*
+            for (var panel_id in this.parent.panels){
+                this.panel_boundaries[panel_id] = this.svg.append("rect").attr("class", "lz-panel-boundary");
+            }
+            */
+            // Initialize resize handle
             if (this.parent.layout.resizable == "manual"){
                 this.resize_handle = this.svg.append("g")
                     .attr("id", this.parent.id + ".ui.resize_handle");
@@ -1015,6 +1121,19 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.render();
         },
         render: function(){
+            // Size and position panel boundaries
+            /*
+            var panel;
+            for (var panel_id in this.panel_boundaries){
+                panel = this.parent.panels[panel_id];
+                this.panel_boundaries[panel_id]
+                    .attr("width", panel.layout.width)
+                    .attr("height", panel.layout.height)
+                    .attr("x", panel.layout.origin.x)
+                    .attr("y", panel.layout.origin.y);
+            }
+            */
+            // Position resize handle
             if (this.parent.layout.resizable == "manual"){
                 this.resize_handle
                     .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
@@ -1191,6 +1310,8 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.controls.update();
         }
     }.bind(this));
+
+    this.initialized = true;
     
     return this;
 
@@ -1221,7 +1342,6 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.initialized = true;
             this.onUpdate();
         }.bind(this));
 
@@ -1256,7 +1376,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.initialized = true;
             this.onUpdate();
         }.bind(this));
 
@@ -1328,6 +1447,7 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
+    y_index: 0,
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -1337,6 +1457,8 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: 1,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    resizable: false,
+    removable: false,
     cliparea: {
         height: 0,
         width: 0,
@@ -1392,8 +1514,8 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.layout.width); }
-    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.layout.height); }
+    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.max(Math.round(+x), 0); }
+    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.max(Math.round(+y), 0); }
     if (this.initialized){ this.render(); }
     return this;
 };

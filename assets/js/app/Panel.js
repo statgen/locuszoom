@@ -62,6 +62,7 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
+    y_index: 0,
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -71,6 +72,8 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: 1,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    resizable: false,
+    removable: false,
     cliparea: {
         height: 0,
         width: 0,
@@ -126,8 +129,8 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.layout.width); }
-    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.layout.height); }
+    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.max(Math.round(+x), 0); }
+    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.max(Math.round(+y), 0); }
     if (this.initialized){ this.render(); }
     return this;
 };

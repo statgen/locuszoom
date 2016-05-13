@@ -108,10 +108,10 @@ describe('LocusZoom Core', function(){
         });
 
         it('should allow for populating an element with a predefined layout and state as separate arguments (DEPRECATED)', function(){
-            var layout = { width: 200 };
+            var layout = { foo: "bar" };
             var state = { chr: 10 };
             var instance = LocusZoom.populate("#instance_id", {}, layout, state);
-            instance.layout.width.should.be.exactly(200);
+            instance.layout.foo.should.be.exactly("bar");
             instance.layout.state.chr.should.be.exactly(10);
             assert.deepEqual(instance.state, instance.layout.state);
         });

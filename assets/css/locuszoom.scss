@@ -84,6 +84,13 @@ svg.#{$namespace}-locuszoom {
     stroke-linejoin: round;
   }
 
+  rect.#{$namespace}-panel-boundary {
+    fill: none;
+    stroke: rgb(45,45,45);
+    stroke-opacity: 0.3;
+    stroke-width: 4;
+  }
+
   .#{$namespace}-axis path,
   .#{$namespace}-axis line {
   	fill: none;
