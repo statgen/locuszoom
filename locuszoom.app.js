@@ -1126,7 +1126,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         svg: ui_svg,
         parent: this,
         is_resize_dragging: false,
-        panel_boundaries: {},
         show: function(){
             this.svg.style("display", null);
         },
@@ -1134,12 +1133,6 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.svg.style("display", "none");
         },
         initialize: function(){
-            // Initialize panel boundaries
-            /*
-            for (var panel_id in this.parent.panels){
-                this.panel_boundaries[panel_id] = this.svg.append("rect").attr("class", "lz-panel-boundary");
-            }
-            */
             // Initialize resize handle
             if (this.parent.layout.resizable == "manual"){
                 this.resize_handle = this.svg.append("g")
@@ -1166,18 +1159,6 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.render();
         },
         render: function(){
-            // Size and position panel boundaries
-            /*
-            var panel;
-            for (var panel_id in this.panel_boundaries){
-                panel = this.parent.panels[panel_id];
-                this.panel_boundaries[panel_id]
-                    .attr("width", panel.layout.width)
-                    .attr("height", panel.layout.height)
-                    .attr("x", panel.layout.origin.x)
-                    .attr("y", panel.layout.origin.y);
-            }
-            */
             // Position resize handle
             if (this.parent.layout.resizable == "manual"){
                 this.resize_handle

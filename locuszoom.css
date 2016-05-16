@@ -55,11 +55,6 @@ svg.lz-locuszoom {
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round; }
-  svg.lz-locuszoom rect.lz-panel-boundary {
-    fill: none;
-    stroke: #2d2d2d;
-    stroke-opacity: 0.3;
-    stroke-width: 4; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
