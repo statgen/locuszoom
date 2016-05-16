@@ -176,7 +176,7 @@ LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
 }, "AssociationLZ");
 
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
-    ["id","position"].forEach(function(x) {
+    ["id", "position"].forEach(function(x) {
         if (fields.indexOf(x)==-1) {
             fields.unshift(x);
             outnames.unshift(x);
@@ -199,8 +199,14 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    if (!this.params.pvaluefield) {
-        this.params.pvaluefield = "pvalue|neglog10";
+    if (!this.params.id_field) {
+        this.params.id_field = "id";
+    }
+    if (!this.params.position_field) {
+        this.params.position_field = "position";
+    }
+    if (!this.params.pvalue_field) {
+        this.params.pvalue_field = "pvalue|neglog10";
     }
 }, "LDLZ");
 
@@ -226,14 +232,14 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 
     var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
     var refVar = fields[0];
-    if ( refVar == "state" ) {
+    if (refVar == "state") {
         refVar = state.ldrefvar || chain.header.ldrefvar || "best";
     }
-    if ( refVar=="best" ) {
-        if ( !chain.body ) {
+    if (refVar == "best") {
+        if (!chain.body) {
             throw("No association data found to find best pvalue");
         }
-        refVar = chain.body[findExtremeValue(chain.body, this.params.pvaluefield)].id;
+        refVar = chain.body[findExtremeValue(chain.body, this.params.pvalue_field)][this.params.id_field];
     }
     if (!chain.header) {chain.header = {};}
     chain.header.ldrefvar = refVar;
@@ -246,21 +252,21 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 };
 
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    var leftJoin  = function(left, right, lfield, rfield) {
+    var data_source = this;
+    var leftJoin = function(left, right, lfield, rfield) {
         var i=0, j=0;
         while (i < left.length && j < right.position2.length) {
-            if (left[i].position == right.position2[j]) {
+            if (left[i][data_source.params.position_field] == right.position2[j]) {
                 left[i][lfield] = right[rfield][j];
                 i++;
                 j++;
-            } else if (left[i].position < right.position2[j]) {
+            } else if (left[i][data_source.params.position_field] < right.position2[j]) {
                 i++;
             } else {
                 j++;
             }
         }
     };
-
     leftJoin(chain.body, resp.data, outnames[0], "rsquare");
     return chain;   
 };

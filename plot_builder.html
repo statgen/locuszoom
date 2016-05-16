@@ -89,14 +89,31 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}])
+      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: { analysis: 3 }}])
       .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
       .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
 
     function addAnalysis(){
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
-      data_sources.add(ns, ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}]);
+      var shape = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"][Math.floor(Math.random()*6)];
+      var assoc_source = [ "AssociationLZ",
+                           { url: apiBase + "single/",
+                             params: {
+                               analysis: 3
+                             }
+                           }
+                         ];
+      var ld_source = [ "LDLZ",
+                        { url: apiBase + "pair/LD/",
+                          params: {
+                            pvalue_field: ns + ":pvalue|neglog10",
+                            position_field: ns + ":position",
+                            id_field: ns + ":id"
+                          }
+                        }
+                      ];
+      data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
       var layout = {
           y_index: 1,
           min_width:  400,
@@ -137,14 +154,14 @@
               },
               positions: {
                   type: "scatter",
-                  point_shape: "circle",
+                  point_shape: shape,
                   point_size: 40,
                   fields: [ns+":id",
                            ns+":position",
                            ns+":pvalue|scinotation",
                            ns+":pvalue|neglog10",
                            ns+":refAllele",
-                           "ld:state"],
+                           ns+"_ld:state"],
                   id_field: ns+":id",
                   x_axis: {
                       field: ns+":position"
@@ -157,7 +174,7 @@
                       min_extent: [ 0, 10 ]
                   },
                   color: {
-                      field: "ld:state",
+                      field: ns+"_ld:state",
                       scale_function: "numerical_bin",
                       parameters: {
                           breaks: [0, 0.2, 0.4, 0.6, 0.8],
