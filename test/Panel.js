@@ -107,8 +107,7 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
             this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
         });
-        /*
-        it('should allow setting origin only within the instance dimensions', function(){
+        it('should allow setting origin irrespective of instance dimensions', function(){
             this.instance.setDimensions(500, 600);
             this.panel.setOrigin(20, 50);
             this.panel.layout.origin.x.should.be.exactly(20);
@@ -120,10 +119,9 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.origin.x.should.be.exactly(0);
             this.panel.layout.origin.y.should.be.exactly(0);
             this.panel.setOrigin(700, 800);
-            this.panel.layout.origin.x.should.be.exactly(400);
-            this.panel.layout.origin.y.should.be.exactly(225);
+            this.panel.layout.origin.x.should.be.exactly(700);
+            this.panel.layout.origin.y.should.be.exactly(800);
         });
-        */
         it('should allow setting margin, which sets cliparea origin and dimensions', function(){
             this.panel.setMargin(1, 2, 3, 4);
             this.panel.layout.margin.top.should.be.exactly(1);

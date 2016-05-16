@@ -62,7 +62,7 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    y_index: 0,
+    y_index: null,
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
@@ -87,6 +87,23 @@ LocusZoom.Panel.DefaultLayout = {
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
+
+    // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
+    // This will default the panel to taking up the full width of the plot.
+    if (this.layout.width == 0 && this.layout.proportional_width == null){
+        this.layout.proportional_width = 1;
+    }
+
+    // If the layout is missing BOTH height and proportional height then set the proportional height to
+    // an equal share of the plot's current height.
+    if (this.layout.height == 0 && this.layout.proportional_height == null){
+        var panel_count = Object.keys(this.parent.panels).length;
+        if (panel_count > 0){
+            this.layout.proportional_height = (1 / panel_count);
+        } else {
+            this.layout.proportional_height = 1;
+        }
+    }
 
     // Set panel dimensions, origin, and margin
     this.setDimensions();

@@ -234,7 +234,18 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
-    this.panel_ids_by_y_index.push(panel.id);
+
+    // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
+    if (panel.layout.y_index != null && !isNaN(panel.layout.y_index)
+        && this.panel_ids_by_y_index.length > 0){
+        this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
+        this.panel_ids_by_y_index.forEach(function(pid, idx){
+            this.panels[pid].layout.y_index = idx;
+        }.bind(this));
+    } else {
+        var length = this.panel_ids_by_y_index.push(panel.id);
+        this.panels[panel.id].layout.y_index = length - 1;
+    }
 
     // If not present, store the panel layout in the plot layout
     if (typeof this.layout.panels[panel.id] == "undefined"){
@@ -244,6 +255,12 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
         this.positionPanels();
+        // Initialize and load data into the new panel
+        this.panels[panel.id].initialize();
+        this.panels[panel.id].reMap();
+        // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
+        // positioning. TODO: make this additional call unnecessary.
+        this.setDimensions(this.layout.width, this.layout.height);
     }
 
     return this.panels[panel.id];

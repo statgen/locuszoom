@@ -100,26 +100,24 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.should.not.have.property("panelA");
             this.plot.layout.panels.should.not.have.property("panelA");
         });
-        /*
         it('should allow setting dimensions, bounded by layout minimums', function(){          
             this.plot.setDimensions(563, 681);
             this.plot.layout.width.should.be.exactly(563);
             this.plot.layout.height.should.be.exactly(681);
             this.plot.layout.aspect_ratio.should.be.exactly(563/681);
             this.plot.setDimensions(1320.3, -50);
-            this.plot.layout.width.should.be.exactly(1320);
+            this.plot.layout.width.should.be.exactly(563);
             this.plot.layout.height.should.be.exactly(681);
-            this.plot.layout.aspect_ratio.should.be.exactly(1320/681);
+            this.plot.layout.aspect_ratio.should.be.exactly(563/681);
             this.plot.setDimensions("q", 0);
-            this.plot.layout.width.should.be.exactly(1320);
-            this.plot.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
-            this.plot.layout.aspect_ratio.should.be.exactly(1320/LocusZoom.StandardLayout.min_height);
-            this.plot.setDimensions(0, 0);
+            this.plot.layout.width.should.be.exactly(563);
+            this.plot.layout.height.should.be.exactly(681);
+            this.plot.layout.aspect_ratio.should.be.exactly(563/681);
+            this.plot.setDimensions(1, 1);
             this.plot.layout.width.should.be.exactly(LocusZoom.StandardLayout.min_width);
             this.plot.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
             this.plot.layout.aspect_ratio.should.be.exactly(LocusZoom.StandardLayout.min_width/LocusZoom.StandardLayout.min_height);
         });
-        */
         it('should enforce minimum dimensions based on its panels', function(){
             this.plot.addPanel("p1", { width: 50, height: 30, min_width: 50, min_height: 30 });
             this.plot.addPanel("p2", { width: 20, height: 10, min_width: 20, min_height: 10 });
@@ -129,34 +127,16 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.width.should.be.exactly(this.plot.layout.min_width);
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
-        /*
-        it('should allow for responsively setting dimensions using a predefined aspect ratio', function(){
-            var layout = LocusZoom.mergeLayouts({ aspect_ratio: 2 }, LocusZoom.StandardLayout);
-            this.plot = LocusZoom.populate("#plot", {}, layout);
-            this.plot.layout.aspect_ratio.should.be.exactly(2);
-            assert.equal(this.plot.layout.width/this.plot.layout.height, 2);
-            this.plot.setDimensions(2000);
-            this.plot.layout.aspect_ratio.should.be.exactly(2);
-            assert.equal(this.plot.layout.width/this.plot.layout.height, 2);
-            this.plot.setDimensions(900, 900);
-            this.plot.layout.aspect_ratio.should.be.exactly(2);
-            assert.equal(this.plot.layout.width/this.plot.layout.height, 2);
-        });
-        */
-        /*
         it('should allow for responsively positioning panels using a proportional dimensions', function(){
             var responsive_layout = LocusZoom.mergeLayouts({
                 resizable: "responsive",
                 aspect_ratio: 2,
                 panels: {
-                    positions: { proportional_width: 1, proportional_height: 0.6 },
-                    genes:     { proportional_width: 1, proportional_height: 0.4 }
+                    positions: { proportional_width: 1, proportional_height: 0.6, min_height: 60 },
+                    genes:     { proportional_width: 1, proportional_height: 0.4, min_height: 40 }
                 }
             }, LocusZoom.StandardLayout);
             this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
-            console.log(this.plot.layout);
-            console.log(this.plot.panels.positions.layout);
-            console.log(this.plot.panels.genes.layout);
             assert.equal(this.plot.layout.panels.positions.height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels.genes.height/this.plot.layout.height, 0.4);
             this.plot.setDimensions(2000);
@@ -169,7 +149,6 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.plot.layout.panels.positions.height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels.genes.height/this.plot.layout.height, 0.4);
         });
-        */
         it('should not allow for a non-numerical / non-positive predefined dimensions', function(){
             assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 0, height: 0 }) });
             assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 20, height: -20 }) });
@@ -281,6 +260,7 @@ describe('LocusZoom.Instance', function(){
 
     describe("Dynamic Panel Positioning", function() {
         beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
             this.layout = {
                 width: 100,
                 height: 100,
@@ -292,7 +272,7 @@ describe('LocusZoom.Instance', function(){
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
-            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
         });
         it('Should adjust the size of the plot if a single panel is added that does not completely fill it', function(){
             var panelA = { width: 100, height: 50 };
@@ -348,6 +328,18 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(0);
             this.plot.panels.panelB.layout.origin.y.should.be.exactly(0);
             this.plot.sumProportional("height").should.be.exactly(1);
+        });
+        it('Should allow for inserting panels at discrete y indexes', function(){
+            var panelA = { width: 100, height: 60 };
+            var panelB = { width: 100, height: 60 };
+            this.plot.addPanel('panelA', panelA);
+            this.plot.addPanel('panelB', panelB);
+            var panelC = { width: 100, height: 60, y_index: 1 };
+            this.plot.addPanel('panelC', panelC);
+            this.plot.panels.panelA.layout.y_index.should.be.exactly(0);
+            this.plot.panels.panelB.layout.y_index.should.be.exactly(2);
+            this.plot.panels.panelC.layout.y_index.should.be.exactly(1);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["panelA", "panelC", "panelB"]);
         });
     });
 
