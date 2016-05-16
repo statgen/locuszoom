@@ -90,12 +90,12 @@ describe('LocusZoom.Panel', function(){
             this.panel.setDimensions(840, 560);
             this.panel.layout.should.have.property('width').which.is.exactly(840);
             this.panel.layout.should.have.property('height').which.is.exactly(560);
-            this.panel.setDimensions(675.3, -50);
-            this.panel.layout.should.have.property('width').which.is.exactly(675);
+            this.panel.setDimensions(9000, -50);
+            this.panel.layout.should.have.property('width').which.is.exactly(840);
             this.panel.layout.should.have.property('height').which.is.exactly(560);
             this.panel.setDimensions("q", 942);
-            this.panel.layout.should.have.property('width').which.is.exactly(675);
-            this.panel.layout.should.have.property('height').which.is.exactly(942);
+            this.panel.layout.should.have.property('width').which.is.exactly(840);
+            this.panel.layout.should.have.property('height').which.is.exactly(560);
         });
         it('should enforce minimum dimensions', function(){
             this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);

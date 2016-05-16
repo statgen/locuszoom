@@ -45,6 +45,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
         instance.setDimensions();
+        instance.positionPanels();
         // Initialize the instance
         instance.initialize();
         // If the instance has defined data sources then trigger its first mapping based on state values

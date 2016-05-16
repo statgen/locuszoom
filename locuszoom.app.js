@@ -59,6 +59,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
         instance.setDimensions();
+        instance.positionPanels();
         // Initialize the instance
         instance.initialize();
         // If the instance has defined data sources then trigger its first mapping based on state values
@@ -895,8 +896,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         min_width = Math.max(min_width, this.panels[id].layout.min_width);
         min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
     }
-    this.layout.min_width = min_width;
-    this.layout.min_height = min_height;
+    this.layout.min_width = Math.max(min_width, 1);
+    this.layout.min_height = Math.max(min_height, 1);
 
     // If width and height arguments were passed then adjust them against instance minimums if necessary.
     // Then resize the instance and proportionally resize panels to fit inside the new instance dimensions.
@@ -927,15 +928,17 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }.bind(this));
     }
 
-    // If width and height arguments were NOT passed then determine the instance dimensions
+    // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
     // by making it conform to panel dimensions, assuming panels are already positioned correctly.
-    else {
+    else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
         this.layout.height = 0;
         for (var id in this.panels){
             this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
             this.layout.height += this.panels[id].layout.height;
         }
+        this.layout.width = Math.max(this.layout.width, this.layout.min_width);
+        this.layout.height = Math.max(this.layout.height, this.layout.min_height);
     }
 
     // Keep aspect ratio in agreement with dimensions
@@ -1030,18 +1033,30 @@ LocusZoom.Instance.prototype.removePanel = function(id){
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
 LocusZoom.Instance.prototype.positionPanels = function(){
+
+    // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
+    // proportional heights for all panels with a null value from discretely set dimensions.
+    // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
+    for (var id in this.panels){
+        if (this.panels[id].layout.proportional_height == null){
+            this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
+        }
+        if (this.panels[id].layout.proportional_width == null){
+            this.panels[id].layout.proportional_width = 1;
+        }
+    }
+
+    // Sum the proportional heights and then adjust all proportionally so that the sum is exactly 1
     var total_proportional_height = this.sumProportional("height");
     if (!total_proportional_height){
         return this;
     }
-
-    // Proportionally adjust all proportional heights to have a total value of 1
     var proportional_adjustment = 1 / total_proportional_height;
     for (var id in this.panels){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
-    // Update origins on all panels without changing current dimensions
+    // Update origins on all panels without changing instance-level dimensions yet
     var y_offset = 0;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setOrigin(0, y_offset);
@@ -1055,6 +1070,13 @@ LocusZoom.Instance.prototype.positionPanels = function(){
 
     // Update dimensions on the instance to accomodate repositioned panels
     this.setDimensions();
+
+    // Set dimensions on all panels using newly set instance-level dimensions and panel-level proportional dimensions
+    this.panel_ids_by_y_index.forEach(function(panel_id){
+        this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
+                                            this.layout.height * this.panels[panel_id].layout.proportional_height);
+    }.bind(this));
+    
 };
 
 // Create all instance-level objects, initialize all child panels
@@ -1451,10 +1473,10 @@ LocusZoom.Panel.DefaultLayout = {
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
-    min_width: 0,
-    min_height: 0,
-    proportional_width: 1,
-    proportional_height: 1,
+    min_width: 1,
+    min_height: 1,
+    proportional_width: null,
+    proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     resizable: false,
@@ -1501,14 +1523,21 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (!isNaN(width) && width >= 0){
-        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+    if (typeof width != "undefined" && typeof height != "undefined"){
+        if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
+            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+        }
+    } else {
+        if (this.layout.proportional_width != null){
+            this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
+        }
+        if (this.layout.proportional_height != null){
+            this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+        }
     }
-    if (!isNaN(height) && height >= 0){
-        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);    
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);    
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -1536,8 +1565,11 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
         this.layout.margin.left -= extra;
         this.layout.margin.right -= extra;
     }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    ["top", "right", "bottom", "left"].forEach(function(m){
+        this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+    }.bind(this));
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
 

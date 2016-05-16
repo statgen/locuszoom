@@ -42,7 +42,7 @@ describe('LocusZoom.Instance', function(){
 
     describe("Constructor", function() {
         beforeEach(function() {
-            this.instance = new LocusZoom.Instance("instance_id");
+            this.instance = new LocusZoom.Instance("plot");
         });
         it("returns an object", function() {
             this.instance.should.be.an.Object;
@@ -59,12 +59,12 @@ describe('LocusZoom.Instance', function(){
     });
 
     describe("Geometry and Panels", function() {
-        beforeEach(function() {
+        beforeEach(function(){
             this.layout = {
                 width: 100,
                 height: 100,
-                min_width: 100,
-                min_height: 100,
+                min_width: 1,
+                min_height: 1,
                 resizable: false,
                 aspect_ratio: 1,
                 panels: {},
@@ -72,6 +72,10 @@ describe('LocusZoom.Instance', function(){
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", {}, this.layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
         });
         it('should allow for adding arbitrarily many panels', function(){
             this.plot.addPanel.should.be.a.Function;
@@ -115,23 +119,20 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
             this.plot.layout.aspect_ratio.should.be.exactly(LocusZoom.StandardLayout.min_width/LocusZoom.StandardLayout.min_height);
         });
+        */
         it('should enforce minimum dimensions based on its panels', function(){
+            this.plot.addPanel("p1", { width: 50, height: 30, min_width: 50, min_height: 30 });
+            this.plot.addPanel("p2", { width: 20, height: 10, min_width: 20, min_height: 10 });
             this.plot.setDimensions(1, 1);
-            var calculated_min_width = 0;
-            var calculated_min_height = 0;
-            var panel;
-            for (panel in this.plot.panels){
-                calculated_min_width = Math.max(calculated_min_width, this.plot.panels[panel].layout.min_width);
-                calculated_min_height += this.plot.panels[panel].layout.min_height;
-            }
-            assert.equal(this.plot.layout.min_width, calculated_min_width);
-            assert.equal(this.plot.layout.min_height, calculated_min_height);
-            this.plot.layout.width.should.not.be.lessThan(this.plot.layout.min_width);
-            this.plot.layout.height.should.not.be.lessThan(this.plot.layout.min_height);
+            assert.equal(this.plot.layout.min_width, 50);
+            assert.equal(this.plot.layout.min_height, 40);
+            this.plot.layout.width.should.be.exactly(this.plot.layout.min_width);
+            this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
+        /*
         it('should allow for responsively setting dimensions using a predefined aspect ratio', function(){
             var layout = LocusZoom.mergeLayouts({ aspect_ratio: 2 }, LocusZoom.StandardLayout);
-            this.plot = LocusZoom.populate("#instance_id", {}, layout);
+            this.plot = LocusZoom.populate("#plot", {}, layout);
             this.plot.layout.aspect_ratio.should.be.exactly(2);
             assert.equal(this.plot.layout.width/this.plot.layout.height, 2);
             this.plot.setDimensions(2000);
@@ -141,6 +142,8 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.aspect_ratio.should.be.exactly(2);
             assert.equal(this.plot.layout.width/this.plot.layout.height, 2);
         });
+        */
+        /*
         it('should allow for responsively positioning panels using a proportional dimensions', function(){
             var responsive_layout = LocusZoom.mergeLayouts({
                 resizable: "responsive",
@@ -150,7 +153,10 @@ describe('LocusZoom.Instance', function(){
                     genes:     { proportional_width: 1, proportional_height: 0.4 }
                 }
             }, LocusZoom.StandardLayout);
-            this.plot = LocusZoom.populate("#instance_id", {}, responsive_layout);
+            this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
+            console.log(this.plot.layout);
+            console.log(this.plot.panels.positions.layout);
+            console.log(this.plot.panels.genes.layout);
             assert.equal(this.plot.layout.panels.positions.height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels.genes.height/this.plot.layout.height, 0.4);
             this.plot.setDimensions(2000);
@@ -165,27 +171,27 @@ describe('LocusZoom.Instance', function(){
         });
         */
         it('should not allow for a non-numerical / non-positive predefined dimensions', function(){
-            assert.throws(function(){ this.plot = LocusZoom.populate("#instance_id", {}, { width: 0, height: 0 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#instance_id", {}, { width: 20, height: -20 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#instance_id", {}, { width: "foo", height: 40 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#instance_id", {}, { width: 60, height: [1,2] }) });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 0, height: 0 }) });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 20, height: -20 }) });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: "foo", height: 40 }) });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 60, height: [1,2] }) });
         });
         it('should not allow for a non-numerical / non-positive predefined aspect ratio', function(){
             assert.throws(function(){
                 var responsive_layout = { resizable: "responsive", aspect_ratio: 0 };
-                this.plot = LocusZoom.populate("#instance_id", {}, responsive_layout);
+                this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
                 var responsive_layout = { resizable: "responsive", aspect_ratio: -1 };
-                this.plot = LocusZoom.populate("#instance_id", {}, responsive_layout);
+                this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
                 var responsive_layout = { resizable: "responsive", aspect_ratio: "foo" };
-                this.plot = LocusZoom.populate("#instance_id", {}, responsive_layout);
+                this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
                 var responsive_layout = { resizable: "responsive", aspect_ratio: [1,2,3] };
-                this.plot = LocusZoom.populate("#instance_id", {}, responsive_layout);
+                this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
         });
     });
@@ -193,38 +199,38 @@ describe('LocusZoom.Instance', function(){
     describe("SVG Composition", function() {
         describe("Mouse Guide Layer", function() {
             beforeEach(function(){
-                d3.select("body").append("div").attr("id", "instance_id");
-                this.instance = LocusZoom.populate("#instance_id");
+                d3.select("body").append("div").attr("id", "plot");
+                this.instance = LocusZoom.populate("#plot");
             });
             it('first child should be a mouse guide layer group element', function(){
-                d3.select(this.instance.svg.node().firstChild).attr("id").should.be.exactly("instance_id.mouse_guide");
+                d3.select(this.instance.svg.node().firstChild).attr("id").should.be.exactly("plot.mouse_guide");
             });
             it('should have a mouse guide object with mouse guide svg selectors', function(){
                 this.instance.mouse_guide.should.be.an.Object;
                 this.instance.mouse_guide.svg.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.svg.html(), this.instance.svg.select("#instance_id\\.mouse_guide").html());
+                assert.equal(this.instance.mouse_guide.svg.html(), this.instance.svg.select("#plot\\.mouse_guide").html());
                 this.instance.mouse_guide.vertical.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.vertical.html(), this.instance.svg.select("#instance_id\\.mouse_guide rect.lz-mouse_guide-vertical").html());
+                assert.equal(this.instance.mouse_guide.vertical.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-vertical").html());
                 this.instance.mouse_guide.horizontal.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#instance_id\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
+                assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
             });
         });
         describe("UI Layer", function() {
             beforeEach(function(){
-                d3.select("body").append("div").attr("id", "instance_id");
-                this.instance = LocusZoom.populate("#instance_id");
+                d3.select("body").append("div").attr("id", "plot");
+                this.instance = LocusZoom.populate("#plot");
             });
             it('second-to-last child should be a ui group element', function(){
                 var childNodes = this.instance.svg.node().childNodes.length;
-                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("instance_id.ui");
+                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("plot.ui");
                 d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("class").should.be.exactly("lz-ui");
             });
             it('should have a ui object with ui svg selectors', function(){
                 this.instance.ui.should.be.an.Object;
                 this.instance.ui.svg.should.be.an.Object;
-                assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#instance_id\\.ui").html());
+                assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#plot\\.ui").html());
                 if (this.instance.layout.resizable == "manual"){
-                    assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#instance_id\\.ui\\.resize_handle").html());
+                    assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#plot\\.ui\\.resize_handle").html());
                 }
             });
             it('should be hidden by default', function(){
@@ -244,17 +250,17 @@ describe('LocusZoom.Instance', function(){
         });
         describe("Curtain Layer", function() {
             beforeEach(function(){
-                d3.select("body").append("div").attr("id", "instance_id");
-                this.instance = LocusZoom.populate("#instance_id");
+                d3.select("body").append("div").attr("id", "plot");
+                this.instance = LocusZoom.populate("#plot");
             });
             it('last child should be a curtain group element', function(){
-                d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("instance_id.curtain");
+                d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("plot.curtain");
                 d3.select(this.instance.svg.node().lastChild).attr("class").should.be.exactly("lz-curtain");
             });
             it('should have a curtain object with stored svg selector', function(){
                 this.instance.curtain.should.be.an.Object;
                 this.instance.curtain.svg.should.be.an.Object;
-                assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#instance_id\\.curtain").html());
+                assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#plot\\.curtain").html());
             });
             it('should be hidden by default', function(){
                 assert.equal(this.instance.curtain.svg.style("display"), "none");

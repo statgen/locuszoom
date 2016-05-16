@@ -66,10 +66,10 @@ LocusZoom.Panel.DefaultLayout = {
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
-    min_width: 0,
-    min_height: 0,
-    proportional_width: 1,
-    proportional_height: 1,
+    min_width: 1,
+    min_height: 1,
+    proportional_width: null,
+    proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     resizable: false,
@@ -116,14 +116,21 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (!isNaN(width) && width >= 0){
-        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+    if (typeof width != "undefined" && typeof height != "undefined"){
+        if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
+            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+        }
+    } else {
+        if (this.layout.proportional_width != null){
+            this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
+        }
+        if (this.layout.proportional_height != null){
+            this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+        }
     }
-    if (!isNaN(height) && height >= 0){
-        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);    
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);    
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -151,8 +158,11 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
         this.layout.margin.left -= extra;
         this.layout.margin.right -= extra;
     }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    ["top", "right", "bottom", "left"].forEach(function(m){
+        this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+    }.bind(this));
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
 
