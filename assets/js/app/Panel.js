@@ -72,8 +72,8 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    resizable: false,
-    removable: false,
+    resizable: true,
+    removable: true,
     cliparea: {
         height: 0,
         width: 0,

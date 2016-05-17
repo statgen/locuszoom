@@ -96,9 +96,13 @@ describe('LocusZoom.Instance', function(){
             this.plot.removePanel.should.be.a.Function;
             var panelA = this.plot.addPanel("panelA", { foo: "bar" });
             var panelB = this.plot.addPanel("panelB", { foo: "baz" });
+            this.plot.panels.should.have.property("panelA");
+            this.plot.layout.panels.should.have.property("panelA");
+            this.plot.layout.state.should.have.property("panelA");
             this.plot.removePanel("panelA");
             this.plot.panels.should.not.have.property("panelA");
             this.plot.layout.panels.should.not.have.property("panelA");
+            this.plot.layout.state.should.not.have.property("panelA");
         });
         it('should allow setting dimensions, bounded by layout minimums', function(){          
             this.plot.setDimensions(563, 681);

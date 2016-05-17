@@ -1028,15 +1028,25 @@ LocusZoom.Instance.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
     }
+    if (!this.panels[id].layout.removable){
+        throw ("Unable to remove panel, panel is marked as not removable");
+    }
+
+    // Destroy all tooltips and state vars for all data layers on the panel
+    this.panels[id].data_layer_ids_by_z_index.forEach(function(dlid){
+        this.panels[id].data_layers[dlid].destroyAllTooltips();
+        delete this.layout.state[id + "." + dlid];
+    }.bind(this));
 
     // Remove the svg container for the panel if it exists
     if (this.panels[id].svg.container){
         this.panels[id].svg.container.remove();
     }
 
-    // Delete the panel and its presence in the layout
+    // Delete the panel and its presence in the plot layout and state
     delete this.panels[id];
     delete this.layout.panels[id];
+    delete this.layout.state[id];
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
@@ -1044,6 +1054,9 @@ LocusZoom.Instance.prototype.removePanel = function(id){
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
         this.positionPanels();
+        // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
+        // positioning. TODO: make this additional call unnecessary.
+        this.setDimensions(this.layout.width, this.layout.height);
     }
 
     return this;
@@ -1342,6 +1355,10 @@ LocusZoom.Instance.prototype.initialize = function(){
     }.bind(this));
 
     this.initialized = true;
+
+    // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
+    // positioning. TODO: make this additional call unnecessary.
+    this.setDimensions(this.layout.width, this.layout.height);
     
     return this;
 
@@ -1487,8 +1504,8 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    resizable: false,
-    removable: false,
+    resizable: true,
+    removable: true,
     cliparea: {
         height: 0,
         width: 0,
