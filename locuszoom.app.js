@@ -322,7 +322,7 @@ LocusZoom.StandardLayout = {
     aspect_ratio: (16/9),
     panels: {
         positions: {
-            title: "Lorem Ispum",
+            title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
@@ -1538,7 +1538,7 @@ LocusZoom.Panel.DefaultLayout = {
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     controls: {
         description: true,
-        y_index: true,
+        reposition: true,
         remove: true
     },
     cliparea: {
@@ -1717,6 +1717,15 @@ LocusZoom.Panel.prototype.initialize = function(){
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
                 .style({ position: "absolute" });
+            // Description button
+            if (this.layout.controls.description){
+                this.controls.selector.append("a")
+                    .attr("class", "lz-controls-button")
+                    .attr("title", "Panel information")
+                    .style({ "font-weight": "bold" })
+                    .text("?");
+            }
+            // Remove button
             if (this.layout.controls.remove){
                 this.controls.selector.append("a")
                     .attr("class", "lz-controls-button")

@@ -100,11 +100,11 @@
 
     function addAnalysis(){
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
-      var shape = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"][Math.floor(Math.random()*6)];
+      var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
                            { url: apiBase + "single/",
                              params: {
-                               analysis: 3
+                               analysis: analysis
                              }
                            }
                          ];
@@ -119,7 +119,7 @@
                       ];
       data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
       var layout = {
-          title: ns,
+          title: "Analysis ID: " + analysis,
           description: ns,
           y_index: -1,
           min_width:  400,
@@ -160,7 +160,7 @@
               },
               positions: {
                   type: "scatter",
-                  point_shape: shape,
+                  point_shape: "circle",
                   point_size: 40,
                   fields: [ns+":id",
                            ns+":position",

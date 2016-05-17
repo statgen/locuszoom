@@ -308,7 +308,7 @@ LocusZoom.StandardLayout = {
     aspect_ratio: (16/9),
     panels: {
         positions: {
-            title: "Lorem Ispum",
+            title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
