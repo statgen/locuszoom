@@ -84,6 +84,11 @@ svg.#{$namespace}-locuszoom {
     stroke-linejoin: round;
   }
 
+  .#{$namespace}-panel-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
   .#{$namespace}-axis path,
   .#{$namespace}-axis line {
   	fill: none;

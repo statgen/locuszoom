@@ -322,6 +322,8 @@ LocusZoom.StandardLayout = {
     aspect_ratio: (16/9),
     panels: {
         positions: {
+            title: "Lorem Ispum",
+            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
@@ -330,7 +332,7 @@ LocusZoom.StandardLayout = {
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
-            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            margin: { top: 35, right: 20, bottom: 35, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
@@ -1494,6 +1496,8 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
+    title: null,
+    description: null,
     y_index: null,
     width:  0,
     height: 0,
@@ -1675,6 +1679,24 @@ LocusZoom.Panel.prototype.initialize = function(){
     // If the layout defines an inner border render it before rendering axes
     if (this.layout.inner_border){
         this.inner_border = this.svg.group.append("rect");
+    }
+
+    // Add the title, if defined
+    if (this.layout.title){
+        var default_x = 10;
+        var default_y = 22;
+        if (typeof this.layout.title == "string"){
+            this.layout.title = {
+                text: this.layout.title,
+                x: default_x,
+                y: default_y
+            };
+        }
+        this.svg.group.append("text")
+            .attr("class", "lz-panel-title")
+            .attr("x", parseFloat(this.layout.title.x) || default_x)
+            .attr("y", parseFloat(this.layout.title.y) || default_y)
+            .text(this.layout.title.text);
     }
 
     // Initialize Axes

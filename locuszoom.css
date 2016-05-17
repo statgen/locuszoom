@@ -55,6 +55,9 @@ svg.lz-locuszoom {
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-panel-title {
+    font-size: 18px;
+    font-weight: 600; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;

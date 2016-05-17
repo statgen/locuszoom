@@ -120,10 +120,12 @@
                       ];
       data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
       var layout = {
+          title: ns,
+          description: ns,
           y_index: -1,
           min_width:  400,
           min_height: 112.5,
-          margin: { top: 20, right: 20, bottom: 35, left: 50 },
+          margin: { top: 35, right: 20, bottom: 35, left: 50 },
           inner_border: "rgba(210, 210, 210, 0.85)",
           axes: {
               x: {
