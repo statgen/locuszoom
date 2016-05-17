@@ -123,24 +123,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }
     };
 
-    // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
-    // (useful for custom reimplementations this.positionTooltip())
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
-        var container = this.parent.parent.svg.node();
-        while (container.parentNode != null){
-            container = container.parentNode;
-            if (container != document && d3.select(container).style("position") != "static"){
-                x_offset = -1 * container.getBoundingClientRect().left;
-                y_offset = -1 * container.getBoundingClientRect().top;
-                break;
-            }
-        }
+        var panel_origin = this.parent.getPageOrigin();
         return {
-            x: x_offset + bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
-            y: y_offset + bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top
+            x: panel_origin.x + this.parent.layout.margin.left,
+            y: panel_origin.y + this.parent.layout.margin.top
         };
     };
     

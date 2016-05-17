@@ -227,3 +227,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   .lz-locuszoom-controls .lz-controls-button-disabled:hover {
     cursor: wait;
     background-color: #D8D8D8; }
+
+.lz-locuszoom-panel-controls {
+  padding-top: 4px;
+  padding-right: 4px; }

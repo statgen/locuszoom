@@ -47,6 +47,27 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Array of functions to call when the plot is updated
     this.onUpdateFunctions = [];
 
+    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the plot
+    this.getPageOrigin = function(){
+        var bounding_client_rect = this.svg.node().getBoundingClientRect();
+        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        var container = this.svg.node();
+        while (container.parentNode != null){
+            container = container.parentNode;
+            if (container != document && d3.select(container).style("position") != "static"){
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
+        return {
+            x: x_offset + bounding_client_rect.left,
+            y: y_offset + bounding_client_rect.top
+        };
+    };
+
     // Initialize the layout
     this.initializeLayout();
 
@@ -274,9 +295,6 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
 LocusZoom.Instance.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
-    }
-    if (!this.panels[id].layout.removable){
-        throw ("Unable to remove panel, panel is marked as not removable");
     }
 
     // Destroy all tooltips and state vars for all data layers on the panel
@@ -563,11 +581,11 @@ LocusZoom.Instance.prototype.initialize = function(){
     if (this.layout.controls.show == "always"){
         this.controls.show();
     } else if (this.layout.controls.show == "onmouseover"){
-        d3.select(this.svg.node().parentNode).on("mouseover", function(){
+        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".controls", function(){
             clearTimeout(this.controls.hide_timeout);
             this.controls.show();
         }.bind(this));
-        d3.select(this.svg.node().parentNode).on("mouseout", function(){
+        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".controls", function(){
             this.controls.hide_timeout = setTimeout(function(){
                 this.controls.hide();
             }.bind(this), this.layout.controls.hide_delay);

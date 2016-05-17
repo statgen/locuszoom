@@ -53,6 +53,16 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.onUpdate = function(){
         this.parent.onUpdate();
     };
+    
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
+    this.getPageOrigin = function(){
+        var instance_origin = this.parent.getPageOrigin();
+        return {
+            x: instance_origin.x + this.layout.origin.x,
+            y: instance_origin.y + this.layout.origin.y
+        };
+    };
 
     // Initialize the layout
     this.initializeLayout();
@@ -74,8 +84,11 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    resizable: true,
-    removable: true,
+    controls: {
+        description: true,
+        y_index: true,
+        remove: true
+    },
     cliparea: {
         height: 0,
         width: 0,
@@ -241,6 +254,53 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.curtain.svg.append("text")
         .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
+
+    // Initialize controls element
+    this.controls = {
+        selector: null,
+        hide_timeout: null,
+        show: function(){
+            if (!this.layout.controls || this.controls.selector){ return; }
+            this.controls.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
+                .attr("id", this.getBaseId() + ".controls")
+                .style({ position: "absolute" });
+            if (this.layout.controls.remove){
+                this.controls.selector.append("a")
+                    .attr("class", "lz-controls-button")
+                    .attr("title", "Remove panel")
+                    .style({ "font-weight": "bold" })
+                    .text("×")
+                    .on("click", function(){ this.parent.removePanel(this.id) }.bind(this));
+            }
+        }.bind(this),
+        position: function(){
+            var page_origin = this.getPageOrigin();
+            var client_rect = this.controls.selector.node().getBoundingClientRect();
+            var top = page_origin.y.toString() + "px";
+            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
+            this.controls.selector.style({ position: "absolute", top: top, left: left });
+        }.bind(this),
+        hide: function(){
+            if (!this.layout.controls || !this.controls.selector){ return; }
+            this.controls.selector.remove();
+            this.controls.selector = null;
+        }.bind(this)
+    };
+
+    // If controls are defined add mouseover controls to the plot container to show/hide them
+    if (this.layout.controls){
+        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
+            clearTimeout(this.controls.hide_timeout);
+            this.controls.show();
+            this.controls.position();
+        }.bind(this));
+        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
+            this.controls.hide_timeout = setTimeout(function(){
+                this.controls.hide();
+            }.bind(this), 100);
+        }.bind(this));
+    }
 
     // If the layout defines an inner border render it before rendering axes
     if (this.layout.inner_border){

@@ -74,7 +74,6 @@
 
     <div class="row" id="panels">
       <button onclick="addAnalysis();">Add Analysis</button>
-      <button id="remove_positions" onclick="plot.removePanel('positions'); $('#remove_positions').remove();">Remove positions</button>
     </div>
 
   </div>
@@ -200,7 +199,6 @@
           }
       };
       plot.addPanel(ns, layout);
-      $("#panels").append("<button id=\"remove_" + ns + "\" onclick=\"plot.removePanel('" + ns + "'); $('#remove_" + ns + "').remove();\">Remove " + ns + "</button>");
     }
 
     var plot;

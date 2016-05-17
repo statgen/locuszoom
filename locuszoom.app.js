@@ -802,6 +802,27 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Array of functions to call when the plot is updated
     this.onUpdateFunctions = [];
 
+    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the plot
+    this.getPageOrigin = function(){
+        var bounding_client_rect = this.svg.node().getBoundingClientRect();
+        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        var container = this.svg.node();
+        while (container.parentNode != null){
+            container = container.parentNode;
+            if (container != document && d3.select(container).style("position") != "static"){
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
+        return {
+            x: x_offset + bounding_client_rect.left,
+            y: y_offset + bounding_client_rect.top
+        };
+    };
+
     // Initialize the layout
     this.initializeLayout();
 
@@ -1029,9 +1050,6 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
 LocusZoom.Instance.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
-    }
-    if (!this.panels[id].layout.removable){
-        throw ("Unable to remove panel, panel is marked as not removable");
     }
 
     // Destroy all tooltips and state vars for all data layers on the panel
@@ -1318,11 +1336,11 @@ LocusZoom.Instance.prototype.initialize = function(){
     if (this.layout.controls.show == "always"){
         this.controls.show();
     } else if (this.layout.controls.show == "onmouseover"){
-        d3.select(this.svg.node().parentNode).on("mouseover", function(){
+        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".controls", function(){
             clearTimeout(this.controls.hide_timeout);
             this.controls.show();
         }.bind(this));
-        d3.select(this.svg.node().parentNode).on("mouseout", function(){
+        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".controls", function(){
             this.controls.hide_timeout = setTimeout(function(){
                 this.controls.hide();
             }.bind(this), this.layout.controls.hide_delay);
@@ -1487,6 +1505,16 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.onUpdate = function(){
         this.parent.onUpdate();
     };
+    
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
+    this.getPageOrigin = function(){
+        var instance_origin = this.parent.getPageOrigin();
+        return {
+            x: instance_origin.x + this.layout.origin.x,
+            y: instance_origin.y + this.layout.origin.y
+        };
+    };
 
     // Initialize the layout
     this.initializeLayout();
@@ -1508,8 +1536,11 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    resizable: true,
-    removable: true,
+    controls: {
+        description: true,
+        y_index: true,
+        remove: true
+    },
     cliparea: {
         height: 0,
         width: 0,
@@ -1675,6 +1706,53 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.curtain.svg.append("text")
         .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
+
+    // Initialize controls element
+    this.controls = {
+        selector: null,
+        hide_timeout: null,
+        show: function(){
+            if (!this.layout.controls || this.controls.selector){ return; }
+            this.controls.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
+                .attr("id", this.getBaseId() + ".controls")
+                .style({ position: "absolute" });
+            if (this.layout.controls.remove){
+                this.controls.selector.append("a")
+                    .attr("class", "lz-controls-button")
+                    .attr("title", "Remove panel")
+                    .style({ "font-weight": "bold" })
+                    .text("×")
+                    .on("click", function(){ this.parent.removePanel(this.id) }.bind(this));
+            }
+        }.bind(this),
+        position: function(){
+            var page_origin = this.getPageOrigin();
+            var client_rect = this.controls.selector.node().getBoundingClientRect();
+            var top = page_origin.y.toString() + "px";
+            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
+            this.controls.selector.style({ position: "absolute", top: top, left: left });
+        }.bind(this),
+        hide: function(){
+            if (!this.layout.controls || !this.controls.selector){ return; }
+            this.controls.selector.remove();
+            this.controls.selector = null;
+        }.bind(this)
+    };
+
+    // If controls are defined add mouseover controls to the plot container to show/hide them
+    if (this.layout.controls){
+        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
+            clearTimeout(this.controls.hide_timeout);
+            this.controls.show();
+            this.controls.position();
+        }.bind(this));
+        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
+            this.controls.hide_timeout = setTimeout(function(){
+                this.controls.hide();
+            }.bind(this), 100);
+        }.bind(this));
+    }
 
     // If the layout defines an inner border render it before rendering axes
     if (this.layout.inner_border){
@@ -2123,24 +2201,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }
     };
 
-    // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
-    // (useful for custom reimplementations this.positionTooltip())
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
-        var container = this.parent.parent.svg.node();
-        while (container.parentNode != null){
-            container = container.parentNode;
-            if (container != document && d3.select(container).style("position") != "static"){
-                x_offset = -1 * container.getBoundingClientRect().left;
-                y_offset = -1 * container.getBoundingClientRect().top;
-                break;
-            }
-        }
+        var panel_origin = this.parent.getPageOrigin();
         return {
-            x: x_offset + bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
-            y: y_offset + bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top
+            x: panel_origin.x + this.parent.layout.margin.left,
+            y: panel_origin.y + this.parent.layout.margin.top
         };
     };
     
