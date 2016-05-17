@@ -72,6 +72,11 @@
 
     </div>
 
+    <div class="row" id="panels">
+      <button onclick="addAnalysis();">Add Analysis</button>
+      <button id="remove_positions" onclick="plot.removePanel('positions'); $('#remove_positions').remove();">Remove positions</button>
+    </div>
+
   </div>
 
   <script type="text/javascript">
@@ -115,7 +120,7 @@
                       ];
       data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
       var layout = {
-          y_index: 1,
+          y_index: -1,
           min_width:  400,
           min_height: 112.5,
           margin: { top: 20, right: 20, bottom: 35, left: 50 },
@@ -193,6 +198,7 @@
           }
       };
       plot.addPanel(ns, layout);
+      $("#panels").append("<button id=\"remove_" + ns + "\" onclick=\"plot.removePanel('" + ns + "'); $('#remove_" + ns + "').remove();\">Remove " + ns + "</button>");
     }
 
     var plot;
