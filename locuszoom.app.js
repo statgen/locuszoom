@@ -991,6 +991,10 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
     // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
     if (panel.layout.y_index != null && !isNaN(panel.layout.y_index)
         && this.panel_ids_by_y_index.length > 0){
+        // Negative y_index values should count backwards from the end, so convert negatives to appropriate values here
+        if (panel.layout.y_index < 0){
+            panel.layout.y_index = Math.max(this.panel_ids_by_y_index.length + panel.layout.y_index, 0);
+        }
         this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
         this.panel_ids_by_y_index.forEach(function(pid, idx){
             this.panels[pid].layout.y_index = idx;

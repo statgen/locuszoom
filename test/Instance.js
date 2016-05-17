@@ -341,6 +341,24 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelC.layout.y_index.should.be.exactly(1);
             assert.deepEqual(this.plot.panel_ids_by_y_index, ["panelA", "panelC", "panelB"]);
         });
+        it('Should allow for inserting panels at negative discrete y indexes', function(){
+            var panelA = { width: 100, height: 60 };
+            var panelB = { width: 100, height: 60 };
+            var panelC = { width: 100, height: 60 };
+            var panelD = { width: 100, height: 60 };
+            this.plot.addPanel('panelA', panelA);
+            this.plot.addPanel('panelB', panelB);
+            this.plot.addPanel('panelC', panelC);
+            this.plot.addPanel('panelD', panelD);
+            var panelE = { width: 100, height: 60, y_index: -1 };
+            this.plot.addPanel('panelE', panelE);
+            this.plot.panels.panelA.layout.y_index.should.be.exactly(0);
+            this.plot.panels.panelB.layout.y_index.should.be.exactly(1);
+            this.plot.panels.panelC.layout.y_index.should.be.exactly(2);
+            this.plot.panels.panelD.layout.y_index.should.be.exactly(4);
+            this.plot.panels.panelE.layout.y_index.should.be.exactly(3);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["panelA", "panelB", "panelC", "panelE", "panelD"]);
+        });
     });
 
 });
