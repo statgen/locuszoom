@@ -269,9 +269,9 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Initialize child Data Layers
-    for (var id in this.data_layers){
+    this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
-    }
+    }.bind(this));
 
     return this;
     
@@ -305,7 +305,27 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
-    this.data_layer_ids_by_z_index.push(data_layer.id);
+
+    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accomodate this one
+    if (data_layer.layout.z_index != null && !isNaN(data_layer.layout.z_index)
+        && this.data_layer_ids_by_z_index.length > 0){
+        // Negative z_index values should count backwards from the end, so convert negatives to appropriate values here
+        if (data_layer.layout.z_index < 0){
+            data_layer.layout.z_index = Math.max(this.data_layer_ids_by_z_index.length + data_layer.layout.z_index, 0);
+        }
+        this.data_layer_ids_by_z_index.splice(data_layer.layout.z_index, 0, data_layer.id);
+        this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
+            this.data_layers[dlid].layout.z_index = idx;
+        }.bind(this));
+    } else {
+        var length = this.data_layer_ids_by_z_index.push(data_layer.id);
+        this.data_layers[data_layer.id].layout.z_index = length - 1;
+    }
+
+    // If not present, store the data layer layout in the panel layout
+    if (typeof this.layout.data_layers[data_layer.id] == "undefined"){
+        this.layout.data_layers[data_layer.id] = this.data_layers[data_layer.id].layout;
+    }
 
     return this.data_layers[data_layer.id];
 };
