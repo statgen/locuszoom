@@ -334,6 +334,7 @@ LocusZoom.StandardLayout = {
                 significance: {
                     type: "line",
                     fields: ["sig:x", "sig:y"],
+                    z_index: 0,
                     style: {
                         "stroke": "#D3D3D3",
                         "stroke-width": "3px",
@@ -356,6 +357,7 @@ LocusZoom.StandardLayout = {
                     point_shape: "circle",
                     point_size: 40,
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    z_index: 1,
                     x_axis: {
                         field: "position"
                     },
