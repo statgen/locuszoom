@@ -270,10 +270,13 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     }
     for (var property in default_layout) {
         if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity
+        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
         // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+        // Also separate arrays from objects as a discrete type.
         var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
         var default_type = typeof default_layout[property];
+        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
         // Unsupported property types: throw an exception
         if (custom_type == "function" || default_type == "function"){
             throw("LocusZoom.mergeLayouts encountered an unsupported property type");

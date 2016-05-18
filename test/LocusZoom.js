@@ -222,7 +222,7 @@ describe('LocusZoom Core', function(){
             });
             it('should not overwrite array values in the first with any values from the second', function(){
                 var custom_layout = {
-                    array_of_scalars: [ 1, 2, 3 ],
+                    array_of_scalars: [ 4, 6 ],
                     nested_object: {
                         property_1: {
                             charlie: ["whiskey", "xray"]
@@ -231,7 +231,7 @@ describe('LocusZoom Core', function(){
                     }
                 };
                 var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
-                expected_layout.array_of_scalars = [ 1, 2, 3 ];
+                expected_layout.array_of_scalars = [ 4, 6 ];
                 expected_layout.nested_object.property_1.charlie = ["whiskey", "xray"];
                 expected_layout.nested_object.property_2 = true;
                 var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
