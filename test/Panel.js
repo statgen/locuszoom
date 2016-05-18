@@ -90,12 +90,12 @@ describe('LocusZoom.Panel', function(){
             this.panel.setDimensions(840, 560);
             this.panel.layout.should.have.property('width').which.is.exactly(840);
             this.panel.layout.should.have.property('height').which.is.exactly(560);
-            this.panel.setDimensions(675.3, -50);
-            this.panel.layout.should.have.property('width').which.is.exactly(675);
+            this.panel.setDimensions(9000, -50);
+            this.panel.layout.should.have.property('width').which.is.exactly(840);
             this.panel.layout.should.have.property('height').which.is.exactly(560);
             this.panel.setDimensions("q", 942);
-            this.panel.layout.should.have.property('width').which.is.exactly(675);
-            this.panel.layout.should.have.property('height').which.is.exactly(942);
+            this.panel.layout.should.have.property('width').which.is.exactly(840);
+            this.panel.layout.should.have.property('height').which.is.exactly(560);
         });
         it('should enforce minimum dimensions', function(){
             this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
@@ -107,7 +107,7 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
             this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
         });
-        it('should allow setting origin only within the instance dimensions', function(){
+        it('should allow setting origin irrespective of instance dimensions', function(){
             this.instance.setDimensions(500, 600);
             this.panel.setOrigin(20, 50);
             this.panel.layout.origin.x.should.be.exactly(20);
@@ -119,8 +119,8 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.origin.x.should.be.exactly(0);
             this.panel.layout.origin.y.should.be.exactly(0);
             this.panel.setOrigin(700, 800);
-            this.panel.layout.origin.x.should.be.exactly(400);
-            this.panel.layout.origin.y.should.be.exactly(225);
+            this.panel.layout.origin.x.should.be.exactly(700);
+            this.panel.layout.origin.y.should.be.exactly(800);
         });
         it('should allow setting margin, which sets cliparea origin and dimensions', function(){
             this.panel.setMargin(1, 2, 3, 4);

@@ -62,15 +62,18 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
+    y_index: null,
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
-    min_width: 0,
-    min_height: 0,
-    proportional_width: 1,
-    proportional_height: 1,
+    min_width: 1,
+    min_height: 1,
+    proportional_width: null,
+    proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    resizable: true,
+    removable: true,
     cliparea: {
         height: 0,
         width: 0,
@@ -84,6 +87,23 @@ LocusZoom.Panel.DefaultLayout = {
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
+
+    // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
+    // This will default the panel to taking up the full width of the plot.
+    if (this.layout.width == 0 && this.layout.proportional_width == null){
+        this.layout.proportional_width = 1;
+    }
+
+    // If the layout is missing BOTH height and proportional height then set the proportional height to
+    // an equal share of the plot's current height.
+    if (this.layout.height == 0 && this.layout.proportional_height == null){
+        var panel_count = Object.keys(this.parent.panels).length;
+        if (panel_count > 0){
+            this.layout.proportional_height = (1 / panel_count);
+        } else {
+            this.layout.proportional_height = 1;
+        }
+    }
 
     // Set panel dimensions, origin, and margin
     this.setDimensions();
@@ -113,21 +133,28 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (!isNaN(width) && width >= 0){
-        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+    if (typeof width != "undefined" && typeof height != "undefined"){
+        if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
+            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+        }
+    } else {
+        if (this.layout.proportional_width != null){
+            this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
+        }
+        if (this.layout.proportional_height != null){
+            this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+        }
     }
-    if (!isNaN(height) && height >= 0){
-        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);    
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);    
     if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.layout.width); }
-    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.layout.height); }
+    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.max(Math.round(+x), 0); }
+    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.max(Math.round(+y), 0); }
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -148,8 +175,11 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
         this.layout.margin.left -= extra;
         this.layout.margin.right -= extra;
     }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    ["top", "right", "bottom", "left"].forEach(function(m){
+        this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+    }.bind(this));
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
 
