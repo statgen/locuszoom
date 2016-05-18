@@ -23,6 +23,11 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     this.panels = {};
     this.panel_ids_by_y_index = [];
+    this.applyPanelYIndexesToPanelLayouts = function(){
+        this.panel_ids_by_y_index.forEach(function(pid, idx){
+            this.panels[pid].layout.y_index = idx;
+        }.bind(this));
+    };
 
     this.remap_promises = [];
 
@@ -199,6 +204,9 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
+            if (this.panels[panel_id].controls.selector){
+                this.panels[panel_id].controls.position();
+            }
         }.bind(this));
     }
 
@@ -264,9 +272,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
             panel.layout.y_index = Math.max(this.panel_ids_by_y_index.length + panel.layout.y_index, 0);
         }
         this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
-        this.panel_ids_by_y_index.forEach(function(pid, idx){
-            this.panels[pid].layout.y_index = idx;
-        }.bind(this));
+        this.applyPanelYIndexesToPanelLayouts();
     } else {
         var length = this.panel_ids_by_y_index.push(panel.id);
         this.panels[panel.id].layout.y_index = length - 1;

@@ -266,11 +266,40 @@ LocusZoom.Panel.prototype.initialize = function(){
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
                 .style({ position: "absolute" });
+            // Reposition buttons
+            if (this.layout.controls.reposition){
+                this.controls.link_selectors.reposition_up = this.controls.selector.append("a")
+                    .attr("class", "lz-controls-button-disabled")
+                    .attr("title", "Move panel up")
+                    .style({ "font-weight": "bold" })
+                    .text("▴")
+                    .on("click", function(){
+                        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
+                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
+                            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
+                            this.parent.applyPanelYIndexesToPanelLayouts();
+                            this.parent.positionPanels();
+                        }
+                    }.bind(this));
+                this.controls.link_selectors.reposition_down = this.controls.selector.append("a")
+                    .attr("class", "lz-controls-button-disabled")
+                    .attr("title", "Move panel down")
+                    .style({ "font-weight": "bold" })
+                    .text("▾")
+                    .on("click", function(){
+                        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
+                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
+                            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+                            this.parent.applyPanelYIndexesToPanelLayouts();
+                            this.parent.positionPanels();
+                        }
+                    }.bind(this));
+            }
             // Description button
             if (this.layout.controls.description && this.layout.description){
                 this.controls.link_selectors.description = this.controls.selector.append("a")
                     .attr("class", "lz-controls-button")
-                    .attr("title", "Panel information")
+                    .attr("title", "View panel information")
                     .style({ "font-weight": "bold" })
                     .text("?")
                     .on("click", function(){
@@ -333,6 +362,17 @@ LocusZoom.Panel.prototype.initialize = function(){
             var top = page_origin.y.toString() + "px";
             var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
             this.controls.selector.style({ position: "absolute", top: top, left: left });
+            // Position description box if it's showing
+            if (this.controls.description && this.controls.description.is_showing){
+                this.controls.description.position();
+            }
+            // Apply appropriate classes to reposition buttons as needed
+            if (this.controls.link_selectors.reposition_up){
+                this.controls.link_selectors.reposition_up.attr("class", (this.layout.y_index == 0) ? "lz-controls-button-disabled" : "lz-controls-button");
+            }
+            if (this.controls.link_selectors.reposition_down){
+                this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-controls-button-disabled" : "lz-controls-button");
+            }
         }.bind(this),
         hide: function(){
             if (!this.layout.controls || !this.controls.selector){ return; }
