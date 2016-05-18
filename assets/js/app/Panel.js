@@ -315,7 +315,16 @@ LocusZoom.Panel.prototype.initialize = function(){
                     .attr("title", "Remove panel")
                     .style({ "font-weight": "bold" })
                     .text("×")
-                    .on("click", function(){ this.parent.removePanel(this.id) }.bind(this));
+                    .on("click", function(){
+                        // Hide description and controls
+                        if (this.controls.description && this.controls.description.is_showing){ this.controls.description.hide(); }
+                        this.controls.hide();
+                        // Remove mouse event listeners for these controls
+                        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
+                        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
+                        // Remove the panel
+                        this.parent.removePanel(this.id);
+                    }.bind(this));
             }
         }.bind(this),
         position: function(){

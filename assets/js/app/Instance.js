@@ -505,7 +505,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         show: function(){
             if (!this.showing){
                 this.div = d3.select(this.parent.svg.node().parentNode).append("div")
-                    .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
+                    .attr("class", "lz-locuszoom-controls").attr("id", this.parent.id + ".controls");
                 this.links = this.div.append("div")
                     .attr("id", this.parent.id + ".controls.links")
                     .style("float", "left");
