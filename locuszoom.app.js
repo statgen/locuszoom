@@ -1713,6 +1713,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.controls = {
         selector: null,
         hide_timeout: null,
+        link_selectors: {},
         show: function(){
             if (!this.layout.controls || this.controls.selector){ return; }
             this.controls.selector = d3.select(this.parent.svg.node().parentNode).append("div")
@@ -1720,16 +1721,50 @@ LocusZoom.Panel.prototype.initialize = function(){
                 .attr("id", this.getBaseId() + ".controls")
                 .style({ position: "absolute" });
             // Description button
-            if (this.layout.controls.description){
-                this.controls.selector.append("a")
+            if (this.layout.controls.description && this.layout.description){
+                this.controls.link_selectors.description = this.controls.selector.append("a")
                     .attr("class", "lz-controls-button")
                     .attr("title", "Panel information")
                     .style({ "font-weight": "bold" })
-                    .text("?");
+                    .text("?")
+                    .on("click", function(){
+                        if (this.controls.description.is_showing){
+                            this.controls.description.hide();
+                        } else {
+                            this.controls.description.show();
+                            this.controls.description.position();
+                        }
+                    }.bind(this));
+                this.controls.description = {
+                    is_showing: false,
+                    selector: null,
+                    show: function(){
+                        this.controls.link_selectors.description.attr("class", "lz-controls-button-selected");
+                        this.controls.description.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                            .attr("class", "lz-panel-description")
+                            .attr("id", this.getBaseId() + ".description")
+                            .html(this.layout.description);
+                        this.controls.description.is_showing = true;
+                    }.bind(this),
+                    position: function(){
+                        var padding = 4; // is there a better place to store this?
+                        var page_origin = this.getPageOrigin();
+                        var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
+                        var desc_client_rect = this.controls.description.selector.node().getBoundingClientRect();
+                        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
+                        var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+                        this.controls.description.selector.style({ top: top, left: left });
+                    }.bind(this),
+                    hide: function(){
+                        this.controls.link_selectors.description.attr("class", "lz-controls-button");
+                        this.controls.description.selector.remove();
+                        this.controls.description.is_showing = false;
+                    }.bind(this),
+                };
             }
             // Remove button
             if (this.layout.controls.remove){
-                this.controls.selector.append("a")
+                this.controls.link_selectors.remove = this.controls.selector.append("a")
                     .attr("class", "lz-controls-button")
                     .attr("title", "Remove panel")
                     .style({ "font-weight": "bold" })
@@ -1746,6 +1781,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this),
         hide: function(){
             if (!this.layout.controls || !this.controls.selector){ return; }
+            // Do not hide if this panel is showing a description
+            if (this.controls.description && this.controls.description.is_showing){ return; }
             this.controls.selector.remove();
             this.controls.selector = null;
         }.bind(this)

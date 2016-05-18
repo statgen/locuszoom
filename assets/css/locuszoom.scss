@@ -287,7 +287,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   .#{$namespace}-controls-button:hover {
     cursor: pointer;
     background-color: #333333;
-    color: #D8D8D8
+    color: #D8D8D8;
+  }
+  .#{$namespace}-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8;
   }
   .#{$namespace}-controls-button-disabled {
     text-decoration: none;
@@ -307,4 +317,15 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 .#{$namespace}-locuszoom-panel-controls {
    padding-top: 4px;
    padding-right: 4px;
+}
+
+div.#{$namespace}-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: rgba(228,235,240,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
 }

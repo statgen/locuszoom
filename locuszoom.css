@@ -216,6 +216,15 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     cursor: pointer;
     background-color: #333333;
     color: #D8D8D8; }
+  .lz-locuszoom-controls .lz-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8; }
   .lz-locuszoom-controls .lz-controls-button-disabled {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
@@ -231,3 +240,13 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 .lz-locuszoom-panel-controls {
   padding-top: 4px;
   padding-right: 4px; }
+
+div.lz-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: #e4ebf0;
+  border: 1px solid rgba(24, 24, 24, 1);
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
