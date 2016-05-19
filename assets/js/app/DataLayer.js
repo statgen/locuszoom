@@ -70,7 +70,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
     };
     this.updateTooltip = function(d, id){
         // Empty the tooltip of all HTML (including its arrow!)
-        this.tooltips[id].selector.html('');
+        this.tooltips[id].selector.html("");
         this.tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html){

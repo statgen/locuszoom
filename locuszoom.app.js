@@ -2095,7 +2095,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
     };
     this.updateTooltip = function(d, id){
         // Empty the tooltip of all HTML (including its arrow!)
-        this.tooltips[id].selector.html('');
+        this.tooltips[id].selector.html("");
         this.tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html){
@@ -2967,7 +2967,6 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         var border_radius = 6; // as defined in the default stylesheet
         var stroke_width = parseFloat(this.layout.style["stroke-width"]) || 1;
         var page_origin = this.getPageOrigin();
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
         var top, left, arrow_top, arrow_left, arrow_type;
@@ -2990,7 +2989,6 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
                 arrow_left = tooltip_box.width - stroke_width;
             }
             // Position vertically centered unless we're at the top or bottom of the plot
-            var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
             if (dd.display.y - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
                 top = page_origin.y + dd.display.y - (1.5 * arrow_width) - border_radius;
                 arrow_top = border_radius;
@@ -3030,7 +3028,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         tooltip.selector.style({ left: left + "px", top: top + "px" });
         // Create / update position on arrow connecting tooltip to data
         if (!tooltip.arrow){
-            tooltip.arrow = tooltip.selector.append("div").attr("id","fooarrow").style("position", "absolute");
+            tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
         }
         tooltip.arrow
             .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
@@ -3097,7 +3095,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
                 .interpolate(this.layout.interpolate);
             hitarea
                 .attr("d", hitarea_line)
-                .on("mouseover", function(d){
+                .on("mouseover", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
