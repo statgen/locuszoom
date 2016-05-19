@@ -119,9 +119,8 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-line-hitarea {
-    fill: transparent;
+    fill: none;
     stroke: transparent;
-    stroke-width: 12px;
     cursor: pointer;
   }
 

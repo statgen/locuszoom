@@ -66,6 +66,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
         };
+        this.updateTooltip(d, id);
+    };
+    this.updateTooltip = function(d, id){
+        // Empty the tooltip of all HTML (including its arrow!)
+        this.tooltips[id].selector.html('');
+        this.tooltips[id].arrow = null;
+        // Set the new HTML
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         } else if (this.layout.tooltip.divs){
@@ -79,6 +86,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
             }
         }
+        // Reposition and draw a new arrow
         this.positionTooltip(id);
     };
     this.destroyTooltip = function(id){
