@@ -238,8 +238,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     background-color: #D8D8D8; }
 
 .lz-locuszoom-panel-controls {
-  padding-top: 4px;
-  padding-right: 4px; }
+  padding-top: 6px;
+  padding-right: 2px; }
 
 div.lz-panel-description {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
@@ -250,3 +250,28 @@ div.lz-panel-description {
   border: 1px solid rgba(24, 24, 24, 1);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 4px;
+  width: 200px;
+  border-radius: 2px;
+  background: rgba(235, 240, 228, 0.5);
+  border: 1px solid rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 3px;
+  width: 200px;
+  border-radius: 1px;
+  background: rgba(216, 216, 216, 0.4);
+  border: 1px solid rgba(24, 24, 24, 0.4);
+  cursor: row-resize; }
+
+div.lz-panel-boundary:hover {
+  background: #d8d8d8;
+  border: 1px solid rgba(24, 24, 24, 1); }
+
+div.lz-panel-boundary:active {
+  background: #333333;
+  border: 1px solid #d8d8d8; }

@@ -334,7 +334,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.link_selectors.description.attr("class", "lz-controls-button");
                         this.controls.description.selector.remove();
                         this.controls.description.is_showing = false;
-                    }.bind(this),
+                    }.bind(this)
                 };
             }
             // Remove button
@@ -378,6 +378,8 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (!this.layout.controls || !this.controls.selector){ return; }
             // Do not hide if this panel is showing a description
             if (this.controls.description && this.controls.description.is_showing){ return; }
+            // Do not hide if actively in an instance-level drag event
+            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return; }
             this.controls.selector.remove();
             this.controls.selector = null;
         }.bind(this)

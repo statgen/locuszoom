@@ -93,7 +93,8 @@ LocusZoom.Instance.DefaultLayout = {
     controls: {
         show: "onmouseover",
         hide_delay: 500
-    }
+    },
+    panel_boundaries: true
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
@@ -111,7 +112,6 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     }
     return total;
 };
-
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined"){
@@ -490,6 +490,92 @@ LocusZoom.Instance.prototype.initialize = function(){
     this.curtain.svg.append("text")
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
+
+    // Create the panel_boundaries object with show/position/hide methods
+    this.panel_boundaries = {
+        parent: this,
+        hide_timeout: null,
+        showing: false,
+        dragging: false,
+        selectors: [],
+        show: function(){
+            // Generate panel boundaries
+            if (!this.showing){
+                this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
+                    var selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                        .attr("class", "lz-panel-boundary")
+                        .attr("title", "Resize panels");
+                    var panel_resize_drag = d3.behavior.drag();
+                    panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
+                    panel_resize_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
+                    panel_resize_drag.on("drag", function(){
+                        // First set the dimensions on the panel we're resizing
+                        var this_panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
+                        var original_panel_height = this_panel.layout.height;
+                        this_panel.setDimensions(this_panel.layout.width, this_panel.layout.height + d3.event.dy);
+                        var panel_height_change = this_panel.layout.height - original_panel_height;
+                        var new_calculated_plot_height = this.parent.layout.height + panel_height_change;
+                        // Next loop through all panels.
+                        // Update proportional dimensions for all panels including the one we've resized using discrete heights.
+                        // Reposition panels with a greater y-index than this panel to their appropriate new origin.
+                        this.parent.panel_ids_by_y_index.forEach(function(loop_panel_id, loop_panel_idx){
+                            var loop_panel = this.parent.panels[this.parent.panel_ids_by_y_index[loop_panel_idx]];
+                            loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
+                            if (loop_panel_idx > panel_idx){
+                                loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
+                                if (loop_panel.layout.controls){
+                                    loop_panel.controls.position();
+                                }
+                            }
+                        }.bind(this));
+                        // Reset dimensions on the entire plot and reposition panel boundaries
+                        this.parent.positionPanels();
+                        this.position();
+                    }.bind(this));
+                    selector.call(panel_resize_drag);
+                    this.parent.panel_boundaries.selectors.push(selector);
+                }.bind(this));
+                this.showing = true;
+            }
+            this.position();
+        },
+        position: function(){
+            // Position panel boundaries
+            var plot_page_origin = this.parent.getPageOrigin();
+            this.selectors.forEach(function(selector, panel_idx){
+                var panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
+                var left = plot_page_origin.x;
+                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 2;
+                var width = this.parent.layout.width - 1;
+                selector.style({
+                    top: top + "px",
+                    left: left + "px",
+                    width: width + "px"
+                });
+            }.bind(this));
+        },
+        hide: function(){
+            // Remove panel boundaries
+            this.selectors.forEach(function(selector){
+                selector.remove();
+            });
+            this.selectors = [];
+            this.showing = false;
+        }
+    };
+
+    // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
+    if (this.layout.panel_boundaries){
+        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".panel_boundaries", function(){
+            clearTimeout(this.panel_boundaries.hide_timeout);
+            this.panel_boundaries.show();
+        }.bind(this));
+        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".panel_boundaries", function(){
+            this.panel_boundaries.hide_timeout = setTimeout(function(){
+                this.panel_boundaries.hide();
+            }.bind(this), 300);
+        }.bind(this));
+    }
 
     // Create the controls object with show/update/hide methods
     var css_string = "";
