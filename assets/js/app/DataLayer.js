@@ -32,19 +32,18 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.state[this.state_id].selected = this.state[this.state_id].selected || null;
         }
     } else {
-        this.state = null;
+        this.state = {};
         this.state_id = null;
     }
 
     this.data = [];
-    this.metadata = {};
 
     this.getBaseId = function(){
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
 
-    this.triggerOnUpdate = function(){
-        this.parent.triggerOnUpdate();
+    this.onUpdate = function(){
+        this.parent.onUpdate();
     };
 
     // Tooltip methods
@@ -56,6 +55,10 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         if (typeof id != "string"){
             throw ("Unable to create tooltip: id is not a string");
         }
+        if (this.tooltips[id]){
+            this.positionTooltip(id);
+            return;
+        }
         this.tooltips[id] = {
             data: d,
             arrow: null,
@@ -63,6 +66,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
         };
+        this.updateTooltip(d, id);
+    };
+    this.updateTooltip = function(d, id){
+        // Empty the tooltip of all HTML (including its arrow!)
+        this.tooltips[id].selector.html("");
+        this.tooltips[id].arrow = null;
+        // Set the new HTML
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         } else if (this.layout.tooltip.divs){
@@ -76,6 +86,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
             }
         }
+        // Reposition and draw a new arrow
         this.positionTooltip(id);
     };
     this.destroyTooltip = function(id){
@@ -120,15 +131,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }
     };
 
-    // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
-    // (useful for custom reimplementations this.positionTooltip())
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_scroll = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_scroll = document.documentElement.scrollTop || document.body.scrollTop;
+        var panel_origin = this.parent.getPageOrigin();
         return {
-            x: bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left + x_scroll,
-            y: bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top + y_scroll
+            x: panel_origin.x + this.parent.layout.margin.left,
+            y: panel_origin.y + this.parent.layout.margin.top
         };
     };
     
@@ -138,13 +147,28 @@ LocusZoom.DataLayer = function(id, layout, parent) {
 
 LocusZoom.DataLayer.DefaultLayout = {
     type: "",
-    fields: []
+    fields: [],
+    x_axis: {},
+    y_axis: {}
 };
 
-// Generate a y-axis extent functions based on the layout
+// Generate dimension extent function based on layout parameters
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+
+    if (["x", "y"].indexOf(dimension) == -1){
+        throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
+    }
+
     var axis = dimension + "_axis";
-    return function(){
+
+    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
+        return [+this.layout[axis].floor, +this.layout[axis].ceiling];
+    }
+
+    // If a field is defined for the axis and the data layer has data then generate the extent from the data set
+    if (this.layout[axis].field && this.data && this.data.length){
+
         var extent = d3.extent(this.data, function(d) {
             return +d[this.layout[axis].field];
         }.bind(this));
@@ -161,12 +185,24 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
         // Generate a new base extent
         extent = d3.extent(extent);
-
+        
         // Apply floor/ceiling, if applicable
         if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
         if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+
         return extent;
-    }.bind(this);
+
+    }
+
+    // If this is for the x axis and no extent could be generated yet but state has a defined start and end
+    // then default to using the state-defined region as the extent
+    if (dimension == "x" && !isNaN(this.state.start) && !isNaN(this.state.end)) {
+        return [this.state.start, this.state.end];
+    }
+
+    // No conditions met for generating a valid extent, return an empty array
+    return [];
+
 };
 
 // Initialize a data layer
@@ -186,9 +222,6 @@ LocusZoom.DataLayer.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".data_layer")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Flip the "initialized" bit
-    this.initialized = true;
-
     return this;
 
 };
@@ -204,11 +237,16 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 // Re-Map a data layer to new positions according to the parent panel's parent instance's state
 LocusZoom.DataLayer.prototype.reMap = function(){
+
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
                                // and then recreated if returning to visibility
+
+    // Fetch new data
     var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
+        this.initialized = true;
     }.bind(this));
     return promise;
+
 };

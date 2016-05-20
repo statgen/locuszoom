@@ -38,9 +38,9 @@ LocusZoom.Panel = function(id, layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
-    this.xExtent  = null;
-    this.y1Extent = null;
-    this.y2Extent = null;
+    this.x_extent  = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -50,8 +50,18 @@ LocusZoom.Panel = function(id, layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.triggerOnUpdate = function(){
-        this.parent.triggerOnUpdate();
+    this.onUpdate = function(){
+        this.parent.onUpdate();
+    };
+    
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
+    this.getPageOrigin = function(){
+        var instance_origin = this.parent.getPageOrigin();
+        return {
+            x: instance_origin.x + this.layout.origin.x,
+            y: instance_origin.y + this.layout.origin.y
+        };
     };
 
     // Initialize the layout
@@ -62,18 +72,23 @@ LocusZoom.Panel = function(id, layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    state: {
-        data_layers: {}   
-    },
+    title: null,
+    description: null,
+    y_index: null,
     width:  0,
     height: 0,
     origin: { x: 0, y: 0 },
-    min_width: 0,
-    min_height: 0,
-    proportional_width: 1,
-    proportional_height: 1,
+    min_width: 1,
+    min_height: 1,
+    proportional_width: null,
+    proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    controls: {
+        description: true,
+        reposition: true,
+        remove: true
+    },
     cliparea: {
         height: 0,
         width: 0,
@@ -87,6 +102,23 @@ LocusZoom.Panel.DefaultLayout = {
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
+
+    // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
+    // This will default the panel to taking up the full width of the plot.
+    if (this.layout.width == 0 && this.layout.proportional_width == null){
+        this.layout.proportional_width = 1;
+    }
+
+    // If the layout is missing BOTH height and proportional height then set the proportional height to
+    // an equal share of the plot's current height.
+    if (this.layout.height == 0 && this.layout.proportional_height == null){
+        var panel_count = Object.keys(this.parent.panels).length;
+        if (panel_count > 0){
+            this.layout.proportional_height = (1 / panel_count);
+        } else {
+            this.layout.proportional_height = 1;
+        }
+    }
 
     // Set panel dimensions, origin, and margin
     this.setDimensions();
@@ -102,7 +134,6 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
             this.layout.axes[axis].render = true;
             this.layout.axes[axis].label = this.layout.axes[axis].label || null;
             this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
-            this.layout.axes[axis].data_layer_id = this.layout.axes[axis].data_layer_id || null;
         }
     }.bind(this));
 
@@ -117,21 +148,28 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 };
 
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
-    if (!isNaN(width) && width >= 0){
-        this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+    if (typeof width != "undefined" && typeof height != "undefined"){
+        if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
+            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+        }
+    } else {
+        if (this.layout.proportional_width != null){
+            this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
+        }
+        if (this.layout.proportional_height != null){
+            this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+        }
     }
-    if (!isNaN(height) && height >= 0){
-        this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-    }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);    
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);    
     if (this.initialized){ this.render(); }
     return this;
 };
 
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
-    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.min(Math.max(Math.round(+x), 0), this.parent.layout.width); }
-    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.min(Math.max(Math.round(+y), 0), this.parent.layout.height); }
+    if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.max(Math.round(+x), 0); }
+    if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.max(Math.round(+y), 0); }
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -152,8 +190,11 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
         this.layout.margin.left -= extra;
         this.layout.margin.right -= extra;
     }
-    this.layout.cliparea.width = this.layout.width - (this.layout.margin.left + this.layout.margin.right);
-    this.layout.cliparea.height = this.layout.height - (this.layout.margin.top + this.layout.margin.bottom);
+    ["top", "right", "bottom", "left"].forEach(function(m){
+        this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+    }.bind(this));
+    this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
     this.layout.cliparea.origin.x = this.layout.margin.left;
     this.layout.cliparea.origin.y = this.layout.margin.top;
 
@@ -214,9 +255,171 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+    // Initialize controls element
+    this.controls = {
+        selector: null,
+        hide_timeout: null,
+        link_selectors: {},
+        show: function(){
+            if (!this.layout.controls || this.controls.selector){ return; }
+            this.controls.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
+                .attr("id", this.getBaseId() + ".controls")
+                .style({ position: "absolute" });
+            // Reposition buttons
+            if (this.layout.controls.reposition){
+                this.controls.link_selectors.reposition_up = this.controls.selector.append("a")
+                    .attr("class", "lz-panel-controls-button-disabled")
+                    .attr("title", "Move panel up")
+                    .style({ "font-weight": "bold" })
+                    .text("▴")
+                    .on("click", function(){
+                        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
+                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
+                            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
+                            this.parent.applyPanelYIndexesToPanelLayouts();
+                            this.parent.positionPanels();
+                        }
+                    }.bind(this));
+                this.controls.link_selectors.reposition_down = this.controls.selector.append("a")
+                    .attr("class", "lz-panel-controls-button-disabled")
+                    .attr("title", "Move panel down")
+                    .style({ "font-weight": "bold" })
+                    .text("▾")
+                    .on("click", function(){
+                        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
+                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
+                            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+                            this.parent.applyPanelYIndexesToPanelLayouts();
+                            this.parent.positionPanels();
+                        }
+                    }.bind(this));
+            }
+            // Description button
+            if (this.layout.controls.description && this.layout.description){
+                this.controls.link_selectors.description = this.controls.selector.append("a")
+                    .attr("class", "lz-panel-controls-button")
+                    .attr("title", "View panel information")
+                    .style({ "font-weight": "bold" })
+                    .text("?")
+                    .on("click", function(){
+                        if (this.controls.description.is_showing){
+                            this.controls.description.hide();
+                        } else {
+                            this.controls.description.show();
+                            this.controls.description.position();
+                        }
+                    }.bind(this));
+                this.controls.description = {
+                    is_showing: false,
+                    selector: null,
+                    show: function(){
+                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
+                        this.controls.description.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                            .attr("class", "lz-panel-description")
+                            .attr("id", this.getBaseId() + ".description")
+                            .html(this.layout.description);
+                        this.controls.description.is_showing = true;
+                    }.bind(this),
+                    position: function(){
+                        var padding = 4; // is there a better place to store this?
+                        var page_origin = this.getPageOrigin();
+                        var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
+                        var desc_client_rect = this.controls.description.selector.node().getBoundingClientRect();
+                        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
+                        var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+                        this.controls.description.selector.style({ top: top, left: left });
+                    }.bind(this),
+                    hide: function(){
+                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
+                        this.controls.description.selector.remove();
+                        this.controls.description.is_showing = false;
+                    }.bind(this)
+                };
+            }
+            // Remove button
+            if (this.layout.controls.remove){
+                this.controls.link_selectors.remove = this.controls.selector.append("a")
+                    .attr("class", "lz-panel-controls-button")
+                    .attr("title", "Remove panel")
+                    .style({ "font-weight": "bold" })
+                    .text("×")
+                    .on("click", function(){
+                        // Hide description and controls
+                        if (this.controls.description && this.controls.description.is_showing){ this.controls.description.hide(); }
+                        this.controls.hide();
+                        // Remove mouse event listeners for these controls
+                        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
+                        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
+                        // Remove the panel
+                        this.parent.removePanel(this.id);
+                    }.bind(this));
+            }
+        }.bind(this),
+        position: function(){
+            var page_origin = this.getPageOrigin();
+            var client_rect = this.controls.selector.node().getBoundingClientRect();
+            var top = page_origin.y.toString() + "px";
+            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
+            this.controls.selector.style({ position: "absolute", top: top, left: left });
+            // Position description box if it's showing
+            if (this.controls.description && this.controls.description.is_showing){
+                this.controls.description.position();
+            }
+            // Apply appropriate classes to reposition buttons as needed
+            if (this.controls.link_selectors.reposition_up){
+                this.controls.link_selectors.reposition_up.attr("class", (this.layout.y_index == 0) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
+            }
+            if (this.controls.link_selectors.reposition_down){
+                this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
+            }
+        }.bind(this),
+        hide: function(){
+            if (!this.layout.controls || !this.controls.selector){ return; }
+            // Do not hide if this panel is showing a description
+            if (this.controls.description && this.controls.description.is_showing){ return; }
+            // Do not hide if actively in an instance-level drag event
+            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return; }
+            this.controls.selector.remove();
+            this.controls.selector = null;
+        }.bind(this)
+    };
+
+    // If controls are defined add mouseover controls to the plot container to show/hide them
+    if (this.layout.controls){
+        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
+            clearTimeout(this.controls.hide_timeout);
+            this.controls.show();
+            this.controls.position();
+        }.bind(this));
+        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
+            this.controls.hide_timeout = setTimeout(function(){
+                this.controls.hide();
+            }.bind(this), 300);
+        }.bind(this));
+    }
+
     // If the layout defines an inner border render it before rendering axes
     if (this.layout.inner_border){
         this.inner_border = this.svg.group.append("rect");
+    }
+
+    // Add the title, if defined
+    if (this.layout.title){
+        var default_x = 10;
+        var default_y = 22;
+        if (typeof this.layout.title == "string"){
+            this.layout.title = {
+                text: this.layout.title,
+                x: default_x,
+                y: default_y
+            };
+        }
+        this.svg.group.append("text")
+            .attr("class", "lz-panel-title")
+            .attr("x", parseFloat(this.layout.title.x) || default_x)
+            .attr("y", parseFloat(this.layout.title.y) || default_y)
+            .text(this.layout.title.text);
     }
 
     // Initialize Axes
@@ -243,12 +446,9 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Initialize child Data Layers
-    for (var id in this.data_layers){
+    this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
-    }
-
-    // Flip the "initialized" bit
-    this.initialized = true;
+    }.bind(this));
 
     return this;
     
@@ -257,6 +457,8 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+
+    // Sanity checks
     if (typeof id !== "string"){
         throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
@@ -270,26 +472,36 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
 
+    // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
+    if (typeof layout.y_axis == "object" && (typeof layout.y_axis.axis == "undefined" || [1,2].indexOf(layout.y_axis.axis) == -1)){
+        layout.y_axis.axis = 1;
+    }
+
     // Create the Data Layer
     var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
-    this.data_layer_ids_by_z_index.push(data_layer.id);
 
-    // Generate xExtent function (defaults to the state range defined by "start" and "end")
-    if (layout.x_axis){
-        this.xExtent = this.data_layers[data_layer.id].getAxisExtent("x");
+    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accomodate this one
+    if (data_layer.layout.z_index != null && !isNaN(data_layer.layout.z_index)
+        && this.data_layer_ids_by_z_index.length > 0){
+        // Negative z_index values should count backwards from the end, so convert negatives to appropriate values here
+        if (data_layer.layout.z_index < 0){
+            data_layer.layout.z_index = Math.max(this.data_layer_ids_by_z_index.length + data_layer.layout.z_index, 0);
+        }
+        this.data_layer_ids_by_z_index.splice(data_layer.layout.z_index, 0, data_layer.id);
+        this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
+            this.data_layers[dlid].layout.z_index = idx;
+        }.bind(this));
     } else {
-        this.xExtent = function(){
-            return d3.extent([this.state.start, this.state.end]);
-        };
+        var length = this.data_layer_ids_by_z_index.push(data_layer.id);
+        this.data_layers[data_layer.id].layout.z_index = length - 1;
     }
-    // Generate the yExtent function
-    if (layout.y_axis){
-        var y_axis_name = "y" + (layout.y_axis.axis == 1 || layout.y_axis.axis == 2 ? layout.y_axis.axis : 1);
-        this[y_axis_name + "Extent"] = this.data_layers[data_layer.id].getAxisExtent("y");
-        this.layout.axes[y_axis_name].data_layer_id = data_layer.id;
+
+    // If not present, store the data layer layout in the panel layout
+    if (typeof this.layout.data_layers[data_layer.id] == "undefined"){
+        this.layout.data_layers[data_layer.id] = this.data_layers[data_layer.id].layout;
     }
 
     return this.data_layers[data_layer.id];
@@ -301,17 +513,51 @@ LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
-        this.data_promises.push(this.data_layers[id].reMap());
+        try {
+            this.data_promises.push(this.data_layers[id].reMap());
+        } catch (error) {
+            console.log(error);
+            this.curtain.drop(error);
+        }
     }
     // When all finished trigger a render
     return Q.all(this.data_promises)
         .then(function(){
+            this.initialized = true;
             this.render();
         }.bind(this))
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
         }.bind(this));
+};
+
+// Iterate over data layers to generate panel axis extents
+LocusZoom.Panel.prototype.generateExtents = function(){
+
+    // Reset extents
+    this.x_extent = null;
+    this.y1_extent = null;
+    this.y2_extent = null;
+
+    // Loop through the data layers
+    for (var id in this.data_layers){
+
+        var data_layer = this.data_layers[id];
+
+        // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
+        if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
+            this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
+        }
+
+        // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
+        if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled){
+            var y_axis = "y" + data_layer.layout.y_axis.axis;
+            this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
+        }
+
+    }
+
 };
 
 
@@ -330,14 +576,16 @@ LocusZoom.Panel.prototype.render = function(){
             .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
             .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
-            .style({ "fill": "transparent",
+            .style({ "fill": "none",
                      "stroke-width": 1,
                      "stroke": this.layout.inner_border });
     }
 
-    // Generate discrete extents, ticks, and scales
-    if (typeof this.xExtent == "function"){
-        this.x_extent = this.xExtent();
+    // Regenerate all extents
+    this.generateExtents();
+
+    // Generate ticks and scales using generated extents
+    if (this.x_extent){
         if (this.layout.axes.x.ticks){
             this.x_ticks = this.layout.axes.x.ticks;
         } else {
@@ -347,8 +595,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.x_extent[0], this.x_extent[1]])
             .range([0, this.layout.cliparea.width]);
     }
-    if (typeof this.y1Extent == "function"){
-        this.y1_extent = this.y1Extent();
+    if (this.y1_extent){
         if (this.layout.axes.y1.ticks){
             this.y1_ticks = this.layout.axes.y1.ticks;
         } else {
@@ -359,8 +606,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.y1_extent[0], this.y1_extent[1]])
             .range([this.layout.cliparea.height, 0]);
     }
-    if (typeof this.y2Extent == "function"){
-        this.y2_extent = this.y2Extent();
+    if (this.y2_extent){
         if (this.layout.axes.y2.ticks){
             this.y2_ticks = this.layout.axes.y2.ticks;
         } else {

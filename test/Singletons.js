@@ -104,9 +104,9 @@ describe('LocusZoom Singletons', function(){
         });
         it("should have a method to list available label functions", function(){
             LocusZoom.TransformationFunctions.should.have.property("list").which.is.a.Function;
-            var returned_list = LocusZoom.TransformationFunctions.list();
-            var expected_list = ["neglog10", "scinotation"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.TransformationFunctions.list().should.be.an.Array;
+            LocusZoom.TransformationFunctions.list().should.containEql("scinotation");
+            LocusZoom.TransformationFunctions.list().should.containEql("neglog10");
         });
         it("should have a general method to get a function or execute it for a result", function(){
             LocusZoom.TransformationFunctions.should.have.property("get").which.is.a.Function;
@@ -116,9 +116,7 @@ describe('LocusZoom Singletons', function(){
             LocusZoom.TransformationFunctions.should.have.property("add").which.is.a.Function;
             var foo = function(x){ return x + 1; };
             LocusZoom.TransformationFunctions.add("foo", foo);
-            var returned_list = LocusZoom.TransformationFunctions.list();
-            var expected_list = ["neglog10", "scinotation", "foo"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.TransformationFunctions.list().should.containEql("foo");
             var returned_value = LocusZoom.TransformationFunctions.get("foo")(2);
             var expected_value = 3;
             assert.equal(returned_value, expected_value);
@@ -127,16 +125,12 @@ describe('LocusZoom Singletons', function(){
             LocusZoom.TransformationFunctions.should.have.property("set").which.is.a.Function;
             var foo_new = function(x){ return x * 2; };
             LocusZoom.TransformationFunctions.set("foo", foo_new);
-            var returned_list = LocusZoom.TransformationFunctions.list();
-            var expected_list = ["neglog10", "scinotation", "foo"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.TransformationFunctions.list().should.containEql("foo");
             var returned_value = LocusZoom.TransformationFunctions.get("foo")(4);
             var expected_value = 8;
             assert.equal(returned_value, expected_value);
             LocusZoom.TransformationFunctions.set("foo");
-            var returned_list = LocusZoom.TransformationFunctions.list();
-            var expected_list = ["neglog10", "scinotation"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.TransformationFunctions.list().should.not.containEql("foo");
         });
         it("should throw an exception if asked to get a function that has not been defined", function(){
             assert.throws(function(){
@@ -281,10 +275,10 @@ describe('LocusZoom Singletons', function(){
         it('LocusZoom should have a DataLayers singleton', function(){
             LocusZoom.should.have.property('DataLayers').which.is.an.Object;
         });
-       it('should have a method to list available data layers', function(){
+        it('should have a method to list available data layers', function(){
             LocusZoom.DataLayers.should.have.property('list').which.is.a.Function;
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "genes"];
+            var expected_list = ["scatter", "line", "genes"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should have a general method to get a data layer by name', function(){
@@ -301,7 +295,7 @@ describe('LocusZoom Singletons', function(){
             };
             LocusZoom.DataLayers.add("foo", foo);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "genes", "foo"];
+            var expected_list = ["scatter", "line", "genes", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", "bar", {});
             var expected_value = new foo("bar", {});
@@ -320,7 +314,7 @@ describe('LocusZoom Singletons', function(){
             };
             LocusZoom.DataLayers.set("foo", foo_new);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "genes", "foo"];
+            var expected_list = ["scatter", "line", "genes", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", "baz", {});
             var expected_value = new foo_new("baz", {});
@@ -329,7 +323,7 @@ describe('LocusZoom Singletons', function(){
             assert.equal(returned_value.render(), expected_value.render());
             LocusZoom.DataLayers.set("foo");
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "genes"];
+            var expected_list = ["scatter", "line", "genes"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){

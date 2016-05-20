@@ -12,12 +12,14 @@ svg.#{$namespace}-locuszoom {
   font-size: 10px;
 
   rect.#{$namespace}-clickarea {
-    fill: transparent;
+    fill: rgb(0,0,0);
+    fill-opacity: 0;
   }
 
   .#{$namespace}-curtain {
     rect {
-      fill: rgba(210,210,210,0.85);
+      fill: rgb(210,210,210);
+      fill-opacity: 0.85;
     }
     text, tspan {
       fill: rgb(0,0,0);
@@ -34,7 +36,8 @@ svg.#{$namespace}-locuszoom {
 
   .#{$namespace}-mouse_guide {
     rect {
-      fill: rgba(210,210,210,0.85);
+      fill: rgb(210,210,210);
+      fill-opacity: 0.85;
     }
     rect.#{$namespace}-mouse_guide-vertical {
       width: 1px;
@@ -53,26 +56,37 @@ svg.#{$namespace}-locuszoom {
   }
 
   .#{$namespace}-ui-resize_handle {
-    fill: rgba(210,210,210,0.85);
-    stroke: rgba(45,45,45,0.85);
+    fill: rgb(210,210,210);
+    fill-opacity: 0.4;
+    stroke: rgb(45,45,45);
+    stroke-opacity: 0.4;
     stroke-width: 1;
     cursor: nwse-resize;
     stroke-linejoin: round;
   }
 
   .#{$namespace}-ui-resize_handle:hover {
-    fill: rgba(210,210,210,1);
-    stroke: rgba(45,45,45,1);
+    fill: rgb(210,210,210);
+    fill-opacity: 1;
+    stroke: rgb(45,45,45);
+    stroke-opacity: 1;
     stroke-width: 2;
     stroke-linejoin: round;
   }
 
   .#{$namespace}-ui-resize_handle_dragging {
-    fill: rgba(210,210,210,1);
-    stroke: rgba(45,45,45,1);
+    fill: rgb(210,210,210);
+    fill-opacity: 1;
+    stroke: rgb(45,45,45);
+    stroke-opacity: 1;
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round;
+  }
+
+  .#{$namespace}-panel-title {
+    font-size: 18px;
+    font-weight: 600;
   }
 
   .#{$namespace}-axis path,
@@ -103,6 +117,18 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4;
   }
 
+  path.#{$namespace}-data_layer-line {
+    stroke: #{$default_black};
+    stroke-width: 1;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-line-hitarea {
+    fill: none;
+    stroke: transparent;
+    cursor: pointer;
+  }
+
   g.#{$namespace}-data_layer-gene {
     cursor: pointer;
   }
@@ -112,29 +138,34 @@ svg.#{$namespace}-locuszoom {
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box {
-    fill: transparent;
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0;
     stroke-width: 0;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-hovered {
-    fill: rgba(54, 54, 150, 0.1);
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.1;
     stroke-width: 0;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-selected {
-    fill: rgba(54, 54, 150, 0.15);
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.15;
     stroke: #{$default_black};
     stroke-width: 1;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
-    stroke: rgba(54, 54, 150, 1);
+    stroke: rgb(54, 54, 150);
+    stroke-opacity: 1;
     stroke-width: 1;
     fill: #000099;
   }
 
   rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
-    stroke: rgba(54, 54, 150, 1);
+    stroke: rgb(54, 54, 150);
+    stroke-opacity: 1;
     stroke-width: 1;
     fill: #000099;
   }
@@ -153,40 +184,45 @@ div.#{$namespace}-data_layer-tooltip {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_up {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_down {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid transparent;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_right {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_left {
-  width: 0; 
-  height: 0; 
+  width: 0;
+  height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
   border-right: #{$tooltip_arrow_width}px solid #{$default_black}; 
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_left {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
@@ -194,8 +230,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_top_left {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_right {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid #{$default_black};
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
@@ -203,8 +240,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_top_right {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid #{$default_black};
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
@@ -212,8 +250,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
-  width: 0; 
+  width: 0;
   height: 0;
+  pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-left: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
@@ -231,3 +270,126 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   overflow: hidden;
 }
 
+.#{$namespace}-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  .#{$namespace}-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+  }
+  .#{$namespace}-controls-button:hover {
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8;
+  }
+  .#{$namespace}-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8;
+  }
+  .#{$namespace}-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #999999;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .#{$namespace}-controls-button-disabled:hover {
+    cursor: wait;
+    background-color: #D8D8D8;
+  }
+}
+
+.#{$namespace}-locuszoom-panel-controls {
+   padding-top: 6px;
+   padding-right: 2px;
+   .#{$namespace}-panel-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216,216,216,0.4);
+    border: 1px solid rgba(51,51,51,0.4);
+    color: rgba(51,51,51,0.4);
+    border-radius: 4px;
+    pointer-events: auto;
+  }
+  .#{$namespace}-panel-controls-button:hover {
+    cursor: pointer;
+    background-color: rgba(216,216,216,1);
+    border: 1px solid rgba(51,51,51,1);
+    color: rgba(51,51,51,1);
+  }
+  .#{$namespace}-panel-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid rgba(51,51,51,1);
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: rgba(51,51,51,1);
+    color: rgba(216,216,216,1);
+  }
+  .#{$namespace}-panel-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216,216,216,0.4);
+    border: 1px solid rgba(153,153,153,0.4);
+    color: rgba(153,153,153,0.4);
+    border-radius: 4px;
+    pointer-events: none;
+    cursor: wait;
+  }
+}
+
+div.#{$namespace}-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: rgba(228,235,240,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
+}
+
+div.#{$namespace}-panel-boundary {
+  position: absolute;
+  height: 4px;
+  width: 200px;
+  border-radius: 2px;
+  background: rgba(235,240,228,0.5);
+  border: 1px solid #{$default_black_shadow};
+}
+
+div.#{$namespace}-panel-boundary {
+  position: absolute;
+  height: 3px;
+  width: 200px;
+  border-radius: 1px;
+  background: rgba(216,216,216,0.4);
+  border: 1px solid #{$default_black_shadow};
+  cursor: row-resize;
+}
+
+div.#{$namespace}-panel-boundary:hover {
+  background: rgba(216,216,216,1);
+  border: 1px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-boundary:active {
+  background: rgba(51,51,51,1);
+  border: 1px solid rgba(216,216,216,1);
+}

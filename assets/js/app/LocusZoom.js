@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.8"
+    version: "0.3.9"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -45,6 +45,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
         instance.setDimensions();
+        instance.positionPanels();
         // Initialize the instance
         instance.initialize();
         // If the instance has defined data sources then trigger its first mapping based on state values
@@ -221,7 +222,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    response.resolve(JSON.parse(xhr.responseText));
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        response.resolve(data);
+                    } catch (err) {
+                        response.reject("Unable to parse JSON response:" + err);
+                    }
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -231,6 +237,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         body = typeof body !== "undefined" ? body : "";
         xhr.send(body);
     } 
+    return response.promise;
+};
+
+LocusZoom.createResolvedPromise = function() {
+    var response = Q.defer();
+    response.resolve(Array.prototype.slice.call(arguments));
     return response.promise;
 };
 
@@ -244,10 +256,13 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     }
     for (var property in default_layout) {
         if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity
+        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
         // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+        // Also separate arrays from objects as a discrete type.
         var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
         var default_type = typeof default_layout[property];
+        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
         // Unsupported property types: throw an exception
         if (custom_type == "function" || default_type == "function"){
             throw("LocusZoom.mergeLayouts encountered an unsupported property type");
@@ -285,57 +300,90 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-// Default Layout
-LocusZoom.DefaultLayout = {
-    state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
-    resizable: false,
-    aspect_ratio: 1,
-    panels: {}
-};
+LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
     width: 800,
     height: 450,
-    min_width: 400,
-    min_height: 225,
     resizable: "responsive",
     aspect_ratio: (16/9),
     panels: {
         positions: {
+            title: "Analysis ID: 3",
+            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
             min_width:  400,
-            min_height: 112.5,
+            min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
-            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region",
-
+                    tick_format: "region"
                 },
                 y1: {
                     label: "-log10 p-value",
                     label_offset: 28
+                },
+                y2: {
+                    label: "Recombination Rate (cM/Mb)",
+                    label_offset: 40
                 }
             },
             data_layers: {
+                significance: {
+                    type: "line",
+                    fields: ["sig:x", "sig:y"],
+                    z_index: 0,
+                    style: {
+                        "stroke": "#D3D3D3",
+                        "stroke-width": "3px",
+                        "stroke-dasharray": "10px 10px"
+                    },
+                    x_axis: {
+                        field: "sig:x",
+                        decoupled: true
+                    },
+                    y_axis: {
+                        axis: 1,
+                        field: "sig:y"
+                    },
+                    tooltip: {
+                        html: "Significance Threshold: 3 × 10^-5"
+                    }
+                },
+                recomb: {
+                    type: "line",
+                    fields: ["recomb:position", "recomb:recomb_rate"],
+                    z_index: 1,
+                    style: {
+                        "stroke": "#0000FF",
+                        "stroke-width": "1.5px"
+                    },
+                    x_axis: {
+                        field: "recomb:position"
+                    },
+                    y_axis: {
+                        axis: 2,
+                        field: "recomb:recomb_rate",
+                        floor: 0,
+                        ceiling: 100
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: 40,
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    z_index: 2,
                     x_axis: {
                         field: "position"
                     },
@@ -368,13 +416,13 @@ LocusZoom.StandardLayout = {
         genes: {
             width: 800,
             height: 225,
-            origin: { x: 0, y: 350 },
+            origin: { x: 0, y: 225 },
             min_width: 400,
             min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
             data_layers: {
                 genes: {

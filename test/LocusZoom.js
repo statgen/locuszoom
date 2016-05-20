@@ -36,7 +36,7 @@ describe('LocusZoom Core', function(){
         should.exist(LocusZoom);
     });
 
-    describe("LocusZoom Core Singleton", function() {
+    describe("LocusZoom Core", function() {
 
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "instance_id");
@@ -48,10 +48,6 @@ describe('LocusZoom Core', function(){
 
         it('should have a version number', function(){
             LocusZoom.should.have.property('version').which.is.a.String;
-        });
-
-        it('should have a default layout', function(){
-            LocusZoom.should.have.property('DefaultLayout').which.is.an.Object;
         });
 
         it('should have a method for converting an integer position to a string', function(){
@@ -112,10 +108,10 @@ describe('LocusZoom Core', function(){
         });
 
         it('should allow for populating an element with a predefined layout and state as separate arguments (DEPRECATED)', function(){
-            var layout = { width: 200 };
+            var layout = { foo: "bar" };
             var state = { chr: 10 };
             var instance = LocusZoom.populate("#instance_id", {}, layout, state);
-            instance.layout.width.should.be.exactly(200);
+            instance.layout.foo.should.be.exactly("bar");
             instance.layout.state.chr.should.be.exactly(10);
             assert.deepEqual(instance.state, instance.layout.state);
         });
@@ -226,7 +222,7 @@ describe('LocusZoom Core', function(){
             });
             it('should not overwrite array values in the first with any values from the second', function(){
                 var custom_layout = {
-                    array_of_scalars: [ 1, 2, 3 ],
+                    array_of_scalars: [ 4, 6 ],
                     nested_object: {
                         property_1: {
                             charlie: ["whiskey", "xray"]
@@ -235,7 +231,7 @@ describe('LocusZoom Core', function(){
                     }
                 };
                 var expected_layout = JSON.parse(JSON.stringify(this.default_layout));
-                expected_layout.array_of_scalars = [ 1, 2, 3 ];
+                expected_layout.array_of_scalars = [ 4, 6 ];
                 expected_layout.nested_object.property_1.charlie = ["whiskey", "xray"];
                 expected_layout.nested_object.property_2 = true;
                 var returned_layout = LocusZoom.mergeLayouts(custom_layout, this.default_layout);
