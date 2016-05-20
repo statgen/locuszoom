@@ -329,7 +329,7 @@ LocusZoom.StandardLayout = {
             height: 225,
             origin: { x: 0, y: 0 },
             min_width:  400,
-            min_height: 112.5,
+            min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
@@ -346,7 +346,7 @@ LocusZoom.StandardLayout = {
                     label_offset: 28
                 },
                 y2: {
-                    label: "Recombination Rate",
+                    label: "Recombination Rate (cM/Mb)",
                     label_offset: 40
                 }
             },

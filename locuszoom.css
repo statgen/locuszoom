@@ -199,7 +199,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 .lz-locuszoom-controls {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
-  padding-top: 4px; }
+  padding-top: 4px;
+  padding-bottom: 4px; }
   .lz-locuszoom-controls .lz-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;

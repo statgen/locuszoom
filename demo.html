@@ -43,8 +43,8 @@
       .add("base", ["AssociationLZ", {url: apiBase + "single/", params: {analysis: 3}}])
       .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
-      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
-      .add("recomb", ["RecombLZ", { url: apiBase + "recomb/results/", params: {source: 15} }]);
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
 
     // Define custom LocusZoom layout object to allow manual resizing.
     // This will be merged with the default layout (LocusZoom.DefaultLayout)
