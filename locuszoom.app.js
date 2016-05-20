@@ -329,11 +329,11 @@ LocusZoom.StandardLayout = {
             height: 225,
             origin: { x: 0, y: 0 },
             min_width:  400,
-            min_height: 112.5,
+            min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
-            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            margin: { top: 20, right: 50, bottom: 35, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
@@ -344,6 +344,10 @@ LocusZoom.StandardLayout = {
                 y1: {
                     label: "-log10 p-value",
                     label_offset: 28
+                },
+                y2: {
+                    label: "Recombination Rate (cM/Mb)",
+                    label_offset: 40
                 }
             },
             data_layers: {
@@ -368,12 +372,30 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
+                recomb: {
+                    type: "line",
+                    fields: ["recomb:position", "recomb:recomb_rate"],
+                    z_index: 1,
+                    style: {
+                        "stroke": "#0000FF",
+                        "stroke-width": "1.5px"
+                    },
+                    x_axis: {
+                        field: "recomb:position"
+                    },
+                    y_axis: {
+                        axis: 2,
+                        field: "recomb:recomb_rate",
+                        floor: 0,
+                        ceiling: 100
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: 40,
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
-                    z_index: 1,
+                    z_index: 2,
                     x_axis: {
                         field: "position"
                     },
@@ -412,7 +434,7 @@ LocusZoom.StandardLayout = {
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
             data_layers: {
                 genes: {
@@ -1866,7 +1888,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.y1_extent[0], this.y1_extent[1]])
             .range([this.layout.cliparea.height, 0]);
     }
-    if (this.y_extent){
+    if (this.y2_extent){
         if (this.layout.axes.y2.ticks){
             this.y2_ticks = this.layout.axes.y2.ticks;
         } else {
@@ -2069,6 +2091,13 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
         };
+        this.updateTooltip(d, id);
+    };
+    this.updateTooltip = function(d, id){
+        // Empty the tooltip of all HTML (including its arrow!)
+        this.tooltips[id].selector.html("");
+        this.tooltips[id].arrow = null;
+        // Set the new HTML
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         } else if (this.layout.tooltip.divs){
@@ -2082,6 +2111,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                 if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
             }
         }
+        // Reposition and draw a new arrow
         this.positionTooltip(id);
     };
     this.destroyTooltip = function(id){
@@ -2524,7 +2554,6 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
 });
 
 
-
 /****************
   Scale Functions
 
@@ -2866,11 +2895,13 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         style: {
-            fill: "transparent"
+            fill: "transparent",
+            "stroke-width": "2px"
         },
         interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
+        hitarea_width: 5,
         selectable: false
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -2886,6 +2917,42 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
+    // Helper function to get display and data objects representing
+    // the x/y coordinates of the current mouse event with respect to the line in terms of the display
+    // and the interpolated values of the x/y fields with respect to the line
+    this.getMouseDisplayAndData = function(){
+        var ret = {
+            display: {
+                x: d3.mouse(this.mouse_event)[0],
+                y: null
+            },
+            data: {},
+            slope: null
+        };
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        ret.data[x_field] = this.parent[x_scale].invert(ret.display.x);
+        var bisect = d3.bisector(function(datum) { return +datum[x_field]; }).left;
+        var index = bisect(this.data, ret.data[x_field]) - 1;
+        var startDatum = this.data[index];
+        var endDatum = this.data[index + 1];
+        var interpolate = d3.interpolateNumber(+startDatum[y_field], +endDatum[y_field]);
+        var range = +endDatum[x_field] - +startDatum[x_field];
+        ret.data[y_field] = interpolate((ret.data[x_field] % range) / range);
+        ret.display.y = this.parent[y_scale](ret.data[y_field]);
+        if (this.layout.tooltip.x_precision){
+            ret.data[x_field] = ret.data[x_field].toPrecision(this.layout.tooltip.x_precision);
+        }
+        if (this.layout.tooltip.y_precision){
+            ret.data[y_field] = ret.data[y_field].toPrecision(this.layout.tooltip.y_precision);
+        }
+        ret.slope = (this.parent[y_scale](endDatum[y_field]) - this.parent[y_scale](startDatum[y_field]))
+                  / (this.parent[x_scale](endDatum[x_field]) - this.parent[x_scale](startDatum[x_field]));
+        return ret;
+    };
+
     // Reimplement the positionTooltip() method to be line-specific
     this.positionTooltip = function(id){
         if (typeof id != "string"){
@@ -2895,62 +2962,80 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+        var arrow_width = 7; // as defined in the default stylesheet
+        var border_radius = 6; // as defined in the default stylesheet
+        var stroke_width = parseFloat(this.layout.style["stroke-width"]) || 1;
+        var page_origin = this.getPageOrigin();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        var top, left, arrow_top, arrow_left, arrow_type;
 
         // Determine x/y coordinates for display and data
-        var x_field = this.layout.x_axis.field;
-        var y_field = this.layout.y_axis.field;
-        var x_scale = "x_scale";
-        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
-        var display = { x: d3.mouse(this.mouse_event)[0], y: null };
-        var data = { x: this.parent[x_scale].invert(display.x), y: null };
-        var bisect = d3.bisector(function(datum) { return datum[x_field]; }).left;
-        var index = bisect(this.data, data.x) - 1;
-        var startDatum = this.data[index];
-        var endDatum = this.data[index + 1];
-        var interpolate = d3.interpolateNumber(startDatum[y_field], endDatum[y_field]);
-        var range = endDatum[x_field] - startDatum[x_field];
-        data.y = interpolate((data.x % range) / range);
-        display.y = this.parent[y_scale](data.y);
+        var dd = this.getMouseDisplayAndData();
 
-        // Position horizontally: attempt to center on the mouse's x coordinate
-        // pad to either side if bumping up against the edge of the data layer
-        var offset_right = Math.max((tooltip_box.width / 2) - display.x, 0);
-        var offset_left = Math.max((tooltip_box.width / 2) + display.x - data_layer_width, 0);
-        var left = page_origin.x + display.x - (tooltip_box.width / 2) - offset_left + offset_right;
-        var min_arrow_left = arrow_width / 2;
-        var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
-        var arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
-        arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
+        // If the absolute value of the slope of the line at this point is above 1 (including Infinity)
+        // then position the tool tip left/right. Otherwise position top/bottom.
+        if (Math.abs(dd.slope) > 1){
 
-        // Position vertically above the line unless there's insufficient space
-        var top, arrow_type, arrow_top;
-        if (tooltip_box.height + stroke_width + arrow_width < data_layer_height - display.y){
-            top = page_origin.y + display.y + stroke_width + arrow_width;
-            arrow_type = "up";
-            arrow_top = 0 - stroke_width - arrow_width;
+            // Position horizontally on the left or the right depending on which side of the plot the point is on
+            if (dd.display.x <= this.parent.layout.width / 2){
+                left = page_origin.x + dd.display.x + stroke_width + arrow_width + stroke_width;
+                arrow_type = "left";
+                arrow_left = -1 * (arrow_width + stroke_width);
+            } else {
+                left = page_origin.x + dd.display.x - tooltip_box.width - stroke_width - arrow_width - stroke_width;
+                arrow_type = "right";
+                arrow_left = tooltip_box.width - stroke_width;
+            }
+            // Position vertically centered unless we're at the top or bottom of the plot
+            if (dd.display.y - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+                top = page_origin.y + dd.display.y - (1.5 * arrow_width) - border_radius;
+                arrow_top = border_radius;
+            } else if (dd.display.y + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+                top = page_origin.y + dd.display.y + arrow_width + border_radius - tooltip_box.height;
+                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+            } else { // vertically centered
+                top = page_origin.y + dd.display.y - (tooltip_box.height / 2);
+                arrow_top = (tooltip_box.height / 2) - arrow_width;
+            }
+
         } else {
-            top = page_origin.y + display.y - (tooltip_box.height + stroke_width + arrow_width);
-            arrow_type = "down";
-            arrow_top = tooltip_box.height - stroke_width;
+
+            // Position horizontally: attempt to center on the mouse's x coordinate
+            // pad to either side if bumping up against the edge of the data layer
+            var offset_right = Math.max((tooltip_box.width / 2) - dd.display.x, 0);
+            var offset_left = Math.max((tooltip_box.width / 2) + dd.display.x - data_layer_width, 0);
+            left = page_origin.x + dd.display.x - (tooltip_box.width / 2) - offset_left + offset_right;
+            var min_arrow_left = arrow_width / 2;
+            var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
+            arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
+            arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
+
+            // Position vertically above the line unless there's insufficient space
+            if (tooltip_box.height + stroke_width + arrow_width > dd.display.y){
+                top = page_origin.y + dd.display.y + stroke_width + arrow_width;
+                arrow_type = "up";
+                arrow_top = 0 - stroke_width - arrow_width;
+            } else {
+                top = page_origin.y + dd.display.y - (tooltip_box.height + stroke_width + arrow_width);
+                arrow_type = "down";
+                arrow_top = tooltip_box.height - stroke_width;
+            }
         }
 
         // Apply positions to the main div
-        tooltip.selector.style("left", left + "px").style("top", top + "px");
+        tooltip.selector.style({ left: left + "px", top: top + "px" });
         // Create / update position on arrow connecting tooltip to data
         if (!tooltip.arrow){
             tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
         }
         tooltip.arrow
             .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
-            .style("left", arrow_left + "px")
-            .style("top", arrow_top + "px");
+            .style({ "left": arrow_left + "px", top: arrow_top + "px" });
+
     };
+
 
     // Implement the main render function
     this.render = function(){
@@ -2996,26 +3081,31 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         // Apply tooltip, etc
         if (this.layout.tooltip){
             // Generate an overlaying transparent "hit area" line for more intuitive mouse events
+            var hitarea_width = parseFloat(this.layout.hitarea_width).toString() + "px";
             var hitarea = this.svg.group
                 .selectAll("path.lz-data_layer-line-hitarea")
                 .data([this.data]);
             hitarea.enter()
                 .append("path")
-                .attr("class", "lz-data_layer-line-hitarea");
+                .attr("class", "lz-data_layer-line-hitarea")
+                .style("stroke-width", hitarea_width);
             var hitarea_line = d3.svg.line()
                 .x(function(d) { return panel[x_scale](d[x_field]); })
                 .y(function(d) { return panel[y_scale](d[y_field]); })
                 .interpolate(this.layout.interpolate);
             hitarea
                 .attr("d", hitarea_line)
-                .on("mouseover", function(d){
+                .on("mouseover", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
-                    data_layer.createTooltip(d, data_layer.state_id);
+                    var dd = data_layer.getMouseDisplayAndData();
+                    data_layer.createTooltip(dd.data, data_layer.state_id);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
+                    var dd = data_layer.getMouseDisplayAndData();
+                    data_layer.updateTooltip(dd.data, data_layer.state_id);
                     data_layer.positionTooltip(data_layer.state_id);
                 })
                 .on("mouseout", function(){
@@ -3035,7 +3125,6 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     return this;
 
 });
-
 
 /*********************
   Genes Data Layer

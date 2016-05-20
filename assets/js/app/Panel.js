@@ -429,7 +429,7 @@ LocusZoom.Panel.prototype.render = function(){
             .domain([this.y1_extent[0], this.y1_extent[1]])
             .range([this.layout.cliparea.height, 0]);
     }
-    if (this.y_extent){
+    if (this.y2_extent){
         if (this.layout.axes.y2.ticks){
             this.y2_ticks = this.layout.axes.y2.ticks;
         } else {

@@ -119,9 +119,8 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-line-hitarea {
-    fill: transparent;
+    fill: none;
     stroke: transparent;
-    stroke-width: 12px;
     cursor: pointer;
   }
 
@@ -270,6 +269,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 4px;
+  padding-bottom: 4px;
   .#{$namespace}-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
