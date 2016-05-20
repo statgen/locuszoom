@@ -23,6 +23,11 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     this.panels = {};
     this.panel_ids_by_y_index = [];
+    this.applyPanelYIndexesToPanelLayouts = function(){
+        this.panel_ids_by_y_index.forEach(function(pid, idx){
+            this.panels[pid].layout.y_index = idx;
+        }.bind(this));
+    };
 
     this.remap_promises = [];
 
@@ -47,6 +52,27 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Array of functions to call when the plot is updated
     this.onUpdateFunctions = [];
 
+    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the plot
+    this.getPageOrigin = function(){
+        var bounding_client_rect = this.svg.node().getBoundingClientRect();
+        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        var container = this.svg.node();
+        while (container.parentNode != null){
+            container = container.parentNode;
+            if (container != document && d3.select(container).style("position") != "static"){
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
+        return {
+            x: x_offset + bounding_client_rect.left,
+            y: y_offset + bounding_client_rect.top
+        };
+    };
+
     // Initialize the layout
     this.initializeLayout();
 
@@ -66,8 +92,9 @@ LocusZoom.Instance.DefaultLayout = {
     panels: {},
     controls: {
         show: "onmouseover",
-        hide_delay: 500
-    }
+        hide_delay: 300
+    },
+    panel_boundaries: true
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
@@ -85,7 +112,6 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     }
     return total;
 };
-
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined"){
@@ -178,7 +204,14 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
+            if (this.panels[panel_id].controls.selector){
+                this.panels[panel_id].controls.position();
+            }
         }.bind(this));
+        // Reposition panel boundaries if showing
+        if (this.panel_boundaries && this.panel_boundaries.showing){
+            this.panel_boundaries.position();
+        }
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -243,9 +276,7 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
             panel.layout.y_index = Math.max(this.panel_ids_by_y_index.length + panel.layout.y_index, 0);
         }
         this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
-        this.panel_ids_by_y_index.forEach(function(pid, idx){
-            this.panels[pid].layout.y_index = idx;
-        }.bind(this));
+        this.applyPanelYIndexesToPanelLayouts();
     } else {
         var length = this.panel_ids_by_y_index.push(panel.id);
         this.panels[panel.id].layout.y_index = length - 1;
@@ -274,9 +305,6 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
 LocusZoom.Instance.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
-    }
-    if (!this.panels[id].layout.removable){
-        throw ("Unable to remove panel, panel is marked as not removable");
     }
 
     // Destroy all tooltips and state vars for all data layers on the panel
@@ -389,6 +417,7 @@ LocusZoom.Instance.prototype.initialize = function(){
     this.ui = {
         svg: ui_svg,
         parent: this,
+        hide_timeout: null,
         is_resize_dragging: false,
         show: function(){
             this.svg.style("display", null);
@@ -467,6 +496,92 @@ LocusZoom.Instance.prototype.initialize = function(){
         .attr("id", this.id + ".curtain_text")
         .attr("x", "1em").attr("y", "0em");
 
+    // Create the panel_boundaries object with show/position/hide methods
+    this.panel_boundaries = {
+        parent: this,
+        hide_timeout: null,
+        showing: false,
+        dragging: false,
+        selectors: [],
+        show: function(){
+            // Generate panel boundaries
+            if (!this.showing){
+                this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
+                    var selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                        .attr("class", "lz-panel-boundary")
+                        .attr("title", "Resize panels");
+                    var panel_resize_drag = d3.behavior.drag();
+                    panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
+                    panel_resize_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
+                    panel_resize_drag.on("drag", function(){
+                        // First set the dimensions on the panel we're resizing
+                        var this_panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
+                        var original_panel_height = this_panel.layout.height;
+                        this_panel.setDimensions(this_panel.layout.width, this_panel.layout.height + d3.event.dy);
+                        var panel_height_change = this_panel.layout.height - original_panel_height;
+                        var new_calculated_plot_height = this.parent.layout.height + panel_height_change;
+                        // Next loop through all panels.
+                        // Update proportional dimensions for all panels including the one we've resized using discrete heights.
+                        // Reposition panels with a greater y-index than this panel to their appropriate new origin.
+                        this.parent.panel_ids_by_y_index.forEach(function(loop_panel_id, loop_panel_idx){
+                            var loop_panel = this.parent.panels[this.parent.panel_ids_by_y_index[loop_panel_idx]];
+                            loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
+                            if (loop_panel_idx > panel_idx){
+                                loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
+                                if (loop_panel.layout.controls){
+                                    loop_panel.controls.position();
+                                }
+                            }
+                        }.bind(this));
+                        // Reset dimensions on the entire plot and reposition panel boundaries
+                        this.parent.positionPanels();
+                        this.position();
+                    }.bind(this));
+                    selector.call(panel_resize_drag);
+                    this.parent.panel_boundaries.selectors.push(selector);
+                }.bind(this));
+                this.showing = true;
+            }
+            this.position();
+        },
+        position: function(){
+            // Position panel boundaries
+            var plot_page_origin = this.parent.getPageOrigin();
+            this.selectors.forEach(function(selector, panel_idx){
+                var panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
+                var left = plot_page_origin.x;
+                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 2;
+                var width = this.parent.layout.width - 1;
+                selector.style({
+                    top: top + "px",
+                    left: left + "px",
+                    width: width + "px"
+                });
+            }.bind(this));
+        },
+        hide: function(){
+            // Remove panel boundaries
+            this.selectors.forEach(function(selector){
+                selector.remove();
+            });
+            this.selectors = [];
+            this.showing = false;
+        }
+    };
+
+    // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
+    if (this.layout.panel_boundaries){
+        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".panel_boundaries", function(){
+            clearTimeout(this.panel_boundaries.hide_timeout);
+            this.panel_boundaries.show();
+        }.bind(this));
+        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".panel_boundaries", function(){
+            this.panel_boundaries.hide_timeout = setTimeout(function(){
+                this.panel_boundaries.hide();
+            }.bind(this), 300);
+        }.bind(this));
+    }
+
     // Create the controls object with show/update/hide methods
     var css_string = "";
     for (var stylesheet in Object.keys(document.styleSheets)){
@@ -487,7 +602,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         show: function(){
             if (!this.showing){
                 this.div = d3.select(this.parent.svg.node().parentNode).append("div")
-                    .attr("class", "lz-locuszoom-controls").attr("id", this.id + ".controls");
+                    .attr("class", "lz-locuszoom-controls").attr("id", this.parent.id + ".controls");
                 this.links = this.div.append("div")
                     .attr("id", this.parent.id + ".controls.links")
                     .style("float", "left");
@@ -563,11 +678,11 @@ LocusZoom.Instance.prototype.initialize = function(){
     if (this.layout.controls.show == "always"){
         this.controls.show();
     } else if (this.layout.controls.show == "onmouseover"){
-        d3.select(this.svg.node().parentNode).on("mouseover", function(){
+        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".controls", function(){
             clearTimeout(this.controls.hide_timeout);
             this.controls.show();
         }.bind(this));
-        d3.select(this.svg.node().parentNode).on("mouseout", function(){
+        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".controls", function(){
             this.controls.hide_timeout = setTimeout(function(){
                 this.controls.hide();
             }.bind(this), this.layout.controls.hide_delay);
@@ -582,12 +697,15 @@ LocusZoom.Instance.prototype.initialize = function(){
     // Define instance/svg level mouse events
     this.svg.on("mouseover", function(){
         if (!this.ui.is_resize_dragging){
+            clearTimeout(this.ui.hide_timeout);
             this.ui.show();
         }
     }.bind(this));
     this.svg.on("mouseout", function(){
         if (!this.ui.is_resize_dragging){
-            this.ui.hide();
+            this.ui.hide_timeout = setTimeout(function(){
+                this.ui.hide();
+            }.bind(this), 300);
         }
         this.mouse_guide.vertical.attr("x", -1);
         this.mouse_guide.horizontal.attr("y", -1);

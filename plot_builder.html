@@ -74,7 +74,6 @@
 
     <div class="row" id="panels">
       <button onclick="addAnalysis();">Add Analysis</button>
-      <button id="remove_positions" onclick="plot.removePanel('positions'); $('#remove_positions').remove();">Remove positions</button>
     </div>
 
   </div>
@@ -102,11 +101,11 @@
 
     function addAnalysis(){
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
-      var shape = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"][Math.floor(Math.random()*6)];
+      var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
                            { url: apiBase + "single/",
                              params: {
-                               analysis: 3
+                               analysis: analysis
                              }
                            }
                          ];
@@ -121,10 +120,12 @@
                       ];
       data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
       var layout = {
+          title: "Analysis ID: " + analysis,
+          description: ns,
           y_index: -1,
           min_width:  400,
           min_height: 112.5,
-          margin: { top: 20, right: 20, bottom: 35, left: 50 },
+          margin: { top: 35, right: 20, bottom: 35, left: 50 },
           inner_border: "rgba(210, 210, 210, 0.85)",
           axes: {
               x: {
@@ -160,7 +161,7 @@
               },
               positions: {
                   type: "scatter",
-                  point_shape: shape,
+                  point_shape: "circle",
                   point_size: 40,
                   fields: [ns+":id",
                            ns+":position",
@@ -199,7 +200,6 @@
           }
       };
       plot.addPanel(ns, layout);
-      $("#panels").append("<button id=\"remove_" + ns + "\" onclick=\"plot.removePanel('" + ns + "'); $('#remove_" + ns + "').remove();\">Remove " + ns + "</button>");
     }
 
     var plot;
