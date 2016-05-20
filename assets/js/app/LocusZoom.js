@@ -317,11 +317,11 @@ LocusZoom.StandardLayout = {
             height: 225,
             origin: { x: 0, y: 0 },
             min_width:  400,
-            min_height: 112.5,
+            min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
-            margin: { top: 35, right: 20, bottom: 40, left: 50 },
+            margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
@@ -332,6 +332,10 @@ LocusZoom.StandardLayout = {
                 y1: {
                     label: "-log10 p-value",
                     label_offset: 28
+                },
+                y2: {
+                    label: "Recombination Rate (cM/Mb)",
+                    label_offset: 40
                 }
             },
             data_layers: {
@@ -356,12 +360,30 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
+                recomb: {
+                    type: "line",
+                    fields: ["recomb:position", "recomb:recomb_rate"],
+                    z_index: 1,
+                    style: {
+                        "stroke": "#0000FF",
+                        "stroke-width": "1.5px"
+                    },
+                    x_axis: {
+                        field: "recomb:position"
+                    },
+                    y_axis: {
+                        axis: 2,
+                        field: "recomb:recomb_rate",
+                        floor: 0,
+                        ceiling: 100
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: 40,
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
-                    z_index: 1,
+                    z_index: 2,
                     x_axis: {
                         field: "position"
                     },
@@ -400,7 +422,7 @@ LocusZoom.StandardLayout = {
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
             data_layers: {
                 genes: {
