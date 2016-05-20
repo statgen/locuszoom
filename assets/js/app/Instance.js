@@ -92,7 +92,7 @@ LocusZoom.Instance.DefaultLayout = {
     panels: {},
     controls: {
         show: "onmouseover",
-        hide_delay: 500
+        hide_delay: 300
     },
     panel_boundaries: true
 };
@@ -208,6 +208,10 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
                 this.panels[panel_id].controls.position();
             }
         }.bind(this));
+        // Reposition panel boundaries if showing
+        if (this.panel_boundaries && this.panel_boundaries.showing){
+            this.panel_boundaries.position();
+        }
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -413,6 +417,7 @@ LocusZoom.Instance.prototype.initialize = function(){
     this.ui = {
         svg: ui_svg,
         parent: this,
+        hide_timeout: null,
         is_resize_dragging: false,
         show: function(){
             this.svg.style("display", null);
@@ -692,12 +697,15 @@ LocusZoom.Instance.prototype.initialize = function(){
     // Define instance/svg level mouse events
     this.svg.on("mouseover", function(){
         if (!this.ui.is_resize_dragging){
+            clearTimeout(this.ui.hide_timeout);
             this.ui.show();
         }
     }.bind(this));
     this.svg.on("mouseout", function(){
         if (!this.ui.is_resize_dragging){
-            this.ui.hide();
+            this.ui.hide_timeout = setTimeout(function(){
+                this.ui.hide();
+            }.bind(this), 300);
         }
         this.mouse_guide.vertical.attr("x", -1);
         this.mouse_guide.horizontal.attr("y", -1);

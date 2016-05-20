@@ -852,7 +852,7 @@ LocusZoom.Instance.DefaultLayout = {
     panels: {},
     controls: {
         show: "onmouseover",
-        hide_delay: 500
+        hide_delay: 300
     },
     panel_boundaries: true
 };
@@ -968,6 +968,10 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
                 this.panels[panel_id].controls.position();
             }
         }.bind(this));
+        // Reposition panel boundaries if showing
+        if (this.panel_boundaries && this.panel_boundaries.showing){
+            this.panel_boundaries.position();
+        }
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -1173,6 +1177,7 @@ LocusZoom.Instance.prototype.initialize = function(){
     this.ui = {
         svg: ui_svg,
         parent: this,
+        hide_timeout: null,
         is_resize_dragging: false,
         show: function(){
             this.svg.style("display", null);
@@ -1452,12 +1457,15 @@ LocusZoom.Instance.prototype.initialize = function(){
     // Define instance/svg level mouse events
     this.svg.on("mouseover", function(){
         if (!this.ui.is_resize_dragging){
+            clearTimeout(this.ui.hide_timeout);
             this.ui.show();
         }
     }.bind(this));
     this.svg.on("mouseout", function(){
         if (!this.ui.is_resize_dragging){
-            this.ui.hide();
+            this.ui.hide_timeout = setTimeout(function(){
+                this.ui.hide();
+            }.bind(this), 300);
         }
         this.mouse_guide.vertical.attr("x", -1);
         this.mouse_guide.horizontal.attr("y", -1);
@@ -1818,7 +1826,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Reposition buttons
             if (this.layout.controls.reposition){
                 this.controls.link_selectors.reposition_up = this.controls.selector.append("a")
-                    .attr("class", "lz-controls-button-disabled")
+                    .attr("class", "lz-panel-controls-button-disabled")
                     .attr("title", "Move panel up")
                     .style({ "font-weight": "bold" })
                     .text("▴")
@@ -1831,7 +1839,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         }
                     }.bind(this));
                 this.controls.link_selectors.reposition_down = this.controls.selector.append("a")
-                    .attr("class", "lz-controls-button-disabled")
+                    .attr("class", "lz-panel-controls-button-disabled")
                     .attr("title", "Move panel down")
                     .style({ "font-weight": "bold" })
                     .text("▾")
@@ -1847,7 +1855,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Description button
             if (this.layout.controls.description && this.layout.description){
                 this.controls.link_selectors.description = this.controls.selector.append("a")
-                    .attr("class", "lz-controls-button")
+                    .attr("class", "lz-panel-controls-button")
                     .attr("title", "View panel information")
                     .style({ "font-weight": "bold" })
                     .text("?")
@@ -1863,7 +1871,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     is_showing: false,
                     selector: null,
                     show: function(){
-                        this.controls.link_selectors.description.attr("class", "lz-controls-button-selected");
+                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
                         this.controls.description.selector = d3.select(this.parent.svg.node().parentNode).append("div")
                             .attr("class", "lz-panel-description")
                             .attr("id", this.getBaseId() + ".description")
@@ -1880,16 +1888,16 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.description.selector.style({ top: top, left: left });
                     }.bind(this),
                     hide: function(){
-                        this.controls.link_selectors.description.attr("class", "lz-controls-button");
+                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
                         this.controls.description.selector.remove();
                         this.controls.description.is_showing = false;
-                    }.bind(this),
+                    }.bind(this)
                 };
             }
             // Remove button
             if (this.layout.controls.remove){
                 this.controls.link_selectors.remove = this.controls.selector.append("a")
-                    .attr("class", "lz-controls-button")
+                    .attr("class", "lz-panel-controls-button")
                     .attr("title", "Remove panel")
                     .style({ "font-weight": "bold" })
                     .text("×")
@@ -1917,10 +1925,10 @@ LocusZoom.Panel.prototype.initialize = function(){
             }
             // Apply appropriate classes to reposition buttons as needed
             if (this.controls.link_selectors.reposition_up){
-                this.controls.link_selectors.reposition_up.attr("class", (this.layout.y_index == 0) ? "lz-controls-button-disabled" : "lz-controls-button");
+                this.controls.link_selectors.reposition_up.attr("class", (this.layout.y_index == 0) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
             }
             if (this.controls.link_selectors.reposition_down){
-                this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-controls-button-disabled" : "lz-controls-button");
+                this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
             }
         }.bind(this),
         hide: function(){
@@ -1944,7 +1952,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
             this.controls.hide_timeout = setTimeout(function(){
                 this.controls.hide();
-            }.bind(this), 100);
+            }.bind(this), 300);
         }.bind(this));
     }
 
@@ -2290,6 +2298,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     }
 
 };
+
 /* global d3,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
