@@ -739,6 +739,22 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 /**
+  Known Data Source for Annotation Track (BED Track) Data
+*/
+
+LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "BEDLZ");
+
+LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
+    var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
+    return this.url + "?filter=id in " + source + 
+        " and chromosome eq '" + state.chr + "'" + 
+        " and start le " + state.end +
+        " and end ge " + state.start;
+};
+
+/**
   Known Data Source for Static JSON Data
 */
 LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
