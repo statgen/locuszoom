@@ -424,6 +424,7 @@ LocusZoom.StandardLayout = {
                             { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
                         ]
                     },
+                    /*
                     label: {
                         text: "{{id}}",
                         spacing: 4,
@@ -446,6 +447,7 @@ LocusZoom.StandardLayout = {
                             "fill": "#333333"
                         }
                     }
+                    */
                 }
             }
         },
