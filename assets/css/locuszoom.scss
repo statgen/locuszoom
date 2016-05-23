@@ -57,9 +57,9 @@ svg.#{$namespace}-locuszoom {
 
   .#{$namespace}-ui-resize_handle {
     fill: rgb(210,210,210);
-    fill-opacity: 0.85;
+    fill-opacity: 0.4;
     stroke: rgb(45,45,45);
-    stroke-opacity: 0.85;
+    stroke-opacity: 0.4;
     stroke-width: 1;
     cursor: nwse-resize;
     stroke-linejoin: round;
@@ -82,6 +82,11 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round;
+  }
+
+  .#{$namespace}-panel-title {
+    font-size: 18px;
+    font-weight: 600;
   }
 
   .#{$namespace}-axis path,
@@ -129,9 +134,8 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-line-hitarea {
-    fill: transparent;
+    fill: none;
     stroke: transparent;
-    stroke-width: 12px;
     cursor: pointer;
   }
 
@@ -280,6 +284,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 4px;
+  padding-bottom: 4px;
   .#{$namespace}-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
@@ -292,7 +297,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   .#{$namespace}-controls-button:hover {
     cursor: pointer;
     background-color: #333333;
-    color: #D8D8D8
+    color: #D8D8D8;
+  }
+  .#{$namespace}-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8;
   }
   .#{$namespace}-controls-button-disabled {
     text-decoration: none;
@@ -307,4 +322,84 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     cursor: wait;
     background-color: #D8D8D8;
   }
+}
+
+.#{$namespace}-locuszoom-panel-controls {
+   padding-top: 6px;
+   padding-right: 2px;
+   .#{$namespace}-panel-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216,216,216,0.4);
+    border: 1px solid rgba(51,51,51,0.4);
+    color: rgba(51,51,51,0.4);
+    border-radius: 4px;
+    pointer-events: auto;
+  }
+  .#{$namespace}-panel-controls-button:hover {
+    cursor: pointer;
+    background-color: rgba(216,216,216,1);
+    border: 1px solid rgba(51,51,51,1);
+    color: rgba(51,51,51,1);
+  }
+  .#{$namespace}-panel-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid rgba(51,51,51,1);
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: rgba(51,51,51,1);
+    color: rgba(216,216,216,1);
+  }
+  .#{$namespace}-panel-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216,216,216,0.4);
+    border: 1px solid rgba(153,153,153,0.4);
+    color: rgba(153,153,153,0.4);
+    border-radius: 4px;
+    pointer-events: none;
+    cursor: wait;
+  }
+}
+
+div.#{$namespace}-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: rgba(228,235,240,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
+}
+
+div.#{$namespace}-panel-boundary {
+  position: absolute;
+  height: 4px;
+  width: 200px;
+  border-radius: 2px;
+  background: rgba(235,240,228,0.5);
+  border: 1px solid #{$default_black_shadow};
+}
+
+div.#{$namespace}-panel-boundary {
+  position: absolute;
+  height: 3px;
+  width: 200px;
+  border-radius: 1px;
+  background: rgba(216,216,216,0.4);
+  border: 1px solid #{$default_black_shadow};
+  cursor: row-resize;
+}
+
+div.#{$namespace}-panel-boundary:hover {
+  background: rgba(216,216,216,1);
+  border: 1px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-boundary:active {
+  background: rgba(51,51,51,1);
+  border: 1px solid rgba(216,216,216,1);
 }

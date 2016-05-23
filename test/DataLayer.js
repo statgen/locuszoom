@@ -217,4 +217,47 @@ describe('LocusZoom.DataLayer', function(){
 
     });
 
+    describe("Layout Paramters", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.layout = {
+                panels: {
+                    p1: {
+                        data_layers: {}
+                    }
+                },
+                controls: false
+            };
+            d3.select("body").append("div").attr("id", "plot");
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it('should allow for explicitly setting data layer z_index', function(){
+            this.layout.panels.p1.data_layers = {
+                d1: { type: "line", z_index: 1 },
+                d2: { type: "line", z_index: 0 }
+            };
+            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ["d2", "d1"]);
+            this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(1);
+            this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(0);
+        });
+        it('should allow for explicitly setting data layer z_index with a negative value', function(){
+            this.layout.panels.p1.data_layers = {
+                d1: { type: "line" },
+                d2: { type: "line" },
+                d3: { type: "line" },
+                d4: { type: "line", z_index: -1 }
+            };
+            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+            assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ["d1", "d2", "d4", "d3"]);
+            this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(0);
+            this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(1);
+            this.plot.panels.p1.data_layers.d3.layout.z_index.should.be.exactly(3);
+            this.plot.panels.p1.data_layers.d4.layout.z_index.should.be.exactly(2);
+        });
+    });
+
 });

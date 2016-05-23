@@ -34,9 +34,9 @@ svg.lz-locuszoom {
     border-radius: 3px; }
   svg.lz-locuszoom .lz-ui-resize_handle {
     fill: #d2d2d2;
-    fill-opacity: 0.85;
+    fill-opacity: 0.4;
     stroke: #2d2d2d;
-    stroke-opacity: 0.85;
+    stroke-opacity: 0.4;
     stroke-width: 1;
     cursor: nwse-resize;
     stroke-linejoin: round; }
@@ -55,6 +55,9 @@ svg.lz-locuszoom {
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-panel-title {
+    font-size: 18px;
+    font-weight: 600; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
@@ -84,9 +87,8 @@ svg.lz-locuszoom {
     stroke-width: 1;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
-    fill: transparent;
+    fill: none;
     stroke: transparent;
-    stroke-width: 12px;
     cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
@@ -206,7 +208,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 .lz-locuszoom-controls {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
-  padding-top: 4px; }
+  padding-top: 4px;
+  padding-bottom: 4px; }
   .lz-locuszoom-controls .lz-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
@@ -216,6 +219,15 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     border-radius: 4px;
     pointer-events: auto; }
   .lz-locuszoom-controls .lz-controls-button:hover {
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8; }
+  .lz-locuszoom-controls .lz-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
     cursor: pointer;
     background-color: #333333;
     color: #D8D8D8; }
@@ -230,3 +242,73 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   .lz-locuszoom-controls .lz-controls-button-disabled:hover {
     cursor: wait;
     background-color: #D8D8D8; }
+
+.lz-locuszoom-panel-controls {
+  padding-top: 6px;
+  padding-right: 2px; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216, 216, 216, 0.4);
+    border: 1px solid rgba(51, 51, 51, 0.4);
+    color: rgba(51, 51, 51, 0.4);
+    border-radius: 4px;
+    pointer-events: auto; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button:hover {
+    cursor: pointer;
+    background-color: #d8d8d8;
+    border: 1px solid #333333;
+    color: #333333; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #d8d8d8; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216, 216, 216, 0.4);
+    border: 1px solid rgba(153, 153, 153, 0.4);
+    color: rgba(153, 153, 153, 0.4);
+    border-radius: 4px;
+    pointer-events: none;
+    cursor: wait; }
+
+div.lz-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: #e4ebf0;
+  border: 1px solid rgba(24, 24, 24, 1);
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 4px;
+  width: 200px;
+  border-radius: 2px;
+  background: rgba(235, 240, 228, 0.5);
+  border: 1px solid rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 3px;
+  width: 200px;
+  border-radius: 1px;
+  background: rgba(216, 216, 216, 0.4);
+  border: 1px solid rgba(24, 24, 24, 0.4);
+  cursor: row-resize; }
+
+div.lz-panel-boundary:hover {
+  background: #d8d8d8;
+  border: 1px solid rgba(24, 24, 24, 1); }
+
+div.lz-panel-boundary:active {
+  background: #333333;
+  border: 1px solid #d8d8d8; }
