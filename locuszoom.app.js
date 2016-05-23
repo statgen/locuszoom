@@ -499,22 +499,28 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
     }
 
 };
+
+LocusZoom.Data.Source.prototype.getPossiblyCachedRequest = function(url) {
+    if (url == this._lastURL && this._cachedResponse) {
+        return Q.when(this._cachedResponse);
+    } else {
+        return this.getUnCachedRequest(url).then(function(x) {
+            this._lastURL = url;
+            return this._cachedResponse = x;
+        }.bind(this));
+    }
+};
+
+LocusZoom.Data.Source.prototype.getUnCachedRequest = function(url) {
+    return LocusZoom.createCORSPromise("GET", url); 
+};
+
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
-    var getPromise = function(url) {
-        return LocusZoom.createCORSPromise("GET", url); 
-    };
     var url = this.getURL(state, chain, fields);
     if (this.cacheURLResponse) {
-        if (url == this._lastURL && this._cachedResponse) {
-            return Q.when(this._cachedResponse);
-        } else {
-            return getPromise(url).then(function(x) {
-                this._lastURL = url;
-                return this._cachedResponse = x;
-            }.bind(this));
-        }
+        return this.getPossiblyCachedRequest(url);
     }
-    return getPromise(url);
+    return this.getUnCachedRequest(url);
 };
 
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
