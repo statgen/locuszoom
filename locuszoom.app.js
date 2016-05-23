@@ -500,7 +500,21 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 
 };
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
-    return LocusZoom.createCORSPromise("GET", this.getURL(state, chain, fields));
+    var getPromise = function(url) {
+        return LocusZoom.createCORSPromise("GET", url); 
+    };
+    var url = this.getURL(state, chain, fields);
+    if (this.cacheURLResponse) {
+        if (url == this._lastURL && this._cachedResponse) {
+            return Q.when(this._cachedResponse);
+        } else {
+            return getPromise(url).then(function(x) {
+                this._lastURL = url;
+                return this._cachedResponse = x;
+            }.bind(this));
+        }
+    }
+    return getPromise(url);
 };
 
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
@@ -607,6 +621,7 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
 */
 LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.cacheURLResponse = true;
 }, "AssociationLZ");
 
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
@@ -633,6 +648,7 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.cacheURLResponse = true;
     if (!this.params.id_field) {
         this.params.id_field = "id";
     }
@@ -710,6 +726,7 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
 */
 LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.cacheURLResponse = true;
 }, "GeneLZ");
 
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
@@ -728,6 +745,7 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 */
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.cacheURLResponse = true;
 }, "RecombLZ");
 
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
@@ -744,6 +762,7 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 
 LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.cacheURLResponse = true;
 }, "BEDLZ");
 
 LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
