@@ -51,7 +51,10 @@ LocusZoom.Data.Requester = function(sources) {
   Base Data Source Class
   This can be extended with .extend() to create custom data sources
 */
-LocusZoom.Data.Source = function() {};
+LocusZoom.Data.Source = function() {
+    this.enableCache = true;
+};
+
 LocusZoom.Data.Source.prototype.parseInit = function(init) {
     if (typeof init === "string") {
         this.url = init;
@@ -66,27 +69,31 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 
 };
 
-LocusZoom.Data.Source.prototype.getPossiblyCachedRequest = function(url) {
-    if (url == this._lastURL && this._cachedResponse) {
-        return Q.when(this._cachedResponse);
-    } else {
-        return this.getUnCachedRequest(url).then(function(x) {
-            this._lastURL = url;
-            return this._cachedResponse = x;
-        }.bind(this));
-    }
+LocusZoom.Data.Source.prototype.getCacheKey = function(state, chain, fields) {
+    var url = this.getURL(state, chain, fields);
+    return url;
 };
 
-LocusZoom.Data.Source.prototype.getUnCachedRequest = function(url) {
+LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
+    var url = this.getURL(state, chain, fields);
     return LocusZoom.createCORSPromise("GET", url); 
 };
 
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
-    var url = this.getURL(state, chain, fields);
-    if (this.cacheURLResponse) {
-        return this.getPossiblyCachedRequest(url);
+    var req;
+    var cacheKey = this.getCacheKey(state, chain, fields);
+    if (this.enableCache & cacheKey == this._cachedKey) {
+        req = Q.when(this._cachedResponse);
+    } else {
+        req = this.fetchRequest(state, chain, fields);
+        if (this.enableCache) {
+            req = req.then(function(x) {
+                this._cachedKey = cacheKey;
+                return this._cachedResponse = x;
+            }.bind(this));
+        }
     }
-    return this.getUnCachedRequest(url);
+    return req;
 };
 
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
@@ -174,7 +181,7 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
 
 LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
     constructorFun = constructorFun || function() {};
-    constructorFun.prototype = Object.create(LocusZoom.Data.Source.prototype);
+    constructorFun.prototype = new LocusZoom.Data.Source();
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
         constructorFun.SOURCE_NAME = uniqueName;
@@ -193,7 +200,6 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
 */
 LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    this.cacheURLResponse = true;
 }, "AssociationLZ");
 
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
@@ -220,7 +226,6 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    this.cacheURLResponse = true;
     if (!this.params.id_field) {
         this.params.id_field = "id";
     }
@@ -298,7 +303,6 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
 */
 LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    this.cacheURLResponse = true;
 }, "GeneLZ");
 
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
@@ -317,7 +321,6 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 */
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    this.cacheURLResponse = true;
 }, "RecombLZ");
 
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
@@ -334,7 +337,6 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 
 LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    this.cacheURLResponse = true;
 }, "BEDLZ");
 
 LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
