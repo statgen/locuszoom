@@ -895,6 +895,11 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     return total;
 };
 
+LocusZoom.Instance.prototype.rescaleSVG = function(){
+    var clientRect = this.svg.node().parentNode.getBoundingClientRect();
+    this.setDimensions(clientRect.width, clientRect.height);
+}
+
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined" && this.onUpdateFunctions.length){
         for (func in this.onUpdateFunctions){
@@ -922,8 +927,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
     if (this.layout.resizable == "responsive"){
         this.window_onresize = d3.select(window).on("resize.lz-"+this.id, function(){
-            var clientRect = this.svg.node().parentNode.getBoundingClientRect();
-            this.setDimensions(clientRect.width, clientRect.height);
+            this.rescaleSVG();
         }.bind(this));
         // Forcing one additional setDimensions() call after the page is loaded clears up
         // any disagreements between the initial layout and the loaded responsive container's size
