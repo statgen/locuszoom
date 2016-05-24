@@ -567,7 +567,6 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
     // Override x_extent from state if explicitly defined to do so
     if (this.layout.axes.x && this.layout.axes.x.extent == "state"){
-        console.log("overriding");
         this.x_extent = [ this.state.start, this.state.end ];
     }    
 
