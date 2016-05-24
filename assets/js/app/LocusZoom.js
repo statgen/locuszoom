@@ -327,7 +327,8 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region"
+                    tick_format: "region",
+                    extent: "state"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -385,8 +386,7 @@ LocusZoom.StandardLayout = {
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
-                        field: "position",
-                        extent: "state"
+                        field: "position"
                     },
                     y_axis: {
                         axis: 1,

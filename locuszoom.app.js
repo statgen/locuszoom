@@ -341,7 +341,8 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region"
+                    tick_format: "region",
+                    extent: "state"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -399,8 +400,7 @@ LocusZoom.StandardLayout = {
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
-                        field: "position",
-                        extent: "state"
+                        field: "position"
                     },
                     y_axis: {
                         axis: 1,
@@ -2179,15 +2179,9 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
         var data_layer = this.data_layers[id];
 
-        // If defined and not decoupled, generate the x extent
+        // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
         if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
-            // If explicitly set to state then generate extent from state
-            // Otherwise merge the x extent of the data layer with the panel's x extent
-            if (this.layout.x_axis && this.layout.x_axis.extent == "state"){
-                this.x_extent = [ this.state.start, this.state.end ];
-            } else {
-                this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
-            }
+            this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
         }
 
         // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
@@ -2195,8 +2189,14 @@ LocusZoom.Panel.prototype.generateExtents = function(){
             var y_axis = "y" + data_layer.layout.y_axis.axis;
             this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
         }
-
+        
     }
+
+    // Override x_extent from state if explicitly defined to do so
+    if (this.layout.axes.x && this.layout.axes.x.extent == "state"){
+        console.log("overriding");
+        this.x_extent = [ this.state.start, this.state.end ];
+    }    
 
 };
 
