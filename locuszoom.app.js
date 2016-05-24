@@ -1741,7 +1741,11 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         }
     }
     this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);    
+    this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
+    if (this.svg.clipRect){
+        this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
+    }
+    
     if (this.initialized){ this.render(); }
     return this;
 };
@@ -1785,13 +1789,16 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
+    // Position with initial layout parameters
     this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
-        .attr("id", this.getBaseId() + ".panel_container");
-        
-    // Append clip path to the parent svg element
+        .attr("id", this.getBaseId() + ".panel_container")
+        .attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
+
+    // Append clip path to the parent svg element, size with initial layout parameters
     var clipPath = this.svg.container.append("clipPath")
         .attr("id", this.getBaseId() + ".clip");
-    this.svg.clipRect = clipPath.append("rect");
+    this.svg.clipRect = clipPath.append("rect")
+        .attr("width", this.layout.width).attr("height", this.layout.height);
     
     // Append svg group for rendering all panel child elements, clipped by the clip path
     this.svg.group = this.svg.container.append("g")
@@ -3182,7 +3189,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         style: {
-            fill: "transparent",
+            fill: "none",
             "stroke-width": "2px"
         },
         interpolate: "linear",

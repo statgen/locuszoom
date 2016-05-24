@@ -606,7 +606,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         style: {
-            fill: "transparent",
+            fill: "none",
             "stroke-width": "2px"
         },
         interpolate: "linear",

@@ -82,7 +82,7 @@ svg.lz-locuszoom {
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
     fill: none;
-    stroke: transparent;
+    stroke: none;
     cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
