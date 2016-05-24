@@ -399,7 +399,8 @@ LocusZoom.StandardLayout = {
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
-                        field: "position"
+                        field: "position",
+                        extent: "state"
                     },
                     y_axis: {
                         axis: 1,
@@ -2178,9 +2179,15 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
         var data_layer = this.data_layers[id];
 
-        // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
+        // If defined and not decoupled, generate the x extent
         if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled){
-            this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
+            // If explicitly set to state then generate extent from state
+            // Otherwise merge the x extent of the data layer with the panel's x extent
+            if (this.layout.x_axis && this.layout.x_axis.extent == "state"){
+                this.x_extent = [ this.state.start, this.state.end ];
+            } else {
+                this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent("x")));
+            }
         }
 
         // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent

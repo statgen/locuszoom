@@ -385,7 +385,8 @@ LocusZoom.StandardLayout = {
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
-                        field: "position"
+                        field: "position",
+                        extent: "state"
                     },
                     y_axis: {
                         axis: 1,
