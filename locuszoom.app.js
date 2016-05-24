@@ -896,7 +896,7 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 };
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
-    if (typeof func == "undefined"){
+    if (typeof func == "undefined" && this.onUpdateFunctions.length){
         for (func in this.onUpdateFunctions){
             this.onUpdateFunctions[func]();
         }
