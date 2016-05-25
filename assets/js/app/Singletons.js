@@ -421,6 +421,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
+    // Extra default for layout spacing
+    // Not in default layout since that would make the label attribute always present
+    if (layout.label && isNaN(layout.label.spacing)){
+        layout.label.spacing = 4;
+    }
+
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
@@ -478,9 +484,268 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             .style("top", arrow_top + "px");
     };
 
+    // Function to flip labels from being anchored at the start of the text to the end
+    // Both to keep labels from running outside the data layer and  also as a first
+    // pass on recursive separation
+    this.flip_labels = function(){
+        var data_layer = this;
+        var spacing = this.layout.label.spacing;
+        var handle_lines = Boolean(data_layer.layout.label.lines);
+        var min_x = 2 * spacing;
+        var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
+        var flip = function(dn, dnl){
+            var dnx = +dn.attr("x");
+            var text_swing = (2 * spacing) + (2 * Math.sqrt(data_layer.layout.point_size));
+            if (handle_lines){
+                var dnlx2 = +dnl.attr("x2");
+                var line_swing = spacing + (2 * Math.sqrt(data_layer.layout.point_size));
+            }
+            if (dn.style("text-anchor") == "start"){
+                dn.style("text-anchor", "end");
+                dn.attr("x", dnx - text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 - line_swing); }
+            } else {
+                dn.style("text-anchor", "start");
+                dn.attr("x", dnx + text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 + line_swing); }
+            }
+        };
+        // Flip any going over the right edge from the right side to the left side
+        // (all labels start on the right side)
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            dax = +da.attr("x");
+            abound = da.node().getBoundingClientRect();
+            if (dax + abound.width + spacing > max_x){
+                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                flip(da, dal);
+            }
+        });
+        // Second pass to flip any others that haven't flipped yet if they collide with another label
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            if (da.style("text-anchor") == "end") return;
+            dax = +da.attr("x");
+            abound = da.node().getBoundingClientRect();
+            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                db = d3.select(b);
+                dbx = +db.attr("x");
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
+                    abound.left + abound.width + (2*spacing) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*spacing) &&
+                    abound.height + abound.top + (2*spacing) > bbound.top;
+                if (collision){
+                    flip(da, dal);
+                    // Double check that this flip didn't push the label past min_x. If it did, immediately flip back.
+                    dax = +da.attr("x");
+                    if (dax - abound.width - spacing < min_x){
+                        flip(da, dal);
+                    }
+                }
+                return;
+            });
+        });
+    };
+
+    // Recursive function to space labels apart immediately after initial render
+    // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
+    // TODO: Make labels also aware of data elements
+    this.separate_labels = function(){
+        this.seperate_iterations++;
+        var data_layer = this;
+        var alpha = 0.5;
+        var spacing = this.layout.label.spacing;
+        var again = false;
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            y1 = da.attr("y");
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                // a & b are the same element and don't collide.
+                if (a == b) return;
+                db = d3.select(b);
+                // a & b are on opposite sides of the chart and
+                // don't collide
+                if (da.attr("text-anchor") != db.attr("text-anchor")) return;
+                // Determine if the  bounding rects for the two text elements collide
+                abound = da.node().getBoundingClientRect();
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
+                    abound.left + abound.width + (2*spacing) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*spacing) &&
+                    abound.height + abound.top + (2*spacing) > bbound.top;
+                if (!collision) return;
+                again = true;                
+                // If the labels collide, we'll push each
+                // of the two labels up and down a little bit.
+                y2 = db.attr("y");
+                sign = abound.top < bbound.top ? 1 : -1;
+                adjust = sign * alpha;
+                new_a_y = +y1 - adjust;
+                new_b_y = +y2 + adjust;
+                // Keep new values from extending outside the data layer
+                var min_y = 2 * spacing;
+                var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                if (new_a_y - (abound.height/2) < min_y){
+                    delta = +y1 - new_a_y;
+                    new_a_y = +y1;
+                    new_b_y += delta;
+                } else if (new_b_y - (bbound.height/2) < min_y){
+                    delta = +y2 - new_b_y;
+                    new_b_y = +y2;
+                    new_a_y += delta;
+                }
+                if (new_a_y + (abound.height/2) > max_y){
+                    delta = new_a_y - +y1;
+                    new_a_y = +y1;
+                    new_b_y -= delta;
+                } else if (new_b_y + (bbound.height/2) > max_y){
+                    delta = new_b_y - +y2;
+                    new_b_y = +y2;
+                    new_a_y -= delta;
+                }
+                da.attr("y",new_a_y);
+                db.attr("y",new_b_y);
+            });
+        });
+        if (again) {
+            // Adjust lines to follow the labels
+            if (data_layer.layout.label.lines){
+                var label_elements = data_layer.label_texts[0];
+                data_layer.label_lines.attr("y2",function(d,i) {
+                    var label_line = d3.select(label_elements[i]);
+                    return label_line.attr("y");
+                });
+            }
+            // After ~150 iterations we're probably beyond diminising returns, so stop recursing
+            if (this.seperate_iterations < 150){
+                setTimeout(function(){
+                    this.separate_labels();
+                }.bind(this), 1);
+            }
+        }
+    };
+
     // Implement the main render function
     this.render = function(){
 
+        var data_layer = this;
+        var x_scale = "x_scale";
+        var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+
+        // Generate labels first (if defined)
+        if (this.layout.label){
+            // Apply filters to generate a filtered data set
+            var filtered_data = this.data.filter(function(d){
+                if (!data_layer.layout.label.filters){
+                    return true;
+                } else {
+                    // Start by assuming a match, run through all filters to test if not a match on any one
+                    var match = true;
+                    data_layer.layout.label.filters.forEach(function(filter){
+                        if (isNaN(d[filter.field])){
+                            match = false;
+                        } else {
+                            switch (filter.operator){
+                            case "<":
+                                if (!(d[filter.field] < filter.value)){ match = false; }
+                                break;
+                            case "<=":
+                                if (!(d[filter.field] <= filter.value)){ match = false; }
+                                break;
+                            case ">":
+                                if (!(d[filter.field] > filter.value)){ match = false; }
+                                break;
+                            case ">=":
+                                if (!(d[filter.field] >= filter.value)){ match = false; }
+                                break;
+                            case "=":
+                                if (!(d[filter.field] == filter.value)){ match = false; }
+                                break;
+                            default:
+                                // If we got here the operator is not valid, so the filter should fail
+                                match = false;
+                                break;
+                            }
+                        }
+                    });
+                    return match;
+                }
+            });
+            // Render label groups
+            this.label_groups = this.svg.group
+                .selectAll("g.lz-data_layer-scatter-label")
+                .data(filtered_data, function(d){ return d.id + "_label"; });
+            this.label_groups.enter()
+                .append("g")
+                .attr("class", "lz-data_layer-scatter-label");
+            // Render label texts
+            if (this.label_texts){ this.label_texts.remove(); }
+            this.label_texts = this.label_groups.append("text")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_texts
+                .text(function(d){
+                    return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
+                })
+                .style(data_layer.layout.label.style || {})
+                .attr({
+                    "x": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                              + Math.sqrt(data_layer.layout.point_size) + data_layer.layout.label.spacing
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "text-anchor": function(d){
+                        return "start";
+                    }
+                });
+            // Render label lines
+            if (data_layer.layout.label.lines){
+                if (this.label_lines){ this.label_lines.remove(); }
+                this.label_lines = this.label_groups.append("line")
+                    .attr("class", "lz-data_layer-scatter-label");
+                this.label_lines
+                    .style(data_layer.layout.label.lines.style || {})
+                    .attr({
+                        "x1": function(d){
+                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                            if (isNaN(x)){ x = -1000; }
+                            return x;
+                        },
+                        "y1": function(d){
+                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            if (isNaN(y)){ y = -1000; }
+                            return y;
+                        },
+                        "x2": function(d){
+                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                                  + Math.sqrt(data_layer.layout.point_size) + (data_layer.layout.label.spacing/2)
+                            if (isNaN(x)){ x = -1000; }
+                            return x;
+                        },
+                        "y2": function(d){
+                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            if (isNaN(y)){ y = -1000; }
+                            return y;
+                        },
+                    });
+            }
+            // Remove labels when they're no longer in the filtered data set
+            this.label_groups.exit().remove();
+        }
+            
+        // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
@@ -493,8 +758,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Generate new values (or functions for them) for position, color, and shape
         var transform = function(d) {
-            var x = this.parent.x_scale(d[this.layout.x_axis.field]);
-            var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+            var x = this.parent[x_scale](d[this.layout.x_axis.field]);
             var y = this.parent[y_scale](d[this.layout.y_axis.field]);
             if (isNaN(x)){ x = -1000; }
             if (isNaN(y)){ y = -1000; }
@@ -588,6 +852,13 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
 
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply method to keep labels from overlapping each other
+        if (this.layout.label){
+            this.flip_labels();
+            this.seperate_iterations = 0;
+            this.separate_labels();
+        }
         
     };
        
