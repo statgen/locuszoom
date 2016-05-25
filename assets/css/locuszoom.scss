@@ -102,14 +102,14 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-scatter {
-    stroke: #{$default_black};
+    stroke: #{$default_black_shadow};
     stroke-width: 1;
     cursor: pointer;
   }
 
   path.#{$namespace}-data_layer-scatter-hovered {
-    stroke: #{$default_black};
-    stroke-width: 3;
+    stroke: #{$default_black_shadow};
+    stroke-width: 4;
   }
 
   path.#{$namespace}-data_layer-scatter-selected {
@@ -143,37 +143,37 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
-  text.#{$namespace}-data_layer-gene.#{$namespace}-label {
+  text.#{$namespace}-data_layer-genes.#{$namespace}-label {
     font-style: italic;
   }
 
-  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box {
     fill: rgb(54, 54, 150);
     fill-opacity: 0;
     stroke-width: 0;
   }
 
-  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-hovered {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-hovered {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.1;
     stroke-width: 0;
   }
 
-  rect.#{$namespace}-data_layer-gene.#{$namespace}-bounding_box-selected {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-selected {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.15;
     stroke: #{$default_black};
     stroke-width: 1;
   }
 
-  rect.#{$namespace}-data_layer-gene.#{$namespace}-boundary {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-boundary {
     stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
     stroke-width: 1;
     fill: #000099;
   }
 
-  rect.#{$namespace}-data_layer-gene.#{$namespace}-exon {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-exon {
     stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
     stroke-width: 1;
@@ -187,10 +187,32 @@ div.#{$namespace}-data_layer-tooltip {
   font-size: 12px;
   position: absolute;
   padding: 6px;
+  padding-right: 24px;
   background: rgba(235,235,235,1);
   border: 1px solid #{$default_black};
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
+
+  .#{$namespace}-tooltip-close-button {
+    font-weight: bold;
+    text-decoration: none;
+    line-height: 1.2;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(235,235,235,0.4);
+    color: #{$default_black_shadow};
+    border: 1px solid #{$default_black_shadow};
+    border-radius: 4px;
+    pointer-events: auto;
+    position: absolute;
+    right: -1px;
+    top: -1px;
+  }
+  .#{$namespace}-tooltip-close-button:hover {
+    cursor: pointer;
+    background-color: #{$default_black};
+    color: rgba(235,235,235,1);
+  }
+  
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_up {

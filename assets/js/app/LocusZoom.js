@@ -404,12 +404,12 @@ LocusZoom.StandardLayout = {
                             null_value: "#B8B8B8"
                         }
                     },
+                    selectable: "multiple",
                     tooltip: {
-                        divs: [
-                            { html: "<strong>{{id}}</strong>" },
-                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
-                            { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
-                        ]
+                        html: "<strong>{{id}}</strong><br>"
+                            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
+                            + "Ref. Allele: <strong>{{refAllele}}</strong>",
+                        closable: true
                     },
                     /*
                     label: {
@@ -453,13 +453,13 @@ LocusZoom.StandardLayout = {
                 genes: {
                     type: "genes",
                     fields: ["gene:gene"],
+                    id_field: "gene_id",
+                    selectable: "one",
                     tooltip: {
-                        divs: [
-                            { html: "<strong><i>{{gene_name}}</i></strong>" },
-                            { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "Transcript ID: <strong>{{transcript_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>" }
-                        ]
+                        html: "<strong><i>{{gene_name}}</i></strong><br>"
+                            + "Gene ID: <strong>{{gene_id}}</strong><br>"
+                            + "Transcript ID: <strong>{{transcript_id}}</strong><br>"
+                            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>"
                     }
                 }
             }
