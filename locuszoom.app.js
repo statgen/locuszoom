@@ -414,7 +414,15 @@ LocusZoom.StandardLayout = {
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
-                    point_size: 40,
+                    point_size: {
+                        field: "ld:state",
+                        scale_function: "numerical_bin",
+                        parameters: {
+                            breaks: [0, 0.99],
+                            values: [40, 80],
+                            null_value: 40
+                        }
+                    },
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
@@ -431,8 +439,8 @@ LocusZoom.StandardLayout = {
                         field: "ld:state",
                         scale_function: "numerical_bin",
                         parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
+                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
                             null_value: "#B8B8B8"
                         }
                     },
@@ -3220,6 +3228,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
+        var point_size = +this.layout.point_size || 40;
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -3229,7 +3238,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         // Position horizontally on the left or the right depending on which side of the plot the point is on
-        var offset = Math.sqrt(this.layout.point_size / Math.PI);
+        var offset = Math.sqrt(point_size / Math.PI);
         var left, arrow_type, arrow_left;
         if (x_center <= this.parent.layout.width / 2){
             left = page_origin.x + x_center + offset + arrow_width + stroke_width;
@@ -3270,16 +3279,17 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     // pass on recursive separation
     this.flip_labels = function(){
         var data_layer = this;
+        var point_size = +data_layer.layout.point_size || 40;
         var spacing = this.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
         var min_x = 2 * spacing;
         var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
         var flip = function(dn, dnl){
             var dnx = +dn.attr("x");
-            var text_swing = (2 * spacing) + (2 * Math.sqrt(data_layer.layout.point_size));
+            var text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
             if (handle_lines){
                 var dnlx2 = +dnl.attr("x2");
-                var line_swing = spacing + (2 * Math.sqrt(data_layer.layout.point_size));
+                var line_swing = spacing + (2 * Math.sqrt(point_size));
             }
             if (dn.style("text-anchor") == "start"){
                 dn.style("text-anchor", "end");
@@ -3478,7 +3488,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 .attr({
                     "x": function(d){
                         var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(data_layer.layout.point_size) + data_layer.layout.label.spacing
+                              + Math.sqrt(+data_layer.layout.point_size || 40) + data_layer.layout.label.spacing
                         if (isNaN(x)){ x = -1000; }
                         return x;
                     },
@@ -3511,7 +3521,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         },
                         "x2": function(d){
                             var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                  + Math.sqrt(data_layer.layout.point_size) + (data_layer.layout.label.spacing/2)
+                                  + Math.sqrt(+data_layer.layout.point_size || 40) + (data_layer.layout.label.spacing/2)
                             if (isNaN(x)){ x = -1000; }
                             return x;
                         },
@@ -3537,7 +3547,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             .attr("class", "lz-data_layer-scatter")
             .attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this));
 
-        // Generate new values (or functions for them) for position, color, and shape
+        // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
             var x = this.parent[x_scale](d[this.layout.x_axis.field]);
             var y = this.parent[y_scale](d[this.layout.y_axis.field]);
@@ -3562,7 +3572,23 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 break;
             }
         }
-        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape);
+        var size;
+        switch (typeof this.layout.point_size){
+        case "number":
+        case "string":
+            size = +this.layout.point_size;
+            break;
+        case "object":
+            if (this.layout.point_size.scale_function && this.layout.point_size.field) {
+                size = function(d){
+                    return LocusZoom.ScaleFunctions.get(this.layout.point_size.scale_function,
+                                                        this.layout.point_size.parameters || {},
+                                                        d[this.layout.point_size.field]);
+                }.bind(this);
+            }
+            break;
+        }
+        var shape = d3.svg.symbol().size(size).type(this.layout.point_shape);
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){
