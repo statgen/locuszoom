@@ -300,8 +300,6 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
-LocusZoom.KnownDataSources = [];
-
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},

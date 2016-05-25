@@ -185,7 +185,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
         constructorFun.SOURCE_NAME = uniqueName;
-        LocusZoom.KnownDataSources.push(constructorFun);
+        LocusZoom.KnownDataSources.add(constructorFun);
     }
     return constructorFun;
 };

@@ -18,11 +18,11 @@ describe('LocusZoom Data', function(){
                fs.readFileSync('./assets/js/vendor/d3.min.js'),
                fs.readFileSync('./assets/js/vendor/q.min.js'),
                fs.readFileSync('./assets/js/app/LocusZoom.js'),
+               fs.readFileSync('./assets/js/app/DataLayer.js'),
+               fs.readFileSync('./assets/js/app/Singletons.js'),
                fs.readFileSync('./assets/js/app/Data.js'),
                fs.readFileSync('./assets/js/app/Instance.js'),
-               fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js')
+               fs.readFileSync('./assets/js/app/Panel.js')
              ]
     });
 
@@ -37,15 +37,17 @@ describe('LocusZoom Data', function(){
         var TestSource1, TestSource2;
         var originalKnownDataSources;
         beforeEach(function() {
-            originalKnownDataSources = LocusZoom.KnownDataSources;
+            originalKnownDataSources = LocusZoom.KnownDataSources._data.slice(0);
+            LocusZoom.KnownDataSources.clear();
             TestSource1 = function(x) {this.init = x};
             TestSource1.SOURCE_NAME = "test1";
             TestSource2 = function(x) {this.init = x};
             TestSource2.SOURCE_NAME = "test2";
-            LocusZoom.KnownDataSources = [TestSource1, TestSource2];
+            LocusZoom.KnownDataSources.add(TestSource1);
+            LocusZoom.KnownDataSources.add(TestSource2);
         });
         afterEach(function() {
-            LocusZoom.KnownDataSources = originalKnownDataSources;
+            LocusZoom.KnownDataSources._set_data(originalKnownDataSources);
         });
 
         it('should have a DataSources object', function(){

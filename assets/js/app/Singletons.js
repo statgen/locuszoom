@@ -30,26 +30,9 @@ LocusZoom.DataSources.prototype.add = function(ns, x) {
 };
 
 LocusZoom.DataSources.prototype.set = function(ns, x) {
-    function findKnownSource(x) {
-        if (!LocusZoom.KnownDataSources) {return null;}
-        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
-            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
-                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
-            }
-            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
-                return LocusZoom.KnownDataSources[i];
-            }
-        }
-        return null;
-    }
-
     if (Array.isArray(x)) {
-        var dsclass = findKnownSource(x[0]);
-        if (dsclass) {
-            this.sources[ns] = new dsclass(x[1]);
-        } else {
-            throw("Unable to resolve " + x[0] + " data source");
-        }
+        var dsobj = LocusZoom.KnownDataSources.create.apply(null, x);
+        this.sources[ns] = dsobj;
     } else {
         if (x !== null) {
             this.sources[ns] = x;
@@ -96,6 +79,68 @@ LocusZoom.DataSources.prototype.keys = function() {
 LocusZoom.DataSources.prototype.toJSON = function() {
     return this.sources;
 };
+
+
+/* The Collection of "Known" Data Source Endpoints */
+
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
+
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
+            }
+        }
+        return null;
+    };
+
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
+        }
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
+        } else {
+            throw("Unable to find data source for name: " + name); 
+            return null;
+        }
+    };
+
+    obj.clear = function() {
+        sources = [];
+    };
+
+    obj._data = sources;
+    obj._set_data = function(x) {sources = x};
+
+    return obj;
+})();
 
 
 /****************
