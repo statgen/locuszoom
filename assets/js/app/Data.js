@@ -70,7 +70,7 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 };
 
 LocusZoom.Data.Source.prototype.getCacheKey = function(state, chain, fields) {
-    var url = this.getURL(state, chain, fields);
+    var url = this.getURL && this.getURL(state, chain, fields);
     return url;
 };
 
@@ -82,7 +82,7 @@ LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     var req;
     var cacheKey = this.getCacheKey(state, chain, fields);
-    if (this.enableCache & cacheKey == this._cachedKey) {
+    if (this.enableCache && typeof(cacheKey) !== "undefined" && cacheKey == this._cachedKey) {
         req = Q.when(this._cachedResponse);
     } else {
         req = this.fetchRequest(state, chain, fields);
