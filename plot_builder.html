@@ -72,6 +72,10 @@
 
     </div>
 
+    <div class="row" id="panels">
+      <button onclick="addAnalysis();">Add Analysis</button>
+    </div>
+
   </div>
 
   <script type="text/javascript">
@@ -89,11 +93,114 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: {analysis: 3}}])
+      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: { analysis: 3 }}])
       .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }]);
-      //.add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
 
+    function addAnalysis(){
+      var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
+      var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
+      var assoc_source = [ "AssociationLZ",
+                           { url: apiBase + "single/",
+                             params: {
+                               analysis: analysis
+                             }
+                           }
+                         ];
+      var ld_source = [ "LDLZ",
+                        { url: apiBase + "pair/LD/",
+                          params: {
+                            pvalue_field: ns + ":pvalue|neglog10",
+                            position_field: ns + ":position",
+                            id_field: ns + ":id"
+                          }
+                        }
+                      ];
+      data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
+      var layout = {
+          title: "Analysis ID: " + analysis,
+          description: ns,
+          y_index: -1,
+          min_width:  400,
+          min_height: 112.5,
+          margin: { top: 35, right: 20, bottom: 35, left: 50 },
+          inner_border: "rgba(210, 210, 210, 0.85)",
+          axes: {
+              x: {
+                  label_function: "chromosome",
+                  label_offset: 32,
+                  tick_format: "region"
+              },
+              y1: {
+                  label: "-log10 p-value",
+                  label_offset: 28
+              }
+          },
+          data_layers: {
+              significance: {
+                  type: "line",
+                  fields: ["sig:x", "sig:y"],
+                  style: {
+                      "stroke": "#D3D3D3",
+                      "stroke-width": "3px",
+                      "stroke-dasharray": "10px 10px"
+                  },
+                  x_axis: {
+                      field: "sig:x",
+                      decoupled: true
+                  },
+                  y_axis: {
+                      axis: 1,
+                      field: "sig:y"
+                  },
+                  tooltip: {
+                      html: "Significance Threshold: 3 × 10^-5"
+                  }
+              },
+              positions: {
+                  type: "scatter",
+                  point_shape: "circle",
+                  point_size: 40,
+                  fields: [ns+":id",
+                           ns+":position",
+                           ns+":pvalue|scinotation",
+                           ns+":pvalue|neglog10",
+                           ns+":refAllele",
+                           ns+"_ld:state"],
+                  id_field: ns+":id",
+                  x_axis: {
+                      field: ns+":position"
+                  },
+                  y_axis: {
+                      axis: 1,
+                      field: ns+":pvalue|neglog10",
+                      floor: 0,
+                      upper_buffer: 0.05,
+                      min_extent: [ 0, 10 ]
+                  },
+                  color: {
+                      field: ns+"_ld:state",
+                      scale_function: "numerical_bin",
+                      parameters: {
+                          breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                          values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                          null_value: "#B8B8B8"
+                      }
+                  },
+                  tooltip: {
+                      divs: [
+                          { html: "<strong>{{"+ns+":id}}</strong>" },
+                          { html: "P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong>" },
+                          { html: "Ref. Allele: <strong>{{"+ns+":refAllele}}</strong>" }
+                      ]
+                  }
+              }
+          }
+      };
+      plot.addPanel(ns, layout);
+    }
 
     var plot;
 
@@ -111,9 +218,9 @@
     }
 
     function applyOnUpdate(){
-      plot.onUpdate = function(){
+      plot.onUpdate(function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
-      };
+      });
     }
     
     function updatePlot(){

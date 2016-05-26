@@ -37,14 +37,26 @@
 
   <script type="text/javascript">
 
-    // Define LocusZoom Data Sources object
-    var apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
-    var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url: apiBase + "single/", params: {analysis: 3}}])
-      .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
-      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
-      .add("recomb", ["RecombLZ", { url: apiBase + "recomb/results/", params: {source: 15} }]);
+    // Define LocusZoom Data Sources object differently if loading data locally or not
+    var apiBase, data_sources;
+    if (window.location.search.indexOf("staticdata=1") == -1){
+      apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
+      data_sources = new LocusZoom.DataSources()
+        .add("base", ["AssociationLZ", {url: apiBase + "single/", params: {analysis: 3}}])
+        .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+        .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+    } else {
+      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length)
+              + "staticdata/";
+      data_sources = new LocusZoom.DataSources()
+        .add("base", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?"}])
+        .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
+        .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
+        .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+    }
 
     // Define custom LocusZoom layout object to allow manual resizing.
     // This will be merged with the default layout (LocusZoom.DefaultLayout)

@@ -265,7 +265,6 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
 });
 
 
-
 /****************
   Scale Functions
 
@@ -417,9 +416,16 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         y_axis: {
             axis: 1
         },
-        selectable: true
+        selectable: "multiple",
+        id_field: "id"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+
+    // Extra default for layout spacing
+    // Not in default layout since that would make the label attribute always present
+    if (layout.label && isNaN(layout.label.spacing)){
+        layout.label.spacing = 4;
+    }
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
@@ -433,6 +439,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
+        var point_size = +this.layout.point_size || 40;
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -442,7 +449,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         // Position horizontally on the left or the right depending on which side of the plot the point is on
-        var offset = Math.sqrt(this.layout.point_size / Math.PI);
+        var offset = Math.sqrt(point_size / Math.PI);
         var left, arrow_type, arrow_left;
         if (x_center <= this.parent.layout.width / 2){
             left = page_origin.x + x_center + offset + arrow_width + stroke_width;
@@ -478,23 +485,282 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             .style("top", arrow_top + "px");
     };
 
+    // Function to flip labels from being anchored at the start of the text to the end
+    // Both to keep labels from running outside the data layer and  also as a first
+    // pass on recursive separation
+    this.flip_labels = function(){
+        var data_layer = this;
+        var point_size = +data_layer.layout.point_size || 40;
+        var spacing = this.layout.label.spacing;
+        var handle_lines = Boolean(data_layer.layout.label.lines);
+        var min_x = 2 * spacing;
+        var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
+        var flip = function(dn, dnl){
+            var dnx = +dn.attr("x");
+            var text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
+            if (handle_lines){
+                var dnlx2 = +dnl.attr("x2");
+                var line_swing = spacing + (2 * Math.sqrt(point_size));
+            }
+            if (dn.style("text-anchor") == "start"){
+                dn.style("text-anchor", "end");
+                dn.attr("x", dnx - text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 - line_swing); }
+            } else {
+                dn.style("text-anchor", "start");
+                dn.attr("x", dnx + text_swing);
+                if (handle_lines){ dnl.attr("x2", dnlx2 + line_swing); }
+            }
+        };
+        // Flip any going over the right edge from the right side to the left side
+        // (all labels start on the right side)
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            dax = +da.attr("x");
+            abound = da.node().getBoundingClientRect();
+            if (dax + abound.width + spacing > max_x){
+                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                flip(da, dal);
+            }
+        });
+        // Second pass to flip any others that haven't flipped yet if they collide with another label
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            if (da.style("text-anchor") == "end") return;
+            dax = +da.attr("x");
+            abound = da.node().getBoundingClientRect();
+            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                db = d3.select(b);
+                dbx = +db.attr("x");
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
+                    abound.left + abound.width + (2*spacing) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*spacing) &&
+                    abound.height + abound.top + (2*spacing) > bbound.top;
+                if (collision){
+                    flip(da, dal);
+                    // Double check that this flip didn't push the label past min_x. If it did, immediately flip back.
+                    dax = +da.attr("x");
+                    if (dax - abound.width - spacing < min_x){
+                        flip(da, dal);
+                    }
+                }
+                return;
+            });
+        });
+    };
+
+    // Recursive function to space labels apart immediately after initial render
+    // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
+    // TODO: Make labels also aware of data elements
+    this.separate_labels = function(){
+        this.seperate_iterations++;
+        var data_layer = this;
+        var alpha = 0.5;
+        var spacing = this.layout.label.spacing;
+        var again = false;
+        data_layer.label_texts.each(function (d, i) {
+            a = this;
+            da = d3.select(a);
+            y1 = da.attr("y");
+            data_layer.label_texts.each(function (d, j) {
+                b = this;
+                // a & b are the same element and don't collide.
+                if (a == b) return;
+                db = d3.select(b);
+                // a & b are on opposite sides of the chart and
+                // don't collide
+                if (da.attr("text-anchor") != db.attr("text-anchor")) return;
+                // Determine if the  bounding rects for the two text elements collide
+                abound = da.node().getBoundingClientRect();
+                bbound = db.node().getBoundingClientRect();
+                var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
+                    abound.left + abound.width + (2*spacing) > bbound.left &&
+                    abound.top < bbound.top + bbound.height + (2*spacing) &&
+                    abound.height + abound.top + (2*spacing) > bbound.top;
+                if (!collision) return;
+                again = true;                
+                // If the labels collide, we'll push each
+                // of the two labels up and down a little bit.
+                y2 = db.attr("y");
+                sign = abound.top < bbound.top ? 1 : -1;
+                adjust = sign * alpha;
+                new_a_y = +y1 - adjust;
+                new_b_y = +y2 + adjust;
+                // Keep new values from extending outside the data layer
+                var min_y = 2 * spacing;
+                var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                if (new_a_y - (abound.height/2) < min_y){
+                    delta = +y1 - new_a_y;
+                    new_a_y = +y1;
+                    new_b_y += delta;
+                } else if (new_b_y - (bbound.height/2) < min_y){
+                    delta = +y2 - new_b_y;
+                    new_b_y = +y2;
+                    new_a_y += delta;
+                }
+                if (new_a_y + (abound.height/2) > max_y){
+                    delta = new_a_y - +y1;
+                    new_a_y = +y1;
+                    new_b_y -= delta;
+                } else if (new_b_y + (bbound.height/2) > max_y){
+                    delta = new_b_y - +y2;
+                    new_b_y = +y2;
+                    new_a_y -= delta;
+                }
+                da.attr("y",new_a_y);
+                db.attr("y",new_b_y);
+            });
+        });
+        if (again) {
+            // Adjust lines to follow the labels
+            if (data_layer.layout.label.lines){
+                var label_elements = data_layer.label_texts[0];
+                data_layer.label_lines.attr("y2",function(d,i) {
+                    var label_line = d3.select(label_elements[i]);
+                    return label_line.attr("y");
+                });
+            }
+            // After ~150 iterations we're probably beyond diminising returns, so stop recursing
+            if (this.seperate_iterations < 150){
+                setTimeout(function(){
+                    this.separate_labels();
+                }.bind(this), 1);
+            }
+        }
+    };
+
     // Implement the main render function
     this.render = function(){
 
+        var data_layer = this;
+        var x_scale = "x_scale";
+        var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+
+        // Generate labels first (if defined)
+        if (this.layout.label){
+            // Apply filters to generate a filtered data set
+            var filtered_data = this.data.filter(function(d){
+                if (!data_layer.layout.label.filters){
+                    return true;
+                } else {
+                    // Start by assuming a match, run through all filters to test if not a match on any one
+                    var match = true;
+                    data_layer.layout.label.filters.forEach(function(filter){
+                        if (isNaN(d[filter.field])){
+                            match = false;
+                        } else {
+                            switch (filter.operator){
+                            case "<":
+                                if (!(d[filter.field] < filter.value)){ match = false; }
+                                break;
+                            case "<=":
+                                if (!(d[filter.field] <= filter.value)){ match = false; }
+                                break;
+                            case ">":
+                                if (!(d[filter.field] > filter.value)){ match = false; }
+                                break;
+                            case ">=":
+                                if (!(d[filter.field] >= filter.value)){ match = false; }
+                                break;
+                            case "=":
+                                if (!(d[filter.field] == filter.value)){ match = false; }
+                                break;
+                            default:
+                                // If we got here the operator is not valid, so the filter should fail
+                                match = false;
+                                break;
+                            }
+                        }
+                    });
+                    return match;
+                }
+            });
+            // Render label groups
+            this.label_groups = this.svg.group
+                .selectAll("g.lz-data_layer-scatter-label")
+                .data(filtered_data, function(d){ return d.id + "_label"; });
+            this.label_groups.enter()
+                .append("g")
+                .attr("class", "lz-data_layer-scatter-label");
+            // Render label texts
+            if (this.label_texts){ this.label_texts.remove(); }
+            this.label_texts = this.label_groups.append("text")
+                .attr("class", "lz-data_layer-scatter-label");
+            this.label_texts
+                .text(function(d){
+                    return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
+                })
+                .style(data_layer.layout.label.style || {})
+                .attr({
+                    "x": function(d){
+                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                              + Math.sqrt(+data_layer.layout.point_size || 40) + data_layer.layout.label.spacing
+                        if (isNaN(x)){ x = -1000; }
+                        return x;
+                    },
+                    "y": function(d){
+                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)){ y = -1000; }
+                        return y;
+                    },
+                    "text-anchor": function(d){
+                        return "start";
+                    }
+                });
+            // Render label lines
+            if (data_layer.layout.label.lines){
+                if (this.label_lines){ this.label_lines.remove(); }
+                this.label_lines = this.label_groups.append("line")
+                    .attr("class", "lz-data_layer-scatter-label");
+                this.label_lines
+                    .style(data_layer.layout.label.lines.style || {})
+                    .attr({
+                        "x1": function(d){
+                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                            if (isNaN(x)){ x = -1000; }
+                            return x;
+                        },
+                        "y1": function(d){
+                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            if (isNaN(y)){ y = -1000; }
+                            return y;
+                        },
+                        "x2": function(d){
+                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                                  + Math.sqrt(+data_layer.layout.point_size || 40) + (data_layer.layout.label.spacing/2)
+                            if (isNaN(x)){ x = -1000; }
+                            return x;
+                        },
+                        "y2": function(d){
+                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            if (isNaN(y)){ y = -1000; }
+                            return y;
+                        },
+                    });
+            }
+            // Remove labels when they're no longer in the filtered data set
+            this.label_groups.exit().remove();
+        }
+            
+        // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-scatter")
-            .data(this.data, function(d){ return d.id; });
+            .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
         // Create elements, apply class and ID
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return "s" + d.id.replace(/\W/g,""); });
+            .attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this));
 
-        // Generate new values (or functions for them) for position, color, and shape
+        // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
-            var x = this.parent.x_scale(d[this.layout.x_axis.field]);
-            var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+            var x = this.parent[x_scale](d[this.layout.x_axis.field]);
             var y = this.parent[y_scale](d[this.layout.y_axis.field]);
             if (isNaN(x)){ x = -1000; }
             if (isNaN(y)){ y = -1000; }
@@ -517,7 +783,23 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 break;
             }
         }
-        var shape = d3.svg.symbol().size(this.layout.point_size).type(this.layout.point_shape);
+        var size;
+        switch (typeof this.layout.point_size){
+        case "number":
+        case "string":
+            size = +this.layout.point_size;
+            break;
+        case "object":
+            if (this.layout.point_size.scale_function && this.layout.point_size.field) {
+                size = function(d){
+                    return LocusZoom.ScaleFunctions.get(this.layout.point_size.scale_function,
+                                                        this.layout.point_size.parameters || {},
+                                                        d[this.layout.point_size.field]);
+                }.bind(this);
+            }
+            break;
+        }
+        var shape = d3.svg.symbol().size(size).type(this.layout.point_shape);
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){
@@ -536,58 +818,17 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         }
 
         // Apply selectable, tooltip, etc
-        if (this.layout.selectable && (this.layout.fields.indexOf("id") != -1)){
-            selection.on("mouseover", function(d){
-                var id = "s" + d.id.replace(/\W/g,"");
-                if (this.state[this.state_id].selected != id){
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-hovered");
-                    if (this.layout.tooltip){ this.createTooltip(d, id); }
-                }
-            }.bind(this))
-            .on("mouseout", function(d){
-                var id = "s" + d.id.replace(/\W/g,"");
-                if (this.state[this.state_id].selected != id){
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter");
-                    if (this.layout.tooltip){ this.destroyTooltip(id); }
-                }
-            }.bind(this))
-            .on("click", function(d){
-                var id = "s" + d.id.replace(/\W/g,"");
-                if (this.state[this.state_id].selected == id){
-                    this.state[this.state_id].selected = null;
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-hovered");
-                } else {
-                    if (this.state[this.state_id].selected != null){
-                        d3.select("#" + this.state[this.state_id].selected).attr("class", "lz-data_layer-scatter");
-                        if (this.layout.tooltip){ this.destroyTooltip(this.state[this.state_id].selected); }
-                    }
-                    this.state[this.state_id].selected = id;
-                    d3.select("#" + id).attr("class", "lz-data_layer-scatter lz-data_layer-scatter-selected");
-                }
-                this.triggerOnUpdate();
-            }.bind(this));
-
-            // Apply existing elements from state
-            if (this.state[this.state_id].selected != null){
-                var selected_id = this.state[this.state_id].selected;
-                if (d3.select("#" + selected_id).empty()){
-                    console.warn("State elements for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + this.state[this.state_id].selected);
-                    this.state[this.state_id].selected = null;
-                } else {
-                    if (this.tooltips[this.state[this.state_id].selected]){
-                        this.positionTooltip(this.state[this.state_id].selected);
-                    } else {
-                        this.state[this.state_id].selected = null;
-                        var d = d3.select("#" + selected_id).datum();
-                        d3.select("#" + selected_id).on("mouseover")(d);
-                        d3.select("#" + selected_id).on("click")(d);
-                    }
-                }
-            }
-        }
+        this.enableTooltips(selection);
 
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply method to keep labels from overlapping each other
+        if (this.layout.label){
+            this.flip_labels();
+            this.seperate_iterations = 0;
+            this.separate_labels();
+        }
         
     };
        
@@ -606,11 +847,13 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         style: {
-            fill: "transparent"
+            fill: "none",
+            "stroke-width": "2px"
         },
         interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
+        hitarea_width: 5,
         selectable: false
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -626,6 +869,42 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
+    // Helper function to get display and data objects representing
+    // the x/y coordinates of the current mouse event with respect to the line in terms of the display
+    // and the interpolated values of the x/y fields with respect to the line
+    this.getMouseDisplayAndData = function(){
+        var ret = {
+            display: {
+                x: d3.mouse(this.mouse_event)[0],
+                y: null
+            },
+            data: {},
+            slope: null
+        };
+        var x_field = this.layout.x_axis.field;
+        var y_field = this.layout.y_axis.field;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        ret.data[x_field] = this.parent[x_scale].invert(ret.display.x);
+        var bisect = d3.bisector(function(datum) { return +datum[x_field]; }).left;
+        var index = bisect(this.data, ret.data[x_field]) - 1;
+        var startDatum = this.data[index];
+        var endDatum = this.data[index + 1];
+        var interpolate = d3.interpolateNumber(+startDatum[y_field], +endDatum[y_field]);
+        var range = +endDatum[x_field] - +startDatum[x_field];
+        ret.data[y_field] = interpolate((ret.data[x_field] % range) / range);
+        ret.display.y = this.parent[y_scale](ret.data[y_field]);
+        if (this.layout.tooltip.x_precision){
+            ret.data[x_field] = ret.data[x_field].toPrecision(this.layout.tooltip.x_precision);
+        }
+        if (this.layout.tooltip.y_precision){
+            ret.data[y_field] = ret.data[y_field].toPrecision(this.layout.tooltip.y_precision);
+        }
+        ret.slope = (this.parent[y_scale](endDatum[y_field]) - this.parent[y_scale](startDatum[y_field]))
+                  / (this.parent[x_scale](endDatum[x_field]) - this.parent[x_scale](startDatum[x_field]));
+        return ret;
+    };
+
     // Reimplement the positionTooltip() method to be line-specific
     this.positionTooltip = function(id){
         if (typeof id != "string"){
@@ -635,62 +914,80 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+        var arrow_width = 7; // as defined in the default stylesheet
+        var border_radius = 6; // as defined in the default stylesheet
+        var stroke_width = parseFloat(this.layout.style["stroke-width"]) || 1;
+        var page_origin = this.getPageOrigin();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        var top, left, arrow_top, arrow_left, arrow_type;
 
         // Determine x/y coordinates for display and data
-        var x_field = this.layout.x_axis.field;
-        var y_field = this.layout.y_axis.field;
-        var x_scale = "x_scale";
-        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
-        var display = { x: d3.mouse(this.mouse_event)[0], y: null };
-        var data = { x: this.parent[x_scale].invert(display.x), y: null };
-        var bisect = d3.bisector(function(datum) { return datum[x_field]; }).left;
-        var index = bisect(this.data, data.x) - 1;
-        var startDatum = this.data[index];
-        var endDatum = this.data[index + 1];
-        var interpolate = d3.interpolateNumber(startDatum[y_field], endDatum[y_field]);
-        var range = endDatum[x_field] - startDatum[x_field];
-        data.y = interpolate((data.x % range) / range);
-        display.y = this.parent[y_scale](data.y);
+        var dd = this.getMouseDisplayAndData();
 
-        // Position horizontally: attempt to center on the mouse's x coordinate
-        // pad to either side if bumping up against the edge of the data layer
-        var offset_right = Math.max((tooltip_box.width / 2) - display.x, 0);
-        var offset_left = Math.max((tooltip_box.width / 2) + display.x - data_layer_width, 0);
-        var left = page_origin.x + display.x - (tooltip_box.width / 2) - offset_left + offset_right;
-        var min_arrow_left = arrow_width / 2;
-        var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
-        var arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
-        arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
+        // If the absolute value of the slope of the line at this point is above 1 (including Infinity)
+        // then position the tool tip left/right. Otherwise position top/bottom.
+        if (Math.abs(dd.slope) > 1){
 
-        // Position vertically above the line unless there's insufficient space
-        var top, arrow_type, arrow_top;
-        if (tooltip_box.height + stroke_width + arrow_width < data_layer_height - display.y){
-            top = page_origin.y + display.y + stroke_width + arrow_width;
-            arrow_type = "up";
-            arrow_top = 0 - stroke_width - arrow_width;
+            // Position horizontally on the left or the right depending on which side of the plot the point is on
+            if (dd.display.x <= this.parent.layout.width / 2){
+                left = page_origin.x + dd.display.x + stroke_width + arrow_width + stroke_width;
+                arrow_type = "left";
+                arrow_left = -1 * (arrow_width + stroke_width);
+            } else {
+                left = page_origin.x + dd.display.x - tooltip_box.width - stroke_width - arrow_width - stroke_width;
+                arrow_type = "right";
+                arrow_left = tooltip_box.width - stroke_width;
+            }
+            // Position vertically centered unless we're at the top or bottom of the plot
+            if (dd.display.y - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+                top = page_origin.y + dd.display.y - (1.5 * arrow_width) - border_radius;
+                arrow_top = border_radius;
+            } else if (dd.display.y + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+                top = page_origin.y + dd.display.y + arrow_width + border_radius - tooltip_box.height;
+                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+            } else { // vertically centered
+                top = page_origin.y + dd.display.y - (tooltip_box.height / 2);
+                arrow_top = (tooltip_box.height / 2) - arrow_width;
+            }
+
         } else {
-            top = page_origin.y + display.y - (tooltip_box.height + stroke_width + arrow_width);
-            arrow_type = "down";
-            arrow_top = tooltip_box.height - stroke_width;
+
+            // Position horizontally: attempt to center on the mouse's x coordinate
+            // pad to either side if bumping up against the edge of the data layer
+            var offset_right = Math.max((tooltip_box.width / 2) - dd.display.x, 0);
+            var offset_left = Math.max((tooltip_box.width / 2) + dd.display.x - data_layer_width, 0);
+            left = page_origin.x + dd.display.x - (tooltip_box.width / 2) - offset_left + offset_right;
+            var min_arrow_left = arrow_width / 2;
+            var max_arrow_left = tooltip_box.width - (2.5 * arrow_width);
+            arrow_left = (tooltip_box.width / 2) - arrow_width + offset_left - offset_right;
+            arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
+
+            // Position vertically above the line unless there's insufficient space
+            if (tooltip_box.height + stroke_width + arrow_width > dd.display.y){
+                top = page_origin.y + dd.display.y + stroke_width + arrow_width;
+                arrow_type = "up";
+                arrow_top = 0 - stroke_width - arrow_width;
+            } else {
+                top = page_origin.y + dd.display.y - (tooltip_box.height + stroke_width + arrow_width);
+                arrow_type = "down";
+                arrow_top = tooltip_box.height - stroke_width;
+            }
         }
 
         // Apply positions to the main div
-        tooltip.selector.style("left", left + "px").style("top", top + "px");
+        tooltip.selector.style({ left: left + "px", top: top + "px" });
         // Create / update position on arrow connecting tooltip to data
         if (!tooltip.arrow){
             tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
         }
         tooltip.arrow
             .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
-            .style("left", arrow_left + "px")
-            .style("top", arrow_top + "px");
+            .style({ "left": arrow_left + "px", top: arrow_top + "px" });
+
     };
+
 
     // Implement the main render function
     this.render = function(){
@@ -736,26 +1033,31 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
         // Apply tooltip, etc
         if (this.layout.tooltip){
             // Generate an overlaying transparent "hit area" line for more intuitive mouse events
+            var hitarea_width = parseFloat(this.layout.hitarea_width).toString() + "px";
             var hitarea = this.svg.group
                 .selectAll("path.lz-data_layer-line-hitarea")
                 .data([this.data]);
             hitarea.enter()
                 .append("path")
-                .attr("class", "lz-data_layer-line-hitarea");
+                .attr("class", "lz-data_layer-line-hitarea")
+                .style("stroke-width", hitarea_width);
             var hitarea_line = d3.svg.line()
                 .x(function(d) { return panel[x_scale](d[x_field]); })
                 .y(function(d) { return panel[y_scale](d[y_field]); })
                 .interpolate(this.layout.interpolate);
             hitarea
                 .attr("d", hitarea_line)
-                .on("mouseover", function(d){
+                .on("mouseover", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
-                    data_layer.createTooltip(d, data_layer.state_id);
+                    var dd = data_layer.getMouseDisplayAndData();
+                    data_layer.createTooltip(dd.data, data_layer.state_id);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
+                    var dd = data_layer.getMouseDisplayAndData();
+                    data_layer.updateTooltip(dd.data, data_layer.state_id);
                     data_layer.positionTooltip(data_layer.state_id);
                 })
                 .on("mouseout", function(){
@@ -776,7 +1078,6 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
 
 });
 
-
 /*********************
   Genes Data Layer
   Implements a data layer that will render gene tracks
@@ -791,7 +1092,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
         exon_height: 16,
         bounding_box_padding: 6,
         track_vertical_spacing: 10,
-        selectable: true
+        selectable: "one",
+        hover_element: "bounding_box"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
@@ -821,7 +1123,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
         // Function to get the width in pixels of a label given the text and layout attributes
         this.getLabelWidth = function(gene_name, font_size){
             var temp_text = this.svg.group.append("text")
-                .attr("x", 0).attr("y", 0).attr("class", "lz-data_layer-gene lz-label")
+                .attr("x", 0).attr("y", 0).attr("class", "lz-data_layer-genes lz-label")
                 .style("font-size", font_size)
                 .text(gene_name + "→");
             var label_width = temp_text.node().getBBox().width;
@@ -942,27 +1244,27 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
         this.assignTracks();
 
         // Render gene groups
-        var selection = this.svg.group.selectAll("g.lz-data_layer-gene")
+        var selection = this.svg.group.selectAll("g.lz-data_layer-genes")
             .data(this.data, function(d){ return d.gene_name; });
 
         selection.enter().append("g")
-            .attr("class", "lz-data_layer-gene");
-
-        selection.attr("id", function(d){ return "g" + d.gene_name.replace(/\W/g,""); })
+            .attr("class", "lz-data_layer-genes");
+        
+        selection.attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this))
             .each(function(gene){
 
                 var data_layer = gene.parent;
 
                 // Render gene bounding box
-                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-bounding_box")
+                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box")
                     .data([gene], function(d){ return d.gene_name + "_bbox"; });
 
                 bboxes.enter().append("rect")
-                    .attr("class", "lz-data_layer-gene lz-bounding_box");
+                    .attr("class", "lz-data_layer-genes lz-data_layer-genes-bounding_box");
 
                 bboxes
                     .attr("id", function(d){
-                        return "g" + d.gene_name.replace(/\W/g,"") + "_bounding_box";
+                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_bounding_box";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -986,11 +1288,11 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 bboxes.exit().remove();
 
                 // Render gene boundaries
-                var boundaries = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-boundary")
+                var boundaries = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-boundary")
                     .data([gene], function(d){ return d.gene_name + "_boundary"; });
 
                 boundaries.enter().append("rect")
-                    .attr("class", "lz-data_layer-gene lz-boundary");
+                    .attr("class", "lz-data_layer-genes lz-boundary");
 
                 boundaries
                     .attr("x", function(d){
@@ -1011,11 +1313,11 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 boundaries.exit().remove();
 
                 // Render gene labels
-                var labels = d3.select(this).selectAll("text.lz-data_layer-gene.lz-label")
+                var labels = d3.select(this).selectAll("text.lz-data_layer-genes.lz-label")
                     .data([gene], function(d){ return d.gene_name + "_label"; });
 
                 labels.enter().append("text")
-                    .attr("class", "lz-data_layer-gene lz-label");
+                    .attr("class", "lz-data_layer-genes lz-label");
 
                 labels
                     .attr("x", function(d){
@@ -1043,11 +1345,11 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 labels.exit().remove();
 
                 // Render exon rects (first transcript only, for now)
-                var exons = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-exon")
+                var exons = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-exon")
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d){ return d.exon_id; });
                         
                 exons.enter().append("rect")
-                    .attr("class", "lz-data_layer-gene lz-exon");
+                    .attr("class", "lz-data_layer-genes lz-exon");
                         
                 exons
                     .attr("x", function(d){
@@ -1069,15 +1371,15 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 exons.exit().remove();
 
                 // Render gene click area
-                var clickareas = d3.select(this).selectAll("rect.lz-data_layer-gene.lz-clickarea")
+                var clickareas = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-clickarea")
                     .data([gene], function(d){ return d.gene_name + "_clickarea"; });
 
                 clickareas.enter().append("rect")
-                    .attr("class", "lz-data_layer-gene lz-clickarea");
+                    .attr("class", "lz-data_layer-genes lz-clickarea");
 
                 clickareas
                     .attr("id", function(d){
-                        return "g" + d.gene_name.replace(/\W/g,"") + "_clickarea";
+                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_clickarea";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -1101,56 +1403,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
 
-                // Apply selectable, tooltip, etc. to clickareas
-                if (gene.parent.layout.selectable){
-                    clickareas
-                        .on("mouseover", function(d){
-                            var id = "g" + d.gene_name.replace(/\W/g,"");
-                            if (data_layer.state[data_layer.state_id].selected != id){
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-hovered");
-                                if (data_layer.layout.tooltip){ data_layer.createTooltip(d, id); }
-                            }
-                        })
-                        .on("mouseout", function(d){
-                            var id = "g" + d.gene_name.replace(/\W/g,"");
-                            if (data_layer.state[data_layer.state_id].selected != id){
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                                if (data_layer.layout.tooltip){ data_layer.destroyTooltip(id); }
-                            }
-                        })
-                        .on("click", function(d){
-                            var id = "g" + d.gene_name.replace(/\W/g,"");
-                            if (data_layer.state[data_layer.state_id].selected == id){
-                                data_layer.state[data_layer.state_id].selected = null;
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-hovered");
-                            } else {
-                                if (data_layer.state[data_layer.state_id].selected != null){
-                                    d3.select("#" + data_layer.state[data_layer.state_id].selected + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box");
-                                    if (data_layer.layout.tooltip){ data_layer.destroyTooltip(data_layer.state[data_layer.state_id].selected); }
-                                }
-                                data_layer.state[data_layer.state_id].selected = id;
-                                d3.select("#" + id + "_bounding_box").attr("class", "lz-data_layer-gene lz-bounding_box lz-bounding_box-selected");
-                            }
-                            data_layer.triggerOnUpdate();
-                        });
-                    // Apply existing selection from state
-                    if (gene.parent.state[gene.parent.state_id].selected != null){
-                        var selected_id = gene.parent.state[gene.parent.state_id].selected + "_clickarea";
-                        if (d3.select("#" + selected_id).empty()){
-                            console.warn("Pre-defined state selection for " + gene.parent.state_id + " contains an ID that is not or is no longer present on the plot: " + gene.parent.state[gene.parent.state_id].selected);
-                            gene.parent.state[gene.parent.state_id].selected = null;
-                        } else {
-                            if (gene.parent.tooltips[gene.parent.state[gene.parent.state_id].selected]){
-                                gene.parent.positionTooltip(gene.parent.state[gene.parent.state_id].selected);
-                            } else {
-                                gene.parent.state[gene.parent.state_id].selected = null;
-                                var d = d3.select("#" + selected_id).datum();
-                                d3.select("#" + selected_id).on("mouseover")(d);
-                                d3.select("#" + selected_id).on("click")(d);
-                            }
-                        }
-                    }
-                }
+                // Apply selectable, tooltip, etc to clickareas
+                data_layer.enableTooltips(clickareas);
 
             });
 
@@ -1172,7 +1426,8 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var gene_bbox = d3.select("#g" + tooltip.data.gene_name.replace(/\W/g,"")).node().getBBox();
+        var gene_bbox_id = this.parent.id + "_" + tooltip.data[this.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+        var gene_bbox = d3.select("#" + gene_bbox_id).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
         // Position horizontally: attempt to center on the portion of the gene that's visible,

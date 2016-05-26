@@ -5,9 +5,11 @@ svg.lz-locuszoom {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px; }
   svg.lz-locuszoom rect.lz-clickarea {
-    fill: transparent; }
+    fill: black;
+    fill-opacity: 0; }
   svg.lz-locuszoom .lz-curtain rect {
-    fill: rgba(210, 210, 210, 0.85); }
+    fill: #d2d2d2;
+    fill-opacity: 0.85; }
   svg.lz-locuszoom .lz-curtain text, svg.lz-locuszoom .lz-curtain tspan {
     fill: black;
     font-weight: 600;
@@ -18,7 +20,8 @@ svg.lz-locuszoom {
     fill: #31708f;
     cursor: pointer; }
   svg.lz-locuszoom .lz-mouse_guide rect {
-    fill: rgba(210, 210, 210, 0.85); }
+    fill: #d2d2d2;
+    fill-opacity: 0.85; }
   svg.lz-locuszoom .lz-mouse_guide rect.lz-mouse_guide-vertical {
     width: 1px;
     height: 100%; }
@@ -30,22 +33,31 @@ svg.lz-locuszoom {
     border: 1px solid rgba(24, 24, 24, 1);
     border-radius: 3px; }
   svg.lz-locuszoom .lz-ui-resize_handle {
-    fill: rgba(210, 210, 210, 0.85);
-    stroke: rgba(45, 45, 45, 0.85);
+    fill: #d2d2d2;
+    fill-opacity: 0.4;
+    stroke: #2d2d2d;
+    stroke-opacity: 0.4;
     stroke-width: 1;
     cursor: nwse-resize;
     stroke-linejoin: round; }
   svg.lz-locuszoom .lz-ui-resize_handle:hover {
     fill: #d2d2d2;
+    fill-opacity: 1;
     stroke: #2d2d2d;
+    stroke-opacity: 1;
     stroke-width: 2;
     stroke-linejoin: round; }
   svg.lz-locuszoom .lz-ui-resize_handle_dragging {
     fill: #d2d2d2;
+    fill-opacity: 1;
     stroke: #2d2d2d;
+    stroke-opacity: 1;
     stroke-width: 2;
     cursor: nwse-resize;
     stroke-linejoin: round; }
+  svg.lz-locuszoom .lz-panel-title {
+    font-size: 18px;
+    font-weight: 600; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
@@ -55,44 +67,54 @@ svg.lz-locuszoom {
     font-size: 12px;
     font-weight: 600; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgba(24, 24, 24, 0.4);
     stroke-width: 1;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-scatter-hovered {
-    stroke: rgba(24, 24, 24, 1);
-    stroke-width: 3; }
+    stroke: rgba(24, 24, 24, 0.4);
+    stroke-width: 4; }
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4; }
+  svg.lz-locuszoom text.lz-data_layer-scatter-label {
+    fill: rgba(24, 24, 24, 1);
+    alignment-baseline: middle; }
+  svg.lz-locuszoom line.lz-data_layer-scatter-label {
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1px; }
   svg.lz-locuszoom path.lz-data_layer-line {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
-    fill: transparent;
-    stroke: transparent;
-    stroke-width: 12px;
+    fill: none;
+    stroke: none;
     cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-gene {
     cursor: pointer; }
-  svg.lz-locuszoom text.lz-data_layer-gene.lz-label {
+  svg.lz-locuszoom text.lz-data_layer-genes.lz-label {
     font-style: italic; }
-  svg.lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box {
-    fill: transparent;
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box {
+    fill: #363696;
+    fill-opacity: 0;
     stroke-width: 0; }
-  svg.lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box-hovered {
-    fill: rgba(54, 54, 150, 0.1);
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-hovered {
+    fill: #363696;
+    fill-opacity: 0.1;
     stroke-width: 0; }
-  svg.lz-locuszoom rect.lz-data_layer-gene.lz-bounding_box-selected {
-    fill: rgba(54, 54, 150, 0.15);
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-selected {
+    fill: #363696;
+    fill-opacity: 0.15;
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1; }
-  svg.lz-locuszoom rect.lz-data_layer-gene.lz-boundary {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-boundary {
     stroke: #363696;
+    stroke-opacity: 1;
     stroke-width: 1;
     fill: #000099; }
-  svg.lz-locuszoom rect.lz-data_layer-gene.lz-exon {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-exon {
     stroke: #363696;
+    stroke-opacity: 1;
     stroke-width: 1;
     fill: #000099; }
 
@@ -105,6 +127,23 @@ div.lz-data_layer-tooltip {
   border: 1px solid rgba(24, 24, 24, 1);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+  div.lz-data_layer-tooltip .lz-tooltip-close-button {
+    font-weight: bold;
+    text-decoration: none;
+    line-height: 1.2;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(235, 235, 235, 0.4);
+    color: rgba(24, 24, 24, 0.4);
+    border: 1px solid rgba(24, 24, 24, 0.4);
+    border-radius: 4px;
+    pointer-events: auto;
+    position: absolute;
+    right: -1px;
+    top: -1px; }
+  div.lz-data_layer-tooltip .lz-tooltip-close-button:hover {
+    cursor: pointer;
+    background-color: rgba(24, 24, 24, 1);
+    color: #ebebeb; }
 
 div.lz-data_layer-tooltip-arrow_up {
   width: 0;
@@ -182,3 +221,111 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   width: 100%;
   display: inline-block;
   overflow: hidden; }
+
+.lz-locuszoom-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 4px;
+  padding-bottom: 4px; }
+  .lz-locuszoom-controls .lz-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto; }
+  .lz-locuszoom-controls .lz-controls-button:hover {
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8; }
+  .lz-locuszoom-controls .lz-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #D8D8D8; }
+  .lz-locuszoom-controls .lz-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #D8D8D8;
+    color: #999999;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    pointer-events: none; }
+  .lz-locuszoom-controls .lz-controls-button-disabled:hover {
+    cursor: wait;
+    background-color: #D8D8D8; }
+
+.lz-locuszoom-panel-controls {
+  padding-top: 6px;
+  padding-right: 2px; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216, 216, 216, 0.4);
+    border: 1px solid rgba(51, 51, 51, 0.4);
+    color: rgba(51, 51, 51, 0.4);
+    border-radius: 4px;
+    pointer-events: auto; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button:hover {
+    cursor: pointer;
+    background-color: #d8d8d8;
+    border: 1px solid #333333;
+    color: #333333; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button-selected {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    border: 1px solid #333333;
+    border-radius: 4px;
+    pointer-events: auto;
+    cursor: pointer;
+    background-color: #333333;
+    color: #d8d8d8; }
+  .lz-locuszoom-panel-controls .lz-panel-controls-button-disabled {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216, 216, 216, 0.4);
+    border: 1px solid rgba(153, 153, 153, 0.4);
+    color: rgba(153, 153, 153, 0.4);
+    border-radius: 4px;
+    pointer-events: none;
+    cursor: wait; }
+
+div.lz-panel-description {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: #e4ebf0;
+  border: 1px solid rgba(24, 24, 24, 1);
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 4px;
+  width: 200px;
+  border-radius: 2px;
+  background: rgba(235, 240, 228, 0.5);
+  border: 1px solid rgba(24, 24, 24, 0.4); }
+
+div.lz-panel-boundary {
+  position: absolute;
+  height: 3px;
+  width: 200px;
+  border-radius: 1px;
+  background: rgba(216, 216, 216, 0.4);
+  border: 1px solid rgba(24, 24, 24, 0.4);
+  cursor: row-resize; }
+
+div.lz-panel-boundary:hover {
+  background: #d8d8d8;
+  border: 1px solid rgba(24, 24, 24, 1); }
+
+div.lz-panel-boundary:active {
+  background: #333333;
+  border: 1px solid #d8d8d8; }

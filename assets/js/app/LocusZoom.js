@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.8"
+    version: "0.3.9"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -45,6 +45,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             .attr("xmlns", "http://www.w3.org/2000/svg")
             .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
         instance.setDimensions();
+        instance.positionPanels();
         // Initialize the instance
         instance.initialize();
         // If the instance has defined data sources then trigger its first mapping based on state values
@@ -239,6 +240,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
+LocusZoom.createResolvedPromise = function() {
+    var response = Q.defer();
+    response.resolve(Array.prototype.slice.call(arguments));
+    return response.promise;
+};
+
 // Merge two layout objects
 // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
 // Ensures that all values defined in the second layout are at least present in the first
@@ -249,10 +256,13 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     }
     for (var property in default_layout) {
         if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity
+        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
         // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+        // Also separate arrays from objects as a discrete type.
         var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
         var default_type = typeof default_layout[property];
+        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
         // Unsupported property types: throw an exception
         if (custom_type == "function" || default_type == "function"){
             throw("LocusZoom.mergeLayouts encountered an unsupported property type");
@@ -297,37 +307,43 @@ LocusZoom.StandardLayout = {
     state: {},
     width: 800,
     height: 450,
-    min_width: 400,
-    min_height: 225,
     resizable: "responsive",
     aspect_ratio: (16/9),
     panels: {
         positions: {
+            title: "Analysis ID: 3",
+            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
             min_width:  400,
-            min_height: 112.5,
+            min_height: 200,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0 },
-            margin: { top: 20, right: 20, bottom: 35, left: 50 },
+            margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             axes: {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region"
+                    tick_format: "region",
+                    extent: "state"
                 },
                 y1: {
                     label: "-log10 p-value",
                     label_offset: 28
+                },
+                y2: {
+                    label: "Recombination Rate (cM/Mb)",
+                    label_offset: 40
                 }
             },
             data_layers: {
                 significance: {
                     type: "line",
                     fields: ["sig:x", "sig:y"],
+                    z_index: 0,
                     style: {
                         "stroke": "#D3D3D3",
                         "stroke-width": "3px",
@@ -345,11 +361,38 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
+                recomb: {
+                    type: "line",
+                    fields: ["recomb:position", "recomb:recomb_rate"],
+                    z_index: 1,
+                    style: {
+                        "stroke": "#0000FF",
+                        "stroke-width": "1.5px"
+                    },
+                    x_axis: {
+                        field: "recomb:position"
+                    },
+                    y_axis: {
+                        axis: 2,
+                        field: "recomb:recomb_rate",
+                        floor: 0,
+                        ceiling: 100
+                    }
+                },
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
-                    point_size: 40,
+                    point_size: {
+                        field: "ld:state",
+                        scale_function: "numerical_bin",
+                        parameters: {
+                            breaks: [0, 0.99],
+                            values: [40, 80],
+                            null_value: 40
+                        }
+                    },
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    z_index: 2,
                     x_axis: {
                         field: "position"
                     },
@@ -364,43 +407,67 @@ LocusZoom.StandardLayout = {
                         field: "ld:state",
                         scale_function: "numerical_bin",
                         parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
+                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
                             null_value: "#B8B8B8"
                         }
                     },
+                    selectable: "multiple",
                     tooltip: {
-                        divs: [
-                            { html: "<strong>{{id}}</strong>" },
-                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
-                            { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
-                        ]
+                        html: "<strong>{{id}}</strong><br>"
+                            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
+                            + "Ref. Allele: <strong>{{refAllele}}</strong>",
+                        closable: true
+                    },
+                    /*
+                    label: {
+                        text: "{{id}}",
+                        spacing: 4,
+                        lines: {
+                            style: {
+                                "stroke-width": "1px",
+                                "stroke": "#333333",
+                                "stroke-dasharray": "1px 1px"
+                            }
+                        },
+                        filters: [
+                            {
+                                field: "pvalue|neglog10",
+                                operator: ">=",
+                                value: 50
+                            }
+                        ],
+                        style: {
+                            "font-size": "12px",
+                            "fill": "#333333"
+                        }
                     }
+                    */
                 }
             }
         },
         genes: {
             width: 800,
             height: 225,
-            origin: { x: 0, y: 350 },
+            origin: { x: 0, y: 225 },
             min_width: 400,
             min_height: 112.5,
             proportional_width: 1,
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 20, bottom: 20, left: 50 },
+            margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
             data_layers: {
                 genes: {
                     type: "genes",
                     fields: ["gene:gene"],
+                    id_field: "gene_id",
+                    selectable: "one",
                     tooltip: {
-                        divs: [
-                            { html: "<strong><i>{{gene_name}}</i></strong>" },
-                            { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "Transcript ID: <strong>{{transcript_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>" }
-                        ]
+                        html: "<strong><i>{{gene_name}}</i></strong><br>"
+                            + "Gene ID: <strong>{{gene_id}}</strong><br>"
+                            + "Transcript ID: <strong>{{transcript_id}}</strong><br>"
+                            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>"
                     }
                 }
             }

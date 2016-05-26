@@ -29,7 +29,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         this.state_id = this.parent.id + "." + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
         if (this.layout.selectable){
-            this.state[this.state_id].selected = this.state[this.state_id].selected || null;
+            this.state[this.state_id].selected = this.state[this.state_id].selected || [];
         }
     } else {
         this.state = {};
@@ -42,8 +42,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         return this.parent.parent.id + "." + this.parent.id + "." + this.id;
     };
 
-    this.triggerOnUpdate = function(){
-        this.parent.triggerOnUpdate();
+    this.onUpdate = function(){
+        this.parent.onUpdate();
     };
 
     // Tooltip methods
@@ -62,25 +62,62 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         this.tooltips[id] = {
             data: d,
             arrow: null,
+            closed: false,
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
         };
+        this.updateTooltip(d, id);
+    };
+    this.updateTooltip = function(d, id){
+        // Empty the tooltip of all HTML (including its arrow!)
+        this.tooltips[id].selector.html("");
+        this.tooltips[id].arrow = null;
+        // Set the new HTML
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
-        } else if (this.layout.tooltip.divs){
-            var i, div, selection;
-            for (i in this.layout.tooltip.divs){
-                div = this.layout.tooltip.divs[i];
-                selection = this.tooltips[id].selector.append("div");
-                if (div.id){ selection.attr("id", div.id); }
-                if (div.class){ selection.attr("class", div.class); }
-                if (div.style){ selection.style(div.style); }
-                if (div.html){ selection.html(LocusZoom.parseFields(d, div.html)); }
-            }
         }
+        // If the layout allows tool tips on this data layer to be closable then add the close button
+        // and add padding to the tooltip to accomodate it
+        if (this.layout.tooltip.closable){
+            this.tooltips[id].selector.style("padding-right", "24px");
+            this.tooltips[id].selector.append("a")
+                .attr("class", "lz-tooltip-close-button")
+                .attr("title", "Close")
+                .html("×")
+                .on("click", function(){
+                    this.closeTooltip(id);
+                }.bind(this));
+        }
+        // Reposition and draw a new arrow
         this.positionTooltip(id);
     };
+    // Close tool tip - hide the tool tip element and flag it as closed, but don't destroy it
+    this.closeTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to close tooltip: id is not a string");
+        }
+        if (this.tooltips[id]){
+            if (typeof this.tooltips[id].selector == "object"){
+                this.tooltips[id].selector.style("display", "none");
+            }
+            this.tooltips[id].closed = true;
+        }
+    };
+    // Unclose tool tip - reveal and position a previously closed tool tip (rather than creating it anew)
+    this.uncloseTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to unclose tooltip: id is not a string");
+        }
+        if (this.tooltips[id] && this.tooltips[id].closed){
+            if (typeof this.tooltips[id].selector == "object"){
+                this.tooltips[id].selector.style("display", null);
+            }
+            this.positionTooltip(id);
+            this.tooltips[id].closed = false;
+        }
+    };
+    // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
     this.destroyTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to destroy tooltip: id is not a string");
@@ -98,6 +135,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.destroyTooltip(id);
         }
     };
+    // Position tool tip - naive function to place a tool tip to the lower right of the current mouse element
+    // Most data layers reimplement this method to position tool tips specifically for the data they display
     this.positionTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
@@ -123,24 +162,123 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }
     };
 
-    // Get an object with the x and y coordinates of this data layer's origin in terms of the entire page
-    // (useful for custom reimplementations this.positionTooltip())
-    this.getPageOrigin = function(){
-        var bounding_client_rect = this.parent.parent.svg.node().getBoundingClientRect();
-        var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
-        var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
-        var container = this.parent.parent.svg.node();
-        while (container.parentNode != null){
-            container = container.parentNode;
-            if (container != document && d3.select(container).style("position") != "static"){
-                x_offset = -1 * container.getBoundingClientRect().left;
-                y_offset = -1 * container.getBoundingClientRect().top;
-                break;
-            }
+    // Standard approach to applying unit-based selectability and general tooltip behavior (one and/or multiple)
+    // on a selection of data elements
+    this.enableTooltips = function(selection){
+        
+        if (typeof selection != "object"){ return; }
+        if (!this.layout.id_field){
+            console.warn("Data layer " + this.id + " tried to enable tooltips but does not have a valid id_field defined in the layout");
+            return;
         }
+        
+        // Enable mouseover/mouseout tooltip show/hide behavior
+        selection.on("mouseover", function(d){
+            var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
+            var select_id = id;
+            var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
+            if (this.layout.hover_element){
+                select_id += "_" + this.layout.hover_element;
+                attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
+            }
+            if (this.state[this.state_id].selected.indexOf(id) == -1){
+                d3.select("#" + select_id).attr("class", attr_class);
+                if (this.layout.tooltip){ this.createTooltip(d, id); }
+            }
+        }.bind(this))
+        .on("mouseout", function(d){
+            var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
+            var select_id = id;
+            var attr_class = "lz-data_layer-" + this.layout.type;
+            if (this.layout.hover_element){
+                select_id += "_" + this.layout.hover_element;
+                attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
+            }
+            if (this.state[this.state_id].selected.indexOf(id) == -1){
+                d3.select("#" + select_id).attr("class", attr_class);
+                if (this.layout.tooltip){ this.destroyTooltip(id); }
+            }
+        }.bind(this));
+        
+        if (this.layout.selectable){
+            
+            // Enable selectability
+            selection.on("click", function(d){
+                var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
+                var selected_idx = this.state[this.state_id].selected.indexOf(id);
+                // If this element IS currently selected...
+                if (selected_idx != -1){
+                    // If in selectable:multiple mode and this tooltip was closed then unclose it and be done
+                    if (this.layout.selectable == "multiple" && this.tooltips[id] && this.tooltips[id].closed){
+                        this.uncloseTooltip(id);
+                    // Otherwise unselect the element but leave the tool tip in place (to be destroyed on mouse out)
+                    } else {
+                        this.state[this.state_id].selected.splice(selected_idx, 1);
+                        var select_id = id;
+                        var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
+                        if (this.layout.hover_element){
+                            select_id += "_" + this.layout.hover_element;
+                            attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
+                        }
+                        d3.select("#" + select_id).attr("class", attr_class);
+                    }
+
+                // If this element IS NOT currently selected...
+                } else {
+                    // If in selectable:one mode then deselect any current selection
+                    if (this.layout.selectable == "one" && this.state[this.state_id].selected.length){
+                        this.destroyTooltip(this.state[this.state_id].selected[0]);
+                        var select_id = this.state[this.state_id].selected[0];
+                        var attr_class = "lz-data_layer-" + this.layout.type;
+                        if (this.layout.hover_element){
+                            select_id += "_" + this.layout.hover_element;
+                            attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
+                        }
+                        d3.select("#" + select_id).attr("class", attr_class);
+                        this.state[this.state_id].selected = [];
+                    }
+                    // Select the clicked element    
+                    this.state[this.state_id].selected.push(id);
+                    var select_id = id;
+                    var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
+                    if (this.layout.hover_element){
+                        select_id += "_" + this.layout.hover_element;
+                        attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-selected";
+                    }
+                    d3.select("#" + select_id).attr("class", attr_class);
+                }
+                this.onUpdate();
+            }.bind(this));
+
+            // Apply existing elements from state
+            if (Array.isArray(this.state[this.state_id].selected) && this.state[this.state_id].selected.length){
+                this.state[this.state_id].selected.forEach(function(selected_id, idx){
+                    if (d3.select("#" + selected_id).empty()){
+                        console.warn("State elements for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + selected_id);
+                        this.state[this.state_id].selected.splice(idx, 1);
+                    } else {
+                        if (this.tooltips[selected_id] && !this.tooltips[selected_id].closed){
+                            this.positionTooltip(selected_id);
+                        } else {
+                            this.state[this.state_id].selected.splice(idx, 1);
+                            var d = d3.select("#" + selected_id).datum();
+                            d3.select("#" + selected_id).on("mouseover")(d);
+                            d3.select("#" + selected_id).on("click")(d);
+                        }
+                    }
+                }.bind(this));
+            }
+            
+        }
+    };
+
+    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+    // Necessary for positioning any HTML elements over the panel
+    this.getPageOrigin = function(){
+        var panel_origin = this.parent.getPageOrigin();
         return {
-            x: x_offset + bounding_client_rect.left + this.parent.layout.origin.x + this.parent.layout.margin.left,
-            y: y_offset + bounding_client_rect.top + this.parent.layout.origin.y + this.parent.layout.margin.top
+            x: panel_origin.x + this.parent.layout.margin.left,
+            y: panel_origin.y + this.parent.layout.margin.top
         };
     };
     
