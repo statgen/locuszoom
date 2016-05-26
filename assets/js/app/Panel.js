@@ -269,7 +269,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         link_selectors: {},
         show: function(){
             if (!this.layout.controls || this.controls.selector){ return; }
-            this.controls.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+            this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
                 .style({ position: "absolute" });

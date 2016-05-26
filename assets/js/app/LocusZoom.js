@@ -374,7 +374,15 @@ LocusZoom.StandardLayout = {
                 positions: {
                     type: "scatter",
                     point_shape: "circle",
-                    point_size: 40,
+                    point_size: {
+                        field: "ld:state",
+                        scale_function: "numerical_bin",
+                        parameters: {
+                            breaks: [0, 0.99],
+                            values: [40, 80],
+                            null_value: 40
+                        }
+                    },
                     fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
                     z_index: 2,
                     x_axis: {
@@ -391,8 +399,8 @@ LocusZoom.StandardLayout = {
                         field: "ld:state",
                         scale_function: "numerical_bin",
                         parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
+                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
+                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
                             null_value: "#B8B8B8"
                         }
                     },
