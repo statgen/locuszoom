@@ -112,6 +112,104 @@ describe('LocusZoom Data', function(){
         });
     });
 
+
+    describe("LocusZoom.Data.Source.extend()", function() {
+
+        //reset known data sources
+        var originalKDS;
+        beforeEach(function() {
+            originalKDS = LocusZoom.KnownDataSources.getAll().slice(0);
+        });
+        afterEach(function() {
+            LocusZoom.KnownDataSources.setAll(originalKDS);
+        });
+
+        it("should work with no parameters", function() {
+            var source = LocusZoom.Data.Source.extend();
+            //no changes to KDS
+            LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length);
+            //has inherited the get data method from base Data.Source
+            var obj = new source();
+            should.exist(obj.getData);
+        });
+
+        it("should respect a custom constructor", function() {
+            var source = LocusZoom.Data.Source.extend(function() {
+                this.test = 5;
+            });
+            var obj = new source();
+            should.exist(obj.test);
+            obj.test.should.equal(5);
+        });
+
+        it("should register with KnownDataSources", function() {
+            var source = LocusZoom.Data.Source.extend(function() {
+                this.test = 11;
+            }, "Happy");
+            LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length+1);
+            LocusZoom.KnownDataSources.list().should.containEql("Happy");
+            var obj = LocusZoom.KnownDataSources.create("Happy");
+            should.exist(obj.test);
+            obj.test.should.equal(11);
+        });
+
+        it("should allow specific prototype", function() {
+            var source = LocusZoom.Data.Source.extend(function() {
+                this.fromCon = 3
+            }, null, {fromProto:7});
+            var obj = new source();
+            should.exist(obj.fromCon);
+            obj.fromCon.should.equal(3);
+            should.exist(obj.fromProto);
+            obj.fromProto.should.equal(7);
+        });
+
+        it("should easily inherit from known types (string)", function() {
+            var source1 = LocusZoom.Data.Source.extend(function() {
+                this.name = "Bob";
+                this.initOnly = "Boo";
+            }, "BaseOne");
+            source1.prototype.greet = function() {return "hello " + this.name;};
+            var source2 = LocusZoom.Data.Source.extend(function() {
+                this.name = "Brenda"
+            }, "BaseTwo", "BaseOne");
+            var obj = new source2();
+            should.exist(obj.name);
+            should.exist(obj.greet);
+            obj.name.should.equal("Brenda");
+            obj.greet().should.equal("hello Brenda");
+            should.not.exist(obj.initOnly);
+        });
+
+        it("should easily inherit from known types (function)", function() {
+            var source1 = LocusZoom.Data.Source.extend(function() {
+                this.name = "Bob";
+            }, "BaseOne");
+            source1.prototype.greet = function() {return "hello " + this.name;};
+            var source2 = LocusZoom.Data.Source.extend(function() {
+                this.name = "Brenda"
+            }, "BaseTwo", source1);
+            var obj = new source2();
+            should.exist(obj.name);
+            should.exist(obj.greet);
+            obj.name.should.equal("Brenda");
+            obj.greet().should.equal("hello Brenda");
+        });
+
+        it("should easily inherit from known types (array)", function() {
+            var source1 = LocusZoom.Data.Source.extend(function() {
+                this.name = "Bob";
+            }, "BaseOne");
+            source1.prototype.greet = function() {return "hello " + this.name;};
+            var source = LocusZoom.Data.Source.extend(null, "BaseTwo", ["BaseOne"]);
+            var obj = new source();
+            should.exist(obj.name);
+            should.exist(obj.greet);
+            obj.name.should.equal("Bob");
+            obj.greet().should.equal("hello Bob");
+        })
+    });
+
     describe("Static JSON Data Source", function() {
         var datasources, namespace, data;
         beforeEach(function(){
