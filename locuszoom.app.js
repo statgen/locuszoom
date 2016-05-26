@@ -987,12 +987,18 @@ LocusZoom.KnownDataSources = (function() {
         }
     };
 
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
+
     obj.clear = function() {
         sources = [];
     };
-
-    obj._data = sources;
-    obj._set_data = function(x) {sources = x};
 
     return obj;
 })();

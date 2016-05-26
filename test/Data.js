@@ -37,7 +37,7 @@ describe('LocusZoom Data', function(){
         var TestSource1, TestSource2;
         var originalKnownDataSources;
         beforeEach(function() {
-            originalKnownDataSources = LocusZoom.KnownDataSources._data.slice(0);
+            originalKnownDataSources = LocusZoom.KnownDataSources.getAll().slice(0);
             LocusZoom.KnownDataSources.clear();
             TestSource1 = function(x) {this.init = x};
             TestSource1.SOURCE_NAME = "test1";
@@ -47,7 +47,7 @@ describe('LocusZoom Data', function(){
             LocusZoom.KnownDataSources.add(TestSource2);
         });
         afterEach(function() {
-            LocusZoom.KnownDataSources._set_data(originalKnownDataSources);
+            LocusZoom.KnownDataSources.setAll(originalKnownDataSources);
         });
 
         it('should have a DataSources object', function(){
