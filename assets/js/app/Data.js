@@ -246,9 +246,20 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
     }
 };
 
-LocusZoom.Data.Source.extend = function(constructorFun, uniqueName) {
+LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
+    if (base) {
+        if (Array.isArray(base)) {
+            base = LocusZoom.KnownDataSources.create.apply(null, base);
+        } else if (typeof base === "string") {
+            base = LocusZoom.KnownDataSources.get(base).prototype;
+        } else if (typeof base === "function") {
+            base = base.prototype;
+        }
+    } else {
+        base =  new LocusZoom.Data.Source();
+    }
     constructorFun = constructorFun || function() {};
-    constructorFun.prototype = new LocusZoom.Data.Source();
+    constructorFun.prototype = base;
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
         constructorFun.SOURCE_NAME = uniqueName;
