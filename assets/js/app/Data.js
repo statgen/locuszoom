@@ -304,21 +304,40 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-    if (!this.params.id_field) {
-        this.params.id_field = "id";
-    }
-    if (!this.params.position_field) {
-        this.params.position_field = "position";
-    }
-    if (!this.params.pvalue_field) {
-        this.params.pvalue_field = "pvalue|neglog10";
-    }
 }, "LDLZ");
 
 LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
     if (fields.length>1) {
         throw("LD currently only supports one field");
     }
+};
+
+LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
+    // since LD may be shared across sources with different namespaces
+    // we use regex to find columns to join on rather than 
+    // requiring exact matches
+    var exactMatch = function(arr) {return function() {
+        var regexes = arguments;
+        for(var i=0; i<regexes.length; i++) {
+            var regex = regexes[i];
+            var m = arr.filter(function(x) {return x.match(regex);});
+            if (m.length==1) {
+                return m[0];
+            }
+        }
+        return null;
+    };};
+    var dataFields = {id: this.params.id_field, position: this.params.position_field, 
+        pvalue: this.params.pvalue_field, _names_:null};
+    if (chain && chain.body && chain.body.length>0) {
+        var names = Object.keys(chain.body[0]);
+        var nameMatch = exactMatch(names);
+        dataFields.id = dataFields.id || nameMatch(/\bid\b/);
+        dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
+        dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\|neglog10\b/i);
+        dataFields._names_ = names;
+    }
+    return dataFields;
 };
 
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
@@ -344,7 +363,11 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         if (!chain.body) {
             throw("No association data found to find best pvalue");
         }
-        refVar = chain.body[findExtremeValue(chain.body, this.params.pvalue_field)][this.params.id_field];
+        var keys = this.findMergeFields(chain);
+        if(!keys.pvalue || !keys.id) {
+            throw("Unable to find columns for both pvalue and id for merge: " + keys._names_);
+        }
+        refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
     if (!chain.header) {chain.header = {};}
     chain.header.ldrefvar = refVar;
@@ -357,15 +380,18 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 };
 
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    var data_source = this;
+    var keys = this.findMergeFields(chain);
+    if (!keys.position) {
+        throw("Unable to find position field for merge: " + keys._names_);
+    }
     var leftJoin = function(left, right, lfield, rfield) {
         var i=0, j=0;
         while (i < left.length && j < right.position2.length) {
-            if (left[i][data_source.params.position_field] == right.position2[j]) {
+            if (left[i][keys.position] == right.position2[j]) {
                 left[i][lfield] = right[rfield][j];
                 i++;
                 j++;
-            } else if (left[i][data_source.params.position_field] < right.position2[j]) {
+            } else if (left[i][keys.position] < right.position2[j]) {
                 i++;
             } else {
                 j++;
