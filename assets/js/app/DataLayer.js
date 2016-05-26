@@ -62,6 +62,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         this.tooltips[id] = {
             data: d,
             arrow: null,
+            closed: false,
             selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
                 .attr("class", "lz-data_layer-tooltip")
                 .attr("id", this.getBaseId() + ".tooltip." + id)
@@ -76,18 +77,47 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         if (this.layout.tooltip.html){
             this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
         }
+        // If the layout allows tool tips on this data layer to be closable then add the close button
+        // and add padding to the tooltip to accomodate it
         if (this.layout.tooltip.closable){
+            this.tooltips[id].selector.style("padding-right", "24px");
             this.tooltips[id].selector.append("a")
                 .attr("class", "lz-tooltip-close-button")
                 .attr("title", "Close")
                 .html("×")
                 .on("click", function(){
-                    this.destroyTooltip(id);
+                    this.closeTooltip(id);
                 }.bind(this));
         }
         // Reposition and draw a new arrow
         this.positionTooltip(id);
     };
+    // Close tool tip - hide the tool tip element and flag it as closed, but don't destroy it
+    this.closeTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to close tooltip: id is not a string");
+        }
+        if (this.tooltips[id]){
+            if (typeof this.tooltips[id].selector == "object"){
+                this.tooltips[id].selector.style("display", "none");
+            }
+            this.tooltips[id].closed = true;
+        }
+    };
+    // Unclose tool tip - reveal and position a previously closed tool tip (rather than creating it anew)
+    this.uncloseTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to unclose tooltip: id is not a string");
+        }
+        if (this.tooltips[id] && this.tooltips[id].closed){
+            if (typeof this.tooltips[id].selector == "object"){
+                this.tooltips[id].selector.style("display", null);
+            }
+            this.positionTooltip(id);
+            this.tooltips[id].closed = false;
+        }
+    };
+    // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
     this.destroyTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to destroy tooltip: id is not a string");
@@ -105,6 +135,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             this.destroyTooltip(id);
         }
     };
+    // Position tool tip - naive function to place a tool tip to the lower right of the current mouse element
+    // Most data layers reimplement this method to position tool tips specifically for the data they display
     this.positionTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
@@ -131,6 +163,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
     };
 
     // Standard approach to applying unit-based selectability and general tooltip behavior (one and/or multiple)
+    // on a selection of data elements
     this.enableTooltips = function(selection){
         
         if (typeof selection != "object"){ return; }
@@ -173,9 +206,12 @@ LocusZoom.DataLayer = function(id, layout, parent) {
             selection.on("click", function(d){
                 var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
                 var selected_idx = this.state[this.state_id].selected.indexOf(id);
+                // If this element IS currently selected...
                 if (selected_idx != -1){
-                    if (this.layout.selectable == "multiple" && this.layout.tooltip && !this.tooltips[id]){
-                        this.createTooltip(d, id);
+                    // If in selectable:multiple mode and this tooltip was closed then unclose it and be done
+                    if (this.layout.selectable == "multiple" && this.tooltips[id] && this.tooltips[id].closed){
+                        this.uncloseTooltip(id);
+                    // Otherwise unselect the element but leave the tool tip in place (to be destroyed on mouse out)
                     } else {
                         this.state[this.state_id].selected.splice(selected_idx, 1);
                         var select_id = id;
@@ -186,8 +222,10 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                         }
                         d3.select("#" + select_id).attr("class", attr_class);
                     }
+
+                // If this element IS NOT currently selected...
                 } else {
-                    // Deselect current selection if present and selectable is "one"
+                    // If in selectable:one mode then deselect any current selection
                     if (this.layout.selectable == "one" && this.state[this.state_id].selected.length){
                         this.destroyTooltip(this.state[this.state_id].selected[0]);
                         var select_id = this.state[this.state_id].selected[0];
@@ -219,7 +257,7 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                         console.warn("State elements for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + selected_id);
                         this.state[this.state_id].selected.splice(idx, 1);
                     } else {
-                        if (this.tooltips[selected_id]){
+                        if (this.tooltips[selected_id] && !this.tooltips[selected_id].closed){
                             this.positionTooltip(selected_id);
                         } else {
                             this.state[this.state_id].selected.splice(idx, 1);

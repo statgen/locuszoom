@@ -511,7 +511,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             // Generate panel boundaries
             if (!this.showing){
                 this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
-                    var selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                    var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
                         .attr("title", "Resize panels");
                     var panel_resize_drag = d3.behavior.drag();
@@ -605,7 +605,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         css_string: css_string,
         show: function(){
             if (!this.showing){
-                this.div = d3.select(this.parent.svg.node().parentNode).append("div")
+                this.div = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                     .attr("class", "lz-locuszoom-controls").attr("id", this.parent.id + ".controls");
                 this.links = this.div.append("div")
                     .attr("id", this.parent.id + ".controls.links")
