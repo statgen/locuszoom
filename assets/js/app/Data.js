@@ -317,6 +317,39 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 };
 
 /**
+  Known Data Source for Gene Constraint Data
+*/
+LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "GeneConstraintLZ");
+
+LocusZoom.Data.GeneConstraintSource.prototype.getURL = function() {
+    return this.url;
+};
+
+LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function(state, chain, fields) {
+    return this.url + JSON.stringify(state);
+};
+
+LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, chain, fields) {
+    var params = { geneids: [] };
+    chain.body.forEach(function(gene){
+        var gene_id = gene.gene_id;
+        if (gene_id.indexOf(".")){
+            gene_id = gene_id.substr(0, gene_id.indexOf("."));
+        }
+        params.geneids.push(gene_id);
+    });
+    console.log(params);
+    var url = this.getURL(state, chain, fields);
+    return LocusZoom.createCORSPromise("POST", this.url, JSON.stringify(params));
+};
+
+LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    return {header: chain.header, body: resp.data};
+};
+
+/**
   Known Data Source for Recombination Rate Data
 */
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
