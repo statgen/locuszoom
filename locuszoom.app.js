@@ -2654,7 +2654,9 @@ LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
 
 LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
     if (fields.length>1) {
-        throw("LD currently only supports one field");
+        if (fields.length!=2 || fields.indexOf("isrefvar")==-1) {
+            throw("LD does not know how to get all fields: " + fields.join(", "));
+        }
     }
 };
 
@@ -2686,6 +2688,20 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
     return dataFields;
 };
 
+LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outnames) {
+    var obj = {};
+    for(var i=0; i<fields.length; i++) {
+        if(fields[i]=="isrefvar") {
+            obj.isrefvarin = fields[i];
+            obj.isrefvarout = outnames && outnames[i];
+        } else {
+            obj.ldin = fields[i];
+            obj.ldout = outnames && outnames[i];
+        }
+    }
+    return obj;
+};
+
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var findExtremeValue = function(x, pval, sign) {
         pval = pval || "pvalue";
@@ -2701,7 +2717,8 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     };
 
     var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
-    var refVar = fields[0];
+    var reqFields = this.findRequestedFields(fields);
+    var refVar = reqFields.ldin;
     if (refVar == "state") {
         refVar = state.ldrefvar || chain.header.ldrefvar || "best";
     }
@@ -2727,6 +2744,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     var keys = this.findMergeFields(chain);
+    var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
         throw("Unable to find position field for merge: " + keys._names_);
     }
@@ -2744,7 +2762,19 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
             }
         }
     };
-    leftJoin(chain.body, resp.data, outnames[0], "rsquare");
+    var tagRefVariant = function(data, refvar, idfield, outname) {
+        for(var i=0; i<data.length; i++) {
+            if (data[i][idfield] && data[i][idfield]===refvar) {
+                data[i][outname] = 1;
+            } else {
+                data[i][outname] = 0;
+            }
+        }
+    };
+    leftJoin(chain.body, resp.data, reqFields.ldout, "rsquare");
+    if(reqFields.isrefvarin && chain.header.ldrefvar) {
+        tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
+    }
     return chain;   
 };
 
