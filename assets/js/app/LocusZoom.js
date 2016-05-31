@@ -240,12 +240,6 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
-LocusZoom.createResolvedPromise = function() {
-    var response = Q.defer();
-    response.resolve(Array.prototype.slice.call(arguments));
-    return response.promise;
-};
-
 // Merge two layout objects
 // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
 // Ensures that all values defined in the second layout are at least present in the first
@@ -299,8 +293,6 @@ LocusZoom.parseFields = function (data, html) {
     }
     return html;
 };
-
-LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {

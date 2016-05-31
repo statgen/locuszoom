@@ -14,88 +14,73 @@
 
 */
 
-/* A named collection of data sources used to draw a plot*/
 
-LocusZoom.DataSources = function() {
-    this.sources = {};
-};
+/* The Collection of "Known" Data Source Endpoints */
 
-LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    console.warn("Warning: .addSource() is depricated. Use .add() instead");
-    return this.add(ns, x);
-};
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
 
-LocusZoom.DataSources.prototype.add = function(ns, x) {
-    return this.set(ns, x);
-};
-
-LocusZoom.DataSources.prototype.set = function(ns, x) {
-    function findKnownSource(x) {
-        if (!LocusZoom.KnownDataSources) {return null;}
-        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
-            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
-                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
             }
-            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
-                return LocusZoom.KnownDataSources[i];
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
             }
         }
         return null;
-    }
+    };
 
-    if (Array.isArray(x)) {
-        var dsclass = findKnownSource(x[0]);
-        if (dsclass) {
-            this.sources[ns] = new dsclass(x[1]);
-        } else {
-            throw("Unable to resolve " + x[0] + " data source");
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
         }
-    } else {
-        if (x !== null) {
-            this.sources[ns] = x;
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
         } else {
-            delete this.sources[ns];
+            throw("Unable to find data source for name: " + name); 
+            return null;
         }
-    }
-    return this;
-};
+    };
 
-LocusZoom.DataSources.prototype.getSource = function(ns) {
-    console.warn("Warning: .getSource() is depricated. Use .get() instead");
-    return this.get(ns);
-};
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
 
-LocusZoom.DataSources.prototype.get = function(ns) {
-    return this.sources[ns];
-};
+    obj.clear = function() {
+        sources = [];
+    };
 
-LocusZoom.DataSources.prototype.removeSource = function(ns) {
-    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
-    return this.remove(ns);
-};
-
-LocusZoom.DataSources.prototype.remove = function(ns) {
-    return this.set(ns, null);
-};
-
-LocusZoom.DataSources.prototype.fromJSON = function(x) {
-    if (typeof x === "string") {
-        x = JSON.parse(x);
-    }
-    var ds = this;
-    Object.keys(x).forEach(function(ns) {
-        ds.set(ns, x[ns]);
-    });
-    return ds;
-};
-
-LocusZoom.DataSources.prototype.keys = function() {
-    return Object.keys(this.sources);
-};
-
-LocusZoom.DataSources.prototype.toJSON = function() {
-    return this.sources;
-};
+    return obj;
+})();
 
 
 /****************
