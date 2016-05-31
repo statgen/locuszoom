@@ -178,7 +178,7 @@ describe('LocusZoom Singletons', function(){
         it('should have a method to list available scale functions', function(){
             LocusZoom.ScaleFunctions.should.have.property('list').which.is.a.Function;
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["numerical_bin", "categorical_bin"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should have a general method to get a scale by function name', function(){
@@ -189,7 +189,7 @@ describe('LocusZoom Singletons', function(){
             var foo = function(parameters, value){ return "#000000"; };
             LocusZoom.ScaleFunctions.add("foo", foo);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["numerical_bin", "categorical_bin", "foo"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get("foo", {}, 0);
             var expected_value = "#000000";
@@ -200,14 +200,14 @@ describe('LocusZoom Singletons', function(){
             var foo_new = function(parameters, value){ return "#FFFFFF"; };
             LocusZoom.ScaleFunctions.set("foo", foo_new);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["numerical_bin", "categorical_bin", "foo"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get("foo", {}, 0);
             var expected_value = "#FFFFFF";
             assert.equal(returned_value, expected_value);
             LocusZoom.ScaleFunctions.set("foo");
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["numerical_bin", "categorical_bin"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
@@ -221,8 +221,41 @@ describe('LocusZoom Singletons', function(){
                 LocusZoom.ScaleFunctions.add("categorical_bin", foo);
             });
         });
+        describe("if", function() {
+            it('should match against an arbitrary value, return null if not matched', function(){
+                var parameters = {
+                    field_value: 6,
+                    then: true
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, 0), null);
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, "foo"), null);
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, 6), true);
+            });
+            it('should optionally allow for defining an else', function(){
+                var parameters = {
+                    field_value: "kiwi",
+                    then: "pineapple",
+                    else: "watermelon"
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, 0), "watermelon");
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, "foo"), "watermelon");
+                assert.equal(LocusZoom.ScaleFunctions.get("if", parameters, "kiwi"), "pineapple");
+            });
+        });
         describe("numerical_bin", function() {
-            it('should work with arbitrarily many breaks/values', function(){
+           it('should work with arbitrarily many breaks/values', function(){
+                var parameters = {
+                    breaks: [-167, -46, 15, 23, 76.8, 952],
+                    values: ["value-167", "value-46", "value15", "value23", "value76.8", "value952"]
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, -50000), "value-167");
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 0), "value-46");
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 76.799999999), "value23");
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 481329), "value952");
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, "foo"), null);
+                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters), null);
+            });
+            it('should work with arbitrarily many breaks/values and an optional null_value parameter', function(){
                 var parameters = {
                     breaks: [0, 0.2, 0.4, 0.6, 0.8],
                     values: ["value0", "value0.2", "value0.4", "value0.6", "value0.8"],
@@ -235,20 +268,21 @@ describe('LocusZoom Singletons', function(){
                 assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 3246), "value0.8");
                 assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, "foo"), "null_value");
                 assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters), "null_value");
-                var parameters = {
-                    breaks: [-167, -46, 15, 23, 76.8, 952],
-                    values: ["value-167", "value-46", "value15", "value23", "value76.8", "value952"]
-                };
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, -50000), "value-167");
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 0), "value-46");
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 76.799999999), "value23");
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, 481329), "value952");
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters, "foo"), "value-167");
-                assert.equal(LocusZoom.ScaleFunctions.get("numerical_bin", parameters), "value-167");
             });
         });
         describe("categorical_bin", function() {
             it('should work with arbitrarily many categories/values', function(){
+                var parameters = {
+                    categories: ["oxygen", "fluorine", "tungsten"],
+                    values: ["value-oxygen", "value-fluorine", "value-tungsten"]
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, "fluorine"), "value-fluorine");
+                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, "tungsten"), "value-tungsten");
+                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, 135), null);
+                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, ["tungsten"]), null);
+                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters), null);
+            });
+            it('should work with arbitrarily many categories/values and an optional null_value parameter', function(){
                 var parameters = {
                     categories: ["dog", "cat", "hippo", "marmoset"],
                     values: ["value-dog", "value-cat", "value-hippo", "value-marmoset"],
@@ -259,14 +293,6 @@ describe('LocusZoom Singletons', function(){
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, "CAT"), "null_value");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, 53), "null_value");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters), "null_value");
-                var parameters = {
-                    categories: ["oxygen", "fluorine", "tungsten"],
-                    values: ["value-oxygen", "value-fluorine", "value-tungsten"]
-                };
-                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, "fluorine"), "value-fluorine");
-                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, 135), "value-oxygen");
-                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, ["tungsten"]), "value-oxygen");
-                assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters), "value-oxygen");
             });
         });
     });

@@ -293,6 +293,31 @@ LocusZoom.DataLayer.DefaultLayout = {
     y_axis: {}
 };
 
+// Resolve a scalable parameter for an element into a single value based on its layout and the element's data
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
+    var ret = null;
+    if (Array.isArray(layout)){
+        var idx = 0;
+        while (ret == null && idx < layout.length){
+            ret = this.resolveScalableParameter(layout[idx], data);
+            idx++;
+        }
+    } else {
+        switch (typeof layout){
+        case "number":
+        case "string":
+            ret = layout;
+            break;
+        case "object":
+            if (layout.scale_function && layout.field) {
+                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data[layout.field]);
+            }
+            break;
+        }
+    }
+    return ret;
+};
+
 // Generate dimension extent function based on layout parameters
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
