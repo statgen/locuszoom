@@ -2851,8 +2851,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             if (typeof chain.body[i][field] != "undefined"){ return; }
             if (resp[gene_id]){
                 var val = resp[gene_id][field];
-                console.log(val);
-                if (typeof val == "number" && val.toString().indexOf('.') != -1){
+                if (typeof val == "number" && val.toString().indexOf(".") != -1){
                     val = parseFloat(val.toFixed(2));
                 }
                 chain.body[i][field] = val;
