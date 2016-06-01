@@ -267,10 +267,9 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         };
         timeout && setTimeout(response.reject, timeout);
         body = typeof body !== "undefined" ? body : "";
-        // If posting an object set the JSON type header
-        if (method == "POST" && typeof body == "object"){
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-            console.log("body: ", body);
+        // If posting an object set the proper content-type header
+        if (method == "POST"){
+            xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
         }
         // Send the request
         xhr.send(body);
@@ -847,21 +846,39 @@ LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function(state, chai
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, chain, fields) {
-    var params = { geneids: [] };
+    var geneids = [];
     chain.body.forEach(function(gene){
         var gene_id = gene.gene_id;
         if (gene_id.indexOf(".")){
             gene_id = gene_id.substr(0, gene_id.indexOf("."));
         }
-        params.geneids.push(gene_id);
+        geneids.push(gene_id);
     });
-    console.log(params);
     var url = this.getURL(state, chain, fields);
-    return LocusZoom.createCORSPromise("POST", this.url, JSON.stringify(params));
+    var body = "geneids=" + encodeURIComponent(JSON.stringify(geneids));
+    return LocusZoom.createCORSPromise("POST", this.url, body);
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    return {header: chain.header, body: resp.data};
+    // Loop through the array of genes in the body and match each to a result from the contraints request
+    var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
+    chain.body.forEach(function(gene, i){
+        var gene_id = gene.gene_id;
+        if (gene_id.indexOf(".")){
+            gene_id = gene_id.substr(0, gene_id.indexOf("."));
+        }
+        if (resp[gene_id]){
+            constraint_fields.forEach(function(field){
+                // Do not overwrite any fields defined in the original gene source
+                // And skip fields not present in the gene constraint source
+                if (typeof chain.body[i][field] != "undefined"|| typeof resp[gene_id][field] == "undefined"){
+                    return;
+                }
+                chain.body[i][field] = resp[gene_id][field];
+            });
+        }
+    });
+    return {header: chain.header, body: chain.body};
 };
 
 /**

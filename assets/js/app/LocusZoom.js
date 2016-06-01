@@ -235,10 +235,9 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         };
         timeout && setTimeout(response.reject, timeout);
         body = typeof body !== "undefined" ? body : "";
-        // If posting an object set the JSON type header
-        if (method == "POST" && typeof body == "object"){
-            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-            console.log("body: ", body);
+        // If posting an object set the proper content-type header
+        if (method == "POST"){
+            xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
         }
         // Send the request
         xhr.send(body);
