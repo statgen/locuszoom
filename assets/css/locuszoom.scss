@@ -192,6 +192,28 @@ div.#{$namespace}-data_layer-tooltip {
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
 
+  h6 { font-size: 110%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
+  h5 { font-size: 125%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
+  h4 { font-size: 150%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
+  h3 { font-size: 175%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
+  h2 { font-size: 200%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
+  h1 { font-size: 250%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
+
+  table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 1px;
+    margin-bottom: 0.2em;
+  }
+  th:first-child, td:first-child {
+    padding-left: 0px;
+  }
+  th, td {
+    padding: 6px;
+    text-align: left;
+    border-bottom: 1px solid #E1E1E1;
+  }
+
   .#{$namespace}-tooltip-close-button {
     font-weight: bold;
     text-decoration: none;

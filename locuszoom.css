@@ -127,6 +127,47 @@ div.lz-data_layer-tooltip {
   border: 1px solid rgba(24, 24, 24, 1);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+  div.lz-data_layer-tooltip h6 {
+    font-size: 110%;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    padding: 0; }
+  div.lz-data_layer-tooltip h5 {
+    font-size: 125%;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+    padding: 0; }
+  div.lz-data_layer-tooltip h4 {
+    font-size: 150%;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+    padding: 0; }
+  div.lz-data_layer-tooltip h3 {
+    font-size: 175%;
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+    padding: 0; }
+  div.lz-data_layer-tooltip h2 {
+    font-size: 200%;
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+    padding: 0; }
+  div.lz-data_layer-tooltip h1 {
+    font-size: 250%;
+    margin-top: 0.3em;
+    margin-bottom: 0.3em;
+    padding: 0; }
+  div.lz-data_layer-tooltip table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 1px;
+    margin-bottom: 0.2em; }
+  div.lz-data_layer-tooltip th:first-child, div.lz-data_layer-tooltip td:first-child {
+    padding-left: 0px; }
+  div.lz-data_layer-tooltip th, div.lz-data_layer-tooltip td {
+    padding: 6px;
+    text-align: left;
+    border-bottom: 1px solid #E1E1E1; }
   div.lz-data_layer-tooltip .lz-tooltip-close-button {
     font-weight: bold;
     text-decoration: none;

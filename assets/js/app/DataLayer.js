@@ -201,6 +201,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }.bind(this));
         
         if (this.layout.selectable){
+
+            var select_id, attr_class;
             
             // Enable selectability
             selection.on("click", function(d){
@@ -214,8 +216,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     // Otherwise unselect the element but leave the tool tip in place (to be destroyed on mouse out)
                     } else {
                         this.state[this.state_id].selected.splice(selected_idx, 1);
-                        var select_id = id;
-                        var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
+                        select_id = id;
+                        attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
                         if (this.layout.hover_element){
                             select_id += "_" + this.layout.hover_element;
                             attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
@@ -228,8 +230,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     // If in selectable:one mode then deselect any current selection
                     if (this.layout.selectable == "one" && this.state[this.state_id].selected.length){
                         this.destroyTooltip(this.state[this.state_id].selected[0]);
-                        var select_id = this.state[this.state_id].selected[0];
-                        var attr_class = "lz-data_layer-" + this.layout.type;
+                        select_id = this.state[this.state_id].selected[0];
+                        attr_class = "lz-data_layer-" + this.layout.type;
                         if (this.layout.hover_element){
                             select_id += "_" + this.layout.hover_element;
                             attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
@@ -239,8 +241,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     }
                     // Select the clicked element    
                     this.state[this.state_id].selected.push(id);
-                    var select_id = id;
-                    var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
+                    select_id = id;
+                    attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
                     if (this.layout.hover_element){
                         select_id += "_" + this.layout.hover_element;
                         attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-selected";
@@ -291,6 +293,31 @@ LocusZoom.DataLayer.DefaultLayout = {
     fields: [],
     x_axis: {},
     y_axis: {}
+};
+
+// Resolve a scalable parameter for an element into a single value based on its layout and the element's data
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
+    var ret = null;
+    if (Array.isArray(layout)){
+        var idx = 0;
+        while (ret == null && idx < layout.length){
+            ret = this.resolveScalableParameter(layout[idx], data);
+            idx++;
+        }
+    } else {
+        switch (typeof layout){
+        case "number":
+        case "string":
+            ret = layout;
+            break;
+        case "object":
+            if (layout.scale_function && layout.field) {
+                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data[layout.field]);
+            }
+            break;
+        }
+    }
+    return ret;
 };
 
 // Generate dimension extent function based on layout parameters

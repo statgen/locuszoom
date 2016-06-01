@@ -245,12 +245,6 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
     return response.promise;
 };
 
-LocusZoom.createResolvedPromise = function() {
-    var response = Q.defer();
-    response.resolve(Array.prototype.slice.call(arguments));
-    return response.promise;
-};
-
 // Merge two layout objects
 // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
 // Ensures that all values defined in the second layout are at least present in the first
@@ -295,17 +289,16 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    var re;
+    var regex, replace;
     for (var field in data) {
         if (!data.hasOwnProperty(field)){ continue; }
-        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
-        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
-        html = html.replace(re, data[field]);
+        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean" && data[field] != null){ continue; }
+        regex = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
+        replace = (data[field] == null ? "" : data[field]);
+        html = html.replace(regex, replace);
     }
     return html;
 };
-
-LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {
@@ -388,15 +381,34 @@ LocusZoom.StandardLayout = {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
+                        scale_function: "if",
+                        field: "ld:isrefvar",
                         parameters: {
-                            breaks: [0, 0.99],
-                            values: [40, 80],
-                            null_value: 40
+                            field_value: 1,
+                            then: 80,
+                            else: 40
                         }
                     },
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    color: [
+                        {
+                            scale_function: "if",
+                            field: "ld:isrefvar",
+                            parameters: {
+                                field_value: 1,
+                                then: "#9632b8"
+                            }
+                        },
+                        {
+                            scale_function: "numerical_bin",
+                            field: "ld:state",
+                            parameters: {
+                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+                            }
+                        },
+                        "#B8B8B8"
+                    ],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
                     z_index: 2,
                     x_axis: {
                         field: "position"
@@ -408,46 +420,13 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    color: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
-                        parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
-                            null_value: "#B8B8B8"
-                        }
-                    },
                     selectable: "multiple",
                     tooltip: {
                         html: "<strong>{{id}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{refAllele}}</strong>",
                         closable: true
-                    },
-                    /*
-                    label: {
-                        text: "{{id}}",
-                        spacing: 4,
-                        lines: {
-                            style: {
-                                "stroke-width": "1px",
-                                "stroke": "#333333",
-                                "stroke-dasharray": "1px 1px"
-                            }
-                        },
-                        filters: [
-                            {
-                                field: "pvalue|neglog10",
-                                operator: ">=",
-                                value: 50
-                            }
-                        ],
-                        style: {
-                            "font-size": "12px",
-                            "fill": "#333333"
-                        }
                     }
-                    */
                 }
             }
         },
@@ -469,10 +448,17 @@ LocusZoom.StandardLayout = {
                     id_field: "gene_id",
                     selectable: "one",
                     tooltip: {
-                        html: "<strong><i>{{gene_name}}</i></strong><br>"
-                            + "Gene ID: <strong>{{gene_id}}</strong><br>"
-                            + "Transcript ID: <strong>{{transcript_id}}</strong><br>"
-                            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>"
+                        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+                            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+                            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+                            + "<div style=\"clear: both;\"></div>"
+                            + "<table>"
+                            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+                            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+                            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+                            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+                            + "</table>"
+                            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
             }

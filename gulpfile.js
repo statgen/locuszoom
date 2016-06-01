@@ -11,20 +11,20 @@ var argv = require("yargs").argv;
 // App-specific JS files to be watched and concatenate/minify
 // NOTE: Order of inclusion is important!
 var app_js_files = ["./assets/js/app/LocusZoom.js",
+                    "./assets/js/app/DataLayer.js",
+                    "./assets/js/app/Singletons.js",
                     "./assets/js/app/Data.js",
                     "./assets/js/app/Instance.js",
-                    "./assets/js/app/Panel.js",
-                    "./assets/js/app/DataLayer.js",
-                    "./assets/js/app/Singletons.js"
+                    "./assets/js/app/Panel.js"
                    ];
 
 // Test suites. Should be able to be executed in any order.
 var test_js_files = ["./test/LocusZoom.js",
+                     "./test/DataLayer.js",
+                     "./test/Singletons.js",
                      "./test/Data.js",
                      "./test/Instance.js",
-                     "./test/Panel.js",
-                     "./test/DataLayer.js",
-                     "./test/Singletons.js"
+                     "./test/Panel.js"
                     ];
 
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
