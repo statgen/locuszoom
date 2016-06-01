@@ -421,30 +421,6 @@ LocusZoom.StandardLayout = {
                             + "Ref. Allele: <strong>{{refAllele}}</strong>",
                         closable: true
                     }
-                    /*
-                    label: {
-                        text: "{{id}}",
-                        spacing: 4,
-                        lines: {
-                            style: {
-                                "stroke-width": "1px",
-                                "stroke": "#333333",
-                                "stroke-dasharray": "1px 1px"
-                            }
-                        },
-                        filters: [
-                            {
-                                field: "pvalue|neglog10",
-                                operator: ">=",
-                                value: 50
-                            }
-                        ],
-                        style: {
-                            "font-size": "12px",
-                            "fill": "#333333"
-                        }
-                    }
-                    */
                 }
             }
         },

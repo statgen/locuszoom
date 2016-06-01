@@ -1,6 +1,7 @@
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
 
 "use strict";
 

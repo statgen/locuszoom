@@ -62,7 +62,6 @@ LocusZoom.KnownDataSources = (function() {
             return new (Function.prototype.bind.apply(newObj, params));
         } else {
             throw("Unable to find data source for name: " + name); 
-            return null;
         }
     };
 
@@ -404,7 +403,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
+LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -513,28 +512,27 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         // Flip any going over the right edge from the right side to the left side
         // (all labels start on the right side)
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
+            var a = this;
+            var da = d3.select(a);
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x){
-                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
                 flip(da, dal);
             }
         });
         // Second pass to flip any others that haven't flipped yet if they collide with another label
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
+            var a = this;
+            var da = d3.select(a);
             if (da.style("text-anchor") == "end") return;
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
-            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
-                db = d3.select(b);
-                dbx = +db.attr("x");
-                bbound = db.node().getBoundingClientRect();
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
+            var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function () {
+                var b = this;
+                var db = d3.select(b);
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
@@ -561,37 +559,38 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var alpha = 0.5;
         var spacing = this.layout.label.spacing;
         var again = false;
-        data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            y1 = da.attr("y");
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
+        data_layer.label_texts.each(function () {
+            var a = this;
+            var da = d3.select(a);
+            var y1 = da.attr("y");
+            data_layer.label_texts.each(function () {
+                var b = this;
                 // a & b are the same element and don't collide.
                 if (a == b) return;
-                db = d3.select(b);
+                var db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
                 if (da.attr("text-anchor") != db.attr("text-anchor")) return;
                 // Determine if the  bounding rects for the two text elements collide
-                abound = da.node().getBoundingClientRect();
-                bbound = db.node().getBoundingClientRect();
+                var abound = da.node().getBoundingClientRect();
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
                     abound.height + abound.top + (2*spacing) > bbound.top;
                 if (!collision) return;
-                again = true;                
+                again = true;
                 // If the labels collide, we'll push each
                 // of the two labels up and down a little bit.
-                y2 = db.attr("y");
-                sign = abound.top < bbound.top ? 1 : -1;
-                adjust = sign * alpha;
-                new_a_y = +y1 - adjust;
-                new_b_y = +y2 + adjust;
+                var y2 = db.attr("y");
+                var sign = abound.top < bbound.top ? 1 : -1;
+                var adjust = sign * alpha;
+                var new_a_y = +y1 - adjust;
+                var new_b_y = +y2 + adjust;
                 // Keep new values from extending outside the data layer
                 var min_y = 2 * spacing;
                 var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                var delta;
                 if (new_a_y - (abound.height/2) < min_y){
                     delta = +y1 - new_a_y;
                     new_a_y = +y1;
@@ -814,7 +813,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout, parent){
+LocusZoom.DataLayers.add("line", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1055,7 +1054,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout, parent){
+LocusZoom.DataLayers.add("genes", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {

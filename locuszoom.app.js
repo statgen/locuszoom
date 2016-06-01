@@ -453,30 +453,6 @@ LocusZoom.StandardLayout = {
                             + "Ref. Allele: <strong>{{refAllele}}</strong>",
                         closable: true
                     }
-                    /*
-                    label: {
-                        text: "{{id}}",
-                        spacing: 4,
-                        lines: {
-                            style: {
-                                "stroke-width": "1px",
-                                "stroke": "#333333",
-                                "stroke-dasharray": "1px 1px"
-                            }
-                        },
-                        filters: [
-                            {
-                                field: "pvalue|neglog10",
-                                operator: ">=",
-                                value: 50
-                            }
-                        ],
-                        style: {
-                            "font-size": "12px",
-                            "fill": "#333333"
-                        }
-                    }
-                    */
                 }
             }
         },
@@ -712,6 +688,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         }.bind(this));
         
         if (this.layout.selectable){
+
+            var select_id, attr_class;
             
             // Enable selectability
             selection.on("click", function(d){
@@ -725,8 +703,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     // Otherwise unselect the element but leave the tool tip in place (to be destroyed on mouse out)
                     } else {
                         this.state[this.state_id].selected.splice(selected_idx, 1);
-                        var select_id = id;
-                        var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
+                        select_id = id;
+                        attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
                         if (this.layout.hover_element){
                             select_id += "_" + this.layout.hover_element;
                             attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
@@ -739,8 +717,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     // If in selectable:one mode then deselect any current selection
                     if (this.layout.selectable == "one" && this.state[this.state_id].selected.length){
                         this.destroyTooltip(this.state[this.state_id].selected[0]);
-                        var select_id = this.state[this.state_id].selected[0];
-                        var attr_class = "lz-data_layer-" + this.layout.type;
+                        select_id = this.state[this.state_id].selected[0];
+                        attr_class = "lz-data_layer-" + this.layout.type;
                         if (this.layout.hover_element){
                             select_id += "_" + this.layout.hover_element;
                             attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
@@ -750,8 +728,8 @@ LocusZoom.DataLayer = function(id, layout, parent) {
                     }
                     // Select the clicked element    
                     this.state[this.state_id].selected.push(id);
-                    var select_id = id;
-                    var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
+                    select_id = id;
+                    attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
                     if (this.layout.hover_element){
                         select_id += "_" + this.layout.hover_element;
                         attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-selected";
@@ -992,7 +970,6 @@ LocusZoom.KnownDataSources = (function() {
             return new (Function.prototype.bind.apply(newObj, params));
         } else {
             throw("Unable to find data source for name: " + name); 
-            return null;
         }
     };
 
@@ -1334,7 +1311,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
+LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1443,28 +1420,27 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         // Flip any going over the right edge from the right side to the left side
         // (all labels start on the right side)
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
+            var a = this;
+            var da = d3.select(a);
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x){
-                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
                 flip(da, dal);
             }
         });
         // Second pass to flip any others that haven't flipped yet if they collide with another label
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
+            var a = this;
+            var da = d3.select(a);
             if (da.style("text-anchor") == "end") return;
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
-            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
-                db = d3.select(b);
-                dbx = +db.attr("x");
-                bbound = db.node().getBoundingClientRect();
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
+            var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function () {
+                var b = this;
+                var db = d3.select(b);
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
@@ -1491,37 +1467,38 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var alpha = 0.5;
         var spacing = this.layout.label.spacing;
         var again = false;
-        data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            y1 = da.attr("y");
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
+        data_layer.label_texts.each(function () {
+            var a = this;
+            var da = d3.select(a);
+            var y1 = da.attr("y");
+            data_layer.label_texts.each(function () {
+                var b = this;
                 // a & b are the same element and don't collide.
                 if (a == b) return;
-                db = d3.select(b);
+                var db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
                 if (da.attr("text-anchor") != db.attr("text-anchor")) return;
                 // Determine if the  bounding rects for the two text elements collide
-                abound = da.node().getBoundingClientRect();
-                bbound = db.node().getBoundingClientRect();
+                var abound = da.node().getBoundingClientRect();
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
                     abound.height + abound.top + (2*spacing) > bbound.top;
                 if (!collision) return;
-                again = true;                
+                again = true;
                 // If the labels collide, we'll push each
                 // of the two labels up and down a little bit.
-                y2 = db.attr("y");
-                sign = abound.top < bbound.top ? 1 : -1;
-                adjust = sign * alpha;
-                new_a_y = +y1 - adjust;
-                new_b_y = +y2 + adjust;
+                var y2 = db.attr("y");
+                var sign = abound.top < bbound.top ? 1 : -1;
+                var adjust = sign * alpha;
+                var new_a_y = +y1 - adjust;
+                var new_b_y = +y2 + adjust;
                 // Keep new values from extending outside the data layer
                 var min_y = 2 * spacing;
                 var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                var delta;
                 if (new_a_y - (abound.height/2) < min_y){
                     delta = +y1 - new_a_y;
                     new_a_y = +y1;
@@ -1744,7 +1721,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout, parent){
+LocusZoom.DataLayers.add("line", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1985,7 +1962,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout, parent){
+LocusZoom.DataLayers.add("genes", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -2369,6 +2346,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
 
 "use strict";
 
@@ -2985,7 +2963,7 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
-}
+};
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined" && this.onUpdateFunctions.length){
@@ -3041,10 +3019,12 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 */
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
+    var id;
+
     // Update minimum allowable width and height by aggregating minimums from panels.
     var min_width = null;
     var min_height = null;
-    for (var id in this.panels){
+    for (id in this.panels){
         min_width = Math.max(min_width, this.panels[id].layout.min_width);
         min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
     }
@@ -3092,7 +3072,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
         this.layout.height = 0;
-        for (var id in this.panels){
+        for (id in this.panels){
             this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
             this.layout.height += this.panels[id].layout.height;
         }
@@ -3222,10 +3202,12 @@ LocusZoom.Instance.prototype.removePanel = function(id){
 */
 LocusZoom.Instance.prototype.positionPanels = function(){
 
+    var id;
+
     // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
     // proportional heights for all panels with a null value from discretely set dimensions.
     // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
-    for (var id in this.panels){
+    for (id in this.panels){
         if (this.panels[id].layout.proportional_height == null){
             this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
         }
@@ -3240,7 +3222,7 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         return this;
     }
     var proportional_adjustment = 1 / total_proportional_height;
-    for (var id in this.panels){
+    for (id in this.panels){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
