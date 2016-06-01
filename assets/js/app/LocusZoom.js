@@ -375,15 +375,34 @@ LocusZoom.StandardLayout = {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
+                        scale_function: "if",
+                        field: "ld:isrefvar",
                         parameters: {
-                            breaks: [0, 0.99],
-                            values: [40, 80],
-                            null_value: 40
+                            field_value: 1,
+                            then: 80,
+                            else: 40
                         }
                     },
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    color: [
+                        {
+                            scale_function: "if",
+                            field: "ld:isrefvar",
+                            parameters: {
+                                field_value: 1,
+                                then: "#9632b8"
+                            }
+                        },
+                        {
+                            scale_function: "numerical_bin",
+                            field: "ld:state",
+                            parameters: {
+                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+                            }
+                        },
+                        "#B8B8B8"
+                    ],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
                     z_index: 2,
                     x_axis: {
                         field: "position"
@@ -395,22 +414,13 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    color: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
-                        parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
-                            null_value: "#B8B8B8"
-                        }
-                    },
                     selectable: "multiple",
                     tooltip: {
                         html: "<strong>{{id}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{refAllele}}</strong>",
                         closable: true
-                    },
+                    }
                     /*
                     label: {
                         text: "{{id}}",

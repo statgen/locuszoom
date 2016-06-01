@@ -407,15 +407,34 @@ LocusZoom.StandardLayout = {
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
+                        scale_function: "if",
+                        field: "ld:isrefvar",
                         parameters: {
-                            breaks: [0, 0.99],
-                            values: [40, 80],
-                            null_value: 40
+                            field_value: 1,
+                            then: 80,
+                            else: 40
                         }
                     },
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    color: [
+                        {
+                            scale_function: "if",
+                            field: "ld:isrefvar",
+                            parameters: {
+                                field_value: 1,
+                                then: "#9632b8"
+                            }
+                        },
+                        {
+                            scale_function: "numerical_bin",
+                            field: "ld:state",
+                            parameters: {
+                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+                            }
+                        },
+                        "#B8B8B8"
+                    ],
+                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
                     z_index: 2,
                     x_axis: {
                         field: "position"
@@ -427,22 +446,13 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    color: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
-                        parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8, 0.99],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a", "#9632b8"],
-                            null_value: "#B8B8B8"
-                        }
-                    },
                     selectable: "multiple",
                     tooltip: {
                         html: "<strong>{{id}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{refAllele}}</strong>",
                         closable: true
-                    },
+                    }
                     /*
                     label: {
                         text: "{{id}}",
@@ -792,6 +802,31 @@ LocusZoom.DataLayer.DefaultLayout = {
     fields: [],
     x_axis: {},
     y_axis: {}
+};
+
+// Resolve a scalable parameter for an element into a single value based on its layout and the element's data
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
+    var ret = null;
+    if (Array.isArray(layout)){
+        var idx = 0;
+        while (ret == null && idx < layout.length){
+            ret = this.resolveScalableParameter(layout[idx], data);
+            idx++;
+        }
+    } else {
+        switch (typeof layout){
+        case "number":
+        case "string":
+            ret = layout;
+            break;
+        case "object":
+            if (layout.scale_function && layout.field) {
+                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data[layout.field]);
+            }
+            break;
+        }
+    }
+    return ret;
 };
 
 // Generate dimension extent function based on layout parameters
@@ -1195,12 +1230,25 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
+// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("if", function(parameters, value){
+    if (typeof value == "undefined" || parameters.field_value != value){
+        if (typeof parameters.else != "undefined"){
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+});
+
 // Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
 LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
     var breaks = parameters.breaks;
     var values = parameters.values;
-    if (value == null || isNaN(+value)){
-        return (parameters.null_value ? parameters.null_value : values[0]);
+    if (typeof value == "undefined" || value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : null);
     }
     var threshold = breaks.reduce(function(prev, curr){
         if (+value < prev || (+value >= prev && +value < curr)){
@@ -1214,10 +1262,10 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
 
 // Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
 LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (parameters.categories.indexOf(value) != -1){
-        return parameters.values[parameters.categories.indexOf(value)];
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+        return (parameters.null_value ? parameters.null_value : null); 
     } else {
-        return (parameters.null_value ? parameters.null_value : parameters.values[0]); 
+        return parameters.values[parameters.categories.indexOf(value)];
     }
 });
 
@@ -1319,7 +1367,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
-        var point_size = +this.layout.point_size || 40;
+        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -1370,8 +1418,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     // pass on recursive separation
     this.flip_labels = function(){
         var data_layer = this;
-        var point_size = +data_layer.layout.point_size || 40;
-        var spacing = this.layout.label.spacing;
+        var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
+        var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
         var min_x = 2 * spacing;
         var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
@@ -1579,7 +1627,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 .attr({
                     "x": function(d){
                         var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(+data_layer.layout.point_size || 40) + data_layer.layout.label.spacing
+                              + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                              + data_layer.layout.label.spacing;
                         if (isNaN(x)){ x = -1000; }
                         return x;
                     },
@@ -1588,7 +1637,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         if (isNaN(y)){ y = -1000; }
                         return y;
                     },
-                    "text-anchor": function(d){
+                    "text-anchor": function(){
                         return "start";
                     }
                 });
@@ -1612,7 +1661,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         },
                         "x2": function(d){
                             var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                  + Math.sqrt(+data_layer.layout.point_size || 40) + (data_layer.layout.label.spacing/2)
+                                  + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                                  + (data_layer.layout.label.spacing/2);
                             if (isNaN(x)){ x = -1000; }
                             return x;
                         },
@@ -1620,7 +1670,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                             var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
                             if (isNaN(y)){ y = -1000; }
                             return y;
-                        },
+                        }
                     });
             }
             // Remove labels when they're no longer in the filtered data set
@@ -1646,40 +1696,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             if (isNaN(y)){ y = -1000; }
             return "translate(" + x + "," + y + ")";
         }.bind(this);
-        var fill;
-        if (this.layout.color){
-            switch (typeof this.layout.color){
-            case "string":
-                fill = this.layout.color;
-                break;
-            case "object":
-                if (this.layout.color.scale_function && this.layout.color.field) {
-                    fill = function(d){
-                        return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
-                                                            this.layout.color.parameters || {},
-                                                            d[this.layout.color.field]);
-                    }.bind(this);
-                }
-                break;
-            }
-        }
-        var size;
-        switch (typeof this.layout.point_size){
-        case "number":
-        case "string":
-            size = +this.layout.point_size;
-            break;
-        case "object":
-            if (this.layout.point_size.scale_function && this.layout.point_size.field) {
-                size = function(d){
-                    return LocusZoom.ScaleFunctions.get(this.layout.point_size.scale_function,
-                                                        this.layout.point_size.parameters || {},
-                                                        d[this.layout.point_size.field]);
-                }.bind(this);
-            }
-            break;
-        }
-        var shape = d3.svg.symbol().size(size).type(this.layout.point_shape);
+
+        var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+
+        var shape = d3.svg.symbol()
+            .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
+            .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){

@@ -67,6 +67,66 @@ describe('LocusZoom.DataLayer', function(){
         });
     });
 
+    describe("Scalable parameter resolution", function() {
+        it("has a method to resolve scalable parameters into discrete values", function() {
+            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer.resolveScalableParameter.should.be.a.Function;
+        });
+        it("passes numbers and strings directly through regardless of data", function() {
+            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.layout = { scale: "foo" };
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), "foo");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: "bar" }), "foo");
+            this.layout = { scale: 17 };
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 17);
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: "bar" }), 17);
+        });
+        it("executes a scale function for the data provided", function() {
+            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.layout = {
+                scale: {
+                    scale_function: "categorical_bin",
+                    field: "test",
+                    parameters: {
+                        categories: ["lion", "tiger", "bear"],
+                        values: ["dorothy", "toto", "scarecrow"],
+                    }
+                }
+            };
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "lion" }), "dorothy");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "manatee" }), null);
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), null);
+        });
+        it("iterates over an array of options until exhausted or a non-null value is found", function() {
+            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.layout = {
+                scale: [
+                    {
+                        scale_function: "if",
+                        field: "test",
+                        parameters: {
+                            field_value: "wizard",
+                            then: "oz"
+                        }
+                    },
+                    {
+                        scale_function: "categorical_bin",
+                        field: "test",
+                        parameters: {
+                            categories: ["lion", "tiger", "bear"],
+                            values: ["dorothy", "toto", "scarecrow"],
+                        }
+                    },
+                    "munchkin"
+                ]
+            };
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "wizard" }), "oz");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "tiger" }), "toto");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "witch" }), "munchkin");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), "munchkin");
+        });
+    });
+
     describe("Extent generation", function() {
         it("has a method to generate an extent function for any axis", function() {
             this.datalayer = new LocusZoom.DataLayer("test", {});
