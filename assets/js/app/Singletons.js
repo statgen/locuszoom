@@ -14,88 +14,72 @@
 
 */
 
-/* A named collection of data sources used to draw a plot*/
 
-LocusZoom.DataSources = function() {
-    this.sources = {};
-};
+/* The Collection of "Known" Data Source Endpoints */
 
-LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    console.warn("Warning: .addSource() is depricated. Use .add() instead");
-    return this.add(ns, x);
-};
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
 
-LocusZoom.DataSources.prototype.add = function(ns, x) {
-    return this.set(ns, x);
-};
-
-LocusZoom.DataSources.prototype.set = function(ns, x) {
-    function findKnownSource(x) {
-        if (!LocusZoom.KnownDataSources) {return null;}
-        for(var i=0; i<LocusZoom.KnownDataSources.length; i++) {
-            if (!LocusZoom.KnownDataSources[i].SOURCE_NAME) {
-                throw("KnownDataSource at position " + i + " does not have a 'SOURCE_NAME' static property");
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
             }
-            if (LocusZoom.KnownDataSources[i].SOURCE_NAME == x) {
-                return LocusZoom.KnownDataSources[i];
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
             }
         }
         return null;
-    }
+    };
 
-    if (Array.isArray(x)) {
-        var dsclass = findKnownSource(x[0]);
-        if (dsclass) {
-            this.sources[ns] = new dsclass(x[1]);
-        } else {
-            throw("Unable to resolve " + x[0] + " data source");
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
         }
-    } else {
-        if (x !== null) {
-            this.sources[ns] = x;
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
         } else {
-            delete this.sources[ns];
+            throw("Unable to find data source for name: " + name); 
         }
-    }
-    return this;
-};
+    };
 
-LocusZoom.DataSources.prototype.getSource = function(ns) {
-    console.warn("Warning: .getSource() is depricated. Use .get() instead");
-    return this.get(ns);
-};
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
 
-LocusZoom.DataSources.prototype.get = function(ns) {
-    return this.sources[ns];
-};
+    obj.clear = function() {
+        sources = [];
+    };
 
-LocusZoom.DataSources.prototype.removeSource = function(ns) {
-    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
-    return this.remove(ns);
-};
-
-LocusZoom.DataSources.prototype.remove = function(ns) {
-    return this.set(ns, null);
-};
-
-LocusZoom.DataSources.prototype.fromJSON = function(x) {
-    if (typeof x === "string") {
-        x = JSON.parse(x);
-    }
-    var ds = this;
-    Object.keys(x).forEach(function(ns) {
-        ds.set(ns, x[ns]);
-    });
-    return ds;
-};
-
-LocusZoom.DataSources.prototype.keys = function() {
-    return Object.keys(this.sources);
-};
-
-LocusZoom.DataSources.prototype.toJSON = function() {
-    return this.sources;
-};
+    return obj;
+})();
 
 
 /****************
@@ -315,12 +299,25 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
+// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("if", function(parameters, value){
+    if (typeof value == "undefined" || parameters.field_value != value){
+        if (typeof parameters.else != "undefined"){
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+});
+
 // Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
 LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
     var breaks = parameters.breaks;
     var values = parameters.values;
-    if (value == null || isNaN(+value)){
-        return (parameters.null_value ? parameters.null_value : values[0]);
+    if (typeof value == "undefined" || value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : null);
     }
     var threshold = breaks.reduce(function(prev, curr){
         if (+value < prev || (+value >= prev && +value < curr)){
@@ -334,10 +331,10 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
 
 // Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
 LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (parameters.categories.indexOf(value) != -1){
-        return parameters.values[parameters.categories.indexOf(value)];
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+        return (parameters.null_value ? parameters.null_value : null); 
     } else {
-        return (parameters.null_value ? parameters.null_value : parameters.values[0]); 
+        return parameters.values[parameters.categories.indexOf(value)];
     }
 });
 
@@ -406,7 +403,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
+LocusZoom.DataLayers.add("scatter", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -439,7 +436,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
-        var point_size = +this.layout.point_size || 40;
+        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -490,8 +487,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
     // pass on recursive separation
     this.flip_labels = function(){
         var data_layer = this;
-        var point_size = +data_layer.layout.point_size || 40;
-        var spacing = this.layout.label.spacing;
+        var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
+        var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
         var min_x = 2 * spacing;
         var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
@@ -515,28 +512,27 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         // Flip any going over the right edge from the right side to the left side
         // (all labels start on the right side)
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
+            var a = this;
+            var da = d3.select(a);
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x){
-                dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
                 flip(da, dal);
             }
         });
         // Second pass to flip any others that haven't flipped yet if they collide with another label
         data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
+            var a = this;
+            var da = d3.select(a);
             if (da.style("text-anchor") == "end") return;
-            dax = +da.attr("x");
-            abound = da.node().getBoundingClientRect();
-            dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
-                db = d3.select(b);
-                dbx = +db.attr("x");
-                bbound = db.node().getBoundingClientRect();
+            var dax = +da.attr("x");
+            var abound = da.node().getBoundingClientRect();
+            var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            data_layer.label_texts.each(function () {
+                var b = this;
+                var db = d3.select(b);
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
@@ -563,37 +559,38 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
         var alpha = 0.5;
         var spacing = this.layout.label.spacing;
         var again = false;
-        data_layer.label_texts.each(function (d, i) {
-            a = this;
-            da = d3.select(a);
-            y1 = da.attr("y");
-            data_layer.label_texts.each(function (d, j) {
-                b = this;
+        data_layer.label_texts.each(function () {
+            var a = this;
+            var da = d3.select(a);
+            var y1 = da.attr("y");
+            data_layer.label_texts.each(function () {
+                var b = this;
                 // a & b are the same element and don't collide.
                 if (a == b) return;
-                db = d3.select(b);
+                var db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
                 if (da.attr("text-anchor") != db.attr("text-anchor")) return;
                 // Determine if the  bounding rects for the two text elements collide
-                abound = da.node().getBoundingClientRect();
-                bbound = db.node().getBoundingClientRect();
+                var abound = da.node().getBoundingClientRect();
+                var bbound = db.node().getBoundingClientRect();
                 var collision = abound.left < bbound.left + bbound.width + (2*spacing) &&
                     abound.left + abound.width + (2*spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2*spacing) &&
                     abound.height + abound.top + (2*spacing) > bbound.top;
                 if (!collision) return;
-                again = true;                
+                again = true;
                 // If the labels collide, we'll push each
                 // of the two labels up and down a little bit.
-                y2 = db.attr("y");
-                sign = abound.top < bbound.top ? 1 : -1;
-                adjust = sign * alpha;
-                new_a_y = +y1 - adjust;
-                new_b_y = +y2 + adjust;
+                var y2 = db.attr("y");
+                var sign = abound.top < bbound.top ? 1 : -1;
+                var adjust = sign * alpha;
+                var new_a_y = +y1 - adjust;
+                var new_b_y = +y2 + adjust;
                 // Keep new values from extending outside the data layer
                 var min_y = 2 * spacing;
                 var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                var delta;
                 if (new_a_y - (abound.height/2) < min_y){
                     delta = +y1 - new_a_y;
                     new_a_y = +y1;
@@ -699,7 +696,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                 .attr({
                     "x": function(d){
                         var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(+data_layer.layout.point_size || 40) + data_layer.layout.label.spacing
+                              + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                              + data_layer.layout.label.spacing;
                         if (isNaN(x)){ x = -1000; }
                         return x;
                     },
@@ -708,7 +706,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         if (isNaN(y)){ y = -1000; }
                         return y;
                     },
-                    "text-anchor": function(d){
+                    "text-anchor": function(){
                         return "start";
                     }
                 });
@@ -732,7 +730,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                         },
                         "x2": function(d){
                             var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                  + Math.sqrt(+data_layer.layout.point_size || 40) + (data_layer.layout.label.spacing/2)
+                                  + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                                  + (data_layer.layout.label.spacing/2);
                             if (isNaN(x)){ x = -1000; }
                             return x;
                         },
@@ -740,7 +739,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
                             var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
                             if (isNaN(y)){ y = -1000; }
                             return y;
-                        },
+                        }
                     });
             }
             // Remove labels when they're no longer in the filtered data set
@@ -766,40 +765,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
             if (isNaN(y)){ y = -1000; }
             return "translate(" + x + "," + y + ")";
         }.bind(this);
-        var fill;
-        if (this.layout.color){
-            switch (typeof this.layout.color){
-            case "string":
-                fill = this.layout.color;
-                break;
-            case "object":
-                if (this.layout.color.scale_function && this.layout.color.field) {
-                    fill = function(d){
-                        return LocusZoom.ScaleFunctions.get(this.layout.color.scale_function,
-                                                            this.layout.color.parameters || {},
-                                                            d[this.layout.color.field]);
-                    }.bind(this);
-                }
-                break;
-            }
-        }
-        var size;
-        switch (typeof this.layout.point_size){
-        case "number":
-        case "string":
-            size = +this.layout.point_size;
-            break;
-        case "object":
-            if (this.layout.point_size.scale_function && this.layout.point_size.field) {
-                size = function(d){
-                    return LocusZoom.ScaleFunctions.get(this.layout.point_size.scale_function,
-                                                        this.layout.point_size.parameters || {},
-                                                        d[this.layout.point_size.field]);
-                }.bind(this);
-            }
-            break;
-        }
-        var shape = d3.svg.symbol().size(size).type(this.layout.point_shape);
+
+        var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+
+        var shape = d3.svg.symbol()
+            .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
+            .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
         if (this.layout.transition){
@@ -842,7 +813,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout, parent){
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout, parent){
+LocusZoom.DataLayers.add("line", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1083,7 +1054,7 @@ LocusZoom.DataLayers.add("line", function(id, layout, parent){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout, parent){
+LocusZoom.DataLayers.add("genes", function(id, layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {

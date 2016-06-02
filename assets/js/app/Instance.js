@@ -116,7 +116,7 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
-}
+};
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined" && this.onUpdateFunctions.length){
@@ -172,10 +172,12 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 */
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
+    var id;
+
     // Update minimum allowable width and height by aggregating minimums from panels.
     var min_width = null;
     var min_height = null;
-    for (var id in this.panels){
+    for (id in this.panels){
         min_width = Math.max(min_width, this.panels[id].layout.min_width);
         min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
     }
@@ -223,7 +225,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
         this.layout.height = 0;
-        for (var id in this.panels){
+        for (id in this.panels){
             this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
             this.layout.height += this.panels[id].layout.height;
         }
@@ -353,10 +355,12 @@ LocusZoom.Instance.prototype.removePanel = function(id){
 */
 LocusZoom.Instance.prototype.positionPanels = function(){
 
+    var id;
+
     // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
     // proportional heights for all panels with a null value from discretely set dimensions.
     // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
-    for (var id in this.panels){
+    for (id in this.panels){
         if (this.panels[id].layout.proportional_height == null){
             this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
         }
@@ -371,7 +375,7 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         return this;
     }
     var proportional_adjustment = 1 / total_proportional_height;
-    for (var id in this.panels){
+    for (id in this.panels){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
