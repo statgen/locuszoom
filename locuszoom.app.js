@@ -2538,10 +2538,8 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
 
 
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var json = resp;
-    if (typeof resp == "string"){ json = JSON.parse(resp); }
-    if (typeof json.data != "undefined"){ json = json.data; }
-    var records = this.parseData(json, fields, outnames, trans);
+    var json = typeof resp == "string" ? JSON.parse(resp) : resp;
+    var records = this.parseData(json.data || json, fields, outnames, trans);
     return {header: chain.header || {}, body: records};
 };
 
@@ -2916,10 +2914,12 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
         this._data];
 };
 
+    /*
 LocusZoom.Data.StaticSource.prototype.parseResponse  = function(resp, chain, fields, outnames, trans) {
     var records = this.parseData(resp, fields, outnames, trans);
     return {header: chain.header || {}, body: records};
 };
+*/
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
