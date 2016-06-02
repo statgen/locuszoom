@@ -202,7 +202,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
 
 // From http://www.html5rocks.com/en/tutorials/cors/
 // and with promises from https://gist.github.com/kriskowal/593076
-LocusZoom.createCORSPromise = function (method, url, body, timeout) {
+LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     var response = Q.defer();
     var xhr = new XMLHttpRequest();
     if ("withCredentials" in xhr) {
@@ -222,12 +222,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        response.resolve(data);
-                    } catch (err) {
-                        response.reject("Unable to parse JSON response:" + err);
-                    }
+                    response.resolve(xhr.response);
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -235,6 +230,12 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         };
         timeout && setTimeout(response.reject, timeout);
         body = typeof body !== "undefined" ? body : "";
+        if (typeof headers !== "undefined"){
+            for (var header in headers){
+                xhr.setRequestHeader(header, headers[header]);
+            }
+        }
+        // Send the request
         xhr.send(body);
     } 
     return response.promise;
@@ -284,12 +285,13 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    var re;
+    var regex, replace;
     for (var field in data) {
         if (!data.hasOwnProperty(field)){ continue; }
-        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
-        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
-        html = html.replace(re, data[field]);
+        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean" && data[field] != null){ continue; }
+        regex = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
+        replace = (data[field] == null ? "" : data[field]);
+        html = html.replace(regex, replace);
     }
     return html;
 };
@@ -437,14 +439,21 @@ LocusZoom.StandardLayout = {
             data_layers: {
                 genes: {
                     type: "genes",
-                    fields: ["gene:gene"],
+                    fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
                     selectable: "one",
                     tooltip: {
-                        html: "<strong><i>{{gene_name}}</i></strong><br>"
-                            + "Gene ID: <strong>{{gene_id}}</strong><br>"
-                            + "Transcript ID: <strong>{{transcript_id}}</strong><br>"
-                            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>"
+                        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+                            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+                            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+                            + "<div style=\"clear: both;\"></div>"
+                            + "<table>"
+                            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+                            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+                            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+                            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+                            + "</table>"
+                            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
             }
