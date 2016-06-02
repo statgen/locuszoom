@@ -446,12 +446,11 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    selectable: "multiple",
+                    selectable: "one",
                     tooltip: {
                         html: "<strong>{{id}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{refAllele}}</strong>",
-                        closable: true
+                            + "Ref. Allele: <strong>{{refAllele}}</strong>"
                     }
                 }
             }
