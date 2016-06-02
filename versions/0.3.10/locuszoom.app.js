@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.9"
+    version: "0.3.10"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -2913,12 +2913,6 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
         this._data];
 };
 
-    /*
-LocusZoom.Data.StaticSource.prototype.parseResponse  = function(resp, chain, fields, outnames, trans) {
-    var records = this.parseData(resp, fields, outnames, trans);
-    return {header: chain.header || {}, body: records};
-};
-*/
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
