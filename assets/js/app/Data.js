@@ -183,10 +183,12 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
 };
 
 
-LocusZoom.Data.Source.prototype.parseResponse  = function(x, chain, fields, outnames, trans) {
-    var records = this.parseData(x.data || x, fields, outnames, trans);
-    var res = {header: chain.header || {}, body: records};
-    return res;
+LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    var json = resp;
+    if (typeof resp == "string"){ json = JSON.parse(resp); }
+    if (typeof json.data != "undefined"){ json = json.data; }
+    var records = this.parseData(json, fields, outnames, trans);
+    return {header: chain.header || {}, body: records};
 };
 
 LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
@@ -398,6 +400,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 };
 
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    var json = JSON.parse(resp);
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
@@ -426,7 +429,7 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
             }
         }
     };
-    leftJoin(chain.body, resp.data, reqFields.ldout, "rsquare");
+    leftJoin(chain.body, json.data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
     }
@@ -447,8 +450,10 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
         " and start le " + state.end +
         " and end ge " + state.start;
 };
+
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    return {header: chain.header, body: resp.data};
+    var json = JSON.parse(resp);
+    return {header: chain.header, body: json.data};
 };
 
 /**
@@ -477,10 +482,14 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
     });
     var url = this.getURL(state, chain, fields);
     var body = "geneids=" + encodeURIComponent(JSON.stringify(geneids));
-    return LocusZoom.createCORSPromise("POST", this.url, body);
+    var headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    };
+    return LocusZoom.createCORSPromise("POST", this.url, body, headers);
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    var data = JSON.parse(resp);
     // Loop through the array of genes in the body and match each to a result from the contraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
     chain.body.forEach(function(gene, i){
@@ -491,8 +500,8 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
         constraint_fields.forEach(function(field){
             // Do not overwrite any fields defined in the original gene source
             if (typeof chain.body[i][field] != "undefined"){ return; }
-            if (resp[gene_id]){
-                var val = resp[gene_id][field];
+            if (data[gene_id]){
+                var val = data[gene_id][field];
                 if (typeof val == "number" && val.toString().indexOf(".") != -1){
                     val = parseFloat(val.toFixed(2));
                 }
@@ -553,4 +562,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
         this._data];
 };
 
-
+LocusZoom.Data.StaticSource.prototype.parseResponse  = function(resp, chain, fields, outnames, trans) {
+    var records = this.parseData(resp, fields, outnames, trans);
+    return {header: chain.header || {}, body: records};
+};

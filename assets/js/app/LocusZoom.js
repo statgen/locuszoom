@@ -202,7 +202,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
 
 // From http://www.html5rocks.com/en/tutorials/cors/
 // and with promises from https://gist.github.com/kriskowal/593076
-LocusZoom.createCORSPromise = function (method, url, body, timeout) {
+LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     var response = Q.defer();
     var xhr = new XMLHttpRequest();
     if ("withCredentials" in xhr) {
@@ -222,12 +222,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        response.resolve(data);
-                    } catch (err) {
-                        response.reject("Unable to parse JSON response:" + err);
-                    }
+                    response.resolve(xhr.response);
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -235,9 +230,10 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         };
         timeout && setTimeout(response.reject, timeout);
         body = typeof body !== "undefined" ? body : "";
-        // If posting an object set the proper content-type header
-        if (method == "POST"){
-            xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded");
+        if (typeof headers !== "undefined"){
+            for (var header in headers){
+                xhr.setRequestHeader(header, headers[header]);
+            }
         }
         // Send the request
         xhr.send(body);
