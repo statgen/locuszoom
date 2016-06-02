@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.9"
+    version: "0.3.10"
 };
     
 // Populate a single element with a LocusZoom instance.
