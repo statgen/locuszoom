@@ -591,22 +591,10 @@ LocusZoom.Instance.prototype.initialize = function(){
     }
 
     // Create the controls object with show/update/hide methods
-    var css_string = "";
-    for (var stylesheet in Object.keys(document.styleSheets)){
-        if (   document.styleSheets[stylesheet].href != null
-               && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){
-            for (var rule in document.styleSheets[stylesheet].cssRules){
-                if (typeof document.styleSheets[stylesheet].cssRules[rule].cssText != "undefined"){
-                    css_string += document.styleSheets[stylesheet].cssRules[rule].cssText + " ";
-                }
-            }
-            break;
-        }
-    }
     this.controls = {
         parent: this,
         showing: false,
-        css_string: css_string,
+        css_string: "",
         show: function(){
             if (!this.showing){
                 this.div = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
@@ -681,6 +669,19 @@ LocusZoom.Instance.prototype.initialize = function(){
             }.bind(this));
         }
     };
+
+    // Populate the CSS string with a CORS request to handle cross-domain CSS loading
+    var css_url = "";
+    for (var stylesheet in Object.keys(document.styleSheets)){
+        if ( document.styleSheets[stylesheet].href != null
+             && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){
+            LocusZoom.createCORSPromise("GET", document.styleSheets[stylesheet].href)
+                .then(function(response){
+                    this.controls.css_string = response;
+                }.bind(this));
+            break;
+        }
+    }   
 
     // Show controls once or with mouse events as stipulated by the layout
     if (this.layout.controls.show == "always"){
