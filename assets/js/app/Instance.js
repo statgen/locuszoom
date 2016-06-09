@@ -120,9 +120,9 @@ LocusZoom.Instance.prototype.rescaleSVG = function(){
 
 LocusZoom.Instance.prototype.onUpdate = function(func){
     if (typeof func == "undefined" && this.onUpdateFunctions.length){
-        for (func in this.onUpdateFunctions){
-            this.onUpdateFunctions[func]();
-        }
+        this.onUpdateFunctions.forEach(function(funcToRun) {
+            funcToRun();
+        });
     } else if (typeof func == "function") {
         this.onUpdateFunctions.push(func);
     }
