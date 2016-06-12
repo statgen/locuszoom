@@ -70,7 +70,7 @@ svg.lz-locuszoom {
     stroke: rgba(24, 24, 24, 0.4);
     stroke-width: 1;
     cursor: pointer; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-hovered {
+  svg.lz-locuszoom path.lz-data_layer-scatter-highlighted {
     stroke: rgba(24, 24, 24, 0.4);
     stroke-width: 4; }
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
@@ -98,7 +98,7 @@ svg.lz-locuszoom {
     fill: #363696;
     fill-opacity: 0;
     stroke-width: 0; }
-  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-hovered {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-highlighted {
     fill: #363696;
     fill-opacity: 0.1;
     stroke-width: 0; }

@@ -416,8 +416,8 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    highlightable: "onmouseover",
-                    selectable: {
+                    highlighted: "onmouseover",
+                    selected: {
                         toggle: "onclick",
                         allow_multiple: "onshiftclick"
                     },
@@ -447,8 +447,8 @@ LocusZoom.StandardLayout = {
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
-                    highlightable: "onmouseover",
-                    selectable: {
+                    highlighted: "onmouseover",
+                    selected: {
                         toggle: "onclick"
                     },
                     tooltip: {

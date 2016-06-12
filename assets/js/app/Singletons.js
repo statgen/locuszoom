@@ -789,7 +789,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         }
 
         // Apply selectable, tooltip, etc
-        this.enableTooltips(selection);
+        this.applyAllStatusBehaviors(selection);
 
         // Remove old elements as needed
         selection.exit().remove();
@@ -1375,7 +1375,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 clickareas.exit().remove();
 
                 // Apply selectable, tooltip, etc to clickareas
-                data_layer.enableTooltips(clickareas);
+                data_layer.applyAllStatusBehaviors(clickareas);
 
             });
 
