@@ -416,8 +416,14 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    selectable: "one",
+                    highlightable: "onmouseover",
+                    selectable: {
+                        toggle: "onclick",
+                        allow_multiple: "onshiftclick"
+                    },
                     tooltip: {
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{id}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{refAllele}}</strong>"
@@ -441,8 +447,13 @@ LocusZoom.StandardLayout = {
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
-                    selectable: "one",
+                    highlightable: "onmouseover",
+                    selectable: {
+                        toggle: "onclick"
+                    },
                     tooltip: {
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
                         html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
                             + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
                             + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"

@@ -320,4 +320,153 @@ describe('LocusZoom.DataLayer', function(){
         });
     });
 
+    describe("Highlight functions", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.layout = { panels: { p: { data_layers: {} } }, controls: false };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it('should allow for highlighting and unhighlighting a single element', function(){
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlightable: "onmouseover" });
+            var state_id = this.plot.panels.p.data_layers.d.state_id;
+            var d = this.plot.panels.p.data_layers.d;
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.state[state_id].highlighted.should.be.an.Array;
+            this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.highlightElement(d.getElementId(d.data[0]), true);
+            this.plot.state[state_id].highlighted.length.should.be.exactly(1);
+            this.plot.state[state_id].highlighted[0].should.be.exactly(d.getElementId(d.data[0]));
+            this.plot.panels.p.data_layers.d.highlightElement(d.getElementId(d.data[0]), false);
+            this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.highlightElement(d.getElementId(d.data[2]));
+            this.plot.state[state_id].highlighted.length.should.be.exactly(1);
+            this.plot.state[state_id].highlighted[0].should.be.exactly(d.getElementId(d.data[2]));
+            this.plot.panels.p.data_layers.d.unhighlightElement(d.getElementId(d.data[1]));
+            this.plot.state[state_id].highlighted.length.should.be.exactly(1);
+            this.plot.panels.p.data_layers.d.unhighlightElement(d.getElementId(d.data[2]));
+            this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+        });
+        it('should allow for highlighting and unhighlighting all elements', function(){
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlightable: "onmouseover" });
+            var state_id = this.plot.panels.p.data_layers.d.state_id;
+            var d = this.plot.panels.p.data_layers.d;
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.highlightAllElements(true);
+            this.plot.state[state_id].highlighted.length.should.be.exactly(3);
+            this.plot.state[state_id].highlighted[0].should.be.exactly(d.getElementId(d.data[0]));
+            this.plot.state[state_id].highlighted[1].should.be.exactly(d.getElementId(d.data[1]));
+            this.plot.state[state_id].highlighted[2].should.be.exactly(d.getElementId(d.data[2]));
+            this.plot.panels.p.data_layers.d.highlightAllElements(false);
+            this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.highlightAllElements();
+            this.plot.state[state_id].highlighted.length.should.be.exactly(3);
+            this.plot.panels.p.data_layers.d.unhighlightAllElements();
+            this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+        });
+    });
+
+    describe("Select functions", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.layout = { panels: { p: { data_layers: {} } }, controls: false };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it('should allow for selecting and unselecting a single element', function(){
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", selectable: { toggle: "onclick" } });
+            var state_id = this.plot.panels.p.data_layers.d.state_id;
+            var d = this.plot.panels.p.data_layers.d;
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.state[state_id].selected.should.be.an.Array;
+            this.plot.state[state_id].selected.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.selectElement(d.getElementId(d.data[0]), true);
+            this.plot.state[state_id].selected.length.should.be.exactly(1);
+            this.plot.state[state_id].selected[0].should.be.exactly(d.getElementId(d.data[0]));
+            this.plot.panels.p.data_layers.d.selectElement(d.getElementId(d.data[0]), false);
+            this.plot.state[state_id].selected.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.selectElement(d.getElementId(d.data[2]));
+            this.plot.state[state_id].selected.length.should.be.exactly(1);
+            this.plot.state[state_id].selected[0].should.be.exactly(d.getElementId(d.data[2]));
+            this.plot.panels.p.data_layers.d.unselectElement(d.getElementId(d.data[1]));
+            this.plot.state[state_id].selected.length.should.be.exactly(1);
+            this.plot.panels.p.data_layers.d.unselectElement(d.getElementId(d.data[2]));
+            this.plot.state[state_id].selected.length.should.be.exactly(0);
+        });
+        it('should allow for selecting and unselecting all elements', function(){
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", selectable: "onmouseover" });
+            var state_id = this.plot.panels.p.data_layers.d.state_id;
+            var d = this.plot.panels.p.data_layers.d;
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.selectAllElements(true);
+            this.plot.state[state_id].selected.length.should.be.exactly(3);
+            this.plot.state[state_id].selected[0].should.be.exactly(d.getElementId(d.data[0]));
+            this.plot.state[state_id].selected[1].should.be.exactly(d.getElementId(d.data[1]));
+            this.plot.state[state_id].selected[2].should.be.exactly(d.getElementId(d.data[2]));
+            this.plot.panels.p.data_layers.d.selectAllElements(false);
+            this.plot.state[state_id].selected.length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.selectAllElements();
+            this.plot.state[state_id].selected.length.should.be.exactly(3);
+            this.plot.panels.p.data_layers.d.unselectAllElements();
+            this.plot.state[state_id].selected.length.should.be.exactly(0);
+        });
+    });
+
+    describe("Tool tip functions", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.layout = { panels: { p: { data_layers: {} } }, controls: false };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it('should allow for showing or hiding a tool tip based on layout directives and element status', function(){
+            this.plot.panels.p.addDataLayer("d", {
+                type: "scatter",
+                highlightable: "onmouseover",
+                selectable: "onmouseover",
+                tooltip: {
+                    show: { or: ["highlighted", "selected"] },
+                    hide: { and: ["unhighlighted", "unselected"] },
+                    html: ""
+                }
+            });
+            var state_id = this.plot.panels.p.data_layers.d.state_id;
+            var d = this.plot.panels.p.data_layers.d;
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            d.should.be.an.Object;
+            var a_id = d.getElementId(d.data[0]);
+            var b_id = d.getElementId(d.data[1]);
+            // Test highlighted OR selected
+            should(d[a_id]).be.type("undefined");
+            this.plot.panels.p.data_layers.d.highlightElement(a_id, true);
+            should(d[a_id]).be.an.Object;
+            this.plot.panels.p.data_layers.d.highlightElement(a_id, false);
+            should(d[a_id]).be.type("undefined");
+            this.plot.panels.p.data_layers.d.selectElement(a_id, true);
+            should(d[a_id]).be.an.Object;
+            this.plot.panels.p.data_layers.d.selectElement(a_id, false);
+            should(d[a_id]).be.type("undefined");
+            // Test highlight AND selected
+            should(d[b_id]).be.type("undefined");
+            this.plot.panels.p.data_layers.d.highlightElement(b_id, true);
+            this.plot.panels.p.data_layers.d.selectElement(b_id, true);
+            should(d[a_id]).be.an.Object;
+            this.plot.panels.p.data_layers.d.highlightElement(b_id, false);
+            this.plot.panels.p.data_layers.d.selectElement(b_id, false);
+            should(d[b_id]).be.type("undefined");
+        });
+    });
+
 });
