@@ -416,10 +416,13 @@ LocusZoom.StandardLayout = {
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    highlighted: "onmouseover",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
                     selected: {
-                        toggle: "onclick",
-                        allow_multiple: "onshiftclick"
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
                     },
                     tooltip: {
                         show: { or: ["highlighted", "selected"] },
@@ -447,9 +450,13 @@ LocusZoom.StandardLayout = {
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
-                    highlighted: "onmouseover",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
                     selected: {
-                        toggle: "onclick"
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
                     },
                     tooltip: {
                         show: { or: ["highlighted", "selected"] },

@@ -329,7 +329,7 @@ describe('LocusZoom.DataLayer', function(){
             delete this.plot;
         });
         it('should allow for highlighting and unhighlighting a single element', function(){
-            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlighted: "onmouseover" });
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlighted: { onmouseover: "toggle" } });
             var state_id = this.plot.panels.p.data_layers.d.state_id;
             var d = this.plot.panels.p.data_layers.d;
             this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
@@ -355,7 +355,7 @@ describe('LocusZoom.DataLayer', function(){
             this.plot.state[state_id].highlighted.length.should.be.exactly(0);
         });
         it('should allow for highlighting and unhighlighting all elements', function(){
-            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlighted: "onmouseover" });
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", highlighted: { onmouseover: "toggle" } });
             var state_id = this.plot.panels.p.data_layers.d.state_id;
             var d = this.plot.panels.p.data_layers.d;
             this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
@@ -388,7 +388,7 @@ describe('LocusZoom.DataLayer', function(){
             delete this.plot;
         });
         it('should allow for selecting and unselecting a single element', function(){
-            this.plot.panels.p.addDataLayer("d", { type: "scatter", selected: { toggle: "onclick" } });
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", selected: { onclick: "toggle" } });
             var state_id = this.plot.panels.p.data_layers.d.state_id;
             var d = this.plot.panels.p.data_layers.d;
             this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
@@ -414,7 +414,7 @@ describe('LocusZoom.DataLayer', function(){
             this.plot.state[state_id].selected.length.should.be.exactly(0);
         });
         it('should allow for selecting and unselecting all elements', function(){
-            this.plot.panels.p.addDataLayer("d", { type: "scatter", selected: "onmouseover" });
+            this.plot.panels.p.addDataLayer("d", { type: "scatter", selected: { onclick: "toggle" } });
             var state_id = this.plot.panels.p.data_layers.d.state_id;
             var d = this.plot.panels.p.data_layers.d;
             this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
@@ -449,8 +449,8 @@ describe('LocusZoom.DataLayer', function(){
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function(){
             this.plot.panels.p.addDataLayer("d", {
                 type: "scatter",
-                highlighted: "onmouseover",
-                selected: "onmouseover",
+                highlighted: { onmouseover: "toggle" },
+                selected: { onclick: "toggle" },
                 tooltip: {
                     show: { or: ["highlighted", "selected"] },
                     hide: { and: ["unhighlighted", "unselected"] },
@@ -459,6 +459,7 @@ describe('LocusZoom.DataLayer', function(){
             });
             var state_id = this.plot.panels.p.data_layers.d.state_id;
             this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.positionTooltip = function(){ return 0; };
             var d = this.plot.panels.p.data_layers.d;
             var a = d.data[0];
             var a_id = d.getElementId(a);
