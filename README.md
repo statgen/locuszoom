@@ -49,9 +49,9 @@ var layout = {
   panels: {
     association: {
       data_layers: {
-         association:
+         association: {
            type: "scatter",
-           fields: ["trait:position", "trait:pvalue"]
+           fields: ["trait:position", "trait:pvalue"],
            x_axis: { field: "trait:position" },
            y_axis: { field: "trait:pvalue" }
          }
@@ -89,9 +89,9 @@ A basic example may then look like this:
         panels: {
           association: {
             data_layers: {
-              association:
+              association: {
                 type: "scatter",
-                fields: ["trait:position", "trait:pvalue"]
+                fields: ["trait:position", "trait:pvalue"],
                 x_axis: { field: "trait:position" },
                 y_axis: { field: "trait:pvalue" }
               }
