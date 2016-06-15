@@ -1022,19 +1022,19 @@ LocusZoom.DataLayers.add("line", function(id, layout){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.createTooltip(dd.data, data_layer.state_id);
+                    data_layer.createTooltip(dd.data);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.updateTooltip(dd.data, data_layer.state_id);
-                    data_layer.positionTooltip(data_layer.state_id);
+                    data_layer.updateTooltip(dd.data);
+                    data_layer.positionTooltip(data_layer.getElementId());
                 })
                 .on("mouseout", function(){
                     data_layer.tooltip_timeout = setTimeout(function(){
                         data_layer.mouse_event = null;
-                        data_layer.destroyTooltip(data_layer.state_id);
+                        data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
                 });
             hitarea.exit().remove();

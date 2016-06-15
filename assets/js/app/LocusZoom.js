@@ -425,6 +425,7 @@ LocusZoom.StandardLayout = {
                         onshiftclick: "toggle"
                     },
                     tooltip: {
+                        closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{id}}</strong><br>"
@@ -459,6 +460,7 @@ LocusZoom.StandardLayout = {
                         onshiftclick: "toggle"
                     },
                     tooltip: {
+                        closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"

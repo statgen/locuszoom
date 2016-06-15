@@ -457,6 +457,7 @@ LocusZoom.StandardLayout = {
                         onshiftclick: "toggle"
                     },
                     tooltip: {
+                        closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{id}}</strong><br>"
@@ -491,6 +492,7 @@ LocusZoom.StandardLayout = {
                         onshiftclick: "toggle"
                     },
                     tooltip: {
+                        closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
@@ -574,7 +576,17 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
-    return (this.getBaseId() + "-" + element[this.layout.id_field].replace(/\W/g,"")).replace(/\./g,"-");
+    var element_id = "element";
+    if (typeof element == "string"){
+        element_id = element;
+    } else if (typeof element == "object"){
+        var id_field = this.layout.id_field || "id";
+        if (typeof element[id_field] == "undefined"){
+            throw("Unable to generate element ID");
+        }
+        element_id = element[id_field].replace(/\W/g,"");
+    }
+    return (this.getBaseId() + "-" + element_id).replace(/\./g,"-");
 };
 
 LocusZoom.DataLayer.prototype.onUpdate = function(){
@@ -681,13 +693,11 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 };
 
 // Generate a tool tip for a given element
-LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
+LocusZoom.DataLayer.prototype.createTooltip = function(d){
     if (typeof this.layout.tooltip != "object"){
         throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
     }
-    if (typeof id != "string"){
-        throw ("Unable to create tooltip: id is not a string");
-    }
+    var id = this.getElementId(d);
     if (this.tooltips[id]){
         this.positionTooltip(id);
         return;
@@ -695,16 +705,18 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     this.tooltips[id] = {
         data: d,
         arrow: null,
-        closed: false,
         selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
             .attr("class", "lz-data_layer-tooltip")
-            .attr("id", this.getBaseId() + ".tooltip." + id)
+            .attr("id", id + "-tooltip")
     };
     this.updateTooltip(d, id);
 };
 
 // Update a tool tip (generate its inner HTML)
 LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
+    if (typeof id == "undefined"){
+        var id = this.getElementId(d);
+    }
     // Empty the tooltip of all HTML (including its arrow!)
     this.tooltips[id].selector.html("");
     this.tooltips[id].arrow = null;
@@ -721,7 +733,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
             .attr("title", "Close")
             .html("×")
             .on("click", function(){
-                this.closeTooltip(id);
+                this.destroyTooltip(id);
             }.bind(this));
     }
     // Reposition and draw a new arrow
@@ -840,7 +852,7 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(d, id){
     // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
     // Otherwise ensure tooltip does not exist
     if (show_resolved && !hide_resolved){
-        this.createTooltip(d, id);
+        this.createTooltip(d);
     } else {
         this.destroyTooltip(id);
     }
@@ -2084,19 +2096,19 @@ LocusZoom.DataLayers.add("line", function(id, layout){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.createTooltip(dd.data, data_layer.state_id);
+                    data_layer.createTooltip(dd.data);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.updateTooltip(dd.data, data_layer.state_id);
-                    data_layer.positionTooltip(data_layer.state_id);
+                    data_layer.updateTooltip(dd.data);
+                    data_layer.positionTooltip(data_layer.getElementId());
                 })
                 .on("mouseout", function(){
                     data_layer.tooltip_timeout = setTimeout(function(){
                         data_layer.mouse_event = null;
-                        data_layer.destroyTooltip(data_layer.state_id);
+                        data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
                 });
             hitarea.exit().remove();

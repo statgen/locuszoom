@@ -446,6 +446,29 @@ describe('LocusZoom.DataLayer', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
+        it('should allow for creating and destroying tool tips', function(){
+            this.plot.panels.p.addDataLayer("d", {
+                type: "scatter",
+                tooltip: {
+                    html: "foo"
+                }
+            });
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.positionTooltip = function(){ return 0; };
+            var a = this.plot.panels.p.data_layers.d.data[0];
+            var a_id = this.plot.panels.p.data_layers.d.getElementId(a);
+            var a_id_q = "#" + (a_id+"-tooltip").replace(/(:|\.|\[|\]|,)/g, "\\$1");
+            this.plot.panels.p.data_layers.d.tooltips.should.be.an.Object;
+            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(0);
+            this.plot.panels.p.data_layers.d.createTooltip(a);
+            this.plot.panels.p.data_layers.d.tooltips[a_id].should.be.an.Object;
+            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(1);
+            assert.equal(d3.select(a_id_q).empty(), false);
+            this.plot.panels.p.data_layers.d.destroyTooltip(a_id);
+            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(0);
+            assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], "undefined");
+            assert.equal(d3.select(a_id_q).empty(), true);
+        });
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function(){
             this.plot.panels.p.addDataLayer("d", {
                 type: "scatter",
