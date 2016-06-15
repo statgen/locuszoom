@@ -582,12 +582,22 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
     } else if (typeof element == "object"){
         var id_field = this.layout.id_field || "id";
         if (typeof element[id_field] == "undefined"){
+            console.log("here", id_field, element);
             throw("Unable to generate element ID");
         }
         element_id = element[id_field].replace(/\W/g,"");
     }
-    return (this.getBaseId() + "-" + element_id).replace(/\./g,"-");
+    return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
 };
+
+LocusZoom.DataLayer.prototype.getElementById = function(id){
+    var selector = d3.select("#" + id.replace(/(:|\.|\[|\]|,)/g, "\\$1"));
+    if (!selector.empty() && selector.data() && selector.data().length){
+        return selector.data()[0];
+    } else {
+        return null;
+    }
+}
 
 LocusZoom.DataLayer.prototype.onUpdate = function(){
     this.parent.onUpdate();
@@ -693,11 +703,11 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 };
 
 // Generate a tool tip for a given element
-LocusZoom.DataLayer.prototype.createTooltip = function(d){
+LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     if (typeof this.layout.tooltip != "object"){
         throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
     }
-    var id = this.getElementId(d);
+    if (typeof id == "undefined"){ var id = this.getElementId(d); }
     if (this.tooltips[id]){
         this.positionTooltip(id);
         return;
@@ -709,14 +719,12 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d){
             .attr("class", "lz-data_layer-tooltip")
             .attr("id", id + "-tooltip")
     };
-    this.updateTooltip(d, id);
+    this.updateTooltip(d);
 };
 
 // Update a tool tip (generate its inner HTML)
 LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
-    if (typeof id == "undefined"){
-        var id = this.getElementId(d);
-    }
+    if (typeof id == "undefined"){ var id = this.getElementId(d); }
     // Empty the tooltip of all HTML (including its arrow!)
     this.tooltips[id].selector.html("");
     this.tooltips[id].arrow = null;
@@ -741,9 +749,11 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
 };
 
 // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
-LocusZoom.DataLayer.prototype.destroyTooltip = function(id){
-    if (typeof id != "string"){
-        throw ("Unable to destroy tooltip: id is not a string");
+LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
+    if (typeof d == "string"){
+        id = d;
+    } else if (typeof id == "undefined"){
+        var id = this.getElementId(d);
     }
     if (this.tooltips[id]){
         if (typeof this.tooltips[id].selector == "object"){
@@ -789,23 +799,24 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
 };
 
 // Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
-LocusZoom.DataLayer.prototype.showOrHideTooltip = function(d, id){
+LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     
     if (typeof this.layout.tooltip != "object"){ return; }
+    var id = this.getElementId(element);
 
-    var resolveStatus = function(element, directive, operator){
+    var resolveStatus = function(statuses, directive, operator){
         var status = null;
-        if (typeof element != "object" || element == null){ return null; }
+        if (typeof statuses != "object" || statuses == null){ return null; }
         if (Array.isArray(directive)){
             if (typeof operator == "undefined"){ operator = "and"; }
             if (directive.length == 1){
-                status = element[directive[0]];
+                status = statuses[directive[0]];
             } else {
                 status = directive.reduce(function(previousValue, currentValue) {
                     if (operator == "and"){
-                        return element[previousValue] && element[currentValue];
+                        return statuses[previousValue] && statuses[currentValue];
                     } else if (operator == "or"){
-                        return element[previousValue] || element[currentValue];
+                        return statuses[previousValue] || statuses[currentValue];
                     }
                     return null;
                 });
@@ -813,7 +824,7 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(d, id){
         } else if (typeof directive == "object"){
             var sub_status;
             for (var sub_operator in directive){
-                sub_status = resolveStatus(element, directive[sub_operator], sub_operator);
+                sub_status = resolveStatus(statuses, directive[sub_operator], sub_operator);
                 if (status == null){
                     status = sub_status;
                 } else if (operator == "and"){
@@ -840,68 +851,72 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(d, id){
         hide_directive = this.layout.tooltip.hide;
     }
 
-    var element = {};
-    element.highlighted = this.state[this.state_id].highlighted.indexOf(id) != -1;
-    element.unhighlighted = !element.highlighted;
-    element.selected = this.state[this.state_id].selected.indexOf(id) != -1;
-    element.unselected = !element.selected;
+    var statuses = {};
+    statuses.highlighted = this.state[this.state_id].highlighted.indexOf(id) != -1;
+    statuses.unhighlighted = !statuses.highlighted;
+    statuses.selected = this.state[this.state_id].selected.indexOf(id) != -1;
+    statuses.unselected = !statuses.selected;
 
-    var show_resolved = resolveStatus(element, show_directive);
-    var hide_resolved = resolveStatus(element, hide_directive);
+    var show_resolved = resolveStatus(statuses, show_directive);
+    var hide_resolved = resolveStatus(statuses, hide_directive);
 
     // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
     // Otherwise ensure tooltip does not exist
     if (show_resolved && !hide_resolved){
-        this.createTooltip(d);
+        this.createTooltip(element);
     } else {
-        this.destroyTooltip(id);
+        this.destroyTooltip(element);
     }
     
 };
 
 // Toggle the highlighted status of an element
-LocusZoom.DataLayer.prototype.highlightElement = function(d, id, toggle){
-    if (typeof toggle == "undefined"){ var toggle = true; }
-    this.setElementStatus("highlighted", d, id, toggle);
+LocusZoom.DataLayer.prototype.highlightElement = function(element){
+    this.setElementStatus("highlighted", element, true);
 };
-LocusZoom.DataLayer.prototype.unhighlightElement = function(id){
-    this.highlightElement({}, id, false);
+LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
+    this.setElementStatus("highlighted", element, false);
 };
 
 // Toggle the highlighted status of all elements
-LocusZoom.DataLayer.prototype.highlightAllElements = function(toggle){
-    if (typeof toggle == "undefined"){ var toggle = true; }
-    this.setAllElementStatus("highlighted", toggle);
+LocusZoom.DataLayer.prototype.highlightAllElements = function(){
+    this.setAllElementStatus("highlighted", true);
 };
 LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
-    this.highlightAllElements(false);
+    this.setAllElementStatus("highlighted", false);
 }
 
 // Toggle the selected status of an element
-LocusZoom.DataLayer.prototype.selectElement = function(d, id, toggle){
-    if (typeof toggle == "undefined"){ var toggle = true; }
-    this.setElementStatus("selected", d, id, toggle);
+LocusZoom.DataLayer.prototype.selectElement = function(element){
+    this.setElementStatus("selected", element, true);
 };
-LocusZoom.DataLayer.prototype.unselectElement = function(id){
-    this.selectElement({}, id, false);
+LocusZoom.DataLayer.prototype.unselectElement = function(element){
+    this.setElementStatus("selected", element, false);
 };
 
 // Toggle the selected status of all elements
-LocusZoom.DataLayer.prototype.selectAllElements = function(toggle){
-    if (typeof toggle == "undefined"){ var toggle = true; }
-    this.setAllElementStatus("selected", toggle);
+LocusZoom.DataLayer.prototype.selectAllElements = function(){
+    this.setAllElementStatus("selected", true);
 };
 LocusZoom.DataLayer.prototype.unselectAllElements = function(){
-    this.selectAllElements(false);
+    this.setAllElementStatus("selected", false);
 };
 
 // Toggle a status (e.g. highlighted, selected) on an element
-LocusZoom.DataLayer.prototype.setElementStatus = function(status, d, id, toggle){
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle){
     
     // Sanity checks
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){ return; }
-    if (typeof id != "string"){ return; }
-    if (typeof toggle == "undefined"){ var toggle = true; }
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+        throw("Invalid status passed to setElementStatus()");
+    }
+    if (typeof element == "undefined"){
+        throw("Invalid element passed to setElementStatus()");
+    }
+    if (typeof toggle == "undefined"){
+        var toggle = true;
+    }
+
+    var id = this.getElementId(element);
     
     // Set/unset the proper status class on the appropriate DOM element
     var element_id = id;
@@ -922,7 +937,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, d, id, toggle)
     }
     
     // Trigger tool tip show/hide logic
-    this.showOrHideTooltip(d, id);
+    this.showOrHideTooltip(element);
 
     // Trigger generic onUpdate
     this.onUpdate();
@@ -933,21 +948,25 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, d, id, toggle)
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     
     // Sanity check
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){ return; }
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+        throw("Invalid status passed to setAllElementStatus()");
+    }
     if (typeof toggle == "undefined"){ var toggle = true; }
 
     // Apply statuses
     if (toggle){
         this.data.forEach(function(element){
-            var id = this.getElementId(element);
-            if (this.state[this.state_id][status].indexOf(id) == -1){
-                this.setElementStatus(status, element, id, true);
+            if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
+                this.setElementStatus(status, element, true);
             }
         }.bind(this));
     } else {
         var status_ids = this.state[this.state_id][status].slice();
         status_ids.forEach(function(id){
-            this.setElementStatus(status, {}, id, false);
+            var element = this.getElementById(id);
+            if (typeof element == "object" && element != null){
+                this.setElementStatus(status, element, false);
+            }
         }.bind(this));
     }
     
@@ -974,7 +993,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
     };
 
     // General function to process mouse events and layout directives into discrete element status update calls
-    var handleElementStatusEvent = function(status, event, d){
+    var handleElementStatusEvent = function(status, event, element){
         var status_boolean = null;
         var ctrl = d3.event.ctrlKey;
         var shift = d3.event.shiftKey;
@@ -996,7 +1015,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
                 break;
             case "toggle":
             case "toggle_exclusive":
-                status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(d)) == -1);
+                status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
                 break;
         }
         if (status_boolean == null){ return; }
@@ -1006,7 +1025,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
             this.setAllElementStatus(status, false);
         }
         // Apply the new status
-        this.setElementStatus(status, d, this.getElementId(d), status_boolean);
+        this.setElementStatus(status, element, status_boolean);
     }.bind(this);
     
     // Determine which bindings to set up
@@ -1021,8 +1040,8 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
     // Set up the bindings
     Object.keys(events_to_bind).forEach(function(event){
         if (!events_to_bind[event]){ return; }
-        selection.on(event, function(d){
-            handleElementStatusEvent(status, event, d);
+        selection.on(event, function(element){
+            handleElementStatusEvent(status, event, element);
         }.bind(this));
     }.bind(this));
                     
