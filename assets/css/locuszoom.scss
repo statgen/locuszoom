@@ -107,7 +107,7 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
-  path.#{$namespace}-data_layer-scatter-hovered {
+  path.#{$namespace}-data_layer-scatter-highlighted {
     stroke: #{$default_black_shadow};
     stroke-width: 4;
   }
@@ -153,7 +153,7 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 0;
   }
 
-  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-hovered {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-highlighted {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.1;
     stroke-width: 0;

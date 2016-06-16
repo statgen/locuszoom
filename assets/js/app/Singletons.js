@@ -755,7 +755,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this));
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this));
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
@@ -789,7 +789,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         }
 
         // Apply selectable, tooltip, etc
-        this.enableTooltips(selection);
+        this.applyAllStatusBehaviors(selection);
 
         // Remove old elements as needed
         selection.exit().remove();
@@ -1022,19 +1022,19 @@ LocusZoom.DataLayers.add("line", function(id, layout){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.createTooltip(dd.data, data_layer.state_id);
+                    data_layer.createTooltip(dd.data);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.updateTooltip(dd.data, data_layer.state_id);
-                    data_layer.positionTooltip(data_layer.state_id);
+                    data_layer.updateTooltip(dd.data);
+                    data_layer.positionTooltip(data_layer.getElementId());
                 })
                 .on("mouseout", function(){
                     data_layer.tooltip_timeout = setTimeout(function(){
                         data_layer.mouse_event = null;
-                        data_layer.destroyTooltip(data_layer.state_id);
+                        data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
                 });
             hitarea.exit().remove();
@@ -1221,7 +1221,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         selection.enter().append("g")
             .attr("class", "lz-data_layer-genes");
         
-        selection.attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this))
+        selection.attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .each(function(gene){
 
                 var data_layer = gene.parent;
@@ -1235,7 +1235,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 bboxes
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+                        return data_layer.getElementId(d) + "_bounding_box";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -1350,7 +1350,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 clickareas
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_clickarea";
+                        return data_layer.getElementId(d) + "_clickarea";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -1375,7 +1375,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 clickareas.exit().remove();
 
                 // Apply selectable, tooltip, etc to clickareas
-                data_layer.enableTooltips(clickareas);
+                data_layer.applyAllStatusBehaviors(clickareas);
 
             });
 
@@ -1397,7 +1397,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var gene_bbox_id = this.parent.id + "_" + tooltip.data[this.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+        var gene_bbox_id = this.getElementId(tooltip.data) + "_bounding_box";
         var gene_bbox = d3.select("#" + gene_bbox_id).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
