@@ -200,12 +200,21 @@
                       upper_buffer: 0.05,
                       min_extent: [ 0, 10 ]
                   },
-                  selectable: "multiple",
+                  highlighted: {
+                      onmouseover: "on",
+                      onmouseout: "off"
+                  },
+                  selected: {
+                      onclick: "toggle_exclusive",
+                      onshiftclick: "toggle"
+                  },
                   tooltip: {
+                      closable: true,
+                      show: { or: ["highlighted", "selected"] },
+                      hide: { and: ["unhighlighted", "unselected"] },
                       html: "<div><strong>{{"+ns+":id}}</strong></div>"
                           + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
-                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>",
-                      closable: true
+                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>"
                   }
               }
           }
