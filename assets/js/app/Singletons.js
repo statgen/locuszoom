@@ -773,7 +773,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -988,7 +989,8 @@ LocusZoom.DataLayers.add("line", function(id, layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)

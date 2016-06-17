@@ -1866,7 +1866,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -2081,7 +2082,8 @@ LocusZoom.DataLayers.add("line", function(id, layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -3518,7 +3520,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         svg: ui_svg,
         parent: this,
         hide_timeout: null,
-        is_resize_dragging: false,
+        dragging: false,
         show: function(){
             this.svg.style("display", null);
         },
@@ -3537,11 +3539,11 @@ LocusZoom.Instance.prototype.initialize = function(){
                 //resize_drag.origin(function() { return this; });
                 resize_drag.on("dragstart", function(){
                     this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                    this.is_resize_dragging = true;
+                    this.dragging = true;
                 }.bind(this));
                 resize_drag.on("dragend", function(){
                     this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                    this.is_resize_dragging = false;
+                    this.dragging = false;
                 }.bind(this));
                 resize_drag.on("drag", function(){
                     this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
@@ -3796,13 +3798,13 @@ LocusZoom.Instance.prototype.initialize = function(){
 
     // Define instance/svg level mouse events
     this.svg.on("mouseover", function(){
-        if (!this.ui.is_resize_dragging){
+        if (!this.ui.dragging){
             clearTimeout(this.ui.hide_timeout);
             this.ui.show();
         }
     }.bind(this));
     this.svg.on("mouseout", function(){
-        if (!this.ui.is_resize_dragging){
+        if (!this.ui.dragging){
             this.ui.hide_timeout = setTimeout(function(){
                 this.ui.hide();
             }.bind(this), 300);
