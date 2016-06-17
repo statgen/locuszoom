@@ -229,8 +229,9 @@ describe("LocusZoom Data", function(){
         });
         it("should pass only specifically requested fields on static JSON through a getData() request", function() {
             var layout = {
-                panels: {
-                    foo: {
+                panels: [
+                    {
+                        id: "foo",
                         data_layers: {
                             bar: {
                                 type: "line",
@@ -238,7 +239,7 @@ describe("LocusZoom Data", function(){
                             }
                         }
                     }
-                }
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
             var plot = LocusZoom.populate("#plot", datasources, layout);

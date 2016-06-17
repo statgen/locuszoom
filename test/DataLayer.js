@@ -278,11 +278,12 @@ describe('LocusZoom.DataLayer', function(){
         beforeEach(function(){
             this.plot = null;
             this.layout = {
-                panels: {
-                    p1: {
+                panels: [
+                    {
+                        id: "p1",
                         data_layers: {}
                     }
-                },
+                ],
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
@@ -292,7 +293,7 @@ describe('LocusZoom.DataLayer', function(){
             delete this.plot;
         });
         it('should allow for explicitly setting data layer z_index', function(){
-            this.layout.panels.p1.data_layers = {
+            this.layout.panels[0].data_layers = {
                 d1: { type: "line", z_index: 1 },
                 d2: { type: "line", z_index: 0 }
             };
@@ -302,7 +303,7 @@ describe('LocusZoom.DataLayer', function(){
             this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(0);
         });
         it('should allow for explicitly setting data layer z_index with a negative value', function(){
-            this.layout.panels.p1.data_layers = {
+            this.layout.panels[0].data_layers = {
                 d1: { type: "line" },
                 d2: { type: "line" },
                 d3: { type: "line" },
@@ -323,8 +324,9 @@ describe('LocusZoom.DataLayer', function(){
             var data_sources = new LocusZoom.DataSources()
                 .add("d", ["StaticJSON", [{ id: "a" }, { id: "b" },{ id: "c" }] ]);
             var layout = {
-                panels: {
-                    p: {
+                panels: [
+                    {
+                        id: "p",
                         data_layers: {
                             d: {
                                 fields: ["d:id"],
@@ -334,7 +336,7 @@ describe('LocusZoom.DataLayer', function(){
                             }
                         }
                     }
-                },
+                ],
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
@@ -396,8 +398,9 @@ describe('LocusZoom.DataLayer', function(){
             var data_sources = new LocusZoom.DataSources()
                 .add("d", ["StaticJSON", [{ id: "a" }, { id: "b" },{ id: "c" }] ]);
             var layout = {
-                panels: {
-                    p: {
+                panels: [
+                    {
+                        id: "p",
                         data_layers: {
                             d: {
                                 fields: ["d:id"],
@@ -407,7 +410,7 @@ describe('LocusZoom.DataLayer', function(){
                             }
                         }
                     }
-                },
+                ],
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
@@ -466,7 +469,15 @@ describe('LocusZoom.DataLayer', function(){
     describe("Tool tip functions", function() {
         beforeEach(function(){
             this.plot = null;
-            this.layout = { panels: { p: { data_layers: {} } }, controls: false };
+            this.layout = {
+                panels: [
+                    {
+                        id: "p",
+                        data_layers: {}
+                    }
+                ],
+                controls: false
+            };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", {}, this.layout);
         });

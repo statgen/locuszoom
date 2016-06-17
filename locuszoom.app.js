@@ -335,8 +335,9 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    panels: {
-        positions: {
+    panels: [
+        {
+            id: "positions",
             title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
@@ -467,7 +468,8 @@ LocusZoom.StandardLayout = {
                 }
             }
         },
-        genes: {
+        {
+            id: "genes",
             width: 800,
             height: 225,
             origin: { x: 0, y: 225 },
@@ -510,7 +512,7 @@ LocusZoom.StandardLayout = {
                 }
             }
         }
-    }
+    ]
 };
 
 /* global d3,LocusZoom */
@@ -3181,7 +3183,7 @@ LocusZoom.Instance.DefaultLayout = {
     min_height: 1,
     resizable: false,
     aspect_ratio: 1,
-    panels: {},
+    panels: [],
     controls: {
         show: "onmouseover",
         hide_delay: 300
@@ -3245,10 +3247,9 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     }
 
     // Add panels
-    var panel_id;
-    for (panel_id in this.layout.panels){
-        this.addPanel(panel_id, this.layout.panels[panel_id]);
-    }
+    this.layout.panels.forEach(function(panel_layout){
+        this.addPanel(panel_layout);
+    }.bind(this));
 
 };
 
@@ -3348,20 +3349,22 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     return this;
 };
 
-// Create a new panel by id and layout
-LocusZoom.Instance.prototype.addPanel = function(id, layout){
-    if (typeof id !== "string"){
-        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
-    }
-    if (typeof this.panels[id] !== "undefined"){
-        throw "Cannot create panel with id [" + id + "]; panel with that id already exists";
-    }
+// Create a new panel from a layout
+LocusZoom.Instance.prototype.addPanel = function(layout){
+
+    // Sanity checks
     if (typeof layout !== "object"){
         throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
     }
+    if (typeof layout.id !== "string" || !layout.id.length){
+        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
+    }
+    if (typeof this.panels[layout.id] !== "undefined"){
+        throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
+    }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(id, layout, this);
+    var panel = new LocusZoom.Panel(layout.id, layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -3380,10 +3383,16 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
         this.panels[panel.id].layout.y_index = length - 1;
     }
 
-    // If not present, store the panel layout in the plot layout
-    if (typeof this.layout.panels[panel.id] == "undefined"){
-        this.layout.panels[panel.id] = this.panels[panel.id].layout;
+    // Determine if this panel was already in the layout.panels array.
+    // If it wasn't, add it. Either way store the layout.panels array index on the panel.
+    var layout_idx = null;
+    this.layout.panels.forEach(function(panel_layout, idx){
+        if (panel_layout.id ==  panel.id){ layout_idx = idx; }
+    });
+    if (layout_idx == null){
+        layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
     }
+    this.panels[panel.id].layout_idx = layout_idx;
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
@@ -3417,9 +3426,14 @@ LocusZoom.Instance.prototype.removePanel = function(id){
     }
 
     // Delete the panel and its presence in the plot layout and state
+    this.layout.panels.splice(this.panels[id].layout_idx, 1);
     delete this.panels[id];
-    delete this.layout.panels[id];
     delete this.layout.state[id];
+
+    // Update layout_idx values for all remaining panels
+    this.layout.panels.forEach(function(panel_layout, idx){
+        this.panels[panel_layout.id].layout_idx = idx;
+    }.bind(this));
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
@@ -3914,6 +3928,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
 LocusZoom.Panel = function(id, layout, parent) { 
 
     this.initialized = false;
+    this.layout_idx = null;
     
     this.id     = id;
     this.parent = parent || null;

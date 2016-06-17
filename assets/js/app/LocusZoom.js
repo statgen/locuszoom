@@ -303,8 +303,9 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    panels: {
-        positions: {
+    panels: [
+        {
+            id: "positions",
             title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
@@ -435,7 +436,8 @@ LocusZoom.StandardLayout = {
                 }
             }
         },
-        genes: {
+        {
+            id: "genes",
             width: 800,
             height: 225,
             origin: { x: 0, y: 225 },
@@ -478,5 +480,5 @@ LocusZoom.StandardLayout = {
                 }
             }
         }
-    }
+    ]
 };

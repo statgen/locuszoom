@@ -16,6 +16,7 @@
 LocusZoom.Panel = function(id, layout, parent) { 
 
     this.initialized = false;
+    this.layout_idx = null;
     
     this.id     = id;
     this.parent = parent || null;

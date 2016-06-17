@@ -112,6 +112,7 @@
                          ];
       data_sources.add(ns, assoc_source);
       var layout = {
+          id: ns,
           title: "Analysis ID: " + analysis,
           description: ns,
           y_index: -1,
@@ -210,7 +211,7 @@
               }
           }
       };
-      plot.addPanel(ns, layout);
+      plot.addPanel(layout);
     }
 
     var plot;
