@@ -671,7 +671,6 @@ LocusZoom.Instance.prototype.initialize = function(){
     };
 
     // Populate the CSS string with a CORS request to handle cross-domain CSS loading
-    var css_url = "";
     for (var stylesheet in Object.keys(document.styleSheets)){
         if ( document.styleSheets[stylesheet].href != null
              && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){

@@ -82,7 +82,7 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     } else {
         return null;
     }
-}
+};
 
 LocusZoom.DataLayer.prototype.onUpdate = function(){
     this.parent.onUpdate();
@@ -192,7 +192,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     if (typeof this.layout.tooltip != "object"){
         throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
     }
-    if (typeof id == "undefined"){ var id = this.getElementId(d); }
+    if (typeof id == "undefined"){ id = this.getElementId(d); }
     if (this.tooltips[id]){
         this.positionTooltip(id);
         return;
@@ -209,7 +209,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
 
 // Update a tool tip (generate its inner HTML)
 LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
-    if (typeof id == "undefined"){ var id = this.getElementId(d); }
+    if (typeof id == "undefined"){ id = this.getElementId(d); }
     // Empty the tooltip of all HTML (including its arrow!)
     this.tooltips[id].selector.html("");
     this.tooltips[id].arrow = null;
@@ -238,7 +238,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
     if (typeof d == "string"){
         id = d;
     } else if (typeof id == "undefined"){
-        var id = this.getElementId(d);
+        id = this.getElementId(d);
     }
     if (this.tooltips[id]){
         if (typeof this.tooltips[id].selector == "object"){
@@ -369,7 +369,7 @@ LocusZoom.DataLayer.prototype.highlightAllElements = function(){
 };
 LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
     this.setAllElementStatus("highlighted", false);
-}
+};
 
 // Toggle the selected status of an element
 LocusZoom.DataLayer.prototype.selectElement = function(element){
@@ -398,7 +398,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         throw("Invalid element passed to setElementStatus()");
     }
     if (typeof toggle == "undefined"){
-        var toggle = true;
+        toggle = true;
     }
 
     var id = this.getElementId(element);
@@ -436,7 +436,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
         throw("Invalid status passed to setAllElementStatus()");
     }
-    if (typeof toggle == "undefined"){ var toggle = true; }
+    if (typeof toggle == "undefined"){ toggle = true; }
 
     // Apply statuses
     if (toggle){
@@ -492,16 +492,16 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         if (!directive){ return; }
         // Resolve the value of the status boolean from the directive and the element's current status
         switch (directive){
-            case "on":
-                status_boolean = true;
-                break;
-            case "off":
-                status_boolean = false;
-                break;
-            case "toggle":
-            case "toggle_exclusive":
-                status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
-                break;
+        case "on":
+            status_boolean = true;
+            break;
+        case "off":
+            status_boolean = false;
+            break;
+        case "toggle":
+        case "toggle_exclusive":
+            status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
+            break;
         }
         if (status_boolean == null){ return; }
         // Special handling for toggle_exclusive - if the new status_boolean is true then first set the
@@ -538,7 +538,7 @@ LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
     supported_statuses.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
-}
+};
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
 // Necessary for positioning any HTML elements over the panel
