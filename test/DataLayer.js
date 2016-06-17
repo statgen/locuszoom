@@ -66,11 +66,11 @@ describe('LocusZoom.DataLayer', function(){
 
     describe("Scalable parameter resolution", function() {
         it("has a method to resolve scalable parameters into discrete values", function() {
-            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.datalayer.resolveScalableParameter.should.be.a.Function;
         });
         it("passes numbers and strings directly through regardless of data", function() {
-            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.layout = { scale: "foo" };
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), "foo");
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: "bar" }), "foo");
@@ -79,7 +79,7 @@ describe('LocusZoom.DataLayer', function(){
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: "bar" }), 17);
         });
         it("executes a scale function for the data provided", function() {
-            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.layout = {
                 scale: {
                     scale_function: "categorical_bin",
@@ -95,7 +95,7 @@ describe('LocusZoom.DataLayer', function(){
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), null);
         });
         it("iterates over an array of options until exhausted or a non-null value is found", function() {
-            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.layout = {
                 scale: [
                     {
@@ -126,11 +126,11 @@ describe('LocusZoom.DataLayer', function(){
 
     describe("Extent generation", function() {
         it("has a method to generate an extent function for any axis", function() {
-            this.datalayer = new LocusZoom.DataLayer("test", {});
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.datalayer.getAxisExtent.should.be.a.Function;
         });
         it("throws an error on invalid axis identifiers", function() {
-            var data_layer = new LocusZoom.DataLayer();
+            var data_layer = new LocusZoom.DataLayer({ id: "test" });
             assert.throws(function(){ datalayer.getAxisExtent(); });
             assert.throws(function(){ datalayer.getAxisExtent("foo"); });
             assert.throws(function(){ datalayer.getAxisExtent(1); });
@@ -138,9 +138,10 @@ describe('LocusZoom.DataLayer', function(){
         });
         it("generates an accurate extent array for arbitrary data sets", function() {
             this.layout = {
+                id: "test",
                 x_axis: { field: "x" }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
@@ -160,35 +161,38 @@ describe('LocusZoom.DataLayer', function(){
         });
         it("applies upper and lower buffers to extents as defined in the layout", function() {
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     lower_buffer: 0.05
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [0.85, 4]);
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     upper_buffer: 0.2
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 62 }, { x: 7 }, { x: -18 }, { x: 106 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [-18, 130.8]);
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     lower_buffer: 0.35,
                     upper_buffer: 0.6
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 95 }, { x: 0 }, { x: -4 }, { x: 256 }
             ];
@@ -196,17 +200,19 @@ describe('LocusZoom.DataLayer', function(){
         });
         it("applies a minimum extent as defined in the layout", function() {
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     min_extent: [ 0, 3 ]
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 4]);
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     upper_buffer: 0.1,
@@ -214,7 +220,7 @@ describe('LocusZoom.DataLayer', function(){
                     min_extent: [ 0, 10 ]
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
             ];
@@ -230,6 +236,7 @@ describe('LocusZoom.DataLayer', function(){
         });
         it("applies hard floor and ceiling as defined in the layout", function() {
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     min_extent: [6, 10],
@@ -237,12 +244,13 @@ describe('LocusZoom.DataLayer', function(){
                     floor: 0
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 8 }, { x: 9 }, { x: 8 }, { x: 8.5 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 10]);
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     min_extent: [0, 10],
@@ -250,12 +258,13 @@ describe('LocusZoom.DataLayer', function(){
                     ceiling: 5
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 5]);
             this.layout = {
+                id: "test",
                 x_axis: {
                     field: "x",
                     min_extent: [0, 10],
@@ -265,7 +274,7 @@ describe('LocusZoom.DataLayer', function(){
                     ceiling: 6
                 }
             }
-            this.datalayer = new LocusZoom.DataLayer("test", this.layout);
+            this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 2 }, { x: 4 }, { x: 5 }, { x: 17 }
             ];
@@ -281,7 +290,7 @@ describe('LocusZoom.DataLayer', function(){
                 panels: [
                     {
                         id: "p1",
-                        data_layers: {}
+                        data_layers: []
                     }
                 ],
                 controls: false
@@ -293,22 +302,22 @@ describe('LocusZoom.DataLayer', function(){
             delete this.plot;
         });
         it('should allow for explicitly setting data layer z_index', function(){
-            this.layout.panels[0].data_layers = {
-                d1: { type: "line", z_index: 1 },
-                d2: { type: "line", z_index: 0 }
-            };
+            this.layout.panels[0].data_layers = [
+                { id: "d1", type: "line", z_index: 1 },
+                { id: "d2", type: "line", z_index: 0 }
+            ];
             this.plot = LocusZoom.populate("#plot", {}, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ["d2", "d1"]);
             this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(1);
             this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(0);
         });
         it('should allow for explicitly setting data layer z_index with a negative value', function(){
-            this.layout.panels[0].data_layers = {
-                d1: { type: "line" },
-                d2: { type: "line" },
-                d3: { type: "line" },
-                d4: { type: "line", z_index: -1 }
-            };
+            this.layout.panels[0].data_layers = [
+                { id: "d1", type: "line" },
+                { id: "d2", type: "line" },
+                { id: "d3", type: "line" },
+                { id: "d4", type: "line", z_index: -1 }
+            ];
             this.plot = LocusZoom.populate("#plot", {}, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ["d1", "d2", "d4", "d3"]);
             this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(0);
@@ -327,14 +336,15 @@ describe('LocusZoom.DataLayer', function(){
                 panels: [
                     {
                         id: "p",
-                        data_layers: {
-                            d: {
+                        data_layers: [
+                            {
+                                id: "d",
                                 fields: ["d:id"],
                                 id_field: "d:id",
                                 type: "scatter",
                                 highlighted: { onmouseover: "toggle" }
                             }
-                        }
+                        ]
                     }
                 ],
                 controls: false
@@ -401,14 +411,15 @@ describe('LocusZoom.DataLayer', function(){
                 panels: [
                     {
                         id: "p",
-                        data_layers: {
-                            d: {
+                        data_layers: [
+                            {
+                                id: "d",
                                 fields: ["d:id"],
                                 id_field: "d:id",
                                 type: "scatter",
                                 selected: { onclick: "toggle" }
                             }
-                        }
+                        ]
                     }
                 ],
                 controls: false
@@ -473,7 +484,7 @@ describe('LocusZoom.DataLayer', function(){
                 panels: [
                     {
                         id: "p",
-                        data_layers: {}
+                        data_layers: []
                     }
                 ],
                 controls: false
@@ -486,7 +497,8 @@ describe('LocusZoom.DataLayer', function(){
             delete this.plot;
         });
         it('should allow for creating and destroying tool tips', function(){
-            this.plot.panels.p.addDataLayer("d", {
+            this.plot.panels.p.addDataLayer({
+                id: "d",
                 type: "scatter",
                 tooltip: {
                     html: "foo"
@@ -509,7 +521,8 @@ describe('LocusZoom.DataLayer', function(){
             assert.equal(d3.select(a_id_q).empty(), true);
         });
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function(){
-            this.plot.panels.p.addDataLayer("d", {
+            this.plot.panels.p.addDataLayer({
+                id: "d",
                 type: "scatter",
                 highlighted: { onmouseover: "toggle" },
                 selected: { onclick: "toggle" },

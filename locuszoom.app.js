@@ -366,8 +366,9 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
-            data_layers: {
-                significance: {
+            data_layers: [
+                {
+                    id: "significance",
                     type: "line",
                     fields: ["sig:x", "sig:y"],
                     z_index: 0,
@@ -388,7 +389,8 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
-                recomb: {
+                {
+                    id: "recomb",
                     type: "line",
                     fields: ["recomb:position", "recomb:recomb_rate"],
                     z_index: 1,
@@ -406,7 +408,8 @@ LocusZoom.StandardLayout = {
                         ceiling: 100
                     }
                 },
-                positions: {
+                {
+                    id: "positions",
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
@@ -466,7 +469,7 @@ LocusZoom.StandardLayout = {
                             + "Ref. Allele: <strong>{{refAllele}}</strong>"
                     }
                 }
-            }
+            ]
         },
         {
             id: "genes",
@@ -480,8 +483,9 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
-            data_layers: {
-                genes: {
+            data_layers: [
+                {
+                    id: "genes",
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
@@ -510,7 +514,7 @@ LocusZoom.StandardLayout = {
                             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
-            }
+            ]
         }
     ]
 };
@@ -530,15 +534,17 @@ LocusZoom.StandardLayout = {
 
 */
 
-LocusZoom.DataLayer = function(id, layout, parent) {
+LocusZoom.DataLayer = function(layout, parent) {
 
     this.initialized = false;
+    this.layout_idx = null;
 
-    this.id     = id;
+    this.id     = null;
     this.parent = parent || null;
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    if (this.layout.id){ this.id = this.layout.id; }
 
     // Define state parameters specific to this data layer
     if (this.parent){
@@ -1449,14 +1455,14 @@ LocusZoom.DataLayers = (function() {
     var obj = {};
     var datalayers = {};
 
-    obj.get = function(name, id, layout, parent) {
+    obj.get = function(name, layout, parent) {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
-            if (typeof id == "undefined" || typeof layout == "undefined"){
-                throw("id or layout argument missing for data layer [" + name + "]");
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
             } else {
-                return new datalayers[name](id, layout, parent);
+                return new datalayers[name](layout, parent);
             }
         } else {
             throw("data layer [" + name + "] not found");
@@ -1498,7 +1504,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1902,13 +1908,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 
 });
 
-
 /*********************
   Line Data Layer
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout){
+LocusZoom.DataLayers.add("line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -2149,7 +2154,7 @@ LocusZoom.DataLayers.add("line", function(id, layout){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout){
+LocusZoom.DataLayers.add("genes", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -3364,7 +3369,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(layout.id, layout, this);
+    var panel = new LocusZoom.Panel(layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -3387,7 +3392,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     // If it wasn't, add it. Either way store the layout.panels array index on the panel.
     var layout_idx = null;
     this.layout.panels.forEach(function(panel_layout, idx){
-        if (panel_layout.id ==  panel.id){ layout_idx = idx; }
+        if (panel_layout.id == panel.id){ layout_idx = idx; }
     });
     if (layout_idx == null){
         layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
@@ -3925,12 +3930,17 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
 
 */
 
-LocusZoom.Panel = function(id, layout, parent) { 
+LocusZoom.Panel = function(layout, parent) { 
+
+    if (typeof layout !== "object" || typeof layout.id !== "string" || !layout.id.length){
+        console.log(layout);
+        throw "Unable to create panel, invalid layout";
+    }
 
     this.initialized = false;
     this.layout_idx = null;
     
-    this.id     = id;
+    this.id     = layout.id;
     this.parent = parent || null;
     this.svg    = {};
 
@@ -3947,7 +3957,7 @@ LocusZoom.Panel = function(id, layout, parent) {
         this.state_id = null;
     }
     
-    this.data_layers = {};
+    this.data_layers = [];
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
@@ -4011,7 +4021,8 @@ LocusZoom.Panel.DefaultLayout = {
         x:  {},
         y1: {},
         y2: {}
-    }
+    },
+    data_layers: []
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
@@ -4051,12 +4062,9 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     }.bind(this));
 
     // Add data layers (which define x and y extents)
-    if (typeof this.layout.data_layers == "object"){
-        var data_layer_id;
-        for (data_layer_id in this.layout.data_layers){
-            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
-        }
-    }
+    this.layout.data_layers.forEach(function(data_layer_layout){
+        this.addDataLayer(data_layer_layout);
+    }.bind(this));
 
 };
 
@@ -4376,17 +4384,17 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+LocusZoom.Panel.prototype.addDataLayer = function(layout){
 
     // Sanity checks
-    if (typeof id !== "string"){
-        throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
-    }
     if (typeof layout !== "object"){
         throw "Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
+    if (typeof layout.id !== "string" || !layout.id.length){
+        throw "Invalid paneldata layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
+    }
     if (typeof this.data_layers[layout.id] !== "undefined"){
-        throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
+        throw "Cannot create data_layer with id [" + layout.id + "]; data layer with that id already exists in the panel";
     }
     if (typeof layout.type !== "string"){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
@@ -4398,7 +4406,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     }
 
     // Create the Data Layer
-    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
+    var data_layer = LocusZoom.DataLayers.get(layout.type, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
@@ -4419,10 +4427,16 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         this.data_layers[data_layer.id].layout.z_index = length - 1;
     }
 
-    // If not present, store the data layer layout in the panel layout
-    if (typeof this.layout.data_layers[data_layer.id] == "undefined"){
-        this.layout.data_layers[data_layer.id] = this.data_layers[data_layer.id].layout;
+    // Determine if this data layer was already in the layout.data_layers array.
+    // If it wasn't, add it. Either way store the layout.data_layers array index on the data_layer.
+    var layout_idx = null;
+    this.layout.data_layers.forEach(function(data_layer_layout, idx){
+        if (data_layer_layout.id == data_layer.id){ layout_idx = idx; }
+    });
+    if (layout_idx == null){
+        layout_idx = this.layout.data_layers.push(this.data_layers[data_layer.id].layout) - 1;
     }
+    this.data_layers[data_layer.id].layout_idx = layout_idx;
 
     return this.data_layers[data_layer.id];
 };

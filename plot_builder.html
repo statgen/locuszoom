@@ -131,8 +131,9 @@
                   label_offset: 28
               }
           },
-          data_layers: {
-              significance: {
+          data_layers: [
+              {
+                  id: "significance",
                   type: "line",
                   fields: ["sig:x", "sig:y"],
                   style: {
@@ -152,7 +153,8 @@
                       html: "Significance Threshold: 3 × 10^-5"
                   }
               },
-              positions: {
+              {
+                  id: "positions",
                   type: "scatter",
                   point_shape: "circle",
                   point_size: {
@@ -201,15 +203,24 @@
                       upper_buffer: 0.05,
                       min_extent: [ 0, 10 ]
                   },
-                  selectable: "multiple",
+                  highlighted: {
+                      onmouseover: "on",
+                      onmouseout: "off"
+                  },
+                  selected: {
+                      onclick: "toggle_exclusive",
+                      onshiftclick: "toggle"
+                  },
                   tooltip: {
+                      show: { or: ["highlighted", "selected"] },
+                      hide: { and: ["unhighlighted", "unselected"] },
                       html: "<div><strong>{{"+ns+":id}}</strong></div>"
                           + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
                           + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>",
                       closable: true
                   }
               }
-          }
+          ]
       };
       plot.addPanel(layout);
     }

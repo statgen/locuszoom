@@ -354,14 +354,14 @@ LocusZoom.DataLayers = (function() {
     var obj = {};
     var datalayers = {};
 
-    obj.get = function(name, id, layout, parent) {
+    obj.get = function(name, layout, parent) {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
-            if (typeof id == "undefined" || typeof layout == "undefined"){
-                throw("id or layout argument missing for data layer [" + name + "]");
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
             } else {
-                return new datalayers[name](id, layout, parent);
+                return new datalayers[name](layout, parent);
             }
         } else {
             throw("data layer [" + name + "] not found");
@@ -403,7 +403,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -807,13 +807,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 
 });
 
-
 /*********************
   Line Data Layer
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout){
+LocusZoom.DataLayers.add("line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1054,7 +1053,7 @@ LocusZoom.DataLayers.add("line", function(id, layout){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout){
+LocusZoom.DataLayers.add("genes", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {

@@ -270,7 +270,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(layout.id, layout, this);
+    var panel = new LocusZoom.Panel(layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -293,7 +293,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     // If it wasn't, add it. Either way store the layout.panels array index on the panel.
     var layout_idx = null;
     this.layout.panels.forEach(function(panel_layout, idx){
-        if (panel_layout.id ==  panel.id){ layout_idx = idx; }
+        if (panel_layout.id == panel.id){ layout_idx = idx; }
     });
     if (layout_idx == null){
         layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;

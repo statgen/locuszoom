@@ -13,15 +13,17 @@
 
 */
 
-LocusZoom.DataLayer = function(id, layout, parent) {
+LocusZoom.DataLayer = function(layout, parent) {
 
     this.initialized = false;
+    this.layout_idx = null;
 
-    this.id     = id;
+    this.id     = null;
     this.parent = parent || null;
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    if (this.layout.id){ this.id = this.layout.id; }
 
     // Define state parameters specific to this data layer
     if (this.parent){

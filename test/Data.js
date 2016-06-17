@@ -232,12 +232,13 @@ describe("LocusZoom Data", function(){
                 panels: [
                     {
                         id: "foo",
-                        data_layers: {
-                            bar: {
+                        data_layers: [
+                            {
+                                id: "bar",
                                 type: "line",
                                 fields: ["test:x", "test:y"]
                             }
-                        }
+                        ]
                     }
                 ]
             };
