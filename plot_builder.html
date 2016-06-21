@@ -222,7 +222,11 @@
               }
           ]
       };
-      plot.addPanel(layout);
+      var panel = plot.addPanel(layout);
+      panel.curtain.drop("loading...");
+      panel.on("data_rendered", function(){
+        this.curtain.raise(500);
+      }.bind(panel));
     }
 
     var plot;
@@ -241,7 +245,7 @@
     }
 
     function applyOnUpdate(){
-      plot.onUpdate(function(){
+      plot.on("layout_changed", function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
       });
     }

@@ -56,8 +56,20 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.onUpdate = function(){
-        this.parent.onUpdate();
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_rendered": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){ return; }
+        if (typeof hook == "undefined"){
+            this.event_hooks[event].forEach(function(hookToRun) {
+                hookToRun();
+            });
+        } else if (typeof hook == "function") {
+            this.event_hooks[event].push(hook);
+        }
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -217,7 +229,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Position with initial layout parameters
     this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
         .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
+        .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
     // Append clip path to the parent svg element, size with initial layout parameters
     var clipPath = this.svg.container.append("clipPath")
@@ -542,6 +554,9 @@ LocusZoom.Panel.prototype.reMap = function(){
         .then(function(){
             this.initialized = true;
             this.render();
+            this.on("layout_changed");
+            this.parent.on("layout_changed");
+            this.on("data_rendered");
         }.bind(this))
         .catch(function(error){
             console.log(error);

@@ -49,8 +49,21 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
 
-    // Array of functions to call when the plot is updated
-    this.onUpdateFunctions = [];
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_rendered": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){ return; }
+        if (typeof hook == "undefined"){
+            this.event_hooks[event].forEach(function(hookToRun) {
+                hookToRun();
+            });
+        } else if (typeof hook == "function") {
+            this.event_hooks[event].push(hook);
+        }
+    };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
@@ -116,16 +129,6 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
-};
-
-LocusZoom.Instance.prototype.onUpdate = function(func){
-    if (typeof func == "undefined" && this.onUpdateFunctions.length){
-        this.onUpdateFunctions.forEach(function(funcToRun) {
-            funcToRun();
-        });
-    } else if (typeof func == "function") {
-        this.onUpdateFunctions.push(func);
-    }
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -251,7 +254,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.ui.render();
     }
 
-    this.onUpdate();
+    this.on("layout_changed");
     return this;
 };
 
@@ -774,7 +777,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            this.on("layout_changed");
+            this.on("data_rendered");
         }.bind(this));
 
     return this;
@@ -808,7 +812,8 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            this.on("layout_changed");
+            this.on("data_rendered");
         }.bind(this));
 
     return this;
