@@ -212,12 +212,12 @@
                       onshiftclick: "toggle"
                   },
                   tooltip: {
+                      closable: true,
                       show: { or: ["highlighted", "selected"] },
                       hide: { and: ["unhighlighted", "unselected"] },
                       html: "<div><strong>{{"+ns+":id}}</strong></div>"
                           + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
-                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>",
-                      closable: true
+                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>"
                   }
               }
           ]
