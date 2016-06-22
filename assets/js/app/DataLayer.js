@@ -423,8 +423,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     this.showOrHideTooltip(element);
 
     // Trigger layout changed event hook
-    this.parent.on("layout_changed");
-    this.parent.parent.on("layout_changed");
+    this.parent.emit("layout_changed");
+    this.parent.parent.emit("layout_changed");
     
 };
 
