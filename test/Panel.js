@@ -78,6 +78,20 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.cliparea.origin.should.have.property('x').which.is.a.Number;
             this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
         });
+        it('should generate an ID if passed a layout that does not define one', function(){
+            this.instance.addPanel({ "foo": "bar" });
+            var panel_idx = this.instance.layout.panels.length - 1;
+            this.instance.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
+            this.instance.layout.panels[panel_idx].foo.should.be.exactly("bar");
+            this.instance.panels[this.instance.layout.panels[panel_idx].id].should.be.an.Object;
+            this.instance.panels[this.instance.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
+        });
+        it('should throw an error if adding a panel with an ID that is already used', function(){
+            this.instance.addPanel({ "id": "duplicate", "foo": "bar" });
+            assert.throws(function(){
+                this.instance.addPanel({ "id": "duplicate", "foo2": "bar2" });
+            }.bind(this));
+        });
     });
 
     describe("Geometry methods", function() {
