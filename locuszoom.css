@@ -367,25 +367,23 @@ div.lz-panel-description {
 
 div.lz-panel-boundary {
   position: absolute;
-  height: 4px;
-  width: 200px;
-  border-radius: 2px;
-  background: rgba(235, 240, 228, 0.5);
-  border: 1px solid rgba(24, 24, 24, 0.4); }
-
-div.lz-panel-boundary {
-  position: absolute;
   height: 3px;
-  width: 200px;
-  border-radius: 1px;
-  background: rgba(216, 216, 216, 0.4);
-  border: 1px solid rgba(24, 24, 24, 0.4);
-  cursor: row-resize; }
+  cursor: row-resize;
+  display: block;
+  padding-top: 10px;
+  padding-bottom: 10px; }
 
-div.lz-panel-boundary:hover {
+div.lz-panel-boundary span {
+  display: block;
+  border-radius: 1px;
+  background: rgba(216, 216, 216, 0);
+  border: 1px solid rgba(216, 216, 216, 0);
+  height: 3px; }
+
+div.lz-panel-boundary:hover span {
   background: #d8d8d8;
   border: 1px solid rgba(24, 24, 24, 1); }
 
-div.lz-panel-boundary:active {
+div.lz-panel-boundary:active span {
   background: #333333;
   border: 1px solid #d8d8d8; }

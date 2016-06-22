@@ -442,29 +442,27 @@ div.#{$namespace}-panel-description {
 
 div.#{$namespace}-panel-boundary {
   position: absolute;
-  height: 4px;
-  width: 200px;
-  border-radius: 2px;
-  background: rgba(235,240,228,0.5);
-  border: 1px solid #{$default_black_shadow};
-}
-
-div.#{$namespace}-panel-boundary {
-  position: absolute;
   height: 3px;
-  width: 200px;
-  border-radius: 1px;
-  background: rgba(216,216,216,0.4);
-  border: 1px solid #{$default_black_shadow};
   cursor: row-resize;
+  display: block;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
-div.#{$namespace}-panel-boundary:hover {
+div.#{$namespace}-panel-boundary span {
+  display: block;
+  border-radius: 1px;
+  background: rgba(216,216,216,0);
+  border: 1px solid rgba(216,216,216,0);
+  height: 3px;
+}
+
+div.#{$namespace}-panel-boundary:hover span {
   background: rgba(216,216,216,1);
   border: 1px solid #{$default_black};
 }
 
-div.#{$namespace}-panel-boundary:active {
+div.#{$namespace}-panel-boundary:active span {
   background: rgba(51,51,51,1);
   border: 1px solid rgba(216,216,216,1);
 }

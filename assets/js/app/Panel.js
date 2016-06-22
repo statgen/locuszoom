@@ -402,7 +402,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             }
         }.bind(this),
         position: function(){
-            if (!this.controls.showing){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return; }
             var page_origin = this.getPageOrigin();
             var client_rect = this.controls.selector.node().getBoundingClientRect();
             var top = page_origin.y.toString() + "px";

@@ -3652,6 +3652,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                     var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
                         .attr("title", "Resize panels");
+                    selector.append("span");
                     var panel_resize_drag = d3.behavior.drag();
                     panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
                     panel_resize_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
@@ -3693,11 +3694,14 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.selectors.forEach(function(selector, panel_idx){
                 var panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
                 var left = plot_page_origin.x;
-                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 2;
+                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
                 var width = this.parent.layout.width - 1;
                 selector.style({
                     top: top + "px",
                     left: left + "px",
+                    width: width + "px"
+                });
+                selector.select("span").style({
                     width: width + "px"
                 });
             }.bind(this));
@@ -4345,7 +4349,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             }
         }.bind(this),
         position: function(){
-            if (!this.controls.showing){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return; }
             var page_origin = this.getPageOrigin();
             var client_rect = this.controls.selector.node().getBoundingClientRect();
             var top = page_origin.y.toString() + "px";
