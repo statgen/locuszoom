@@ -55,14 +55,21 @@ LocusZoom.Instance = function(id, datasource, layout) {
         "data_rendered": []
     };
     this.on = function(event, hook){
-        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){ return; }
-        if (typeof hook == "undefined"){
-            this.event_hooks[event].forEach(function(hookToRun) {
-                hookToRun();
-            });
-        } else if (typeof hook == "function") {
-            this.event_hooks[event].push(hook);
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("Unable to register event hook, invalid event: " + event.toString());
         }
+        if (typeof hook != "function"){
+            throw("Unable to register event hook, invalid hook function passed");
+        }
+        this.event_hooks[event].push(hook.bind(this));
+    };
+    this.emit = function(event){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("LocusZoom attempted to throw an invalid event: " + event.toString());
+        }
+        this.event_hooks[event].forEach(function(hookToRun) {
+            hookToRun();
+        });
     };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
@@ -254,7 +261,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.ui.render();
     }
 
-    this.on("layout_changed");
+    this.emit("layout_changed");
     return this;
 };
 
@@ -771,8 +778,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.on("layout_changed");
-            this.on("data_rendered");
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
@@ -806,8 +813,8 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.on("layout_changed");
-            this.on("data_rendered");
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
