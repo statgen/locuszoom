@@ -265,12 +265,6 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     if (typeof layout !== "object"){
         throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    if (typeof layout.id !== "string" || !layout.id.length){
-        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
-    }
-    if (typeof this.panels[layout.id] !== "undefined"){
-        throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
-    }
 
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(layout, this);

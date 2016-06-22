@@ -3363,12 +3363,6 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
     if (typeof layout !== "object"){
         throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
     }
-    if (typeof layout.id !== "string" || !layout.id.length){
-        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
-    }
-    if (typeof this.panels[layout.id] !== "undefined"){
-        throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
-    }
 
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(layout, this);
@@ -3935,17 +3929,36 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
 
 LocusZoom.Panel = function(layout, parent) { 
 
-    if (typeof layout !== "object" || typeof layout.id !== "string" || !layout.id.length){
-        console.log(layout);
+    if (typeof layout !== "object"){
         throw "Unable to create panel, invalid layout";
     }
 
+    this.parent = parent || null;
+
+    // Ensure a valid ID is present. If there is no valid ID then generate one
+    if (typeof layout.id !== "string" || !layout.id.length){
+        if (!this.parent){
+            layout.id = "p" + Math.floor(Math.random()*Math.pow(10,8));
+        } else {
+            var id = null;
+            var generateID = function(){
+                id = "p" + Math.floor(Math.random()*Math.pow(10,8));
+                if (id == null || typeof this.parent.panels[id] != "undefined"){
+                    id = generateID();
+                }
+            }.bind(this);
+            layout.id = id;
+        }
+    } else if (this.parent) {
+        if (typeof this.parent.panels[layout.id] !== "undefined"){
+            throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
+        }
+    }
+    this.id = layout.id;
+
     this.initialized = false;
     this.layout_idx = null;
-    
-    this.id     = layout.id;
-    this.parent = parent || null;
-    this.svg    = {};
+    this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
