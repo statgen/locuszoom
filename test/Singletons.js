@@ -312,7 +312,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should have a method to add a data layer', function(){
             LocusZoom.DataLayers.should.have.property('add').which.is.a.Function;
-            var foo = function(id, layout){
+            var foo = function(layout){
                 LocusZoom.DataLayer.apply(this, arguments);
                 this.DefaultLayout = {};
                 this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -323,15 +323,15 @@ describe('LocusZoom Singletons', function(){
             var returned_list = LocusZoom.DataLayers.list();
             var expected_list = ["scatter", "line", "genes", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_value = LocusZoom.DataLayers.get("foo", "bar", {});
-            var expected_value = new foo("bar", {});
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
+            var expected_value = new foo({ id: "bar" });
             assert.equal(returned_value.id, expected_value.id);
             assert.deepEqual(returned_value.layout, expected_value.layout);
             assert.equal(returned_value.render(), expected_value.render());
         });
         it('should have a method to change or delete existing data layers', function(){
             LocusZoom.DataLayers.should.have.property('set').which.is.a.Function;
-            var foo_new = function(id, layout){
+            var foo_new = function(layout){
                 LocusZoom.DataLayer.apply(this, arguments);
                 this.DefaultLayout = { foo: "bar" };
                 this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -342,8 +342,8 @@ describe('LocusZoom Singletons', function(){
             var returned_list = LocusZoom.DataLayers.list();
             var expected_list = ["scatter", "line", "genes", "foo"];
             assert.deepEqual(returned_list, expected_list);
-            var returned_value = LocusZoom.DataLayers.get("foo", "baz", {});
-            var expected_value = new foo_new("baz", {});
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
+            var expected_value = new foo_new({ id: "baz" });
             assert.equal(returned_value.id, expected_value.id);
             assert.deepEqual(returned_value.layout, expected_value.layout);
             assert.equal(returned_value.render(), expected_value.render());
@@ -364,7 +364,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception when adding a new data layer with an already in use name', function(){
             assert.throws(function(){
-                var foo = function(id, layout){
+                var foo = function(layout){
                     LocusZoom.DataLayer.apply(this, arguments);
                     this.DefaultLayout = {};
                     this.layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -388,21 +388,21 @@ describe('LocusZoom Singletons', function(){
             });
             it('should each take its ID from the arguments provided', function(){
                 this.list.forEach(function(name){
-                    var foo = new LocusZoom.DataLayers.get(name, "foo", {});
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
                     assert.equal(foo.id, "foo");
                 });
             });
             it('should each take its layout from the arguments provided and mergit with a built-in DefaultLayout', function(){
                 this.list.forEach(function(name){
-                    var layout = { test: 123 };
-                    var foo = new LocusZoom.DataLayers.get(name, "foo", layout);
+                    var layout = { id: "foo", test: 123 };
+                    var foo = new LocusZoom.DataLayers.get(name, layout);
                     var expected_layout = LocusZoom.mergeLayouts(layout, foo.DefaultLayout);
                     assert.deepEqual(foo.layout, expected_layout);
                 });
             });
             it('should each implement a render function', function(){
                 this.list.forEach(function(name){
-                    var foo = new LocusZoom.DataLayers.get(name, "foo", {});
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
                     foo.should.have.property("render").which.is.a.Function;
                 });
             });

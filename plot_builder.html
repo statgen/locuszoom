@@ -112,6 +112,7 @@
                          ];
       data_sources.add(ns, assoc_source);
       var layout = {
+          id: ns,
           title: "Analysis ID: " + analysis,
           description: ns,
           y_index: -1,
@@ -130,8 +131,9 @@
                   label_offset: 28
               }
           },
-          data_layers: {
-              significance: {
+          data_layers: [
+              {
+                  id: "significance",
                   type: "line",
                   fields: ["sig:x", "sig:y"],
                   style: {
@@ -151,7 +153,8 @@
                       html: "Significance Threshold: 3 × 10^-5"
                   }
               },
-              positions: {
+              {
+                  id: "positions",
                   type: "scatter",
                   point_shape: "circle",
                   point_size: {
@@ -217,9 +220,9 @@
                           + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>"
                   }
               }
-          }
+          ]
       };
-      plot.addPanel(ns, layout);
+      plot.addPanel(layout);
     }
 
     var plot;

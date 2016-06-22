@@ -116,18 +116,6 @@ describe('LocusZoom Core', function(){
             assert.deepEqual(instance.state, instance.layout.state);
         });
 
-        it('should allow for populating an instance with a predefined layout', function(){
-            LocusZoom.populate.should.be.a.Function;
-            var instance = LocusZoom.populate("#instance_id", {});
-            instance.should.be.an.Object;
-            instance.id.should.be.exactly("instance_id");
-            var svg_selector = d3.select('div#instance_id svg');
-            svg_selector.should.be.an.Object;
-            svg_selector.size().should.be.exactly(1);
-            instance.svg.should.be.an.Object;
-            assert.equal(instance.svg.html(), svg_selector.html());
-        });
-
         describe("Position Queries", function() {
             it('should have a parsePositionQuery function', function() {
                 LocusZoom.parsePositionQuery.should.be.a.Function;
