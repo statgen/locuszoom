@@ -175,7 +175,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
      * Calculate appropriate instance dimesions from panels contained within and update instance
 */
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-
+    
     var id;
 
     // Update minimum allowable width and height by aggregating minimums from panels.
@@ -218,12 +218,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
                 this.panels[panel_id].controls.position();
             }
         }.bind(this));
-        // Reposition panel boundaries if showing
-        if (this.panel_boundaries && this.panel_boundaries.showing){
-            this.panel_boundaries.position();
-        }
-        // Resize plot curtain if necessary
-        this.curtain.update();
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -255,6 +249,14 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // If the instance has been initialized then trigger some necessary render functions
     if (this.initialized){
+        // Reposition panel boundaries if showing
+        if (this.panel_boundaries && this.panel_boundaries.showing){
+            this.panel_boundaries.position();
+        }
+        // Reposition plot curtain and loader
+        this.curtain.update();
+        this.loader.update();
+        // Reposition UI layer
         this.ui.render();
     }
 
@@ -499,12 +501,12 @@ LocusZoom.Instance.prototype.initialize = function(){
                     }.bind(this));
                 this.curtain.showing = true;
             }
-            this.curtain.update(content, css);
+            return this.curtain.update(content, css);
         }.bind(this),
         update: function(content, css){
             if (!this.curtain.showing){ return; }
-            // Apply CSS, if passed an object
-            if (typeof css == "object"){
+            // Apply CSS if provided
+            if (typeof css == "object" && css != null){
                 this.curtain.selector.style(css);
             }
             // Update size and position
@@ -519,10 +521,11 @@ LocusZoom.Instance.prototype.initialize = function(){
                 "max-width": (this.layout.width - 40) + "px",
                 "max-height": (this.layout.height - 40) + "px",
             });
-            // Apply content if passed any
+            // Apply content if provided
             if (typeof content == "string"){
                 this.curtain.content_selector.html(content);
             }
+            return this.curtain;
         }.bind(this),
         hide: function(){
             if (!this.curtain.showing){ return; }
@@ -531,6 +534,86 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.curtain.selector = null;
             this.curtain.content_selector = null;
             this.curtain.showing = false;
+            return this.curtain;
+        }.bind(this)
+    };
+
+    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
+    this.loader = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        progress_selector: null,
+        cancel_selector: null,
+        show: function(content){
+            // Generate loader
+            if (!this.loader.showing){
+                this.loader.selector = d3.select(this.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
+                this.loader.content_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-content");
+                this.loader.progress_selector = this.loader.selector
+                    .append("div").attr("class", "lz-loader-progress-container")
+                    .append("div").attr("class", "lz-loader-progress");
+                /* TODO: figure out how to make this cancel button work
+                this.loader.cancel_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-cancel").html("Cancel")
+                    .on("click", function(){
+                        this.loader.hide();
+                    }.bind(this));
+                */
+                this.loader.showing = true;
+                if (typeof content == "undefined"){ content = "Loading..."; }
+            }
+            return this.loader.update(content);
+        }.bind(this),
+        update: function(content, percent){
+            if (!this.loader.showing){ return; }
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.loader.content_selector.html(content);
+            }
+            // Update size and position
+            var padding = 6; // is there a better place to store/define this?
+            var plot_page_origin = this.getPageOrigin();
+            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
+            this.loader.selector.style({
+                top: (plot_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
+                left: (plot_page_origin.x + padding) + "px",
+            });
+            /* Uncomment this code when a functional cancel button can be shown
+            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
+            this.loader.content_selector.style({
+                "padding-right": (cancel_boundrect.width + padding) + "px"
+            });
+            */
+            // Apply percent if provided
+            if (typeof percent == "number"){
+                this.loader.progress_selector.style({
+                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                });
+            }
+            return this.loader;
+        }.bind(this),
+        animate: function(){
+            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
+            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+            return this.loader;
+        }.bind(this),
+        setPercentCompleted: function(percent){
+            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+            return this.loader.update(null, percent);
+        }.bind(this),
+        hide: function(){
+            if (!this.loader.showing){ return; }
+            // Remove loader
+            this.loader.selector.remove();
+            this.loader.selector = null;
+            this.loader.content_selector = null;
+            this.loader.progress_selector = null;
+            this.loader.cancel_selector = null;
+            this.loader.showing = false;
+            return this.loader;
         }.bind(this)
     };
 
