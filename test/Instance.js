@@ -209,10 +209,10 @@ describe('LocusZoom.Instance', function(){
                 d3.select("body").append("div").attr("id", "plot");
                 this.instance = LocusZoom.populate("#plot");
             });
-            it('second-to-last child should be a ui group element', function(){
+            it('last child should be a ui group element', function(){
                 var childNodes = this.instance.svg.node().childNodes.length;
-                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("id").should.be.exactly("plot.ui");
-                d3.select(this.instance.svg.node().childNodes[childNodes-2]).attr("class").should.be.exactly("lz-ui");
+                d3.select(this.instance.svg.node().childNodes[childNodes-1]).attr("id").should.be.exactly("plot.ui");
+                d3.select(this.instance.svg.node().childNodes[childNodes-1]).attr("class").should.be.exactly("lz-ui");
             });
             it('should have a ui object with ui svg selectors', function(){
                 this.instance.ui.should.be.an.Object;
@@ -235,35 +235,6 @@ describe('LocusZoom.Instance', function(){
                 this.instance.ui.show();
                 this.instance.ui.hide();
                 assert.equal(this.instance.ui.svg.style("display"), "none");
-            });
-        });
-        describe("Curtain Layer", function() {
-            beforeEach(function(){
-                d3.select("body").append("div").attr("id", "plot");
-                this.instance = LocusZoom.populate("#plot");
-            });
-            it('last child should be a curtain group element', function(){
-                d3.select(this.instance.svg.node().lastChild).attr("id").should.be.exactly("plot.curtain");
-                d3.select(this.instance.svg.node().lastChild).attr("class").should.be.exactly("lz-curtain");
-            });
-            it('should have a curtain object with stored svg selector', function(){
-                this.instance.curtain.should.be.an.Object;
-                this.instance.curtain.svg.should.be.an.Object;
-                assert.equal(this.instance.curtain.svg.html(), this.instance.svg.select("#plot\\.curtain").html());
-            });
-            it('should be hidden by default', function(){
-                assert.equal(this.instance.curtain.svg.style("display"), "none");
-            });
-            it('should have a method that drops the curtain', function(){
-                this.instance.curtain.drop.should.be.a.Function;
-                this.instance.curtain.drop();
-                assert.equal(this.instance.curtain.svg.style("display"), "");
-            });
-            it('should have a method that raises the curtain', function(){
-                this.instance.curtain.raise.should.be.a.Function;
-                this.instance.curtain.drop();
-                this.instance.curtain.raise();
-                assert.equal(this.instance.curtain.svg.style("display"), "none");
             });
         });
     });

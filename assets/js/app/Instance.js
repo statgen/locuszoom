@@ -82,7 +82,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
         }
         return {
             x: x_offset + bounding_client_rect.left,
-            y: y_offset + bounding_client_rect.top
+            y: y_offset + bounding_client_rect.top,
+            width: bounding_client_rect.width,
+            height: bounding_client_rect.height
         };
     };
 
@@ -220,6 +222,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         if (this.panel_boundaries && this.panel_boundaries.showing){
             this.panel_boundaries.position();
         }
+        // Resize plot curtain if necessary
+        this.curtain.update();
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -484,40 +488,57 @@ LocusZoom.Instance.prototype.initialize = function(){
     };
     this.ui.initialize();
 
-    // Create the curtain object with svg element and drop/raise methods
-    var curtain_svg = this.svg.append("g")
-        .attr("class", "lz-curtain").style("display", "none")
-        .attr("id", this.id + ".curtain");
+    // Create the curtain object with show/update/hide methods
     this.curtain = {
-        svg: curtain_svg,
-        drop: function(message){
-            this.svg.style("display", null);
-            if (typeof message != "undefined"){
-                try {
-                    this.svg.select("text").selectAll("tspan").remove();
-                    message.split("\n").forEach(function(line){
-                        this.svg.select("text").append("tspan")
-                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+        showing: false,
+        selector: null,
+        content_selector: null,
+        show: function(content, css){
+            // Generate curtain
+            if (!this.curtain.showing){
+                this.curtain.selector = d3.select(this.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
+                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
+                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
+                    .on("click", function(){
+                        this.curtain.hide();
                     }.bind(this));
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "2.5em")
-                        .attr("class", "dismiss").text("Dismiss")
-                        .on("click", function(){
-                            this.raise();
-                        }.bind(this));
-                } catch (e){
-                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
-                }
+                this.curtain.showing = true;
             }
-        },
-        raise: function(){
-            this.svg.style("display", "none");
-        }
+            this.curtain.update(content, css);
+        }.bind(this),
+        update: function(content, css){
+            if (!this.curtain.showing){ return; }
+            // Apply CSS, if passed an object
+            if (typeof css == "object"){
+                this.curtain.selector.style(css);
+            }
+            // Update size and position
+            var plot_page_origin = this.getPageOrigin();
+            this.curtain.selector.style({
+                top: plot_page_origin.y + "px",
+                left: plot_page_origin.x + "px",
+                width: this.layout.width + "px",
+                height: this.layout.height + "px",
+            });
+            this.curtain.content_selector.style({
+                "max-width": (this.layout.width - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px",
+            });
+            // Apply content if passed any
+            if (typeof content == "string"){
+                this.curtain.content_selector.html(content);
+            }
+        }.bind(this),
+        hide: function(){
+            if (!this.curtain.showing){ return; }
+            // Remove curtain
+            this.curtain.selector.remove();
+            this.curtain.selector = null;
+            this.curtain.content_selector = null;
+            this.curtain.showing = false;
+        }.bind(this)
     };
-    this.curtain.svg.append("rect").attr("width", "100%").attr("height", "100%");
-    this.curtain.svg.append("text")
-        .attr("id", this.id + ".curtain_text")
-        .attr("x", "1em").attr("y", "0em");
 
     // Create the panel_boundaries object with show/position/hide methods
     this.panel_boundaries = {
@@ -528,7 +549,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         selectors: [],
         show: function(){
             // Generate panel boundaries
-            if (!this.showing){
+            if (!this.showing && !this.parent.curtain.showing){
                 this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
                     var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
@@ -568,6 +589,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             this.position();
         },
         position: function(){
+            if (!this.showing){ return; }
             // Position panel boundaries
             var plot_page_origin = this.parent.getPageOrigin();
             this.selectors.forEach(function(selector, panel_idx){
@@ -583,6 +605,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             }.bind(this));
         },
         hide: function(){
+            if (!this.showing){ return; }
             // Remove panel boundaries
             this.selectors.forEach(function(selector){
                 selector.remove();

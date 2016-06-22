@@ -46,7 +46,7 @@
 
 </head>
 
-<body style="background-color: #E8E8E8; margin-left: 20px; margin-right: 20px;">
+<body style="background-color: #E8E8E8; margin-left: 50px; margin-right: 50px;">
 
   <div style="max-width: 100%; clear: both; margin: 0;">
 
@@ -223,9 +223,9 @@
           ]
       };
       var panel = plot.addPanel(layout);
-      panel.curtain.drop("loading...");
+      panel.curtain.show("loading...", { "text-align": "center" });
       panel.on("data_rendered", function(){
-        this.curtain.raise();
+        this.curtain.hide();
       }.bind(panel));
     }
 
@@ -263,9 +263,9 @@
         return;
       }
       plot = LocusZoom.populate("#plot", data_sources, layout);
-      plot.curtain.drop("applying layout...");
+      plot.curtain.show("applying layout...", { "text-align": "center" });
       plot.on("data_rendered", function(){
-        this.curtain.raise();
+        this.curtain.hide();
       }.bind(plot));
       applyOnLayoutChanged();
     }

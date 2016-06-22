@@ -7,18 +7,6 @@ svg.lz-locuszoom {
   svg.lz-locuszoom rect.lz-clickarea {
     fill: black;
     fill-opacity: 0; }
-  svg.lz-locuszoom .lz-curtain rect {
-    fill: #d2d2d2;
-    fill-opacity: 0.85; }
-  svg.lz-locuszoom .lz-curtain text, svg.lz-locuszoom .lz-curtain tspan {
-    fill: black;
-    font-weight: 600;
-    font-size: 14px;
-    text-anchor: start;
-    alignment-baseline: hanging; }
-  svg.lz-locuszoom .lz-curtain tspan.dismiss {
-    fill: #31708f;
-    cursor: pointer; }
   svg.lz-locuszoom .lz-mouse_guide rect {
     fill: #d2d2d2;
     fill-opacity: 0.85; }
@@ -262,6 +250,37 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   width: 100%;
   display: inline-block;
   overflow: hidden; }
+
+.lz-curtain {
+  position: absolute;
+  font-size: 2em;
+  font-weight: 600;
+  background: rgba(216, 216, 216, 0.8); }
+  .lz-curtain .lz-curtain-content {
+    position: absolute;
+    display: block;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 auto;
+    padding: 0px 20px;
+    overflow-y: auto; }
+  .lz-curtain .lz-curtain-dismiss {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 0.15em 0.5em;
+    font-size: 0.3em;
+    font-weight: 300;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 0px 0px 0px 4px;
+    pointer-events: auto;
+    cursor: pointer; }
+  .lz-curtain .lz-curtain-dismiss:hover {
+    background-color: #333333;
+    color: #D8D8D8; }
 
 .lz-locuszoom-controls {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
