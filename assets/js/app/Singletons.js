@@ -1105,7 +1105,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 .style("font-size", font_size)
                 .text(gene_name + "→");
             var label_width = temp_text.node().getBBox().width;
-            temp_text.node().remove();
+            temp_text.remove();
             return label_width;
         };
 
