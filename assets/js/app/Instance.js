@@ -52,7 +52,8 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
-        "data_rendered": []
+        "data_rendered": [],
+        "element_clicked": []
     };
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -61,14 +62,15 @@ LocusZoom.Instance = function(id, datasource, layout) {
         if (typeof hook != "function"){
             throw("Unable to register event hook, invalid hook function passed");
         }
-        this.event_hooks[event].push(hook.bind(this));
+        this.event_hooks[event].push(hook);
     };
-    this.emit = function(event){
+    this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
+        context = context || this;
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun();
+            hookToRun.call(context);
         });
     };
 

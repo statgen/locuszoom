@@ -1031,6 +1031,11 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         }
         // Apply the new status
         this.setElementStatus(status, element, status_boolean);
+        // Trigger event emitters as needed
+        if (event == "click"){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }
     }.bind(this);
     
     // Determine which bindings to set up
@@ -1887,11 +1892,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .attr("d", shape);
         }
 
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
-
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on("click", function(element){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }.bind(this));
+       
+        // Apply selectable, tooltip, etc
+        this.applyAllStatusBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -2472,6 +2483,12 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
+
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent.parent.emit("element_clicked", element);
+                }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas
                 data_layer.applyAllStatusBehaviors(clickareas);
@@ -3150,7 +3167,8 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
-        "data_rendered": []
+        "data_rendered": [],
+        "element_clicked": []
     };
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -3159,14 +3177,15 @@ LocusZoom.Instance = function(id, datasource, layout) {
         if (typeof hook != "function"){
             throw("Unable to register event hook, invalid hook function passed");
         }
-        this.event_hooks[event].push(hook.bind(this));
+        this.event_hooks[event].push(hook);
     };
-    this.emit = function(event){
+    this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
+        context = context || this;
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun();
+            hookToRun.call(context);
         });
     };
 
@@ -4109,7 +4128,8 @@ LocusZoom.Panel = function(layout, parent) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
-        "data_rendered": []
+        "data_rendered": [],
+        "element_clicked": []
     };
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -4118,14 +4138,15 @@ LocusZoom.Panel = function(layout, parent) {
         if (typeof hook != "function"){
             throw("Unable to register event hook, invalid hook function passed");
         }
-        this.event_hooks[event].push(hook.bind(this));
+        this.event_hooks[event].push(hook);
     };
-    this.emit = function(event){
+    this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
+        context = context || this;
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun();
+            hookToRun.call(context);
         });
     };
     

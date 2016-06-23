@@ -510,6 +510,11 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         }
         // Apply the new status
         this.setElementStatus(status, element, status_boolean);
+        // Trigger event emitters as needed
+        if (event == "click"){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }
     }.bind(this);
     
     // Determine which bindings to set up
