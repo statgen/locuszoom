@@ -789,11 +789,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .attr("d", shape);
         }
 
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
-
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on("click", function(element){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }.bind(this));
+       
+        // Apply selectable, tooltip, etc
+        this.applyAllStatusBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -1374,6 +1380,12 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
+
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent.parent.emit("element_clicked", element);
+                }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas
                 data_layer.applyAllStatusBehaviors(clickareas);

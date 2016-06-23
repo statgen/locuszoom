@@ -86,10 +86,6 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     }
 };
 
-LocusZoom.DataLayer.prototype.onUpdate = function(){
-    this.parent.onUpdate();
-};
-
 // Initialize a data layer
 LocusZoom.DataLayer.prototype.initialize = function(){
 
@@ -426,8 +422,9 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Trigger tool tip show/hide logic
     this.showOrHideTooltip(element);
 
-    // Trigger generic onUpdate
-    this.onUpdate();
+    // Trigger layout changed event hook
+    this.parent.emit("layout_changed");
+    this.parent.parent.emit("layout_changed");
     
 };
 
@@ -513,6 +510,11 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         }
         // Apply the new status
         this.setElementStatus(status, element, status_boolean);
+        // Trigger event emitters as needed
+        if (event == "click"){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }
     }.bind(this);
     
     // Determine which bindings to set up

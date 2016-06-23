@@ -222,7 +222,11 @@
               }
           ]
       };
-      plot.addPanel(layout);
+      var panel = plot.addPanel(layout);
+      panel.curtain.drop("loading...");
+      panel.on("data_rendered", function(){
+        this.curtain.raise();
+      }.bind(panel));
     }
 
     var plot;
@@ -237,11 +241,14 @@
                           };
       var base_layout = LocusZoom.mergeLayouts(initial_state, LocusZoom.StandardLayout);
       plot = LocusZoom.populate("#plot", data_sources, base_layout);
-      applyOnUpdate();
+      plot.on("element_clicked", function(){
+        console.log("element clicked: ", this);
+      });
+      applyOnLayoutChanged();
     }
 
-    function applyOnUpdate(){
-      plot.onUpdate(function(){
+    function applyOnLayoutChanged(){
+      plot.on("layout_changed", function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
       });
     }
@@ -259,7 +266,11 @@
         return;
       }
       plot = LocusZoom.populate("#plot", data_sources, layout);
-      applyOnUpdate();
+      plot.curtain.drop("applying layout...");
+      plot.on("data_rendered", function(){
+        this.curtain.raise();
+      }.bind(plot));
+      applyOnLayoutChanged();
     }
 
     resetPlot();

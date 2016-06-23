@@ -607,10 +607,6 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     }
 };
 
-LocusZoom.DataLayer.prototype.onUpdate = function(){
-    this.parent.onUpdate();
-};
-
 // Initialize a data layer
 LocusZoom.DataLayer.prototype.initialize = function(){
 
@@ -947,8 +943,9 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Trigger tool tip show/hide logic
     this.showOrHideTooltip(element);
 
-    // Trigger generic onUpdate
-    this.onUpdate();
+    // Trigger layout changed event hook
+    this.parent.emit("layout_changed");
+    this.parent.parent.emit("layout_changed");
     
 };
 
@@ -1034,6 +1031,11 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         }
         // Apply the new status
         this.setElementStatus(status, element, status_boolean);
+        // Trigger event emitters as needed
+        if (event == "click"){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }
     }.bind(this);
     
     // Determine which bindings to set up
@@ -1890,11 +1892,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .attr("d", shape);
         }
 
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
-
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on("click", function(element){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }.bind(this));
+       
+        // Apply selectable, tooltip, etc
+        this.applyAllStatusBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -2475,6 +2483,12 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
+
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent.parent.emit("element_clicked", element);
+                }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas
                 data_layer.applyAllStatusBehaviors(clickareas);
@@ -3150,8 +3164,30 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
 
-    // Array of functions to call when the plot is updated
-    this.onUpdateFunctions = [];
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_rendered": [],
+        "element_clicked": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("Unable to register event hook, invalid event: " + event.toString());
+        }
+        if (typeof hook != "function"){
+            throw("Unable to register event hook, invalid hook function passed");
+        }
+        this.event_hooks[event].push(hook);
+    };
+    this.emit = function(event, context){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("LocusZoom attempted to throw an invalid event: " + event.toString());
+        }
+        context = context || this;
+        this.event_hooks[event].forEach(function(hookToRun) {
+            hookToRun.call(context);
+        });
+    };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
@@ -3217,16 +3253,6 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
-};
-
-LocusZoom.Instance.prototype.onUpdate = function(func){
-    if (typeof func == "undefined" && this.onUpdateFunctions.length){
-        this.onUpdateFunctions.forEach(function(funcToRun) {
-            funcToRun();
-        });
-    } else if (typeof func == "function") {
-        this.onUpdateFunctions.push(func);
-    }
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -3352,7 +3378,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.ui.render();
     }
 
-    this.onUpdate();
+    this.emit("layout_changed");
     return this;
 };
 
@@ -3869,7 +3895,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
@@ -3903,7 +3930,8 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
@@ -3987,8 +4015,29 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.onUpdate = function(){
-        this.parent.onUpdate();
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_rendered": [],
+        "element_clicked": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("Unable to register event hook, invalid event: " + event.toString());
+        }
+        if (typeof hook != "function"){
+            throw("Unable to register event hook, invalid hook function passed");
+        }
+        this.event_hooks[event].push(hook);
+    };
+    this.emit = function(event, context){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("LocusZoom attempted to throw an invalid event: " + event.toString());
+        }
+        context = context || this;
+        this.event_hooks[event].forEach(function(hookToRun) {
+            hookToRun.call(context);
+        });
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -4148,7 +4197,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Position with initial layout parameters
     this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
         .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
+        .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
     // Append clip path to the parent svg element, size with initial layout parameters
     var clipPath = this.svg.container.append("clipPath")
@@ -4473,6 +4522,9 @@ LocusZoom.Panel.prototype.reMap = function(){
         .then(function(){
             this.initialized = true;
             this.render();
+            this.emit("layout_changed");
+            this.parent.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
             console.log(error);
