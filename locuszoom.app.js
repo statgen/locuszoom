@@ -4046,6 +4046,29 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+            // Apply panel-level state values
+            this.panel_ids_by_y_index.forEach(function(panel_id){
+                var panel = this.panels[panel_id];
+                var state_id = panel_id;
+                // Apply data-layer-level state values
+                panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+                    var data_layer = this.data_layers[data_layer_id];
+                    var state_id = panel_id + "." + data_layer_id;
+                    for (var property in this.state[state_id]){
+                        if (!this.state[state_id].hasOwnProperty(property)){ continue; }
+                        if (Array.isArray(this.state[state_id][property])){
+                            this.state[state_id][property].forEach(function(element_id){
+                                try {
+                                    this.setElementStatus(property, this.getElementById(element_id), true);
+                                } catch (e){
+                                    console.error("Unable to apply state: " + state_id + ", " + property);
+                                }
+                            }.bind(data_layer));
+                        }
+                    }
+                }.bind(panel));
+            }.bind(this));
+            // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
         }.bind(this));
@@ -4053,6 +4076,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
     return this;
     
 };
+
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
