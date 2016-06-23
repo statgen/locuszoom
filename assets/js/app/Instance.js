@@ -513,7 +513,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             return this.curtain.update(content, css);
         }.bind(this),
         update: function(content, css){
-            if (!this.curtain.showing){ return; }
+            if (!this.curtain.showing){ return this.curtain; }
             // Apply CSS if provided
             if (typeof css == "object" && css != null){
                 this.curtain.selector.style(css);
@@ -537,7 +537,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             return this.curtain;
         }.bind(this),
         hide: function(){
-            if (!this.curtain.showing){ return; }
+            if (!this.curtain.showing){ return this.curtain; }
             // Remove curtain
             this.curtain.selector.remove();
             this.curtain.selector = null;
@@ -577,7 +577,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             return this.loader.update(content);
         }.bind(this),
         update: function(content, percent){
-            if (!this.loader.showing){ return; }
+            if (!this.loader.showing){ return this.loader; }
             // Apply content if provided
             if (typeof content == "string"){
                 this.loader.content_selector.html(content);
@@ -614,7 +614,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             return this.loader.update(null, percent);
         }.bind(this),
         hide: function(){
-            if (!this.loader.showing){ return; }
+            if (!this.loader.showing){ return this.loader; }
             // Remove loader
             this.loader.selector.remove();
             this.loader.selector = null;
@@ -674,9 +674,10 @@ LocusZoom.Instance.prototype.initialize = function(){
                 this.showing = true;
             }
             this.position();
+            return this;
         },
         position: function(){
-            if (!this.showing){ return; }
+            if (!this.showing){ return this; }
             // Position panel boundaries
             var plot_page_origin = this.parent.getPageOrigin();
             this.selectors.forEach(function(selector, panel_idx){
@@ -693,15 +694,17 @@ LocusZoom.Instance.prototype.initialize = function(){
                     width: width + "px"
                 });
             }.bind(this));
+            return this;
         },
         hide: function(){
-            if (!this.showing){ return; }
+            if (!this.showing){ return this; }
             // Remove panel boundaries
             this.selectors.forEach(function(selector){
                 selector.remove();
             });
             this.selectors = [];
             this.showing = false;
+            return this;
         }
     };
 
@@ -762,16 +765,19 @@ LocusZoom.Instance.prototype.initialize = function(){
             }
             // Update all control element values
             this.update();
+            return this;
         },
         update: function(){
             this.div.attr("width", this.parent.layout.width);
             var display_width = this.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
             var display_height = this.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
             this.dimensions.text(display_width + "px × " + display_height + "px");
+            return this;
         },
         hide: function(){
             this.div.remove();
             this.showing = false;
+            return this;
         },
         generateBase64SVG: function(){
             return Q.fcall(function () {

@@ -294,7 +294,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             return this.curtain.update(content, css);
         }.bind(this),
         update: function(content, css){
-            if (!this.curtain.showing){ return; }
+            if (!this.curtain.showing){ return this.curtain; }
             // Apply CSS if provided
             if (typeof css == "object"){
                 this.curtain.selector.style(css);
@@ -318,7 +318,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             return this.curtain;
         }.bind(this),
         hide: function(){
-            if (!this.curtain.showing){ return; }
+            if (!this.curtain.showing){ return this.curtain; }
             // Remove curtain
             this.curtain.selector.remove();
             this.curtain.selector = null;
@@ -358,7 +358,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             return this.loader.update(content);
         }.bind(this),
         update: function(content, percent){
-            if (!this.loader.showing){ return; }
+            if (!this.loader.showing){ return this.loader; }
             // Apply content if provided
             if (typeof content == "string"){
                 this.loader.content_selector.html(content);
@@ -395,7 +395,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             return this.loader.update(null, percent);
         }.bind(this),
         hide: function(){
-            if (!this.loader.showing){ return; }
+            if (!this.loader.showing){ return this.loader; }
             // Remove loader
             this.loader.selector.remove();
             this.loader.selector = null;
@@ -413,8 +413,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         hide_timeout: null,
         link_selectors: {},
         show: function(){
-            if (!this.layout.controls || this.controls.selector){ return; }
-            if (this.curtain.showing || this.parent.curtain.showing){ return; }
+            if (!this.layout.controls || this.controls.selector){ return this.controls; }
+            if (this.curtain.showing || this.parent.curtain.showing){ return this.controls; }
             this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
@@ -473,9 +473,10 @@ LocusZoom.Panel.prototype.initialize = function(){
                             .attr("id", this.getBaseId() + ".description")
                             .html(this.layout.description);
                         this.controls.description.showing = true;
+                        return this.controls.description;
                     }.bind(this),
                     position: function(){
-                        if (!this.controls.description.showing){ return; }
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         var padding = 4; // is there a better place to store this?
                         var page_origin = this.getPageOrigin();
                         var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
@@ -483,14 +484,17 @@ LocusZoom.Panel.prototype.initialize = function(){
                         var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
                         var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
                         this.controls.description.selector.style({ top: top, left: left });
+                        return this.controls.description;
                     }.bind(this),
                     hide: function(){
-                        if (!this.controls.description.showing){ return; }
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
                         this.controls.description.selector.remove();
                         this.controls.description.showing = false;
+                        return this.controls.description;
                     }.bind(this)
                 };
+                return this.controls;
             }
             // Remove button
             if (this.layout.controls.remove){
@@ -509,10 +513,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                         // Remove the panel
                         this.parent.removePanel(this.id);
                     }.bind(this));
+                return this.controls;
             }
         }.bind(this),
         position: function(){
-            if (!this.layout.controls || !this.controls.selector){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             var page_origin = this.getPageOrigin();
             var client_rect = this.controls.selector.node().getBoundingClientRect();
             var top = page_origin.y.toString() + "px";
@@ -529,15 +534,17 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.controls.link_selectors.reposition_down){
                 this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
             }
+            return this.controls;
         }.bind(this),
         hide: function(){
-            if (!this.layout.controls || !this.controls.selector){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             // Do not hide if this panel is showing a description
-            if (this.controls.description && this.controls.description.showing){ return; }
+            if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return; }
+            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
+            return this.controls;
         }.bind(this)
     };
 
