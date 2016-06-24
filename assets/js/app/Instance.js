@@ -52,6 +52,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
+        "data_requested": [],
         "data_rendered": [],
         "element_clicked": []
     };
@@ -919,6 +920,11 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
     for (var property in new_state) {
         this.state[property] = new_state[property];
     }
+
+    this.emit("data_requested");
+    this.panel_ids_by_y_index.forEach(function(panel_id){
+        this.panels[panel_id].emit("data_requested");
+    }.bind(this));
 
     this.remap_promises = [];
     for (var id in this.panels){

@@ -78,6 +78,7 @@ LocusZoom.Panel = function(layout, parent) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
+        "data_requested": [],
         "data_rendered": [],
         "element_clicked": []
     };
