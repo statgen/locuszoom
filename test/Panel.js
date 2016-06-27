@@ -166,4 +166,96 @@ describe('LocusZoom.Panel', function(){
         });
     });
 
+    describe("Panel Curtain and Loader", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            this.layout = {
+                width: 100,
+                height: 100,
+                min_width: 100,
+                min_height: 100,
+                resizable: false,
+                aspect_ratio: 1,
+                panels: [
+                    { id: "test",
+                      width: 100,
+                      height: 100 }
+                ],
+                controls: false
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+            this.panel = this.plot.panels.test;
+        });
+        it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
+            this.panel.should.have.property("curtain").which.is.an.Object;
+            this.panel.curtain.should.have.property("showing").which.is.exactly(false);
+            this.panel.curtain.should.have.property("show").which.is.a.Function;
+            this.panel.curtain.should.have.property("update").which.is.a.Function;
+            this.panel.curtain.should.have.property("hide").which.is.a.Function;
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.curtain.show("test content");
+            this.panel.curtain.showing.should.be.true();
+            this.panel.curtain.selector.empty().should.be.false();
+            this.panel.curtain.content_selector.empty().should.be.false();
+            this.panel.curtain.content_selector.html().should.be.exactly("test content");
+            this.panel.curtain.hide();
+            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors", function(){
+            this.panel.should.have.property("loader").which.is.an.Object;
+            this.panel.loader.should.have.property("showing").which.is.exactly(false);
+            this.panel.loader.should.have.property("show").which.is.a.Function;
+            this.panel.loader.should.have.property("update").which.is.a.Function;
+            this.panel.loader.should.have.property("animate").which.is.a.Function;
+            this.panel.loader.should.have.property("update").which.is.a.Function;
+            this.panel.loader.should.have.property("setPercentCompleted").which.is.a.Function;
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.panel.loader.showing.should.be.false();
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+            this.panel.loader.show("test content");
+            this.panel.loader.showing.should.be.true();
+            this.panel.loader.selector.empty().should.be.false();
+            this.panel.loader.content_selector.empty().should.be.false();
+            this.panel.loader.content_selector.html().should.be.exactly("test content");
+            this.panel.loader.progress_selector.empty().should.be.false();
+            this.panel.loader.hide();
+            this.panel.loader.showing.should.be.false();
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should allow for animating or showing discrete percentages of completion", function(){
+            this.panel.loader.show("test content").animate();
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.true();
+            this.panel.loader.setPercentCompleted(15);
+            this.panel.loader.content_selector.html().should.be.exactly("test content");
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.false();
+            this.panel.loader.progress_selector.style("width").should.be.exactly("15%");
+            this.panel.loader.update("still loading...", 62);
+            this.panel.loader.content_selector.html().should.be.exactly("still loading...");
+            this.panel.loader.progress_selector.style("width").should.be.exactly("62%");
+            this.panel.loader.setPercentCompleted(200);
+            this.panel.loader.progress_selector.style("width").should.be.exactly("100%");
+            this.panel.loader.setPercentCompleted(-43);
+            this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
+            this.panel.loader.setPercentCompleted("foo");
+            this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
+        });
+    });
+
 });

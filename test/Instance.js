@@ -342,4 +342,91 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
+    describe("Instance Curtain and Loader", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            this.layout = {
+                width: 100,
+                height: 100,
+                min_width: 100,
+                min_height: 100,
+                resizable: false,
+                aspect_ratio: 1,
+                panels: [],
+                controls: false
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+        });
+        it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
+            this.plot.should.have.property("curtain").which.is.an.Object;
+            this.plot.curtain.should.have.property("showing").which.is.exactly(false);
+            this.plot.curtain.should.have.property("show").which.is.a.Function;
+            this.plot.curtain.should.have.property("update").which.is.a.Function;
+            this.plot.curtain.should.have.property("hide").which.is.a.Function;
+            this.plot.curtain.should.have.property("selector").which.is.exactly(null);
+            this.plot.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.plot.curtain.showing.should.be.false();
+            this.plot.curtain.should.have.property("selector").which.is.exactly(null);
+            this.plot.curtain.should.have.property("content_selector").which.is.exactly(null);
+            this.plot.curtain.show("test content");
+            this.plot.curtain.showing.should.be.true();
+            this.plot.curtain.selector.empty().should.be.false();
+            this.plot.curtain.content_selector.empty().should.be.false();
+            this.plot.curtain.content_selector.html().should.be.exactly("test content");
+            this.plot.curtain.hide();
+            this.plot.curtain.showing.should.be.false();
+            this.plot.curtain.should.have.property("selector").which.is.exactly(null);
+            this.plot.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors", function(){
+            this.plot.should.have.property("loader").which.is.an.Object;
+            this.plot.loader.should.have.property("showing").which.is.exactly(false);
+            this.plot.loader.should.have.property("show").which.is.a.Function;
+            this.plot.loader.should.have.property("update").which.is.a.Function;
+            this.plot.loader.should.have.property("animate").which.is.a.Function;
+            this.plot.loader.should.have.property("update").which.is.a.Function;
+            this.plot.loader.should.have.property("setPercentCompleted").which.is.a.Function;
+            this.plot.loader.should.have.property("selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.plot.loader.showing.should.be.false();
+            this.plot.loader.should.have.property("selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("progress_selector").which.is.exactly(null);
+            this.plot.loader.show("test content");
+            this.plot.loader.showing.should.be.true();
+            this.plot.loader.selector.empty().should.be.false();
+            this.plot.loader.content_selector.empty().should.be.false();
+            this.plot.loader.content_selector.html().should.be.exactly("test content");
+            this.plot.loader.progress_selector.empty().should.be.false();
+            this.plot.loader.hide();
+            this.plot.loader.showing.should.be.false();
+            this.plot.loader.should.have.property("selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.plot.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should allow for animating or showing discrete percentages of completion", function(){
+            this.plot.loader.show("test content").animate();
+            this.plot.loader.progress_selector.classed("lz-loader-progress-animated").should.be.true();
+            this.plot.loader.setPercentCompleted(15);
+            this.plot.loader.content_selector.html().should.be.exactly("test content");
+            this.plot.loader.progress_selector.classed("lz-loader-progress-animated").should.be.false();
+            this.plot.loader.progress_selector.style("width").should.be.exactly("15%");
+            this.plot.loader.update("still loading...", 62);
+            this.plot.loader.content_selector.html().should.be.exactly("still loading...");
+            this.plot.loader.progress_selector.style("width").should.be.exactly("62%");
+            this.plot.loader.setPercentCompleted(200);
+            this.plot.loader.progress_selector.style("width").should.be.exactly("100%");
+            this.plot.loader.setPercentCompleted(-43);
+            this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
+            this.plot.loader.setPercentCompleted("foo");
+            this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
+        });
+    });
+
 });
