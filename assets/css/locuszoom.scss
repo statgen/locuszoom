@@ -16,24 +16,6 @@ svg.#{$namespace}-locuszoom {
     fill-opacity: 0;
   }
 
-  .#{$namespace}-curtain {
-    rect {
-      fill: rgb(210,210,210);
-      fill-opacity: 0.85;
-    }
-    text, tspan {
-      fill: rgb(0,0,0);
-      font-weight: 600;
-      font-size: 14px;
-      text-anchor: start;
-      alignment-baseline: hanging;
-    }
-    tspan.dismiss {
-      fill: rgb(49,112,143);
-      cursor: pointer;
-    }
-  }
-
   .#{$namespace}-mouse_guide {
     rect {
       fill: rgb(210,210,210);
@@ -323,6 +305,114 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   overflow: hidden;
 }
 
+.#{$namespace}-curtain {
+  
+  position: absolute;
+  font-size: 2em;
+  font-weight: 600;
+  background: rgba(216,216,216,0.8);
+
+  .#{$namespace}-curtain-content {
+    position: absolute;
+    display: block;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 auto;
+    padding: 0px 20px;
+    overflow-y: auto;
+  }
+
+  .#{$namespace}-curtain-dismiss {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 0.15em 0.5em;
+    font-size: 0.3em;
+    font-weight: 300;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 0px 0px 0px 4px;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .#{$namespace}-curtain-dismiss:hover {
+    background-color: #333333;
+    color: #D8D8D8;
+  }
+  
+}
+
+.#{$namespace}-loader {
+
+  position: absolute;
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  padding: 6px;
+  background: rgba(240,235,228,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
+
+  .#{$namespace}-loader-content {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  .#{$namespace}-loader-cancel {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    padding: 2px 4px;
+    font-size: 9px;
+    font-weight: 300;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 0px 4px 0px 4px;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .#{$namespace}-loader-cancel:hover {
+    background-color: #333333;
+    color: #D8D8D8;
+  }
+
+  .#{$namespace}-loader-progress-container {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 2px;
+    padding-top: 6px;
+  }
+
+  .#{$namespace}-loader-progress {
+    position: absolute;
+    left: 0%;
+    width: 0%;
+    height: 2px;
+    background-color: #{$default_black_shadow};
+  }
+
+  .#{$namespace}-loader-progress-animated {
+    animation-name: #{$namespace}-loader-animate;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  } 
+  
+}
+
+@keyframes #{$namespace}-loader-animate {
+  0%   { width: 0%;   left: 0%;   }
+  50%  { width: 100%; left: 0%;   }
+  100% { width: 0%;   left: 100%; }
+}
+
 .#{$namespace}-locuszoom-controls {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
@@ -420,29 +510,27 @@ div.#{$namespace}-panel-description {
 
 div.#{$namespace}-panel-boundary {
   position: absolute;
-  height: 4px;
-  width: 200px;
-  border-radius: 2px;
-  background: rgba(235,240,228,0.5);
-  border: 1px solid #{$default_black_shadow};
-}
-
-div.#{$namespace}-panel-boundary {
-  position: absolute;
   height: 3px;
-  width: 200px;
-  border-radius: 1px;
-  background: rgba(216,216,216,0.4);
-  border: 1px solid #{$default_black_shadow};
   cursor: row-resize;
+  display: block;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
-div.#{$namespace}-panel-boundary:hover {
+div.#{$namespace}-panel-boundary span {
+  display: block;
+  border-radius: 1px;
+  background: rgba(216,216,216,0);
+  border: 1px solid rgba(216,216,216,0);
+  height: 3px;
+}
+
+div.#{$namespace}-panel-boundary:hover span {
   background: rgba(216,216,216,1);
   border: 1px solid #{$default_black};
 }
 
-div.#{$namespace}-panel-boundary:active {
+div.#{$namespace}-panel-boundary:active span {
   background: rgba(51,51,51,1);
   border: 1px solid rgba(216,216,216,1);
 }

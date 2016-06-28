@@ -78,6 +78,7 @@ LocusZoom.Panel = function(layout, parent) {
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
+        "data_requested": [],
         "data_rendered": [],
         "element_clicked": []
     };
@@ -211,7 +212,11 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
     }
     
-    if (this.initialized){ this.render(); }
+    if (this.initialized){
+        this.render();
+        this.curtain.update();
+        this.loader.update();
+    }
     return this;
 };
 
@@ -270,41 +275,138 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Append a curtain element with svg element and drop/raise methods
-    var panel_curtain_svg = this.svg.container.append("g")
-        .attr("id", this.getBaseId() + ".curtain")
-        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)")
-        .attr("class", "lz-curtain").style("display", "none");
+    // Create the curtain object with show/update/hide methods
     this.curtain = {
-        svg: panel_curtain_svg,
-        drop: function(message){
-            this.svg.style("display", null);
-            if (typeof message != "undefined"){
-                try {
-                    this.svg.select("text").selectAll("tspan").remove();
-                    message.split("\n").forEach(function(line){
-                        this.svg.select("text").append("tspan")
-                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+        showing: false,
+        selector: null,
+        content_selector: null,
+        show: function(content, css){
+            // Generate curtain
+            if (!this.curtain.showing){
+                this.curtain.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
+                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
+                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
+                    .on("click", function(){
+                        this.curtain.hide();
                     }.bind(this));
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "2.5em")
-                        .attr("class", "dismiss").text("Dismiss")
-                        .on("click", function(){
-                            this.raise();
-                        }.bind(this));
-                } catch (e){
-                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
-                }
+                this.curtain.showing = true;
             }
-        },
-        raise: function(){
-            this.svg.style("display", "none");
-        }
+            return this.curtain.update(content, css);
+        }.bind(this),
+        update: function(content, css){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Apply CSS if provided
+            if (typeof css == "object"){
+                this.curtain.selector.style(css);
+            }
+            // Update size and position
+            var panel_page_origin = this.getPageOrigin();
+            this.curtain.selector.style({
+                top: panel_page_origin.y + "px",
+                left: panel_page_origin.x + "px",
+                width: this.layout.width + "px",
+                height: this.layout.height + "px",
+            });
+            this.curtain.content_selector.style({
+                "max-width": (this.layout.width - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px",
+            });
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.curtain.content_selector.html(content);
+            }
+            return this.curtain;
+        }.bind(this),
+        hide: function(){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Remove curtain
+            this.curtain.selector.remove();
+            this.curtain.selector = null;
+            this.curtain.content_selector = null;
+            this.curtain.showing = false;
+            return this.curtain;
+        }.bind(this)
     };
-    this.curtain.svg.append("rect").attr("width", "100%").attr("height", "100%");
-    this.curtain.svg.append("text")
-        .attr("id", this.getBaseId() + ".curtain_text")
-        .attr("x", "1em").attr("y", "0em");
+
+    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
+    this.loader = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        progress_selector: null,
+        cancel_selector: null,
+        show: function(content){
+            // Generate loader
+            if (!this.loader.showing){
+                this.loader.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
+                this.loader.content_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-content");
+                this.loader.progress_selector = this.loader.selector
+                    .append("div").attr("class", "lz-loader-progress-container")
+                    .append("div").attr("class", "lz-loader-progress");
+                /* TODO: figure out how to make this cancel button work
+                this.loader.cancel_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-cancel").html("Cancel")
+                    .on("click", function(){
+                        this.loader.hide();
+                    }.bind(this));
+                */
+                this.loader.showing = true;
+                if (typeof content == "undefined"){ content = "Loading..."; }
+            }
+            return this.loader.update(content);
+        }.bind(this),
+        update: function(content, percent){
+            if (!this.loader.showing){ return this.loader; }
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.loader.content_selector.html(content);
+            }
+            // Update size and position
+            var padding = 6; // is there a better place to store/define this?
+            var panel_page_origin = this.getPageOrigin();
+            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
+            this.loader.selector.style({
+                top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
+                left: (panel_page_origin.x + padding) + "px",
+            });
+            /* Uncomment this code when a functional cancel button can be shown
+            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
+            this.loader.content_selector.style({
+                "padding-right": (cancel_boundrect.width + padding) + "px"
+            });
+            */
+            // Apply percent if provided
+            if (typeof percent == "number"){
+                this.loader.progress_selector.style({
+                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                });
+            }
+            return this.loader;
+        }.bind(this),
+        animate: function(){
+            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
+            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+            return this.loader;
+        }.bind(this),
+        setPercentCompleted: function(percent){
+            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+            return this.loader.update(null, percent);
+        }.bind(this),
+        hide: function(){
+            if (!this.loader.showing){ return this.loader; }
+            // Remove loader
+            this.loader.selector.remove();
+            this.loader.selector = null;
+            this.loader.content_selector = null;
+            this.loader.progress_selector = null;
+            this.loader.cancel_selector = null;
+            this.loader.showing = false;
+            return this.loader;
+        }.bind(this)
+    };
 
     // Initialize controls element
     this.controls = {
@@ -312,7 +414,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         hide_timeout: null,
         link_selectors: {},
         show: function(){
-            if (!this.layout.controls || this.controls.selector){ return; }
+            if (!this.layout.controls || this.controls.selector){ return this.controls; }
+            if (this.curtain.showing || this.parent.curtain.showing){ return this.controls; }
             this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
@@ -354,7 +457,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     .style({ "font-weight": "bold" })
                     .text("?")
                     .on("click", function(){
-                        if (this.controls.description.is_showing){
+                        if (this.controls.description.showing){
                             this.controls.description.hide();
                         } else {
                             this.controls.description.show();
@@ -362,7 +465,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         }
                     }.bind(this));
                 this.controls.description = {
-                    is_showing: false,
+                    showing: false,
                     selector: null,
                     show: function(){
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
@@ -370,9 +473,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                             .attr("class", "lz-panel-description")
                             .attr("id", this.getBaseId() + ".description")
                             .html(this.layout.description);
-                        this.controls.description.is_showing = true;
+                        this.controls.description.showing = true;
+                        return this.controls.description;
                     }.bind(this),
                     position: function(){
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         var padding = 4; // is there a better place to store this?
                         var page_origin = this.getPageOrigin();
                         var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
@@ -380,13 +485,17 @@ LocusZoom.Panel.prototype.initialize = function(){
                         var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
                         var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
                         this.controls.description.selector.style({ top: top, left: left });
+                        return this.controls.description;
                     }.bind(this),
                     hide: function(){
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
                         this.controls.description.selector.remove();
-                        this.controls.description.is_showing = false;
+                        this.controls.description.showing = false;
+                        return this.controls.description;
                     }.bind(this)
                 };
+                return this.controls;
             }
             // Remove button
             if (this.layout.controls.remove){
@@ -397,7 +506,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     .text("×")
                     .on("click", function(){
                         // Hide description and controls
-                        if (this.controls.description && this.controls.description.is_showing){ this.controls.description.hide(); }
+                        if (this.controls.description && this.controls.description.showing){ this.controls.description.hide(); }
                         this.controls.hide();
                         // Remove mouse event listeners for these controls
                         d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
@@ -405,16 +514,18 @@ LocusZoom.Panel.prototype.initialize = function(){
                         // Remove the panel
                         this.parent.removePanel(this.id);
                     }.bind(this));
+                return this.controls;
             }
         }.bind(this),
         position: function(){
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             var page_origin = this.getPageOrigin();
             var client_rect = this.controls.selector.node().getBoundingClientRect();
             var top = page_origin.y.toString() + "px";
             var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
             this.controls.selector.style({ position: "absolute", top: top, left: left });
             // Position description box if it's showing
-            if (this.controls.description && this.controls.description.is_showing){
+            if (this.controls.description && this.controls.description.showing){
                 this.controls.description.position();
             }
             // Apply appropriate classes to reposition buttons as needed
@@ -424,15 +535,17 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.controls.link_selectors.reposition_down){
                 this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
             }
+            return this.controls;
         }.bind(this),
         hide: function(){
-            if (!this.layout.controls || !this.controls.selector){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             // Do not hide if this panel is showing a description
-            if (this.controls.description && this.controls.description.is_showing){ return; }
+            if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return; }
+            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
+            return this.controls;
         }.bind(this)
     };
 
@@ -574,7 +687,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
             console.log(error);
-            this.curtain.drop(error);
+            this.curtain.show(error);
         }
     }
     // When all finished trigger a render
@@ -588,7 +701,7 @@ LocusZoom.Panel.prototype.reMap = function(){
         }.bind(this))
         .catch(function(error){
             console.log(error);
-            this.curtain.drop(error);
+            this.curtain.show(error);
         }.bind(this));
 };
 
