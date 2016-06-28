@@ -467,11 +467,14 @@ LocusZoom.Panel.prototype.initialize = function(){
                 this.controls.description = {
                     showing: false,
                     selector: null,
+                    content_selector: null,
                     show: function(){
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
                         this.controls.description.selector = d3.select(this.parent.svg.node().parentNode).append("div")
                             .attr("class", "lz-panel-description")
-                            .attr("id", this.getBaseId() + ".description")
+                            .attr("id", this.getBaseId() + ".description");
+                        this.controls.description.content_selector = this.controls.description.selector.append("div")
+                            .attr("class", "lz-panel-description-content")
                             .html(this.layout.description);
                         this.controls.description.showing = true;
                         return this.controls.description;
@@ -482,15 +485,30 @@ LocusZoom.Panel.prototype.initialize = function(){
                         var page_origin = this.getPageOrigin();
                         var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
                         var desc_client_rect = this.controls.description.selector.node().getBoundingClientRect();
+                        var total_content_height = this.controls.description.content_selector.node().scrollHeight;
                         var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
                         var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
-                        this.controls.description.selector.style({ top: top, left: left });
+                        var base_max_width = (this.layout.width - (2 * padding));
+                        var container_max_width = base_max_width.toString() + "px";
+                        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
+                        var base_max_height = (this.layout.height - (7 * padding) - controls_client_rect.height);
+                        var height = Math.min(total_content_height, base_max_height).toString() + "px";
+                        var max_height = base_max_height.toString() + "px";
+                        this.controls.description.selector.style({
+                            top: top, left: left,
+                            "max-width": container_max_width,
+                            "max-height": max_height,
+                            height: height
+                        });
+                        this.controls.description.content_selector.style({ "max-width": content_max_width });
                         return this.controls.description;
                     }.bind(this),
                     hide: function(){
                         if (!this.controls.description.showing){ return this.controls.description; }
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
                         this.controls.description.selector.remove();
+                        this.controls.description.selector = null;
+                        this.controls.description.content_selector = null;
                         this.controls.description.showing = false;
                         return this.controls.description;
                     }.bind(this)
