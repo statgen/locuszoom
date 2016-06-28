@@ -408,14 +408,15 @@ LocusZoom.StandardLayout = {
                         },
                         "#B8B8B8"
                     ],
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
+                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+                    id_field: "variant",
                     z_index: 2,
                     x_axis: {
                         field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        field: "pvalue|neglog10",
+                        field: "log_pvalue",
                         floor: 0,
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
@@ -432,9 +433,9 @@ LocusZoom.StandardLayout = {
                         closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<strong>{{id}}</strong><br>"
+                        html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{refAllele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
                     }
                 }
             ]
