@@ -354,14 +354,14 @@ LocusZoom.DataLayers = (function() {
     var obj = {};
     var datalayers = {};
 
-    obj.get = function(name, id, layout, parent) {
+    obj.get = function(name, layout, parent) {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
-            if (typeof id == "undefined" || typeof layout == "undefined"){
-                throw("id or layout argument missing for data layer [" + name + "]");
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
             } else {
-                return new datalayers[name](id, layout, parent);
+                return new datalayers[name](layout, parent);
             }
         } else {
             throw("data layer [" + name + "] not found");
@@ -403,7 +403,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -755,7 +755,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this));
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this));
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
@@ -773,7 +773,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -788,11 +789,17 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
                 .attr("d", shape);
         }
 
-        // Apply selectable, tooltip, etc
-        this.enableTooltips(selection);
-
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on("click", function(element){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }.bind(this));
+       
+        // Apply selectable, tooltip, etc
+        this.applyAllStatusBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -807,13 +814,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 
 });
 
-
 /*********************
   Line Data Layer
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout){
+LocusZoom.DataLayers.add("line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -988,7 +994,8 @@ LocusZoom.DataLayers.add("line", function(id, layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -1022,19 +1029,19 @@ LocusZoom.DataLayers.add("line", function(id, layout){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.createTooltip(dd.data, data_layer.state_id);
+                    data_layer.createTooltip(dd.data);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.updateTooltip(dd.data, data_layer.state_id);
-                    data_layer.positionTooltip(data_layer.state_id);
+                    data_layer.updateTooltip(dd.data);
+                    data_layer.positionTooltip(data_layer.getElementId());
                 })
                 .on("mouseout", function(){
                     data_layer.tooltip_timeout = setTimeout(function(){
                         data_layer.mouse_event = null;
-                        data_layer.destroyTooltip(data_layer.state_id);
+                        data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
                 });
             hitarea.exit().remove();
@@ -1054,7 +1061,7 @@ LocusZoom.DataLayers.add("line", function(id, layout){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout){
+LocusZoom.DataLayers.add("genes", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1098,7 +1105,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 .style("font-size", font_size)
                 .text(gene_name + "→");
             var label_width = temp_text.node().getBBox().width;
-            temp_text.node().remove();
+            temp_text.remove();
             return label_width;
         };
 
@@ -1221,7 +1228,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         selection.enter().append("g")
             .attr("class", "lz-data_layer-genes");
         
-        selection.attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this))
+        selection.attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .each(function(gene){
 
                 var data_layer = gene.parent;
@@ -1235,7 +1242,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 bboxes
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+                        return data_layer.getElementId(d) + "_bounding_box";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -1350,7 +1357,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 clickareas
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_clickarea";
+                        return data_layer.getElementId(d) + "_clickarea";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -1374,8 +1381,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
 
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent.parent.emit("element_clicked", element);
+                }.bind(this));
+
                 // Apply selectable, tooltip, etc to clickareas
-                data_layer.enableTooltips(clickareas);
+                data_layer.applyAllStatusBehaviors(clickareas);
 
             });
 
@@ -1397,7 +1410,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var gene_bbox_id = this.parent.id + "_" + tooltip.data[this.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+        var gene_bbox_id = this.getElementId(tooltip.data) + "_bounding_box";
         var gene_bbox = d3.select("#" + gene_bbox_id).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);

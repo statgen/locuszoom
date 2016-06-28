@@ -46,7 +46,7 @@
 
 </head>
 
-<body style="background-color: #E8E8E8; margin-left: 20px; margin-right: 20px;">
+<body style="background-color: #E8E8E8; margin-left: 50px; margin-right: 50px;">
 
   <div style="max-width: 100%; clear: both; margin: 0;">
 
@@ -93,7 +93,7 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: { analysis: 3 }}])
+      .add("base", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 3, id_field: "variant" }}])
       .add("ld", ["LDLZ", apiBase + "pair/LD/"])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
@@ -104,14 +104,16 @@
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
       var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
-                           { url: apiBase + "single/",
+                           { url: apiBase + "statistic/single/",
                              params: {
-                               analysis: analysis
+                               analysis: analysis,
+                               id_field: "variant"
                              }
                            }
                          ];
       data_sources.add(ns, assoc_source);
       var layout = {
+          id: ns,
           title: "Analysis ID: " + analysis,
           description: ns,
           y_index: -1,
@@ -130,8 +132,9 @@
                   label_offset: 28
               }
           },
-          data_layers: {
-              significance: {
+          data_layers: [
+              {
+                  id: "significance",
                   type: "line",
                   fields: ["sig:x", "sig:y"],
                   style: {
@@ -151,7 +154,8 @@
                       html: "Significance Threshold: 3 × 10^-5"
                   }
               },
-              positions: {
+              {
+                  id: "positions",
                   type: "scatter",
                   point_shape: "circle",
                   point_size: {
@@ -182,14 +186,14 @@
                       },
                       "#B8B8B8"
                   ],
-                  fields: [ns+":id",
+                  fields: [ns+":variant",
                            ns+":position",
                            ns+":pvalue|scinotation",
                            ns+":pvalue|neglog10",
-                           ns+":refAllele",
+                           ns+":ref_allele",
                            "ld:state",
                            "ld:isrefvar"],
-                  id_field: ns+":id",
+                  id_field: ns+":variant",
                   x_axis: {
                       field: ns+":position"
                   },
@@ -200,17 +204,30 @@
                       upper_buffer: 0.05,
                       min_extent: [ 0, 10 ]
                   },
-                  selectable: "multiple",
+                  highlighted: {
+                      onmouseover: "on",
+                      onmouseout: "off"
+                  },
+                  selected: {
+                      onclick: "toggle_exclusive",
+                      onshiftclick: "toggle"
+                  },
                   tooltip: {
-                      html: "<div><strong>{{"+ns+":id}}</strong></div>"
+                      closable: true,
+                      show: { or: ["highlighted", "selected"] },
+                      hide: { and: ["unhighlighted", "unselected"] },
+                      html: "<div><strong>{{"+ns+":variant}}</strong></div>"
                           + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
-                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>",
-                      closable: true
+                          + "<div>Ref. Allele: <strong>{{"+ns+":ref_allele}}</strong></div>"
                   }
               }
-          }
+          ]
       };
-      plot.addPanel(ns, layout);
+      var panel = plot.addPanel(layout);
+      panel.curtain.show("loading...", { "text-align": "center" });
+      panel.on("data_rendered", function(){
+        this.curtain.hide();
+      }.bind(panel));
     }
 
     var plot;
@@ -225,11 +242,14 @@
                           };
       var base_layout = LocusZoom.mergeLayouts(initial_state, LocusZoom.StandardLayout);
       plot = LocusZoom.populate("#plot", data_sources, base_layout);
-      applyOnUpdate();
+      plot.on("element_clicked", function(){
+        console.log("element clicked: ", this);
+      });
+      applyOnLayoutChanged();
     }
 
-    function applyOnUpdate(){
-      plot.onUpdate(function(){
+    function applyOnLayoutChanged(){
+      plot.on("layout_changed", function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
       });
     }
@@ -247,7 +267,11 @@
         return;
       }
       plot = LocusZoom.populate("#plot", data_sources, layout);
-      applyOnUpdate();
+      plot.curtain.show("applying layout...", { "text-align": "center" });
+      plot.on("data_rendered", function(){
+        this.curtain.hide();
+      }.bind(plot));
+      applyOnLayoutChanged();
     }
 
     resetPlot();

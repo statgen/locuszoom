@@ -46,18 +46,20 @@ A layout definition may look something like this:
 var layout = {
   width: 500,
   height: 500,
-  panels: {
-    association: {
-      data_layers: {
-         association:
+  panels: [
+    {
+      id: "association",
+      data_layers: [
+         {
+           id: "association",
            type: "scatter",
-           fields: ["trait:position", "trait:pvalue"]
+           fields: ["trait:position", "trait:pvalue"],
            x_axis: { field: "trait:position" },
            y_axis: { field: "trait:pvalue" }
          }
-      }
+      ]
     }
-  }
+  ]
 };
 ```
 
@@ -86,18 +88,20 @@ A basic example may then look like this:
       var layout = {
         width: 500,
         height: 500,
-        panels: {
-          association: {
-            data_layers: {
-              association:
+        panels: [
+          {
+            id : "association",
+            data_layers: [
+              {
+                id: "association",
                 type: "scatter",
-                fields: ["trait:position", "trait:pvalue"]
+                fields: ["trait:position", "trait:pvalue"],
                 x_axis: { field: "trait:position" },
                 y_axis: { field: "trait:pvalue" }
               }
-            }
+            ]
           }
-        }
+        ]
       };
       var plot = LocusZoom.populate("#plot", datasource, layout); 
     </script>

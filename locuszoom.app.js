@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.10"
+    version: "0.4.0"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -335,8 +335,9 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    panels: {
-        positions: {
+    panels: [
+        {
+            id: "positions",
             title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
@@ -365,8 +366,9 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
-            data_layers: {
-                significance: {
+            data_layers: [
+                {
+                    id: "significance",
                     type: "line",
                     fields: ["sig:x", "sig:y"],
                     z_index: 0,
@@ -387,7 +389,8 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
-                recomb: {
+                {
+                    id: "recomb",
                     type: "line",
                     fields: ["recomb:position", "recomb:recomb_rate"],
                     z_index: 1,
@@ -405,7 +408,8 @@ LocusZoom.StandardLayout = {
                         ceiling: 100
                     }
                 },
-                positions: {
+                {
+                    id: "positions",
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
@@ -436,28 +440,40 @@ LocusZoom.StandardLayout = {
                         },
                         "#B8B8B8"
                     ],
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
+                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+                    id_field: "variant",
                     z_index: 2,
                     x_axis: {
                         field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        field: "pvalue|neglog10",
+                        field: "log_pvalue",
                         floor: 0,
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    selectable: "one",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
                     tooltip: {
-                        html: "<strong>{{id}}</strong><br>"
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
+                        html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{refAllele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
                     }
                 }
-            }
+            ]
         },
-        genes: {
+        {
+            id: "genes",
             width: 800,
             height: 225,
             origin: { x: 0, y: 225 },
@@ -468,13 +484,24 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
-            data_layers: {
-                genes: {
+            data_layers: [
+                {
+                    id: "genes",
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
-                    selectable: "one",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
                     tooltip: {
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
                         html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
                             + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
                             + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
@@ -488,9 +515,9 @@ LocusZoom.StandardLayout = {
                             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
-            }
+            ]
         }
-    }
+    ]
 };
 
 /* global d3,LocusZoom */
@@ -508,22 +535,27 @@ LocusZoom.StandardLayout = {
 
 */
 
-LocusZoom.DataLayer = function(id, layout, parent) {
+LocusZoom.DataLayer = function(layout, parent) {
 
     this.initialized = false;
+    this.layout_idx = null;
 
-    this.id     = id;
+    this.id     = null;
     this.parent = parent || null;
     this.svg    = {};
 
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    if (this.layout.id){ this.id = this.layout.id; }
 
     // Define state parameters specific to this data layer
     if (this.parent){
         this.state = this.parent.state;
         this.state_id = this.parent.id + "." + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
-        if (this.layout.selectable){
+        if (typeof this.layout.highlighted == "object"){
+            this.state[this.state_id].highlighted = this.state[this.state_id].highlighted || [];
+        }
+        if (typeof this.layout.selected == "object"){
             this.state[this.state_id].selected = this.state[this.state_id].selected || [];
         }
     } else {
@@ -531,253 +563,11 @@ LocusZoom.DataLayer = function(id, layout, parent) {
         this.state_id = null;
     }
 
+    // Initialize parameters for storing data and tool tips
     this.data = [];
-
-    this.getBaseId = function(){
-        return this.parent.parent.id + "." + this.parent.id + "." + this.id;
-    };
-
-    this.onUpdate = function(){
-        this.parent.onUpdate();
-    };
-
-    // Tooltip methods
-    this.tooltips = {};
-    this.createTooltip = function(d, id){
-        if (typeof this.layout.tooltip != "object"){
-            throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
-        }
-        if (typeof id != "string"){
-            throw ("Unable to create tooltip: id is not a string");
-        }
-        if (this.tooltips[id]){
-            this.positionTooltip(id);
-            return;
-        }
-        this.tooltips[id] = {
-            data: d,
-            arrow: null,
-            closed: false,
-            selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
-                .attr("class", "lz-data_layer-tooltip")
-                .attr("id", this.getBaseId() + ".tooltip." + id)
-        };
-        this.updateTooltip(d, id);
-    };
-    this.updateTooltip = function(d, id){
-        // Empty the tooltip of all HTML (including its arrow!)
-        this.tooltips[id].selector.html("");
-        this.tooltips[id].arrow = null;
-        // Set the new HTML
-        if (this.layout.tooltip.html){
-            this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
-        }
-        // If the layout allows tool tips on this data layer to be closable then add the close button
-        // and add padding to the tooltip to accomodate it
-        if (this.layout.tooltip.closable){
-            this.tooltips[id].selector.style("padding-right", "24px");
-            this.tooltips[id].selector.append("a")
-                .attr("class", "lz-tooltip-close-button")
-                .attr("title", "Close")
-                .html("×")
-                .on("click", function(){
-                    this.closeTooltip(id);
-                }.bind(this));
-        }
-        // Reposition and draw a new arrow
-        this.positionTooltip(id);
-    };
-    // Close tool tip - hide the tool tip element and flag it as closed, but don't destroy it
-    this.closeTooltip = function(id){
-        if (typeof id != "string"){
-            throw ("Unable to close tooltip: id is not a string");
-        }
-        if (this.tooltips[id]){
-            if (typeof this.tooltips[id].selector == "object"){
-                this.tooltips[id].selector.style("display", "none");
-            }
-            this.tooltips[id].closed = true;
-        }
-    };
-    // Unclose tool tip - reveal and position a previously closed tool tip (rather than creating it anew)
-    this.uncloseTooltip = function(id){
-        if (typeof id != "string"){
-            throw ("Unable to unclose tooltip: id is not a string");
-        }
-        if (this.tooltips[id] && this.tooltips[id].closed){
-            if (typeof this.tooltips[id].selector == "object"){
-                this.tooltips[id].selector.style("display", null);
-            }
-            this.positionTooltip(id);
-            this.tooltips[id].closed = false;
-        }
-    };
-    // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
-    this.destroyTooltip = function(id){
-        if (typeof id != "string"){
-            throw ("Unable to destroy tooltip: id is not a string");
-        }
-        if (this.tooltips[id]){
-            if (typeof this.tooltips[id].selector == "object"){
-                this.tooltips[id].selector.remove();
-            }
-            delete this.tooltips[id];
-        }
-    };
-    this.destroyAllTooltips = function(){
-        var id;
-        for (id in this.tooltips){
-            this.destroyTooltip(id);
-        }
-    };
-    // Position tool tip - naive function to place a tool tip to the lower right of the current mouse element
-    // Most data layers reimplement this method to position tool tips specifically for the data they display
-    this.positionTooltip = function(id){
-        if (typeof id != "string"){
-            throw ("Unable to position tooltip: id is not a string");
-        }
-        // Position the div itself
-        this.tooltips[id].selector
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY) + "px");
-        // Create / update position on arrow connecting tooltip to data
-        if (!this.tooltips[id].arrow){
-            this.tooltips[id].arrow = this.tooltips[id].selector.append("div")
-                .style("position", "absolute")
-                .attr("class", "lz-data_layer-tooltip-arrow_top_left");
-        }
-        this.tooltips[id].arrow
-            .style("left", "-1px")
-            .style("top", "-1px");
-    };
-    this.positionAllTooltips = function(){
-        var id;
-        for (id in this.tooltips){
-            this.positionTooltip(id);
-        }
-    };
-
-    // Standard approach to applying unit-based selectability and general tooltip behavior (one and/or multiple)
-    // on a selection of data elements
-    this.enableTooltips = function(selection){
-        
-        if (typeof selection != "object"){ return; }
-        if (!this.layout.id_field){
-            console.warn("Data layer " + this.id + " tried to enable tooltips but does not have a valid id_field defined in the layout");
-            return;
-        }
-        
-        // Enable mouseover/mouseout tooltip show/hide behavior
-        selection.on("mouseover", function(d){
-            var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
-            var select_id = id;
-            var attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
-            if (this.layout.hover_element){
-                select_id += "_" + this.layout.hover_element;
-                attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
-            }
-            if (this.state[this.state_id].selected.indexOf(id) == -1){
-                d3.select("#" + select_id).attr("class", attr_class);
-                if (this.layout.tooltip){ this.createTooltip(d, id); }
-            }
-        }.bind(this))
-        .on("mouseout", function(d){
-            var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
-            var select_id = id;
-            var attr_class = "lz-data_layer-" + this.layout.type;
-            if (this.layout.hover_element){
-                select_id += "_" + this.layout.hover_element;
-                attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
-            }
-            if (this.state[this.state_id].selected.indexOf(id) == -1){
-                d3.select("#" + select_id).attr("class", attr_class);
-                if (this.layout.tooltip){ this.destroyTooltip(id); }
-            }
-        }.bind(this));
-        
-        if (this.layout.selectable){
-
-            var select_id, attr_class;
-            
-            // Enable selectability
-            selection.on("click", function(d){
-                var id = this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,"");
-                var selected_idx = this.state[this.state_id].selected.indexOf(id);
-                // If this element IS currently selected...
-                if (selected_idx != -1){
-                    // If in selectable:multiple mode and this tooltip was closed then unclose it and be done
-                    if (this.layout.selectable == "multiple" && this.tooltips[id] && this.tooltips[id].closed){
-                        this.uncloseTooltip(id);
-                    // Otherwise unselect the element but leave the tool tip in place (to be destroyed on mouse out)
-                    } else {
-                        this.state[this.state_id].selected.splice(selected_idx, 1);
-                        select_id = id;
-                        attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-hovered";
-                        if (this.layout.hover_element){
-                            select_id += "_" + this.layout.hover_element;
-                            attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-hovered";
-                        }
-                        d3.select("#" + select_id).attr("class", attr_class);
-                    }
-
-                // If this element IS NOT currently selected...
-                } else {
-                    // If in selectable:one mode then deselect any current selection
-                    if (this.layout.selectable == "one" && this.state[this.state_id].selected.length){
-                        this.destroyTooltip(this.state[this.state_id].selected[0]);
-                        select_id = this.state[this.state_id].selected[0];
-                        attr_class = "lz-data_layer-" + this.layout.type;
-                        if (this.layout.hover_element){
-                            select_id += "_" + this.layout.hover_element;
-                            attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element;
-                        }
-                        d3.select("#" + select_id).attr("class", attr_class);
-                        this.state[this.state_id].selected = [];
-                    }
-                    // Select the clicked element    
-                    this.state[this.state_id].selected.push(id);
-                    select_id = id;
-                    attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-selected";
-                    if (this.layout.hover_element){
-                        select_id += "_" + this.layout.hover_element;
-                        attr_class = "lz-data_layer-" + this.layout.type + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + " lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-selected";
-                    }
-                    d3.select("#" + select_id).attr("class", attr_class);
-                }
-                this.onUpdate();
-            }.bind(this));
-
-            // Apply existing elements from state
-            if (Array.isArray(this.state[this.state_id].selected) && this.state[this.state_id].selected.length){
-                this.state[this.state_id].selected.forEach(function(selected_id, idx){
-                    if (d3.select("#" + selected_id).empty()){
-                        console.warn("State elements for " + this.state_id + " contains an ID that is not or is no longer present on the plot: " + selected_id);
-                        this.state[this.state_id].selected.splice(idx, 1);
-                    } else {
-                        if (this.tooltips[selected_id] && !this.tooltips[selected_id].closed){
-                            this.positionTooltip(selected_id);
-                        } else {
-                            this.state[this.state_id].selected.splice(idx, 1);
-                            var d = d3.select("#" + selected_id).datum();
-                            d3.select("#" + selected_id).on("mouseover")(d);
-                            d3.select("#" + selected_id).on("click")(d);
-                        }
-                    }
-                }.bind(this));
-            }
-            
-        }
-    };
-
-    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
-    // Necessary for positioning any HTML elements over the panel
-    this.getPageOrigin = function(){
-        var panel_origin = this.parent.getPageOrigin();
-        return {
-            x: panel_origin.x + this.parent.layout.margin.left,
-            y: panel_origin.y + this.parent.layout.margin.top
-        };
-    };
+    if (this.layout.tooltip){
+        this.tooltips = {};
+    }
     
     return this;
 
@@ -788,6 +578,54 @@ LocusZoom.DataLayer.DefaultLayout = {
     fields: [],
     x_axis: {},
     y_axis: {}
+};
+
+LocusZoom.DataLayer.prototype.getBaseId = function(){
+    return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+};
+
+LocusZoom.DataLayer.prototype.getElementId = function(element){
+    var element_id = "element";
+    if (typeof element == "string"){
+        element_id = element;
+    } else if (typeof element == "object"){
+        var id_field = this.layout.id_field || "id";
+        if (typeof element[id_field] == "undefined"){
+            throw("Unable to generate element ID");
+        }
+        element_id = element[id_field].replace(/\W/g,"");
+    }
+    return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
+};
+
+LocusZoom.DataLayer.prototype.getElementById = function(id){
+    var selector = d3.select("#" + id.replace(/(:|\.|\[|\]|,)/g, "\\$1"));
+    if (!selector.empty() && selector.data() && selector.data().length){
+        return selector.data()[0];
+    } else {
+        return null;
+    }
+};
+
+// Initialize a data layer
+LocusZoom.DataLayer.prototype.initialize = function(){
+
+    // Append a container group element to house the main data layer group element and the clip path
+    this.svg.container = this.parent.svg.group.append("g")
+        .attr("id", this.getBaseId() + ".data_layer_container");
+        
+    // Append clip path to the container element
+    this.svg.clipRect = this.svg.container.append("clipPath")
+        .attr("id", this.getBaseId() + ".clip")
+        .append("rect");
+    
+    // Append svg group for rendering all data layer elements, clipped by the clip path
+    this.svg.group = this.svg.container.append("g")
+        .attr("id", this.getBaseId() + ".data_layer")
+        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
+
+    return this;
+
 };
 
 // Resolve a scalable parameter for an element into a single value based on its layout and the element's data
@@ -868,26 +706,375 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
 };
 
-// Initialize a data layer
-LocusZoom.DataLayer.prototype.initialize = function(){
-
-    // Append a container group element to house the main data layer group element and the clip path
-    this.svg.container = this.parent.svg.group.append("g")
-        .attr("id", this.getBaseId() + ".data_layer_container");
-        
-    // Append clip path to the container element
-    this.svg.clipRect = this.svg.container.append("clipPath")
-        .attr("id", this.getBaseId() + ".clip")
-        .append("rect");
-    
-    // Append svg group for rendering all data layer elements, clipped by the clip path
-    this.svg.group = this.svg.container.append("g")
-        .attr("id", this.getBaseId() + ".data_layer")
-        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
-
-    return this;
-
+// Generate a tool tip for a given element
+LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
+    if (typeof this.layout.tooltip != "object"){
+        throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
+    }
+    if (typeof id == "undefined"){ id = this.getElementId(d); }
+    if (this.tooltips[id]){
+        this.positionTooltip(id);
+        return;
+    }
+    this.tooltips[id] = {
+        data: d,
+        arrow: null,
+        selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
+            .attr("class", "lz-data_layer-tooltip")
+            .attr("id", id + "-tooltip")
+    };
+    this.updateTooltip(d);
 };
+
+// Update a tool tip (generate its inner HTML)
+LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
+    if (typeof id == "undefined"){ id = this.getElementId(d); }
+    // Empty the tooltip of all HTML (including its arrow!)
+    this.tooltips[id].selector.html("");
+    this.tooltips[id].arrow = null;
+    // Set the new HTML
+    if (this.layout.tooltip.html){
+        this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
+    }
+    // If the layout allows tool tips on this data layer to be closable then add the close button
+    // and add padding to the tooltip to accomodate it
+    if (this.layout.tooltip.closable){
+        this.tooltips[id].selector.style("padding-right", "24px");
+        this.tooltips[id].selector.append("a")
+            .attr("class", "lz-tooltip-close-button")
+            .attr("title", "Close")
+            .html("×")
+            .on("click", function(){
+                this.destroyTooltip(id);
+            }.bind(this));
+    }
+    // Reposition and draw a new arrow
+    this.positionTooltip(id);
+};
+
+// Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
+LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
+    if (typeof d == "string"){
+        id = d;
+    } else if (typeof id == "undefined"){
+        id = this.getElementId(d);
+    }
+    if (this.tooltips[id]){
+        if (typeof this.tooltips[id].selector == "object"){
+            this.tooltips[id].selector.remove();
+        }
+        delete this.tooltips[id];
+    }
+};
+
+// Loop through and destroy all tool tips on this data layer
+LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
+    for (var id in this.tooltips){
+        this.destroyTooltip(id);
+    }
+};
+
+// Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
+// Most data layers reimplement this method to position tool tips specifically for the data they display
+LocusZoom.DataLayer.prototype.positionTooltip = function(id){
+    if (typeof id != "string"){
+        throw ("Unable to position tooltip: id is not a string");
+    }
+    // Position the div itself
+    this.tooltips[id].selector
+        .style("left", (d3.event.pageX) + "px")
+        .style("top", (d3.event.pageY) + "px");
+    // Create / update position on arrow connecting tooltip to data
+    if (!this.tooltips[id].arrow){
+        this.tooltips[id].arrow = this.tooltips[id].selector.append("div")
+            .style("position", "absolute")
+            .attr("class", "lz-data_layer-tooltip-arrow_top_left");
+    }
+    this.tooltips[id].arrow
+        .style("left", "-1px")
+        .style("top", "-1px");
+};
+
+// Loop through and position all tool tips on this data layer
+LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
+    for (var id in this.tooltips){
+        this.positionTooltip(id);
+    }
+};
+
+// Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
+LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
+    
+    if (typeof this.layout.tooltip != "object"){ return; }
+    var id = this.getElementId(element);
+
+    var resolveStatus = function(statuses, directive, operator){
+        var status = null;
+        if (typeof statuses != "object" || statuses == null){ return null; }
+        if (Array.isArray(directive)){
+            if (typeof operator == "undefined"){ operator = "and"; }
+            if (directive.length == 1){
+                status = statuses[directive[0]];
+            } else {
+                status = directive.reduce(function(previousValue, currentValue) {
+                    if (operator == "and"){
+                        return statuses[previousValue] && statuses[currentValue];
+                    } else if (operator == "or"){
+                        return statuses[previousValue] || statuses[currentValue];
+                    }
+                    return null;
+                });
+            }
+        } else if (typeof directive == "object"){
+            var sub_status;
+            for (var sub_operator in directive){
+                sub_status = resolveStatus(statuses, directive[sub_operator], sub_operator);
+                if (status == null){
+                    status = sub_status;
+                } else if (operator == "and"){
+                    status = status && sub_status;
+                } else if (operator == "or"){
+                    status = status || sub_status;
+                }
+            }
+        }
+        return status;
+    };
+
+    var show_directive = {};
+    if (typeof this.layout.tooltip.show == "string"){
+        show_directive = { and: [ this.layout.tooltip.show ] };
+    } else if (typeof this.layout.tooltip.show == "object"){
+        show_directive = this.layout.tooltip.show;
+    }
+
+    var hide_directive = {};
+    if (typeof this.layout.tooltip.hide == "string"){
+        hide_directive = { and: [ this.layout.tooltip.hide ] };
+    } else if (typeof this.layout.tooltip.hide == "object"){
+        hide_directive = this.layout.tooltip.hide;
+    }
+
+    var statuses = {};
+    statuses.highlighted = this.state[this.state_id].highlighted.indexOf(id) != -1;
+    statuses.unhighlighted = !statuses.highlighted;
+    statuses.selected = this.state[this.state_id].selected.indexOf(id) != -1;
+    statuses.unselected = !statuses.selected;
+
+    var show_resolved = resolveStatus(statuses, show_directive);
+    var hide_resolved = resolveStatus(statuses, hide_directive);
+
+    // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
+    // Otherwise ensure tooltip does not exist
+    if (show_resolved && !hide_resolved){
+        this.createTooltip(element);
+    } else {
+        this.destroyTooltip(element);
+    }
+    
+};
+
+// Toggle the highlighted status of an element
+LocusZoom.DataLayer.prototype.highlightElement = function(element){
+    this.setElementStatus("highlighted", element, true);
+};
+LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
+    this.setElementStatus("highlighted", element, false);
+};
+
+// Toggle the highlighted status of all elements
+LocusZoom.DataLayer.prototype.highlightAllElements = function(){
+    this.setAllElementStatus("highlighted", true);
+};
+LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
+    this.setAllElementStatus("highlighted", false);
+};
+
+// Toggle the selected status of an element
+LocusZoom.DataLayer.prototype.selectElement = function(element){
+    this.setElementStatus("selected", element, true);
+};
+LocusZoom.DataLayer.prototype.unselectElement = function(element){
+    this.setElementStatus("selected", element, false);
+};
+
+// Toggle the selected status of all elements
+LocusZoom.DataLayer.prototype.selectAllElements = function(){
+    this.setAllElementStatus("selected", true);
+};
+LocusZoom.DataLayer.prototype.unselectAllElements = function(){
+    this.setAllElementStatus("selected", false);
+};
+
+// Toggle a status (e.g. highlighted, selected) on an element
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle){
+    
+    // Sanity checks
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+        throw("Invalid status passed to setElementStatus()");
+    }
+    if (typeof element == "undefined"){
+        throw("Invalid element passed to setElementStatus()");
+    }
+    if (typeof toggle == "undefined"){
+        toggle = true;
+    }
+
+    var id = this.getElementId(element);
+    
+    // Set/unset the proper status class on the appropriate DOM element
+    var element_id = id;
+    var attr_class = "lz-data_layer-" + this.layout.type + "-" + status;
+    if (this.layout.hover_element){
+        element_id += "_" + this.layout.hover_element;
+        attr_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
+    }
+    d3.select("#" + element_id).classed(attr_class, toggle);
+    
+    // Track element ID in the proper status state array
+    var element_status_idx = this.state[this.state_id][status].indexOf(id);
+    if (toggle && element_status_idx == -1){
+        this.state[this.state_id][status].push(id);
+    }
+    if (!toggle && element_status_idx != -1){
+        this.state[this.state_id][status].splice(element_status_idx, 1);
+    }
+    
+    // Trigger tool tip show/hide logic
+    this.showOrHideTooltip(element);
+
+    // Trigger layout changed event hook
+    this.parent.emit("layout_changed");
+    this.parent.parent.emit("layout_changed");
+    
+};
+
+// Toggle a status on an all elements in the data layer
+LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
+    
+    // Sanity check
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+        throw("Invalid status passed to setAllElementStatus()");
+    }
+    if (typeof toggle == "undefined"){ toggle = true; }
+
+    // Apply statuses
+    if (toggle){
+        this.data.forEach(function(element){
+            if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
+                this.setElementStatus(status, element, true);
+            }
+        }.bind(this));
+    } else {
+        var status_ids = this.state[this.state_id][status].slice();
+        status_ids.forEach(function(id){
+            var element = this.getElementById(id);
+            if (typeof element == "object" && element != null){
+                this.setElementStatus(status, element, false);
+            }
+        }.bind(this));
+    }
+    
+};
+
+// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected)
+LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
+
+    // Glossary for this function:
+    // status - an element property that can be tied to mouse behavior (e.g. highighted, selected)
+    // event - a mouse event that can be bound to a watch function (e.g. "mouseover", "click")
+    // action - a more verbose locuszoom-layout-specific form of an event (e.g. "onmouseover", "onshiftclick")
+
+    // Sanity checks
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){ return; }
+    if (typeof selection != "object"){ return; }
+    if (typeof this.layout[status] != "object" || !this.layout[status]){ return; }
+
+    // Map of supported d3 events and the locuszoom layout events they map to
+    var event_directive_map = {
+        "mouseover": ["onmouseover", "onctrlmouseover", "onshiftmouseover", "onctrlshiftmouseover"],
+        "mouseout": ["onmouseout"],
+        "click": ["onclick", "onctrlclick", "onshiftclick", "onctrlshiftclick"]
+    };
+
+    // General function to process mouse events and layout directives into discrete element status update calls
+    var handleElementStatusEvent = function(status, event, element){
+        var status_boolean = null;
+        var ctrl = d3.event.ctrlKey;
+        var shift = d3.event.shiftKey;
+        if (!event_directive_map[event]){ return; }
+        // Determine the directive by building the action string to use. Default down to basic actions
+        // if more precise actions are not defined (e.g. if onclick is defined and onshiftclick is not,
+        // but this click event happened with the shift key pressed, just treat it as a regular click)
+        var base_action = "on" + event;
+        var precise_action = "on" + (ctrl ? "ctrl" : "") + (shift ? "shift" : "") + event;
+        var directive = this.layout[status][precise_action] || this.layout[status][base_action] || null;
+        if (!directive){ return; }
+        // Resolve the value of the status boolean from the directive and the element's current status
+        switch (directive){
+        case "on":
+            status_boolean = true;
+            break;
+        case "off":
+            status_boolean = false;
+            break;
+        case "toggle":
+        case "toggle_exclusive":
+            status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
+            break;
+        }
+        if (status_boolean == null){ return; }
+        // Special handling for toggle_exclusive - if the new status_boolean is true then first set the
+        // status to off for all other elements
+        if (status_boolean && directive == "toggle_exclusive"){
+            this.setAllElementStatus(status, false);
+        }
+        // Apply the new status
+        this.setElementStatus(status, element, status_boolean);
+        // Trigger event emitters as needed
+        if (event == "click"){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }
+    }.bind(this);
+    
+    // Determine which bindings to set up
+    var events_to_bind = {};
+    Object.keys(event_directive_map).forEach(function(event){ events_to_bind[event] = false; });
+    Object.keys(this.layout[status]).forEach(function(action){
+        Object.keys(event_directive_map).forEach(function(event){
+            if (event_directive_map[event].indexOf(action) != -1){ events_to_bind[event] = true; }
+        });
+    });
+
+    // Set up the bindings
+    Object.keys(events_to_bind).forEach(function(event){
+        if (!events_to_bind[event]){ return; }
+        selection.on(event, function(element){
+            handleElementStatusEvent(status, event, element);
+        }.bind(this));
+    }.bind(this));
+                    
+};
+
+// Apply all supported status behaviors to a selection of objects
+LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
+    var supported_statuses = ["highlighted","selected"];
+    supported_statuses.forEach(function(status){
+        this.applyStatusBehavior(status, selection);
+    }.bind(this));
+};
+
+// Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+// Necessary for positioning any HTML elements over the panel
+LocusZoom.DataLayer.prototype.getPageOrigin = function(){
+    var panel_origin = this.parent.getPageOrigin();
+    return {
+        x: panel_origin.x + this.parent.layout.margin.left,
+        y: panel_origin.y + this.parent.layout.margin.top
+    };
+};
+
 
 LocusZoom.DataLayer.prototype.draw = function(){
     this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
@@ -1270,14 +1457,14 @@ LocusZoom.DataLayers = (function() {
     var obj = {};
     var datalayers = {};
 
-    obj.get = function(name, id, layout, parent) {
+    obj.get = function(name, layout, parent) {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
-            if (typeof id == "undefined" || typeof layout == "undefined"){
-                throw("id or layout argument missing for data layer [" + name + "]");
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
             } else {
-                return new datalayers[name](id, layout, parent);
+                return new datalayers[name](layout, parent);
             }
         } else {
             throw("data layer [" + name + "] not found");
@@ -1319,7 +1506,7 @@ LocusZoom.DataLayers = (function() {
   Implements a standard scatter plot
 */
 
-LocusZoom.DataLayers.add("scatter", function(id, layout){
+LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1671,7 +1858,7 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this));
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this));
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
@@ -1689,7 +1876,8 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -1704,11 +1892,17 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
                 .attr("d", shape);
         }
 
-        // Apply selectable, tooltip, etc
-        this.enableTooltips(selection);
-
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on("click", function(element){
+            this.parent.emit("element_clicked", element);
+            this.parent.parent.emit("element_clicked", element);
+        }.bind(this));
+       
+        // Apply selectable, tooltip, etc
+        this.applyAllStatusBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -1723,13 +1917,12 @@ LocusZoom.DataLayers.add("scatter", function(id, layout){
 
 });
 
-
 /*********************
   Line Data Layer
   Implements a standard line plot
 */
 
-LocusZoom.DataLayers.add("line", function(id, layout){
+LocusZoom.DataLayers.add("line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -1904,7 +2097,8 @@ LocusZoom.DataLayers.add("line", function(id, layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        if (this.layout.transition){
+        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
+        if (this.layout.transition && !dragging){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -1938,19 +2132,19 @@ LocusZoom.DataLayers.add("line", function(id, layout){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.createTooltip(dd.data, data_layer.state_id);
+                    data_layer.createTooltip(dd.data);
                 })
                 .on("mousemove", function(){
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
-                    data_layer.updateTooltip(dd.data, data_layer.state_id);
-                    data_layer.positionTooltip(data_layer.state_id);
+                    data_layer.updateTooltip(dd.data);
+                    data_layer.positionTooltip(data_layer.getElementId());
                 })
                 .on("mouseout", function(){
                     data_layer.tooltip_timeout = setTimeout(function(){
                         data_layer.mouse_event = null;
-                        data_layer.destroyTooltip(data_layer.state_id);
+                        data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
                 });
             hitarea.exit().remove();
@@ -1970,7 +2164,7 @@ LocusZoom.DataLayers.add("line", function(id, layout){
   Implements a data layer that will render gene tracks
 */
 
-LocusZoom.DataLayers.add("genes", function(id, layout){
+LocusZoom.DataLayers.add("genes", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -2014,7 +2208,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 .style("font-size", font_size)
                 .text(gene_name + "→");
             var label_width = temp_text.node().getBBox().width;
-            temp_text.node().remove();
+            temp_text.remove();
             return label_width;
         };
 
@@ -2137,7 +2331,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         selection.enter().append("g")
             .attr("class", "lz-data_layer-genes");
         
-        selection.attr("id", function(d){ return this.parent.id + "_" + d[this.layout.id_field].replace(/\W/g,""); }.bind(this))
+        selection.attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .each(function(gene){
 
                 var data_layer = gene.parent;
@@ -2151,7 +2345,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 bboxes
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+                        return data_layer.getElementId(d) + "_bounding_box";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -2266,7 +2460,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
 
                 clickareas
                     .attr("id", function(d){
-                        return data_layer.parent.id + "_" + d[data_layer.layout.id_field].replace(/\W/g,"") + "_clickarea";
+                        return data_layer.getElementId(d) + "_clickarea";
                     })
                     .attr("x", function(d){
                         return d.display_range.start;
@@ -2290,8 +2484,14 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
 
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent.parent.emit("element_clicked", element);
+                }.bind(this));
+
                 // Apply selectable, tooltip, etc to clickareas
-                data_layer.enableTooltips(clickareas);
+                data_layer.applyAllStatusBehaviors(clickareas);
 
             });
 
@@ -2313,7 +2513,7 @@ LocusZoom.DataLayers.add("genes", function(id, layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var gene_bbox_id = this.parent.id + "_" + tooltip.data[this.layout.id_field].replace(/\W/g,"") + "_bounding_box";
+        var gene_bbox_id = this.getElementId(tooltip.data) + "_bounding_box";
         var gene_bbox = d3.select("#" + gene_bbox_id).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
@@ -2635,7 +2835,8 @@ LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
 }, "AssociationLZ");
 
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
-    ["id", "position"].forEach(function(x) {
+    var id_field = this.params.id_field || "id";
+    [id_field, "position"].forEach(function(x) {
         if (fields.indexOf(x)==-1) {
             fields.unshift(x);
             outnames.unshift(x);
@@ -2688,9 +2889,9 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
-        dataFields.id = dataFields.id || nameMatch(/\bid\b/);
+        dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
         dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
-        dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\|neglog10\b/i);
+        dataFields.pvalue = dataFields.pvalue || nameMatch(/\blog_pvalue\b/i) || nameMatch(/\bpvalue\|neglog10\b/i);
         dataFields._names_ = names;
     }
     return dataFields;
@@ -2964,8 +3165,31 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // Window.onresize listener (responsive layouts only)
     this.window_onresize = null;
 
-    // Array of functions to call when the plot is updated
-    this.onUpdateFunctions = [];
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_requested": [],
+        "data_rendered": [],
+        "element_clicked": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("Unable to register event hook, invalid event: " + event.toString());
+        }
+        if (typeof hook != "function"){
+            throw("Unable to register event hook, invalid hook function passed");
+        }
+        this.event_hooks[event].push(hook);
+    };
+    this.emit = function(event, context){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("LocusZoom attempted to throw an invalid event: " + event.toString());
+        }
+        context = context || this;
+        this.event_hooks[event].forEach(function(hookToRun) {
+            hookToRun.call(context);
+        });
+    };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
@@ -2984,7 +3208,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
         }
         return {
             x: x_offset + bounding_client_rect.left,
-            y: y_offset + bounding_client_rect.top
+            y: y_offset + bounding_client_rect.top,
+            width: bounding_client_rect.width,
+            height: bounding_client_rect.height
         };
     };
 
@@ -3004,7 +3230,7 @@ LocusZoom.Instance.DefaultLayout = {
     min_height: 1,
     resizable: false,
     aspect_ratio: 1,
-    panels: {},
+    panels: [],
     controls: {
         show: "onmouseover",
         hide_delay: 300
@@ -3033,16 +3259,6 @@ LocusZoom.Instance.prototype.rescaleSVG = function(){
     this.setDimensions(clientRect.width, clientRect.height);
 };
 
-LocusZoom.Instance.prototype.onUpdate = function(func){
-    if (typeof func == "undefined" && this.onUpdateFunctions.length){
-        for (func in this.onUpdateFunctions){
-            this.onUpdateFunctions[func]();
-        }
-    } else if (typeof func == "function") {
-        this.onUpdateFunctions.push(func);
-    }
-};
-
 LocusZoom.Instance.prototype.initializeLayout = function(){
 
     // Sanity check layout values
@@ -3068,10 +3284,9 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     }
 
     // Add panels
-    var panel_id;
-    for (panel_id in this.layout.panels){
-        this.addPanel(panel_id, this.layout.panels[panel_id]);
-    }
+    this.layout.panels.forEach(function(panel_layout){
+        this.addPanel(panel_layout);
+    }.bind(this));
 
 };
 
@@ -3086,7 +3301,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
      * Calculate appropriate instance dimesions from panels contained within and update instance
 */
 LocusZoom.Instance.prototype.setDimensions = function(width, height){
-
+    
     var id;
 
     // Update minimum allowable width and height by aggregating minimums from panels.
@@ -3129,10 +3344,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
                 this.panels[panel_id].controls.position();
             }
         }.bind(this));
-        // Reposition panel boundaries if showing
-        if (this.panel_boundaries && this.panel_boundaries.showing){
-            this.panel_boundaries.position();
-        }
     }
 
     // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
@@ -3164,27 +3375,31 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // If the instance has been initialized then trigger some necessary render functions
     if (this.initialized){
+        // Reposition panel boundaries if showing
+        if (this.panel_boundaries && this.panel_boundaries.showing){
+            this.panel_boundaries.position();
+        }
+        // Reposition plot curtain and loader
+        this.curtain.update();
+        this.loader.update();
+        // Reposition UI layer
         this.ui.render();
     }
 
-    this.onUpdate();
+    this.emit("layout_changed");
     return this;
 };
 
-// Create a new panel by id and layout
-LocusZoom.Instance.prototype.addPanel = function(id, layout){
-    if (typeof id !== "string"){
-        throw "Invalid panel id passed to LocusZoom.Instance.prototype.addPanel()";
-    }
-    if (typeof this.panels[id] !== "undefined"){
-        throw "Cannot create panel with id [" + id + "]; panel with that id already exists";
-    }
+// Create a new panel from a layout
+LocusZoom.Instance.prototype.addPanel = function(layout){
+
+    // Sanity checks
     if (typeof layout !== "object"){
         throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
     }
 
     // Create the Panel and set its parent
-    var panel = new LocusZoom.Panel(id, layout, this);
+    var panel = new LocusZoom.Panel(layout, this);
     
     // Store the Panel on the Instance
     this.panels[panel.id] = panel;
@@ -3203,10 +3418,16 @@ LocusZoom.Instance.prototype.addPanel = function(id, layout){
         this.panels[panel.id].layout.y_index = length - 1;
     }
 
-    // If not present, store the panel layout in the plot layout
-    if (typeof this.layout.panels[panel.id] == "undefined"){
-        this.layout.panels[panel.id] = this.panels[panel.id].layout;
+    // Determine if this panel was already in the layout.panels array.
+    // If it wasn't, add it. Either way store the layout.panels array index on the panel.
+    var layout_idx = null;
+    this.layout.panels.forEach(function(panel_layout, idx){
+        if (panel_layout.id == panel.id){ layout_idx = idx; }
+    });
+    if (layout_idx == null){
+        layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
     }
+    this.panels[panel.id].layout_idx = layout_idx;
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
@@ -3240,9 +3461,14 @@ LocusZoom.Instance.prototype.removePanel = function(id){
     }
 
     // Delete the panel and its presence in the plot layout and state
+    this.layout.panels.splice(this.panels[id].layout_idx, 1);
     delete this.panels[id];
-    delete this.layout.panels[id];
     delete this.layout.state[id];
+
+    // Update layout_idx values for all remaining panels
+    this.layout.panels.forEach(function(panel_layout, idx){
+        this.panels[panel_layout.id].layout_idx = idx;
+    }.bind(this));
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
@@ -3341,7 +3567,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         svg: ui_svg,
         parent: this,
         hide_timeout: null,
-        is_resize_dragging: false,
+        dragging: false,
         show: function(){
             this.svg.style("display", null);
         },
@@ -3360,11 +3586,11 @@ LocusZoom.Instance.prototype.initialize = function(){
                 //resize_drag.origin(function() { return this; });
                 resize_drag.on("dragstart", function(){
                     this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                    this.is_resize_dragging = true;
+                    this.dragging = true;
                 }.bind(this));
                 resize_drag.on("dragend", function(){
                     this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                    this.is_resize_dragging = false;
+                    this.dragging = false;
                 }.bind(this));
                 resize_drag.on("drag", function(){
                     this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
@@ -3384,40 +3610,138 @@ LocusZoom.Instance.prototype.initialize = function(){
     };
     this.ui.initialize();
 
-    // Create the curtain object with svg element and drop/raise methods
-    var curtain_svg = this.svg.append("g")
-        .attr("class", "lz-curtain").style("display", "none")
-        .attr("id", this.id + ".curtain");
+    // Create the curtain object with show/update/hide methods
     this.curtain = {
-        svg: curtain_svg,
-        drop: function(message){
-            this.svg.style("display", null);
-            if (typeof message != "undefined"){
-                try {
-                    this.svg.select("text").selectAll("tspan").remove();
-                    message.split("\n").forEach(function(line){
-                        this.svg.select("text").append("tspan")
-                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+        showing: false,
+        selector: null,
+        content_selector: null,
+        show: function(content, css){
+            // Generate curtain
+            if (!this.curtain.showing){
+                this.curtain.selector = d3.select(this.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
+                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
+                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
+                    .on("click", function(){
+                        this.curtain.hide();
                     }.bind(this));
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "2.5em")
-                        .attr("class", "dismiss").text("Dismiss")
-                        .on("click", function(){
-                            this.raise();
-                        }.bind(this));
-                } catch (e){
-                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
-                }
+                this.curtain.showing = true;
             }
-        },
-        raise: function(){
-            this.svg.style("display", "none");
-        }
+            return this.curtain.update(content, css);
+        }.bind(this),
+        update: function(content, css){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Apply CSS if provided
+            if (typeof css == "object" && css != null){
+                this.curtain.selector.style(css);
+            }
+            // Update size and position
+            var plot_page_origin = this.getPageOrigin();
+            this.curtain.selector.style({
+                top: plot_page_origin.y + "px",
+                left: plot_page_origin.x + "px",
+                width: this.layout.width + "px",
+                height: this.layout.height + "px"
+            });
+            this.curtain.content_selector.style({
+                "max-width": (this.layout.width - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
+            });
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.curtain.content_selector.html(content);
+            }
+            return this.curtain;
+        }.bind(this),
+        hide: function(){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Remove curtain
+            this.curtain.selector.remove();
+            this.curtain.selector = null;
+            this.curtain.content_selector = null;
+            this.curtain.showing = false;
+            return this.curtain;
+        }.bind(this)
     };
-    this.curtain.svg.append("rect").attr("width", "100%").attr("height", "100%");
-    this.curtain.svg.append("text")
-        .attr("id", this.id + ".curtain_text")
-        .attr("x", "1em").attr("y", "0em");
+
+    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
+    this.loader = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        progress_selector: null,
+        cancel_selector: null,
+        show: function(content){
+            // Generate loader
+            if (!this.loader.showing){
+                this.loader.selector = d3.select(this.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
+                this.loader.content_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-content");
+                this.loader.progress_selector = this.loader.selector
+                    .append("div").attr("class", "lz-loader-progress-container")
+                    .append("div").attr("class", "lz-loader-progress");
+                /* TODO: figure out how to make this cancel button work
+                this.loader.cancel_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-cancel").html("Cancel")
+                    .on("click", function(){
+                        this.loader.hide();
+                    }.bind(this));
+                */
+                this.loader.showing = true;
+                if (typeof content == "undefined"){ content = "Loading..."; }
+            }
+            return this.loader.update(content);
+        }.bind(this),
+        update: function(content, percent){
+            if (!this.loader.showing){ return this.loader; }
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.loader.content_selector.html(content);
+            }
+            // Update size and position
+            var padding = 6; // is there a better place to store/define this?
+            var plot_page_origin = this.getPageOrigin();
+            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
+            this.loader.selector.style({
+                top: (plot_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
+                left: (plot_page_origin.x + padding) + "px"
+            });
+            /* Uncomment this code when a functional cancel button can be shown
+            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
+            this.loader.content_selector.style({
+                "padding-right": (cancel_boundrect.width + padding) + "px"
+            });
+            */
+            // Apply percent if provided
+            if (typeof percent == "number"){
+                this.loader.progress_selector.style({
+                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                });
+            }
+            return this.loader;
+        }.bind(this),
+        animate: function(){
+            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
+            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+            return this.loader;
+        }.bind(this),
+        setPercentCompleted: function(percent){
+            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+            return this.loader.update(null, percent);
+        }.bind(this),
+        hide: function(){
+            if (!this.loader.showing){ return this.loader; }
+            // Remove loader
+            this.loader.selector.remove();
+            this.loader.selector = null;
+            this.loader.content_selector = null;
+            this.loader.progress_selector = null;
+            this.loader.cancel_selector = null;
+            this.loader.showing = false;
+            return this.loader;
+        }.bind(this)
+    };
 
     // Create the panel_boundaries object with show/position/hide methods
     this.panel_boundaries = {
@@ -3428,11 +3752,12 @@ LocusZoom.Instance.prototype.initialize = function(){
         selectors: [],
         show: function(){
             // Generate panel boundaries
-            if (!this.showing){
+            if (!this.showing && !this.parent.curtain.showing){
                 this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
                     var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
                         .attr("title", "Resize panels");
+                    selector.append("span");
                     var panel_resize_drag = d3.behavior.drag();
                     panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
                     panel_resize_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
@@ -3466,29 +3791,37 @@ LocusZoom.Instance.prototype.initialize = function(){
                 this.showing = true;
             }
             this.position();
+            return this;
         },
         position: function(){
+            if (!this.showing){ return this; }
             // Position panel boundaries
             var plot_page_origin = this.parent.getPageOrigin();
             this.selectors.forEach(function(selector, panel_idx){
                 var panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
                 var left = plot_page_origin.x;
-                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 2;
+                var top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
                 var width = this.parent.layout.width - 1;
                 selector.style({
                     top: top + "px",
                     left: left + "px",
                     width: width + "px"
                 });
+                selector.select("span").style({
+                    width: width + "px"
+                });
             }.bind(this));
+            return this;
         },
         hide: function(){
+            if (!this.showing){ return this; }
             // Remove panel boundaries
             this.selectors.forEach(function(selector){
                 selector.remove();
             });
             this.selectors = [];
             this.showing = false;
+            return this;
         }
     };
 
@@ -3549,16 +3882,19 @@ LocusZoom.Instance.prototype.initialize = function(){
             }
             // Update all control element values
             this.update();
+            return this;
         },
         update: function(){
             this.div.attr("width", this.parent.layout.width);
             var display_width = this.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
             var display_height = this.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
             this.dimensions.text(display_width + "px × " + display_height + "px");
+            return this;
         },
         hide: function(){
             this.div.remove();
             this.showing = false;
+            return this;
         },
         generateBase64SVG: function(){
             return Q.fcall(function () {
@@ -3586,7 +3922,6 @@ LocusZoom.Instance.prototype.initialize = function(){
     };
 
     // Populate the CSS string with a CORS request to handle cross-domain CSS loading
-    var css_url = "";
     for (var stylesheet in Object.keys(document.styleSheets)){
         if ( document.styleSheets[stylesheet].href != null
              && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){
@@ -3620,13 +3955,13 @@ LocusZoom.Instance.prototype.initialize = function(){
 
     // Define instance/svg level mouse events
     this.svg.on("mouseover", function(){
-        if (!this.ui.is_resize_dragging){
+        if (!this.ui.dragging){
             clearTimeout(this.ui.hide_timeout);
             this.ui.show();
         }
     }.bind(this));
     this.svg.on("mouseout", function(){
-        if (!this.ui.is_resize_dragging){
+        if (!this.ui.dragging){
             this.ui.hide_timeout = setTimeout(function(){
                 this.ui.hide();
             }.bind(this), 300);
@@ -3678,7 +4013,8 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
@@ -3701,6 +4037,11 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         this.state[property] = new_state[property];
     }
 
+    this.emit("data_requested");
+    this.panel_ids_by_y_index.forEach(function(panel_id){
+        this.panels[panel_id].emit("data_requested");
+    }.bind(this));
+
     this.remap_promises = [];
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
@@ -3712,12 +4053,36 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
-            this.onUpdate();
+            // Apply panel-level state values
+            this.panel_ids_by_y_index.forEach(function(panel_id){
+                var panel = this.panels[panel_id];
+                // Apply data-layer-level state values
+                panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+                    var data_layer = this.data_layers[data_layer_id];
+                    var state_id = panel_id + "." + data_layer_id;
+                    for (var property in this.state[state_id]){
+                        if (!this.state[state_id].hasOwnProperty(property)){ continue; }
+                        if (Array.isArray(this.state[state_id][property])){
+                            this.state[state_id][property].forEach(function(element_id){
+                                try {
+                                    this.setElementStatus(property, this.getElementById(element_id), true);
+                                } catch (e){
+                                    console.error("Unable to apply state: " + state_id + ", " + property);
+                                }
+                            }.bind(data_layer));
+                        }
+                    }
+                }.bind(panel));
+            }.bind(this));
+            // Emit events
+            this.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this));
 
     return this;
     
 };
+
 
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
@@ -3734,13 +4099,38 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
 
 */
 
-LocusZoom.Panel = function(id, layout, parent) { 
+LocusZoom.Panel = function(layout, parent) { 
+
+    if (typeof layout !== "object"){
+        throw "Unable to create panel, invalid layout";
+    }
+
+    this.parent = parent || null;
+
+    // Ensure a valid ID is present. If there is no valid ID then generate one
+    if (typeof layout.id !== "string" || !layout.id.length){
+        if (!this.parent){
+            layout.id = "p" + Math.floor(Math.random()*Math.pow(10,8));
+        } else {
+            var id = null;
+            var generateID = function(){
+                id = "p" + Math.floor(Math.random()*Math.pow(10,8));
+                if (id == null || typeof this.parent.panels[id] != "undefined"){
+                    id = generateID();
+                }
+            }.bind(this);
+            layout.id = id;
+        }
+    } else if (this.parent) {
+        if (typeof this.parent.panels[layout.id] !== "undefined"){
+            throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
+        }
+    }
+    this.id = layout.id;
 
     this.initialized = false;
-    
-    this.id     = id;
-    this.parent = parent || null;
-    this.svg    = {};
+    this.layout_idx = null;
+    this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
@@ -3755,7 +4145,7 @@ LocusZoom.Panel = function(id, layout, parent) {
         this.state_id = null;
     }
     
-    this.data_layers = {};
+    this.data_layers = [];
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
@@ -3771,8 +4161,30 @@ LocusZoom.Panel = function(id, layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.onUpdate = function(){
-        this.parent.onUpdate();
+    // Event hooks
+    this.event_hooks = {
+        "layout_changed": [],
+        "data_requested": [],
+        "data_rendered": [],
+        "element_clicked": []
+    };
+    this.on = function(event, hook){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("Unable to register event hook, invalid event: " + event.toString());
+        }
+        if (typeof hook != "function"){
+            throw("Unable to register event hook, invalid hook function passed");
+        }
+        this.event_hooks[event].push(hook);
+    };
+    this.emit = function(event, context){
+        if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
+            throw("LocusZoom attempted to throw an invalid event: " + event.toString());
+        }
+        context = context || this;
+        this.event_hooks[event].forEach(function(hookToRun) {
+            hookToRun.call(context);
+        });
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -3819,7 +4231,8 @@ LocusZoom.Panel.DefaultLayout = {
         x:  {},
         y1: {},
         y2: {}
-    }
+    },
+    data_layers: []
 };
 
 LocusZoom.Panel.prototype.initializeLayout = function(){
@@ -3859,12 +4272,9 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     }.bind(this));
 
     // Add data layers (which define x and y extents)
-    if (typeof this.layout.data_layers == "object"){
-        var data_layer_id;
-        for (data_layer_id in this.layout.data_layers){
-            this.addDataLayer(data_layer_id, this.layout.data_layers[data_layer_id]);
-        }
-    }
+    this.layout.data_layers.forEach(function(data_layer_layout){
+        this.addDataLayer(data_layer_layout);
+    }.bind(this));
 
 };
 
@@ -3888,7 +4298,11 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
     }
     
-    if (this.initialized){ this.render(); }
+    if (this.initialized){
+        this.render();
+        this.curtain.update();
+        this.loader.update();
+    }
     return this;
 };
 
@@ -3934,7 +4348,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Position with initial layout parameters
     this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
         .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
+        .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
     // Append clip path to the parent svg element, size with initial layout parameters
     var clipPath = this.svg.container.append("clipPath")
@@ -3947,41 +4361,138 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Append a curtain element with svg element and drop/raise methods
-    var panel_curtain_svg = this.svg.container.append("g")
-        .attr("id", this.getBaseId() + ".curtain")
-        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)")
-        .attr("class", "lz-curtain").style("display", "none");
+    // Create the curtain object with show/update/hide methods
     this.curtain = {
-        svg: panel_curtain_svg,
-        drop: function(message){
-            this.svg.style("display", null);
-            if (typeof message != "undefined"){
-                try {
-                    this.svg.select("text").selectAll("tspan").remove();
-                    message.split("\n").forEach(function(line){
-                        this.svg.select("text").append("tspan")
-                            .attr("x", "1em").attr("dy", "1.5em").text(line);
+        showing: false,
+        selector: null,
+        content_selector: null,
+        show: function(content, css){
+            // Generate curtain
+            if (!this.curtain.showing){
+                this.curtain.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
+                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
+                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
+                    .on("click", function(){
+                        this.curtain.hide();
                     }.bind(this));
-                    this.svg.select("text").append("tspan")
-                        .attr("x", "1em").attr("dy", "2.5em")
-                        .attr("class", "dismiss").text("Dismiss")
-                        .on("click", function(){
-                            this.raise();
-                        }.bind(this));
-                } catch (e){
-                    console.error("LocusZoom tried to render an error message but it's not a string:", message);
-                }
+                this.curtain.showing = true;
             }
-        },
-        raise: function(){
-            this.svg.style("display", "none");
-        }
+            return this.curtain.update(content, css);
+        }.bind(this),
+        update: function(content, css){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Apply CSS if provided
+            if (typeof css == "object"){
+                this.curtain.selector.style(css);
+            }
+            // Update size and position
+            var panel_page_origin = this.getPageOrigin();
+            this.curtain.selector.style({
+                top: panel_page_origin.y + "px",
+                left: panel_page_origin.x + "px",
+                width: this.layout.width + "px",
+                height: this.layout.height + "px"
+            });
+            this.curtain.content_selector.style({
+                "max-width": (this.layout.width - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
+            });
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.curtain.content_selector.html(content);
+            }
+            return this.curtain;
+        }.bind(this),
+        hide: function(){
+            if (!this.curtain.showing){ return this.curtain; }
+            // Remove curtain
+            this.curtain.selector.remove();
+            this.curtain.selector = null;
+            this.curtain.content_selector = null;
+            this.curtain.showing = false;
+            return this.curtain;
+        }.bind(this)
     };
-    this.curtain.svg.append("rect").attr("width", "100%").attr("height", "100%");
-    this.curtain.svg.append("text")
-        .attr("id", this.getBaseId() + ".curtain_text")
-        .attr("x", "1em").attr("y", "0em");
+
+    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
+    this.loader = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        progress_selector: null,
+        cancel_selector: null,
+        show: function(content){
+            // Generate loader
+            if (!this.loader.showing){
+                this.loader.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
+                this.loader.content_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-content");
+                this.loader.progress_selector = this.loader.selector
+                    .append("div").attr("class", "lz-loader-progress-container")
+                    .append("div").attr("class", "lz-loader-progress");
+                /* TODO: figure out how to make this cancel button work
+                this.loader.cancel_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-cancel").html("Cancel")
+                    .on("click", function(){
+                        this.loader.hide();
+                    }.bind(this));
+                */
+                this.loader.showing = true;
+                if (typeof content == "undefined"){ content = "Loading..."; }
+            }
+            return this.loader.update(content);
+        }.bind(this),
+        update: function(content, percent){
+            if (!this.loader.showing){ return this.loader; }
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.loader.content_selector.html(content);
+            }
+            // Update size and position
+            var padding = 6; // is there a better place to store/define this?
+            var panel_page_origin = this.getPageOrigin();
+            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
+            this.loader.selector.style({
+                top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
+                left: (panel_page_origin.x + padding) + "px"
+            });
+            /* Uncomment this code when a functional cancel button can be shown
+            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
+            this.loader.content_selector.style({
+                "padding-right": (cancel_boundrect.width + padding) + "px"
+            });
+            */
+            // Apply percent if provided
+            if (typeof percent == "number"){
+                this.loader.progress_selector.style({
+                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                });
+            }
+            return this.loader;
+        }.bind(this),
+        animate: function(){
+            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
+            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+            return this.loader;
+        }.bind(this),
+        setPercentCompleted: function(percent){
+            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+            return this.loader.update(null, percent);
+        }.bind(this),
+        hide: function(){
+            if (!this.loader.showing){ return this.loader; }
+            // Remove loader
+            this.loader.selector.remove();
+            this.loader.selector = null;
+            this.loader.content_selector = null;
+            this.loader.progress_selector = null;
+            this.loader.cancel_selector = null;
+            this.loader.showing = false;
+            return this.loader;
+        }.bind(this)
+    };
 
     // Initialize controls element
     this.controls = {
@@ -3989,7 +4500,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         hide_timeout: null,
         link_selectors: {},
         show: function(){
-            if (!this.layout.controls || this.controls.selector){ return; }
+            if (!this.layout.controls || this.controls.selector){ return this.controls; }
+            if (this.curtain.showing || this.parent.curtain.showing){ return this.controls; }
             this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
@@ -4031,7 +4543,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     .style({ "font-weight": "bold" })
                     .text("?")
                     .on("click", function(){
-                        if (this.controls.description.is_showing){
+                        if (this.controls.description.showing){
                             this.controls.description.hide();
                         } else {
                             this.controls.description.show();
@@ -4039,7 +4551,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         }
                     }.bind(this));
                 this.controls.description = {
-                    is_showing: false,
+                    showing: false,
                     selector: null,
                     show: function(){
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
@@ -4047,9 +4559,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                             .attr("class", "lz-panel-description")
                             .attr("id", this.getBaseId() + ".description")
                             .html(this.layout.description);
-                        this.controls.description.is_showing = true;
+                        this.controls.description.showing = true;
+                        return this.controls.description;
                     }.bind(this),
                     position: function(){
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         var padding = 4; // is there a better place to store this?
                         var page_origin = this.getPageOrigin();
                         var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
@@ -4057,13 +4571,17 @@ LocusZoom.Panel.prototype.initialize = function(){
                         var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
                         var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
                         this.controls.description.selector.style({ top: top, left: left });
+                        return this.controls.description;
                     }.bind(this),
                     hide: function(){
+                        if (!this.controls.description.showing){ return this.controls.description; }
                         this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
                         this.controls.description.selector.remove();
-                        this.controls.description.is_showing = false;
+                        this.controls.description.showing = false;
+                        return this.controls.description;
                     }.bind(this)
                 };
+                return this.controls;
             }
             // Remove button
             if (this.layout.controls.remove){
@@ -4074,7 +4592,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     .text("×")
                     .on("click", function(){
                         // Hide description and controls
-                        if (this.controls.description && this.controls.description.is_showing){ this.controls.description.hide(); }
+                        if (this.controls.description && this.controls.description.showing){ this.controls.description.hide(); }
                         this.controls.hide();
                         // Remove mouse event listeners for these controls
                         d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
@@ -4082,16 +4600,18 @@ LocusZoom.Panel.prototype.initialize = function(){
                         // Remove the panel
                         this.parent.removePanel(this.id);
                     }.bind(this));
+                return this.controls;
             }
         }.bind(this),
         position: function(){
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             var page_origin = this.getPageOrigin();
             var client_rect = this.controls.selector.node().getBoundingClientRect();
             var top = page_origin.y.toString() + "px";
             var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
             this.controls.selector.style({ position: "absolute", top: top, left: left });
             // Position description box if it's showing
-            if (this.controls.description && this.controls.description.is_showing){
+            if (this.controls.description && this.controls.description.showing){
                 this.controls.description.position();
             }
             // Apply appropriate classes to reposition buttons as needed
@@ -4101,15 +4621,17 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.controls.link_selectors.reposition_down){
                 this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
             }
+            return this.controls;
         }.bind(this),
         hide: function(){
-            if (!this.layout.controls || !this.controls.selector){ return; }
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
             // Do not hide if this panel is showing a description
-            if (this.controls.description && this.controls.description.is_showing){ return; }
+            if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return; }
+            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
+            return this.controls;
         }.bind(this)
     };
 
@@ -4184,17 +4706,17 @@ LocusZoom.Panel.prototype.initialize = function(){
 
 
 // Create a new data layer by layout object
-LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
+LocusZoom.Panel.prototype.addDataLayer = function(layout){
 
     // Sanity checks
-    if (typeof id !== "string"){
-        throw "Invalid data layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
-    }
     if (typeof layout !== "object"){
         throw "Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
+    if (typeof layout.id !== "string" || !layout.id.length){
+        throw "Invalid paneldata layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
+    }
     if (typeof this.data_layers[layout.id] !== "undefined"){
-        throw "Cannot create data layer with id [" + id + "]; data layer with that id already exists";
+        throw "Cannot create data_layer with id [" + layout.id + "]; data layer with that id already exists in the panel";
     }
     if (typeof layout.type !== "string"){
         throw "Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()";
@@ -4206,7 +4728,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
     }
 
     // Create the Data Layer
-    var data_layer = LocusZoom.DataLayers.get(layout.type, id, layout, this);
+    var data_layer = LocusZoom.DataLayers.get(layout.type, layout, this);
 
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
@@ -4227,10 +4749,16 @@ LocusZoom.Panel.prototype.addDataLayer = function(id, layout){
         this.data_layers[data_layer.id].layout.z_index = length - 1;
     }
 
-    // If not present, store the data layer layout in the panel layout
-    if (typeof this.layout.data_layers[data_layer.id] == "undefined"){
-        this.layout.data_layers[data_layer.id] = this.data_layers[data_layer.id].layout;
+    // Determine if this data layer was already in the layout.data_layers array.
+    // If it wasn't, add it. Either way store the layout.data_layers array index on the data_layer.
+    var layout_idx = null;
+    this.layout.data_layers.forEach(function(data_layer_layout, idx){
+        if (data_layer_layout.id == data_layer.id){ layout_idx = idx; }
+    });
+    if (layout_idx == null){
+        layout_idx = this.layout.data_layers.push(this.data_layers[data_layer.id].layout) - 1;
     }
+    this.data_layers[data_layer.id].layout_idx = layout_idx;
 
     return this.data_layers[data_layer.id];
 };
@@ -4245,7 +4773,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
             console.log(error);
-            this.curtain.drop(error);
+            this.curtain.show(error);
         }
     }
     // When all finished trigger a render
@@ -4253,10 +4781,13 @@ LocusZoom.Panel.prototype.reMap = function(){
         .then(function(){
             this.initialized = true;
             this.render();
+            this.emit("layout_changed");
+            this.parent.emit("layout_changed");
+            this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
             console.log(error);
-            this.curtain.drop(error);
+            this.curtain.show(error);
         }.bind(this));
 };
 

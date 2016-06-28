@@ -78,6 +78,20 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.cliparea.origin.should.have.property('x').which.is.a.Number;
             this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
         });
+        it('should generate an ID if passed a layout that does not define one', function(){
+            this.instance.addPanel({ "foo": "bar" });
+            var panel_idx = this.instance.layout.panels.length - 1;
+            this.instance.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
+            this.instance.layout.panels[panel_idx].foo.should.be.exactly("bar");
+            this.instance.panels[this.instance.layout.panels[panel_idx].id].should.be.an.Object;
+            this.instance.panels[this.instance.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
+        });
+        it('should throw an error if adding a panel with an ID that is already used', function(){
+            this.instance.addPanel({ "id": "duplicate", "foo": "bar" });
+            assert.throws(function(){
+                this.instance.addPanel({ "id": "duplicate", "foo2": "bar2" });
+            }.bind(this));
+        });
     });
 
     describe("Geometry methods", function() {
@@ -152,40 +166,95 @@ describe('LocusZoom.Panel', function(){
         });
     });
 
-    describe("SVG Composition", function() {
-        describe("Curtain", function() {
-            beforeEach(function(){
-                d3.select("body").append("div").attr("id", "instance_id");
-                this.instance = LocusZoom.populate("#instance_id");
-            });
-            it('last child of each panel container should be a curtain element', function(){
-                Object.keys(this.instance.panels).forEach(function(panel_id){
-                    d3.select(this.instance.panels[panel_id].svg.group.node().parentNode.lastChild).attr("id").should.be.exactly("instance_id." + panel_id + ".curtain");
-                    d3.select(this.instance.panels[panel_id].svg.group.node().parentNode.lastChild).attr("class").should.be.exactly("lz-curtain");
-                }.bind(this));
-            });
-            it('each panel should have a curtain object with stored svg selector', function(){
-                Object.keys(this.instance.panels).forEach(function(panel_id){
-                    this.instance.panels[panel_id].curtain.should.be.an.Object;
-                    this.instance.panels[panel_id].curtain.svg.should.be.an.Object;
-                    assert.equal(this.instance.panels[panel_id].curtain.svg.html(), this.instance.svg.select("#instance_id\\." + panel_id + "\\.curtain").html());
-                }.bind(this));
-            });
-            it('each panel curtain should have a method that drops the curtain', function(){
-                Object.keys(this.instance.panels).forEach(function(panel_id){
-                    this.instance.panels[panel_id].curtain.drop.should.be.a.Function;
-                    this.instance.panels[panel_id].curtain.drop();
-                    assert.equal(this.instance.panels[panel_id].curtain.svg.style("display"), "");
-                }.bind(this));
-            });
-            it('each panel curtain should have a method that raises the curtain', function(){
-                Object.keys(this.instance.panels).forEach(function(panel_id){
-                    this.instance.panels[panel_id].curtain.raise.should.be.a.Function;
-                    this.instance.panels[panel_id].curtain.drop();
-                    this.instance.panels[panel_id].curtain.raise();
-                    assert.equal(this.instance.panels[panel_id].curtain.svg.style("display"), "none");
-                }.bind(this));
-            });
+    describe("Panel Curtain and Loader", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            this.layout = {
+                width: 100,
+                height: 100,
+                min_width: 100,
+                min_height: 100,
+                resizable: false,
+                aspect_ratio: 1,
+                panels: [
+                    { id: "test",
+                      width: 100,
+                      height: 100 }
+                ],
+                controls: false
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+            this.panel = this.plot.panels.test;
+        });
+        it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
+            this.panel.should.have.property("curtain").which.is.an.Object;
+            this.panel.curtain.should.have.property("showing").which.is.exactly(false);
+            this.panel.curtain.should.have.property("show").which.is.a.Function;
+            this.panel.curtain.should.have.property("update").which.is.a.Function;
+            this.panel.curtain.should.have.property("hide").which.is.a.Function;
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.curtain.show("test content");
+            this.panel.curtain.showing.should.be.true();
+            this.panel.curtain.selector.empty().should.be.false();
+            this.panel.curtain.content_selector.empty().should.be.false();
+            this.panel.curtain.content_selector.html().should.be.exactly("test content");
+            this.panel.curtain.hide();
+            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.should.have.property("selector").which.is.exactly(null);
+            this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
+        });
+        it("should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors", function(){
+            this.panel.should.have.property("loader").which.is.an.Object;
+            this.panel.loader.should.have.property("showing").which.is.exactly(false);
+            this.panel.loader.should.have.property("show").which.is.a.Function;
+            this.panel.loader.should.have.property("update").which.is.a.Function;
+            this.panel.loader.should.have.property("animate").which.is.a.Function;
+            this.panel.loader.should.have.property("update").which.is.a.Function;
+            this.panel.loader.should.have.property("setPercentCompleted").which.is.a.Function;
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should show/hide/update on command and track shown status", function(){
+            this.panel.loader.showing.should.be.false();
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+            this.panel.loader.show("test content");
+            this.panel.loader.showing.should.be.true();
+            this.panel.loader.selector.empty().should.be.false();
+            this.panel.loader.content_selector.empty().should.be.false();
+            this.panel.loader.content_selector.html().should.be.exactly("test content");
+            this.panel.loader.progress_selector.empty().should.be.false();
+            this.panel.loader.hide();
+            this.panel.loader.showing.should.be.false();
+            this.panel.loader.should.have.property("selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
+            this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
+        });
+        it("should allow for animating or showing discrete percentages of completion", function(){
+            this.panel.loader.show("test content").animate();
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.true();
+            this.panel.loader.setPercentCompleted(15);
+            this.panel.loader.content_selector.html().should.be.exactly("test content");
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.false();
+            this.panel.loader.progress_selector.style("width").should.be.exactly("15%");
+            this.panel.loader.update("still loading...", 62);
+            this.panel.loader.content_selector.html().should.be.exactly("still loading...");
+            this.panel.loader.progress_selector.style("width").should.be.exactly("62%");
+            this.panel.loader.setPercentCompleted(200);
+            this.panel.loader.progress_selector.style("width").should.be.exactly("100%");
+            this.panel.loader.setPercentCompleted(-43);
+            this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
+            this.panel.loader.setPercentCompleted("foo");
+            this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
         });
     });
 

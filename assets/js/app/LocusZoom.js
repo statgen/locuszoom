@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.10"
+    version: "0.4.0"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -303,8 +303,9 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    panels: {
-        positions: {
+    panels: [
+        {
+            id: "positions",
             title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
@@ -333,8 +334,9 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
-            data_layers: {
-                significance: {
+            data_layers: [
+                {
+                    id: "significance",
                     type: "line",
                     fields: ["sig:x", "sig:y"],
                     z_index: 0,
@@ -355,7 +357,8 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
-                recomb: {
+                {
+                    id: "recomb",
                     type: "line",
                     fields: ["recomb:position", "recomb:recomb_rate"],
                     z_index: 1,
@@ -373,7 +376,8 @@ LocusZoom.StandardLayout = {
                         ceiling: 100
                     }
                 },
-                positions: {
+                {
+                    id: "positions",
                     type: "scatter",
                     point_shape: "circle",
                     point_size: {
@@ -404,28 +408,40 @@ LocusZoom.StandardLayout = {
                         },
                         "#B8B8B8"
                     ],
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
+                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+                    id_field: "variant",
                     z_index: 2,
                     x_axis: {
                         field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        field: "pvalue|neglog10",
+                        field: "log_pvalue",
                         floor: 0,
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    selectable: "one",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
                     tooltip: {
-                        html: "<strong>{{id}}</strong><br>"
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
+                        html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{refAllele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
                     }
                 }
-            }
+            ]
         },
-        genes: {
+        {
+            id: "genes",
             width: 800,
             height: 225,
             origin: { x: 0, y: 225 },
@@ -436,13 +452,24 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
-            data_layers: {
-                genes: {
+            data_layers: [
+                {
+                    id: "genes",
                     type: "genes",
                     fields: ["gene:gene", "constraint:constraint"],
                     id_field: "gene_id",
-                    selectable: "one",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
                     tooltip: {
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
                         html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
                             + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
                             + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
@@ -456,7 +483,7 @@ LocusZoom.StandardLayout = {
                             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
-            }
+            ]
         }
-    }
+    ]
 };
