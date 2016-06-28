@@ -93,7 +93,7 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: { analysis: 3 }}])
+      .add("base", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 3, id_field: "variant" }}])
       .add("ld", ["LDLZ", apiBase + "pair/LD/"])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
@@ -104,9 +104,10 @@
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
       var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
-                           { url: apiBase + "single/",
+                           { url: apiBase + "statistic/single/",
                              params: {
-                               analysis: analysis
+                               analysis: analysis,
+                               id_field: "variant"
                              }
                            }
                          ];
@@ -185,14 +186,14 @@
                       },
                       "#B8B8B8"
                   ],
-                  fields: [ns+":id",
+                  fields: [ns+":variant",
                            ns+":position",
                            ns+":pvalue|scinotation",
                            ns+":pvalue|neglog10",
-                           ns+":refAllele",
+                           ns+":ref_allele",
                            "ld:state",
                            "ld:isrefvar"],
-                  id_field: ns+":id",
+                  id_field: ns+":variant",
                   x_axis: {
                       field: ns+":position"
                   },
@@ -215,9 +216,9 @@
                       closable: true,
                       show: { or: ["highlighted", "selected"] },
                       hide: { and: ["unhighlighted", "unselected"] },
-                      html: "<div><strong>{{"+ns+":id}}</strong></div>"
+                      html: "<div><strong>{{"+ns+":variant}}</strong></div>"
                           + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
-                          + "<div>Ref. Allele: <strong>{{"+ns+":refAllele}}</strong></div>"
+                          + "<div>Ref. Allele: <strong>{{"+ns+":ref_allele}}</strong></div>"
                   }
               }
           ]

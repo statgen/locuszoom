@@ -440,14 +440,15 @@ LocusZoom.StandardLayout = {
                         },
                         "#B8B8B8"
                     ],
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state", "ld:isrefvar"],
+                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+                    id_field: "variant",
                     z_index: 2,
                     x_axis: {
                         field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        field: "pvalue|neglog10",
+                        field: "log_pvalue",
                         floor: 0,
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
@@ -464,9 +465,9 @@ LocusZoom.StandardLayout = {
                         closable: true,
                         show: { or: ["highlighted", "selected"] },
                         hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<strong>{{id}}</strong><br>"
+                        html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{refAllele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
                     }
                 }
             ]
@@ -590,7 +591,6 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
     } else if (typeof element == "object"){
         var id_field = this.layout.id_field || "id";
         if (typeof element[id_field] == "undefined"){
-            console.log("here", id_field, element);
             throw("Unable to generate element ID");
         }
         element_id = element[id_field].replace(/\W/g,"");
@@ -2835,7 +2835,8 @@ LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
 }, "AssociationLZ");
 
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
-    ["id", "position"].forEach(function(x) {
+    var id_field = this.params.id_field || "id";
+    [id_field, "position"].forEach(function(x) {
         if (fields.indexOf(x)==-1) {
             fields.unshift(x);
             outnames.unshift(x);
@@ -2888,9 +2889,9 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
-        dataFields.id = dataFields.id || nameMatch(/\bid\b/);
+        dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
         dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
-        dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\|neglog10\b/i);
+        dataFields.pvalue = dataFields.pvalue || nameMatch(/\blog_pvalue\b/i) || nameMatch(/\bpvalue\|neglog10\b/i);
         dataFields._names_ = names;
     }
     return dataFields;
