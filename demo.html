@@ -40,9 +40,9 @@
     // Define LocusZoom Data Sources object differently if loading data locally or not
     var apiBase, data_sources;
     if (window.location.search.indexOf("staticdata=1") == -1){
-      apiBase = "http://portaldev.sph.umich.edu/api_internal_dev/v1/";
+      apiBase = "http://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
-        .add("base", ["AssociationLZ", {url: apiBase + "single/", params: {analysis: 3}}])
+        .add("base", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
