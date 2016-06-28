@@ -306,11 +306,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                 top: panel_page_origin.y + "px",
                 left: panel_page_origin.x + "px",
                 width: this.layout.width + "px",
-                height: this.layout.height + "px",
+                height: this.layout.height + "px"
             });
             this.curtain.content_selector.style({
                 "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
             });
             // Apply content if provided
             if (typeof content == "string"){
@@ -370,7 +370,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector.style({
                 top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (panel_page_origin.x + padding) + "px",
+                left: (panel_page_origin.x + padding) + "px"
             });
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();

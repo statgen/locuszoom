@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.10"
+    version: "0.4.0"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -3641,11 +3641,11 @@ LocusZoom.Instance.prototype.initialize = function(){
                 top: plot_page_origin.y + "px",
                 left: plot_page_origin.x + "px",
                 width: this.layout.width + "px",
-                height: this.layout.height + "px",
+                height: this.layout.height + "px"
             });
             this.curtain.content_selector.style({
                 "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
             });
             // Apply content if provided
             if (typeof content == "string"){
@@ -3705,7 +3705,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector.style({
                 top: (plot_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (plot_page_origin.x + padding) + "px",
+                left: (plot_page_origin.x + padding) + "px"
             });
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
@@ -4056,7 +4056,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
-                var state_id = panel_id;
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];
@@ -4393,11 +4392,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                 top: panel_page_origin.y + "px",
                 left: panel_page_origin.x + "px",
                 width: this.layout.width + "px",
-                height: this.layout.height + "px",
+                height: this.layout.height + "px"
             });
             this.curtain.content_selector.style({
                 "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
             });
             // Apply content if provided
             if (typeof content == "string"){
@@ -4457,7 +4456,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector.style({
                 top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (panel_page_origin.x + padding) + "px",
+                left: (panel_page_origin.x + padding) + "px"
             });
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
