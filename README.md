@@ -4,7 +4,7 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 [![Build Status](https://api.travis-ci.org/statgen/locuszoom.svg?branch=master)](https://api.travis-ci.org/statgen/locuszoom)
 
-See [API Reference](https://github.com/statgen/locuszoom/wiki/API-Reference) if already up and running or the introduction below.
+See [API Reference](https://github.com/statgen/locuszoom/wiki) if already up and running or the introduction below.
 
 ## Making a LocusZoom Plot
 
