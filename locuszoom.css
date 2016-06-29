@@ -421,7 +421,13 @@ div.lz-panel-description {
   background: #e4ebf0;
   border: 1px solid rgba(24, 24, 24, 1);
   border-radius: 4px;
-  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
+  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4);
+  overflow: hidden; }
+  div.lz-panel-description .lz-panel-description-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto; }
 
 div.lz-panel-boundary {
   position: absolute;

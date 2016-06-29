@@ -506,6 +506,15 @@ div.#{$namespace}-panel-description {
   border: 1px solid #{$default_black};
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
+  overflow: hidden;
+
+  .#{$namespace}-panel-description-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+  }
+
 }
 
 div.#{$namespace}-panel-boundary {
