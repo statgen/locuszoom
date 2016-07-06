@@ -899,7 +899,7 @@ LocusZoom.Instance.prototype.conditionOn = function(element){
     }
     this.applyState();
 };
-LocusZoom.Instance.prototype.clearConditions = function(){
+LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
 }
 

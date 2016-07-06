@@ -412,7 +412,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(221, 195, 230, 0.8);
     border: 1px solid rgba(80, 49, 89, 0.8);
-    color: rgba(80, 49, 89, 0.4);
+    color: rgba(80, 49, 89, 0.8);
     border-radius: 4px;
     pointer-events: auto; }
   .lz-locuszoom-panel-controls .lz-panel-controls-button-purple:not(.lz-panel-controls-button-purple-disabled):not(.lz-panel-controls-button-purple-selected):hover {
@@ -465,6 +465,18 @@ div.lz-panel-conditions {
     overflow-y: auto; }
     div.lz-panel-conditions .lz-panel-conditions-content h1, div.lz-panel-conditions .lz-panel-conditions-content h2, div.lz-panel-conditions .lz-panel-conditions-content h3, div.lz-panel-conditions .lz-panel-conditions-content h4, div.lz-panel-conditions .lz-panel-conditions-content h5, div.lz-panel-conditions .lz-panel-conditions-content h6 {
       margin-top: 0.1em; }
+  div.lz-panel-conditions button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: #ddc3e6;
+    border: 1px solid #503159;
+    color: #503159;
+    border-radius: 4px;
+    cursor: pointer; }
+  div.lz-panel-conditions button:hover {
+    border: 1px solid #503159;
+    background-color: #503159;
+    color: #ddc3e6; }
 
 div.lz-panel-boundary {
   position: absolute;

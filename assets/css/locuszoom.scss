@@ -498,7 +498,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(221,195,230,0.8);
     border: 1px solid rgba(80,49,89,0.8);
-    color: rgba(80,49,89,0.4);
+    color: rgba(80,49,89,0.8);
     border-radius: 4px;
     pointer-events: auto;    
   }
@@ -563,6 +563,21 @@ div.#{$namespace}-panel-conditions {
 
     h1, h2, h3, h4, h5, h6 { margin-top: 0.1em; }
   
+  }
+
+  button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(221,195,230,1);
+    border: 1px solid rgba(80,49,89,1);
+    color: rgba(80,49,89,1);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover {
+    border: 1px solid rgba(80,49,89,1);
+    background-color: rgba(80,49,89,1);
+    color: rgba(221,195,230,1);
   }
 
 }

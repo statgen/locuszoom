@@ -4032,7 +4032,7 @@ LocusZoom.Instance.prototype.conditionOn = function(element){
     }
     this.applyState();
 };
-LocusZoom.Instance.prototype.clearConditions = function(){
+LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
 }
 
@@ -4604,17 +4604,28 @@ LocusZoom.Panel.prototype.initialize = function(){
                     selector: null,
                     content_selector: null,
                     show: function(){
+                        if (this.controls.conditions.showing){ return this.controls.conditions.update(); }
                         this.controls.conditions.selector = d3.select(this.parent.svg.node().parentNode).append("div")
                             .attr("class", "lz-panel-conditions")
                             .attr("id", this.getBaseId() + ".conditions");
                         this.controls.conditions.content_selector = this.controls.conditions.selector.append("div")
                             .attr("class", "lz-panel-conditions-content");
                         this.controls.conditions.showing = true;
-                        return this.controls.conditions;
+                        return this.controls.conditions.update();
                     }.bind(this),
                     update: function(){
+                        if (!this.controls.conditions.showing){ return this.controls.conditions.position(); }
+                        this.controls.conditions.content_selector.html("");
+                        this.controls.conditions.content_selector.append("h3").html("Conditional Analysis");
+                        this.controls.conditions.content_selector.append("button").html("Remove All Conditions")
+                            .on("click", function(){
+                                this.parent.removeAllConditions();
+                                this.controls.conditions.hide();
+                            }.bind(this));
+                        return this.controls.conditions.position();
+                    }.bind(this),
+                    position: function(){
                         if (!this.controls.conditions.showing){ return this.controls.conditions; }
-                        this.controls.conditions.content_selector.html("<h3>Conditional Analysis</h3>...");
                         var padding = 4; // is there a better place to store this?
                         var page_origin = this.getPageOrigin();
                         var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
@@ -4790,7 +4801,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             }
             // Position conditions dialog as needed
             if (this.controls.conditions && this.controls.conditions.showing){
-                this.controls.conditions.update();
+                this.controls.conditions.position();
             }
             return this.controls;
         }.bind(this),
