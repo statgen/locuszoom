@@ -461,43 +461,67 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 }
 
 .#{$namespace}-locuszoom-panel-controls {
-   padding-top: 6px;
-   padding-right: 2px;
-   .#{$namespace}-panel-controls-button {
+  padding-top: 6px;
+  padding-right: 2px;
+  
+  .#{$namespace}-panel-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(216,216,216,0.4);
     border: 1px solid rgba(51,51,51,0.4);
     color: rgba(51,51,51,0.4);
     border-radius: 4px;
-    pointer-events: auto;
+    pointer-events: auto;    
   }
-  .#{$namespace}-panel-controls-button:hover {
+  .#{$namespace}-panel-controls-button:not(.#{$namespace}-panel-controls-button-disabled):not(.#{$namespace}-panel-controls-button-selected):hover {
     cursor: pointer;
     background-color: rgba(216,216,216,1);
     border: 1px solid rgba(51,51,51,1);
     color: rgba(51,51,51,1);
   }
   .#{$namespace}-panel-controls-button-selected {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
     border: 1px solid rgba(51,51,51,1);
-    border-radius: 4px;
-    pointer-events: auto;
-    cursor: pointer;
     background-color: rgba(51,51,51,1);
     color: rgba(216,216,216,1);
+    cursor: pointer;
   }
   .#{$namespace}-panel-controls-button-disabled {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(216,216,216,0.4);
     border: 1px solid rgba(153,153,153,0.4);
     color: rgba(153,153,153,0.4);
-    border-radius: 4px;
     pointer-events: none;
     cursor: wait;
   }
+
+  .#{$namespace}-panel-controls-button-purple {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(221,195,230,0.4);
+    border: 1px solid rgba(80,49,89,0.4);
+    color: rgba(80,49,89,0.4);
+    border-radius: 4px;
+    pointer-events: auto;    
+  }
+  .#{$namespace}-panel-controls-button-purple:not(.#{$namespace}-panel-controls-button-purple-disabled):not(.#{$namespace}-panel-controls-button-purple-selected):hover {
+    cursor: pointer;
+    background-color: rgba(221,195,230,1);
+    border: 1px solid rgba(80,49,89,1);
+    color: rgba(80,49,89,1);
+  }
+  .#{$namespace}-panel-controls-button-purple-selected {
+    border: 1px solid rgba(80,49,89,1);
+    background-color: rgba(80,49,89,1);
+    color: rgba(221,195,230,1);
+    cursor: pointer;
+  }
+  .#{$namespace}-panel-controls-button-purple-disabled {
+    background-color: rgba(221,195,230,0.4);
+    border: 1px solid rgba(167,134,179,0.4);
+    color: rgba(167,134,179,0.4);
+    pointer-events: none;
+    cursor: wait;
+  }
+  
 }
 
 div.#{$namespace}-panel-description {
@@ -516,6 +540,29 @@ div.#{$namespace}-panel-description {
     width: 100%;
     height: 100%;
     overflow-y: auto;
+  }
+
+}
+
+div.#{$namespace}-panel-conditions {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  background: rgba(237,228,240,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow};
+  overflow: hidden;
+
+  .#{$namespace}-panel-conditions-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+
+    h1, h2, h3, h4, h5, h6 { margin-top: 0.1em; }
+  
   }
 
 }
