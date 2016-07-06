@@ -4190,7 +4190,7 @@ LocusZoom.Panel = function(layout, parent) {
         this.state_id = null;
     }
     
-    this.data_layers = [];
+    this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
