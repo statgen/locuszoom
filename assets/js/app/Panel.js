@@ -891,7 +891,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     if (ticksAreAllNumbers){
         this[axis+"_axis"].tickValues(this[axis+"_ticks"]);
         if (this.layout.axes[axis].tick_format == "region"){
-            this[axis+"_axis"].tickFormat(function(d) { return LocusZoom.positionIntToString(d); });
+            this[axis+"_axis"].tickFormat(function(d) { return LocusZoom.positionIntToString(d, 6); });
         }
     } else {
         var ticks = this[axis+"_ticks"].map(function(t){

@@ -67,9 +67,25 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
-LocusZoom.positionIntToString = function(p){
-    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
-    return "" + (p / Math.pow(10, 6)).toFixed(places);
+// pos    - Position value (integer, required)
+// exp    - Exponent of the returned string's base. E.g. 6 => Mb, regardless of pos. (integer, optional)
+//          If not provided returned string will select smallest base divisible by 3 for a whole number value
+// suffix - Whether or not to append a sufix (e.g. "Mb") to the end of the returned string (boolean, optional)
+LocusZoom.positionIntToString = function(pos, exp, suffix){
+    var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
+    suffix = suffix || false;
+    if (isNaN(exp) || exp == null){
+        var log = Math.log(pos) / Math.LN10;
+        exp = Math.min(Math.max(log - (log % 3), 0), 9);
+    }
+    var places_exp = exp - Math.floor((Math.log(pos) / Math.LN10).toFixed(exp + 3));
+    var min_exp = Math.min(Math.max(exp, 0), 2);
+    var places = Math.min(Math.max(places_exp, min_exp), 12);
+    var ret = "" + (pos / Math.pow(10, exp)).toFixed(places);
+    if (suffix && typeof exp_symbols[exp] !== "undefined"){
+        ret += " " + exp_symbols[exp] + "b";
+    }
+    return ret;
 };
 
 // Convert a string position to an integer (e.g. "5.8 Mb" => 58000000)

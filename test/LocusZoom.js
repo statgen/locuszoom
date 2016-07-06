@@ -52,12 +52,25 @@ describe('LocusZoom Core', function(){
 
         it('should have a method for converting an integer position to a string', function(){
             LocusZoom.positionIntToString.should.be.a.Function;
-            assert.equal(LocusZoom.positionIntToString(1),          "0.000001");
-            assert.equal(LocusZoom.positionIntToString(1000),       "0.001");
-            assert.equal(LocusZoom.positionIntToString(4567),       "0.005");
-            assert.equal(LocusZoom.positionIntToString(1000000),    "1.00");
-            assert.equal(LocusZoom.positionIntToString(23423456),   "23.42");
-            assert.equal(LocusZoom.positionIntToString(1896335235), "1896.34");
+            assert.equal(LocusZoom.positionIntToString(1, 6),          "0.000001");
+            assert.equal(LocusZoom.positionIntToString(1000, 6),       "0.001");
+            assert.equal(LocusZoom.positionIntToString(4567, 6),       "0.005");
+            assert.equal(LocusZoom.positionIntToString(1000000, 6),    "1.00");
+            assert.equal(LocusZoom.positionIntToString(23423456, 6),   "23.42");
+            assert.equal(LocusZoom.positionIntToString(1896335235, 6), "1896.34");
+            assert.equal(LocusZoom.positionIntToString(8, 3),          "0.008");
+            assert.equal(LocusZoom.positionIntToString(4567, 3),       "4.57");
+            assert.equal(LocusZoom.positionIntToString(23423456, 3),   "23423.46");
+            assert.equal(LocusZoom.positionIntToString(8, 9),          "0.000000008");
+            assert.equal(LocusZoom.positionIntToString(4567, 9),       "0.000005");
+            assert.equal(LocusZoom.positionIntToString(23423456, 9),   "0.02");
+            assert.equal(LocusZoom.positionIntToString(8, 0),          "8");
+            assert.equal(LocusZoom.positionIntToString(4567, 0),       "4567");
+            assert.equal(LocusZoom.positionIntToString(23423456, 0),   "23423456");
+            assert.equal(LocusZoom.positionIntToString(209, null, true),        "209 b");
+            assert.equal(LocusZoom.positionIntToString(52667, null, true),      "52.67 Kb");
+            assert.equal(LocusZoom.positionIntToString(290344350, null, true),  "290.34 Mb");
+            assert.equal(LocusZoom.positionIntToString(1026911427, null, true), "1.03 Gb");
         });
 
         it('should have a method for converting a string position to an integer', function(){

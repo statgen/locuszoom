@@ -418,6 +418,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   font-size: 80%;
   padding-top: 4px;
   padding-bottom: 4px;
+  .#{$namespace}-controls-info {
+    margin-left: 2em;
+  }
   .#{$namespace}-controls-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
