@@ -46,7 +46,7 @@
 
 </head>
 
-<body style="background-color: #E8E8E8; margin-left: 20px; margin-right: 20px;">
+<body style="background-color: #E8E8E8; margin-left: 50px; margin-right: 50px;">
 
   <div style="max-width: 100%; clear: both; margin: 0;">
 
@@ -60,7 +60,7 @@
         <textarea id="layout" style="height: 460px;"></textarea>
         <br>
         <button class="button-yellow" onclick="flip();">Flip</button>
-        <a class="button button-blue" href="https://github.com/statgen/locuszoom/wiki/API-Reference" target="_blank">Reference</a>
+        <a class="button button-blue" href="https://github.com/statgen/locuszoom/wiki" target="_blank">Reference</a>
         <button class="button-red" onclick="resetPlot();">Reset Plot</button>
         <span style="margin: 0px 10px 0px 10px;">|</span>
         <button class="button-green" onClick="updatePlot();">Apply Layout</button>
@@ -93,33 +93,27 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "single/", params: { analysis: 3 }}])
-      .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
+      .add("base", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 3, id_field: "variant" }}])
+      .add("ld", ["LDLZ", apiBase + "pair/LD/"])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
       .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
 
     function addAnalysis(){
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
       var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
-                           { url: apiBase + "single/",
+                           { url: apiBase + "statistic/single/",
                              params: {
-                               analysis: analysis
+                               analysis: analysis,
+                               id_field: "variant"
                              }
                            }
                          ];
-      var ld_source = [ "LDLZ",
-                        { url: apiBase + "pair/LD/",
-                          params: {
-                            pvalue_field: ns + ":pvalue|neglog10",
-                            position_field: ns + ":position",
-                            id_field: ns + ":id"
-                          }
-                        }
-                      ];
-      data_sources.add(ns, assoc_source).add(ns + "_ld", ld_source);
+      data_sources.add(ns, assoc_source);
       var layout = {
+          id: ns,
           title: "Analysis ID: " + analysis,
           description: ns,
           y_index: -1,
@@ -138,8 +132,9 @@
                   label_offset: 28
               }
           },
-          data_layers: {
-              significance: {
+          data_layers: [
+              {
+                  id: "significance",
                   type: "line",
                   fields: ["sig:x", "sig:y"],
                   style: {
@@ -159,17 +154,46 @@
                       html: "Significance Threshold: 3 × 10^-5"
                   }
               },
-              positions: {
+              {
+                  id: "positions",
                   type: "scatter",
                   point_shape: "circle",
-                  point_size: 40,
-                  fields: [ns+":id",
+                  point_size: {
+                      scale_function: "if",
+                      field: "ld:isrefvar",
+                      parameters: {
+                          field_value: 1,
+                          then: 80,
+                          else: 40
+                      }
+                  },
+                  color: [
+                      {
+                          scale_function: "if",
+                          field: "ld:isrefvar",
+                          parameters: {
+                              field_value: 1,
+                              then: "#9632b8"
+                          }
+                      },
+                      {
+                          scale_function: "numerical_bin",
+                          field: "ld:state",
+                          parameters: {
+                              breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                              values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+                          }
+                      },
+                      "#B8B8B8"
+                  ],
+                  fields: [ns+":variant",
                            ns+":position",
                            ns+":pvalue|scinotation",
                            ns+":pvalue|neglog10",
-                           ns+":refAllele",
-                           ns+"_ld:state"],
-                  id_field: ns+":id",
+                           ns+":ref_allele",
+                           "ld:state",
+                           "ld:isrefvar"],
+                  id_field: ns+":variant",
                   x_axis: {
                       field: ns+":position"
                   },
@@ -180,26 +204,30 @@
                       upper_buffer: 0.05,
                       min_extent: [ 0, 10 ]
                   },
-                  color: {
-                      field: ns+"_ld:state",
-                      scale_function: "numerical_bin",
-                      parameters: {
-                          breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                          values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
-                          null_value: "#B8B8B8"
-                      }
+                  highlighted: {
+                      onmouseover: "on",
+                      onmouseout: "off"
+                  },
+                  selected: {
+                      onclick: "toggle_exclusive",
+                      onshiftclick: "toggle"
                   },
                   tooltip: {
-                      divs: [
-                          { html: "<strong>{{"+ns+":id}}</strong>" },
-                          { html: "P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong>" },
-                          { html: "Ref. Allele: <strong>{{"+ns+":refAllele}}</strong>" }
-                      ]
+                      closable: true,
+                      show: { or: ["highlighted", "selected"] },
+                      hide: { and: ["unhighlighted", "unselected"] },
+                      html: "<div><strong>{{"+ns+":variant}}</strong></div>"
+                          + "<div>P Value: <strong>{{"+ns+":pvalue|scinotation}}</strong></div>"
+                          + "<div>Ref. Allele: <strong>{{"+ns+":ref_allele}}</strong></div>"
                   }
               }
-          }
+          ]
       };
-      plot.addPanel(ns, layout);
+      var panel = plot.addPanel(layout);
+      panel.curtain.show("loading...", { "text-align": "center" });
+      panel.on("data_rendered", function(){
+        this.curtain.hide();
+      }.bind(panel));
     }
 
     var plot;
@@ -214,11 +242,14 @@
                           };
       var base_layout = LocusZoom.mergeLayouts(initial_state, LocusZoom.StandardLayout);
       plot = LocusZoom.populate("#plot", data_sources, base_layout);
-      applyOnUpdate();
+      plot.on("element_clicked", function(){
+        console.log("element clicked: ", this);
+      });
+      applyOnLayoutChanged();
     }
 
-    function applyOnUpdate(){
-      plot.onUpdate(function(){
+    function applyOnLayoutChanged(){
+      plot.on("layout_changed", function(){
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
       });
     }
@@ -236,7 +267,11 @@
         return;
       }
       plot = LocusZoom.populate("#plot", data_sources, layout);
-      applyOnUpdate();
+      plot.curtain.show("applying layout...", { "text-align": "center" });
+      plot.on("data_rendered", function(){
+        this.curtain.hide();
+      }.bind(plot));
+      applyOnLayoutChanged();
     }
 
     resetPlot();

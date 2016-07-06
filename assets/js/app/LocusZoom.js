@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.3.9"
+    version: "0.4.1"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -67,9 +67,25 @@ LocusZoom.populateAll = function(selector, datasource, layout, state) {
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
-LocusZoom.positionIntToString = function(p){
-    var places = Math.min(Math.max(6 - Math.floor((Math.log(p) / Math.LN10).toFixed(9)), 2), 12);
-    return "" + (p / Math.pow(10, 6)).toFixed(places);
+// pos    - Position value (integer, required)
+// exp    - Exponent of the returned string's base. E.g. 6 => Mb, regardless of pos. (integer, optional)
+//          If not provided returned string will select smallest base divisible by 3 for a whole number value
+// suffix - Whether or not to append a sufix (e.g. "Mb") to the end of the returned string (boolean, optional)
+LocusZoom.positionIntToString = function(pos, exp, suffix){
+    var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
+    suffix = suffix || false;
+    if (isNaN(exp) || exp == null){
+        var log = Math.log(pos) / Math.LN10;
+        exp = Math.min(Math.max(log - (log % 3), 0), 9);
+    }
+    var places_exp = exp - Math.floor((Math.log(pos) / Math.LN10).toFixed(exp + 3));
+    var min_exp = Math.min(Math.max(exp, 0), 2);
+    var places = Math.min(Math.max(places_exp, min_exp), 12);
+    var ret = "" + (pos / Math.pow(10, exp)).toFixed(places);
+    if (suffix && typeof exp_symbols[exp] !== "undefined"){
+        ret += " " + exp_symbols[exp] + "b";
+    }
+    return ret;
 };
 
 // Convert a string position to an integer (e.g. "5.8 Mb" => 58000000)
@@ -202,7 +218,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
 
 // From http://www.html5rocks.com/en/tutorials/cors/
 // and with promises from https://gist.github.com/kriskowal/593076
-LocusZoom.createCORSPromise = function (method, url, body, timeout) {
+LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     var response = Q.defer();
     var xhr = new XMLHttpRequest();
     if ("withCredentials" in xhr) {
@@ -222,12 +238,7 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        response.resolve(data);
-                    } catch (err) {
-                        response.reject("Unable to parse JSON response:" + err);
-                    }
+                    response.resolve(xhr.response);
                 } else {
                     response.reject("HTTP " + xhr.status + " for " + url);
                 }
@@ -235,14 +246,14 @@ LocusZoom.createCORSPromise = function (method, url, body, timeout) {
         };
         timeout && setTimeout(response.reject, timeout);
         body = typeof body !== "undefined" ? body : "";
+        if (typeof headers !== "undefined"){
+            for (var header in headers){
+                xhr.setRequestHeader(header, headers[header]);
+            }
+        }
+        // Send the request
         xhr.send(body);
     } 
-    return response.promise;
-};
-
-LocusZoom.createResolvedPromise = function() {
-    var response = Q.defer();
-    response.resolve(Array.prototype.slice.call(arguments));
     return response.promise;
 };
 
@@ -290,17 +301,16 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    var re;
+    var regex, replace;
     for (var field in data) {
         if (!data.hasOwnProperty(field)){ continue; }
-        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean"){ continue; }
-        re = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
-        html = html.replace(re, data[field]);
+        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean" && data[field] != null){ continue; }
+        regex = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
+        replace = (data[field] == null ? "" : data[field]);
+        html = html.replace(regex, replace);
     }
     return html;
 };
-
-LocusZoom.KnownDataSources = [];
 
 // Standard Layout
 LocusZoom.StandardLayout = {
@@ -309,8 +319,9 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    panels: {
-        positions: {
+    panels: [
+        {
+            id: "positions",
             title: "Analysis ID: 3",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
@@ -327,7 +338,8 @@ LocusZoom.StandardLayout = {
                 x: {
                     label_function: "chromosome",
                     label_offset: 32,
-                    tick_format: "region"
+                    tick_format: "region",
+                    extent: "state"
                 },
                 y1: {
                     label: "-log10 p-value",
@@ -338,8 +350,9 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
-            data_layers: {
-                significance: {
+            data_layers: [
+                {
+                    id: "significance",
                     type: "line",
                     fields: ["sig:x", "sig:y"],
                     z_index: 0,
@@ -360,7 +373,8 @@ LocusZoom.StandardLayout = {
                         html: "Significance Threshold: 3 × 10^-5"
                     }
                 },
-                recomb: {
+                {
+                    id: "recomb",
                     type: "line",
                     fields: ["recomb:position", "recomb:recomb_rate"],
                     z_index: 1,
@@ -378,42 +392,72 @@ LocusZoom.StandardLayout = {
                         ceiling: 100
                     }
                 },
-                positions: {
+                {
+                    id: "positions",
                     type: "scatter",
                     point_shape: "circle",
-                    point_size: 40,
-                    fields: ["id", "position", "pvalue|scinotation", "pvalue|neglog10", "refAllele", "ld:state"],
+                    point_size: {
+                        scale_function: "if",
+                        field: "ld:isrefvar",
+                        parameters: {
+                            field_value: 1,
+                            then: 80,
+                            else: 40
+                        }
+                    },
+                    color: [
+                        {
+                            scale_function: "if",
+                            field: "ld:isrefvar",
+                            parameters: {
+                                field_value: 1,
+                                then: "#9632b8"
+                            }
+                        },
+                        {
+                            scale_function: "numerical_bin",
+                            field: "ld:state",
+                            parameters: {
+                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+                            }
+                        },
+                        "#B8B8B8"
+                    ],
+                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+                    id_field: "variant",
                     z_index: 2,
                     x_axis: {
                         field: "position"
                     },
                     y_axis: {
                         axis: 1,
-                        field: "pvalue|neglog10",
+                        field: "log_pvalue",
                         floor: 0,
                         upper_buffer: 0.05,
                         min_extent: [ 0, 10 ]
                     },
-                    color: {
-                        field: "ld:state",
-                        scale_function: "numerical_bin",
-                        parameters: {
-                            breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                            values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"],
-                            null_value: "#B8B8B8"
-                        }
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
                     },
                     tooltip: {
-                        divs: [
-                            { html: "<strong>{{id}}</strong>" },
-                            { html: "P Value: <strong>{{pvalue|scinotation}}</strong>" },
-                            { html: "Ref. Allele: <strong>{{refAllele}}</strong>" }
-                        ]
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
+                        html: "<strong>{{variant}}</strong><br>"
+                            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
                     }
                 }
-            }
+            ]
         },
-        genes: {
+        {
+            id: "genes",
             width: 800,
             height: 225,
             origin: { x: 0, y: 225 },
@@ -424,20 +468,38 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
-            data_layers: {
-                genes: {
+            data_layers: [
+                {
+                    id: "genes",
                     type: "genes",
-                    fields: ["gene:gene"],
+                    fields: ["gene:gene", "constraint:constraint"],
+                    id_field: "gene_id",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
                     tooltip: {
-                        divs: [
-                            { html: "<strong><i>{{gene_name}}</i></strong>" },
-                            { html: "Gene ID: <strong>{{gene_id}}</strong>" },
-                            { html: "Transcript ID: <strong>{{transcript_id}}</strong>" },
-                            { html: "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">ExAC Page</a>" }
-                        ]
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
+                        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+                            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+                            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+                            + "<div style=\"clear: both;\"></div>"
+                            + "<table>"
+                            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+                            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+                            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+                            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+                            + "</table>"
+                            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
                     }
                 }
-            }
+            ]
         }
-    }
+    ]
 };
