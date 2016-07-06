@@ -366,6 +366,7 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
+            controls: { conditions: true },
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -3239,7 +3240,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
 // Default Layout
 LocusZoom.Instance.DefaultLayout = {
-    state: {},
+    state: {
+        conditions: []
+    },
     width: 1,
     height: 1,
     min_width: 1,
@@ -4022,6 +4025,17 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
+// Conditional Analysis shortcut functions
+LocusZoom.Instance.prototype.conditionOn = function(element){
+    if (this.state.conditions.indexOf(element) == -1){
+        this.state.conditions.push(element);
+    }
+    this.applyState();
+};
+LocusZoom.Instance.prototype.clearConditions = function(){
+    this.applyState({ conditions: [] });
+}
+
 // Map an entire LocusZoom Instance to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
 // LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
@@ -4057,12 +4071,13 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState({});
+    this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
 LocusZoom.Instance.prototype.applyState = function(new_state){
 
+    new_state = new_state || {};
     if (typeof new_state != "object"){
         throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
     }
@@ -4096,9 +4111,20 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+                
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
+                if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
+                    panel.controls.description.update();
+                }
+                if (panel.layout.controls.conditions && panel.controls.conditions){
+                    if (panel.controls.showing){
+                        panel.controls.update();
+                    } else if (this.state.conditions.length){
+                        panel.controls.show();
+                    }
+                }
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];
@@ -4117,11 +4143,14 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                 }.bind(panel));
             }.bind(this));
+            
             // Update controls info
             this.controls.update();
+            
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+            
         }.bind(this));
 
     return this;
@@ -4265,7 +4294,8 @@ LocusZoom.Panel.DefaultLayout = {
     controls: {
         description: true,
         reposition: true,
-        remove: true
+        remove: true,
+        conditions: false
     },
     cliparea: {
         height: 0,
@@ -4544,77 +4574,79 @@ LocusZoom.Panel.prototype.initialize = function(){
         selector: null,
         hide_timeout: null,
         link_selectors: {},
+        showing: false,
         show: function(){
-            if (!this.layout.controls || this.controls.selector){ return this.controls.update(); }
-            if (this.curtain.showing || this.parent.curtain.showing){ return this.controls.update(); }
+            if (this.controls.showing){ return this.controls.update(); }
             this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                 .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
                 .attr("id", this.getBaseId() + ".controls")
                 .style({ position: "absolute" });
             
-            // Conditional button
-            this.controls.link_selectors.conditions = this.controls.selector.append("a")
-                .classed("lz-panel-controls-button-purple", true)
-                .attr("title", "Show and edit Conditional Analysis")
-                .style({ "font-weight": "bold" })
-                .text("*Conditions")
-                .on("click", function(){
-                    if (this.controls.conditions.showing){
-                        this.controls.conditions.hide();
-                        this.controls.link_selectors.conditions.classed("lz-panel-controls-button-purple-selected", false);
-                    } else {
-                        this.controls.conditions.show();
-                        this.controls.conditions.update();
-                        this.controls.link_selectors.conditions.classed("lz-panel-controls-button-purple-selected", true);
-                    }
-                }.bind(this));
-            this.controls.conditions = {
-                showing: false,
-                selector: null,
-                content_selector: null,
-                show: function(){
-                    this.controls.conditions.selector = d3.select(this.parent.svg.node().parentNode).append("div")
-                        .attr("class", "lz-panel-conditions")
-                        .attr("id", this.getBaseId() + ".conditions");
-                    this.controls.conditions.content_selector = this.controls.conditions.selector.append("div")
-                        .attr("class", "lz-panel-conditions-content");
-                    this.controls.conditions.showing = true;
-                    return this.controls.conditions;
-                }.bind(this),
-                update: function(){
-                    if (!this.controls.conditions.showing){ return this.controls.conditions; }
-                    this.controls.conditions.content_selector.html("<h3>Conditional Analysis</h3>...");
-                    var padding = 4; // is there a better place to store this?
-                    var page_origin = this.getPageOrigin();
-                    var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
-                    var cond_client_rect = this.controls.conditions.selector.node().getBoundingClientRect();
-                    var total_content_height = this.controls.conditions.content_selector.node().scrollHeight;
-                    var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
-                    var left = Math.max(page_origin.x + this.layout.width - cond_client_rect.width - padding, page_origin.x + padding).toString() + "px";
-                    var base_max_width = (this.layout.width - (2 * padding));
-                    var container_max_width = base_max_width.toString() + "px";
-                    var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-                    var base_max_height = (this.layout.height - (7 * padding) - controls_client_rect.height);
-                    var height = Math.min(total_content_height, base_max_height).toString() + "px";
-                    var max_height = base_max_height.toString() + "px";
-                    this.controls.conditions.selector.style({
-                        top: top, left: left,
-                        "max-width": container_max_width,
-                        "max-height": max_height,
-                        height: height
-                    });
-                    this.controls.conditions.content_selector.style({ "max-width": content_max_width });
-                    return this.controls.conditions;
-                }.bind(this),
-                hide: function(){
-                    if (!this.controls.conditions.showing){ return this.controls.conditions; }
-                    this.controls.conditions.selector.remove();
-                    this.controls.conditions.selector = null;
-                    this.controls.conditions.content_selector = null;
-                    this.controls.conditions.showing = false;
-                    return this.controls.conditions;
-                }.bind(this)
-            };
+            // Conditions button
+            if (this.layout.controls.conditions){
+                this.controls.link_selectors.conditions = this.controls.selector.append("a")
+                    .classed("lz-panel-controls-button-purple", true).classed("lz-panel-controls-button-purple-disabled", true)
+                    .attr("title", "Show and edit Conditional Analysis")
+                    .style({ "font-weight": "bold", "margin-right": "6px" })
+                    .text("Conditions")
+                    .on("click", function(){
+                        if (this.controls.conditions.showing){
+                            this.controls.conditions.hide();
+                            this.controls.link_selectors.conditions.classed("lz-panel-controls-button-purple-selected", false);
+                        } else {
+                            this.controls.conditions.show();
+                            this.controls.conditions.update();
+                            this.controls.link_selectors.conditions.classed("lz-panel-controls-button-purple-selected", true);
+                        }
+                    }.bind(this));
+                this.controls.conditions = {
+                    showing: false,
+                    selector: null,
+                    content_selector: null,
+                    show: function(){
+                        this.controls.conditions.selector = d3.select(this.parent.svg.node().parentNode).append("div")
+                            .attr("class", "lz-panel-conditions")
+                            .attr("id", this.getBaseId() + ".conditions");
+                        this.controls.conditions.content_selector = this.controls.conditions.selector.append("div")
+                            .attr("class", "lz-panel-conditions-content");
+                        this.controls.conditions.showing = true;
+                        return this.controls.conditions;
+                    }.bind(this),
+                    update: function(){
+                        if (!this.controls.conditions.showing){ return this.controls.conditions; }
+                        this.controls.conditions.content_selector.html("<h3>Conditional Analysis</h3>...");
+                        var padding = 4; // is there a better place to store this?
+                        var page_origin = this.getPageOrigin();
+                        var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
+                        var cond_client_rect = this.controls.conditions.selector.node().getBoundingClientRect();
+                        var total_content_height = this.controls.conditions.content_selector.node().scrollHeight;
+                        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
+                        var left = Math.max(page_origin.x + this.layout.width - cond_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+                        var base_max_width = (this.layout.width - (2 * padding));
+                        var container_max_width = base_max_width.toString() + "px";
+                        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
+                        var base_max_height = (this.layout.height - (7 * padding) - controls_client_rect.height);
+                        var height = Math.min(total_content_height, base_max_height).toString() + "px";
+                        var max_height = base_max_height.toString() + "px";
+                        this.controls.conditions.selector.style({
+                            top: top, left: left,
+                            "max-width": container_max_width,
+                            "max-height": max_height,
+                            height: height
+                        });
+                        this.controls.conditions.content_selector.style({ "max-width": content_max_width });
+                        return this.controls.conditions;
+                    }.bind(this),
+                    hide: function(){
+                        if (!this.controls.conditions.showing){ return this.controls.conditions; }
+                        this.controls.conditions.selector.remove();
+                        this.controls.conditions.selector = null;
+                        this.controls.conditions.content_selector = null;
+                        this.controls.conditions.showing = false;
+                        return this.controls.conditions;
+                    }.bind(this)
+                };
+            }
             
             // Reposition buttons
             if (this.layout.controls.reposition){
@@ -4728,19 +4760,11 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.parent.removePanel(this.id);
                     }.bind(this));
             }
+            this.controls.showing = true;
             return this.controls.update();
         }.bind(this),
         update: function(){
             if (!this.layout.controls || !this.controls.selector){ return this.controls; }
-            var page_origin = this.getPageOrigin();
-            var client_rect = this.controls.selector.node().getBoundingClientRect();
-            var top = page_origin.y.toString() + "px";
-            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
-            this.controls.selector.style({ position: "absolute", top: top, left: left });
-            // Position description box if it's showing
-            if (this.controls.description && this.controls.description.showing){
-                this.controls.description.update();
-            }
             // Apply appropriate classes to reposition buttons as needed
             if (this.controls.link_selectors.reposition_up){
                 this.controls.link_selectors.reposition_up.classed("lz-panel-controls-button-disabled", (this.layout.y_index == 0));
@@ -4748,14 +4772,25 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.controls.link_selectors.reposition_down){
                 this.controls.link_selectors.reposition_down.classed("lz-panel-controls-button-disabled", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1));
             }
-            // Show or hide conditional button and conditional dialog if it's showing
-            if (this.state[this.id].conditioning){
-                this.controls.link_selectors.conditions.style("display", null);
-                if (this.controls.conditions.showing){
-                    this.controls.conditions.update();
-                }
-            } else {
-                this.controls.link_selectors.conditions.style("display", "none");
+            // Style conditions button as needed
+            if (this.controls.conditions){
+                this.controls.link_selectors.conditions
+                    .classed("lz-panel-controls-button-purple-disabled", !Boolean(this.state.conditions.length))
+                    .html(Boolean(this.state.conditions.length) ? "Conditioning" : "<small>not conditioning</small>");
+            }
+            // Position the entire controls element
+            var page_origin = this.getPageOrigin();
+            var client_rect = this.controls.selector.node().getBoundingClientRect();
+            var top = page_origin.y.toString() + "px";
+            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
+            this.controls.selector.style({ position: "absolute", top: top, left: left });
+            // Position description box as needed
+            if (this.controls.description && this.controls.description.showing){
+                this.controls.description.update();
+            }
+            // Position conditions dialog as needed
+            if (this.controls.conditions && this.controls.conditions.showing){
+                this.controls.conditions.update();
             }
             return this.controls;
         }.bind(this),
@@ -4764,11 +4799,12 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Do not hide if this panel is showing a description
             if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if this panel is currently displaying conditioned data
-            if (this.state[this.id].conditioning){ return this.controls; }
+            if (this.controls.conditions && this.state.conditions.length){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
             if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
+            this.controls.showing = false;
             return this.controls;
         }.bind(this)
     };

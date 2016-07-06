@@ -107,7 +107,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
 // Default Layout
 LocusZoom.Instance.DefaultLayout = {
-    state: {},
+    state: {
+        conditions: []
+    },
     width: 1,
     height: 1,
     min_width: 1,
@@ -890,6 +892,17 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
+// Conditional Analysis shortcut functions
+LocusZoom.Instance.prototype.conditionOn = function(element){
+    if (this.state.conditions.indexOf(element) == -1){
+        this.state.conditions.push(element);
+    }
+    this.applyState();
+};
+LocusZoom.Instance.prototype.clearConditions = function(){
+    this.applyState({ conditions: [] });
+}
+
 // Map an entire LocusZoom Instance to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
 // LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
@@ -925,12 +938,13 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState({});
+    this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
 LocusZoom.Instance.prototype.applyState = function(new_state){
 
+    new_state = new_state || {};
     if (typeof new_state != "object"){
         throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
     }
@@ -964,9 +978,20 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+                
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
+                if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
+                    panel.controls.description.update();
+                }
+                if (panel.layout.controls.conditions && panel.controls.conditions){
+                    if (panel.controls.showing){
+                        panel.controls.update();
+                    } else if (this.state.conditions.length){
+                        panel.controls.show();
+                    }
+                }
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];
@@ -985,11 +1010,14 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                 }.bind(panel));
             }.bind(this));
+            
             // Update controls info
             this.controls.update();
+            
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+            
         }.bind(this));
 
     return this;
