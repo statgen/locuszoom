@@ -429,4 +429,54 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
+    describe("Conditional Analysis Methods", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, {});
+        });
+        it("Should have a method for adding arbitrary elements to conditions", function(){
+            this.plot.state.conditions.should.be.an.Array;
+            this.plot.state.conditions.length.should.be.exactly(0);
+            this.plot.conditionOn("foo");
+            this.plot.state.conditions.length.should.be.exactly(1);
+            this.plot.state.conditions[0].should.be.exactly("foo");
+        });
+        it("Should not allow for conditioning on the same element more than once", function(){
+            this.plot.conditionOn("foo");
+            this.plot.state.conditions.length.should.be.exactly(1);
+            this.plot.state.conditions[0].should.be.exactly("foo");
+            this.plot.conditionOn("bar");
+            this.plot.state.conditions.length.should.be.exactly(2);
+            this.plot.state.conditions[1].should.be.exactly("bar");
+            this.plot.conditionOn("foo");
+            this.plot.state.conditions.length.should.be.exactly(2);
+            var obj1 = { foo: "bar", baz: function(){ return "baz"; } };
+            var obj2 = { foo: "asdf", baz: function(){ return "baz"; } };
+            this.plot.conditionOn(obj1);
+            this.plot.state.conditions.length.should.be.exactly(3);
+            this.plot.conditionOn(obj2);
+            this.plot.state.conditions.length.should.be.exactly(4);
+            this.plot.conditionOn(obj1);
+            this.plot.state.conditions.length.should.be.exactly(4);
+        });
+        it("Should have a method for removing conditions via their index", function(){
+            this.plot.conditionOn("foo").conditionOn("bar").conditionOn("baz");
+            this.plot.state.conditions.length.should.be.exactly(3);
+            this.plot.removeConditionByIdx(1);
+            this.plot.state.conditions.length.should.be.exactly(2);
+            this.plot.state.conditions[0].should.be.exactly("foo");
+            this.plot.state.conditions[1].should.be.exactly("baz");
+            assert.throws(function(){ this.plot.removeConditionByIdx(9); });
+            assert.throws(function(){ this.plot.removeConditionByIdx(-1); });
+            assert.throws(function(){ this.plot.removeConditionByIdx("foo"); });
+        });
+        it("Should have a method for removing all conditions", function(){
+            this.plot.conditionOn("foo").conditionOn("bar").conditionOn("baz");
+            this.plot.state.conditions.length.should.be.exactly(3);
+            this.plot.removeAllConditions(1);
+            this.plot.state.conditions.length.should.be.exactly(0);
+        });
+    });
+
 });

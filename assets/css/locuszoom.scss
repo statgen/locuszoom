@@ -560,6 +560,7 @@ div.#{$namespace}-panel-conditions {
     width: 100%;
     height: 100%;
     overflow-y: auto;
+    margin-right: 1.6em;
 
     h1, h2, h3, h4, h5, h6 {
       margin-top: 0.1em;
@@ -568,13 +569,27 @@ div.#{$namespace}-panel-conditions {
   
   }
 
-  div.#{$namespace}-panel-conditions-condition {
-    display: block;
+  table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0px;
+    margin-bottom: 0.4em;
     width: 100%;
-    margin-bottom: 0.3em;
+  }
+  th:first-child, td:first-child {
+    vertical-align: top;
+  }
+  tr:nth-child(2) {
+    background-color: rgba(80,49,89,0.1);
+  }
+  th, td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: middle;
   }
 
   button {
+    white-space: nowrap;
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(221,195,230,1);

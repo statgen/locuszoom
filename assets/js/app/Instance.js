@@ -894,18 +894,28 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 // Conditional Analysis shortcut functions
 LocusZoom.Instance.prototype.conditionOn = function(element){
-    if (this.state.conditions.indexOf(element) == -1){
-        this.state.conditions.push(element);
+    // Check if the element is already in the array. Do this with JSON.stringify since elements
+    // may have functions that would trip up more basic equality checking
+    for (var i = 0; i < this.state.conditions.length; i++) {
+        if (JSON.stringify(this.state.conditions[i]) === JSON.stringify(element)) {
+            return this;
+        }
     }
+    this.state.conditions.push(element);
     this.applyState();
+    return this;
 };
 LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
-    if (typeof this.state.conditions[idx] == "undefined"){ return; }
+    if (typeof this.state.conditions[idx] == "undefined"){
+        throw("Unable to remove condition, invalid index: " + idx.toString());
+    }
     this.state.conditions.splice(idx, 1);
     this.applyState();
+    return this;
 };
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
+    return this;
 }
 
 // Map an entire LocusZoom Instance to a new region
@@ -990,6 +1000,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
+                panel.controls.update();
                 if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
                     panel.controls.description.update();
                 }
@@ -999,6 +1010,9 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                     if (panel.controls.showing && panel.controls.conditions && panel.controls.conditions.showing){
                         panel.controls.conditions.update();
+                        if (!this.state.conditions.length){
+                            panel.controls.conditions.hide();
+                        }
                     }
                 }
                 // Apply data-layer-level state values

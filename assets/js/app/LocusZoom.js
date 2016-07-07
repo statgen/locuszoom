@@ -312,6 +312,21 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
+// Shortcut method for getting the data bound to a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipData = function(node){
+    if (typeof node != "object" || typeof node.parentNode == "undefined"){
+        throw("Invalid node object");
+    }
+    // If this node is a locuszoom tool tip then return its data
+    var selector = d3.select(node);
+    if (selector.classed("lz-data_layer-tooltip") && typeof selector.data()[0] != "undefined"){
+        return selector.data()[0];
+    } else {
+        return LocusZoom.getToolTipData(node.parentNode);
+    }
+};
+
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -452,7 +467,8 @@ LocusZoom.StandardLayout = {
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
+                            + "<button onclick=\"plot.conditionOn(LocusZoom.getToolTipData(this));\">Condition</button>"
                     }
                 }
             ]

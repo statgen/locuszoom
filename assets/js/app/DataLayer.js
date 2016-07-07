@@ -85,6 +85,13 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     }
 };
 
+// Stub method to apply arbitrary methods to data elements.
+// Default does nothing; data layer types may apply different methods as needed.
+// This is called on all data immediately after being fetched.
+LocusZoom.DataLayer.prototype.applyDataMethods = function(){
+    return;
+};
+
 // Initialize a data layer
 LocusZoom.DataLayer.prototype.initialize = function(){
 
@@ -226,6 +233,8 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
                 this.destroyTooltip(id);
             }.bind(this));
     }
+    // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
+    this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
 };
@@ -573,6 +582,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
+        this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
     return promise;

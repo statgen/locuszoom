@@ -443,6 +443,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     showing: false,
                     selector: null,
                     content_selector: null,
+                    // show - generate elements for the conditions dialog selector and its content selector
                     show: function(){
                         if (this.controls.conditions.showing){ return this.controls.conditions.update(); }
                         this.controls.conditions.selector = d3.select(this.parent.svg.node().parentNode).append("div")
@@ -453,33 +454,33 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.conditions.showing = true;
                         return this.controls.conditions.update();
                     }.bind(this),
+                    // update - populate the conditions dialog content element with conditional analysis UI elements
                     update: function(){
-                        if (!this.controls.conditions.showing){ console.log("bail"); return this.controls.conditions.position(); }
+                        if (!this.controls.conditions.showing){ return this.controls.conditions.position(); }
                         this.controls.conditions.content_selector.html("");
                         this.controls.conditions.content_selector.append("h3").html("Conditional Analysis");
+                        var table = this.controls.conditions.content_selector.append("table");
                         this.state.conditions.forEach(function(condition, idx){
                             var html = condition.toString();
                             if (typeof condition == "object" && typeof condition.toHTML == "function"){
                                 html = condition.toHTML();
                             }
-                            var div = this.controls.conditions.content_selector.append("div")
-                                .classed("lz-panel-conditions-condition", true)
-                                .html(condition);
-                            div.append("button")
-                                .style({ "float": "right", "margin-left": "0.3em"})
-                                .text("×")
+                            var row = table.append("tr");
+                            row.append("td").append("button").text("×")
                                 .on("click", function(){
                                     this.parent.removeConditionByIdx(idx);
                                 }.bind(this));
-                            div.append("div").style({ "clear": "both" });
+                            row.append("td").html(html);
                         }.bind(this));
-                        this.controls.conditions.content_selector.append("button").html("Remove All Conditions")
+                        this.controls.conditions.content_selector.append("button")
+                            .style({ "margin-left": "4px" }).html("× Remove All Conditions")
                             .on("click", function(){
                                 this.parent.removeAllConditions();
                                 this.controls.conditions.hide();
                             }.bind(this));
                         return this.controls.conditions.position();
                     }.bind(this),
+                    // position - adjust the size and position of the conditions dialog alement
                     position: function(){
                         if (!this.controls.conditions.showing){ return this.controls.conditions; }
                         var padding = 4; // is there a better place to store this?
@@ -504,6 +505,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.conditions.content_selector.style({ "max-width": content_max_width });
                         return this.controls.conditions;
                     }.bind(this),
+                    // hide - destroy the conditions dialog element
                     hide: function(){
                         if (!this.controls.conditions.showing){ return this.controls.conditions; }
                         this.controls.conditions.selector.remove();

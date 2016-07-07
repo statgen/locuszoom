@@ -344,6 +344,21 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
+// Shortcut method for getting the data bound to a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipData = function(node){
+    if (typeof node != "object" || typeof node.parentNode == "undefined"){
+        throw("Invalid node object");
+    }
+    // If this node is a locuszoom tool tip then return its data
+    var selector = d3.select(node);
+    if (selector.classed("lz-data_layer-tooltip") && typeof selector.data()[0] != "undefined"){
+        return selector.data()[0];
+    } else {
+        return LocusZoom.getToolTipData(node.parentNode);
+    }
+};
+
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -484,7 +499,8 @@ LocusZoom.StandardLayout = {
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
+                            + "<button onclick=\"plot.conditionOn(LocusZoom.getToolTipData(this));\">Condition</button>"
                     }
                 }
             ]
@@ -622,6 +638,13 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     } else {
         return null;
     }
+};
+
+// Stub method to apply arbitrary methods to data elements.
+// Default does nothing; data layer types may apply different methods as needed.
+// This is called on all data immediately after being fetched.
+LocusZoom.DataLayer.prototype.applyDataMethods = function(){
+    return;
 };
 
 // Initialize a data layer
@@ -765,6 +788,8 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
                 this.destroyTooltip(id);
             }.bind(this));
     }
+    // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
+    this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
 };
@@ -1112,6 +1137,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
+        this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
     return promise;
@@ -1546,6 +1572,18 @@ LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
+
+    // Reimplement applyDataMethods() to add a toHTML() method on each scatter element
+    this.applyDataMethods = function(){
+        this.data.forEach(function(d, i){
+            this.data[i].toHTML = function(){
+                var html = "";
+                if (this.id){ html = this.id; }
+                else if (this.variant){ html = this.variant; }
+                return html;
+            };
+        }.bind(this));
+    };
 
     // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(id){
@@ -4027,18 +4065,28 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 // Conditional Analysis shortcut functions
 LocusZoom.Instance.prototype.conditionOn = function(element){
-    if (this.state.conditions.indexOf(element) == -1){
-        this.state.conditions.push(element);
+    // Check if the element is already in the array. Do this with JSON.stringify since elements
+    // may have functions that would trip up more basic equality checking
+    for (var i = 0; i < this.state.conditions.length; i++) {
+        if (JSON.stringify(this.state.conditions[i]) === JSON.stringify(element)) {
+            return this;
+        }
     }
+    this.state.conditions.push(element);
     this.applyState();
+    return this;
 };
 LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
-    if (typeof this.state.conditions[idx] == "undefined"){ return; }
+    if (typeof this.state.conditions[idx] == "undefined"){
+        throw("Unable to remove condition, invalid index: " + idx.toString());
+    }
     this.state.conditions.splice(idx, 1);
     this.applyState();
+    return this;
 };
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
+    return this;
 }
 
 // Map an entire LocusZoom Instance to a new region
@@ -4123,6 +4171,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
+                panel.controls.update();
                 if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
                     panel.controls.description.update();
                 }
@@ -4132,6 +4181,9 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                     if (panel.controls.showing && panel.controls.conditions && panel.controls.conditions.showing){
                         panel.controls.conditions.update();
+                        if (!this.state.conditions.length){
+                            panel.controls.conditions.hide();
+                        }
                     }
                 }
                 // Apply data-layer-level state values
@@ -4609,6 +4661,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     showing: false,
                     selector: null,
                     content_selector: null,
+                    // show - generate elements for the conditions dialog selector and its content selector
                     show: function(){
                         if (this.controls.conditions.showing){ return this.controls.conditions.update(); }
                         this.controls.conditions.selector = d3.select(this.parent.svg.node().parentNode).append("div")
@@ -4619,33 +4672,33 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.conditions.showing = true;
                         return this.controls.conditions.update();
                     }.bind(this),
+                    // update - populate the conditions dialog content element with conditional analysis UI elements
                     update: function(){
-                        if (!this.controls.conditions.showing){ console.log("bail"); return this.controls.conditions.position(); }
+                        if (!this.controls.conditions.showing){ return this.controls.conditions.position(); }
                         this.controls.conditions.content_selector.html("");
                         this.controls.conditions.content_selector.append("h3").html("Conditional Analysis");
+                        var table = this.controls.conditions.content_selector.append("table");
                         this.state.conditions.forEach(function(condition, idx){
                             var html = condition.toString();
                             if (typeof condition == "object" && typeof condition.toHTML == "function"){
                                 html = condition.toHTML();
                             }
-                            var div = this.controls.conditions.content_selector.append("div")
-                                .classed("lz-panel-conditions-condition", true)
-                                .html(condition);
-                            div.append("button")
-                                .style({ "float": "right", "margin-left": "0.3em"})
-                                .text("×")
+                            var row = table.append("tr");
+                            row.append("td").append("button").text("×")
                                 .on("click", function(){
                                     this.parent.removeConditionByIdx(idx);
                                 }.bind(this));
-                            div.append("div").style({ "clear": "both" });
+                            row.append("td").html(html);
                         }.bind(this));
-                        this.controls.conditions.content_selector.append("button").html("Remove All Conditions")
+                        this.controls.conditions.content_selector.append("button")
+                            .style({ "margin-left": "4px" }).html("× Remove All Conditions")
                             .on("click", function(){
                                 this.parent.removeAllConditions();
                                 this.controls.conditions.hide();
                             }.bind(this));
                         return this.controls.conditions.position();
                     }.bind(this),
+                    // position - adjust the size and position of the conditions dialog alement
                     position: function(){
                         if (!this.controls.conditions.showing){ return this.controls.conditions; }
                         var padding = 4; // is there a better place to store this?
@@ -4670,6 +4723,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                         this.controls.conditions.content_selector.style({ "max-width": content_max_width });
                         return this.controls.conditions;
                     }.bind(this),
+                    // hide - destroy the conditions dialog element
                     hide: function(){
                         if (!this.controls.conditions.showing){ return this.controls.conditions; }
                         this.controls.conditions.selector.remove();

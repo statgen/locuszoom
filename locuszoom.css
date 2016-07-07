@@ -462,15 +462,27 @@ div.lz-panel-conditions {
     display: block;
     width: 100%;
     height: 100%;
-    overflow-y: auto; }
+    overflow-y: auto;
+    margin-right: 1.6em; }
     div.lz-panel-conditions .lz-panel-conditions-content h1, div.lz-panel-conditions .lz-panel-conditions-content h2, div.lz-panel-conditions .lz-panel-conditions-content h3, div.lz-panel-conditions .lz-panel-conditions-content h4, div.lz-panel-conditions .lz-panel-conditions-content h5, div.lz-panel-conditions .lz-panel-conditions-content h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em; }
-  div.lz-panel-conditions div.lz-panel-conditions-condition {
-    display: block;
-    width: 100%;
-    margin-bottom: 0.3em; }
+  div.lz-panel-conditions table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0px;
+    margin-bottom: 0.4em;
+    width: 100%; }
+  div.lz-panel-conditions th:first-child, div.lz-panel-conditions td:first-child {
+    vertical-align: top; }
+  div.lz-panel-conditions tr:nth-child(2) {
+    background-color: rgba(80, 49, 89, 0.1); }
+  div.lz-panel-conditions th, div.lz-panel-conditions td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: middle; }
   div.lz-panel-conditions button {
+    white-space: nowrap;
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #ddc3e6;
