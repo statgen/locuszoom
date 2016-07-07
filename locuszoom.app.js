@@ -4032,6 +4032,11 @@ LocusZoom.Instance.prototype.conditionOn = function(element){
     }
     this.applyState();
 };
+LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
+    if (typeof this.state.conditions[idx] == "undefined"){ return; }
+    this.state.conditions.splice(idx, 1);
+    this.applyState();
+};
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
 }
@@ -4111,6 +4116,9 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+
+            // Update controls info
+            this.controls.update();
                 
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
@@ -4118,11 +4126,12 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                 if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
                     panel.controls.description.update();
                 }
-                if (panel.layout.controls.conditions && panel.controls.conditions){
-                    if (panel.controls.showing){
-                        panel.controls.update();
-                    } else if (this.state.conditions.length){
+                if (panel.layout.controls.conditions){
+                    if (this.state.conditions.length && !panel.controls.showing){
                         panel.controls.show();
+                    }
+                    if (panel.controls.showing && panel.controls.conditions && panel.controls.conditions.showing){
+                        panel.controls.conditions.update();
                     }
                 }
                 // Apply data-layer-level state values
@@ -4143,9 +4152,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                 }.bind(panel));
             }.bind(this));
-            
-            // Update controls info
-            this.controls.update();
             
             // Emit events
             this.emit("layout_changed");
@@ -4614,9 +4620,25 @@ LocusZoom.Panel.prototype.initialize = function(){
                         return this.controls.conditions.update();
                     }.bind(this),
                     update: function(){
-                        if (!this.controls.conditions.showing){ return this.controls.conditions.position(); }
+                        if (!this.controls.conditions.showing){ console.log("bail"); return this.controls.conditions.position(); }
                         this.controls.conditions.content_selector.html("");
                         this.controls.conditions.content_selector.append("h3").html("Conditional Analysis");
+                        this.state.conditions.forEach(function(condition, idx){
+                            var html = condition.toString();
+                            if (typeof condition == "object" && typeof condition.toHTML == "function"){
+                                html = condition.toHTML();
+                            }
+                            var div = this.controls.conditions.content_selector.append("div")
+                                .classed("lz-panel-conditions-condition", true)
+                                .html(condition);
+                            div.append("button")
+                                .style({ "float": "right", "margin-left": "0.3em"})
+                                .text("×")
+                                .on("click", function(){
+                                    this.parent.removeConditionByIdx(idx);
+                                }.bind(this));
+                            div.append("div").style({ "clear": "both" });
+                        }.bind(this));
                         this.controls.conditions.content_selector.append("button").html("Remove All Conditions")
                             .on("click", function(){
                                 this.parent.removeAllConditions();

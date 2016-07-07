@@ -464,7 +464,12 @@ div.lz-panel-conditions {
     height: 100%;
     overflow-y: auto; }
     div.lz-panel-conditions .lz-panel-conditions-content h1, div.lz-panel-conditions .lz-panel-conditions-content h2, div.lz-panel-conditions .lz-panel-conditions-content h3, div.lz-panel-conditions .lz-panel-conditions-content h4, div.lz-panel-conditions .lz-panel-conditions-content h5, div.lz-panel-conditions .lz-panel-conditions-content h6 {
-      margin-top: 0.1em; }
+      margin-top: 0.1em;
+      margin-bottom: 0.3em; }
+  div.lz-panel-conditions div.lz-panel-conditions-condition {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.3em; }
   div.lz-panel-conditions button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;

@@ -899,6 +899,11 @@ LocusZoom.Instance.prototype.conditionOn = function(element){
     }
     this.applyState();
 };
+LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
+    if (typeof this.state.conditions[idx] == "undefined"){ return; }
+    this.state.conditions.splice(idx, 1);
+    this.applyState();
+};
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
 }
@@ -978,6 +983,9 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.curtain.drop(error);
         }.bind(this))
         .done(function(){
+
+            // Update controls info
+            this.controls.update();
                 
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
@@ -985,11 +993,12 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                 if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
                     panel.controls.description.update();
                 }
-                if (panel.layout.controls.conditions && panel.controls.conditions){
-                    if (panel.controls.showing){
-                        panel.controls.update();
-                    } else if (this.state.conditions.length){
+                if (panel.layout.controls.conditions){
+                    if (this.state.conditions.length && !panel.controls.showing){
                         panel.controls.show();
+                    }
+                    if (panel.controls.showing && panel.controls.conditions && panel.controls.conditions.showing){
+                        panel.controls.conditions.update();
                     }
                 }
                 // Apply data-layer-level state values
@@ -1010,9 +1019,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                 }.bind(panel));
             }.bind(this));
-            
-            // Update controls info
-            this.controls.update();
             
             // Emit events
             this.emit("layout_changed");

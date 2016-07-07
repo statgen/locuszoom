@@ -454,9 +454,25 @@ LocusZoom.Panel.prototype.initialize = function(){
                         return this.controls.conditions.update();
                     }.bind(this),
                     update: function(){
-                        if (!this.controls.conditions.showing){ return this.controls.conditions.position(); }
+                        if (!this.controls.conditions.showing){ console.log("bail"); return this.controls.conditions.position(); }
                         this.controls.conditions.content_selector.html("");
                         this.controls.conditions.content_selector.append("h3").html("Conditional Analysis");
+                        this.state.conditions.forEach(function(condition, idx){
+                            var html = condition.toString();
+                            if (typeof condition == "object" && typeof condition.toHTML == "function"){
+                                html = condition.toHTML();
+                            }
+                            var div = this.controls.conditions.content_selector.append("div")
+                                .classed("lz-panel-conditions-condition", true)
+                                .html(condition);
+                            div.append("button")
+                                .style({ "float": "right", "margin-left": "0.3em"})
+                                .text("×")
+                                .on("click", function(){
+                                    this.parent.removeConditionByIdx(idx);
+                                }.bind(this));
+                            div.append("div").style({ "clear": "both" });
+                        }.bind(this));
                         this.controls.conditions.content_selector.append("button").html("Remove All Conditions")
                             .on("click", function(){
                                 this.parent.removeAllConditions();
