@@ -1577,11 +1577,11 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     this.applyDataMethods = function(){
         this.data.forEach(function(d, i){
             this.data[i].toHTML = function(){
+                var id_field = this.layout.id_field || "id";
                 var html = "";
-                if (this.id){ html = this.id; }
-                else if (this.variant){ html = this.variant; }
+                if (this.data[i][id_field]){ html = this.data[i][id_field]; }
                 return html;
-            };
+            }.bind(this);
         }.bind(this));
     };
 
