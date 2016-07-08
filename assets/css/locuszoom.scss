@@ -460,113 +460,213 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   }
 }
 
-.#{$namespace}-locuszoom-panel-controls {
-  padding-top: 6px;
-  padding-right: 2px;
+.#{$namespace}-panel-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 3px;
+  padding-right: 3px;
+  position: absolute;
   
   .#{$namespace}-panel-controls-button {
     text-decoration: none;
+    font-weight: bold;
+    font-size: 11px;
     padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(216,216,216,0.4);
-    border: 1px solid rgba(51,51,51,0.4);
-    color: rgba(51,51,51,0.4);
     border-radius: 4px;
-    pointer-events: auto;    
-  }
-  .#{$namespace}-panel-controls-button:not(.#{$namespace}-panel-controls-button-disabled):not(.#{$namespace}-panel-controls-button-selected):hover {
+    pointer-events: auto;
     cursor: pointer;
+  }
+
+  .#{$namespace}-panel-controls-button-gray {
+    background-color: rgba(216,216,216,0.5);
+    border: 1px solid rgba(51,51,51,0.5);
+    color: rgba(51,51,51,0.5);
+  }
+  .#{$namespace}-panel-controls-button-gray:not(.#{$namespace}-panel-controls-button-gray-disabled):not(.#{$namespace}-panel-controls-button-gray-highlighted):hover {
     background-color: rgba(216,216,216,1);
     border: 1px solid rgba(51,51,51,1);
     color: rgba(51,51,51,1);
   }
-  .#{$namespace}-panel-controls-button-selected {
+  .#{$namespace}-panel-controls-button-gray-highlighted {
     border: 1px solid rgba(51,51,51,1);
     background-color: rgba(51,51,51,1);
     color: rgba(216,216,216,1);
-    cursor: pointer;
   }
-  .#{$namespace}-panel-controls-button-disabled {
-    background-color: rgba(216,216,216,0.4);
-    border: 1px solid rgba(153,153,153,0.4);
-    color: rgba(153,153,153,0.4);
+  .#{$namespace}-panel-controls-button-gray-disabled {
+    background-color: rgba(216,216,216,0.5);
+    border: 1px solid rgba(153,153,153,0.5);
+    color: rgba(153,153,153,0.5);
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .#{$namespace}-panel-controls-button-red {
+    background-color: rgba(230,195,195,0.75);
+    border: 1px solid rgba(89,49,49,0.75);
+    color: rgba(89,49,49,0.75);
+  }
+  .#{$namespace}-panel-controls-button-red:not(.#{$namespace}-panel-controls-button-red-disabled):not(.#{$namespace}-panel-controls-button-red-highlighted):hover {
+    background-color: rgba(230,195,195,1);
+    border: 1px solid rgba(89,49,49,1);
+    color: rgba(89,49,49,1);
+  }
+  .#{$namespace}-panel-controls-button-red-highlighted {
+    border: 1px solid rgba(89,49,49,1);
+    background-color: rgba(89,49,49,1);
+    color: rgba(230,195,195,1);
+  }
+  .#{$namespace}-panel-controls-button-red-disabled {
+    background-color: rgba(230,195,195,0.75);
+    border: 1px solid rgba(179,134,134,0.75);
+    color: rgba(179,134,134,0.75);
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .#{$namespace}-panel-controls-button-orange {
+    background-color: rgba(230,213,195,0.75);
+    border: 1px solid rgba(89,69,49,0.75);
+    color: rgba(89,69,49,0.75);
+  }
+  .#{$namespace}-panel-controls-button-orange:not(.#{$namespace}-panel-controls-button-orange-disabled):not(.#{$namespace}-panel-controls-button-orange-highlighted):hover {
+    background-color: rgba(230,213,195,1);
+    border: 1px solid rgba(89,69,49,1);
+    color: rgba(89,69,49,1);
+  }
+  .#{$namespace}-panel-controls-button-orange-highlighted {
+    border: 1px solid rgba(89,69,49,1);
+    background-color: rgba(89,69,49,1);
+    color: rgba(230,213,195,1);
+  }
+  .#{$namespace}-panel-controls-button-orange-disabled {
+    background-color: rgba(230,213,195,0.75);
+    border: 1px solid rgba(179,156,134,0.75);
+    color: rgba(179,156,134,0.75);
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .#{$namespace}-panel-controls-button-yellow {
+    background-color: rgba(230,230,195,0.75);
+    border: 1px solid rgba(89,89,49,0.75);
+    color: rgba(89,89,49,0.75);
+  }
+  .#{$namespace}-panel-controls-button-yellow:not(.#{$namespace}-panel-controls-button-yellow-disabled):not(.#{$namespace}-panel-controls-button-yellow-highlighted):hover {
+    background-color: rgba(230,230,195,1);
+    border: 1px solid rgba(89,89,49,1);
+    color: rgba(89,89,49,1);
+  }
+  .#{$namespace}-panel-controls-button-yellow-highlighted {
+    border: 1px solid rgba(89,89,49,1);
+    background-color: rgba(89,89,49,1);
+    color: rgba(230,230,195,1);
+  }
+  .#{$namespace}-panel-controls-button-yellow-disabled {
+    background-color: rgba(230,230,195,0.75);
+    border: 1px solid rgba(179,179,134,0.75);
+    color: rgba(179,179,134,0.75);
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .#{$namespace}-panel-controls-button-green {
+    background-color: rgba(204,230,195,0.75);
+    border: 1px solid rgba(59,89,49,0.75);
+    color: rgba(59,89,49,0.75);
+  }
+  .#{$namespace}-panel-controls-button-green:not(.#{$namespace}-panel-controls-button-green-disabled):not(.#{$namespace}-panel-controls-button-green-highlighted):hover {
+    background-color: rgba(204,230,195,1);
+    border: 1px solid rgba(59,89,49,1);
+    color: rgba(59,89,49,1);
+  }
+  .#{$namespace}-panel-controls-button-green-highlighted {
+    border: 1px solid rgba(59,89,49,1);
+    background-color: rgba(59,89,49,1);
+    color: rgba(204,230,195,1);
+  }
+  .#{$namespace}-panel-controls-button-green-disabled {
+    background-color: rgba(204,230,195,0.75);
+    border: 1px solid rgba(145,179,134,0.75);
+    color: rgba(145,179,134,0.75);
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .#{$namespace}-panel-controls-button-blue {
+    background-color: rgba(195,210,230,0.75);
+    border: 1px solid rgba(49,66,89,0.75);
+    color: rgba(49,66,89,0.75);
+  }
+  .#{$namespace}-panel-controls-button-blue:not(.#{$namespace}-panel-controls-button-blue-disabled):not(.#{$namespace}-panel-controls-button-blue-highlighted):hover {
+    background-color: rgba(195,210,230,1);
+    border: 1px solid rgba(49,66,89,1);
+    color: rgba(49,66,89,1);
+  }
+  .#{$namespace}-panel-controls-button-blue-highlighted {
+    border: 1px solid rgba(49,66,89,1);
+    background-color: rgba(49,66,89,1);
+    color: rgba(195,210,230,1);
+  }
+  .#{$namespace}-panel-controls-button-blue-disabled {
+    background-color: rgba(195,210,230,0.75);
+    border: 1px solid rgba(134,153,179,0.75);
+    color: rgba(134,153,179,0.75);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-panel-controls-button-purple {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(221,195,230,0.8);
-    border: 1px solid rgba(80,49,89,0.8);
-    color: rgba(80,49,89,0.8);
-    border-radius: 4px;
-    pointer-events: auto;    
+    background-color: rgba(221,195,230,0.75);
+    border: 1px solid rgba(80,49,89,0.75);
+    color: rgba(80,49,89,0.75);
   }
-  .#{$namespace}-panel-controls-button-purple:not(.#{$namespace}-panel-controls-button-purple-disabled):not(.#{$namespace}-panel-controls-button-purple-selected):hover {
-    cursor: pointer;
+  .#{$namespace}-panel-controls-button-purple:not(.#{$namespace}-panel-controls-button-purple-disabled):not(.#{$namespace}-panel-controls-button-purple-highlighted):hover {
     background-color: rgba(221,195,230,1);
     border: 1px solid rgba(80,49,89,1);
     color: rgba(80,49,89,1);
   }
-  .#{$namespace}-panel-controls-button-purple-selected {
+  .#{$namespace}-panel-controls-button-purple-highlighted {
     border: 1px solid rgba(80,49,89,1);
     background-color: rgba(80,49,89,1);
     color: rgba(221,195,230,1);
-    cursor: pointer;
   }
   .#{$namespace}-panel-controls-button-purple-disabled {
-    background-color: rgba(221,195,230,0.4);
-    border: 1px solid rgba(167,134,179,0.4);
-    color: rgba(167,134,179,0.4);
+    background-color: rgba(221,195,230,0.75);
+    border: 1px solid rgba(167,134,179,0.75);
+    color: rgba(167,134,179,0.75);
     pointer-events: none;
     cursor: wait;
   }
   
 }
 
-div.#{$namespace}-panel-description {
+div.#{$namespace}-panel-controls-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
   padding: 6px;
-  background: rgba(228,235,240,1);
-  border: 1px solid #{$default_black};
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
   overflow: hidden;
 
-  .#{$namespace}-panel-description-content {
+  .#{$namespace}-panel-controls-menu-content {
     display: block;
     width: 100%;
     height: 100%;
     overflow-y: auto;
-  }
-
-}
-
-div.#{$namespace}-panel-conditions {
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
-  font-size: 12px;
-  position: absolute;
-  padding: 6px;
-  background: rgba(237,228,240,1);
-  border: 1px solid #{$default_black};
-  border-radius: 4px;
-  box-shadow: 2px 2px 2px #{$default_black_shadow};
-  overflow: hidden;
-
-  .#{$namespace}-panel-conditions-content {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    margin-right: 1.6em;
 
     h1, h2, h3, h4, h5, h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em;
     }
-  
+
+    h1 { font-size: 20px; }
+    h2 { font-size: 18px; }
+    h3 { font-size: 16px; }
+    h4 { font-size: 14px; }
+    h5 { font-size: 12px; }
+    h6 { font-size: 11px; }
+
   }
 
   table {
@@ -580,30 +680,48 @@ div.#{$namespace}-panel-conditions {
     vertical-align: top;
   }
   tr:nth-child(2) {
-    background-color: rgba(80,49,89,0.1);
+    background-color: rgba(0,0,0,0.08);
   }
   th, td {
     padding: 4px;
     text-align: left;
     vertical-align: middle;
   }
+}
 
-  button {
-    white-space: nowrap;
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(221,195,230,1);
-    border: 1px solid rgba(80,49,89,1);
-    color: rgba(80,49,89,1);
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  button:hover {
-    border: 1px solid rgba(80,49,89,1);
-    background-color: rgba(80,49,89,1);
-    color: rgba(221,195,230,1);
-  }
+.#{$namespace}-panel-controls-menu-gray {
+  background-color: rgba(232,232,232,1);
+  border: 1px solid rgba(51,51,51,1);
+}
 
+.#{$namespace}-panel-controls-menu-red {
+  background: rgba(240,228,228,1);
+  border: 1px solid rgba(89,49,49,1);
+}
+
+.#{$namespace}-panel-controls-menu-orange {
+  background: rgba(240,234,228,1);
+  border: 1px solid rgba(89,69,49,1);
+}
+
+.#{$namespace}-panel-controls-menu-yellow {
+  background: rgba(240,240,228,1);
+  border: 1px solid rgba(89,89,49,1);
+}
+
+.#{$namespace}-panel-controls-menu-green {
+  background: rgba(231,240,228,1);
+  border: 1px solid rgba(59,89,49,1);
+}
+
+.#{$namespace}-panel-controls-menu-blue {
+  background: rgba(228,233,240,1);
+  border: 1px solid rgba(49,66,89,1);
+}
+
+.#{$namespace}-panel-controls-menu-purple {
+  background: rgba(237,228,240,1);
+  border: 1px solid rgba(80,49,89,1);
 }
 
 div.#{$namespace}-panel-boundary {

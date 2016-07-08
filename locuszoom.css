@@ -380,120 +380,217 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     cursor: wait;
     background-color: #D8D8D8; }
 
-.lz-locuszoom-panel-controls {
-  padding-top: 6px;
-  padding-right: 2px; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button {
+.lz-panel-controls {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+  padding-top: 3px;
+  padding-right: 3px;
+  position: absolute; }
+  .lz-panel-controls .lz-panel-controls-button {
     text-decoration: none;
+    font-weight: bold;
+    font-size: 11px;
     padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(216, 216, 216, 0.4);
-    border: 1px solid rgba(51, 51, 51, 0.4);
-    color: rgba(51, 51, 51, 0.4);
     border-radius: 4px;
-    pointer-events: auto; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button:not(.lz-panel-controls-button-disabled):not(.lz-panel-controls-button-selected):hover {
-    cursor: pointer;
+    pointer-events: auto;
+    cursor: pointer; }
+  .lz-panel-controls .lz-panel-controls-button-gray {
+    background-color: rgba(216, 216, 216, 0.5);
+    border: 1px solid rgba(51, 51, 51, 0.5);
+    color: rgba(51, 51, 51, 0.5); }
+  .lz-panel-controls .lz-panel-controls-button-gray:not(.lz-panel-controls-button-gray-disabled):not(.lz-panel-controls-button-gray-highlighted):hover {
     background-color: #d8d8d8;
     border: 1px solid #333333;
     color: #333333; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-selected {
+  .lz-panel-controls .lz-panel-controls-button-gray-highlighted {
     border: 1px solid #333333;
     background-color: #333333;
-    color: #d8d8d8;
-    cursor: pointer; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-disabled {
-    background-color: rgba(216, 216, 216, 0.4);
-    border: 1px solid rgba(153, 153, 153, 0.4);
-    color: rgba(153, 153, 153, 0.4);
+    color: #d8d8d8; }
+  .lz-panel-controls .lz-panel-controls-button-gray-disabled {
+    background-color: rgba(216, 216, 216, 0.5);
+    border: 1px solid rgba(153, 153, 153, 0.5);
+    color: rgba(153, 153, 153, 0.5);
     pointer-events: none;
     cursor: wait; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-purple {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(221, 195, 230, 0.8);
-    border: 1px solid rgba(80, 49, 89, 0.8);
-    color: rgba(80, 49, 89, 0.8);
-    border-radius: 4px;
-    pointer-events: auto; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-purple:not(.lz-panel-controls-button-purple-disabled):not(.lz-panel-controls-button-purple-selected):hover {
-    cursor: pointer;
+  .lz-panel-controls .lz-panel-controls-button-red {
+    background-color: rgba(230, 195, 195, 0.75);
+    border: 1px solid rgba(89, 49, 49, 0.75);
+    color: rgba(89, 49, 49, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-red:not(.lz-panel-controls-button-red-disabled):not(.lz-panel-controls-button-red-highlighted):hover {
+    background-color: #e6c3c3;
+    border: 1px solid #593131;
+    color: #593131; }
+  .lz-panel-controls .lz-panel-controls-button-red-highlighted {
+    border: 1px solid #593131;
+    background-color: #593131;
+    color: #e6c3c3; }
+  .lz-panel-controls .lz-panel-controls-button-red-disabled {
+    background-color: rgba(230, 195, 195, 0.75);
+    border: 1px solid rgba(179, 134, 134, 0.75);
+    color: rgba(179, 134, 134, 0.75);
+    pointer-events: none;
+    cursor: wait; }
+  .lz-panel-controls .lz-panel-controls-button-orange {
+    background-color: rgba(230, 213, 195, 0.75);
+    border: 1px solid rgba(89, 69, 49, 0.75);
+    color: rgba(89, 69, 49, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-orange:not(.lz-panel-controls-button-orange-disabled):not(.lz-panel-controls-button-orange-highlighted):hover {
+    background-color: #e6d5c3;
+    border: 1px solid #594531;
+    color: #594531; }
+  .lz-panel-controls .lz-panel-controls-button-orange-highlighted {
+    border: 1px solid #594531;
+    background-color: #594531;
+    color: #e6d5c3; }
+  .lz-panel-controls .lz-panel-controls-button-orange-disabled {
+    background-color: rgba(230, 213, 195, 0.75);
+    border: 1px solid rgba(179, 156, 134, 0.75);
+    color: rgba(179, 156, 134, 0.75);
+    pointer-events: none;
+    cursor: wait; }
+  .lz-panel-controls .lz-panel-controls-button-yellow {
+    background-color: rgba(230, 230, 195, 0.75);
+    border: 1px solid rgba(89, 89, 49, 0.75);
+    color: rgba(89, 89, 49, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-yellow:not(.lz-panel-controls-button-yellow-disabled):not(.lz-panel-controls-button-yellow-highlighted):hover {
+    background-color: #e6e6c3;
+    border: 1px solid #595931;
+    color: #595931; }
+  .lz-panel-controls .lz-panel-controls-button-yellow-highlighted {
+    border: 1px solid #595931;
+    background-color: #595931;
+    color: #e6e6c3; }
+  .lz-panel-controls .lz-panel-controls-button-yellow-disabled {
+    background-color: rgba(230, 230, 195, 0.75);
+    border: 1px solid rgba(179, 179, 134, 0.75);
+    color: rgba(179, 179, 134, 0.75);
+    pointer-events: none;
+    cursor: wait; }
+  .lz-panel-controls .lz-panel-controls-button-green {
+    background-color: rgba(204, 230, 195, 0.75);
+    border: 1px solid rgba(59, 89, 49, 0.75);
+    color: rgba(59, 89, 49, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-green:not(.lz-panel-controls-button-green-disabled):not(.lz-panel-controls-button-green-highlighted):hover {
+    background-color: #cce6c3;
+    border: 1px solid #3b5931;
+    color: #3b5931; }
+  .lz-panel-controls .lz-panel-controls-button-green-highlighted {
+    border: 1px solid #3b5931;
+    background-color: #3b5931;
+    color: #cce6c3; }
+  .lz-panel-controls .lz-panel-controls-button-green-disabled {
+    background-color: rgba(204, 230, 195, 0.75);
+    border: 1px solid rgba(145, 179, 134, 0.75);
+    color: rgba(145, 179, 134, 0.75);
+    pointer-events: none;
+    cursor: wait; }
+  .lz-panel-controls .lz-panel-controls-button-blue {
+    background-color: rgba(195, 210, 230, 0.75);
+    border: 1px solid rgba(49, 66, 89, 0.75);
+    color: rgba(49, 66, 89, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-blue:not(.lz-panel-controls-button-blue-disabled):not(.lz-panel-controls-button-blue-highlighted):hover {
+    background-color: #c3d2e6;
+    border: 1px solid #314259;
+    color: #314259; }
+  .lz-panel-controls .lz-panel-controls-button-blue-highlighted {
+    border: 1px solid #314259;
+    background-color: #314259;
+    color: #c3d2e6; }
+  .lz-panel-controls .lz-panel-controls-button-blue-disabled {
+    background-color: rgba(195, 210, 230, 0.75);
+    border: 1px solid rgba(134, 153, 179, 0.75);
+    color: rgba(134, 153, 179, 0.75);
+    pointer-events: none;
+    cursor: wait; }
+  .lz-panel-controls .lz-panel-controls-button-purple {
+    background-color: rgba(221, 195, 230, 0.75);
+    border: 1px solid rgba(80, 49, 89, 0.75);
+    color: rgba(80, 49, 89, 0.75); }
+  .lz-panel-controls .lz-panel-controls-button-purple:not(.lz-panel-controls-button-purple-disabled):not(.lz-panel-controls-button-purple-highlighted):hover {
     background-color: #ddc3e6;
     border: 1px solid #503159;
     color: #503159; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-purple-selected {
+  .lz-panel-controls .lz-panel-controls-button-purple-highlighted {
     border: 1px solid #503159;
     background-color: #503159;
-    color: #ddc3e6;
-    cursor: pointer; }
-  .lz-locuszoom-panel-controls .lz-panel-controls-button-purple-disabled {
-    background-color: rgba(221, 195, 230, 0.4);
-    border: 1px solid rgba(167, 134, 179, 0.4);
-    color: rgba(167, 134, 179, 0.4);
+    color: #ddc3e6; }
+  .lz-panel-controls .lz-panel-controls-button-purple-disabled {
+    background-color: rgba(221, 195, 230, 0.75);
+    border: 1px solid rgba(167, 134, 179, 0.75);
+    color: rgba(167, 134, 179, 0.75);
     pointer-events: none;
     cursor: wait; }
 
-div.lz-panel-description {
+div.lz-panel-controls-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
   padding: 6px;
-  background: #e4ebf0;
-  border: 1px solid rgba(24, 24, 24, 1);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4);
   overflow: hidden; }
-  div.lz-panel-description .lz-panel-description-content {
+  div.lz-panel-controls-menu .lz-panel-controls-menu-content {
     display: block;
     width: 100%;
     height: 100%;
     overflow-y: auto; }
-
-div.lz-panel-conditions {
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
-  font-size: 12px;
-  position: absolute;
-  padding: 6px;
-  background: #ede4f0;
-  border: 1px solid rgba(24, 24, 24, 1);
-  border-radius: 4px;
-  box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4);
-  overflow: hidden; }
-  div.lz-panel-conditions .lz-panel-conditions-content {
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    margin-right: 1.6em; }
-    div.lz-panel-conditions .lz-panel-conditions-content h1, div.lz-panel-conditions .lz-panel-conditions-content h2, div.lz-panel-conditions .lz-panel-conditions-content h3, div.lz-panel-conditions .lz-panel-conditions-content h4, div.lz-panel-conditions .lz-panel-conditions-content h5, div.lz-panel-conditions .lz-panel-conditions-content h6 {
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h1, div.lz-panel-controls-menu .lz-panel-controls-menu-content h2, div.lz-panel-controls-menu .lz-panel-controls-menu-content h3, div.lz-panel-controls-menu .lz-panel-controls-menu-content h4, div.lz-panel-controls-menu .lz-panel-controls-menu-content h5, div.lz-panel-controls-menu .lz-panel-controls-menu-content h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em; }
-  div.lz-panel-conditions table {
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h1 {
+      font-size: 20px; }
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h2 {
+      font-size: 18px; }
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h3 {
+      font-size: 16px; }
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h4 {
+      font-size: 14px; }
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h5 {
+      font-size: 12px; }
+    div.lz-panel-controls-menu .lz-panel-controls-menu-content h6 {
+      font-size: 11px; }
+  div.lz-panel-controls-menu table {
     display: table;
     border-collapse: separate;
     border-spacing: 0px;
     margin-bottom: 0.4em;
     width: 100%; }
-  div.lz-panel-conditions th:first-child, div.lz-panel-conditions td:first-child {
+  div.lz-panel-controls-menu th:first-child, div.lz-panel-controls-menu td:first-child {
     vertical-align: top; }
-  div.lz-panel-conditions tr:nth-child(2) {
-    background-color: rgba(80, 49, 89, 0.1); }
-  div.lz-panel-conditions th, div.lz-panel-conditions td {
+  div.lz-panel-controls-menu tr:nth-child(2) {
+    background-color: rgba(0, 0, 0, 0.08); }
+  div.lz-panel-controls-menu th, div.lz-panel-controls-menu td {
     padding: 4px;
     text-align: left;
     vertical-align: middle; }
-  div.lz-panel-conditions button {
-    white-space: nowrap;
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: #ddc3e6;
-    border: 1px solid #503159;
-    color: #503159;
-    border-radius: 4px;
-    cursor: pointer; }
-  div.lz-panel-conditions button:hover {
-    border: 1px solid #503159;
-    background-color: #503159;
-    color: #ddc3e6; }
+
+.lz-panel-controls-menu-gray {
+  background-color: #e8e8e8;
+  border: 1px solid #333333; }
+
+.lz-panel-controls-menu-red {
+  background: #f0e4e4;
+  border: 1px solid #593131; }
+
+.lz-panel-controls-menu-orange {
+  background: #f0eae4;
+  border: 1px solid #594531; }
+
+.lz-panel-controls-menu-yellow {
+  background: #f0f0e4;
+  border: 1px solid #595931; }
+
+.lz-panel-controls-menu-green {
+  background: #e7f0e4;
+  border: 1px solid #3b5931; }
+
+.lz-panel-controls-menu-blue {
+  background: #e4e9f0;
+  border: 1px solid #314259; }
+
+.lz-panel-controls-menu-purple {
+  background: #ede4f0;
+  border: 1px solid #503159; }
 
 div.lz-panel-boundary {
   position: absolute;

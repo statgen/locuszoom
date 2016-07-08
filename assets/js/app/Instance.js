@@ -1001,20 +1001,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
                 panel.controls.update();
-                if (panel.layout.controls.description && panel.controls.description && panel.controls.description.showing){
-                    panel.controls.description.update();
-                }
-                if (panel.layout.controls.conditions){
-                    if (this.state.conditions.length && !panel.controls.showing){
-                        panel.controls.show();
-                    }
-                    if (panel.controls.showing && panel.controls.conditions && panel.controls.conditions.showing){
-                        panel.controls.conditions.update();
-                        if (!this.state.conditions.length){
-                            panel.controls.conditions.hide();
-                        }
-                    }
-                }
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];
