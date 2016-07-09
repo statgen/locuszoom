@@ -370,7 +370,7 @@ LocusZoom.StandardLayout = {
         {
             id: "positions",
             title: "Analysis ID: 3",
-            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit. Ut a porta magna, sit amet hendrerit massa. Fusce lobortis odio at cursus tempor. Proin lacinia fermentum volutpat. Etiam lobortis, eros in consequat tincidunt, turpis dui feugiat nulla, non condimentum augue tellus non quam. Pellentesque sit amet pharetra tellus, sed scelerisque sapien. Sed egestas quam nibh, a varius nisl malesuada ut. Praesent luctus dolor sit amet pulvinar vestibulum. Fusce vulputate neque non augue ultrices, et ullamcorper mauris eleifend.<br><br>Nunc erat urna, molestie eget tempor vitae, pretium nec dui. Aenean at leo et lacus volutpat hendrerit. Cras dictum tortor in sem bibendum suscipit. Cras enim diam, dictum et auctor id, pretium vel nisl. Nam luctus tincidunt diam, sit amet aliquet mi facilisis eget.<br><br>In vel augue ut dolor mollis tincidunt. Duis dictum arcu a sapien facilisis consequat.<br><br>Fusce a commodo purus, vel blandit diam. Curabitur sollicitudin augue dolor, nec posuere quam consequat a. Duis in porta lorem. Curabitur vestibulum facilisis finibus. Sed a egestas neque, id porta mauris. Aliquam leo odio, accumsan at quam a, rutrum sollicitudin massa. Nullam nec nunc accumsan, accumsan turpis quis, tristique urna.<br><br>Pellentesque sit amet aliquam sem. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent a aliquam ipsum. Aenean ut consectetur lorem, id tempor turpis. Cras vitae lacus quis est ornare maximus. Praesent vel nulla aliquam, aliquam nibh malesuada, pellentesque libero. Ut eu hendrerit dui. Vivamus rhoncus quam blandit purus iaculis ultrices. Aenean vel semper nisl. Aenean nec enim at metus dictum sodales eget vitae justo. Aenean molestie vestibulum libero. Vestibulum augue ex, auctor vel consectetur sed, condimentum sit amet mauris. Mauris ut lacus tincidunt, rhoncus urna sagittis, luctus tortor. Ut molestie aliquam cursus. Vivamus et elementum tellus, nec mattis ante.<br><br>In hac habitasse platea dictumst.",
+            description: "Example panel description",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
@@ -4087,7 +4087,7 @@ LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
     return this;
-}
+};
 
 // Map an entire LocusZoom Instance to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
@@ -4144,7 +4144,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
     this.controls.update();
 
     // Apply new state properties
-    for (var property in new_state) {
+    for (property in new_state) {
         this.state[property] = new_state[property];
     }
 
@@ -4207,202 +4207,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
 /* eslint-disable no-console */
 
 "use strict";
-
-/**
-
-  LocusZoom.PanelControlsButton Class
-
-  Panels have a "controls" element that appears at the top right to display interactive HTML overlays.
-  Each of these individual overlays is a Panel Controls Button. It can have a click action and call up
-  a companion overlay called a menu for displaying static information or dynamic/interactive elements.
-
-*/
-
-LocusZoom.PanelControlsButton = function(id, parent) {   
-
-    if (!parent || !parent.controls || !parent.controls.buttons){
-        throw "Unable to create panel controls button, invalid parent";
-    }
-    this.parent = parent;
-
-    if (typeof id !== "string" || typeof this.parent.controls.buttons[id] !== "undefined"){
-        throw "Cannot create panel controls button, id invalid or already in use";
-    }
-    this.id = id;
-
-    this.showing = false;
-    this.persist = false;
-    this.selector = null;
-
-    // HTML controls
-    this.text = "";
-    this.setText = function(text){
-        this.text = text;
-        return this;
-    };
-
-    // Title controls (HTML built-in tool tip)
-    this.title = "";
-    this.setTitle = function(title){
-        this.title = title;
-        return this;
-    };
-
-    // Color controls (using predefined CSS classes as opposed to styles)
-    this.color = "gray";
-    this.setColor = function(color){
-        if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
-        return this;
-    };
-
-    // Style controls
-    this.style = {};
-    this.setStyle = function(style){
-        this.style = style;
-        return this;
-    };
-
-    // Status controls (highlighted / disabled)
-    this.status = "";
-    this.setStatus = function(status){
-        if (["", "highlighted", "disabled"].indexOf(status) !== -1){ this.status = status; }
-        return this;
-    };
-    this.highlight = function(bool){
-        if (typeof bool == "undefined"){ var bool = true } else { bool = Boolean(bool); }
-        return this.setStatus(bool ? "highlighted" : "");
-    };
-    this.disable = function(bool){
-        if (typeof bool == "undefined"){ var bool = true } else { bool = Boolean(bool); }
-        return this.setStatus(bool ? "disabled" : "");
-    };
-
-    // OnClick controls
-    this.onclick_function = function(){};
-    this.onClick = function(onclick_function){
-        if (typeof onclick_function == "function"){ this.onclick_function = onclick_function; }
-        return this;
-    };
-
-    // Menu object and controls
-    this.menu = {
-        outer_selector: null,
-        inner_selector: null,
-        showing: false,
-        enabled: false
-    };
-    this.menu.show = function(){
-        if (this.menu.showing){ return this; }
-        this.menu.outer_selector = d3.select(this.parent.parent.svg.node().parentNode).append("div")
-            .attr("class", "lz-panel-controls lz-panel-controls-menu lz-panel-controls-menu-" + this.color)
-            .attr("id", this.parent.getBaseId() + ".controls." + this.id + ".menu");
-        this.menu.inner_selector = this.menu.outer_selector.append("div")
-            .attr("class", "lz-panel-controls-menu-content");
-        this.menu.showing = true;
-        return this.menu.update();
-    }.bind(this);
-    this.menu.update = function(){
-        if (!this.menu.showing){ return this.menu; }
-        this.menu.populate(); // This is the custom part
-        return this.menu.position();
-    }.bind(this);
-    this.menu.position = function(){
-        if (!this.menu.showing){ return this.menu; }
-        var padding = 3;
-        var page_origin = this.parent.getPageOrigin();
-        var controls_client_rect = this.parent.controls.selector.node().getBoundingClientRect();
-        var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-        var total_content_height = this.menu.inner_selector.node().scrollHeight;
-        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
-        var left = Math.max(page_origin.x + this.parent.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
-        var base_max_width = (this.parent.layout.width - (2 * padding));
-        var container_max_width = base_max_width.toString() + "px";
-        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-        var base_max_height = (this.parent.layout.height - (7 * padding) - controls_client_rect.height);
-        var height = Math.min(total_content_height, base_max_height).toString() + "px";
-        var max_height = base_max_height.toString() + "px";
-        this.menu.outer_selector.style({
-            top: top, left: left,
-            "max-width": container_max_width,
-            "max-height": max_height,
-            height: height
-        });
-        this.menu.inner_selector.style({ "max-width": content_max_width });        
-        return this.menu;
-    }.bind(this);
-    this.menu.hide = function(){
-        if (!this.menu.showing){ return this.menu; }
-        this.menu.inner_selector.remove();
-        this.menu.outer_selector.remove();
-        this.menu.inner_selector = null;
-        this.menu.outer_selector = null;
-        this.menu.showing = false;
-        return this.menu;
-    }.bind(this);
-    // By convention populate() does nothing and should be reimplemented with each panel controls button definition
-    // Reimplement by way of PanelControlsButton.menuPopulate to define the populate method and hook up standard menu
-    // click-toggle behavior
-    this.menu.populate = function(){
-        this.menu.inner_selector.html("...");
-    }.bind(this);
-    this.menuPopulate = function(menu_populate_function){
-        if (typeof menu_populate_function == "function"){
-            this.menu.populate = menu_populate_function;
-            this.onclick_function = function(){
-                if (this.menu.showing){
-                    this.menu.hide();
-                    this.highlight(false);
-                    this.persist = false;
-                } else {
-                    this.menu.show();
-                    this.highlight();
-                    this.persist = true;
-                }
-            }.bind(this);
-            this.menu.enabled = true;
-        } else {
-            this.onclick_function = function(){};
-            this.menu.enabled = false;
-        }
-        return this;
-    };
-
-    // Primary behavior functions
-    this.show = function(){
-        if (!this.showing){
-            this.selector = this.parent.controls.selector.append("button")
-                .attr("class", "lz-panel-controls-button");
-            this.showing = true;
-        }
-        return this.update();
-    };
-    this.preUpdate = function(){
-        return this;
-    }
-    this.update = function(){
-        if (!this.showing){ return this; }
-        this.preUpdate();
-        this.selector
-            .attr("class", "lz-panel-controls-button lz-panel-controls-button-" + this.color + (this.status ? "-" + this.status : ""))
-            .attr("title", this.title).style(this.style)
-            .on("click", (this.status == "disabled") ? null : this.onclick_function)
-            .text(this.text);
-        if (this.menu.enabled){ this.menu.update(); }
-        this.postUpdate();
-        return this;
-    };
-    this.postUpdate = function(){
-        return this;
-    }
-    this.hide = function(){
-        if (this.showing && !this.persist){
-            this.selector.remove();
-            this.showing = false;
-        }
-        return this;
-    };
-
-};
 
 /**
 
@@ -4818,11 +4622,13 @@ LocusZoom.Panel.prototype.initialize = function(){
     };
     // Show controls: insert controls div after all tooltips (to show above them)
     this.controls.show = function(){
-        if (this.controls.showing){ return this.controls; }
-        this.controls.selector = d3.select(this.parent.svg.node().parentNode)
-            .insert("div", ".lz-data_layer-tooltip")
-            .classed("lz-panel-controls", true)
-            .attr("id", this.getBaseId() + ".controls");
+        if (this.controls.showing === true){ return this.controls; }
+        if (!this.controls.showing){
+            this.controls.selector = d3.select(this.parent.svg.node().parentNode)
+                .insert("div", ".lz-data_layer-tooltip")
+                .classed("lz-panel-controls", true)
+                .attr("id", this.getBaseId() + ".controls");
+        }
         this.controls.showing = true;
         return this.controls.update();
     }.bind(this);
@@ -4872,6 +4678,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             persisted_button_ids.forEach(function(button_id){
                 this.controls.buttons[button_id].update();
             }.bind(this));
+            this.controls.showing = "persisted";
         } else {
             this.controls.selector.remove();
             this.controls.selector = null;
@@ -4910,6 +4717,7 @@ LocusZoom.Panel.prototype.initialize = function(){
                     var row = table.append("tr");
                     row.append("td").append("button")
                         .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
+                        .style({ "margin-left": "0em" })
                         .on("click", function(){
                             this.parent.removeConditionByIdx(idx);
                         }.bind(this))
@@ -4936,7 +4744,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Controls button: description
     if (this.layout.controls.description){
         this.controls.buttons.description = new LocusZoom.PanelControlsButton("description", this)
-            .setColor("yellow").setText("?").setTitle("Panel details")
+            .setColor("yellow").setText("Info").setTitle("Panel information")
             .menuPopulate(function(){
                 this.controls.buttons.description.menu.inner_selector.html(this.layout.description);
             }.bind(this));
@@ -4945,7 +4753,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Controls button: reposition (two buttons: down and up)
     if (this.layout.controls.reposition){
         this.controls.buttons.reposition_down = new LocusZoom.PanelControlsButton("reposition_down", this)
-            .setColor("gray").setText("▾").setTitle("Move panel down").setStyle({"font-weight": "bold"})
+            .setColor("gray").setText("▾").setTitle("Move panel down")
             .onClick(function(){
                 if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
                     this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
@@ -4958,7 +4766,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             this.status = (this.parent.layout.y_index == this.parent.parent.panel_ids_by_y_index.length - 1) ? "disabled" : "";
         };
         this.controls.buttons.reposition_up = new LocusZoom.PanelControlsButton("reposition_up", this)
-            .setColor("gray").setText("▴").setTitle("Move panel up")
+            .setColor("gray").setText("▴").setTitle("Move panel up").setStyle({"margin-left": "0em"})
             .onClick(function(){
                 if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
                     this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
@@ -4982,6 +4790,9 @@ LocusZoom.Panel.prototype.initialize = function(){
                 d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
                 this.parent.removePanel(this.id);
             }.bind(this));
+        if (this.layout.controls.reposition){
+            this.controls.buttons.remove.setStyle({"margin-left": "0em" });
+        }
     }
 
     // If the layout defines an inner border render it before rendering axes
@@ -5338,6 +5149,203 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
                 .attr("transform", "rotate(" + axis_params[axis].label_rotate + " " + axis_params[axis].label_x + "," + axis_params[axis].label_y + ")");
         }
     }
+
+};
+
+
+/**
+
+  LocusZoom.PanelControlsButton Class
+
+  Panels have a "controls" element that appears at the top right to display interactive HTML overlays.
+  Each of these individual overlays is a Panel Controls Button. It can have a click action and call up
+  a companion overlay called a menu for displaying static information or dynamic/interactive elements.
+
+*/
+
+LocusZoom.PanelControlsButton = function(id, parent) {   
+
+    if (!parent || !parent.controls || !parent.controls.buttons){
+        throw "Unable to create panel controls button, invalid parent";
+    }
+    this.parent = parent;
+
+    if (typeof id !== "string" || typeof this.parent.controls.buttons[id] !== "undefined"){
+        throw "Cannot create panel controls button, id invalid or already in use";
+    }
+    this.id = id;
+
+    this.showing = false;
+    this.persist = false;
+    this.selector = null;
+
+    // HTML controls
+    this.text = "";
+    this.setText = function(text){
+        this.text = text;
+        return this;
+    };
+
+    // Title controls (HTML built-in tool tip)
+    this.title = "";
+    this.setTitle = function(title){
+        this.title = title;
+        return this;
+    };
+
+    // Color controls (using predefined CSS classes as opposed to styles)
+    this.color = "gray";
+    this.setColor = function(color){
+        if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
+        return this;
+    };
+
+    // Style controls
+    this.style = {};
+    this.setStyle = function(style){
+        this.style = style;
+        return this;
+    };
+
+    // Status controls (highlighted / disabled)
+    this.status = "";
+    this.setStatus = function(status){
+        if (["", "highlighted", "disabled"].indexOf(status) !== -1){ this.status = status; }
+        return this;
+    };
+    this.highlight = function(bool){
+        if (typeof bool == "undefined"){ bool = true; } else { bool = Boolean(bool); }
+        if (bool){ return this.setStatus("highlighted"); }
+        else if (this.status == "highlighted"){ return this.setStatus(""); }
+        return this;
+    };
+    this.disable = function(bool){
+        if (typeof bool == "undefined"){ bool = true; } else { bool = Boolean(bool); }
+        if (bool){ return this.setStatus("disabled"); }
+        else if (this.status == "disabled"){ return this.setStatus(""); }
+        return this;
+    };
+
+    // OnClick controls
+    this.onclick_function = function(){};
+    this.onClick = function(onclick_function){
+        if (typeof onclick_function == "function"){ this.onclick_function = onclick_function; }
+        return this;
+    };
+    
+    // Primary behavior functions
+    this.show = function(){
+        if (!this.showing){
+            this.selector = this.parent.controls.selector.append("button")
+                .attr("class", "lz-panel-controls-button");
+            this.showing = true;
+        }
+        return this.update();
+    };
+    this.preUpdate = function(){ return this; };
+    this.update = function(){
+        if (!this.showing){ return this; }
+        this.preUpdate();
+        this.selector
+            .attr("class", "lz-panel-controls-button lz-panel-controls-button-" + this.color + (this.status ? "-" + this.status : ""))
+            .attr("title", this.title).style(this.style)
+            .on("click", (this.status == "disabled") ? null : this.onclick_function)
+            .text(this.text);
+        if (this.menu.enabled){ this.menu.update(); }
+        this.postUpdate();
+        return this;
+    };
+    this.postUpdate = function(){ return this; };
+    this.hide = function(){
+        if (this.showing && !this.persist){
+            this.selector.remove();
+            this.showing = false;
+        }
+        return this;
+    };    
+
+    // Menu object and controls
+    this.menu = {
+        outer_selector: null,
+        inner_selector: null,
+        showing: false,
+        enabled: false
+    };
+    this.menu.show = function(){
+        if (this.menu.showing){ return this; }
+        this.menu.outer_selector = d3.select(this.parent.parent.svg.node().parentNode).append("div")
+            .attr("class", "lz-panel-controls lz-panel-controls-menu lz-panel-controls-menu-" + this.color)
+            .attr("id", this.parent.getBaseId() + ".controls." + this.id + ".menu");
+        this.menu.inner_selector = this.menu.outer_selector.append("div")
+            .attr("class", "lz-panel-controls-menu-content");
+        this.menu.showing = true;
+        return this.menu.update();
+    }.bind(this);
+    this.menu.update = function(){
+        if (!this.menu.showing){ return this.menu; }
+        this.menu.populate(); // This is the custom part
+        return this.menu.position();
+    }.bind(this);
+    this.menu.position = function(){
+        if (!this.menu.showing){ return this.menu; }
+        var padding = 3;
+        var page_origin = this.parent.getPageOrigin();
+        var controls_client_rect = this.parent.controls.selector.node().getBoundingClientRect();
+        var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
+        var total_content_height = this.menu.inner_selector.node().scrollHeight;
+        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
+        var left = Math.max(page_origin.x + this.parent.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+        var base_max_width = (this.parent.layout.width - (2 * padding));
+        var container_max_width = base_max_width.toString() + "px";
+        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
+        var base_max_height = (this.parent.layout.height - (7 * padding) - controls_client_rect.height);
+        var height = Math.min(total_content_height, base_max_height).toString() + "px";
+        var max_height = base_max_height.toString() + "px";
+        this.menu.outer_selector.style({
+            top: top, left: left,
+            "max-width": container_max_width,
+            "max-height": max_height,
+            height: height
+        });
+        this.menu.inner_selector.style({ "max-width": content_max_width });        
+        return this.menu;
+    }.bind(this);
+    this.menu.hide = function(){
+        if (!this.menu.showing){ return this.menu; }
+        this.menu.inner_selector.remove();
+        this.menu.outer_selector.remove();
+        this.menu.inner_selector = null;
+        this.menu.outer_selector = null;
+        this.menu.showing = false;
+        return this.menu;
+    }.bind(this);
+    // By convention populate() does nothing and should be reimplemented with each panel controls button definition
+    // Reimplement by way of PanelControlsButton.menuPopulate to define the populate method and hook up standard menu
+    // click-toggle behavior
+    this.menu.populate = function(){
+        this.menu.inner_selector.html("...");
+    }.bind(this);
+    this.menuPopulate = function(menu_populate_function){
+        if (typeof menu_populate_function == "function"){
+            this.menu.populate = menu_populate_function;
+            this.onclick_function = function(){
+                if (!this.menu.showing){
+                    this.menu.show();
+                    this.highlight().update();
+                    this.persist = true;
+                } else {
+                    this.menu.hide();
+                    this.highlight(false).update();
+                    this.persist = false;
+                }
+            }.bind(this);
+            this.menu.enabled = true;
+        } else {
+            this.onclick_function = function(){};
+            this.menu.enabled = false;
+        }
+        return this;
+    };
 
 };
 

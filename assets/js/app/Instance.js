@@ -916,7 +916,7 @@ LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
 LocusZoom.Instance.prototype.removeAllConditions = function(){
     this.applyState({ conditions: [] });
     return this;
-}
+};
 
 // Map an entire LocusZoom Instance to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
@@ -973,7 +973,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
     this.controls.update();
 
     // Apply new state properties
-    for (var property in new_state) {
+    for (property in new_state) {
         this.state[property] = new_state[property];
     }
 

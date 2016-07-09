@@ -393,10 +393,13 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     font-weight: bold;
     font-size: 11px;
     height: auto;
-    line-height: inherit;
+    line-height: 100%;
     text-transform: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
+    margin-left: 3px;
     border-radius: 4px;
+    outline: none;
+    white-space: nowrap;
     pointer-events: auto;
     cursor: pointer; }
   .lz-panel-controls .lz-panel-controls-button-gray {
@@ -538,7 +541,8 @@ div.lz-panel-controls-menu {
     display: block;
     width: 100%;
     height: 100%;
-    overflow-y: auto; }
+    overflow-y: auto;
+    margin-right: 1.5em; }
     div.lz-panel-controls-menu .lz-panel-controls-menu-content h1, div.lz-panel-controls-menu .lz-panel-controls-menu-content h2, div.lz-panel-controls-menu .lz-panel-controls-menu-content h3, div.lz-panel-controls-menu .lz-panel-controls-menu-content h4, div.lz-panel-controls-menu .lz-panel-controls-menu-content h5, div.lz-panel-controls-menu .lz-panel-controls-menu-content h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em; }
