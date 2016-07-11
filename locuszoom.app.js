@@ -780,10 +780,10 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
         this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("a")
+        this.tooltips[id].selector.append("button")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
-            .html("×")
+            .text("×")
             .on("click", function(){
                 this.destroyTooltip(id);
             }.bind(this));
@@ -4332,12 +4332,7 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    controls: {
-        reposition: true,
-        remove: true,
-        description: false,
-        conditions: false
-    },
+    controls: {},
     cliparea: {
         height: 0,
         width: 0,
@@ -4704,7 +4699,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             .menuPopulate(function(){
                 var selector = this.controls.buttons.conditions.menu.inner_selector;
                 selector.html("");
-                selector.append("h3").html("Conditional Analysis");
+                selector.append("h4").html("Conditional Analysis");
                 var table = selector.append("table");
                 this.state.conditions.forEach(function(condition, idx){
                     var html = condition.toString();
@@ -4751,7 +4746,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     if (this.layout.controls.reposition){
         this.controls.buttons.reposition_down = new LocusZoom.PanelControlsButton("reposition_down", this)
             .setColor("gray").setText("▾").setTitle("Move panel down")
-            .onClick(function(){
+            .setOnclick(function(){
                 if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
                     this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
                     this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
@@ -4764,7 +4759,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         };
         this.controls.buttons.reposition_up = new LocusZoom.PanelControlsButton("reposition_up", this)
             .setColor("gray").setText("▴").setTitle("Move panel up").setStyle({"margin-left": "0em"})
-            .onClick(function(){
+            .setOnclick(function(){
                 if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
                     this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
                     this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
@@ -4781,7 +4776,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     if (this.layout.controls.remove){
         this.controls.buttons.remove = new LocusZoom.PanelControlsButton("remove", this)
             .setColor("gray").setText("×").setTitle("Remove panel")
-            .onClick(function(){
+            .setOnclick(function(){
                 this.controls.hide(true);
                 d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
                 d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
@@ -5224,9 +5219,10 @@ LocusZoom.PanelControlsButton = function(id, parent) {
     };
 
     // OnClick controls
-    this.onclick_function = function(){};
-    this.onClick = function(onclick_function){
-        if (typeof onclick_function == "function"){ this.onclick_function = onclick_function; }
+    this.onclick = function(){};
+    this.setOnclick = function(onclick){
+        if (typeof onclick == "function"){ this.onclick = onclick; }
+        else { this.onclick = function(){}; }
         return this;
     };
     
@@ -5246,7 +5242,7 @@ LocusZoom.PanelControlsButton = function(id, parent) {
         this.selector
             .attr("class", "lz-panel-controls-button lz-panel-controls-button-" + this.color + (this.status ? "-" + this.status : ""))
             .attr("title", this.title).style(this.style)
-            .on("click", (this.status == "disabled") ? null : this.onclick_function)
+            .on("click", (this.status == "disabled") ? null : this.onclick)
             .text(this.text);
         if (this.menu.enabled){ this.menu.update(); }
         this.postUpdate();
@@ -5256,6 +5252,7 @@ LocusZoom.PanelControlsButton = function(id, parent) {
     this.hide = function(){
         if (this.showing && !this.persist){
             this.selector.remove();
+            this.selector = null;
             this.showing = false;
         }
         return this;
@@ -5325,7 +5322,7 @@ LocusZoom.PanelControlsButton = function(id, parent) {
     this.menuPopulate = function(menu_populate_function){
         if (typeof menu_populate_function == "function"){
             this.menu.populate = menu_populate_function;
-            this.onclick_function = function(){
+            this.setOnclick(function(){
                 if (!this.menu.showing){
                     this.menu.show();
                     this.highlight().update();
@@ -5335,10 +5332,10 @@ LocusZoom.PanelControlsButton = function(id, parent) {
                     this.highlight(false).update();
                     this.persist = false;
                 }
-            }.bind(this);
+            }.bind(this));
             this.menu.enabled = true;
         } else {
-            this.onclick_function = function(){};
+            this.setOnclick();
             this.menu.enabled = false;
         }
         return this;

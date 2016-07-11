@@ -225,10 +225,10 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
         this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("a")
+        this.tooltips[id].selector.append("button")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
-            .html("×")
+            .text("×")
             .on("click", function(){
                 this.destroyTooltip(id);
             }.bind(this));

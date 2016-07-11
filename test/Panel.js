@@ -258,4 +258,153 @@ describe('LocusZoom.Panel', function(){
         });
     });
 
+    describe("Panel Controls and Control Buttons", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            this.layout = {
+                width: 100,
+                height: 100,
+                min_width: 100,
+                min_height: 100,
+                resizable: false,
+                aspect_ratio: 1,
+                panels: [],
+                controls: false
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+            this.panel = this.plot.panels.test;
+        });
+        it("panels should have a controls element with buttons as defined in the panel layout", function(){
+            var test1 = this.plot.addPanel({
+                id: "test1",
+                controls: { remove: true }
+            });
+            test1.should.have.property("controls").which.is.an.Object;
+            test1.controls.should.have.property("showing").which.is.exactly(false);
+            test1.controls.should.have.property("selector").which.is.exactly(null);
+            test1.controls.should.have.property("show").which.is.a.Function;
+            test1.controls.should.have.property("update").which.is.a.Function;
+            test1.controls.should.have.property("position").which.is.a.Function;
+            test1.controls.should.have.property("hide").which.is.a.Function;
+            test1.controls.should.have.property("buttons").which.is.an.Object;
+            assert.deepEqual(Object.keys(test1.controls.buttons), ["remove"]);
+            assert.ok(test1.controls.buttons.remove instanceof LocusZoom.PanelControlsButton);
+            var test2 = this.plot.addPanel({
+                id: "test2",
+                description: "Lorem ipsum",
+                controls: { description: true }
+            });
+            assert.deepEqual(Object.keys(test2.controls.buttons), ["description"]);
+            assert.ok(test2.controls.buttons.description instanceof LocusZoom.PanelControlsButton);
+            var test3 = this.plot.addPanel({
+                id: "test3",
+                controls: { conditions: true, reposition: true }
+            });
+            assert.deepEqual(Object.keys(test3.controls.buttons), ["conditions", "reposition_down", "reposition_up"]);
+            assert.ok(test3.controls.buttons.conditions instanceof LocusZoom.PanelControlsButton);
+            assert.ok(test3.controls.buttons.reposition_down instanceof LocusZoom.PanelControlsButton);
+            assert.ok(test3.controls.buttons.reposition_up instanceof LocusZoom.PanelControlsButton);
+        });
+        it("panel buttons should have show/hide/update and various property setter methods", function(){
+            var test1 = this.plot.addPanel({
+                id: "test1",
+                controls: { remove: true }
+            });
+            var btn = test1.controls.buttons.remove;
+            btn.should.have.property("id").which.is.a.String;
+            assert.equal(btn.id, "remove");
+            btn.should.have.property("parent").which.is.an.Object;
+            assert.deepEqual(btn.parent, test1);
+            btn.should.have.property("showing").which.is.exactly(false);
+            btn.should.have.property("persist").which.is.exactly(false);
+            btn.should.have.property("selector").which.is.exactly(null);
+            btn.should.have.property("text").which.is.a.String;
+            btn.should.have.property("setText").which.is.a.Function;
+            btn.setText("foo");
+            assert.equal(btn.text, "foo");
+            btn.should.have.property("title").which.is.a.String;
+            btn.should.have.property("setTitle").which.is.a.Function;
+            btn.setTitle("bar");
+            assert.equal(btn.title, "bar");
+            btn.should.have.property("color").which.is.a.String;
+            btn.should.have.property("setColor").which.is.a.Function;
+            btn.setColor("red");
+            assert.equal(btn.color, "red");
+            btn.should.have.property("status").which.is.a.String;
+            btn.should.have.property("setStatus").which.is.a.Function;
+            btn.setStatus("highlighted");
+            assert.equal(btn.status, "highlighted");
+            btn.should.have.property("disable").which.is.a.Function;
+            btn.should.have.property("highlight").which.is.a.Function;
+            btn.disable();
+            assert.equal(btn.status, "disabled");
+            btn.disable(false);
+            assert.equal(btn.status, "");
+            btn.highlight();
+            assert.equal(btn.status, "highlighted");
+            btn.should.have.property("onclick").which.is.a.Function;
+            btn.should.have.property("setOnclick").which.is.a.Function;
+            var func = function(){ return "foo"; };
+            btn.setOnclick(func);
+            assert.deepEqual(btn.onclick, func);
+            btn.should.have.property("show").which.is.a.Function;
+            btn.should.have.property("preUpdate").which.is.a.Function;
+            btn.should.have.property("update").which.is.a.Function;
+            btn.should.have.property("postUpdate").which.is.a.Function;
+            btn.should.have.property("hide").which.is.a.Function;
+        });
+        it("panel controls show and hide methods should add/remove DOM object", function(){
+            var test1 = this.plot.addPanel({
+                id: "test1",
+                controls: { remove: true }
+            });
+            test1.controls.show();
+            assert.ok(test1.controls.showing);
+            test1.controls.selector.should.have.property("empty").which.is.a.Function;
+            assert.equal(test1.controls.selector.empty(), false);
+            assert.ok(test1.controls.selector.classed("lz-panel-controls"));
+            assert.ok(test1.controls.buttons.remove.showing);
+            test1.controls.buttons.remove.selector.should.have.property("empty").which.is.a.Function;
+            assert.equal(test1.controls.buttons.remove.selector.empty(), false);
+            assert.ok(test1.controls.buttons.remove.selector.classed("lz-panel-controls-button"));
+            test1.controls.hide();
+            assert.equal(test1.controls.showing, false);
+            assert.equal(test1.controls.selector, null);
+            assert.equal(test1.controls.buttons.remove.showing, false);
+            assert.equal(test1.controls.buttons.remove.selector, null);
+        });
+        it("panel controls buttons that implement a menu should create/destroy menu DOM element on click", function(){
+            var test1 = this.plot.addPanel({
+                id: "test1",
+                description: "Lorem ipsum",
+                controls: { description: true }
+            });
+            test1.controls.buttons.description.should.have.property("menu").which.is.an.Object;
+            test1.controls.buttons.description.menu.should.have.property("showing").which.is.exactly(false);
+            test1.controls.buttons.description.menu.should.have.property("enabled").which.is.exactly(true);
+            test1.controls.buttons.description.menu.should.have.property("outer_selector").which.is.exactly(null);
+            test1.controls.buttons.description.menu.should.have.property("inner_selector").which.is.exactly(null);
+            test1.controls.buttons.description.menu.should.have.property("show").which.is.a.Function;
+            test1.controls.buttons.description.menu.should.have.property("update").which.is.a.Function;
+            test1.controls.buttons.description.menu.should.have.property("position").which.is.a.Function;
+            test1.controls.buttons.description.menu.should.have.property("hide").which.is.a.Function;
+            test1.controls.show();
+            test1.controls.buttons.description.selector.on("click")(); // toggle menu on
+            assert.equal(test1.controls.buttons.description.status, "highlighted");
+            assert.ok(test1.controls.buttons.description.menu.showing);
+            test1.controls.buttons.description.menu.outer_selector.should.have.property("empty").which.is.a.Function;
+            assert.equal(test1.controls.buttons.description.menu.outer_selector.empty(), false);
+            assert.ok(test1.controls.buttons.description.menu.outer_selector.classed("lz-panel-controls-menu"));
+            test1.controls.buttons.description.menu.inner_selector.should.have.property("empty").which.is.a.Function;
+            assert.equal(test1.controls.buttons.description.menu.inner_selector.empty(), false);
+            assert.ok(test1.controls.buttons.description.menu.inner_selector.classed("lz-panel-controls-menu-content"));
+            assert.equal(test1.controls.buttons.description.menu.inner_selector.html(), "Lorem ipsum");
+            test1.controls.buttons.description.selector.on("click")(); // toggle menu off
+            assert.equal(test1.controls.buttons.description.menu.showing, false);
+            assert.equal(test1.controls.buttons.description.menu.outer_selector, null);
+            assert.equal(test1.controls.buttons.description.menu.inner_selector, null);
+        });
+    });
+
 });

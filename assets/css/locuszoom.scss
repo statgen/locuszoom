@@ -174,12 +174,17 @@ div.#{$namespace}-data_layer-tooltip {
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
 
-  h6 { font-size: 110%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
-  h5 { font-size: 125%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
-  h4 { font-size: 150%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
-  h3 { font-size: 175%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
-  h2 { font-size: 200%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
-  h1 { font-size: 250%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0.1em;
+    margin-bottom: 0.3em;
+  }
+
+  h1 { font-size: 200%; }
+  h2 { font-size: 175%; }
+  h3 { font-size: 150%; }
+  h4 { font-size: 135%; }
+  h5 { font-size: 125%; }
+  h6 { font-size: 110%; }
 
   table {
     display: table;
@@ -196,24 +201,31 @@ div.#{$namespace}-data_layer-tooltip {
     border-bottom: 1px solid #E1E1E1;
   }
 
-  .#{$namespace}-tooltip-close-button {
-    font-weight: bold;
+  button {
     text-decoration: none;
-    line-height: 1.2;
+    height: auto;
+    line-height: inherit; 
     padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(235,235,235,0.4);
-    color: #{$default_black_shadow};
-    border: 1px solid #{$default_black_shadow};
+    background-color: rgba(216,216,216,1);
+    color: #{$default_black};
+    border: 1px solid #{$default_black};
     border-radius: 4px;
     pointer-events: auto;
-    position: absolute;
-    right: -1px;
-    top: -1px;
+    outline: none;
   }
-  .#{$namespace}-tooltip-close-button:hover {
+  button:hover {
     cursor: pointer;
     background-color: #{$default_black};
     color: rgba(235,235,235,1);
+  }
+
+  .#{$namespace}-tooltip-close-button {
+    color: #{$default_black_shadow};
+    border: 1px solid #{$default_black_shadow};
+    background-color: rgba(235,235,235,0.4);
+    position: absolute;
+    right: -1px;
+    top: -1px;
   }
   
 }
@@ -669,12 +681,12 @@ div.#{$namespace}-panel-controls-menu {
       margin-bottom: 0.3em;
     }
 
-    h1 { font-size: 20px; }
-    h2 { font-size: 18px; }
-    h3 { font-size: 16px; }
-    h4 { font-size: 14px; }
-    h5 { font-size: 12px; }
-    h6 { font-size: 11px; }
+    h1 { font-size: 200%; }
+    h2 { font-size: 175%; }
+    h3 { font-size: 150%; }
+    h4 { font-size: 135%; }
+    h5 { font-size: 125%; }
+    h6 { font-size: 110%; }
 
   }
 
