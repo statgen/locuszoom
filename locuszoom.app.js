@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.0"
+    version: "0.4.1"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -1559,7 +1559,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         y_axis: {
             axis: 1
         },
-        selectable: "multiple",
         id_field: "id"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -1988,8 +1987,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
-        hitarea_width: 5,
-        selectable: false
+        hitarea_width: 5
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
@@ -2228,7 +2226,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
         exon_height: 16,
         bounding_box_padding: 6,
         track_vertical_spacing: 10,
-        selectable: "one",
         hover_element: "bounding_box"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
