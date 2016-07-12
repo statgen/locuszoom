@@ -71,6 +71,10 @@ svg.#{$namespace}-locuszoom {
     font-weight: 600;
   }
 
+  .#{$namespace}-panel-background {
+    fill: rgba(255,255,255,0);
+  }
+
   .#{$namespace}-axis path,
   .#{$namespace}-axis line {
   	fill: none;
