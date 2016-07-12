@@ -426,18 +426,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Reimplement applyDataMethods() to add a toHTML() method on each scatter element
-    this.applyDataMethods = function(){
-        this.data.forEach(function(d, i){
-            this.data[i].toHTML = function(){
-                var id_field = this.layout.id_field || "id";
-                var html = "";
-                if (this.data[i][id_field]){ html = this.data[i][id_field]; }
-                return html;
-            }.bind(this);
-        }.bind(this));
-    };
-
     // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(id){
         if (typeof id != "string"){

@@ -500,7 +500,7 @@ LocusZoom.StandardLayout = {
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.conditionOn(LocusZoom.getToolTipData(this));\">Condition</button>"
+                            + "<button onclick=\"plot.conditionOn(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
                     }
                 }
             ]
@@ -640,11 +640,35 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     }
 };
 
-// Stub method to apply arbitrary methods to data elements.
-// Default does nothing; data layer types may apply different methods as needed.
+// Basic method to apply arbitrary methods and properties to data elements.
 // This is called on all data immediately after being fetched.
 LocusZoom.DataLayer.prototype.applyDataMethods = function(){
-    return;
+    this.data.forEach(function(d, i){
+        // Basic toHTML() method - return the stringified value in the id_field, if defined.
+        this.data[i].toHTML = function(){
+            var id_field = this.layout.id_field || "id";
+            var html = "";
+            if (this.data[i][id_field]){ html = this.data[i][id_field].toString(); }
+            return html;
+        }.bind(this);
+        // getDataLayer() method - return a reference to the data layer
+        this.data[i].getDataLayer = function(){
+            return this;
+        }.bind(this);
+        // deselect() method - shortcut method to deselect the element
+        this.data[i].deselect = function(){
+            var data_layer = this.getDataLayer();
+            data_layer.unselectElement(this);
+        };
+    }.bind(this));
+    this.applyCustomDataMethods();
+    return this;
+};
+
+// Arbitrarily advanced method to apply methods and properties to data elements.
+// May be implemented by data layer classes as needed to do special things.
+LocusZoom.DataLayer.prototype.applyCustomDataMethods = function(){
+    return this;
 };
 
 // Initialize a data layer
@@ -702,7 +726,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
-    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    // If a floor AND a ceiling are explicitly defined then just return that extent and be done
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
@@ -1573,18 +1597,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
-
-    // Reimplement applyDataMethods() to add a toHTML() method on each scatter element
-    this.applyDataMethods = function(){
-        this.data.forEach(function(d, i){
-            this.data[i].toHTML = function(){
-                var id_field = this.layout.id_field || "id";
-                var html = "";
-                if (this.data[i][id_field]){ html = this.data[i][id_field]; }
-                return html;
-            }.bind(this);
-        }.bind(this));
-    };
 
     // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(id){

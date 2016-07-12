@@ -85,11 +85,35 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     }
 };
 
-// Stub method to apply arbitrary methods to data elements.
-// Default does nothing; data layer types may apply different methods as needed.
+// Basic method to apply arbitrary methods and properties to data elements.
 // This is called on all data immediately after being fetched.
 LocusZoom.DataLayer.prototype.applyDataMethods = function(){
-    return;
+    this.data.forEach(function(d, i){
+        // Basic toHTML() method - return the stringified value in the id_field, if defined.
+        this.data[i].toHTML = function(){
+            var id_field = this.layout.id_field || "id";
+            var html = "";
+            if (this.data[i][id_field]){ html = this.data[i][id_field].toString(); }
+            return html;
+        }.bind(this);
+        // getDataLayer() method - return a reference to the data layer
+        this.data[i].getDataLayer = function(){
+            return this;
+        }.bind(this);
+        // deselect() method - shortcut method to deselect the element
+        this.data[i].deselect = function(){
+            var data_layer = this.getDataLayer();
+            data_layer.unselectElement(this);
+        };
+    }.bind(this));
+    this.applyCustomDataMethods();
+    return this;
+};
+
+// Arbitrarily advanced method to apply methods and properties to data elements.
+// May be implemented by data layer classes as needed to do special things.
+LocusZoom.DataLayer.prototype.applyCustomDataMethods = function(){
+    return this;
 };
 
 // Initialize a data layer
@@ -147,7 +171,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
-    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    // If a floor AND a ceiling are explicitly defined then just return that extent and be done
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
