@@ -145,7 +145,7 @@
       }
       plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
       populateForms();
-      return(false);
+      return false;
     }
 
     // Fill demo forms with values already loaded into LocusZoom objects
@@ -157,7 +157,7 @@
 
     function listHits() {
       $("#tophits").empty().append("<ul>").children(0).append(topHits.map(function(e) {
-        return "<li><a href='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
+        return "<li><a href='javascript:void(0);' onclick='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
       }))
     }
 
