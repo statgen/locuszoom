@@ -434,6 +434,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
         throw("Invalid status passed to setAllElementStatus()");
     }
+    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
     if (typeof toggle == "undefined"){ toggle = true; }
 
     // Apply statuses
@@ -453,6 +454,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
         }.bind(this));
     }
     
+    return this;
 };
 
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected)
