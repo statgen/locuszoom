@@ -972,6 +972,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
         throw("Invalid status passed to setAllElementStatus()");
     }
+    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
     if (typeof toggle == "undefined"){ toggle = true; }
 
     // Apply statuses
@@ -991,6 +992,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
         }.bind(this));
     }
     
+    return this;
 };
 
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected)
@@ -1532,7 +1534,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         y_axis: {
             axis: 1
         },
-        selectable: "multiple",
         id_field: "id"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -1949,8 +1950,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         interpolate: "linear",
         x_axis: { field: "x" },
         y_axis: { field: "y", axis: 1 },
-        hitarea_width: 5,
-        selectable: false
+        hitarea_width: 5
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
 
@@ -2189,7 +2189,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
         exon_height: 16,
         bounding_box_padding: 6,
         track_vertical_spacing: 10,
-        selectable: "one",
         hover_element: "bounding_box"
     };
     layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
@@ -4262,6 +4261,7 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_height: null,
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    background_click: "clear_selections",
     controls: {
         description: true,
         reposition: true,
@@ -4712,10 +4712,12 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // If the layout defines an inner border render it before rendering axes
-    if (this.layout.inner_border){
-        this.inner_border = this.svg.group.append("rect");
-    }
+    // Inner border
+    this.inner_border = this.svg.group.append("rect")
+        .attr("class", "lz-panel-background")
+        .on("click", function(){
+            if (this.layout.background_click == "clear_selections"){ this.clearSelections(); }
+        }.bind(this));
 
     // Add the title, if defined
     if (this.layout.title){
@@ -4827,6 +4829,15 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
 };
 
 
+// Clear all selections on all data layers
+LocusZoom.Panel.prototype.clearSelections = function(){
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        this.data_layers[id].setAllElementStatus("selected", false);
+    }.bind(this));
+    return this;
+};
+
+
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
     this.data_promises = [];
@@ -4897,15 +4908,13 @@ LocusZoom.Panel.prototype.render = function(){
     // Set size on the clip rect
     this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
 
-    // Set and position the inner border, if necessary
+    // Set and position the inner border, style if necessary
+    this.inner_border
+        .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
+        .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
+        .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
     if (this.layout.inner_border){
-        this.inner_border
-            .attr("x", this.layout.margin.left).attr("y", this.layout.margin.top)
-            .attr("width", this.layout.width - (this.layout.margin.left + this.layout.margin.right))
-            .attr("height", this.layout.height - (this.layout.margin.top + this.layout.margin.bottom))
-            .style({ "fill": "none",
-                     "stroke-width": 1,
-                     "stroke": this.layout.inner_border });
+        this.inner_border.style({ "stroke-width": 1, "stroke": this.layout.inner_border });
     }
 
     // Regenerate all extents
