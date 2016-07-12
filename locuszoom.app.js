@@ -381,7 +381,7 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
-            controls: { description: true, conditions: true },
+            controls: { description: true, model: true, reposition: true },
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -500,7 +500,7 @@ LocusZoom.StandardLayout = {
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.conditionOn(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
+                            + "<button onclick=\"plot.addModelCovariate(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
                     }
                 }
             ]
@@ -516,6 +516,7 @@ LocusZoom.StandardLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
+            controls:  { reposition: true },
             axes: {},
             data_layers: [
                 {
@@ -3290,7 +3291,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
 // Default Layout
 LocusZoom.Instance.DefaultLayout = {
     state: {
-        conditions: []
+        model: {
+            covariates: []
+        }
     },
     width: 1,
     height: 1,
@@ -4074,29 +4077,30 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
-// Conditional Analysis shortcut functions
-LocusZoom.Instance.prototype.conditionOn = function(element){
-    // Check if the element is already in the array. Do this with JSON.stringify since elements
+// Model covariate shortcut functions
+LocusZoom.Instance.prototype.addModelCovariate = function(element){
+    // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
     // may have functions that would trip up more basic equality checking
-    for (var i = 0; i < this.state.conditions.length; i++) {
-        if (JSON.stringify(this.state.conditions[i]) === JSON.stringify(element)) {
+    for (var i = 0; i < this.state.model.covariates.length; i++) {
+        if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
             return this;
         }
     }
-    this.state.conditions.push(element);
+    this.state.model.covariates.push(element);
     this.applyState();
     return this;
 };
-LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
-    if (typeof this.state.conditions[idx] == "undefined"){
-        throw("Unable to remove condition, invalid index: " + idx.toString());
+LocusZoom.Instance.prototype.removeModelCovariateByIdx = function(idx){
+    if (typeof this.state.model.covariates[idx] == "undefined"){
+        throw("Unable to remove model covariate, invalid index: " + idx.toString());
     }
-    this.state.conditions.splice(idx, 1);
+    this.state.model.covariates.splice(idx, 1);
     this.applyState();
     return this;
 };
-LocusZoom.Instance.prototype.removeAllConditions = function(){
-    this.applyState({ conditions: [] });
+LocusZoom.Instance.prototype.removeAllModelCovariates = function(){
+    this.state.model.covariates = [];
+    this.applyState();
     return this;
 };
 
@@ -4642,7 +4646,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Update controls: add/remove buttons as needed from controls
     this.controls.update = function(){
         if (!this.controls.showing){
-            if (this.state.conditions.length){
+            if (this.state.model.covariates.length){
                 return this.controls.show();
             } else {
                 return this.controls;
@@ -4707,44 +4711,53 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Controls button: Conditions
-    if (this.layout.controls.conditions){
-        this.controls.buttons.conditions = new LocusZoom.PanelControlsButton("conditions", this)
-            .setColor("purple").setText("not conditioning").setTitle("Conditional Analysis")
+    // Controls button: Model
+    if (this.layout.controls.model){
+        this.controls.buttons.model = new LocusZoom.PanelControlsButton("model", this)
+            .setColor("purple").setText("model").setTitle("Model").setPermanent()
             .menuPopulate(function(){
-                var selector = this.controls.buttons.conditions.menu.inner_selector;
+                var selector = this.controls.buttons.model.menu.inner_selector;
                 selector.html("");
-                selector.append("h4").html("Conditional Analysis");
-                var table = selector.append("table");
-                this.state.conditions.forEach(function(condition, idx){
-                    var html = condition.toString();
-                    if (typeof condition == "object" && typeof condition.toHTML == "function"){
-                        html = condition.toHTML();
-                    }
-                    var row = table.append("tr");
-                    row.append("td").append("button")
-                        .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                        .style({ "margin-left": "0em" })
-                        .on("click", function(){
-                            this.parent.removeConditionByIdx(idx);
-                        }.bind(this))
-                        .text("×");
-                    row.append("td").html(html);
-                }.bind(this));
-                selector.append("button")
-                    .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                    .style({ "margin-left": "4px" }).html("× Remove All Conditions")
-                    .on("click", function(){
-                        this.parent.removeAllConditions();
+                // General model HTML representation
+                if (typeof this.state.model.html != "undefined"){
+                    selector.append("div").html(this.state.model.html);
+                }
+                // Model covariates table
+                if (!this.state.model.covariates.length){
+                    selector.append("i").text("no covariates in model");
+                } else {
+                    selector.append("h5").html("Model Covariates (" + this.state.model.covariates.length + ")");
+                    var table = selector.append("table");
+                    this.state.model.covariates.forEach(function(covariate, idx){
+                        var html = covariate.toString();
+                        if (typeof covariate == "object" && typeof covariate.toHTML == "function"){
+                            html = covariate.toHTML();
+                        }
+                        var row = table.append("tr");
+                        row.append("td").append("button")
+                            .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
+                            .style({ "margin-left": "0em" })
+                            .on("click", function(){
+                                this.parent.removeModelCovariateByIdx(idx);
+                            }.bind(this))
+                            .text("×");
+                        row.append("td").html(html);
                     }.bind(this));
+                    selector.append("button")
+                        .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
+                        .style({ "margin-left": "4px" }).html("× Remove All Covariates")
+                        .on("click", function(){
+                            this.parent.removeAllModelCovariates();
+                        }.bind(this));
+                }
             }.bind(this));
-        this.controls.buttons.conditions.preUpdate = function(){
-            if (this.parent.state.conditions.length){
-                this.setText("Conditioning").setStyle({"font-weight": "bold"}).disable(false);
-            } else {
-                this.setText("not conditioning").setStyle({"font-weight": "normal"}).disable();
-                this.menu.hide();
+        this.controls.buttons.model.preUpdate = function(){
+            var text = "Model";
+            if (this.parent.state.model.covariates.length){
+                var cov = this.parent.state.model.covariates.length > 1 ? "covariates" : "covariate";
+                text += " (" + this.parent.state.model.covariates.length + " " + cov + ")";
             }
+            this.setText(text).disable(false);
         };
     }
 
@@ -5223,6 +5236,15 @@ LocusZoom.PanelControlsButton = function(id, parent) {
         return this;
     };
 
+    // Permanance controls
+    this.permanent = false;
+    this.setPermanent = function(bool){
+        if (typeof bool == "undefined"){ bool = true; } else { bool = Boolean(bool); }
+        this.permanent = bool;
+        if (this.permanent){ this.persist = true; }
+        return this;
+    };
+
     // Status controls (highlighted / disabled)
     this.status = "";
     this.setStatus = function(status){
@@ -5354,7 +5376,9 @@ LocusZoom.PanelControlsButton = function(id, parent) {
                 } else {
                     this.menu.hide();
                     this.highlight(false).update();
-                    this.persist = false;
+                    if (!this.permanent){
+                        this.persist = false;
+                    }
                 }
             }.bind(this));
             this.menu.enabled = true;

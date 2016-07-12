@@ -427,7 +427,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Update controls: add/remove buttons as needed from controls
     this.controls.update = function(){
         if (!this.controls.showing){
-            if (this.state.conditions.length){
+            if (this.state.model.covariates.length){
                 return this.controls.show();
             } else {
                 return this.controls;
@@ -492,44 +492,53 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Controls button: Conditions
-    if (this.layout.controls.conditions){
-        this.controls.buttons.conditions = new LocusZoom.PanelControlsButton("conditions", this)
-            .setColor("purple").setText("not conditioning").setTitle("Conditional Analysis")
+    // Controls button: Model
+    if (this.layout.controls.model){
+        this.controls.buttons.model = new LocusZoom.PanelControlsButton("model", this)
+            .setColor("purple").setText("model").setTitle("Model").setPermanent()
             .menuPopulate(function(){
-                var selector = this.controls.buttons.conditions.menu.inner_selector;
+                var selector = this.controls.buttons.model.menu.inner_selector;
                 selector.html("");
-                selector.append("h4").html("Conditional Analysis");
-                var table = selector.append("table");
-                this.state.conditions.forEach(function(condition, idx){
-                    var html = condition.toString();
-                    if (typeof condition == "object" && typeof condition.toHTML == "function"){
-                        html = condition.toHTML();
-                    }
-                    var row = table.append("tr");
-                    row.append("td").append("button")
-                        .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                        .style({ "margin-left": "0em" })
-                        .on("click", function(){
-                            this.parent.removeConditionByIdx(idx);
-                        }.bind(this))
-                        .text("×");
-                    row.append("td").html(html);
-                }.bind(this));
-                selector.append("button")
-                    .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                    .style({ "margin-left": "4px" }).html("× Remove All Conditions")
-                    .on("click", function(){
-                        this.parent.removeAllConditions();
+                // General model HTML representation
+                if (typeof this.state.model.html != "undefined"){
+                    selector.append("div").html(this.state.model.html);
+                }
+                // Model covariates table
+                if (!this.state.model.covariates.length){
+                    selector.append("i").text("no covariates in model");
+                } else {
+                    selector.append("h5").html("Model Covariates (" + this.state.model.covariates.length + ")");
+                    var table = selector.append("table");
+                    this.state.model.covariates.forEach(function(covariate, idx){
+                        var html = covariate.toString();
+                        if (typeof covariate == "object" && typeof covariate.toHTML == "function"){
+                            html = covariate.toHTML();
+                        }
+                        var row = table.append("tr");
+                        row.append("td").append("button")
+                            .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
+                            .style({ "margin-left": "0em" })
+                            .on("click", function(){
+                                this.parent.removeModelCovariateByIdx(idx);
+                            }.bind(this))
+                            .text("×");
+                        row.append("td").html(html);
                     }.bind(this));
+                    selector.append("button")
+                        .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
+                        .style({ "margin-left": "4px" }).html("× Remove All Covariates")
+                        .on("click", function(){
+                            this.parent.removeAllModelCovariates();
+                        }.bind(this));
+                }
             }.bind(this));
-        this.controls.buttons.conditions.preUpdate = function(){
-            if (this.parent.state.conditions.length){
-                this.setText("Conditioning").setStyle({"font-weight": "bold"}).disable(false);
-            } else {
-                this.setText("not conditioning").setStyle({"font-weight": "normal"}).disable();
-                this.menu.hide();
+        this.controls.buttons.model.preUpdate = function(){
+            var text = "Model";
+            if (this.parent.state.model.covariates.length){
+                var cov = this.parent.state.model.covariates.length > 1 ? "covariates" : "covariate";
+                text += " (" + this.parent.state.model.covariates.length + " " + cov + ")";
             }
+            this.setText(text).disable(false);
         };
     }
 
@@ -1008,6 +1017,15 @@ LocusZoom.PanelControlsButton = function(id, parent) {
         return this;
     };
 
+    // Permanance controls
+    this.permanent = false;
+    this.setPermanent = function(bool){
+        if (typeof bool == "undefined"){ bool = true; } else { bool = Boolean(bool); }
+        this.permanent = bool;
+        if (this.permanent){ this.persist = true; }
+        return this;
+    };
+
     // Status controls (highlighted / disabled)
     this.status = "";
     this.setStatus = function(status){
@@ -1139,7 +1157,9 @@ LocusZoom.PanelControlsButton = function(id, parent) {
                 } else {
                     this.menu.hide();
                     this.highlight(false).update();
-                    this.persist = false;
+                    if (!this.permanent){
+                        this.persist = false;
+                    }
                 }
             }.bind(this));
             this.menu.enabled = true;

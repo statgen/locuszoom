@@ -299,10 +299,10 @@ describe('LocusZoom.Panel', function(){
             assert.ok(test2.controls.buttons.description instanceof LocusZoom.PanelControlsButton);
             var test3 = this.plot.addPanel({
                 id: "test3",
-                controls: { conditions: true, reposition: true }
+                controls: { model: true, reposition: true }
             });
-            assert.deepEqual(Object.keys(test3.controls.buttons), ["conditions", "reposition_down", "reposition_up"]);
-            assert.ok(test3.controls.buttons.conditions instanceof LocusZoom.PanelControlsButton);
+            assert.deepEqual(Object.keys(test3.controls.buttons), ["model", "reposition_down", "reposition_up"]);
+            assert.ok(test3.controls.buttons.model instanceof LocusZoom.PanelControlsButton);
             assert.ok(test3.controls.buttons.reposition_down instanceof LocusZoom.PanelControlsButton);
             assert.ok(test3.controls.buttons.reposition_up instanceof LocusZoom.PanelControlsButton);
         });

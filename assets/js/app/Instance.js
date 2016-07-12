@@ -108,7 +108,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
 // Default Layout
 LocusZoom.Instance.DefaultLayout = {
     state: {
-        conditions: []
+        model: {
+            covariates: []
+        }
     },
     width: 1,
     height: 1,
@@ -892,29 +894,30 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
-// Conditional Analysis shortcut functions
-LocusZoom.Instance.prototype.conditionOn = function(element){
-    // Check if the element is already in the array. Do this with JSON.stringify since elements
+// Model covariate shortcut functions
+LocusZoom.Instance.prototype.addModelCovariate = function(element){
+    // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
     // may have functions that would trip up more basic equality checking
-    for (var i = 0; i < this.state.conditions.length; i++) {
-        if (JSON.stringify(this.state.conditions[i]) === JSON.stringify(element)) {
+    for (var i = 0; i < this.state.model.covariates.length; i++) {
+        if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
             return this;
         }
     }
-    this.state.conditions.push(element);
+    this.state.model.covariates.push(element);
     this.applyState();
     return this;
 };
-LocusZoom.Instance.prototype.removeConditionByIdx = function(idx){
-    if (typeof this.state.conditions[idx] == "undefined"){
-        throw("Unable to remove condition, invalid index: " + idx.toString());
+LocusZoom.Instance.prototype.removeModelCovariateByIdx = function(idx){
+    if (typeof this.state.model.covariates[idx] == "undefined"){
+        throw("Unable to remove model covariate, invalid index: " + idx.toString());
     }
-    this.state.conditions.splice(idx, 1);
+    this.state.model.covariates.splice(idx, 1);
     this.applyState();
     return this;
 };
-LocusZoom.Instance.prototype.removeAllConditions = function(){
-    this.applyState({ conditions: [] });
+LocusZoom.Instance.prototype.removeAllModelCovariates = function(){
+    this.state.model.covariates = [];
+    this.applyState();
     return this;
 };
 

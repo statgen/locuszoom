@@ -429,53 +429,53 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
-    describe("Conditional Analysis Methods", function() {
+    describe("Model and Model Covariate Methods", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, {});
         });
-        it("Should have a method for adding arbitrary elements to conditions", function(){
-            this.plot.state.conditions.should.be.an.Array;
-            this.plot.state.conditions.length.should.be.exactly(0);
-            this.plot.conditionOn("foo");
-            this.plot.state.conditions.length.should.be.exactly(1);
-            this.plot.state.conditions[0].should.be.exactly("foo");
+        it("Should have a method for adding arbitrary elements to model covariates", function(){
+            this.plot.state.model.covariates.should.be.an.Array;
+            this.plot.state.model.covariates.length.should.be.exactly(0);
+            this.plot.addModelCovariate("foo");
+            this.plot.state.model.covariates.length.should.be.exactly(1);
+            this.plot.state.model.covariates[0].should.be.exactly("foo");
         });
-        it("Should not allow for conditioning on the same element more than once", function(){
-            this.plot.conditionOn("foo");
-            this.plot.state.conditions.length.should.be.exactly(1);
-            this.plot.state.conditions[0].should.be.exactly("foo");
-            this.plot.conditionOn("bar");
-            this.plot.state.conditions.length.should.be.exactly(2);
-            this.plot.state.conditions[1].should.be.exactly("bar");
-            this.plot.conditionOn("foo");
-            this.plot.state.conditions.length.should.be.exactly(2);
+        it("Should not allow for adding the same element to model covariates more than once", function(){
+            this.plot.addModelCovariate("foo");
+            this.plot.state.model.covariates.length.should.be.exactly(1);
+            this.plot.state.model.covariates[0].should.be.exactly("foo");
+            this.plot.addModelCovariate("bar");
+            this.plot.state.model.covariates.length.should.be.exactly(2);
+            this.plot.state.model.covariates[1].should.be.exactly("bar");
+            this.plot.addModelCovariate("foo");
+            this.plot.state.model.covariates.length.should.be.exactly(2);
             var obj1 = { foo: "bar", baz: function(){ return "baz"; } };
             var obj2 = { foo: "asdf", baz: function(){ return "baz"; } };
-            this.plot.conditionOn(obj1);
-            this.plot.state.conditions.length.should.be.exactly(3);
-            this.plot.conditionOn(obj2);
-            this.plot.state.conditions.length.should.be.exactly(4);
-            this.plot.conditionOn(obj1);
-            this.plot.state.conditions.length.should.be.exactly(4);
+            this.plot.addModelCovariate(obj1);
+            this.plot.state.model.covariates.length.should.be.exactly(3);
+            this.plot.addModelCovariate(obj2);
+            this.plot.state.model.covariates.length.should.be.exactly(4);
+            this.plot.addModelCovariate(obj1);
+            this.plot.state.model.covariates.length.should.be.exactly(4);
         });
-        it("Should have a method for removing conditions via their index", function(){
-            this.plot.conditionOn("foo").conditionOn("bar").conditionOn("baz");
-            this.plot.state.conditions.length.should.be.exactly(3);
-            this.plot.removeConditionByIdx(1);
-            this.plot.state.conditions.length.should.be.exactly(2);
-            this.plot.state.conditions[0].should.be.exactly("foo");
-            this.plot.state.conditions[1].should.be.exactly("baz");
-            assert.throws(function(){ this.plot.removeConditionByIdx(9); });
-            assert.throws(function(){ this.plot.removeConditionByIdx(-1); });
-            assert.throws(function(){ this.plot.removeConditionByIdx("foo"); });
+        it("Should have a method for removing model covariates via their index in the array", function(){
+            this.plot.addModelCovariate("foo").addModelCovariate("bar").addModelCovariate("baz");
+            this.plot.state.model.covariates.length.should.be.exactly(3);
+            this.plot.removeModelCovariateByIdx(1);
+            this.plot.state.model.covariates.length.should.be.exactly(2);
+            this.plot.state.model.covariates[0].should.be.exactly("foo");
+            this.plot.state.model.covariates[1].should.be.exactly("baz");
+            assert.throws(function(){ this.plot.removeModelCovariateByIdx(9); });
+            assert.throws(function(){ this.plot.removeModelCovariateByIdx(-1); });
+            assert.throws(function(){ this.plot.removeModelCovariateByIdx("foo"); });
         });
-        it("Should have a method for removing all conditions", function(){
-            this.plot.conditionOn("foo").conditionOn("bar").conditionOn("baz");
-            this.plot.state.conditions.length.should.be.exactly(3);
-            this.plot.removeAllConditions(1);
-            this.plot.state.conditions.length.should.be.exactly(0);
+        it("Should have a method for removing all model covariates", function(){
+            this.plot.addModelCovariate("foo").addModelCovariate("bar").addModelCovariate("baz");
+            this.plot.state.model.covariates.length.should.be.exactly(3);
+            this.plot.removeAllModelCovariates(1);
+            this.plot.state.model.covariates.length.should.be.exactly(0);
         });
     });
 
