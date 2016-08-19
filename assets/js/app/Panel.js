@@ -514,7 +514,6 @@ LocusZoom.Panel.prototype.initialize = function(){
                         return this.controls.description;
                     }.bind(this)
                 };
-                return this.controls;
             }
             // Remove button
             if (this.layout.controls.remove){
@@ -533,8 +532,8 @@ LocusZoom.Panel.prototype.initialize = function(){
                         // Remove the panel
                         this.parent.removePanel(this.id);
                     }.bind(this));
-                return this.controls;
             }
+            return this.controls;
         }.bind(this),
         position: function(){
             if (!this.layout.controls || !this.controls.selector){ return this.controls; }

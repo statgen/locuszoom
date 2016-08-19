@@ -47,7 +47,7 @@ svg.lz-locuszoom {
     font-size: 18px;
     font-weight: 600; }
   svg.lz-locuszoom .lz-panel-background {
-    fill: rgba(2, 5, 5, 0); }
+    fill: rgba(255, 255, 255, 0); }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
