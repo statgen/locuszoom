@@ -350,6 +350,12 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
+            interaction: {
+                drag_background_to_pan: true,
+                drag_x_ticks_to_scale: true,
+                drag_y_ticks_to_scale: true,
+                scroll_to_zoom: true
+            },
             data_layers: [
                 {
                     id: "significance",
@@ -468,6 +474,10 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true
+            },
             data_layers: [
                 {
                     id: "genes",

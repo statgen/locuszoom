@@ -382,6 +382,12 @@ LocusZoom.StandardLayout = {
                     label_offset: 40
                 }
             },
+            interaction: {
+                drag_background_to_pan: true,
+                drag_x_ticks_to_scale: true,
+                drag_y_ticks_to_scale: true,
+                scroll_to_zoom: true
+            },
             data_layers: [
                 {
                     id: "significance",
@@ -500,6 +506,10 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true
+            },
             data_layers: [
                 {
                     id: "genes",
@@ -4277,6 +4287,12 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     },
+    interaction: {
+        drag_background_to_pan: false,
+        drag_x_ticks_to_scale: false,
+        drag_y_ticks_to_scale: false,
+        scroll_to_zoom: false
+    },
     data_layers: []
 };
 
@@ -4320,6 +4336,20 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
+
+    // Set up interaction
+    if (this.layout.interaction.drag_background_to_pan){
+        console.log("set up background-drag panning...");
+    }
+    if (this.layout.interaction.drag_x_ticks_to_scale){
+        console.log("set up x-tick-drag scaling...");
+    }
+    if (this.layout.interaction.drag_y_ticks_to_scale){
+        console.log("set up y-tick-drag scaling...");
+    }
+    if (this.layout.interaction.scroll_to_zoom){
+        console.log("set up zooming...");
+    }
 
 };
 
@@ -4893,7 +4923,9 @@ LocusZoom.Panel.prototype.generateExtents = function(){
     // Override x_extent from state if explicitly defined to do so
     if (this.layout.axes.x && this.layout.axes.x.extent == "state"){
         this.x_extent = [ this.state.start, this.state.end ];
-    }    
+    }
+
+    // Here is also where extents could be overridden by state, e.g. for custom extents via tick dragging
 
 };
 
