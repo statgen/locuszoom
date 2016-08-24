@@ -83,6 +83,8 @@ LocusZoom.Panel = function(layout, parent) {
     this.y1_ticks = [];
     this.y2_ticks = [];
 
+    this.zoom_timeout = null;
+
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
     };
@@ -195,6 +197,11 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.setDimensions();
     this.setOrigin();
     this.setMargin();
+
+    // Set ranges
+    this.x_range = [0, this.layout.cliparea.width];
+    this.y1_range = [0, this.layout.cliparea.height];
+    this.y2_range = [0, this.layout.cliparea.height];
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
@@ -657,55 +664,26 @@ LocusZoom.Panel.prototype.initialize = function(){
     }.bind(this));
 
     // Set up interaction
-    var toggleDragging = function(target){
-        target = target || false;
-        if (!target){
-            if (this.interactions.dragging.dragged_x != this.interactions.dragging.start_x){
-                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
-            }
-            this.interactions.dragging = false;
-        } else {
-            var coords = d3.mouse(this.svg.container.node());
-            this.interactions.dragging = {
-                target: target,
-                start_x: coords[0],
-                start_y: coords[1],
-                dragged_x: 0,
-                dragged_y: 0
-            };
-        }
-        broadcastInteraction();
-    }.bind(this);
-    var broadcastInteraction = function(){
-        if (!this.layout.interaction.linked){ return; }
-        this.parent.panel_ids_by_y_index.forEach(function(panel_id){
-            if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction.linked){ return; }
-            this.parent.panels[panel_id].interactions = this.interactions;
-            this.parent.panels[panel_id].render();
-        }.bind(this));
-    }.bind(this);
+    var namespace = "." + this.parent.id + "-" + this.id + ".interaction";
     if (this.layout.interaction.drag_background_to_pan){
+        var panel = this;
+        var mousedown = function(d){ panel.toggleDragging("background", this); };
+        var mouseup = function(d){ panel.toggleDragging(); };
         this.svg.container.select(".lz-panel-background")
-            .on("mousedown.drag", function(d){ toggleDragging("background"); })
-            .on("mouseup", function(d){ toggleDragging(false); });
+            .on("mousedown" + namespace, mousedown)
+            .on("touchstart" + namespace, mousedown)
+            .on("mouseup" + namespace, mouseup)
+            .on("touchend" + namespace, mouseup);
     }
-    if (this.layout.interaction.drag_x_ticks_to_scale){
-        //console.log("set up x-tick-drag scaling...");
-    }
-    if (this.layout.interaction.drag_y_ticks_to_scale){
-        //console.log("set up y-tick-drag scaling...");
-    }
-    if (this.layout.interaction.scroll_to_zoom){
-        //console.log("set up zooming...");
-    }
-    this.svg.container.on("mousemove", function(){
+    var mousemove = function(){
         if (!this.interactions.dragging){ return; }
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
         this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
         this.render();
-        broadcastInteraction();
-    }.bind(this));
+    }.bind(this)
+    this.parent.svg.on("mousemove" + namespace, mousemove);
+    this.parent.svg.on("touchmove" + namespace, mousemove);
 
     return this;
     
@@ -841,7 +819,11 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 };
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(){
+LocusZoom.Panel.prototype.render = function(broadcast){
+
+    // Whether or not to broadcast some of the products of this function
+    // to other panels (e.g. to link panels together during interaction)
+    if (typeof broadcast == "undefined"){ var broadcast = true; }
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
@@ -864,10 +846,21 @@ LocusZoom.Panel.prototype.render = function(){
     // Generate ranges, scales, and ticks using generated extents
     if (this.x_extent){
         // Range
-        this.x_range = [0, this.layout.cliparea.width];
+        if (typeof this.x_scale == "function"){
+            this.x_range = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        }
         if (this.interactions.dragging){
-            this.x_range[0] += this.interactions.dragging.dragged_x;
-            this.x_range[1] += this.interactions.dragging.dragged_x;
+            switch (this.interactions.dragging.method){
+            case "background":
+                this.x_range[0] += this.interactions.dragging.dragged_x;
+                this.x_range[1] += this.interactions.dragging.dragged_x;
+                break;
+            case "x_tick":
+                // TODO: implement axis scaling logic here
+                this.x_range[0] += this.interactions.dragging.dragged_x;
+                this.x_range[1] += this.interactions.dragging.dragged_x;
+                break;
+            }
         }
         // Scale
         this.x_scale = d3.scale.linear()
@@ -926,10 +919,30 @@ LocusZoom.Panel.prototype.render = function(){
         this.renderAxis("y2");
     }
 
+    // Apply zoom interaction if necessary
+    if (this.layout.interaction.scroll_to_zoom){
+        this.svg.container.call(d3.behavior.zoom().x(this.x_scale).on("zoom", function(d){
+            this.render();
+            this.zoom_timeout = setTimeout(function(){
+                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+            }.bind(this), 1000);
+        }.bind(this)));
+    }
+
     // Render data layers in order by z-index
     this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
         this.data_layers[data_layer_id].draw().render();
     }.bind(this));
+
+    // Broadcast the interaction and scale on this panel to other linked panels, if necessary
+    if (this.layout.interaction.linked && broadcast){
+        this.parent.panel_ids_by_y_index.forEach(function(panel_id){
+            if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction.linked){ return; }
+            this.parent.panels[panel_id].interactions = this.interactions;
+            this.parent.panels[panel_id].x_scale = this.x_scale;
+            this.parent.panels[panel_id].render(false);
+        }.bind(this));
+    }
 
     return this;
     
@@ -1033,4 +1046,39 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         }
     }
 
+    // Attach interactive handlers to ticks if necessary
+    if (this.layout.interaction.drag_x_ticks_to_scale){
+        var panel = this;
+        this.svg.container.selectAll(".lz-axis.lz-x .tick text")
+            .on("mouseover", function(d) { d3.select(this).style({"font-weight": "bold", "cursor": "ew-resize"}); })
+            .on("mouseout",  function(d) { d3.select(this).style({"font-weight": "normal"}); })
+            .on("mousedown.drag", function(d){ panel.toggleDragging("x_tick", this); })
+            .on("mouseup", function(d){ panel.toggleDragging(); });
+        
+    }
+
+};
+
+// Toggle a drag event for the panel
+LocusZoom.Panel.prototype.toggleDragging = function(method, target){
+    method = method || null;
+    target = target || null;
+    if (!method){
+        if (this.interactions.dragging.dragged_x != this.interactions.dragging.start_x){
+            this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+        }
+        this.interactions.dragging = false;
+        this.svg.container.style("cursor", null);
+    } else {
+        var coords = d3.mouse(this.svg.container.node());
+        this.interactions.dragging = {
+            method: method,
+            target: target,
+            start_x: coords[0],
+            start_y: coords[1],
+            dragged_x: 0,
+            dragged_y: 0
+        };
+        this.svg.container.style("cursor", "move");
+    }
 };
