@@ -63,9 +63,21 @@ LocusZoom.Panel = function(layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
+    this.x_range  = null;
+    this.y1_range = null;
+    this.y2_range = null;
+
     this.x_extent  = null;
     this.y1_extent = null;
     this.y2_extent = null;
+
+    this.x_extent_shifted = null;
+    this.y1_extent_shifted = null;
+    this.y2_extent_shifted = null;
+
+    this.x_scale_shifted = null;
+    this.y1_scale_shifted = null;
+    this.y2_scale_shifted = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -111,6 +123,9 @@ LocusZoom.Panel = function(layout, parent) {
         };
     };
 
+    // Object for storing in-progress mouse interactions
+    this.interactions = {};
+
     // Initialize the layout
     this.initializeLayout();
     
@@ -151,7 +166,8 @@ LocusZoom.Panel.DefaultLayout = {
         drag_background_to_pan: false,
         drag_x_ticks_to_scale: false,
         drag_y_ticks_to_scale: false,
-        scroll_to_zoom: false
+        scroll_to_zoom: false,
+        linked: false
     },
     data_layers: []
 };
@@ -196,20 +212,6 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
-
-    // Set up interaction
-    if (this.layout.interaction.drag_background_to_pan){
-        console.log("set up background-drag panning...");
-    }
-    if (this.layout.interaction.drag_x_ticks_to_scale){
-        console.log("set up x-tick-drag scaling...");
-    }
-    if (this.layout.interaction.drag_y_ticks_to_scale){
-        console.log("set up y-tick-drag scaling...");
-    }
-    if (this.layout.interaction.scroll_to_zoom){
-        console.log("set up zooming...");
-    }
 
 };
 
@@ -654,6 +656,57 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.data_layers[id].initialize();
     }.bind(this));
 
+    // Set up interaction
+    var toggleDragging = function(target){
+        target = target || false;
+        if (!target){
+            if (this.interactions.dragging.dragged_x != this.interactions.dragging.start_x){
+                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+            }
+            this.interactions.dragging = false;
+        } else {
+            var coords = d3.mouse(this.svg.container.node());
+            this.interactions.dragging = {
+                target: target,
+                start_x: coords[0],
+                start_y: coords[1],
+                dragged_x: 0,
+                dragged_y: 0
+            };
+        }
+        broadcastInteraction();
+    }.bind(this);
+    var broadcastInteraction = function(){
+        if (!this.layout.interaction.linked){ return; }
+        this.parent.panel_ids_by_y_index.forEach(function(panel_id){
+            if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction.linked){ return; }
+            this.parent.panels[panel_id].interactions = this.interactions;
+            this.parent.panels[panel_id].render();
+        }.bind(this));
+    }.bind(this);
+    if (this.layout.interaction.drag_background_to_pan){
+        this.svg.container.select(".lz-panel-background")
+            .on("mousedown.drag", function(d){ toggleDragging("background"); })
+            .on("mouseup", function(d){ toggleDragging(false); });
+    }
+    if (this.layout.interaction.drag_x_ticks_to_scale){
+        //console.log("set up x-tick-drag scaling...");
+    }
+    if (this.layout.interaction.drag_y_ticks_to_scale){
+        //console.log("set up y-tick-drag scaling...");
+    }
+    if (this.layout.interaction.scroll_to_zoom){
+        //console.log("set up zooming...");
+    }
+    this.svg.container.on("mousemove", function(){
+        if (!this.interactions.dragging){ return; }
+        var coords = d3.mouse(this.svg.container.node());
+        this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
+        this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
+        this.render();
+        broadcastInteraction();
+    }.bind(this));
+
     return this;
     
 };
@@ -785,10 +838,7 @@ LocusZoom.Panel.prototype.generateExtents = function(){
         this.x_extent = [ this.state.start, this.state.end ];
     }
 
-    // Here is also where extents could be overridden by state, e.g. for custom extents via tick dragging
-
 };
-
 
 // Render a given panel
 LocusZoom.Panel.prototype.render = function(){
@@ -811,16 +861,30 @@ LocusZoom.Panel.prototype.render = function(){
     // Regenerate all extents
     this.generateExtents();
 
-    // Generate ticks and scales using generated extents
+    // Generate ranges, scales, and ticks using generated extents
     if (this.x_extent){
+        // Range
+        this.x_range = [0, this.layout.cliparea.width];
+        if (this.interactions.dragging){
+            this.x_range[0] += this.interactions.dragging.dragged_x;
+            this.x_range[1] += this.interactions.dragging.dragged_x;
+        }
+        // Scale
+        this.x_scale = d3.scale.linear()
+            .domain([this.x_extent[0], this.x_extent[1]])
+            .range(this.x_range);
+        // Axis extents and scales
+        this.x_extent_shifted = [ Math.round(this.x_scale.invert(0)),
+                                  Math.round(this.x_scale.invert(this.layout.cliparea.width)) ];
+        this.x_scale_shifted = d3.scale.linear()
+            .domain([this.x_extent_shifted[0], this.x_extent_shifted[1]])
+            .range([0, this.layout.cliparea.width]);
+        // Ticks
         if (this.layout.axes.x.ticks){
             this.x_ticks = this.layout.axes.x.ticks;
         } else {
-            this.x_ticks = LocusZoom.prettyTicks(this.x_extent, "both", this.layout.cliparea.width/120);
+            this.x_ticks = LocusZoom.prettyTicks(this.x_extent_shifted, "both", this.layout.cliparea.width/120);
         }
-        this.x_scale = d3.scale.linear()
-            .domain([this.x_extent[0], this.x_extent[1]])
-            .range([0, this.layout.cliparea.width]);
     }
     if (this.y1_extent){
         if (this.layout.axes.y1.ticks){
@@ -915,8 +979,10 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     })(this[axis+"_ticks"]);
 
     // Initialize the axis; set scale and orientation
+    var scale = this[axis+"_scale"];
+    if (axis == "x"){ scale = this.x_scale_shifted; }
     this[axis+"_axis"] = d3.svg.axis()
-        .scale(this[axis+"_scale"]).orient(axis_params[axis].orientation);
+        .scale(scale).orient(axis_params[axis].orientation);
 
     // Set tick values and format
     if (ticksAreAllNumbers){

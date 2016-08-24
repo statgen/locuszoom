@@ -354,7 +354,8 @@ LocusZoom.StandardLayout = {
                 drag_background_to_pan: true,
                 drag_x_ticks_to_scale: true,
                 drag_y_ticks_to_scale: true,
-                scroll_to_zoom: true
+                scroll_to_zoom: true,
+                linked: true
             },
             data_layers: [
                 {
@@ -476,7 +477,8 @@ LocusZoom.StandardLayout = {
             axes: {},
             interaction: {
                 drag_background_to_pan: true,
-                scroll_to_zoom: true
+                scroll_to_zoom: true,
+                linked: true
             },
             data_layers: [
                 {
