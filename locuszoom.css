@@ -6,7 +6,8 @@ svg.lz-locuszoom {
   font-size: 10px; }
   svg.lz-locuszoom rect.lz-clickarea {
     fill: black;
-    fill-opacity: 0; }
+    fill-opacity: 0;
+    cursor: pointer; }
   svg.lz-locuszoom .lz-mouse_guide rect {
     fill: #d2d2d2;
     fill-opacity: 0.85; }

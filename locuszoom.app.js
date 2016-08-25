@@ -354,7 +354,7 @@ LocusZoom.StandardLayout = {
     panels: [
         {
             id: "positions",
-            title: "Analysis ID: 3",
+            title: "LocusZoom",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
@@ -4101,7 +4101,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         this.remap_promises.push(this.panels[id].reMap());
     }
 
-    Q.all(this.remap_promises)
+    return Q.all(this.remap_promises)
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
@@ -4134,8 +4134,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.emit("layout_changed");
             this.emit("data_rendered");
         }.bind(this));
-
-    return this;
     
 };
 
@@ -4823,7 +4821,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
         this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
         this.render();
-    }.bind(this)
+    }.bind(this);
     this.parent.svg.on("mousemove" + namespace, mousemove);
     this.parent.svg.on("touchmove" + namespace, mousemove);
 
@@ -4988,19 +4986,21 @@ LocusZoom.Panel.prototype.render = function(broadcast){
     // Generate ranges, scales, and ticks using generated extents
     if (this.x_extent){
         // Range
-        if (typeof this.x_scale == "function"){
+        if (this.interactions.zooming && typeof this.x_scale == "function"){
             this.x_range = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        } else {
+            this.x_range = [0, this.layout.cliparea.width];
         }
         if (this.interactions.dragging){
             switch (this.interactions.dragging.method){
             case "background":
-                this.x_range[0] += this.interactions.dragging.dragged_x;
-                this.x_range[1] += this.interactions.dragging.dragged_x;
+                this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
+                this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
                 break;
             case "x_tick":
                 // TODO: implement axis scaling logic here
-                this.x_range[0] += this.interactions.dragging.dragged_x;
-                this.x_range[1] += this.interactions.dragging.dragged_x;
+                this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
+                this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
                 break;
             }
         }
@@ -5064,11 +5064,21 @@ LocusZoom.Panel.prototype.render = function(broadcast){
     // Apply zoom interaction if necessary
     if (this.layout.interaction.scroll_to_zoom){
         this.svg.container.call(d3.behavior.zoom().x(this.x_scale).on("zoom", function(d){
+            if (this.interactions.dragging){ return; }
+            this.interactions.zooming = true;
             this.render();
+            if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
             this.zoom_timeout = setTimeout(function(){
                 this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
-            }.bind(this), 1000);
-        }.bind(this)));
+            }.bind(this), 500);
+        }.bind(this))
+        .on("zoomend", function(d){
+            this.interactions.zooming = false;
+        }.bind(this)))
+        .on("mousedown.zoom", null)
+        .on("touchstart.zoom", null)
+        .on("touchmove.zoom", null)
+        .on("touchend.zoom", null);
     }
 
     // Render data layers in order by z-index
