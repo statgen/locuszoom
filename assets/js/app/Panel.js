@@ -1043,9 +1043,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     })(this[axis+"_ticks"]);
 
     // Initialize the axis; set scale and orientation
-    var scale = this[axis+"_scale_shifted"];
-    this[axis+"_axis"] = d3.svg.axis()
-        .scale(scale).orient(axis_params[axis].orientation);
+    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale_shifted"]).orient(axis_params[axis].orientation);
 
     // Set tick values and format
     if (ticksAreAllNumbers){
