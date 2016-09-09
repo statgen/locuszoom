@@ -4824,9 +4824,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         d3.event.preventDefault();
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
-        if (coords[1] >= 0){ // Why do we have to do this???
-            this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
-        }
+        this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
         this.render();
     }.bind(this);
     this.parent.svg
@@ -5060,7 +5058,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         switch (axis){
         case "x":
             this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(0)),
-                                                Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
+                                               Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
             this[axis + "_scale_shifted"] = d3.scale.linear()
                 .domain(this[axis + "_extent_shifted"])
                 .range([0, this.layout.cliparea.width]);
@@ -5068,7 +5066,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         case "y1":
         case "y2":
             this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(this.layout.cliparea.height)),
-                                                Math.round(this[axis + "_scale"].invert(0)) ];
+                                               Math.round(this[axis + "_scale"].invert(0)) ];
             this[axis + "_scale_shifted"] = d3.scale.linear()
                 .domain(this[axis + "_extent_shifted"])
                 .range([this.layout.cliparea.height, 0]);

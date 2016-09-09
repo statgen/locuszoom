@@ -683,9 +683,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         d3.event.preventDefault();
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
-        if (coords[1] >= 0){ // Why do we have to do this???
-            this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
-        }
+        this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
         this.render();
     }.bind(this);
     this.parent.svg
