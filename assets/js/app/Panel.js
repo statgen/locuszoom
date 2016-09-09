@@ -203,8 +203,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Set ranges
     this.x_range = [0, this.layout.cliparea.width];
-    this.y1_range = [0, this.layout.cliparea.height];
-    this.y2_range = [0, this.layout.cliparea.height];
+    this.y1_range = [this.layout.cliparea.height, 0];
+    this.y2_range = [this.layout.cliparea.height, 0];
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
@@ -919,7 +919,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         switch (axis){
         case "x":
             this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(0)),
-                                                Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
+                                               Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
             this[axis + "_scale_shifted"] = d3.scale.linear()
                 .domain(this[axis + "_extent_shifted"])
                 .range([0, this.layout.cliparea.width]);
@@ -927,7 +927,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         case "y1":
         case "y2":
             this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(this.layout.cliparea.height)),
-                                                Math.round(this[axis + "_scale"].invert(0)) ];
+                                               Math.round(this[axis + "_scale"].invert(0)) ];
             this[axis + "_scale_shifted"] = d3.scale.linear()
                 .domain(this[axis + "_extent_shifted"])
                 .range([this.layout.cliparea.height, 0]);

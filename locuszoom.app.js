@@ -4344,8 +4344,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Set ranges
     this.x_range = [0, this.layout.cliparea.width];
-    this.y1_range = [0, this.layout.cliparea.height];
-    this.y2_range = [0, this.layout.cliparea.height];
+    this.y1_range = [this.layout.cliparea.height, 0];
+    this.y2_range = [this.layout.cliparea.height, 0];
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
