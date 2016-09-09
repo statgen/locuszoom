@@ -88,6 +88,13 @@ svg.#{$namespace}-locuszoom {
     font-weight: 600;
   }
 
+  .tick text:focus {
+    outline-style: dotted;
+    outline-width: 1px;
+    outline-color: rgb(66,66,66);
+    outline-offset: 2px;
+  }
+
   path.#{$namespace}-data_layer-scatter {
     stroke: #{$default_black_shadow};
     stroke-width: 1;

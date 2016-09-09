@@ -353,9 +353,10 @@ LocusZoom.StandardLayout = {
             interaction: {
                 drag_background_to_pan: true,
                 drag_x_ticks_to_scale: true,
-                drag_y_ticks_to_scale: true,
+                drag_y1_ticks_to_scale: true,
+                drag_y2_ticks_to_scale: true,
                 scroll_to_zoom: true,
-                linked: true
+                x_linked: true
             },
             data_layers: [
                 {
@@ -441,7 +442,7 @@ LocusZoom.StandardLayout = {
                         axis: 1,
                         field: "log_pvalue",
                         floor: 0,
-                        upper_buffer: 0.05,
+                        upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
                     },
                     highlighted: {
@@ -478,7 +479,7 @@ LocusZoom.StandardLayout = {
             interaction: {
                 drag_background_to_pan: true,
                 scroll_to_zoom: true,
-                linked: true
+                x_linked: true
             },
             data_layers: [
                 {

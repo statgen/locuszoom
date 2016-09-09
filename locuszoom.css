@@ -57,6 +57,11 @@ svg.lz-locuszoom {
   svg.lz-locuszoom .lz-axis .lz-label {
     font-size: 12px;
     font-weight: 600; }
+  svg.lz-locuszoom .tick text:focus {
+    outline-style: dotted;
+    outline-width: 1px;
+    outline-color: #424242;
+    outline-offset: 2px; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
     stroke: rgba(24, 24, 24, 0.4);
     stroke-width: 1;
