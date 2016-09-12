@@ -576,6 +576,10 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
+    // Ensure any axes defined in the layout have an explicit axis number (default: 1)
+    if (this.layout.x_axis != {} && typeof this.layout.x_axis.axis != "number"){ this.layout.x_axis.axis = 1; }
+    if (this.layout.y_axis != {} && typeof this.layout.y_axis.axis != "number"){ this.layout.y_axis.axis = 1; }
+
     // Define state parameters specific to this data layer
     if (this.parent){
         this.state = this.parent.state;
@@ -4807,8 +4811,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.data_layers[id].initialize();
     }.bind(this));
 
-    // Set up background drag interaction
-    var namespace = "." + this.parent.id + "-" + this.id + ".interaction_drag";
+    // Establish panel background drag interaction mousedown event handler (on the panel background)
+    var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
     if (this.layout.interaction.drag_background_to_pan){
         var panel = this;
         var mousedown = function(){ panel.toggleDragging("background"); };
@@ -4817,21 +4821,24 @@ LocusZoom.Panel.prototype.initialize = function(){
             .on("touchstart" + namespace + ".background", mousedown);
     }
 
-    // Mouse up and move handlers for all drag events for the plot
-    var mouseup = function(){ this.toggleDragging(); }.bind(this);
-    var mousemove = function(){
-        if (!this.interactions.dragging){ return; }
-        d3.event.preventDefault();
-        var coords = d3.mouse(this.svg.container.node());
-        this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
-        this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
-        this.render();
-    }.bind(this);
-    this.parent.svg
-        .on("mouseup" + namespace + ".background", mouseup)
-        .on("touchend" + namespace + ".background", mouseup)
-        .on("mousemove" + namespace, mousemove)
-        .on("touchmove" + namespace, mousemove);
+    // Establish panel mouse up and move handlers for any/all drag events for the plot (on the parent plot)
+    if (this.layout.interaction.drag_background_to_pan || this.layout.interaction.drag_x_ticks_to_scale
+        || this.layout.interaction.drag_y1_ticks_to_scale || this.layout.interaction.drag_y2_ticks_to_scale){
+        var mouseup = function(){ this.toggleDragging(); }.bind(this);
+        var mousemove = function(){
+            if (!this.interactions.dragging){ return; }
+            if (d3.event){ d3.event.preventDefault(); }
+            var coords = d3.mouse(this.svg.container.node());
+            this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
+            this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
+            this.render();
+        }.bind(this);
+        this.parent.svg
+            .on("mouseup" + namespace, mouseup)
+            .on("touchend" + namespace, mouseup)
+            .on("mousemove" + namespace, mousemove)
+            .on("touchmove" + namespace, mousemove);
+    }
 
     return this;
     
@@ -5097,24 +5104,22 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         this.renderAxis("y2");
     }
 
-    // Apply zoom interaction if necessary
+    // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.svg.container.call(d3.behavior.zoom().x(this.x_scale).on("zoom", function(){
-            if (this.interactions.dragging){ return; }
-            this.interactions.zooming = true;
-            this.render();
-            if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
-            this.zoom_timeout = setTimeout(function(){
-                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
-            }.bind(this), 500);
-        }.bind(this))
-        .on("zoomend", function(){
-            this.interactions.zooming = false;
-        }.bind(this)))
-        .on("mousedown.zoom", null)
-        .on("touchstart.zoom", null)
-        .on("touchmove.zoom", null)
-        .on("touchend.zoom", null);
+        this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
+            .on("zoom", function(){
+                if (this.interactions.dragging){ return; }
+                this.interactions.zooming = true;
+                this.render();
+                if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
+                this.zoom_timeout = setTimeout(function(){
+                    this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+                }.bind(this), 500);
+            }.bind(this))
+            .on("zoomend", function(){
+                this.interactions.zooming = false;
+            }.bind(this));
+        this.svg.container.call(this.zoom_listener);
     }
 
     // Render data layers in order by z-index
@@ -5238,7 +5243,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     // Attach interactive handlers to ticks as needed
     ["x", "y1", "y2"].forEach(function(axis){
         var panel = this;
-        var namespace = "." + this.parent.id + "-" + this.id + ".interaction_drag";
+        var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
         if (this.layout.interaction["drag_" + axis + "_ticks_to_scale"]){
             var tick_mouseover = function(){
                 d3.select(this).node().focus();
@@ -5316,6 +5321,7 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         if (method == "y2_tick"){ this.interactions.dragging.on_y2 = true; }
         this.svg.container.style("cursor", "all-scroll");
     }
+    return this;
 };
 
 
