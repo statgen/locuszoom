@@ -132,6 +132,12 @@
                   label_offset: 28
               }
           },
+          interaction: {
+            drag_background_to_pan: true,
+            drag_x_ticks_to_scale: true,
+            drag_y_ticks_to_scale: true,
+            scroll_to_zoom: true
+          },
           data_layers: [
               {
                   id: "significance",
@@ -224,10 +230,14 @@
           ]
       };
       var panel = plot.addPanel(layout);
-      panel.curtain.show("loading...", { "text-align": "center" });
+      panel.curtain.show("Loading Study...", { "text-align": "center" });
+      panel.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+      });
       panel.on("data_rendered", function(){
         this.curtain.hide();
-      }.bind(panel));
+        this.loader.hide();
+      });
     }
 
     var plot;
@@ -244,6 +254,20 @@
       plot = LocusZoom.populate("#plot", data_sources, base_layout);
       plot.on("element_clicked", function(){
         console.log("element clicked: ", this);
+      });
+      plot.panels.genes.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+      });
+      plot.panels.genes.on("data_rendered", function(){
+        this.curtain.hide();
+        this.loader.hide();
+      });
+      plot.panels.positions.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+      });
+      plot.panels.positions.on("data_rendered", function(){
+        this.curtain.hide();
+        this.loader.hide();
       });
       applyOnLayoutChanged();
     }

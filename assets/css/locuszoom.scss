@@ -7,13 +7,14 @@ svg.#{$namespace}-locuszoom {
 
   background-color: #FFFFFF;
   border: none;
-  cursor: move;
+  cursor: crosshair;
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 10px;
 
   rect.#{$namespace}-clickarea {
     fill: rgb(0,0,0);
     fill-opacity: 0;
+    cursor: pointer;
   }
 
   .#{$namespace}-mouse_guide {
@@ -72,7 +73,7 @@ svg.#{$namespace}-locuszoom {
   }
 
   .#{$namespace}-panel-background {
-    fill: rgba(255,255,255,0);
+    fill: rgba(255,255,255,0.01);
   }
 
   .#{$namespace}-axis path,
@@ -85,6 +86,13 @@ svg.#{$namespace}-locuszoom {
   .#{$namespace}-axis .#{$namespace}-label {
     font-size: 12px;
     font-weight: 600;
+  }
+
+  .tick text:focus {
+    outline-style: dotted;
+    outline-width: 1px;
+    outline-color: rgb(66,66,66);
+    outline-offset: 2px;
   }
 
   path.#{$namespace}-data_layer-scatter {
