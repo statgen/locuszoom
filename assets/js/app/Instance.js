@@ -958,7 +958,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         this.remap_promises.push(this.panels[id].reMap());
     }
 
-    Q.all(this.remap_promises)
+    return Q.all(this.remap_promises)
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
@@ -991,8 +991,6 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             this.emit("layout_changed");
             this.emit("data_rendered");
         }.bind(this));
-
-    return this;
     
 };
 

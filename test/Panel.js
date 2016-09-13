@@ -18,11 +18,11 @@ describe('LocusZoom.Panel', function(){
                fs.readFileSync('./assets/js/vendor/d3.min.js'),
                fs.readFileSync('./assets/js/vendor/q.min.js'),
                fs.readFileSync('./assets/js/app/LocusZoom.js'),
-               fs.readFileSync('./assets/js/app/Data.js'),
                fs.readFileSync('./assets/js/app/Instance.js'),
                fs.readFileSync('./assets/js/app/Panel.js'),
                fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js')
+               fs.readFileSync('./assets/js/app/Singletons.js'),
+               fs.readFileSync('./assets/js/app/Data.js')
              ]
     });
 
@@ -197,22 +197,22 @@ describe('LocusZoom.Panel', function(){
             this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
         });
         it("should show/hide/update on command and track shown status", function(){
-            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.showing.should.be.false;
             this.panel.curtain.should.have.property("selector").which.is.exactly(null);
             this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
             this.panel.curtain.show("test content");
-            this.panel.curtain.showing.should.be.true();
-            this.panel.curtain.selector.empty().should.be.false();
-            this.panel.curtain.content_selector.empty().should.be.false();
+            this.panel.curtain.showing.should.be.true;
+            this.panel.curtain.selector.empty().should.be.false;
+            this.panel.curtain.content_selector.empty().should.be.false;
             this.panel.curtain.content_selector.html().should.be.exactly("test content");
             this.panel.curtain.hide();
-            this.panel.curtain.showing.should.be.false();
+            this.panel.curtain.showing.should.be.false;
             this.panel.curtain.should.have.property("selector").which.is.exactly(null);
             this.panel.curtain.should.have.property("content_selector").which.is.exactly(null);
         });
         it("should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors", function(){
             this.panel.should.have.property("loader").which.is.an.Object;
-            this.panel.loader.should.have.property("showing").which.is.exactly(false);
+            this.panel.loader.should.have.property("showing").which.is.false;
             this.panel.loader.should.have.property("show").which.is.a.Function;
             this.panel.loader.should.have.property("update").which.is.a.Function;
             this.panel.loader.should.have.property("animate").which.is.a.Function;
@@ -223,28 +223,28 @@ describe('LocusZoom.Panel', function(){
             this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
         });
         it("should show/hide/update on command and track shown status", function(){
-            this.panel.loader.showing.should.be.false();
+            this.panel.loader.showing.should.be.false;
             this.panel.loader.should.have.property("selector").which.is.exactly(null);
             this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
             this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
             this.panel.loader.show("test content");
-            this.panel.loader.showing.should.be.true();
-            this.panel.loader.selector.empty().should.be.false();
-            this.panel.loader.content_selector.empty().should.be.false();
+            this.panel.loader.showing.should.be.true;
+            this.panel.loader.selector.empty().should.be.false;
+            this.panel.loader.content_selector.empty().should.be.false;
             this.panel.loader.content_selector.html().should.be.exactly("test content");
-            this.panel.loader.progress_selector.empty().should.be.false();
+            this.panel.loader.progress_selector.empty().should.be.false;
             this.panel.loader.hide();
-            this.panel.loader.showing.should.be.false();
+            this.panel.loader.showing.should.be.false;
             this.panel.loader.should.have.property("selector").which.is.exactly(null);
             this.panel.loader.should.have.property("content_selector").which.is.exactly(null);
             this.panel.loader.should.have.property("progress_selector").which.is.exactly(null);
         });
         it("should allow for animating or showing discrete percentages of completion", function(){
             this.panel.loader.show("test content").animate();
-            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.true();
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.true;
             this.panel.loader.setPercentCompleted(15);
             this.panel.loader.content_selector.html().should.be.exactly("test content");
-            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.false();
+            this.panel.loader.progress_selector.classed("lz-loader-progress-animated").should.be.false;
             this.panel.loader.progress_selector.style("width").should.be.exactly("15%");
             this.panel.loader.update("still loading...", 62);
             this.panel.loader.content_selector.html().should.be.exactly("still loading...");
@@ -255,6 +255,278 @@ describe('LocusZoom.Panel', function(){
             this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
             this.panel.loader.setPercentCompleted("foo");
             this.panel.loader.progress_selector.style("width").should.be.exactly("1%");
+        });
+    });
+
+    describe("Panel Interactions", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.datasources = new LocusZoom.DataSources()
+                .add("static", ["StaticJSON", [{ id: "a", x: 1, y: 2 }, { id: "b", x: 3, y: 4 }, { id: "c", x: 5, y: 6 }] ]);
+            this.layout = {
+                width: 100,
+                height: 100,
+                panels: [
+                    {
+                        id: "p",
+                        width: 100,
+                        height: 100,
+                        axes: {
+                            x: { label: "x" },
+                            y1: { label: "y1" }
+                        },
+                        interaction: {},
+                        data_layers: [
+                            {
+                                id: "d",
+                                type: "scatter",
+                                fields: ["static:id", "static:x", "static:y"],
+                                id_field: "static:id",
+                                z_index: 0,
+                                x_axis: {
+                                    field: "static:x"
+                                },
+                                y_axis: {
+                                    axis: 1,
+                                    field: "static:y"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            // Stash the original d3.mouse function as some of the tests in this suite will override it to simulate clicks
+            this.d3_mouse_orig = d3.mouse;
+            d3.select("body").append("div").attr("id", "plot");
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            d3.mouse = this.d3_mouse_orig;
+            delete this.plot;
+            delete this.datasources;
+            delete this.layout;
+        });
+        it("should not establish any interaction mouse event handlers when no interaction layout directives are defined", function(){
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            should.not.exist(this.plot.panels.p.svg.container.select(".lz-panel-background")["__onmousedown.plot.p.interaction.drag.background"]);
+            should.not.exist(this.plot.svg.node()["__onmouseup.plot.p.interaction.drag.background"]);
+            should.not.exist(this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]);
+            should.not.exist(this.plot.panels.p.svg.container.node()["__onwheel.zoom"]);
+        });
+        it("should establish background drag interaction handlers when the layout directive is present", function(done){
+            this.layout.panels[0].interaction.drag_background_to_pan = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(typeof this.plot.panels.p.svg.container.select(".lz-panel-background").node()["__onmousedown.plot.p.interaction.drag.background"], "function");
+                assert.equal(typeof this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"], "function");
+                assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
+                done();
+            }.bind(this));
+        });
+        it("should establish x tick drag interaction handlers when the layout directives are present", function(done){
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(typeof this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"], "function");
+                assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
+                assert.equal(typeof this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"], "function");
+                done();
+            }.bind(this));
+        });
+        it("should establish y1 tick drag interaction handlers when the layout directives are present", function(done){
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(typeof this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"], "function");
+                assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
+                assert.equal(typeof this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"], "function");
+                done();
+            }.bind(this));
+        });
+        it("should establish a zoom interaction handler on the panel when the layout directive is present", function(done){
+            this.layout.panels[0].interaction.scroll_to_zoom = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(typeof this.plot.panels.p.svg.container.node()["__onmousedown.zoom"], "function");
+                done();
+            }.bind(this));
+        });
+        it ("should pan along the x axis when dragging the background", function(done){
+            this.layout.panels[0].interaction.drag_background_to_pan = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                // Simulate click (mousedown) at [ 50, 50 ]
+                d3.mouse = function(){ return [ 50, 50 ]; };
+                this.plot.panels.p.svg.container.select(".lz-panel-background").node()["__onmousedown.plot.p.interaction.drag.background"]();
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                // Simulate drag (mousemove) to [ 25, 50 ] (x -25)
+                d3.mouse = function(){ return [ 25, 50 ]; };
+                this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
+                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [2,6]);
+                // Simulate mouseup at new location
+                this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.should.be.false;
+                this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(2);
+                this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(6);
+                done();
+            }.bind(this));
+        });
+        it ("should scale along the x axis when dragging an x tick", function(done){
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
+                d3.mouse = function(){ return [ 50, 0 ]; };
+                this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("x_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
+                d3.mouse = function(){ return [ 25, 0 ]; };
+                this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("x_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
+                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [1,9]);
+                // Simulate mouseup at new location
+                this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.should.be.false;
+                this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(1);
+                this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(9);
+                done();
+            }.bind(this));
+        });
+        it ("should pan along the x axis when shift+dragging an x tick", function(done){
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                var event = { shiftKey: true, preventDefault: function(){ return null; } };
+                // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
+                d3.mouse = function(){ return [ 50, 0 ]; };
+                this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("x_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
+                d3.mouse = function(){ return [ 25, 0 ]; };
+                this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("x_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
+                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [2,6]);
+                // Simulate mouseup at new location
+                this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.dragging.should.be.false;
+                this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(2);
+                this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(6);
+                done();
+            }.bind(this));
+        });
+        it ("should scale along the y1 axis when dragging a y1 tick", function(done){
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
+                d3.mouse = function(){ return [ 0, 25 ]; };
+                this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("y1_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
+                d3.mouse = function(){ return [ 0, 75 ]; };
+                this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("y1_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(50);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2,6]);
+                assert.deepEqual(this.plot.panels.p.y1_extent_shifted, [2,14]);
+                // Simulate mouseup at new location
+                this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
+                this.plot.panels.p.interactions.dragging.should.be.false;
+                this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(2);
+                this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(14);
+                done();
+            }.bind(this));
+        });
+        it ("should pan along the y axis when shift+dragging a y tick", function(done){
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                var event = { shiftKey: true, preventDefault: function(){ return null; } };
+                // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
+                d3.mouse = function(){ return [ 0, 25 ]; };
+                this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.should.be.an.Object;
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("y1_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
+                // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
+                d3.mouse = function(){ return [ 0, 75 ]; };
+                this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.dragging.method.should.be.exactly("y1_tick");
+                this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
+                this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
+                this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(50);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2,6]);
+                assert.deepEqual(this.plot.panels.p.y1_extent_shifted, [4,8]);
+                // Simulate mouseup at new location
+                this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"](event);
+                this.plot.panels.p.interactions.dragging.should.be.false;
+                this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(4);
+                this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(8);
+                done();
+            }.bind(this));
+        });
+        it ("should zoom along x axis when scrolling", function(done){
+            this.layout.panels[0].interaction.scroll_to_zoom = true;
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                // NOTE: d3 xoom behaviors are much more complicated than drag behaviors and as such are very
+                // difficult to simulate programmatically in a node environment. This test therefore only checks
+                // that the interaction object correctly tracks zoom start and end.
+                this.plot.panels.p.zoom_listener.on("zoom")();
+                this.plot.panels.p.interactions.should.be.an.Object;
+                this.plot.panels.p.interactions.zooming.should.be.true;
+                this.plot.panels.p.zoom_listener.on("zoomend")();
+                this.plot.panels.p.interactions.zooming.should.be.false;
+                done();
+            }.bind(this));
         });
     });
 

@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.1"
+    version: "0.4.2"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -322,7 +322,7 @@ LocusZoom.StandardLayout = {
     panels: [
         {
             id: "positions",
-            title: "Analysis ID: 3",
+            title: "LocusZoom",
             description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
             width: 800,
             height: 225,
@@ -349,6 +349,14 @@ LocusZoom.StandardLayout = {
                     label: "Recombination Rate (cM/Mb)",
                     label_offset: 40
                 }
+            },
+            interaction: {
+                drag_background_to_pan: true,
+                drag_x_ticks_to_scale: true,
+                drag_y1_ticks_to_scale: true,
+                drag_y2_ticks_to_scale: true,
+                scroll_to_zoom: true,
+                x_linked: true
             },
             data_layers: [
                 {
@@ -434,7 +442,7 @@ LocusZoom.StandardLayout = {
                         axis: 1,
                         field: "log_pvalue",
                         floor: 0,
-                        upper_buffer: 0.05,
+                        upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
                     },
                     highlighted: {
@@ -468,6 +476,11 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             axes: {},
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true,
+                x_linked: true
+            },
             data_layers: [
                 {
                     id: "genes",
