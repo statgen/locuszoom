@@ -25,6 +25,10 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
+    // Ensure any axes defined in the layout have an explicit axis number (default: 1)
+    if (this.layout.x_axis != {} && typeof this.layout.x_axis.axis != "number"){ this.layout.x_axis.axis = 1; }
+    if (this.layout.y_axis != {} && typeof this.layout.y_axis.axis != "number"){ this.layout.y_axis.axis = 1; }
+
     // Define state parameters specific to this data layer
     if (this.parent){
         this.state = this.parent.state;
@@ -195,7 +199,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
         // Generate a new base extent
         extent = d3.extent(extent);
-        
+
         // Apply floor/ceiling, if applicable
         if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
         if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }

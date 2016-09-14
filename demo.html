@@ -52,7 +52,7 @@
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length)
               + "staticdata/";
       data_sources = new LocusZoom.DataSources()
-        .add("base", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?"}])
+        .add("base", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
@@ -145,7 +145,7 @@
       }
       plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
       populateForms();
-      return(false);
+      return false;
     }
 
     // Fill demo forms with values already loaded into LocusZoom objects
@@ -157,7 +157,7 @@
 
     function listHits() {
       $("#tophits").empty().append("<ul>").children(0).append(topHits.map(function(e) {
-        return "<li><a href='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
+        return "<li><a href='javascript:void(0);' onclick='javascript:jumpTo(\"" + e[0] + "\");'>" + e[1] + " </a></li>";
       }))
     }
 

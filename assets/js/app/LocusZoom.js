@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.1"
+    version: "0.4.2"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -337,8 +337,7 @@ LocusZoom.StandardLayout = {
     panels: [
         {
             id: "positions",
-            title: "Analysis ID: 3",
-            description: "Example panel description",
+            title: "LocusZoom",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
@@ -349,7 +348,7 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
-            controls: { description: true, model: true, reposition: true },
+            controls: { model: true, reposition: true },
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -365,6 +364,14 @@ LocusZoom.StandardLayout = {
                     label: "Recombination Rate (cM/Mb)",
                     label_offset: 40
                 }
+            },
+            interaction: {
+                drag_background_to_pan: true,
+                drag_x_ticks_to_scale: true,
+                drag_y1_ticks_to_scale: true,
+                drag_y2_ticks_to_scale: true,
+                scroll_to_zoom: true,
+                x_linked: true
             },
             data_layers: [
                 {
@@ -450,7 +457,7 @@ LocusZoom.StandardLayout = {
                         axis: 1,
                         field: "log_pvalue",
                         floor: 0,
-                        upper_buffer: 0.05,
+                        upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
                     },
                     highlighted: {
@@ -486,6 +493,11 @@ LocusZoom.StandardLayout = {
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             controls:  { reposition: true },
             axes: {},
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true,
+                x_linked: true
+            },
             data_layers: [
                 {
                     id: "genes",
