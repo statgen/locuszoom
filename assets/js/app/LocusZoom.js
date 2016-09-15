@@ -337,7 +337,7 @@ LocusZoom.StandardLayout = {
     panels: [
         {
             id: "positions",
-            title: "LocusZoom",
+            title: "",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },

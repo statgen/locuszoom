@@ -437,15 +437,25 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   100% { width: 0%;   left: 100%; }
 }
 
-.#{$namespace}-locuszoom-controls {
+.#{$namespace}-menu_bar {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 4px;
   padding-bottom: 4px;
-  .#{$namespace}-controls-info {
+  .#{$namespace}-menu_bar-left {
+    float: left;
+    margin-right: 2em;
+  }
+  .#{$namespace}-menu_bar-right {
+    float: right;
     margin-left: 2em;
   }
-  .#{$namespace}-controls-button {
+  .#{$namespace}-menu_bar-title {
+    font-size: 150%;
+    font-weight: bold;
+    margin-bottom: 0.3em;
+  }
+  .#{$namespace}-menu_bar-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #D8D8D8;
@@ -456,12 +466,12 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     border-radius: 4px;
     pointer-events: auto;
   }
-  .#{$namespace}-controls-button:hover {
+  .#{$namespace}-menu_bar-button:hover {
     cursor: pointer;
     background-color: #333333;
     color: #D8D8D8;
   }
-  .#{$namespace}-controls-button-selected {
+  .#{$namespace}-menu_bar-button-selected {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     border: 1px solid #333333;
@@ -471,7 +481,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     background-color: #333333;
     color: #D8D8D8;
   }
-  .#{$namespace}-controls-button-disabled {
+  .#{$namespace}-menu_bar-button-disabled {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #D8D8D8;
@@ -480,7 +490,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     border-radius: 4px;
     pointer-events: none;
   }
-  .#{$namespace}-controls-button-disabled:hover {
+  .#{$namespace}-menu_bar-button-disabled:hover {
     cursor: wait;
     background-color: #D8D8D8;
   }

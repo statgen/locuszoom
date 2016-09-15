@@ -338,14 +338,22 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     width: 0%;
     left: 100%; } }
 
-.lz-locuszoom-controls {
+.lz-menu_bar {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 4px;
   padding-bottom: 4px; }
-  .lz-locuszoom-controls .lz-controls-info {
+  .lz-menu_bar .lz-menu_bar-left {
+    float: left;
+    margin-right: 2em; }
+  .lz-menu_bar .lz-menu_bar-right {
+    float: right;
     margin-left: 2em; }
-  .lz-locuszoom-controls .lz-controls-button {
+  .lz-menu_bar .lz-menu_bar-title {
+    font-size: 150%;
+    font-weight: bold;
+    margin-bottom: 0.3em; }
+  .lz-menu_bar .lz-menu_bar-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #D8D8D8;
@@ -355,11 +363,11 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     border: 1px solid #333333;
     border-radius: 4px;
     pointer-events: auto; }
-  .lz-locuszoom-controls .lz-controls-button:hover {
+  .lz-menu_bar .lz-menu_bar-button:hover {
     cursor: pointer;
     background-color: #333333;
     color: #D8D8D8; }
-  .lz-locuszoom-controls .lz-controls-button-selected {
+  .lz-menu_bar .lz-menu_bar-button-selected {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     border: 1px solid #333333;
@@ -368,7 +376,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     cursor: pointer;
     background-color: #333333;
     color: #D8D8D8; }
-  .lz-locuszoom-controls .lz-controls-button-disabled {
+  .lz-menu_bar .lz-menu_bar-button-disabled {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #D8D8D8;
@@ -376,7 +384,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     border: 1px solid #999999;
     border-radius: 4px;
     pointer-events: none; }
-  .lz-locuszoom-controls .lz-controls-button-disabled:hover {
+  .lz-menu_bar .lz-menu_bar-button-disabled:hover {
     cursor: wait;
     background-color: #D8D8D8; }
 

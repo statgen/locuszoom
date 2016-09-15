@@ -1444,3 +1444,175 @@ LocusZoom.DataLayers.add("genes", function(layout){
     return this;
 
 });
+
+
+/************************
+  Menu Bar Components
+
+  The abstract Data Layer class has general methods and properties that apply universally to all Data Layers
+  Specific data layer subclasses (e.g. a scatter plot, a line plot, gene visualization, etc.) must be defined
+  and registered with this singleton to be accessible.
+
+  All new Data Layer subclasses must be defined by accepting an id string and a layout object.
+  Singleton for storing available Data Layer classes as well as updating existing and/or registering new ones
+*/
+
+LocusZoom.MenuBarComponent = function(layout, parent) {
+    this.selector = null;
+    this.layout = layout || {};
+    if (!this.layout.position){ this.layout.position = "left"; }
+    this.parent = parent || null;
+    return this;
+};
+LocusZoom.MenuBarComponent.prototype.render = function(){ 
+    this.selector = this.parent.selector.append("div")
+        .attr("class", "lz-menu_bar-" + this.layout.position);
+    return this.update();
+}
+LocusZoom.MenuBarComponent.prototype.update = function(){ return this; }
+
+LocusZoom.MenuBarComponents = (function() {
+    var obj = {};
+    var components = {};
+
+    obj.get = function(name, layout, parent) {
+        if (!name) {
+            return null;
+        } else if (components[name]) {
+            if (typeof layout != "object"){
+                throw("invalid layout argument for menu bar component [" + name + "]");
+            } else {
+                return new components[name](layout, parent);
+            }
+        } else {
+            throw("menu bar component [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, component) {
+        if (component) {
+            if (typeof component != "function"){
+                throw("unable to set menu bar component [" + name + "], argument provided is not a function");
+            } else {
+                components[name] = component;
+                components[name].prototype = new LocusZoom.MenuBarComponent();
+            }
+        } else {
+            delete components[name];
+        }
+    };
+
+    obj.add = function(name, component) {
+        if (components[name]) {
+            throw("menu bar component already exists with name: " + name);
+        } else {
+            obj.set(name, component);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(components);
+    };
+
+    return obj;
+})();
+
+LocusZoom.MenuBarComponents.add("title", function(layout){
+    LocusZoom.MenuBarComponent.apply(this, arguments);
+    this.render = function(){
+        this.selector = this.parent.selector.append("div")
+            .attr("class", "lz-menu_bar-title lz-menu_bar-" + this.layout.position);
+        return this.update();
+    };
+    this.update = function(){
+        this.selector.text(layout.title);
+        return this;
+    };
+});
+
+LocusZoom.MenuBarComponents.add("dimensions", function(layout){
+    LocusZoom.MenuBarComponent.apply(this, arguments);
+    this.update = function(){
+        var display_width = this.parent.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.parent.layout.width : this.parent.parent.layout.width.toFixed(2);
+        var display_height = this.parent.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.parent.layout.height : this.parent.parent.layout.height.toFixed(2);
+        this.selector.text(display_width + "px × " + display_height + "px");
+        return this;
+    };
+});
+
+LocusZoom.MenuBarComponents.add("region_scale", function(layout){
+    LocusZoom.MenuBarComponent.apply(this, arguments);
+    this.update = function(){
+        if (!isNaN(this.parent.parent.state.start) && !isNaN(this.parent.parent.state.end)
+            && this.parent.parent.state.start != null && this.parent.parent.state.end != null){
+            this.selector.style("display", null);
+            this.selector.text(LocusZoom.positionIntToString(this.parent.parent.state.end - this.parent.parent.state.start, null, true));
+        } else {
+            this.selector.style("display", "none");
+        }
+        return this;
+    };
+});
+
+LocusZoom.MenuBarComponents.add("download_svg", function(layout){
+    LocusZoom.MenuBarComponent.apply(this, arguments);
+    this.render = function(){
+        this.selector = this.parent.selector.append("a")
+            .attr("class", "lz-menu_bar-button lz-menu_bar-" + this.layout.position)
+            .attr("href-lang", "image/svg+xml")
+            .attr("title", "Download SVG as locuszoom.svg")
+            .attr("download", "locuszoom.svg")
+            .text("Download SVG")
+            .on("mouseover", function() {
+                this.selector
+                    .classed("lz-menu_bar-button", false)
+                    .classed("lz-menu_bar-button-disabled", true)
+                    .text("Preparing SVG");
+                this.generateBase64SVG().then(function(base64_string){
+                    this.selector.attr("href", "data:image/svg+xml;base64,\n" + base64_string);
+                    this.selector
+                        .classed("lz-menu_bar-button-disabled", false)
+                        .classed("lz-menu_bar-button", true)
+                        .text("Download SVG");
+                }.bind(this));
+            }.bind(this));
+        return this.update();
+    };
+    this.css_string = "";
+    for (var stylesheet in Object.keys(document.styleSheets)){
+        if ( document.styleSheets[stylesheet].href != null
+             && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){
+            LocusZoom.createCORSPromise("GET", document.styleSheets[stylesheet].href)
+                .then(function(response){
+                    this.css_string = response;
+                }.bind(this));
+            break;
+        }
+    } 
+    this.generateBase64SVG = function(){
+        return Q.fcall(function () {
+            // Insert a hidden div, clone the node into that so we can modify it with d3
+            var container = this.parent.selector.append("div").style("display", "none")
+                .html(this.parent.parent.svg.node().outerHTML);
+            // Remove unnecessary elements
+            container.selectAll("g.lz-curtain").remove();
+            container.selectAll("g.lz-ui").remove();
+            container.selectAll("g.lz-mouse_guide").remove();
+            // Pull the svg into a string and add the contents of the locuszoom stylesheet
+            // Don't add this with d3 because it will escape the CDATA declaration incorrectly
+            var initial_html = d3.select(container.select("svg").node().parentNode).html();
+            var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
+            var insert_at = initial_html.indexOf(">") + 1;
+            initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
+            // Delete the container node
+            container.remove();
+            // Base64-encode the string and return it
+            return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+                return String.fromCharCode("0x" + p1);
+            }));
+        }.bind(this));
+    }
+    this.update = function(){
+        return this;
+    };
+});
