@@ -119,25 +119,7 @@ LocusZoom.Instance.DefaultLayout = {
     resizable: false,
     aspect_ratio: 1,
     panels: [],
-    menu_bar: [
-        {
-            type: "title",
-            title: "LocusZoom",
-            position: "left"
-        },
-        {
-            type: "dimensions",
-            position: "right"
-        },
-        {
-            type: "region_scale",
-            position: "right"
-        },
-        {
-            type: "download_svg",
-            position: "right"
-        }
-    ],
+    controls: [],
     panel_boundaries: true
 };
 
@@ -749,8 +731,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Create the menu bar object and hang components on it
-    this.menu_bar = {
+    // Create the controls object and hang components on it
+    this.controls = {
         parent: this,
         selector: null,
         components: [],
@@ -759,13 +741,13 @@ LocusZoom.Instance.prototype.initialize = function(){
             return this;
         }
     };
-    if (Array.isArray(this.layout.menu_bar)){
-        this.menu_bar.selector = d3.select(this.svg.node().parentNode).insert("div",":first-child")
-            .attr("class", "lz-menu_bar");
-        this.layout.menu_bar.forEach(function(layout){
-            var component = LocusZoom.MenuBarComponents.get(layout.type, layout, this.menu_bar);
-            component.render();
-            this.menu_bar.components.push(component);
+    if (Array.isArray(this.layout.controls)){
+        this.controls.selector = d3.select(this.svg.node().parentNode).insert("div",":first-child")
+            .attr("class", "lz-controls");
+        this.layout.controls.forEach(function(layout){
+            var component = LocusZoom.ControlsComponents.get(layout.type, layout, this.controls);
+            component.show();
+            this.controls.components.push(component);
         }.bind(this));
     }
 
@@ -794,7 +776,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         var coords = d3.mouse(this.svg.node());
         this.mouse_guide.vertical.attr("x", coords[0]);
         this.mouse_guide.horizontal.attr("y", coords[1]);
-        this.menu_bar.update();
+        this.controls.update();
     }.bind(this));
 
     this.initialized = true;
@@ -907,8 +889,8 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         }.bind(this))
         .done(function(){
 
-            // Update menu bar and its components
-            this.menu_bar.update();
+            // Update controls / components
+            this.controls.update();
                 
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
