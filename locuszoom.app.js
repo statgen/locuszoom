@@ -4208,21 +4208,13 @@ LocusZoom.Panel = function(layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
-    this.x_range  = null;
-    this.y1_range = null;
-    this.y2_range = null;
+    this.x_scale  = null;
+    this.y1_scale = null;
+    this.y2_scale = null;
 
     this.x_extent  = null;
     this.y1_extent = null;
     this.y2_extent = null;
-
-    this.x_extent_shifted = null;
-    this.y1_extent_shifted = null;
-    this.y2_extent_shifted = null;
-
-    this.x_scale_shifted = null;
-    this.y1_scale_shifted = null;
-    this.y2_scale_shifted = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -5013,77 +5005,75 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         return value;
     };
 
-    // Define default ranges for all axes
-    if (this.x_extent){ this.x_range = [0, this.layout.cliparea.width]; }
-    if (this.y1_extent){ this.y1_range = [this.layout.cliparea.height, 0]; }
-    if (this.y2_extent){ this.y2_range = [this.layout.cliparea.height, 0]; }
+    // Define default and shifted ranges for all axes
+    var ranges = {};
+    if (this.x_extent){
+        ranges.x = [0, this.layout.cliparea.width];
+        ranges.x_shifted = [0, this.layout.cliparea.width];
+    }
+    if (this.y1_extent){
+        ranges.y1 = [this.layout.cliparea.height, 0];
+        ranges.y1_shifted = [this.layout.cliparea.height, 0];
+    }
+    if (this.y2_extent){
+        ranges.y2 = [this.layout.cliparea.height, 0];
+        ranges.y2_shifted = [this.layout.cliparea.height, 0];
+    }
 
-    // Update ranges based on any drag actions currently underway
+    // Shift ranges based on any drag actions currently underway
     if (this.interactions.zooming && typeof this.x_scale == "function"){
-        this.x_range = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        ranges.x_shifted = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
     } else if (this.interactions.dragging){
         var anchor, scalar = null;
         switch (this.interactions.dragging.method){
         case "background":
-            this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
-            this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
+            ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
+            ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
             break;
         case "x_tick":
             if (d3.event && d3.event.shiftKey){
-                this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
-                this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
+                ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
+                ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
             } else {
                 anchor = this.interactions.dragging.start_x - this.layout.margin.left - this.layout.origin.x;
                 scalar = constrain(anchor / (anchor + this.interactions.dragging.dragged_x), 3);
-                this.x_range[0] = 0;
-                this.x_range[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
+                ranges.x_shifted[0] = 0;
+                ranges.x_shifted[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
             }
             break;
         case "y1_tick":
         case "y2_tick":
-            var y_range = "y" + this.interactions.dragging.method[1] + "_range";
+            var y_shifted = "y" + this.interactions.dragging.method[1] + "_shifted";
             if (d3.event && d3.event.shiftKey){
-                this[y_range][0] = this.layout.cliparea.height + this.interactions.dragging.dragged_y;
-                this[y_range][1] = 0 + this.interactions.dragging.dragged_y;
+                ranges[y_shifted][0] = this.layout.cliparea.height + this.interactions.dragging.dragged_y;
+                ranges[y_shifted][1] = 0 + this.interactions.dragging.dragged_y;
             } else {
                 anchor = this.layout.cliparea.height - (this.interactions.dragging.start_y - this.layout.margin.top - this.layout.origin.y);
                 scalar = constrain(anchor / (anchor - this.interactions.dragging.dragged_y), 3);
-                this[y_range][0] = this.layout.cliparea.height;
-                this[y_range][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
+                ranges[y_shifted][0] = this.layout.cliparea.height;
+                ranges[y_shifted][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
             }
         }
     }
 
-    // Generate scale, shifted extent and shifted scale, and ticks for all axes
+    // Generate scales and ticks for all axes
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
         // Base Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"])
-            .range(this[axis + "_range"]);
-        // Shifted Extent and Scale (extent and scale as shifted by a drag action)
-        switch (axis){
-        case "x":
-            this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(0)),
-                                               Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
-            this[axis + "_scale_shifted"] = d3.scale.linear()
-                .domain(this[axis + "_extent_shifted"])
-                .range([0, this.layout.cliparea.width]);
-            break;
-        case "y1":
-        case "y2":
-            this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(this.layout.cliparea.height)),
-                                               Math.round(this[axis + "_scale"].invert(0)) ];
-            this[axis + "_scale_shifted"] = d3.scale.linear()
-                .domain(this[axis + "_extent_shifted"])
-                .range([this.layout.cliparea.height, 0]);
-            break;
-        }
+            .range(ranges[axis + "_shifted"]);
+        // Shift the extent
+        this[axis + "_extent"] = [ Math.round(this[axis + "_scale"].invert(ranges[axis][0])),
+                                   Math.round(this[axis + "_scale"].invert(ranges[axis][1])) ];
+        // Finalize Scale
+        this[axis + "_scale"] = d3.scale.linear()
+                .domain(this[axis + "_extent"]).range(ranges[axis]);
         // Ticks
         if (this.layout.axes[axis].ticks){
             this[axis + "_ticks"] = this.layout.axes[axis].ticks;
         } else {
-            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent_shifted"], "both");
+            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
     }.bind(this));
 
@@ -5113,7 +5103,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
                 this.zoom_timeout = setTimeout(function(){
-                    this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+                    this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }.bind(this), 500);
             }.bind(this))
             .on("zoomend", function(){
@@ -5135,7 +5125,6 @@ LocusZoom.Panel.prototype.render = function(broadcast){
             this.parent.panel_ids_by_y_index.forEach(function(panel_id){
                 if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction[axis + "_linked"]){ return; }
                 this.parent.panels[panel_id].interactions = this.interactions;
-                this.parent.panels[panel_id][axis + "_scale"] = this[axis + "_scale"];
                 this.parent.panels[panel_id].render(false);
             }.bind(this));
         }.bind(this));
@@ -5189,7 +5178,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     })(this[axis+"_ticks"]);
 
     // Initialize the axis; set scale and orientation
-    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale_shifted"]).orient(axis_params[axis].orientation);
+    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale"]).orient(axis_params[axis].orientation);
 
     // Set tick values and format
     if (ticksAreAllNumbers){
@@ -5293,15 +5282,15 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         case "background":
         case "x_tick":
             if (this.interactions.dragging.dragged_x != 0){
-                overrideAxisLayout("x", 1, this.x_extent_shifted);
-                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+                overrideAxisLayout("x", 1, this.x_extent);
+                this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
             }
             break;
         case "y1_tick":
         case "y2_tick":
             if (this.interactions.dragging.dragged_y != 0){
                 var y_axis_number = this.interactions.dragging.method[1];
-                overrideAxisLayout("y", y_axis_number, this["y"+y_axis_number+"_extent_shifted"]);
+                overrideAxisLayout("y", y_axis_number, this["y"+y_axis_number+"_extent"]);
             }
             break;
         }
