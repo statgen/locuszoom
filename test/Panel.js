@@ -361,6 +361,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.should.be.an.Object;
                 this.plot.panels.p.interactions.dragging.should.be.an.Object;
                 this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.panel_id.should.be.exactly(this.plot.panels.p.id);
                 this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
@@ -369,6 +370,7 @@ describe('LocusZoom.Panel', function(){
                 d3.mouse = function(){ return [ 25, 50 ]; };
                 this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]();
                 this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.panel_id.should.be.exactly(this.plot.panels.p.id);
                 this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);

@@ -674,6 +674,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         var mouseup = function(){ this.toggleDragging(); }.bind(this);
         var mousemove = function(){
             if (!this.interactions.dragging){ return; }
+            if (this.interactions.dragging.panel_id != this.id){ return; }
             if (d3.event){ d3.event.preventDefault(); }
             var coords = d3.mouse(this.svg.container.node());
             this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
@@ -791,9 +792,9 @@ LocusZoom.Panel.prototype.reMap = function(){
 LocusZoom.Panel.prototype.generateExtents = function(){
 
     // Reset extents
-    this.x_extent = null;
-    this.y1_extent = null;
-    this.y2_extent = null;
+    ["x", "y1", "y2"].forEach(function(axis){
+        this[axis + "_extent"] = null;
+    }.bind(this));
 
     // Loop through the data layers
     for (var id in this.data_layers){
@@ -821,11 +822,11 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 };
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(broadcast){
+LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
-    // Whether or not to broadcast some of the products of this function
-    // to other panels (e.g. to link panels together during interaction)
-    if (typeof broadcast == "undefined"){ broadcast = true; }
+    // Whether this function was called as a broadcast of another panel's rendering
+    // (i.e. don't keep broadcasting, skip that step at the bottom of the render loop)
+    if (typeof called_from_broadcast == "undefined"){ called_from_broadcast = false; }
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
@@ -972,15 +973,17 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         this.data_layers[data_layer_id].draw().render();
     }.bind(this));
     
-    // Broadcast the interaction and scale on this panel to other axis-linked panels, if necessary
-    if (broadcast && (this.layout.interaction.x_linked || this.layout.interaction.y1_linked || this.layout.interaction.y2_linked)){
+    // Broadcast this panel's interaction, extent, and scale to other axis-linked panels, if necessary
+    if (called_from_broadcast){ return this; }
+    if (this.layout.interaction.x_linked || this.layout.interaction.y1_linked || this.layout.interaction.y2_linked){
         ["x", "y1", "y2"].forEach(function(axis){
             if (!this.layout.interaction[axis + "_linked"]){ return; }
             if (!(this.interactions.zooming || (this.interactions.dragging && this.interactions.dragging["on_" + axis]))){ return; }
             this.parent.panel_ids_by_y_index.forEach(function(panel_id){
                 if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction[axis + "_linked"]){ return; }
+                this.parent.panels[panel_id][axis + "_scale"] = this[axis + "_scale"];
                 this.parent.panels[panel_id].interactions = this.interactions;
-                this.parent.panels[panel_id].render(false);
+                this.parent.panels[panel_id].render(true);
             }.bind(this));
         }.bind(this));
     }
@@ -1090,7 +1093,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
         if (this.layout.interaction["drag_" + axis + "_ticks_to_scale"]){
             var tick_mouseover = function(){
-                d3.select(this).node().focus();
+                if (typeof d3.select(this).node().focus == "function"){ d3.select(this).node().focus(); }
                 var cursor = (axis == "x") ? "ew-resize" : "ns-resize";
                 if (d3.event && d3.event.shiftKey){ cursor = "move"; }
                 d3.select(this)
@@ -1155,6 +1158,7 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging = {
             method: method,
+            panel_id: this.id,
             start_x: coords[0],
             start_y: coords[1],
             dragged_x: 0,
