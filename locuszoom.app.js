@@ -430,6 +430,9 @@ LocusZoom.StandardLayout = {
                         field: "recomb:recomb_rate",
                         floor: 0,
                         ceiling: 100
+                    },
+                    transition: {
+                        duration: 200
                     }
                 },
                 {
@@ -476,6 +479,9 @@ LocusZoom.StandardLayout = {
                         floor: 0,
                         upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
+                    },
+                    transition: {
+                        duration: 200
                     },
                     highlighted: {
                         onmouseover: "on",
@@ -526,6 +532,9 @@ LocusZoom.StandardLayout = {
                     selected: {
                         onclick: "toggle_exclusive",
                         onshiftclick: "toggle"
+                    },
+                    transition: {
+                        duration: 200
                     },
                     tooltip: {
                         closable: true,
@@ -616,6 +625,11 @@ LocusZoom.DataLayer.DefaultLayout = {
 LocusZoom.DataLayer.prototype.getBaseId = function(){
     return this.parent.parent.id + "." + this.parent.id + "." + this.id;
 };
+
+LocusZoom.DataLayer.prototype.canTransition = function(){
+    if (!this.layout.transition){ return false; }
+    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging);
+}
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";
@@ -1888,11 +1902,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
-        // Create elements, apply class and ID
+        // Create elements, apply class, ID, and initial position
+        var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return this.getElementId(d); }.bind(this));
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this))
+            .attr("transform", "translate(0," + initial_y + ")");
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
@@ -1910,8 +1926,8 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
-        if (this.layout.transition && !dragging){
+
+        if (this.canTransition()){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -2130,8 +2146,7 @@ LocusZoom.DataLayers.add("line", function(layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
-        if (this.layout.transition && !dragging){
+        if (this.canTransition()){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -2356,6 +2371,8 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
         this.assignTracks();
 
+        var width, height, x, y;
+
         // Render gene groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-genes")
             .data(this.data, function(d){ return d.gene_name; });
@@ -2374,22 +2391,10 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 bboxes.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-data_layer-genes-bounding_box");
-
+                
                 bboxes
                     .attr("id", function(d){
                         return data_layer.getElementId(d) + "_bounding_box";
-                    })
-                    .attr("x", function(d){
-                        return d.display_range.start;
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight());
-                    })
-                    .attr("width", function(d){
-                        return d.display_range.width;
-                    })
-                    .attr("height", function(){
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
                     })
                     .attr("rx", function(){
                         return data_layer.layout.bounding_box_padding;
@@ -2397,6 +2402,29 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("ry", function(){
                         return data_layer.layout.bounding_box_padding;
                     });
+
+                width = function(d){
+                    return d.display_range.width;
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    bboxes
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    bboxes
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
 
                 bboxes.exit().remove();
 
@@ -2407,22 +2435,33 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-boundary");
 
-                boundaries
-                    .attr("x", function(d){
-                        return data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size
-                            + data_layer.layout.label_exon_spacing
-                            + (Math.max(data_layer.layout.exon_height, 3) / 2);
-                    })
-                    .attr("width", function(d){
-                        return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("height", 1); // This should be scaled dynamically somehow
-
+                width = function(d){
+                    return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                };
+                height = function(){
+                    return 1; // TODO: scale dynamically?
+                };
+                x = function(d){
+                    return data_layer.parent.x_scale(d.start);
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size
+                        + data_layer.layout.label_exon_spacing
+                        + (Math.max(data_layer.layout.exon_height, 3) / 2);
+                };
+                if (data_layer.canTransition()){
+                    boundaries
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    boundaries
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
+                
                 boundaries.exit().remove();
 
                 // Render gene labels
@@ -2433,20 +2472,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("class", "lz-data_layer-genes lz-label");
 
                 labels
-                    .attr("x", function(d){
-                        if (d.display_range.text_anchor == "middle"){
-                            return d.display_range.start + (d.display_range.width / 2);
-                        } else if (d.display_range.text_anchor == "start"){
-                            return d.display_range.start + data_layer.layout.bounding_box_padding;
-                        } else if (d.display_range.text_anchor == "end"){
-                            return d.display_range.end - data_layer.layout.bounding_box_padding;
-                        }
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size;
-                    })
                     .attr("text-anchor", function(d){
                         return d.display_range.text_anchor;
                     })
@@ -2454,6 +2479,31 @@ LocusZoom.DataLayers.add("genes", function(layout){
                         return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name;
                     })
                     .style("font-size", gene.parent.layout.label_font_size);
+
+                x = function(d){
+                    if (d.display_range.text_anchor == "middle"){
+                        return d.display_range.start + (d.display_range.width / 2);
+                    } else if (d.display_range.text_anchor == "start"){
+                        return d.display_range.start + data_layer.layout.bounding_box_padding;
+                    } else if (d.display_range.text_anchor == "end"){
+                        return d.display_range.end - data_layer.layout.bounding_box_padding;
+                    }
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size;
+                };
+                if (data_layer.canTransition()){
+                    labels
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("x", x).attr("y", y);
+                } else {
+                    labels
+                        .attr("x", x).attr("y", y);
+                }
 
                 labels.exit().remove();
 
@@ -2464,22 +2514,31 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 exons.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-exon");
                         
-                exons
-                    .attr("x", function(d){
-                        return data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("y", function(){
-                        return ((gene.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size
-                            + data_layer.layout.label_exon_spacing;
-                    })
-                    .attr("width", function(d){
-                        return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("height", function(){
-                        return data_layer.layout.exon_height;
-                    });
+                width = function(d){
+                    return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                };
+                height = function(){
+                    return data_layer.layout.exon_height;
+                };
+                x = function(d){
+                    return data_layer.parent.x_scale(d.start);
+                };
+                y = function(){
+                    return ((gene.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size
+                        + data_layer.layout.label_exon_spacing;
+                };
+                if (data_layer.canTransition()){
+                    exons
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    exons
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
 
                 exons.exit().remove();
 
@@ -2494,24 +2553,35 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("id", function(d){
                         return data_layer.getElementId(d) + "_clickarea";
                     })
-                    .attr("x", function(d){
-                        return d.display_range.start;
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight());
-                    })
-                    .attr("width", function(d){
-                        return d.display_range.width;
-                    })
-                    .attr("height", function(){
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    })
                     .attr("rx", function(){
                         return data_layer.layout.bounding_box_padding;
                     })
                     .attr("ry", function(){
                         return data_layer.layout.bounding_box_padding;
                     });
+
+                width = function(d){
+                    return d.display_range.width;
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                }
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    clickareas
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    clickareas
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
 
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
