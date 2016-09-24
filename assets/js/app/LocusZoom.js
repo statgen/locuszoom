@@ -334,6 +334,25 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
+    controls: [
+        {
+            type: "title",
+            title: "LocusZoom",
+            position: "left"
+        },
+        {
+            type: "dimensions",
+            position: "right"
+        },
+        {
+            type: "region_scale",
+            position: "right"
+        },
+        {
+            type: "download_svg",
+            position: "right"
+        }
+    ],
     panels: [
         {
             id: "positions",
@@ -348,7 +367,12 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
-            controls: { model: true, reposition: true },
+            controls: [
+                {
+                    type: "remove_panel",
+                    position: "right"
+                }
+            ],
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -497,7 +521,12 @@ LocusZoom.StandardLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
-            controls:  { reposition: true },
+            controls: [
+                {
+                    type: "remove_panel",
+                    position: "right"
+                }
+            ],
             axes: {},
             interaction: {
                 drag_background_to_pan: true,

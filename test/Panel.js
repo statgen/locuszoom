@@ -181,7 +181,7 @@ describe('LocusZoom.Panel', function(){
                       width: 100,
                       height: 100 }
                 ],
-                controls: false
+                controls: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, this.layout);
@@ -258,6 +258,7 @@ describe('LocusZoom.Panel', function(){
         });
     });
 
+    /*
     describe("Panel Controls and Control Buttons", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
@@ -406,6 +407,7 @@ describe('LocusZoom.Panel', function(){
             assert.equal(test1.controls.buttons.description.menu.inner_selector, null);
         });
     });
+    */
 
     describe("Panel Interactions", function() {
         beforeEach(function(){
