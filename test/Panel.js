@@ -510,6 +510,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.should.be.an.Object;
                 this.plot.panels.p.interactions.dragging.should.be.an.Object;
                 this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.panel_id.should.be.exactly(this.plot.panels.p.id);
                 this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
@@ -518,12 +519,12 @@ describe('LocusZoom.Panel', function(){
                 d3.mouse = function(){ return [ 25, 50 ]; };
                 this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"]();
                 this.plot.panels.p.interactions.dragging.method.should.be.exactly("background");
+                this.plot.panels.p.interactions.dragging.panel_id.should.be.exactly(this.plot.panels.p.id);
                 this.plot.panels.p.interactions.dragging.start_x.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(50);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
                 this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
-                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [2,6]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
                 this.plot.panels.p.interactions.dragging.should.be.false;
@@ -554,8 +555,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
                 this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
-                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [1,9]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1,9]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
                 this.plot.panels.p.interactions.dragging.should.be.false;
@@ -587,8 +587,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(0);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(-25);
                 this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [1,5]);
-                assert.deepEqual(this.plot.panels.p.x_extent_shifted, [2,6]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"](event);
                 this.plot.panels.p.interactions.dragging.should.be.false;
@@ -619,8 +618,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
                 this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(50);
-                assert.deepEqual(this.plot.panels.p.y1_extent, [2,6]);
-                assert.deepEqual(this.plot.panels.p.y1_extent_shifted, [2,14]);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2,14]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"]();
                 this.plot.panels.p.interactions.dragging.should.be.false;
@@ -652,8 +650,7 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.dragging.start_y.should.be.exactly(25);
                 this.plot.panels.p.interactions.dragging.dragged_x.should.be.exactly(0);
                 this.plot.panels.p.interactions.dragging.dragged_y.should.be.exactly(50);
-                assert.deepEqual(this.plot.panels.p.y1_extent, [2,6]);
-                assert.deepEqual(this.plot.panels.p.y1_extent_shifted, [4,8]);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [4,8]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"](event);
                 this.plot.panels.p.interactions.dragging.should.be.false;
@@ -666,7 +663,7 @@ describe('LocusZoom.Panel', function(){
             this.layout.panels[0].interaction.scroll_to_zoom = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
             Q.all(this.plot.remap_promises).then(function(){
-                // NOTE: d3 xoom behaviors are much more complicated than drag behaviors and as such are very
+                // NOTE: d3 zoom behaviors are much more complicated than drag behaviors and as such are very
                 // difficult to simulate programmatically in a node environment. This test therefore only checks
                 // that the interaction object correctly tracks zoom start and end.
                 this.plot.panels.p.zoom_listener.on("zoom")();

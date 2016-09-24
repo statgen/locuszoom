@@ -66,6 +66,11 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
     return this.parent.parent.id + "." + this.parent.id + "." + this.id;
 };
 
+LocusZoom.DataLayer.prototype.canTransition = function(){
+    if (!this.layout.transition){ return false; }
+    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging);
+}
+
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";
     if (typeof element == "string"){
