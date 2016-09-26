@@ -338,25 +338,25 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     width: 0%;
     left: 100%; } }
 
-.lz-controls {
+.lz-dashboard {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 4px;
   padding-bottom: 4px; }
-  .lz-controls .lz-panel-controls {
+  .lz-dashboard .lz-panel-dashboard {
     padding-left: 2px;
     padding-right: 2px; }
-  .lz-controls .lz-controls-left {
+  .lz-dashboard .lz-dashboard-left {
     float: left;
     margin-right: 2em; }
-  .lz-controls .lz-controls-right {
+  .lz-dashboard .lz-dashboard-right {
     float: right;
     margin-left: 2em; }
-  .lz-controls .lz-controls-title {
+  .lz-dashboard .lz-dashboard-title {
     font-size: 150%;
     font-weight: bold;
     margin-bottom: 0.3em; }
-  .lz-controls .lz-controls-button {
+  .lz-dashboard .lz-dashboard-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     height: auto;
@@ -366,7 +366,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     outline: none;
     white-space: nowrap;
     cursor: pointer; }
-  .lz-controls .lz-controls-button {
+  .lz-dashboard .lz-dashboard-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
     height: auto;
@@ -376,140 +376,140 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     outline: none;
     white-space: nowrap;
     cursor: pointer; }
-  .lz-controls .lz-controls-button-gray {
+  .lz-dashboard .lz-dashboard-button-gray {
     background-color: rgba(216, 216, 216, 0.5);
     border: 1px solid rgba(51, 51, 51, 0.5);
     color: rgba(51, 51, 51, 0.5); }
-  .lz-controls .lz-controls-button-gray:not(.lz-controls-button-gray-disabled):not(.lz-controls-button-gray-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-gray:not(.lz-dashboard-button-gray-disabled):not(.lz-dashboard-button-gray-highlighted):hover {
     background-color: #d8d8d8;
     border: 1px solid #333333;
     color: #333333; }
-  .lz-controls .lz-controls-button-gray-highlighted {
+  .lz-dashboard .lz-dashboard-button-gray-highlighted {
     border: 1px solid #333333;
     background-color: #333333;
     color: #d8d8d8; }
-  .lz-controls .lz-controls-button-gray-disabled {
+  .lz-dashboard .lz-dashboard-button-gray-disabled {
     background-color: rgba(216, 216, 216, 0.5);
     border: 1px solid rgba(153, 153, 153, 0.5);
     color: rgba(153, 153, 153, 0.5);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-red {
+  .lz-dashboard .lz-dashboard-button-red {
     background-color: rgba(230, 195, 195, 0.75);
     border: 1px solid rgba(89, 49, 49, 0.75);
     color: rgba(89, 49, 49, 0.75); }
-  .lz-controls .lz-controls-button-red:not(.lz-controls-button-red-disabled):not(.lz-controls-button-red-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-red:not(.lz-dashboard-button-red-disabled):not(.lz-dashboard-button-red-highlighted):hover {
     background-color: #e6c3c3;
     border: 1px solid #593131;
     color: #593131; }
-  .lz-controls .lz-controls-button-red-highlighted {
+  .lz-dashboard .lz-dashboard-button-red-highlighted {
     border: 1px solid #593131;
     background-color: #593131;
     color: #e6c3c3; }
-  .lz-controls .lz-controls-button-red-disabled {
+  .lz-dashboard .lz-dashboard-button-red-disabled {
     background-color: rgba(230, 195, 195, 0.75);
     border: 1px solid rgba(179, 134, 134, 0.75);
     color: rgba(179, 134, 134, 0.75);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-orange {
+  .lz-dashboard .lz-dashboard-button-orange {
     background-color: rgba(230, 213, 195, 0.75);
     border: 1px solid rgba(89, 69, 49, 0.75);
     color: rgba(89, 69, 49, 0.75); }
-  .lz-controls .lz-controls-button-orange:not(.lz-controls-button-orange-disabled):not(.lz-controls-button-orange-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-orange:not(.lz-dashboard-button-orange-disabled):not(.lz-dashboard-button-orange-highlighted):hover {
     background-color: #e6d5c3;
     border: 1px solid #594531;
     color: #594531; }
-  .lz-controls .lz-controls-button-orange-highlighted {
+  .lz-dashboard .lz-dashboard-button-orange-highlighted {
     border: 1px solid #594531;
     background-color: #594531;
     color: #e6d5c3; }
-  .lz-controls .lz-controls-button-orange-disabled {
+  .lz-dashboard .lz-dashboard-button-orange-disabled {
     background-color: rgba(230, 213, 195, 0.75);
     border: 1px solid rgba(179, 156, 134, 0.75);
     color: rgba(179, 156, 134, 0.75);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-yellow {
+  .lz-dashboard .lz-dashboard-button-yellow {
     background-color: rgba(230, 230, 195, 0.75);
     border: 1px solid rgba(89, 89, 49, 0.75);
     color: rgba(89, 89, 49, 0.75); }
-  .lz-controls .lz-controls-button-yellow:not(.lz-controls-button-yellow-disabled):not(.lz-controls-button-yellow-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-yellow:not(.lz-dashboard-button-yellow-disabled):not(.lz-dashboard-button-yellow-highlighted):hover {
     background-color: #e6e6c3;
     border: 1px solid #595931;
     color: #595931; }
-  .lz-controls .lz-controls-button-yellow-highlighted {
+  .lz-dashboard .lz-dashboard-button-yellow-highlighted {
     border: 1px solid #595931;
     background-color: #595931;
     color: #e6e6c3; }
-  .lz-controls .lz-controls-button-yellow-disabled {
+  .lz-dashboard .lz-dashboard-button-yellow-disabled {
     background-color: rgba(230, 230, 195, 0.75);
     border: 1px solid rgba(179, 179, 134, 0.75);
     color: rgba(179, 179, 134, 0.75);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-green {
+  .lz-dashboard .lz-dashboard-button-green {
     background-color: rgba(204, 230, 195, 0.75);
     border: 1px solid rgba(59, 89, 49, 0.75);
     color: rgba(59, 89, 49, 0.75); }
-  .lz-controls .lz-controls-button-green:not(.lz-controls-button-green-disabled):not(.lz-controls-button-green-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-green:not(.lz-dashboard-button-green-disabled):not(.lz-dashboard-button-green-highlighted):hover {
     background-color: #cce6c3;
     border: 1px solid #3b5931;
     color: #3b5931; }
-  .lz-controls .lz-controls-button-green-highlighted {
+  .lz-dashboard .lz-dashboard-button-green-highlighted {
     border: 1px solid #3b5931;
     background-color: #3b5931;
     color: #cce6c3; }
-  .lz-controls .lz-controls-button-green-disabled {
+  .lz-dashboard .lz-dashboard-button-green-disabled {
     background-color: rgba(204, 230, 195, 0.75);
     border: 1px solid rgba(145, 179, 134, 0.75);
     color: rgba(145, 179, 134, 0.75);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-blue {
+  .lz-dashboard .lz-dashboard-button-blue {
     background-color: rgba(195, 210, 230, 0.75);
     border: 1px solid rgba(49, 66, 89, 0.75);
     color: rgba(49, 66, 89, 0.75); }
-  .lz-controls .lz-controls-button-blue:not(.lz-controls-button-blue-disabled):not(.lz-controls-button-blue-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-blue:not(.lz-dashboard-button-blue-disabled):not(.lz-dashboard-button-blue-highlighted):hover {
     background-color: #c3d2e6;
     border: 1px solid #314259;
     color: #314259; }
-  .lz-controls .lz-controls-button-blue-highlighted {
+  .lz-dashboard .lz-dashboard-button-blue-highlighted {
     border: 1px solid #314259;
     background-color: #314259;
     color: #c3d2e6; }
-  .lz-controls .lz-controls-button-blue-disabled {
+  .lz-dashboard .lz-dashboard-button-blue-disabled {
     background-color: rgba(195, 210, 230, 0.75);
     border: 1px solid rgba(134, 153, 179, 0.75);
     color: rgba(134, 153, 179, 0.75);
     pointer-events: none;
     cursor: wait; }
-  .lz-controls .lz-controls-button-purple {
+  .lz-dashboard .lz-dashboard-button-purple {
     background-color: rgba(221, 195, 230, 0.75);
     border: 1px solid rgba(80, 49, 89, 0.75);
     color: rgba(80, 49, 89, 0.75); }
-  .lz-controls .lz-controls-button-purple:not(.lz-controls-button-purple-disabled):not(.lz-controls-button-purple-highlighted):hover {
+  .lz-dashboard .lz-dashboard-button-purple:not(.lz-dashboard-button-purple-disabled):not(.lz-dashboard-button-purple-highlighted):hover {
     background-color: #ddc3e6;
     border: 1px solid #503159;
     color: #503159; }
-  .lz-controls .lz-controls-button-purple-highlighted {
+  .lz-dashboard .lz-dashboard-button-purple-highlighted {
     border: 1px solid #503159;
     background-color: #503159;
     color: #ddc3e6; }
-  .lz-controls .lz-controls-button-purple-disabled {
+  .lz-dashboard .lz-dashboard-button-purple-disabled {
     background-color: rgba(221, 195, 230, 0.75);
     border: 1px solid rgba(167, 134, 179, 0.75);
     color: rgba(167, 134, 179, 0.75);
     pointer-events: none;
     cursor: wait; }
 
-.lz-panel-controls {
+.lz-panel-dashboard {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
   padding-top: 3px;
   padding-right: 3px;
   position: absolute; }
-  .lz-panel-controls .lz-panel-controls-button {
+  .lz-panel-dashboard .lz-panel-dashboard-button {
     text-decoration: none;
     font-weight: bold;
     font-size: 11px;
@@ -524,7 +524,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     pointer-events: auto;
     cursor: pointer; }
 
-div.lz-panel-controls-menu {
+div.lz-panel-dashboard-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
@@ -532,67 +532,67 @@ div.lz-panel-controls-menu {
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4);
   overflow: hidden; }
-  div.lz-panel-controls-menu .lz-panel-controls-menu-content {
+  div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content {
     display: block;
     width: 100%;
     height: 100%;
     overflow-y: auto;
     margin-right: 1.5em; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h1, div.lz-panel-controls-menu .lz-panel-controls-menu-content h2, div.lz-panel-controls-menu .lz-panel-controls-menu-content h3, div.lz-panel-controls-menu .lz-panel-controls-menu-content h4, div.lz-panel-controls-menu .lz-panel-controls-menu-content h5, div.lz-panel-controls-menu .lz-panel-controls-menu-content h6 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h1, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h2, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h3, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h4, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h5, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h1 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h1 {
       font-size: 200%; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h2 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h2 {
       font-size: 175%; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h3 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h3 {
       font-size: 150%; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h4 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h4 {
       font-size: 135%; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h5 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h5 {
       font-size: 125%; }
-    div.lz-panel-controls-menu .lz-panel-controls-menu-content h6 {
+    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h6 {
       font-size: 110%; }
-  div.lz-panel-controls-menu table {
+  div.lz-panel-dashboard-menu table {
     display: table;
     border-collapse: separate;
     border-spacing: 0px;
     margin-bottom: 0.4em;
     width: 100%; }
-  div.lz-panel-controls-menu th:first-child, div.lz-panel-controls-menu td:first-child {
+  div.lz-panel-dashboard-menu th:first-child, div.lz-panel-dashboard-menu td:first-child {
     vertical-align: top; }
-  div.lz-panel-controls-menu tr:nth-child(2) {
+  div.lz-panel-dashboard-menu tr:nth-child(2) {
     background-color: rgba(0, 0, 0, 0.08); }
-  div.lz-panel-controls-menu th, div.lz-panel-controls-menu td {
+  div.lz-panel-dashboard-menu th, div.lz-panel-dashboard-menu td {
     padding: 4px;
     text-align: left;
     vertical-align: middle; }
 
-.lz-panel-controls-menu-gray {
+.lz-panel-dashboard-menu-gray {
   background-color: #e8e8e8;
   border: 1px solid #333333; }
 
-.lz-panel-controls-menu-red {
+.lz-panel-dashboard-menu-red {
   background: #f0e4e4;
   border: 1px solid #593131; }
 
-.lz-panel-controls-menu-orange {
+.lz-panel-dashboard-menu-orange {
   background: #f0eae4;
   border: 1px solid #594531; }
 
-.lz-panel-controls-menu-yellow {
+.lz-panel-dashboard-menu-yellow {
   background: #f0f0e4;
   border: 1px solid #595931; }
 
-.lz-panel-controls-menu-green {
+.lz-panel-dashboard-menu-green {
   background: #e7f0e4;
   border: 1px solid #3b5931; }
 
-.lz-panel-controls-menu-blue {
+.lz-panel-dashboard-menu-blue {
   background: #e4e9f0;
   border: 1px solid #314259; }
 
-.lz-panel-controls-menu-purple {
+.lz-panel-dashboard-menu-purple {
   background: #ede4f0;
   border: 1px solid #503159; }
 

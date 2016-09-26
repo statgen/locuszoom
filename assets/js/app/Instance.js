@@ -29,6 +29,10 @@ LocusZoom.Instance = function(id, datasource, layout) {
         }.bind(this));
     };
 
+    this.getBaseId = function(){
+        return this.id;
+    };
+
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the instance
@@ -119,7 +123,9 @@ LocusZoom.Instance.DefaultLayout = {
     resizable: false,
     aspect_ratio: 1,
     panels: [],
-    controls: [],
+    dashboard: {
+        components: []
+    },
     panel_boundaries: true
 };
 
@@ -225,8 +231,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
-            if (this.panels[panel_id].controls.selector){
-                this.panels[panel_id].controls.position();
+            if (this.panels[panel_id].dashboard.selector){
+                this.panels[panel_id].dashboard.position();
             }
         }.bind(this));
     }
@@ -345,7 +351,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
 
     // Remove all panel-level HTML overlay elements
     this.panels[id].loader.hide();
-    this.panels[id].controls.hide();
+    this.panels[id].dashboard.hide();
     this.panels[id].curtain.hide();
 
     // Remove the svg container for the panel if it exists
@@ -669,8 +675,8 @@ LocusZoom.Instance.prototype.initialize = function(){
                             loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                             if (loop_panel_idx > panel_idx){
                                 loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
-                                if (loop_panel.layout.controls){
-                                    loop_panel.controls.position();
+                                if (!loop_panel.dashboard.empty()){
+                                    loop_panel.dashboard.position();
                                 }
                             }
                         }.bind(this));
@@ -731,25 +737,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Create the controls object and hang components on it
-    this.controls = {
-        parent: this,
-        selector: null,
-        components: [],
-        update: function(){
-            this.components.forEach(function(component){ component.update(); });
-            return this;
-        }
-    };
-    if (Array.isArray(this.layout.controls)){
-        this.controls.selector = d3.select(this.svg.node().parentNode).insert("div",":first-child")
-            .attr("class", "lz-controls");
-        this.layout.controls.forEach(function(layout){
-            var component = LocusZoom.ControlsComponents.get(layout.type, layout, this.controls);
-            component.show();
-            this.controls.components.push(component);
-        }.bind(this));
-    }
+    // Create the dashboard object and hang components on it
+    this.dashboard = new LocusZoom.Dashboard(this).show();
 
     // Initialize all panels
     for (var id in this.panels){
@@ -776,7 +765,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         var coords = d3.mouse(this.svg.node());
         this.mouse_guide.vertical.attr("x", coords[0]);
         this.mouse_guide.horizontal.attr("y", coords[1]);
-        this.controls.update();
+        this.dashboard.update();
     }.bind(this));
 
     this.initialized = true;
@@ -889,13 +878,13 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         }.bind(this))
         .done(function(){
 
-            // Update controls / components
-            this.controls.update();
+            // Update dashboard / components
+            this.dashboard.update();
                 
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
-                panel.controls.update();
+                panel.dashboard.update();
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];

@@ -141,7 +141,9 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: "clear_selections",
-    controls: [],
+    dashboard: {
+        components: []
+    },
     cliparea: {
         height: 0,
         width: 0,
@@ -236,7 +238,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.render();
         this.curtain.update();
         this.loader.update();
-        this.controls.update();
+        this.dashboard.update();
     }
     return this;
 };
@@ -429,8 +431,11 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this)
     };
 
-    // Create the controls object and hang components on it as defined by panel layout
-    this.controls = {
+    // Create the dashboard object and hang components on it as defined by panel layout
+    this.dashboard = new LocusZoom.Dashboard(this);
+
+    /*
+    this.dashboard = {
         parent: this,
         selector: null,
         hide_timeout: null,
@@ -439,8 +444,8 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (!this.selector){
                 this.selector = d3.select(this.parent.parent.svg.node().parentNode)
                     .insert("div", ".lz-data_layer-tooltip")
-                    .classed("lz-controls", true).classed("lz-panel-controls", true)
-                    .attr("id", this.parent.getBaseId() + ".controls");
+                    .classed("lz-dashboard", true).classed("lz-panel-dashboard", true)
+                    .attr("id", this.parent.getBaseId() + ".dashboard");
                 this.components.forEach(function(component){ component.show(); });
             }
             return this.update();
@@ -461,42 +466,43 @@ LocusZoom.Panel.prototype.initialize = function(){
         },
         hide: function(){
             if (!this.selector){ return this; }
-            /*
+            /---
             // Do not hide if any components are in a persistive state
             var persist = false;
             this.components.forEach(function(component){
                 persist = persist || component.persist;
             });
             if (persist){ return this; }
-            */
+            ---/
             // Do not hide if actively in an instance-level drag event
             if (this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging){ return this; }
             // Hide all components
             this.components.forEach(function(component){ component.hide(); });
-            // Remove the controls element from the DOM
+            // Remove the dashboard element from the DOM
             this.selector.remove();
             this.selector = null;
-            return this.controls;
+            return this.dashboard;
         }
     };
 
-    // Add components to controls from the layout
-    if (Array.isArray(this.layout.controls)){
-        this.layout.controls.forEach(function(layout){
-            var component = LocusZoom.ControlsComponents.get(layout.type, layout, this.controls);
-            this.controls.components.push(component);
+    // Add components to dashboard from the layout
+    if (Array.isArray(this.layout.dashboard)){
+        this.layout.dashboard.forEach(function(layout){
+            var component = LocusZoom.DashboardComponents.get(layout.type, layout, this.dashboard);
+            this.dashboard.components.push(component);
         }.bind(this));
-        // Add mouseover event handlers to show/hide panel-level controls
-        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
-            clearTimeout(this.controls.hide_timeout);
-            this.controls.show();
+        // Add mouseover event handlers to show/hide panel-level dashboard
+        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".dashboard", function(){
+            clearTimeout(this.dashboard.hide_timeout);
+            this.dashboard.show();
         }.bind(this));
-        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
-            this.controls.hide_timeout = setTimeout(function(){
-                this.controls.hide();
+        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".dashboard", function(){
+            this.dashboard.hide_timeout = setTimeout(function(){
+                this.dashboard.hide();
             }.bind(this), 300);
         }.bind(this));
     }
+    */
 
     /*
 
