@@ -373,6 +373,11 @@ LocusZoom.StandardLayout = {
                 components: [
                     {
                         type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "reposition_panel",
                         position: "right"
                     }
                 ]
@@ -529,6 +534,11 @@ LocusZoom.StandardLayout = {
                 components: [
                     {
                         type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "reposition_panel",
                         position: "right"
                     }
                 ]

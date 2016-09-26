@@ -51,9 +51,11 @@ LocusZoom.Dashboard.prototype.initialize = function(){
             this.show();
         }.bind(this));
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseout." + this.id, function(){
+            /*
             this.hide_timeout = setTimeout(function(){
                 this.hide();
             }.bind(this), 300);
+            */
         }.bind(this));
     }
 
@@ -69,6 +71,8 @@ LocusZoom.Dashboard.prototype.isEmpty = function(){
 // Populate selector and display dashboard, recursively show components
 LocusZoom.Dashboard.prototype.show = function(){
 
+    if (this.selector){ return this.update(); }
+
     switch (this.type){
     case "plot":
         this.selector = d3.select(this.parent.svg.node().parentNode)
@@ -80,7 +84,7 @@ LocusZoom.Dashboard.prototype.show = function(){
         break;
     }
 
-    this.selector.classed("lz-dashboard", true).attr("id", this.id);
+    this.selector.classed("lz-dashboard", true).classed("lz-"+this.type+"-dashboard", true).attr("id", this.id);
     this.components.forEach(function(component){ component.show(); });
 
     return this.update();
@@ -93,6 +97,7 @@ LocusZoom.Dashboard.prototype.update = function(){
     return this.position();
 };
 
+// Position self (panel only)
 LocusZoom.Dashboard.prototype.position = function(){
     if (!this.selector || this.type == "plot"){ return this; }
     var page_origin = this.parent.getPageOrigin();
@@ -103,6 +108,7 @@ LocusZoom.Dashboard.prototype.position = function(){
     return this;
 };
 
+// Hide self
 LocusZoom.Dashboard.prototype.hide = function(){
     if (!this.selector){ return this; }
 
@@ -136,6 +142,16 @@ LocusZoom.Dashboard.prototype.hide = function(){
 LocusZoom.Dashboard.Component = function(layout, parent) {
     this.layout = layout || {};
     this.parent = parent || null;
+    this.parent_panel = null;
+    this.parent_plot = null;
+    if (this.parent instanceof LocusZoom.Dashboard){
+        if (this.parent.type == "panel"){
+            this.parent_panel = this.parent.parent;
+            this.parent_plot = this.parent.parent.parent;
+        } else {
+            this.parent_plot = this.parent.parent;
+        }
+    }
     this.selector = null;
     this.buttons = [];
     if (!this.layout.position){ this.layout.position = "left"; }
@@ -219,6 +235,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         throw "Unable to create dashboard component button, invalid parent";
     }
     this.parent = parent;
+    this.parent_panel = this.parent.parent_panel;
+    this.parent_plot = this.parent.parent_plot;
 
     this.showing = false;
     this.persist = false;
@@ -249,6 +267,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.color = "gray";
     this.setColor = function(color){
         if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
+        else { this.color = "gray"; }
         return this;
     };
 
@@ -272,7 +291,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.status = "";
     this.setStatus = function(status){
         if (["", "highlighted", "disabled"].indexOf(status) !== -1){ this.status = status; }
-        return this;
+        return this.update();
     };
     this.highlight = function(bool){
         if (typeof bool == "undefined"){ bool = true; } else { bool = Boolean(bool); }
@@ -475,7 +494,7 @@ LocusZoom.Dashboard.Components.add("download_svg", function(layout){
     this.update = function(){
         if (this.buttons[0]){ return this; }
         this.buttons[0] = new LocusZoom.Dashboard.Component.Button(this)
-            .setTag("a").setColor("gray").setText("Download SVG").setTitle("Download SVG as locuszoom.svg")
+            .setTag("a").setColor(layout.color).setText("Download SVG").setTitle("Download SVG as locuszoom.svg")
             .setOnMouseover(function() {
                 this.buttons[0].selector
                     .classed("lz-dashboard-button-gray-disabled", true)
@@ -535,9 +554,9 @@ LocusZoom.Dashboard.Components.add("download_svg", function(layout){
 LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.update = function(){
-        if (this.buttons[0]){ return this; }
+        if (this.buttons.length){ return this; }
         this.buttons[0] = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor("red").setText("×").setTitle("Remove panel")
+            .setColor(layout.color).setText("×").setTitle("Remove panel")
             .setOnclick(function(){
                 var panel = this.parent.parent;
                 panel.dashboard.hide(true);
@@ -547,5 +566,49 @@ LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
             }.bind(this));
         this.buttons[0].show();
         return this;
+    };
+});
+
+
+// Reposition Panel component - button to reposition the panel relative to other panels vertically
+LocusZoom.Dashboard.Components.add("reposition_panel", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        if (this.buttons.length){
+            var is_at_top = (this.parent_panel.layout.y_index == 0);
+            var is_at_bottom = (this.parent_panel.layout.y_index == this.parent_plot.panel_ids_by_y_index.length-1);
+            this.buttons[0].disable(is_at_bottom);
+            this.buttons[1].disable(is_at_top);
+            return this;
+        }
+        this.buttons[0] = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText("▾").setTitle("Move panel down")
+            .setOnclick(function(){
+                var panel = this.parent.parent;
+                var plot = this.parent.parent.parent;
+                if (plot.panel_ids_by_y_index[panel.layout.y_index + 1]){
+                    plot.panel_ids_by_y_index[panel.layout.y_index] = plot.panel_ids_by_y_index[panel.layout.y_index + 1];
+                    plot.panel_ids_by_y_index[panel.layout.y_index + 1] = panel.id;
+                    plot.applyPanelYIndexesToPanelLayouts();
+                    plot.positionPanels();
+                }
+                this.update();
+            }.bind(this));
+        this.buttons[1] = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText("▴").setTitle("Move panel up")
+            .setOnclick(function(){
+                var panel = this.parent.parent;
+                var plot = this.parent.parent.parent;
+                if (plot.panel_ids_by_y_index[panel.layout.y_index - 1]){
+                    plot.panel_ids_by_y_index[panel.layout.y_index] = plot.panel_ids_by_y_index[panel.layout.y_index - 1];
+                    plot.panel_ids_by_y_index[panel.layout.y_index - 1] = panel.id;
+                    plot.applyPanelYIndexesToPanelLayouts();
+                    plot.positionPanels();
+                }
+                this.update();
+            }.bind(this));
+        this.buttons[0].show();
+        this.buttons[1].show();
+        return this.update();
     };
 });

@@ -437,6 +437,62 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   100% { width: 0%;   left: 100%; }
 }
 
+.#{$namespace}-plot-dashboard {
+  padding-left: 0px;
+  padding-right: 0px;
+
+  .#{$namespace}-dashboard-button {
+    text-decoration: none;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    height: auto;
+    line-height: inherit;  
+    border-radius: 4px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
+  float: left;
+  margin-right: 2em;
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-right {
+  float: right;
+  margin-left: 2em;
+}
+
+.#{$namespace}-panel-dashboard {
+  padding-left: 2px;
+  padding-right: 2px;
+
+  .#{$namespace}-dashboard-button {
+    text-decoration: none;
+    padding: 0.1em 0.4em 0.1em 0.4em;
+    height: auto;
+    line-height: inherit;  
+    border-radius: 3px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+}
+
+.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-left {
+  float: left;
+  margin-right: 0px;
+}
+
+.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-right {
+  float: right;
+  margin-left: 0px;
+}
+
 .#{$namespace}-dashboard {
 
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
@@ -444,55 +500,16 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   padding-top: 4px;
   padding-bottom: 4px;
 
-  .#{$namespace}-panel-dashboard {
-    padding-left: 2px;
-    padding-right: 2px;
-  }
-
-  .#{$namespace}-dashboard-left {
-    float: left;
-    margin-right: 2em;
-  }
-
-  .#{$namespace}-dashboard-right {
-    float: right;
-    margin-left: 2em;
-  }
-
   .#{$namespace}-dashboard-title {
     font-size: 150%;
     font-weight: bold;
     margin-bottom: 0.3em;
   }
 
-  .#{$namespace}-dashboard-button {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    height: auto;
-    line-height: inherit;  
-    border-radius: 4px;
-    pointer-events: auto;
-    outline: none;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
-  .#{$namespace}-dashboard-button {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    height: auto;
-    line-height: inherit;  
-    border-radius: 4px;
-    pointer-events: auto;
-    outline: none;
-    white-space: nowrap;
-    cursor: pointer;
-  }
-
   .#{$namespace}-dashboard-button-gray {
-    background-color: rgba(216,216,216,0.5);
-    border: 1px solid rgba(51,51,51,0.5);
-    color: rgba(51,51,51,0.5);
+    background-color: rgba(216,216,216,0.6);
+    border: 1px solid rgba(51,51,51,0.6);
+    color: rgba(51,51,51,0.6);
   }
   .#{$namespace}-dashboard-button-gray:not(.#{$namespace}-dashboard-button-gray-disabled):not(.#{$namespace}-dashboard-button-gray-highlighted):hover {
     background-color: rgba(216,216,216,1);
@@ -505,17 +522,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(216,216,216,1);
   }
   .#{$namespace}-dashboard-button-gray-disabled {
-    background-color: rgba(216,216,216,0.5);
-    border: 1px solid rgba(153,153,153,0.5);
-    color: rgba(153,153,153,0.5);
+    background-color: rgba(216,216,216,0.6);
+    border: 1px solid rgba(153,153,153,0.6);
+    color: rgba(153,153,153,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-red {
-    background-color: rgba(230,195,195,0.75);
-    border: 1px solid rgba(89,49,49,0.75);
-    color: rgba(89,49,49,0.75);
+    background-color: rgba(230,195,195,0.6);
+    border: 1px solid rgba(89,49,49,0.6);
+    color: rgba(89,49,49,0.6);
   }
   .#{$namespace}-dashboard-button-red:not(.#{$namespace}-dashboard-button-red-disabled):not(.#{$namespace}-dashboard-button-red-highlighted):hover {
     background-color: rgba(230,195,195,1);
@@ -528,17 +545,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(230,195,195,1);
   }
   .#{$namespace}-dashboard-button-red-disabled {
-    background-color: rgba(230,195,195,0.75);
-    border: 1px solid rgba(179,134,134,0.75);
-    color: rgba(179,134,134,0.75);
+    background-color: rgba(230,195,195,0.6);
+    border: 1px solid rgba(179,134,134,0.6);
+    color: rgba(179,134,134,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-orange {
-    background-color: rgba(230,213,195,0.75);
-    border: 1px solid rgba(89,69,49,0.75);
-    color: rgba(89,69,49,0.75);
+    background-color: rgba(230,213,195,0.6);
+    border: 1px solid rgba(89,69,49,0.6);
+    color: rgba(89,69,49,0.6);
   }
   .#{$namespace}-dashboard-button-orange:not(.#{$namespace}-dashboard-button-orange-disabled):not(.#{$namespace}-dashboard-button-orange-highlighted):hover {
     background-color: rgba(230,213,195,1);
@@ -551,17 +568,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(230,213,195,1);
   }
   .#{$namespace}-dashboard-button-orange-disabled {
-    background-color: rgba(230,213,195,0.75);
-    border: 1px solid rgba(179,156,134,0.75);
-    color: rgba(179,156,134,0.75);
+    background-color: rgba(230,213,195,0.6);
+    border: 1px solid rgba(179,156,134,0.6);
+    color: rgba(179,156,134,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-yellow {
-    background-color: rgba(230,230,195,0.75);
-    border: 1px solid rgba(89,89,49,0.75);
-    color: rgba(89,89,49,0.75);
+    background-color: rgba(230,230,195,0.6);
+    border: 1px solid rgba(89,89,49,0.6);
+    color: rgba(89,89,49,0.6);
   }
   .#{$namespace}-dashboard-button-yellow:not(.#{$namespace}-dashboard-button-yellow-disabled):not(.#{$namespace}-dashboard-button-yellow-highlighted):hover {
     background-color: rgba(230,230,195,1);
@@ -574,17 +591,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(230,230,195,1);
   }
   .#{$namespace}-dashboard-button-yellow-disabled {
-    background-color: rgba(230,230,195,0.75);
-    border: 1px solid rgba(179,179,134,0.75);
-    color: rgba(179,179,134,0.75);
+    background-color: rgba(230,230,195,0.6);
+    border: 1px solid rgba(179,179,134,0.6);
+    color: rgba(179,179,134,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-green {
-    background-color: rgba(204,230,195,0.75);
-    border: 1px solid rgba(59,89,49,0.75);
-    color: rgba(59,89,49,0.75);
+    background-color: rgba(204,230,195,0.6);
+    border: 1px solid rgba(59,89,49,0.6);
+    color: rgba(59,89,49,0.6);
   }
   .#{$namespace}-dashboard-button-green:not(.#{$namespace}-dashboard-button-green-disabled):not(.#{$namespace}-dashboard-button-green-highlighted):hover {
     background-color: rgba(204,230,195,1);
@@ -597,17 +614,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(204,230,195,1);
   }
   .#{$namespace}-dashboard-button-green-disabled {
-    background-color: rgba(204,230,195,0.75);
-    border: 1px solid rgba(145,179,134,0.75);
-    color: rgba(145,179,134,0.75);
+    background-color: rgba(204,230,195,0.6);
+    border: 1px solid rgba(145,179,134,0.6);
+    color: rgba(145,179,134,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-blue {
-    background-color: rgba(195,210,230,0.75);
-    border: 1px solid rgba(49,66,89,0.75);
-    color: rgba(49,66,89,0.75);
+    background-color: rgba(195,210,230,0.6);
+    border: 1px solid rgba(49,66,89,0.6);
+    color: rgba(49,66,89,0.6);
   }
   .#{$namespace}-dashboard-button-blue:not(.#{$namespace}-dashboard-button-blue-disabled):not(.#{$namespace}-dashboard-button-blue-highlighted):hover {
     background-color: rgba(195,210,230,1);
@@ -620,17 +637,17 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(195,210,230,1);
   }
   .#{$namespace}-dashboard-button-blue-disabled {
-    background-color: rgba(195,210,230,0.75);
-    border: 1px solid rgba(134,153,179,0.75);
-    color: rgba(134,153,179,0.75);
+    background-color: rgba(195,210,230,0.6);
+    border: 1px solid rgba(134,153,179,0.6);
+    color: rgba(134,153,179,0.6);
     pointer-events: none;
     cursor: wait;
   }
 
   .#{$namespace}-dashboard-button-purple {
-    background-color: rgba(221,195,230,0.75);
-    border: 1px solid rgba(80,49,89,0.75);
-    color: rgba(80,49,89,0.75);
+    background-color: rgba(221,195,230,0.6);
+    border: 1px solid rgba(80,49,89,0.6);
+    color: rgba(80,49,89,0.6);
   }
   .#{$namespace}-dashboard-button-purple:not(.#{$namespace}-dashboard-button-purple-disabled):not(.#{$namespace}-dashboard-button-purple-highlighted):hover {
     background-color: rgba(221,195,230,1);
@@ -643,9 +660,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     color: rgba(221,195,230,1);
   }
   .#{$namespace}-dashboard-button-purple-disabled {
-    background-color: rgba(221,195,230,0.75);
-    border: 1px solid rgba(167,134,179,0.75);
-    color: rgba(167,134,179,0.75);
+    background-color: rgba(221,195,230,0.6);
+    border: 1px solid rgba(167,134,179,0.6);
+    color: rgba(167,134,179,0.6);
     pointer-events: none;
     cursor: wait;
   }
