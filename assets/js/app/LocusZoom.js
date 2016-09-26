@@ -437,6 +437,9 @@ LocusZoom.StandardLayout = {
                         field: "recomb:recomb_rate",
                         floor: 0,
                         ceiling: 100
+                    },
+                    transition: {
+                        duration: 200
                     }
                 },
                 {
@@ -483,6 +486,9 @@ LocusZoom.StandardLayout = {
                         floor: 0,
                         upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
+                    },
+                    transition: {
+                        duration: 200
                     },
                     highlighted: {
                         onmouseover: "on",
@@ -540,6 +546,9 @@ LocusZoom.StandardLayout = {
                     selected: {
                         onclick: "toggle_exclusive",
                         onshiftclick: "toggle"
+                    },
+                    transition: {
+                        duration: 200
                     },
                     tooltip: {
                         closable: true,
