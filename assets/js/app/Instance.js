@@ -39,10 +39,11 @@ LocusZoom.Instance = function(id, datasource, layout) {
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.Instance.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
     } else {
-        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.Instance.DefaultLayout);
+        this.layout = layout;
     }
+    LocusZoom.mergeLayouts(this.layout, LocusZoom.Instance.DefaultLayout);
 
     // Create a shortcut to the state in the layout on the instance
     this.state = this.layout.state;
@@ -231,9 +232,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
-            if (this.panels[panel_id].dashboard.selector){
-                this.panels[panel_id].dashboard.position();
-            }
+            this.panels[panel_id].dashboard.position();
         }.bind(this));
     }
 
@@ -675,9 +674,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                             loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                             if (loop_panel_idx > panel_idx){
                                 loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
-                                if (!loop_panel.dashboard.empty()){
-                                    loop_panel.dashboard.position();
-                                }
+                                loop_panel.dashboard.position();
                             }
                         }.bind(this));
                         // Reset dimensions on the entire plot and reposition panel boundaries
@@ -737,7 +734,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Create the dashboard object and hang components on it
+    // Create the dashboard object and immediately show it
     this.dashboard = new LocusZoom.Dashboard(this).show();
 
     // Initialize all panels

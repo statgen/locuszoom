@@ -435,151 +435,6 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.dashboard = new LocusZoom.Dashboard(this);
 
     /*
-    this.dashboard = {
-        parent: this,
-        selector: null,
-        hide_timeout: null,
-        components: [],
-        show: function(){
-            if (!this.selector){
-                this.selector = d3.select(this.parent.parent.svg.node().parentNode)
-                    .insert("div", ".lz-data_layer-tooltip")
-                    .classed("lz-dashboard", true).classed("lz-panel-dashboard", true)
-                    .attr("id", this.parent.getBaseId() + ".dashboard");
-                this.components.forEach(function(component){ component.show(); });
-            }
-            return this.update();
-        },
-        update: function(){
-            if (!this.selector){ return this; }
-            this.components.forEach(function(component){ component.update(); });
-            return this.position();
-        },
-        position: function(){
-            if (!this.selector){ return this; }
-            var page_origin = this.parent.getPageOrigin();
-            var client_rect = this.selector.node().getBoundingClientRect();
-            var top = page_origin.y.toString() + "px";
-            var left = (page_origin.x + this.parent.layout.width - client_rect.width).toString() + "px";
-            this.selector.style({ position: "absolute", top: top, left: left });
-            return this;
-        },
-        hide: function(){
-            if (!this.selector){ return this; }
-            /---
-            // Do not hide if any components are in a persistive state
-            var persist = false;
-            this.components.forEach(function(component){
-                persist = persist || component.persist;
-            });
-            if (persist){ return this; }
-            ---/
-            // Do not hide if actively in an instance-level drag event
-            if (this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging){ return this; }
-            // Hide all components
-            this.components.forEach(function(component){ component.hide(); });
-            // Remove the dashboard element from the DOM
-            this.selector.remove();
-            this.selector = null;
-            return this.dashboard;
-        }
-    };
-
-    // Add components to dashboard from the layout
-    if (Array.isArray(this.layout.dashboard)){
-        this.layout.dashboard.forEach(function(layout){
-            var component = LocusZoom.DashboardComponents.get(layout.type, layout, this.dashboard);
-            this.dashboard.components.push(component);
-        }.bind(this));
-        // Add mouseover event handlers to show/hide panel-level dashboard
-        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".dashboard", function(){
-            clearTimeout(this.dashboard.hide_timeout);
-            this.dashboard.show();
-        }.bind(this));
-        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".dashboard", function(){
-            this.dashboard.hide_timeout = setTimeout(function(){
-                this.dashboard.hide();
-            }.bind(this), 300);
-        }.bind(this));
-    }
-    */
-
-    /*
-
-
-    // Initialize controls element
-    this.controls = {
-        selector: null,
-        hide_timeout: null,
-        showing: false,
-        components: {}
-    };
-    // Show controls: insert controls div after all tooltips (to show above them)
-    this.controls.show = function(){
-        if (this.controls.showing === true){ return this.controls; }
-        if (!this.controls.showing){
-            this.controls.selector = d3.select(this.parent.svg.node().parentNode)
-                .insert("div", ".lz-data_layer-tooltip")
-                .classed("lz-controls", true)
-                .attr("id", this.getBaseId() + ".controls");
-        }
-        this.controls.showing = true;
-        return this.controls.update();
-    }.bind(this);
-    // Update controls: add/remove buttons as needed from controls
-    this.controls.update = function(){
-        if (!this.controls.showing){
-            if (this.state.model.covariates.length){
-                return this.controls.show();
-            } else {
-                return this.controls;
-            }
-        }
-        for (var button_id in this.controls.buttons){
-            this.controls.buttons[button_id].show();
-        }
-        return this.controls.position();
-    }.bind(this);
-    // Position controls: position in top right corner of panel (after update so that size is known)
-    this.controls.position = function(){
-        var page_origin = this.getPageOrigin();
-        var client_rect = this.controls.selector.node().getBoundingClientRect();
-        var top = page_origin.y.toString() + "px";
-        var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
-        this.controls.selector.style({ position: "absolute", top: top, left: left });
-        return this.controls;
-    }.bind(this);
-    // Hide controls: attempt destroy controls element (do not destroy if any buttons within are marked to persist)
-    this.controls.hide = function(force){
-        force = force || false;
-        if (!this.controls.showing){ return this.controls; }
-        // Do not hide anything if actively in a drag event
-        if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
-        // Loop through all buttons and destroy any that are not persisting
-        var persisted_button_ids = [];
-        for (var button_id in this.controls.buttons){
-            if (this.controls.buttons[button_id].persist && !force){
-                persisted_button_ids.push(button_id);
-                continue;
-            } else {
-                this.controls.buttons[button_id].hide();
-            }
-        }
-        // If any buttons persisted then update them now (to trigger repositioning of menus where applicable)
-        // If no buttons persisted then destroy the controls element
-        if (persisted_button_ids.length){
-            this.controls.position();
-            persisted_button_ids.forEach(function(button_id){
-                this.controls.buttons[button_id].update();
-            }.bind(this));
-            this.controls.showing = "persisted";
-        } else {
-            this.controls.selector.remove();
-            this.controls.selector = null;
-            this.controls.showing = false;
-        }
-        return this.controls;
-    }.bind(this);
 
     // Controls button: Model
     if (this.layout.controls.model){
@@ -629,60 +484,6 @@ LocusZoom.Panel.prototype.initialize = function(){
             }
             this.setText(text).disable(false);
         };
-    }
-
-    // Controls button: description
-    if (this.layout.controls.description){
-        this.controls.buttons.description = new LocusZoom.PanelControlsButton("description", this)
-            .setColor("yellow").setText("Info").setTitle("Panel information")
-            .menuPopulate(function(){
-                this.controls.buttons.description.menu.inner_selector.html(this.layout.description);
-            }.bind(this));
-    }
-
-    // Controls button: reposition (two buttons: down and up)
-    if (this.layout.controls.reposition){
-        this.controls.buttons.reposition_down = new LocusZoom.PanelControlsButton("reposition_down", this)
-            .setColor("gray").setText("▾").setTitle("Move panel down")
-            .setOnclick(function(){
-                if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
-                    this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
-                    this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
-                    this.parent.applyPanelYIndexesToPanelLayouts();
-                    this.parent.positionPanels();
-                }
-            }.bind(this));
-        this.controls.buttons.reposition_down.preUpdate = function(){
-            this.status = (this.parent.layout.y_index == this.parent.parent.panel_ids_by_y_index.length - 1) ? "disabled" : "";
-        };
-        this.controls.buttons.reposition_up = new LocusZoom.PanelControlsButton("reposition_up", this)
-            .setColor("gray").setText("▴").setTitle("Move panel up").setStyle({"margin-left": "0em"})
-            .setOnclick(function(){
-                if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
-                    this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
-                    this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
-                    this.parent.applyPanelYIndexesToPanelLayouts();
-                    this.parent.positionPanels();
-                }
-            }.bind(this));
-        this.controls.buttons.reposition_up.preUpdate = function(){
-            this.status = (this.parent.layout.y_index == 0) ? "disabled" : "";
-        };
-    }
-
-    // Controls button: remove
-    if (this.layout.controls.remove){
-        this.controls.buttons.remove = new LocusZoom.PanelControlsButton("remove", this)
-            .setColor("gray").setText("×").setTitle("Remove panel")
-            .setOnclick(function(){
-                this.controls.hide(true);
-                d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
-                d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
-                this.parent.removePanel(this.id);
-            }.bind(this));
-        if (this.layout.controls.reposition){
-            this.controls.buttons.remove.setStyle({"margin-left": "0em" });
-        }
     }
 
     */
@@ -772,6 +573,30 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     return this;
     
+};
+
+
+// Move a panel up relative to others by y-index
+LocusZoom.Panel.prototype.moveUp = function(){
+    if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
+        this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
+        this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
+        this.parent.applyPanelYIndexesToPanelLayouts();
+        this.parent.positionPanels();
+    }
+    return this;
+};
+
+
+// Move a panel down relative to others by y-index
+LocusZoom.Panel.prototype.moveDown = function(){
+    if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
+        this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
+        this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+        this.parent.applyPanelYIndexesToPanelLayouts();
+        this.parent.positionPanels();
+    }
+    return this;
 };
 
 
