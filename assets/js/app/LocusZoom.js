@@ -377,8 +377,18 @@ LocusZoom.StandardLayout = {
                         color: "red"
                     },
                     {
-                        type: "reposition_panel",
+                        type: "move_panel_up",
                         position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    },
+                    {
+                        type: "menu",
+                        position: "right",
+                        button_html: "Details",
+                        menu_html: "Example details (e.g. study abstract, authors, etc.)"
                     }
                 ]
             },
@@ -538,9 +548,13 @@ LocusZoom.StandardLayout = {
                         color: "red"
                     },
                     {
-                        type: "reposition_panel",
+                        type: "move_panel_up",
                         position: "right"
-                    }
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }                    
                 ]
             },
             axes: {},

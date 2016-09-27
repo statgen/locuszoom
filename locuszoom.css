@@ -340,7 +340,9 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 
 .lz-plot-dashboard {
   padding-left: 0px;
-  padding-right: 0px; }
+  padding-right: 0px;
+  padding-top: 3px;
+  padding-bottom: 3px; }
   .lz-plot-dashboard .lz-dashboard-button {
     text-decoration: none;
     padding: 0.2em 0.5em 0.2em 0.5em;
@@ -362,7 +364,9 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 
 .lz-panel-dashboard {
   padding-left: 2px;
-  padding-right: 2px; }
+  padding-right: 2px;
+  padding-top: 2px;
+  padding-bottom: 0px; }
   .lz-panel-dashboard .lz-dashboard-button {
     text-decoration: none;
     padding: 0.1em 0.4em 0.1em 0.4em;
@@ -384,9 +388,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 
 .lz-dashboard {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
-  font-size: 80%;
-  padding-top: 4px;
-  padding-bottom: 4px; }
+  font-size: 80%; }
   .lz-dashboard .lz-dashboard-title {
     font-size: 150%;
     font-weight: bold;
@@ -539,7 +541,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     pointer-events: auto;
     cursor: pointer; }
 
-div.lz-panel-dashboard-menu {
+div.lz-dashboard-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
@@ -547,67 +549,67 @@ div.lz-panel-dashboard-menu {
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4);
   overflow: hidden; }
-  div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content {
+  div.lz-dashboard-menu .lz-dashboard-menu-content {
     display: block;
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    margin-right: 1.5em; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h1, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h2, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h3, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h4, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h5, div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h6 {
+    padding-right: 20px; }
+    div.lz-dashboard-menu .lz-dashboard-menu-content h1, div.lz-dashboard-menu .lz-dashboard-menu-content h2, div.lz-dashboard-menu .lz-dashboard-menu-content h3, div.lz-dashboard-menu .lz-dashboard-menu-content h4, div.lz-dashboard-menu .lz-dashboard-menu-content h5, div.lz-dashboard-menu .lz-dashboard-menu-content h6 {
       margin-top: 0.1em;
       margin-bottom: 0.3em; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h1 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h1 {
       font-size: 200%; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h2 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h2 {
       font-size: 175%; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h3 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h3 {
       font-size: 150%; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h4 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h4 {
       font-size: 135%; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h5 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h5 {
       font-size: 125%; }
-    div.lz-panel-dashboard-menu .lz-panel-dashboard-menu-content h6 {
+    div.lz-dashboard-menu .lz-dashboard-menu-content h6 {
       font-size: 110%; }
-  div.lz-panel-dashboard-menu table {
+  div.lz-dashboard-menu table {
     display: table;
     border-collapse: separate;
     border-spacing: 0px;
     margin-bottom: 0.4em;
     width: 100%; }
-  div.lz-panel-dashboard-menu th:first-child, div.lz-panel-dashboard-menu td:first-child {
+  div.lz-dashboard-menu th:first-child, div.lz-dashboard-menu td:first-child {
     vertical-align: top; }
-  div.lz-panel-dashboard-menu tr:nth-child(2) {
+  div.lz-dashboard-menu tr:nth-child(2) {
     background-color: rgba(0, 0, 0, 0.08); }
-  div.lz-panel-dashboard-menu th, div.lz-panel-dashboard-menu td {
+  div.lz-dashboard-menu th, div.lz-dashboard-menu td {
     padding: 4px;
     text-align: left;
     vertical-align: middle; }
 
-.lz-panel-dashboard-menu-gray {
+.lz-dashboard-menu-gray {
   background-color: #e8e8e8;
   border: 1px solid #333333; }
 
-.lz-panel-dashboard-menu-red {
+.lz-dashboard-menu-red {
   background: #f0e4e4;
   border: 1px solid #593131; }
 
-.lz-panel-dashboard-menu-orange {
+.lz-dashboard-menu-orange {
   background: #f0eae4;
   border: 1px solid #594531; }
 
-.lz-panel-dashboard-menu-yellow {
+.lz-dashboard-menu-yellow {
   background: #f0f0e4;
   border: 1px solid #595931; }
 
-.lz-panel-dashboard-menu-green {
+.lz-dashboard-menu-green {
   background: #e7f0e4;
   border: 1px solid #3b5931; }
 
-.lz-panel-dashboard-menu-blue {
+.lz-dashboard-menu-blue {
   background: #e4e9f0;
   border: 1px solid #314259; }
 
-.lz-panel-dashboard-menu-purple {
+.lz-dashboard-menu-purple {
   background: #ede4f0;
   border: 1px solid #503159; }
 
