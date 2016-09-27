@@ -68,7 +68,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging);
+    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging || this.parent.interactions.dragging);
 }
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
