@@ -582,6 +582,9 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent = parent || null;
     this.svg    = {};
 
+    this.parent_plot = null;
+    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
+
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
@@ -623,12 +626,12 @@ LocusZoom.DataLayer.DefaultLayout = {
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
-    return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    return this.parent_plot.id + "." + this.parent.id + "." + this.id;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging || this.parent.interactions.dragging);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
 }
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -766,7 +769,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     this.tooltips[id] = {
         data: d,
         arrow: null,
-        selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
+        selector: d3.select(this.parent_plot.svg.node().parentNode).append("div")
             .attr("class", "lz-data_layer-tooltip")
             .attr("id", id + "-tooltip")
     };
@@ -992,7 +995,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
-    this.parent.parent.emit("layout_changed");
+    this.parent_plot.emit("layout_changed");
     
 };
 
@@ -1083,7 +1086,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         // Trigger event emitters as needed
         if (event == "click"){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }
     }.bind(this);
     
@@ -1141,7 +1144,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
                                // and then recreated if returning to visibility
 
     // Fetch new data
-    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
         this.initialized = true;
@@ -1194,7 +1197,7 @@ LocusZoom.KnownDataSources = (function() {
             console.warn("Data source added does not have a SOURCE_NAME");
         }
         sources.push(source);
-    };
+   };
 
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
@@ -1948,7 +1951,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         // Apply default event emitters to selection
         selection.on("click", function(element){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
         // Apply selectable, tooltip, etc
@@ -2589,7 +2592,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
                     this.parent.emit("element_clicked", element);
-                    this.parent.parent.emit("element_clicked", element);
+                    this.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas
@@ -3330,7 +3333,7 @@ LocusZoom.Instance.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    resizable: false,
+    responsive_resize: false,
     aspect_ratio: 1,
     panels: [],
     controls: true,
@@ -3373,7 +3376,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
-    if (this.layout.resizable == "responsive"){
+    if (this.layout.responsive_resize){
         this.window_onresize = d3.select(window).on("resize.lz-"+this.id, function(){
             this.rescaleSVG();
         }.bind(this));
@@ -3419,7 +3422,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
         // Override discrete values if resizing responsively
-        if (this.layout.resizable == "responsive"){
+        if (this.layout.responsive_resize){
             if (this.svg){
                 this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
             }
@@ -3463,7 +3466,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
-        if (this.layout.resizable == "responsive"){
+        if (this.layout.responsive_resize){
             this.svg
                 .attr("viewBox", "0 0 " + this.layout.width + " " + this.layout.height)
                 .attr("preserveAspectRatio", "xMinYMin meet");
@@ -3481,8 +3484,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         // Reposition plot curtain and loader
         this.curtain.update();
         this.loader.update();
-        // Reposition UI layer
-        this.ui.render();
     }
 
     this.emit("layout_changed");
@@ -3666,57 +3667,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         horizontal: mouse_guide_horizontal_svg
     };
 
-    // Create an element/layer for containing various UI items
-    var ui_svg = this.svg.append("g")
-        .attr("class", "lz-ui").attr("id", this.id + ".ui")
-        .style("display", "none");
-    this.ui = {
-        svg: ui_svg,
-        parent: this,
-        hide_timeout: null,
-        dragging: false,
-        show: function(){
-            this.svg.style("display", null);
-        },
-        hide: function(){
-            this.svg.style("display", "none");
-        },
-        initialize: function(){
-            // Initialize resize handle
-            if (this.parent.layout.resizable == "manual"){
-                this.resize_handle = this.svg.append("g")
-                    .attr("id", this.parent.id + ".ui.resize_handle");
-                this.resize_handle.append("path")
-                    .attr("class", "lz-ui-resize_handle")
-                    .attr("d", "M 0,16, L 16,0, L 16,16 Z");
-                var resize_drag = d3.behavior.drag();
-                //resize_drag.origin(function() { return this; });
-                resize_drag.on("dragstart", function(){
-                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                    this.dragging = true;
-                }.bind(this));
-                resize_drag.on("dragend", function(){
-                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                    this.dragging = false;
-                }.bind(this));
-                resize_drag.on("drag", function(){
-                    this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
-                }.bind(this.parent));
-                this.resize_handle.call(resize_drag);
-            }
-            // Render all UI elements
-            this.render();
-        },
-        render: function(){
-            // Position resize handle
-            if (this.parent.layout.resizable == "manual"){
-                this.resize_handle
-                    .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
-            }
-        }
-    };
-    this.ui.initialize();
-
     // Create the curtain object with show/update/hide methods
     this.curtain = {
         showing: false,
@@ -3857,13 +3807,16 @@ LocusZoom.Instance.prototype.initialize = function(){
         showing: false,
         dragging: false,
         selectors: [],
+        corner_selector: null,
         show: function(){
             // Generate panel boundaries
             if (!this.showing && !this.parent.curtain.showing){
+                this.showing = true;
+                // Loop through all panels to create a horizontal boundary for each
                 this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
                     var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
-                        .attr("title", "Resize panels");
+                        .attr("title", "Resize panel");
                     selector.append("span");
                     var panel_resize_drag = d3.behavior.drag();
                     panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
@@ -3895,10 +3848,22 @@ LocusZoom.Instance.prototype.initialize = function(){
                     selector.call(panel_resize_drag);
                     this.parent.panel_boundaries.selectors.push(selector);
                 }.bind(this));
-                this.showing = true;
+                // Create a corner boundary / resize element on the bottom-most panel that resizes the entire plot
+                var corner_selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
+                    .attr("class", "lz-panel-corner-boundary")
+                    .attr("title", "Resize plot");
+                corner_selector.append("span").attr("class", "lz-panel-corner-boundary-outer");
+                corner_selector.append("span").attr("class", "lz-panel-corner-boundary-inner");
+                var corner_drag = d3.behavior.drag();
+                corner_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
+                corner_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
+                corner_drag.on("drag", function(){
+                    this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
+                }.bind(this.parent));
+                corner_selector.call(corner_drag);
+                this.parent.panel_boundaries.corner_selector = corner_selector;
             }
-            this.position();
-            return this;
+            return this.position();
         },
         position: function(){
             if (!this.showing){ return this; }
@@ -3918,16 +3883,24 @@ LocusZoom.Instance.prototype.initialize = function(){
                     width: width + "px"
                 });
             }.bind(this));
+            // Position corner selector
+            var corner_padding = 10;
+            var corner_size = 16;
+            this.corner_selector.style({
+                top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + "px",
+                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px",
+            });
             return this;
         },
         hide: function(){
             if (!this.showing){ return this; }
-            // Remove panel boundaries
-            this.selectors.forEach(function(selector){
-                selector.remove();
-            });
-            this.selectors = [];
             this.showing = false;
+            // Remove panel boundaries
+            this.selectors.forEach(function(selector){ selector.remove(); });
+            this.selectors = [];
+            // Remove corner boundary
+            this.corner_selector.remove();
+            this.corner_selector = null;
             return this;
         }
     };
@@ -4073,19 +4046,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         this.panels[id].initialize();
     }
 
-    // Define instance/svg level mouse events
-    this.svg.on("mouseover", function(){
-        if (!this.ui.dragging){
-            clearTimeout(this.ui.hide_timeout);
-            this.ui.show();
-        }
-    }.bind(this));
+    // Define plot-level mouse events
     this.svg.on("mouseout", function(){
-        if (!this.ui.dragging){
-            this.ui.hide_timeout = setTimeout(function(){
-                this.ui.hide();
-            }.bind(this), 300);
-        }
         this.mouse_guide.vertical.attr("x", -1);
         this.mouse_guide.horizontal.attr("y", -1);
     }.bind(this));
@@ -4500,7 +4462,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
     // Position with initial layout parameters
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
+    this.svg.container = this.parent.svg.append("g")
         .attr("id", this.getBaseId() + ".panel_container")
         .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
@@ -4799,7 +4761,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Do not hide if this panel is showing a description
             if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
+            if (this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
             return this.controls;

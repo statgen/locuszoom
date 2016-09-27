@@ -22,6 +22,9 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent = parent || null;
     this.svg    = {};
 
+    this.parent_plot = null;
+    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
+
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
@@ -63,12 +66,12 @@ LocusZoom.DataLayer.DefaultLayout = {
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
-    return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    return this.parent_plot.id + "." + this.parent.id + "." + this.id;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging || this.parent.interactions.dragging);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
 }
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -206,7 +209,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     this.tooltips[id] = {
         data: d,
         arrow: null,
-        selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
+        selector: d3.select(this.parent_plot.svg.node().parentNode).append("div")
             .attr("class", "lz-data_layer-tooltip")
             .attr("id", id + "-tooltip")
     };
@@ -432,7 +435,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
-    this.parent.parent.emit("layout_changed");
+    this.parent_plot.emit("layout_changed");
     
 };
 
@@ -523,7 +526,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         // Trigger event emitters as needed
         if (event == "click"){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }
     }.bind(this);
     
@@ -581,7 +584,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
                                // and then recreated if returning to visibility
 
     // Fetch new data
-    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
         this.initialized = true;

@@ -285,7 +285,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
     // Position with initial layout parameters
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
+    this.svg.container = this.parent.svg.append("g")
         .attr("id", this.getBaseId() + ".panel_container")
         .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
@@ -584,7 +584,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Do not hide if this panel is showing a description
             if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
+            if (this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
             return this.controls;

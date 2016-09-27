@@ -555,6 +555,49 @@ div.#{$namespace}-panel-boundary:hover span {
 }
 
 div.#{$namespace}-panel-boundary:active span {
-  background: rgba(51,51,51,1);
-  border: 1px solid rgba(216,216,216,1);
+  background: rgba(166,166,166,1);
+  border: 1px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-corner-boundary {
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  cursor: nwse-resize;
+  display: block;
+  padding: 10px;
+}
+
+div.#{$namespace}-panel-corner-boundary span.#{$namespace}-panel-corner-boundary-outer {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 16px solid transparent;
+  border-left: 16px solid transparent;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+div.#{$namespace}-panel-corner-boundary span.#{$namespace}-panel-corner-boundary-inner {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 13px solid transparent;
+  border-left: 13px solid transparent;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+div.#{$namespace}-panel-corner-boundary:hover span.#{$namespace}-panel-corner-boundary-outer {
+  border-bottom: 16px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-corner-boundary:hover span.#{$namespace}-panel-corner-boundary-inner {
+  border-bottom: 13px solid rgb(216,216,216);
+}
+
+div.#{$namespace}-panel-corner-boundary:active span.#{$namespace}-panel-corner-boundary-inner {
+  border-bottom: 13px solid rgb(166,166,166);
 }
