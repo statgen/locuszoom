@@ -261,11 +261,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // If the instance has been initialized then trigger some necessary render functions
     if (this.initialized){
-        // Reposition panel boundaries if showing
-        if (this.panel_boundaries && this.panel_boundaries.showing){
-            this.panel_boundaries.position();
-        }
-        // Reposition plot curtain and loader
+        this.panel_boundaries.position();
+        this.dashboard.update();
         this.curtain.update();
         this.loader.update();
     }
@@ -670,7 +667,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             var corner_size = 16;
             this.corner_selector.style({
                 top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + "px",
-                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px",
+                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px"
             });
             return this;
         },

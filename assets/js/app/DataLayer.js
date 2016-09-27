@@ -72,7 +72,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
     return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
-}
+};
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";

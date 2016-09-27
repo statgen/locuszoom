@@ -714,7 +714,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
     return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
-}
+};
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";
@@ -1313,7 +1313,7 @@ LocusZoom.KnownDataSources = (function() {
             console.warn("Data source added does not have a SOURCE_NAME");
         }
         sources.push(source);
-   };
+    };
 
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
@@ -2687,7 +2687,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 };
                 x = function(d){
                     return d.display_range.start;
-                }
+                };
                 y = function(d){
                     return ((d.track-1) * data_layer.getTrackHeight());
                 };
@@ -3195,12 +3195,13 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         var button_client_rect = this.selector.node().getBoundingClientRect();
         var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
         var total_content_height = this.menu.inner_selector.node().scrollHeight;
+        var top = 0; var left = 0;
         if (this.parent_dashboard.type == "panel"){
-            var top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
-            var left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+            top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
+            left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
         } else {
-            var top = (button_client_rect.bottom + padding).toString() + "px";
-            var left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
+            top = (button_client_rect.bottom + padding).toString() + "px";
+            left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
         }
         var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
         var container_max_width = base_max_width.toString() + "px";
@@ -3542,89 +3543,6 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
     };
 });
 
-/*
-// Model covariate shortcut functions
-LocusZoom.Instance.prototype.addModelCovariate = function(element){
-    // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
-    // may have functions that would trip up more basic equality checking
-    for (var i = 0; i < this.state.model.covariates.length; i++) {
-        if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
-            return this;
-        }
-    }
-    this.state.model.covariates.push(element);
-    this.applyState();
-    return this;
-};
-LocusZoom.Instance.prototype.removeModelCovariateByIdx = function(idx){
-    if (typeof this.state.model.covariates[idx] == "undefined"){
-        throw("Unable to remove model covariate, invalid index: " + idx.toString());
-    }
-    this.state.model.covariates.splice(idx, 1);
-    this.applyState();
-    return this;
-};
-LocusZoom.Instance.prototype.removeAllModelCovariates = function(){
-    this.state.model.covariates = [];
-    this.applyState();
-    return this;
-};
-*/
-
-
-    /*
-
-    // Controls button: Model
-    if (this.layout.controls.model){
-        this.controls.buttons.model = new LocusZoom.PanelControlsButton("model", this)
-            .setColor("purple").setText("model").setTitle("Model").setPermanent()
-            .menuPopulate(function(){
-                var selector = this.controls.buttons.model.menu.inner_selector;
-                selector.html("");
-                // General model HTML representation
-                if (typeof this.state.model.html != "undefined"){
-                    selector.append("div").html(this.state.model.html);
-                }
-                // Model covariates table
-                if (!this.state.model.covariates.length){
-                    selector.append("i").text("no covariates in model");
-                } else {
-                    selector.append("h5").html("Model Covariates (" + this.state.model.covariates.length + ")");
-                    var table = selector.append("table");
-                    this.state.model.covariates.forEach(function(covariate, idx){
-                        var html = covariate.toString();
-                        if (typeof covariate == "object" && typeof covariate.toHTML == "function"){
-                            html = covariate.toHTML();
-                        }
-                        var row = table.append("tr");
-                        row.append("td").append("button")
-                            .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                            .style({ "margin-left": "0em" })
-                            .on("click", function(){
-                                this.parent.removeModelCovariateByIdx(idx);
-                            }.bind(this))
-                            .text("×");
-                        row.append("td").html(html);
-                    }.bind(this));
-                    selector.append("button")
-                        .attr("class", "lz-panel-controls-button lz-panel-controls-button-purple")
-                        .style({ "margin-left": "4px" }).html("× Remove All Covariates")
-                        .on("click", function(){
-                            this.parent.removeAllModelCovariates();
-                        }.bind(this));
-                }
-            }.bind(this));
-        this.controls.buttons.model.preUpdate = function(){
-            var text = "Model";
-            if (this.parent.state.model.covariates.length){
-                var cov = this.parent.state.model.covariates.length > 1 ? "covariates" : "covariate";
-                text += " (" + this.parent.state.model.covariates.length + " " + cov + ")";
-            }
-            this.setText(text).disable(false);
-        };
-    };
-
-    */
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
@@ -4451,11 +4369,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // If the instance has been initialized then trigger some necessary render functions
     if (this.initialized){
-        // Reposition panel boundaries if showing
-        if (this.panel_boundaries && this.panel_boundaries.showing){
-            this.panel_boundaries.position();
-        }
-        // Reposition plot curtain and loader
+        this.panel_boundaries.position();
+        this.dashboard.update();
         this.curtain.update();
         this.loader.update();
     }
@@ -4860,7 +4775,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             var corner_size = 16;
             this.corner_selector.style({
                 top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + "px",
-                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px",
+                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px"
             });
             return this;
         },

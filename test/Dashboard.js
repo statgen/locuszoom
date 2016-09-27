@@ -44,6 +44,81 @@ describe('LocusZoom.Dashboard', function(){
         LocusZoom.Dashboard.Components.should.be.an.Object;
     });
 
+    describe("Dimensions Component", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            var layout = {
+                dashboard: {
+                    width: 100,
+                    height: 100,
+                    components: [
+                        {
+                            type: "dimensions"
+                        }
+                    ]
+                },
+                panels: [
+                    {
+                        id: "test",
+                        width: 100,
+                        height: 100
+                    }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+        it("Should show initial plot dimensions", function(){
+            this.plot.dashboard.components[0].selector.html().should.be.exactly("100px × 100px");
+        });
+        it("Should show updated plot dimensions automatically as dimensions change", function(){
+            this.plot.setDimensions(220,330);
+            this.plot.dashboard.components[0].selector.html().should.be.exactly("220px × 330px");
+        });
+    });
+
+    describe("Region Scale Component", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            var layout = {
+                state: {
+                    chr: 1,
+                    start: 126547453,
+                    end: 126847453,
+                },
+                dashboard: {
+                    width: 100,
+                    height: 100,
+                    components: [
+                        {
+                            type: "region_scale"
+                        }
+                    ]
+                }
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+        it("Should show initial region scale from state", function(){
+            this.plot.dashboard.components[0].selector.html().should.be.exactly("300.00 Kb");
+        });
+        it("Should show updated regions scale from state as state region boundaries change", function(){
+            var a = this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 });
+            Q.all(this.plot.remap_promises).then(function(){
+                this.plot.dashboard.components[0].selector.html().should.be.exactly("400.00 Kb");
+                done();
+            }.bind(this));
+        });
+    });
+
     describe("Covariates Model Component", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
