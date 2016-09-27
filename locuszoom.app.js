@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.2"
+    version: "0.4.3"
 };
     
 // Populate a single element with a LocusZoom instance.
@@ -430,6 +430,9 @@ LocusZoom.StandardLayout = {
                         field: "recomb:recomb_rate",
                         floor: 0,
                         ceiling: 100
+                    },
+                    transition: {
+                        duration: 200
                     }
                 },
                 {
@@ -476,6 +479,9 @@ LocusZoom.StandardLayout = {
                         floor: 0,
                         upper_buffer: 0.10,
                         min_extent: [ 0, 10 ]
+                    },
+                    transition: {
+                        duration: 200
                     },
                     highlighted: {
                         onmouseover: "on",
@@ -527,6 +533,9 @@ LocusZoom.StandardLayout = {
                         onclick: "toggle_exclusive",
                         onshiftclick: "toggle"
                     },
+                    transition: {
+                        duration: 200
+                    },
                     tooltip: {
                         closable: true,
                         show: { or: ["highlighted", "selected"] },
@@ -573,6 +582,9 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent = parent || null;
     this.svg    = {};
 
+    this.parent_plot = null;
+    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
+
     this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
@@ -614,8 +626,13 @@ LocusZoom.DataLayer.DefaultLayout = {
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
-    return this.parent.parent.id + "." + this.parent.id + "." + this.id;
+    return this.parent_plot.id + "." + this.parent.id + "." + this.id;
 };
+
+LocusZoom.DataLayer.prototype.canTransition = function(){
+    if (!this.layout.transition){ return false; }
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
+}
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";
@@ -752,7 +769,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
     this.tooltips[id] = {
         data: d,
         arrow: null,
-        selector: d3.select(this.parent.parent.svg.node().parentNode).append("div")
+        selector: d3.select(this.parent_plot.svg.node().parentNode).append("div")
             .attr("class", "lz-data_layer-tooltip")
             .attr("id", id + "-tooltip")
     };
@@ -978,7 +995,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
-    this.parent.parent.emit("layout_changed");
+    this.parent_plot.emit("layout_changed");
     
 };
 
@@ -1069,7 +1086,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
         // Trigger event emitters as needed
         if (event == "click"){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }
     }.bind(this);
     
@@ -1127,7 +1144,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
                                // and then recreated if returning to visibility
 
     // Fetch new data
-    var promise = this.parent.parent.lzd.getData(this.state, this.layout.fields); //,"ld:best"
+    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
         this.initialized = true;
@@ -1180,7 +1197,7 @@ LocusZoom.KnownDataSources = (function() {
             console.warn("Data source added does not have a SOURCE_NAME");
         }
         sources.push(source);
-    };
+   };
 
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
@@ -1888,11 +1905,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             .selectAll("path.lz-data_layer-scatter")
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
-        // Create elements, apply class and ID
+        // Create elements, apply class, ID, and initial position
+        var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-scatter")
-            .attr("id", function(d){ return this.getElementId(d); }.bind(this));
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this))
+            .attr("transform", "translate(0," + initial_y + ")");
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
@@ -1910,8 +1929,8 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
-        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
-        if (this.layout.transition && !dragging){
+
+        if (this.canTransition()){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -1932,7 +1951,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         // Apply default event emitters to selection
         selection.on("click", function(element){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
         // Apply selectable, tooltip, etc
@@ -2130,8 +2149,7 @@ LocusZoom.DataLayers.add("line", function(layout){
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
-        var dragging = this.parent.parent.ui.dragging || this.parent.parent.panel_boundaries.dragging;
-        if (this.layout.transition && !dragging){
+        if (this.canTransition()){
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
@@ -2356,6 +2374,8 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
         this.assignTracks();
 
+        var width, height, x, y;
+
         // Render gene groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-genes")
             .data(this.data, function(d){ return d.gene_name; });
@@ -2374,22 +2394,10 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 bboxes.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-data_layer-genes-bounding_box");
-
+                
                 bboxes
                     .attr("id", function(d){
                         return data_layer.getElementId(d) + "_bounding_box";
-                    })
-                    .attr("x", function(d){
-                        return d.display_range.start;
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight());
-                    })
-                    .attr("width", function(d){
-                        return d.display_range.width;
-                    })
-                    .attr("height", function(){
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
                     })
                     .attr("rx", function(){
                         return data_layer.layout.bounding_box_padding;
@@ -2397,6 +2405,29 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("ry", function(){
                         return data_layer.layout.bounding_box_padding;
                     });
+
+                width = function(d){
+                    return d.display_range.width;
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    bboxes
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    bboxes
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
 
                 bboxes.exit().remove();
 
@@ -2407,22 +2438,33 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-boundary");
 
-                boundaries
-                    .attr("x", function(d){
-                        return data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size
-                            + data_layer.layout.label_exon_spacing
-                            + (Math.max(data_layer.layout.exon_height, 3) / 2);
-                    })
-                    .attr("width", function(d){
-                        return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("height", 1); // This should be scaled dynamically somehow
-
+                width = function(d){
+                    return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                };
+                height = function(){
+                    return 1; // TODO: scale dynamically?
+                };
+                x = function(d){
+                    return data_layer.parent.x_scale(d.start);
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size
+                        + data_layer.layout.label_exon_spacing
+                        + (Math.max(data_layer.layout.exon_height, 3) / 2);
+                };
+                if (data_layer.canTransition()){
+                    boundaries
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    boundaries
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
+                
                 boundaries.exit().remove();
 
                 // Render gene labels
@@ -2433,20 +2475,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("class", "lz-data_layer-genes lz-label");
 
                 labels
-                    .attr("x", function(d){
-                        if (d.display_range.text_anchor == "middle"){
-                            return d.display_range.start + (d.display_range.width / 2);
-                        } else if (d.display_range.text_anchor == "start"){
-                            return d.display_range.start + data_layer.layout.bounding_box_padding;
-                        } else if (d.display_range.text_anchor == "end"){
-                            return d.display_range.end - data_layer.layout.bounding_box_padding;
-                        }
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size;
-                    })
                     .attr("text-anchor", function(d){
                         return d.display_range.text_anchor;
                     })
@@ -2454,6 +2482,31 @@ LocusZoom.DataLayers.add("genes", function(layout){
                         return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name;
                     })
                     .style("font-size", gene.parent.layout.label_font_size);
+
+                x = function(d){
+                    if (d.display_range.text_anchor == "middle"){
+                        return d.display_range.start + (d.display_range.width / 2);
+                    } else if (d.display_range.text_anchor == "start"){
+                        return d.display_range.start + data_layer.layout.bounding_box_padding;
+                    } else if (d.display_range.text_anchor == "end"){
+                        return d.display_range.end - data_layer.layout.bounding_box_padding;
+                    }
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size;
+                };
+                if (data_layer.canTransition()){
+                    labels
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("x", x).attr("y", y);
+                } else {
+                    labels
+                        .attr("x", x).attr("y", y);
+                }
 
                 labels.exit().remove();
 
@@ -2464,22 +2517,31 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 exons.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-exon");
                         
-                exons
-                    .attr("x", function(d){
-                        return data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("y", function(){
-                        return ((gene.track-1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding
-                            + data_layer.layout.label_font_size
-                            + data_layer.layout.label_exon_spacing;
-                    })
-                    .attr("width", function(d){
-                        return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
-                    })
-                    .attr("height", function(){
-                        return data_layer.layout.exon_height;
-                    });
+                width = function(d){
+                    return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
+                };
+                height = function(){
+                    return data_layer.layout.exon_height;
+                };
+                x = function(d){
+                    return data_layer.parent.x_scale(d.start);
+                };
+                y = function(){
+                    return ((gene.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size
+                        + data_layer.layout.label_exon_spacing;
+                };
+                if (data_layer.canTransition()){
+                    exons
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    exons
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
 
                 exons.exit().remove();
 
@@ -2494,18 +2556,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .attr("id", function(d){
                         return data_layer.getElementId(d) + "_clickarea";
                     })
-                    .attr("x", function(d){
-                        return d.display_range.start;
-                    })
-                    .attr("y", function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight());
-                    })
-                    .attr("width", function(d){
-                        return d.display_range.width;
-                    })
-                    .attr("height", function(){
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    })
                     .attr("rx", function(){
                         return data_layer.layout.bounding_box_padding;
                     })
@@ -2513,13 +2563,36 @@ LocusZoom.DataLayers.add("genes", function(layout){
                         return data_layer.layout.bounding_box_padding;
                     });
 
+                width = function(d){
+                    return d.display_range.width;
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                }
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    clickareas
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    clickareas
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
+
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
                     this.parent.emit("element_clicked", element);
-                    this.parent.parent.emit("element_clicked", element);
+                    this.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas
@@ -3260,7 +3333,7 @@ LocusZoom.Instance.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    resizable: false,
+    responsive_resize: false,
     aspect_ratio: 1,
     panels: [],
     controls: true,
@@ -3303,7 +3376,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
-    if (this.layout.resizable == "responsive"){
+    if (this.layout.responsive_resize){
         this.window_onresize = d3.select(window).on("resize.lz-"+this.id, function(){
             this.rescaleSVG();
         }.bind(this));
@@ -3349,7 +3422,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
         // Override discrete values if resizing responsively
-        if (this.layout.resizable == "responsive"){
+        if (this.layout.responsive_resize){
             if (this.svg){
                 this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
             }
@@ -3393,7 +3466,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg != null){
-        if (this.layout.resizable == "responsive"){
+        if (this.layout.responsive_resize){
             this.svg
                 .attr("viewBox", "0 0 " + this.layout.width + " " + this.layout.height)
                 .attr("preserveAspectRatio", "xMinYMin meet");
@@ -3411,8 +3484,6 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         // Reposition plot curtain and loader
         this.curtain.update();
         this.loader.update();
-        // Reposition UI layer
-        this.ui.render();
     }
 
     this.emit("layout_changed");
@@ -3596,57 +3667,6 @@ LocusZoom.Instance.prototype.initialize = function(){
         horizontal: mouse_guide_horizontal_svg
     };
 
-    // Create an element/layer for containing various UI items
-    var ui_svg = this.svg.append("g")
-        .attr("class", "lz-ui").attr("id", this.id + ".ui")
-        .style("display", "none");
-    this.ui = {
-        svg: ui_svg,
-        parent: this,
-        hide_timeout: null,
-        dragging: false,
-        show: function(){
-            this.svg.style("display", null);
-        },
-        hide: function(){
-            this.svg.style("display", "none");
-        },
-        initialize: function(){
-            // Initialize resize handle
-            if (this.parent.layout.resizable == "manual"){
-                this.resize_handle = this.svg.append("g")
-                    .attr("id", this.parent.id + ".ui.resize_handle");
-                this.resize_handle.append("path")
-                    .attr("class", "lz-ui-resize_handle")
-                    .attr("d", "M 0,16, L 16,0, L 16,16 Z");
-                var resize_drag = d3.behavior.drag();
-                //resize_drag.origin(function() { return this; });
-                resize_drag.on("dragstart", function(){
-                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle_dragging");
-                    this.dragging = true;
-                }.bind(this));
-                resize_drag.on("dragend", function(){
-                    this.resize_handle.select("path").attr("class", "lz-ui-resize_handle");
-                    this.dragging = false;
-                }.bind(this));
-                resize_drag.on("drag", function(){
-                    this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
-                }.bind(this.parent));
-                this.resize_handle.call(resize_drag);
-            }
-            // Render all UI elements
-            this.render();
-        },
-        render: function(){
-            // Position resize handle
-            if (this.parent.layout.resizable == "manual"){
-                this.resize_handle
-                    .attr("transform", "translate(" + (this.parent.layout.width - 17) + ", " + (this.parent.layout.height - 17) + ")");
-            }
-        }
-    };
-    this.ui.initialize();
-
     // Create the curtain object with show/update/hide methods
     this.curtain = {
         showing: false,
@@ -3787,13 +3807,16 @@ LocusZoom.Instance.prototype.initialize = function(){
         showing: false,
         dragging: false,
         selectors: [],
+        corner_selector: null,
         show: function(){
             // Generate panel boundaries
             if (!this.showing && !this.parent.curtain.showing){
+                this.showing = true;
+                // Loop through all panels to create a horizontal boundary for each
                 this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx){
                     var selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
                         .attr("class", "lz-panel-boundary")
-                        .attr("title", "Resize panels");
+                        .attr("title", "Resize panel");
                     selector.append("span");
                     var panel_resize_drag = d3.behavior.drag();
                     panel_resize_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
@@ -3825,10 +3848,22 @@ LocusZoom.Instance.prototype.initialize = function(){
                     selector.call(panel_resize_drag);
                     this.parent.panel_boundaries.selectors.push(selector);
                 }.bind(this));
-                this.showing = true;
+                // Create a corner boundary / resize element on the bottom-most panel that resizes the entire plot
+                var corner_selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
+                    .attr("class", "lz-panel-corner-boundary")
+                    .attr("title", "Resize plot");
+                corner_selector.append("span").attr("class", "lz-panel-corner-boundary-outer");
+                corner_selector.append("span").attr("class", "lz-panel-corner-boundary-inner");
+                var corner_drag = d3.behavior.drag();
+                corner_drag.on("dragstart", function(){ this.dragging = true; }.bind(this));
+                corner_drag.on("dragend", function(){ this.dragging = false; }.bind(this));
+                corner_drag.on("drag", function(){
+                    this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
+                }.bind(this.parent));
+                corner_selector.call(corner_drag);
+                this.parent.panel_boundaries.corner_selector = corner_selector;
             }
-            this.position();
-            return this;
+            return this.position();
         },
         position: function(){
             if (!this.showing){ return this; }
@@ -3848,16 +3883,24 @@ LocusZoom.Instance.prototype.initialize = function(){
                     width: width + "px"
                 });
             }.bind(this));
+            // Position corner selector
+            var corner_padding = 10;
+            var corner_size = 16;
+            this.corner_selector.style({
+                top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + "px",
+                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px",
+            });
             return this;
         },
         hide: function(){
             if (!this.showing){ return this; }
-            // Remove panel boundaries
-            this.selectors.forEach(function(selector){
-                selector.remove();
-            });
-            this.selectors = [];
             this.showing = false;
+            // Remove panel boundaries
+            this.selectors.forEach(function(selector){ selector.remove(); });
+            this.selectors = [];
+            // Remove corner boundary
+            this.corner_selector.remove();
+            this.corner_selector = null;
             return this;
         }
     };
@@ -4003,19 +4046,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         this.panels[id].initialize();
     }
 
-    // Define instance/svg level mouse events
-    this.svg.on("mouseover", function(){
-        if (!this.ui.dragging){
-            clearTimeout(this.ui.hide_timeout);
-            this.ui.show();
-        }
-    }.bind(this));
+    // Define plot-level mouse events
     this.svg.on("mouseout", function(){
-        if (!this.ui.dragging){
-            this.ui.hide_timeout = setTimeout(function(){
-                this.ui.hide();
-            }.bind(this), 300);
-        }
         this.mouse_guide.vertical.attr("x", -1);
         this.mouse_guide.horizontal.attr("y", -1);
     }.bind(this));
@@ -4208,21 +4240,13 @@ LocusZoom.Panel = function(layout, parent) {
     this.data_layer_ids_by_z_index = [];
     this.data_promises = [];
 
-    this.x_range  = null;
-    this.y1_range = null;
-    this.y2_range = null;
+    this.x_scale  = null;
+    this.y1_scale = null;
+    this.y2_scale = null;
 
     this.x_extent  = null;
     this.y1_extent = null;
     this.y2_extent = null;
-
-    this.x_extent_shifted = null;
-    this.y1_extent_shifted = null;
-    this.y2_extent_shifted = null;
-
-    this.x_scale_shifted = null;
-    this.y1_scale_shifted = null;
-    this.y2_scale_shifted = null;
 
     this.x_ticks  = [];
     this.y1_ticks = [];
@@ -4438,7 +4462,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
     // Position with initial layout parameters
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
+    this.svg.container = this.parent.svg.append("g")
         .attr("id", this.getBaseId() + ".panel_container")
         .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
@@ -4737,7 +4761,7 @@ LocusZoom.Panel.prototype.initialize = function(){
             // Do not hide if this panel is showing a description
             if (this.controls.description && this.controls.description.showing){ return this.controls; }
             // Do not hide if actively in an instance-level drag event
-            if (this.parent.ui.dragging || this.parent.panel_boundaries.dragging){ return this.controls; }
+            if (this.parent.panel_boundaries.dragging){ return this.controls; }
             this.controls.selector.remove();
             this.controls.selector = null;
             return this.controls;
@@ -4827,6 +4851,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         var mouseup = function(){ this.toggleDragging(); }.bind(this);
         var mousemove = function(){
             if (!this.interactions.dragging){ return; }
+            if (this.interactions.dragging.panel_id != this.id){ return; }
             if (d3.event){ d3.event.preventDefault(); }
             var coords = d3.mouse(this.svg.container.node());
             this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
@@ -4944,9 +4969,9 @@ LocusZoom.Panel.prototype.reMap = function(){
 LocusZoom.Panel.prototype.generateExtents = function(){
 
     // Reset extents
-    this.x_extent = null;
-    this.y1_extent = null;
-    this.y2_extent = null;
+    ["x", "y1", "y2"].forEach(function(axis){
+        this[axis + "_extent"] = null;
+    }.bind(this));
 
     // Loop through the data layers
     for (var id in this.data_layers){
@@ -4974,11 +4999,11 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 };
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(broadcast){
+LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
-    // Whether or not to broadcast some of the products of this function
-    // to other panels (e.g. to link panels together during interaction)
-    if (typeof broadcast == "undefined"){ broadcast = true; }
+    // Whether this function was called as a broadcast of another panel's rendering
+    // (i.e. don't keep broadcasting, skip that step at the bottom of the render loop)
+    if (typeof called_from_broadcast == "undefined"){ called_from_broadcast = false; }
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
@@ -5013,77 +5038,75 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         return value;
     };
 
-    // Define default ranges for all axes
-    if (this.x_extent){ this.x_range = [0, this.layout.cliparea.width]; }
-    if (this.y1_extent){ this.y1_range = [this.layout.cliparea.height, 0]; }
-    if (this.y2_extent){ this.y2_range = [this.layout.cliparea.height, 0]; }
+    // Define default and shifted ranges for all axes
+    var ranges = {};
+    if (this.x_extent){
+        ranges.x = [0, this.layout.cliparea.width];
+        ranges.x_shifted = [0, this.layout.cliparea.width];
+    }
+    if (this.y1_extent){
+        ranges.y1 = [this.layout.cliparea.height, 0];
+        ranges.y1_shifted = [this.layout.cliparea.height, 0];
+    }
+    if (this.y2_extent){
+        ranges.y2 = [this.layout.cliparea.height, 0];
+        ranges.y2_shifted = [this.layout.cliparea.height, 0];
+    }
 
-    // Update ranges based on any drag actions currently underway
+    // Shift ranges based on any drag actions currently underway
     if (this.interactions.zooming && typeof this.x_scale == "function"){
-        this.x_range = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        ranges.x_shifted = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
     } else if (this.interactions.dragging){
         var anchor, scalar = null;
         switch (this.interactions.dragging.method){
         case "background":
-            this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
-            this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
+            ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
+            ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
             break;
         case "x_tick":
             if (d3.event && d3.event.shiftKey){
-                this.x_range[0] = 0 + this.interactions.dragging.dragged_x;
-                this.x_range[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
+                ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
+                ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
             } else {
                 anchor = this.interactions.dragging.start_x - this.layout.margin.left - this.layout.origin.x;
                 scalar = constrain(anchor / (anchor + this.interactions.dragging.dragged_x), 3);
-                this.x_range[0] = 0;
-                this.x_range[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
+                ranges.x_shifted[0] = 0;
+                ranges.x_shifted[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
             }
             break;
         case "y1_tick":
         case "y2_tick":
-            var y_range = "y" + this.interactions.dragging.method[1] + "_range";
+            var y_shifted = "y" + this.interactions.dragging.method[1] + "_shifted";
             if (d3.event && d3.event.shiftKey){
-                this[y_range][0] = this.layout.cliparea.height + this.interactions.dragging.dragged_y;
-                this[y_range][1] = 0 + this.interactions.dragging.dragged_y;
+                ranges[y_shifted][0] = this.layout.cliparea.height + this.interactions.dragging.dragged_y;
+                ranges[y_shifted][1] = 0 + this.interactions.dragging.dragged_y;
             } else {
                 anchor = this.layout.cliparea.height - (this.interactions.dragging.start_y - this.layout.margin.top - this.layout.origin.y);
                 scalar = constrain(anchor / (anchor - this.interactions.dragging.dragged_y), 3);
-                this[y_range][0] = this.layout.cliparea.height;
-                this[y_range][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
+                ranges[y_shifted][0] = this.layout.cliparea.height;
+                ranges[y_shifted][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
             }
         }
     }
 
-    // Generate scale, shifted extent and shifted scale, and ticks for all axes
+    // Generate scales and ticks for all axes
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
         // Base Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"])
-            .range(this[axis + "_range"]);
-        // Shifted Extent and Scale (extent and scale as shifted by a drag action)
-        switch (axis){
-        case "x":
-            this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(0)),
-                                               Math.round(this[axis + "_scale"].invert(this.layout.cliparea.width)) ];
-            this[axis + "_scale_shifted"] = d3.scale.linear()
-                .domain(this[axis + "_extent_shifted"])
-                .range([0, this.layout.cliparea.width]);
-            break;
-        case "y1":
-        case "y2":
-            this[axis + "_extent_shifted"] = [ Math.round(this[axis + "_scale"].invert(this.layout.cliparea.height)),
-                                               Math.round(this[axis + "_scale"].invert(0)) ];
-            this[axis + "_scale_shifted"] = d3.scale.linear()
-                .domain(this[axis + "_extent_shifted"])
-                .range([this.layout.cliparea.height, 0]);
-            break;
-        }
+            .range(ranges[axis + "_shifted"]);
+        // Shift the extent
+        this[axis + "_extent"] = [ Math.round(this[axis + "_scale"].invert(ranges[axis][0])),
+                                   Math.round(this[axis + "_scale"].invert(ranges[axis][1])) ];
+        // Finalize Scale
+        this[axis + "_scale"] = d3.scale.linear()
+                .domain(this[axis + "_extent"]).range(ranges[axis]);
         // Ticks
         if (this.layout.axes[axis].ticks){
             this[axis + "_ticks"] = this.layout.axes[axis].ticks;
         } else {
-            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent_shifted"], "both");
+            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
     }.bind(this));
 
@@ -5113,7 +5136,7 @@ LocusZoom.Panel.prototype.render = function(broadcast){
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
                 this.zoom_timeout = setTimeout(function(){
-                    this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+                    this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }.bind(this), 500);
             }.bind(this))
             .on("zoomend", function(){
@@ -5127,16 +5150,17 @@ LocusZoom.Panel.prototype.render = function(broadcast){
         this.data_layers[data_layer_id].draw().render();
     }.bind(this));
     
-    // Broadcast the interaction and scale on this panel to other axis-linked panels, if necessary
-    if (broadcast && (this.layout.interaction.x_linked || this.layout.interaction.y1_linked || this.layout.interaction.y2_linked)){
+    // Broadcast this panel's interaction, extent, and scale to other axis-linked panels, if necessary
+    if (called_from_broadcast){ return this; }
+    if (this.layout.interaction.x_linked || this.layout.interaction.y1_linked || this.layout.interaction.y2_linked){
         ["x", "y1", "y2"].forEach(function(axis){
             if (!this.layout.interaction[axis + "_linked"]){ return; }
             if (!(this.interactions.zooming || (this.interactions.dragging && this.interactions.dragging["on_" + axis]))){ return; }
             this.parent.panel_ids_by_y_index.forEach(function(panel_id){
                 if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction[axis + "_linked"]){ return; }
-                this.parent.panels[panel_id].interactions = this.interactions;
                 this.parent.panels[panel_id][axis + "_scale"] = this[axis + "_scale"];
-                this.parent.panels[panel_id].render(false);
+                this.parent.panels[panel_id].interactions = this.interactions;
+                this.parent.panels[panel_id].render(true);
             }.bind(this));
         }.bind(this));
     }
@@ -5189,7 +5213,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     })(this[axis+"_ticks"]);
 
     // Initialize the axis; set scale and orientation
-    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale_shifted"]).orient(axis_params[axis].orientation);
+    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale"]).orient(axis_params[axis].orientation);
 
     // Set tick values and format
     if (ticksAreAllNumbers){
@@ -5246,7 +5270,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
         if (this.layout.interaction["drag_" + axis + "_ticks_to_scale"]){
             var tick_mouseover = function(){
-                d3.select(this).node().focus();
+                if (typeof d3.select(this).node().focus == "function"){ d3.select(this).node().focus(); }
                 var cursor = (axis == "x") ? "ew-resize" : "ns-resize";
                 if (d3.event && d3.event.shiftKey){ cursor = "move"; }
                 d3.select(this)
@@ -5293,15 +5317,15 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         case "background":
         case "x_tick":
             if (this.interactions.dragging.dragged_x != 0){
-                overrideAxisLayout("x", 1, this.x_extent_shifted);
-                this.parent.applyState({ start: this.x_extent_shifted[0], end: this.x_extent_shifted[1] });
+                overrideAxisLayout("x", 1, this.x_extent);
+                this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
             }
             break;
         case "y1_tick":
         case "y2_tick":
             if (this.interactions.dragging.dragged_y != 0){
                 var y_axis_number = this.interactions.dragging.method[1];
-                overrideAxisLayout("y", y_axis_number, this["y"+y_axis_number+"_extent_shifted"]);
+                overrideAxisLayout("y", y_axis_number, this["y"+y_axis_number+"_extent"]);
             }
             break;
         }
@@ -5311,6 +5335,7 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging = {
             method: method,
+            panel_id: this.id,
             start_x: coords[0],
             start_y: coords[1],
             dragged_x: 0,
