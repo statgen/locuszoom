@@ -384,6 +384,7 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
+    /*
     describe("Model and Model Covariate Methods", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
@@ -433,5 +434,6 @@ describe('LocusZoom.Instance', function(){
             this.plot.state.model.covariates.length.should.be.exactly(0);
         });
     });
+    */
 
 });

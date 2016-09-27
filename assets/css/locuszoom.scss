@@ -445,7 +445,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 
   .#{$namespace}-dashboard-button {
     text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
+    padding: 3px 7px 3px 7px;
     height: auto;
     line-height: inherit;  
     border-radius: 4px;
@@ -453,18 +453,21 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     outline: none;
     white-space: nowrap;
     cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
   }
 
 }
 
 .#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
   float: left;
-  margin-right: 2em;
+  margin-right: 1.5em;
 }
 
 .#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-right {
   float: right;
-  margin-left: 2em;
+  margin-left: 1.5em;
 }
 
 .#{$namespace}-panel-dashboard {
@@ -475,7 +478,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 
   .#{$namespace}-dashboard-button {
     text-decoration: none;
-    padding: 0.1em 0.4em 0.1em 0.4em;
+    padding: 2px 6px 2px 6px;
     height: auto;
     line-height: inherit;  
     border-radius: 3px;
@@ -483,6 +486,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     outline: none;
     white-space: nowrap;
     cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
   }
 
 }
@@ -508,192 +514,6 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     margin-bottom: 0.3em;
   }
 
-  .#{$namespace}-dashboard-button-gray {
-    background-color: rgba(216,216,216,0.6);
-    border: 1px solid rgba(51,51,51,0.6);
-    color: rgba(51,51,51,0.6);
-  }
-  .#{$namespace}-dashboard-button-gray:not(.#{$namespace}-dashboard-button-gray-disabled):not(.#{$namespace}-dashboard-button-gray-highlighted):hover {
-    background-color: rgba(216,216,216,1);
-    border: 1px solid rgba(51,51,51,1);
-    color: rgba(51,51,51,1);
-  }
-  .#{$namespace}-dashboard-button-gray-highlighted {
-    border: 1px solid rgba(51,51,51,1);
-    background-color: rgba(51,51,51,1);
-    color: rgba(216,216,216,1);
-  }
-  .#{$namespace}-dashboard-button-gray-disabled {
-    background-color: rgba(216,216,216,0.6);
-    border: 1px solid rgba(153,153,153,0.6);
-    color: rgba(153,153,153,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-red {
-    background-color: rgba(230,195,195,0.6);
-    border: 1px solid rgba(89,49,49,0.6);
-    color: rgba(89,49,49,0.6);
-  }
-  .#{$namespace}-dashboard-button-red:not(.#{$namespace}-dashboard-button-red-disabled):not(.#{$namespace}-dashboard-button-red-highlighted):hover {
-    background-color: rgba(230,195,195,1);
-    border: 1px solid rgba(89,49,49,1);
-    color: rgba(89,49,49,1);
-  }
-  .#{$namespace}-dashboard-button-red-highlighted {
-    border: 1px solid rgba(89,49,49,1);
-    background-color: rgba(89,49,49,1);
-    color: rgba(230,195,195,1);
-  }
-  .#{$namespace}-dashboard-button-red-disabled {
-    background-color: rgba(230,195,195,0.6);
-    border: 1px solid rgba(179,134,134,0.6);
-    color: rgba(179,134,134,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-orange {
-    background-color: rgba(230,213,195,0.6);
-    border: 1px solid rgba(89,69,49,0.6);
-    color: rgba(89,69,49,0.6);
-  }
-  .#{$namespace}-dashboard-button-orange:not(.#{$namespace}-dashboard-button-orange-disabled):not(.#{$namespace}-dashboard-button-orange-highlighted):hover {
-    background-color: rgba(230,213,195,1);
-    border: 1px solid rgba(89,69,49,1);
-    color: rgba(89,69,49,1);
-  }
-  .#{$namespace}-dashboard-button-orange-highlighted {
-    border: 1px solid rgba(89,69,49,1);
-    background-color: rgba(89,69,49,1);
-    color: rgba(230,213,195,1);
-  }
-  .#{$namespace}-dashboard-button-orange-disabled {
-    background-color: rgba(230,213,195,0.6);
-    border: 1px solid rgba(179,156,134,0.6);
-    color: rgba(179,156,134,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-yellow {
-    background-color: rgba(230,230,195,0.6);
-    border: 1px solid rgba(89,89,49,0.6);
-    color: rgba(89,89,49,0.6);
-  }
-  .#{$namespace}-dashboard-button-yellow:not(.#{$namespace}-dashboard-button-yellow-disabled):not(.#{$namespace}-dashboard-button-yellow-highlighted):hover {
-    background-color: rgba(230,230,195,1);
-    border: 1px solid rgba(89,89,49,1);
-    color: rgba(89,89,49,1);
-  }
-  .#{$namespace}-dashboard-button-yellow-highlighted {
-    border: 1px solid rgba(89,89,49,1);
-    background-color: rgba(89,89,49,1);
-    color: rgba(230,230,195,1);
-  }
-  .#{$namespace}-dashboard-button-yellow-disabled {
-    background-color: rgba(230,230,195,0.6);
-    border: 1px solid rgba(179,179,134,0.6);
-    color: rgba(179,179,134,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-green {
-    background-color: rgba(204,230,195,0.6);
-    border: 1px solid rgba(59,89,49,0.6);
-    color: rgba(59,89,49,0.6);
-  }
-  .#{$namespace}-dashboard-button-green:not(.#{$namespace}-dashboard-button-green-disabled):not(.#{$namespace}-dashboard-button-green-highlighted):hover {
-    background-color: rgba(204,230,195,1);
-    border: 1px solid rgba(59,89,49,1);
-    color: rgba(59,89,49,1);
-  }
-  .#{$namespace}-dashboard-button-green-highlighted {
-    border: 1px solid rgba(59,89,49,1);
-    background-color: rgba(59,89,49,1);
-    color: rgba(204,230,195,1);
-  }
-  .#{$namespace}-dashboard-button-green-disabled {
-    background-color: rgba(204,230,195,0.6);
-    border: 1px solid rgba(145,179,134,0.6);
-    color: rgba(145,179,134,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-blue {
-    background-color: rgba(195,210,230,0.6);
-    border: 1px solid rgba(49,66,89,0.6);
-    color: rgba(49,66,89,0.6);
-  }
-  .#{$namespace}-dashboard-button-blue:not(.#{$namespace}-dashboard-button-blue-disabled):not(.#{$namespace}-dashboard-button-blue-highlighted):hover {
-    background-color: rgba(195,210,230,1);
-    border: 1px solid rgba(49,66,89,1);
-    color: rgba(49,66,89,1);
-  }
-  .#{$namespace}-dashboard-button-blue-highlighted {
-    border: 1px solid rgba(49,66,89,1);
-    background-color: rgba(49,66,89,1);
-    color: rgba(195,210,230,1);
-  }
-  .#{$namespace}-dashboard-button-blue-disabled {
-    background-color: rgba(195,210,230,0.6);
-    border: 1px solid rgba(134,153,179,0.6);
-    color: rgba(134,153,179,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-  .#{$namespace}-dashboard-button-purple {
-    background-color: rgba(221,195,230,0.6);
-    border: 1px solid rgba(80,49,89,0.6);
-    color: rgba(80,49,89,0.6);
-  }
-  .#{$namespace}-dashboard-button-purple:not(.#{$namespace}-dashboard-button-purple-disabled):not(.#{$namespace}-dashboard-button-purple-highlighted):hover {
-    background-color: rgba(221,195,230,1);
-    border: 1px solid rgba(80,49,89,1);
-    color: rgba(80,49,89,1);
-  }
-  .#{$namespace}-dashboard-button-purple-highlighted {
-    border: 1px solid rgba(80,49,89,1);
-    background-color: rgba(80,49,89,1);
-    color: rgba(221,195,230,1);
-  }
-  .#{$namespace}-dashboard-button-purple-disabled {
-    background-color: rgba(221,195,230,0.6);
-    border: 1px solid rgba(167,134,179,0.6);
-    color: rgba(167,134,179,0.6);
-    pointer-events: none;
-    cursor: wait;
-  }
-
-}
-
-.#{$namespace}-panel-dashboard {
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
-  font-size: 80%;
-  padding-top: 3px;
-  padding-right: 3px;
-  position: absolute;
-  
-  .#{$namespace}-panel-dashboard-button {
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 11px;
-    height: auto;
-    line-height: 100%;
-    text-transform: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    margin-left: 3px;
-    border-radius: 4px;
-    outline: none;
-    white-space: nowrap;
-    pointer-events: auto;
-    cursor: pointer;
-  }
-  
 }
 
 div.#{$namespace}-dashboard-menu {
@@ -724,6 +544,21 @@ div.#{$namespace}-dashboard-menu {
     h5 { font-size: 125%; }
     h6 { font-size: 110%; }
 
+    .#{$namespace}-dashboard-button {
+      text-decoration: none;
+      padding: 2px 6px 2px 6px;
+      height: auto;
+      line-height: inherit;  
+      border-radius: 3px;
+      pointer-events: auto;
+      outline: none;
+      white-space: nowrap;
+      cursor: pointer;
+      box-sizing: border-box;
+      align-items: flex-start;
+      text-align: center;
+    }
+
   }
 
   table {
@@ -744,6 +579,167 @@ div.#{$namespace}-dashboard-menu {
     text-align: left;
     vertical-align: middle;
   }
+}
+
+.#{$namespace}-dashboard-button-gray {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(51,51,51,0.6);
+  color: rgba(51,51,51,0.6);
+}
+.#{$namespace}-dashboard-button-gray:not(.#{$namespace}-dashboard-button-gray-disabled):not(.#{$namespace}-dashboard-button-gray-highlighted):hover {
+  background-color: rgba(216,216,216,1);
+  border: 1px solid rgba(51,51,51,1);
+  color: rgba(51,51,51,1);
+}
+.#{$namespace}-dashboard-button-gray-highlighted {
+  border: 1px solid rgba(51,51,51,1);
+  background-color: rgba(51,51,51,1);
+  color: rgba(216,216,216,1);
+}
+.#{$namespace}-dashboard-button-gray-disabled {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(153,153,153,0.6);
+  color: rgba(153,153,153,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-red {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(89,49,49,0.6);
+  color: rgba(89,49,49,0.6);
+}
+.#{$namespace}-dashboard-button-red:not(.#{$namespace}-dashboard-button-red-disabled):not(.#{$namespace}-dashboard-button-red-highlighted):hover {
+  background-color: rgba(230,195,195,1);
+  border: 1px solid rgba(89,49,49,1);
+  color: rgba(89,49,49,1);
+}
+.#{$namespace}-dashboard-button-red-highlighted {
+  border: 1px solid rgba(89,49,49,1);
+  background-color: rgba(89,49,49,1);
+  color: rgba(230,195,195,1);
+}
+.#{$namespace}-dashboard-button-red-disabled {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(179,134,134,0.6);
+  color: rgba(179,134,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-orange {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(89,69,49,0.6);
+  color: rgba(89,69,49,0.6);
+}
+.#{$namespace}-dashboard-button-orange:not(.#{$namespace}-dashboard-button-orange-disabled):not(.#{$namespace}-dashboard-button-orange-highlighted):hover {
+  background-color: rgba(230,213,195,1);
+  border: 1px solid rgba(89,69,49,1);
+  color: rgba(89,69,49,1);
+}
+.#{$namespace}-dashboard-button-orange-highlighted {
+  border: 1px solid rgba(89,69,49,1);
+  background-color: rgba(89,69,49,1);
+  color: rgba(230,213,195,1);
+}
+.#{$namespace}-dashboard-button-orange-disabled {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(179,156,134,0.6);
+  color: rgba(179,156,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-yellow {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(89,89,49,0.6);
+  color: rgba(89,89,49,0.6);
+}
+.#{$namespace}-dashboard-button-yellow:not(.#{$namespace}-dashboard-button-yellow-disabled):not(.#{$namespace}-dashboard-button-yellow-highlighted):hover {
+  background-color: rgba(230,230,195,1);
+  border: 1px solid rgba(89,89,49,1);
+  color: rgba(89,89,49,1);
+}
+.#{$namespace}-dashboard-button-yellow-highlighted {
+  border: 1px solid rgba(89,89,49,1);
+  background-color: rgba(89,89,49,1);
+  color: rgba(230,230,195,1);
+}
+.#{$namespace}-dashboard-button-yellow-disabled {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(179,179,134,0.6);
+  color: rgba(179,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-green {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(59,89,49,0.6);
+  color: rgba(59,89,49,0.6);
+}
+.#{$namespace}-dashboard-button-green:not(.#{$namespace}-dashboard-button-green-disabled):not(.#{$namespace}-dashboard-button-green-highlighted):hover {
+  background-color: rgba(204,230,195,1);
+  border: 1px solid rgba(59,89,49,1);
+  color: rgba(59,89,49,1);
+}
+.#{$namespace}-dashboard-button-green-highlighted {
+  border: 1px solid rgba(59,89,49,1);
+  background-color: rgba(59,89,49,1);
+  color: rgba(204,230,195,1);
+}
+.#{$namespace}-dashboard-button-green-disabled {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(145,179,134,0.6);
+  color: rgba(145,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-blue {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(49,66,89,0.6);
+  color: rgba(49,66,89,0.6);
+}
+.#{$namespace}-dashboard-button-blue:not(.#{$namespace}-dashboard-button-blue-disabled):not(.#{$namespace}-dashboard-button-blue-highlighted):hover {
+  background-color: rgba(195,210,230,1);
+  border: 1px solid rgba(49,66,89,1);
+  color: rgba(49,66,89,1);
+}
+.#{$namespace}-dashboard-button-blue-highlighted {
+  border: 1px solid rgba(49,66,89,1);
+  background-color: rgba(49,66,89,1);
+  color: rgba(195,210,230,1);
+}
+.#{$namespace}-dashboard-button-blue-disabled {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(134,153,179,0.6);
+  color: rgba(134,153,179,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-purple {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(80,49,89,0.6);
+  color: rgba(80,49,89,0.6);
+}
+.#{$namespace}-dashboard-button-purple:not(.#{$namespace}-dashboard-button-purple-disabled):not(.#{$namespace}-dashboard-button-purple-highlighted):hover {
+  background-color: rgba(221,195,230,1);
+  border: 1px solid rgba(80,49,89,1);
+  color: rgba(80,49,89,1);
+}
+.#{$namespace}-dashboard-button-purple-highlighted {
+  border: 1px solid rgba(80,49,89,1);
+  background-color: rgba(80,49,89,1);
+  color: rgba(221,195,230,1);
+}
+.#{$namespace}-dashboard-button-purple-disabled {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(167,134,179,0.6);
+  color: rgba(167,134,179,0.6);
+  pointer-events: none;
+  cursor: wait;
 }
 
 .#{$namespace}-dashboard-menu-gray {

@@ -342,6 +342,12 @@ LocusZoom.StandardLayout = {
                 position: "left"
             },
             {
+                type: "covariates_model",
+                position: "right",
+                button_html: "Covariates",
+                color: "purple"
+            },
+            {
                 type: "dimensions",
                 position: "right"
             },
@@ -524,7 +530,7 @@ LocusZoom.StandardLayout = {
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.addModelCovariate(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
+                            + "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
                     }
                 }
             ]

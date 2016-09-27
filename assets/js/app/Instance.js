@@ -112,11 +112,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
 // Default Layout
 LocusZoom.Instance.DefaultLayout = {
-    state: {
-        model: {
-            covariates: []
-        }
-    },
+    state: {},
     width: 1,
     height: 1,
     min_width: 1,
@@ -232,7 +228,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
-            this.panels[panel_id].dashboard.position();
+            this.panels[panel_id].dashboard.update();
         }.bind(this));
     }
 
@@ -732,33 +728,6 @@ LocusZoom.Instance.prototype.initialize = function(){
     
     return this;
 
-};
-
-// Model covariate shortcut functions
-LocusZoom.Instance.prototype.addModelCovariate = function(element){
-    // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
-    // may have functions that would trip up more basic equality checking
-    for (var i = 0; i < this.state.model.covariates.length; i++) {
-        if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
-            return this;
-        }
-    }
-    this.state.model.covariates.push(element);
-    this.applyState();
-    return this;
-};
-LocusZoom.Instance.prototype.removeModelCovariateByIdx = function(idx){
-    if (typeof this.state.model.covariates[idx] == "undefined"){
-        throw("Unable to remove model covariate, invalid index: " + idx.toString());
-    }
-    this.state.model.covariates.splice(idx, 1);
-    this.applyState();
-    return this;
-};
-LocusZoom.Instance.prototype.removeAllModelCovariates = function(){
-    this.state.model.covariates = [];
-    this.applyState();
-    return this;
 };
 
 // Map an entire LocusZoom Instance to a new region

@@ -23,6 +23,7 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
 var test_js_files = ["./test/LocusZoom.js",
                      "./test/DataLayer.js",
                      "./test/Singletons.js",
+                     "./test/Dashboard.js",
                      "./test/Data.js",
                      "./test/Instance.js",
                      "./test/Panel.js"
