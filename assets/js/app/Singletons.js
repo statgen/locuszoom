@@ -42,7 +42,7 @@ LocusZoom.KnownDataSources = (function() {
             console.warn("Data source added does not have a SOURCE_NAME");
         }
         sources.push(source);
-    };
+   };
 
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
@@ -796,7 +796,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         // Apply default event emitters to selection
         selection.on("click", function(element){
             this.parent.emit("element_clicked", element);
-            this.parent.parent.emit("element_clicked", element);
+            this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
         // Apply selectable, tooltip, etc
@@ -1437,7 +1437,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
                     this.parent.emit("element_clicked", element);
-                    this.parent.parent.emit("element_clicked", element);
+                    this.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
                 // Apply selectable, tooltip, etc to clickareas

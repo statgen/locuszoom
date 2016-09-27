@@ -633,5 +633,42 @@ div.lz-panel-boundary:hover span {
   border: 1px solid rgba(24, 24, 24, 1); }
 
 div.lz-panel-boundary:active span {
-  background: #333333;
-  border: 1px solid #d8d8d8; }
+  background: #a6a6a6;
+  border: 1px solid rgba(24, 24, 24, 1); }
+
+div.lz-panel-corner-boundary {
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  cursor: nwse-resize;
+  display: block;
+  padding: 10px; }
+
+div.lz-panel-corner-boundary span.lz-panel-corner-boundary-outer {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 16px solid transparent;
+  border-left: 16px solid transparent;
+  position: absolute;
+  top: 10px;
+  left: 10px; }
+
+div.lz-panel-corner-boundary span.lz-panel-corner-boundary-inner {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 13px solid transparent;
+  border-left: 13px solid transparent;
+  position: absolute;
+  top: 12px;
+  left: 12px; }
+
+div.lz-panel-corner-boundary:hover span.lz-panel-corner-boundary-outer {
+  border-bottom: 16px solid rgba(24, 24, 24, 1); }
+
+div.lz-panel-corner-boundary:hover span.lz-panel-corner-boundary-inner {
+  border-bottom: 13px solid #d8d8d8; }
+
+div.lz-panel-corner-boundary:active span.lz-panel-corner-boundary-inner {
+  border-bottom: 13px solid #a6a6a6; }

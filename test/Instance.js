@@ -55,7 +55,6 @@ describe('LocusZoom.Instance', function(){
                 height: 100,
                 min_width: 1,
                 min_height: 1,
-                resizable: false,
                 aspect_ratio: 1,
                 panels: [],
                 controls: false
@@ -129,7 +128,7 @@ describe('LocusZoom.Instance', function(){
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function(){
             var responsive_layout = LocusZoom.mergeLayouts({
-                resizable: "responsive",
+                resposnive_resize: true,
                 aspect_ratio: 2,
                 panels: [
                     { id: "positions", proportional_width: 1, proportional_height: 0.6, min_height: 60 },
@@ -157,19 +156,19 @@ describe('LocusZoom.Instance', function(){
         });
         it('should not allow for a non-numerical / non-positive predefined aspect ratio', function(){
             assert.throws(function(){
-                var responsive_layout = { resizable: "responsive", aspect_ratio: 0 };
+                var responsive_layout = { responsive_resize: true, aspect_ratio: 0 };
                 this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
-                var responsive_layout = { resizable: "responsive", aspect_ratio: -1 };
+                var responsive_layout = { responsive_resize: true, aspect_ratio: -1 };
                 this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
-                var responsive_layout = { resizable: "responsive", aspect_ratio: "foo" };
+                var responsive_layout = { responsive_resize: true, aspect_ratio: "foo" };
                 this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
             assert.throws(function(){
-                var responsive_layout = { resizable: "responsive", aspect_ratio: [1,2,3] };
+                var responsive_layout = { responsive_resize: true, aspect_ratio: [1,2,3] };
                 this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             });
         });
@@ -194,39 +193,6 @@ describe('LocusZoom.Instance', function(){
                 assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
             });
         });
-        describe("UI Layer", function() {
-            beforeEach(function(){
-                d3.select("body").append("div").attr("id", "plot");
-                this.instance = LocusZoom.populate("#plot");
-            });
-            it('last child should be a ui group element', function(){
-                var childNodes = this.instance.svg.node().childNodes.length;
-                d3.select(this.instance.svg.node().childNodes[childNodes-1]).attr("id").should.be.exactly("plot.ui");
-                d3.select(this.instance.svg.node().childNodes[childNodes-1]).attr("class").should.be.exactly("lz-ui");
-            });
-            it('should have a ui object with ui svg selectors', function(){
-                this.instance.ui.should.be.an.Object;
-                this.instance.ui.svg.should.be.an.Object;
-                assert.equal(this.instance.ui.svg.html(), this.instance.svg.select("#plot\\.ui").html());
-                if (this.instance.layout.resizable == "manual"){
-                    assert.equal(this.instance.ui.resize_handle.html(), this.instance.svg.select("#plot\\.ui\\.resize_handle").html());
-                }
-            });
-            it('should be hidden by default', function(){
-                assert.equal(this.instance.ui.svg.style("display"), "none");
-            });
-            it('should have a method that shows the UI layer', function(){
-                this.instance.ui.show.should.be.a.Function;
-                this.instance.ui.show();
-                assert.equal(this.instance.ui.svg.style("display"), "");
-            });
-            it('should have a method that hides the UI layer', function(){
-                this.instance.ui.hide.should.be.a.Function;
-                this.instance.ui.show();
-                this.instance.ui.hide();
-                assert.equal(this.instance.ui.svg.style("display"), "none");
-            });
-        });
     });
 
     describe("Dynamic Panel Positioning", function() {
@@ -237,7 +203,6 @@ describe('LocusZoom.Instance', function(){
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                resizable: false,
                 aspect_ratio: 1,
                 panels: [],
                 controls: false

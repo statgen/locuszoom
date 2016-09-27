@@ -283,7 +283,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
     // Position with initial layout parameters
-    this.svg.container = this.parent.svg.insert("svg:g", "#" + this.parent.id + "\\.ui")
+    this.svg.container = this.parent.svg.append("g")
         .attr("id", this.getBaseId() + ".panel_container")
         .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 
@@ -482,8 +482,37 @@ LocusZoom.Panel.prototype.initialize = function(){
                 var cov = this.parent.state.model.covariates.length > 1 ? "covariates" : "covariate";
                 text += " (" + this.parent.state.model.covariates.length + " " + cov + ")";
             }
+<<<<<<< HEAD
             this.setText(text).disable(false);
         };
+=======
+            return this.controls;
+        }.bind(this),
+        hide: function(){
+            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
+            // Do not hide if this panel is showing a description
+            if (this.controls.description && this.controls.description.showing){ return this.controls; }
+            // Do not hide if actively in an instance-level drag event
+            if (this.parent.panel_boundaries.dragging){ return this.controls; }
+            this.controls.selector.remove();
+            this.controls.selector = null;
+            return this.controls;
+        }.bind(this)
+    };
+
+    // If controls are defined add mouseover controls to the plot container to show/hide them
+    if (this.layout.controls){
+        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
+            clearTimeout(this.controls.hide_timeout);
+            this.controls.show();
+            this.controls.position();
+        }.bind(this));
+        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
+            this.controls.hide_timeout = setTimeout(function(){
+                this.controls.hide();
+            }.bind(this), 300);
+        }.bind(this));
+>>>>>>> 8161cfb062deed4fde1813de03378575d5081437
     }
 
     */
