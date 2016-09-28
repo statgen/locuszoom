@@ -530,23 +530,23 @@ LocusZoom.Dashboard.Components.add("region_scale", function(layout){
     };
 });
 
-// Download SVG component - button to export current plot to an SVG
-LocusZoom.Dashboard.Components.add("download_svg", function(layout){
+// Download component - button to export current plot to an SVG image
+LocusZoom.Dashboard.Components.add("download", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("Download SVG").setTitle("Download SVG as locuszoom.svg")
+            .setColor(layout.color).setText("Download Image").setTitle("Download image of the current plot as locuszoom.svg")
             .setOnMouseover(function() {
                 this.button.selector
                     .classed("lz-dashboard-button-gray-disabled", true)
-                    .text("Preparing SVG");
+                    .text("Preparing Image");
                 this.generateBase64SVG().then(function(base64_string){
                     this.button.selector
                         .attr("href", "data:image/svg+xml;base64,\n" + base64_string)
                         .classed("lz-dashboard-button-gray-disabled", false)
                         .classed("lz-dashboard-button-gray-highlighted", true)
-                        .text("Download SVG");
+                        .text("Download Image");
                 }.bind(this));
             }.bind(this))
             .setOnMouseout(function() {

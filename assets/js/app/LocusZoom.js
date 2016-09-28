@@ -342,12 +342,6 @@ LocusZoom.StandardLayout = {
                 position: "left"
             },
             {
-                type: "covariates_model",
-                position: "right",
-                button_html: "Covariates",
-                color: "purple"
-            },
-            {
                 type: "dimensions",
                 position: "right"
             },
@@ -356,7 +350,7 @@ LocusZoom.StandardLayout = {
                 position: "right"
             },
             {
-                type: "download_svg",
+                type: "download",
                 position: "right"
             }
         ]
@@ -389,12 +383,6 @@ LocusZoom.StandardLayout = {
                     {
                         type: "move_panel_down",
                         position: "right"
-                    },
-                    {
-                        type: "menu",
-                        position: "right",
-                        button_html: "Details",
-                        menu_html: "Example details (e.g. study abstract, authors, etc.)"
                     }
                 ]
             },
