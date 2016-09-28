@@ -30,6 +30,14 @@ LocusZoom.Dashboard = function(parent){
     this.components = [];
     this.hide_timeout = null;
 
+    this.parentIsDragging = function(){
+        if (this.type == "plot"){
+            return this.parent.panel_boundaries.dragging;
+        } else {
+            return this.parent.parent.panel_boundaries.dragging || this.parent.interactions.dragging;
+        }
+    };
+
     return this.initialize();
 
 };
@@ -123,7 +131,7 @@ LocusZoom.Dashboard.prototype.hide = function(){
     if (persist){ return this; }
 
     // Do not hide if actively in an instance-level drag event
-    if (this.parent.parent.panel_boundaries.dragging || this.parent.interactions.dragging){ return this; }
+    if (this.parentIsDragging()){ return this; }
 
     // Hide all components
     this.components.forEach(function(component){ component.hide(); });
@@ -393,91 +401,91 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return this;
     };    
 
-    // Menu object and dashboard
+    // Button Menu Object
+    // The menu is an HTML overlay that can appear below a button. It can contain arbitrary HTML and
+    // has logic to be automatically positioned and sized to behave more or less like a dropdown menu.
     this.menu = {
         outer_selector: null,
-        inner_selector: null
-    };
-    this.menu.show = function(){
-        if (this.menu.outer_selector){ return this.update(); }
-        this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append("div")
-            .attr("class", "lz-dashboard-menu lz-dashboard-menu-" + this.color)
-            .attr("id", this.parent_svg.getBaseId() + ".dashboard.menu");
-        this.menu.inner_selector = this.menu.outer_selector.append("div")
-            .attr("class", "lz-dashboard-menu-content");
-        return this.menu.update();
-    }.bind(this);
-    this.menu.update = function(){
-        if (!this.menu.outer_selector){ return this.menu; }
-        this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
-        return this.menu.position();
-    }.bind(this);
-    this.menu.position = function(){
-        if (!this.menu.outer_selector){ return this.menu; }
-        var padding = 3;
-        var scrollbar_padding = 20;
-        var page_origin = this.parent_svg.getPageOrigin();
-        var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
-        var button_client_rect = this.selector.node().getBoundingClientRect();
-        var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-        var total_content_height = this.menu.inner_selector.node().scrollHeight;
-        var top = 0; var left = 0;
-        if (this.parent_dashboard.type == "panel"){
-            top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
-            left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
-        } else {
-            top = (button_client_rect.bottom + padding).toString() + "px";
-            left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
-        }
-        var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
-        var container_max_width = base_max_width.toString() + "px";
-        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-        var base_max_height = (this.parent_svg.layout.height - (7 * padding));
-        var height = Math.min(total_content_height, base_max_height).toString() + "px";
-        var max_height = base_max_height.toString() + "px";
-        this.menu.outer_selector.style({
-            top: top, left: left,
-            "max-width": container_max_width,
-            "max-height": max_height,
-            height: height
-        });
-        this.menu.inner_selector.style({ "max-width": content_max_width });        
-        return this.menu;
-    }.bind(this);
-    this.menu.hide = function(){
-        if (!this.menu.outer_selector){ return this.menu; }
-        this.menu.inner_selector.remove();
-        this.menu.outer_selector.remove();
-        this.menu.inner_selector = null;
-        this.menu.outer_selector = null;
-        return this.menu;
-    }.bind(this);
-    // By convention populate() does nothing and should be reimplemented with each dashboard button definition
-    // Reimplement by way of Dashboard.Component.Button.setMenuPopulate to define the populate method and hook up standard menu
-    // click-toggle behaviorprototype.
-    this.menu.populate = function(){
-        this.menu.inner_selector.html("...");
-    }.bind(this);
-    this.setMenuPopulate = function(menu_populate_function){
-        if (typeof menu_populate_function == "function"){
-            this.menu.populate = menu_populate_function;
-            this.setOnclick(function(){
-                if (!this.menu.outer_selector){
-                    this.menu.show();
-                    this.highlight().update();
-                    this.persist = true;
-                } else {
-                    this.menu.hide();
-                    this.highlight(false).update();
-                    if (!this.permanent){
+        inner_selector: null,
+        show: function(){
+            if (this.menu.outer_selector){ return this.update(); }
+            this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append("div")
+                .attr("class", "lz-dashboard-menu lz-dashboard-menu-" + this.color)
+                .attr("id", this.parent_svg.getBaseId() + ".dashboard.menu");
+            this.menu.inner_selector = this.menu.outer_selector.append("div")
+                .attr("class", "lz-dashboard-menu-content");
+            return this.menu.update();
+        }.bind(this),
+        update: function(){
+            if (!this.menu.outer_selector){ return this.menu; }
+            this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+            return this.menu.position();
+        }.bind(this),
+        position: function(){
+            if (!this.menu.outer_selector){ return this.menu; }
+            var padding = 3;
+            var scrollbar_padding = 20;
+            var page_origin = this.parent_svg.getPageOrigin();
+            var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
+            var button_client_rect = this.selector.node().getBoundingClientRect();
+            var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
+            var total_content_height = this.menu.inner_selector.node().scrollHeight;
+            var top = 0; var left = 0;
+            if (this.parent_dashboard.type == "panel"){
+                top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
+                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+            } else {
+                top = (button_client_rect.bottom + padding).toString() + "px";
+                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
+            }
+            var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
+            var container_max_width = base_max_width.toString() + "px";
+            var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
+            var base_max_height = (this.parent_svg.layout.height - (7 * padding));
+            var height = Math.min(total_content_height, base_max_height).toString() + "px";
+            var max_height = base_max_height.toString() + "px";
+            this.menu.outer_selector.style({
+                top: top, left: left,
+                "max-width": container_max_width,
+                "max-height": max_height,
+                height: height
+            });
+            this.menu.inner_selector.style({ "max-width": content_max_width });        
+            return this.menu;
+        }.bind(this),
+        hide: function(){
+            if (!this.menu.outer_selector){ return this.menu; }
+            this.menu.inner_selector.remove();
+            this.menu.outer_selector.remove();
+            this.menu.inner_selector = null;
+            this.menu.outer_selector = null;
+            return this.menu;
+        }.bind(this),
+        // By convention populate() does nothing and should be reimplemented with each dashboard button definition
+        // Reimplement by way of Dashboard.Component.Button.menu.setPopulate to define the populate method and hook up standard menu
+        // click-toggle behaviorprototype.
+        populate: function(){ /* stub */ }.bind(this),
+        setPopulate: function(menu_populate_function){
+            if (typeof menu_populate_function == "function"){
+                this.menu.populate = menu_populate_function;
+                this.setOnclick(function(){
+                    if (!this.menu.outer_selector){
+                        this.menu.show();
+                        this.highlight().update();
+                        this.persist = true;
+                    } else {
+                        this.menu.hide();
+                        this.highlight(false).update();
+                        if (!this.permanent){
                         this.persist = false;
+                        }
                     }
-                }
-            }.bind(this));
-        } else {
-            this.setOnclick();
-        }
-        return this;
+                }.bind(this));
+            } else {
+                this.setOnclick();
+            }
+            return this;
+        }.bind(this)
     };
 
 };
@@ -653,7 +661,7 @@ LocusZoom.Dashboard.Components.add("menu", function(layout){
             .setOnclick(function(){
                 this.button.menu.populate();
             }.bind(this));
-        this.button.setMenuPopulate(function(){
+        this.button.menu.setPopulate(function(){
             this.button.menu.inner_selector.html(layout.menu_html);
         }.bind(this));
         this.button.show();
@@ -717,7 +725,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
                 this.button.menu.populate();
             }.bind(this));
 
-        this.button.setMenuPopulate(function(){
+        this.button.menu.setPopulate(function(){
             var selector = this.button.menu.inner_selector;
             selector.html("");
             // General model HTML representation

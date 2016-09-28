@@ -44,25 +44,105 @@ describe('LocusZoom.Dashboard', function(){
         LocusZoom.Dashboard.Components.should.be.an.Object;
     });
 
+    describe("Dashboard Composition and Methods", function() {
+        beforeEach(function(){
+            var datasources = new LocusZoom.DataSources();
+            var layout = {
+                dashboard: {
+                    components: [
+                        { type: "dimensions" }
+                    ]
+                },
+                panels: [
+                    { id: "test", width: 100, height: 100,
+                      dashboard: {
+                          components: [
+                              { type: "remove_panel" }
+                          ]
+                      }
+                    }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
+        });
+        afterEach(function(){
+            d3.select("body").selectAll("*").remove();
+            this.plot = null;
+        });
+        it("should be accessible as an attribute of the plot or panel that created it", function() {
+            this.plot.dashboard.should.be.an.Object;
+            assert.ok(this.plot.dashboard instanceof LocusZoom.Dashboard);
+            this.plot.panels.test.dashboard.should.be.an.Object;
+            assert.ok(this.plot.panels.test.dashboard instanceof LocusZoom.Dashboard);
+        });
+        it("should generate a selector for its DOM element when shown", function() {
+            this.plot.dashboard.show();
+            this.plot.dashboard.selector.should.be.an.Object;
+            assert.ok(this.plot.dashboard.selector instanceof d3.selection);
+            assert.equal(this.plot.dashboard.selector.empty(), false);
+            assert.equal(this.plot.dashboard.selector.attr("id"), d3.select("#plot\\.dashboard").attr("id"));
+            this.plot.panels.test.dashboard.show();
+            this.plot.panels.test.dashboard.selector.should.be.an.Object;
+            assert.ok(this.plot.panels.test.dashboard.selector instanceof d3.selection);
+            assert.equal(this.plot.panels.test.dashboard.selector.empty(), false);
+            assert.equal(this.plot.panels.test.dashboard.selector.attr("id"), d3.select("#plot\\.test\\.dashboard").attr("id"));
+        });
+        it("should remove its DOM element and null out its selector when hidden", function() {
+            this.plot.dashboard.show();
+            this.plot.dashboard.hide();
+            assert.equal(this.plot.dashboard.selector, null);
+            assert.ok(d3.select("#plot\\.dashboard").empty());
+            this.plot.panels.test.dashboard.show();
+            this.plot.panels.test.dashboard.hide();
+            assert.equal(this.plot.panels.test.dashboard.selector, null);
+            assert.ok(d3.select("#plot\\.test\\.dashboard").empty());
+        });
+    });
+
+    describe("Plot-Level Dashboard Rendering Behavior", function() {
+        it("should not render a plot-level dashboard DOM element if void of any components", function() {
+            var datasources = new LocusZoom.DataSources();
+            var layout = {
+                panels: [
+                    { id: "test", width: 100, height: 100 }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
+            assert.equal(d3.select("#plot").empty(), false);
+            assert.equal(d3.select("#plot.dashboard").empty(), true);
+        });
+        it("should render a plot-level dashboard DOM element at least one component is defined", function() {
+            var datasources = new LocusZoom.DataSources();
+            var layout = {
+                dashboard: {
+                    components: [
+                        { type: "dimensions" }
+                    ]
+                },
+                panels: [
+                    { id: "test", width: 100, height: 100 }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
+            assert.equal(d3.select("#plot").empty(), false);
+            assert.equal(d3.select("#plot\\.dashboard").empty(), false);
+        });
+    });
+
     describe("Dimensions Component", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
             var layout = {
                 dashboard: {
-                    width: 100,
-                    height: 100,
                     components: [
-                        {
-                            type: "dimensions"
-                        }
+                        { type: "dimensions" }
                     ]
                 },
                 panels: [
-                    {
-                        id: "test",
-                        width: 100,
-                        height: 100
-                    }
+                    { id: "test", width: 100, height: 100 }
                 ]
             };
             d3.select("body").append("div").attr("id", "plot");
@@ -91,12 +171,8 @@ describe('LocusZoom.Dashboard', function(){
                     end: 126847453,
                 },
                 dashboard: {
-                    width: 100,
-                    height: 100,
                     components: [
-                        {
-                            type: "region_scale"
-                        }
+                        { type: "region_scale" }
                     ]
                 }
             };
@@ -125,9 +201,7 @@ describe('LocusZoom.Dashboard', function(){
             var layout = {
                 dashboard: {
                     components: [
-                        {
-                            type: "covariates_model"
-                        }
+                        { type: "covariates_model" }
                     ]
                 }
             };
