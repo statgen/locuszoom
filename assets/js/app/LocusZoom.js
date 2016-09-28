@@ -312,6 +312,21 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
+// Shortcut method for getting the data bound to a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipData = function(node){
+    if (typeof node != "object" || typeof node.parentNode == "undefined"){
+        throw("Invalid node object");
+    }
+    // If this node is a locuszoom tool tip then return its data
+    var selector = d3.select(node);
+    if (selector.classed("lz-data_layer-tooltip") && typeof selector.data()[0] != "undefined"){
+        return selector.data()[0];
+    } else {
+        return LocusZoom.getToolTipData(node.parentNode);
+    }
+};
+
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -319,11 +334,31 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
+    dashboard: {
+        components: [
+            {
+                type: "title",
+                title: "LocusZoom",
+                position: "left"
+            },
+            {
+                type: "dimensions",
+                position: "right"
+            },
+            {
+                type: "region_scale",
+                position: "right"
+            },
+            {
+                type: "download",
+                position: "right"
+            }
+        ]
+    },
     panels: [
         {
             id: "positions",
-            title: "LocusZoom",
-            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
+            title: "",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
@@ -334,6 +369,23 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
+            dashboard: {
+                components: [
+                    {
+                        type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "move_panel_up",
+                        position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }
+                ]
+            },
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -465,7 +517,8 @@ LocusZoom.StandardLayout = {
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
+                            + "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
                     }
                 }
             ]
@@ -481,6 +534,23 @@ LocusZoom.StandardLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
+            dashboard: {
+                components: [
+                    {
+                        type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "move_panel_up",
+                        position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }                    
+                ]
+            },
             axes: {},
             interaction: {
                 drag_background_to_pan: true,

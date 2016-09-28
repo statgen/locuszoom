@@ -186,12 +186,17 @@ div.#{$namespace}-data_layer-tooltip {
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
 
-  h6 { font-size: 110%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
-  h5 { font-size: 125%; margin-top: 0.1em; margin-bottom: 0.1em; padding: 0; }
-  h4 { font-size: 150%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
-  h3 { font-size: 175%; margin-top: 0.2em; margin-bottom: 0.2em; padding: 0; }
-  h2 { font-size: 200%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
-  h1 { font-size: 250%; margin-top: 0.3em; margin-bottom: 0.3em; padding: 0; }
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0.1em;
+    margin-bottom: 0.3em;
+  }
+
+  h1 { font-size: 200%; }
+  h2 { font-size: 175%; }
+  h3 { font-size: 150%; }
+  h4 { font-size: 135%; }
+  h5 { font-size: 125%; }
+  h6 { font-size: 110%; }
 
   table {
     display: table;
@@ -208,24 +213,31 @@ div.#{$namespace}-data_layer-tooltip {
     border-bottom: 1px solid #E1E1E1;
   }
 
-  .#{$namespace}-tooltip-close-button {
-    font-weight: bold;
+  button {
     text-decoration: none;
-    line-height: 1.2;
+    height: auto;
+    line-height: inherit; 
     padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(235,235,235,0.4);
-    color: #{$default_black_shadow};
-    border: 1px solid #{$default_black_shadow};
+    background-color: rgba(216,216,216,1);
+    color: #{$default_black};
+    border: 1px solid #{$default_black};
     border-radius: 4px;
     pointer-events: auto;
-    position: absolute;
-    right: -1px;
-    top: -1px;
+    outline: none;
   }
-  .#{$namespace}-tooltip-close-button:hover {
+  button:hover {
     cursor: pointer;
     background-color: #{$default_black};
     color: rgba(235,235,235,1);
+  }
+
+  .#{$namespace}-tooltip-close-button {
+    color: #{$default_black_shadow};
+    border: 1px solid #{$default_black_shadow};
+    background-color: rgba(235,235,235,0.4);
+    position: absolute;
+    right: -1px;
+    top: -1px;
   }
   
 }
@@ -425,111 +437,344 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   100% { width: 0%;   left: 100%; }
 }
 
-.#{$namespace}-locuszoom-controls {
+.#{$namespace}-plot-dashboard {
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+
+  .#{$namespace}-dashboard-button {
+    text-decoration: none;
+    padding: 3px 7px 3px 7px;
+    height: auto;
+    line-height: inherit;  
+    border-radius: 4px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
+  }
+
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
+  float: left;
+  margin-right: 1.5em;
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-right {
+  float: right;
+  margin-left: 1.5em;
+}
+
+.#{$namespace}-panel-dashboard {
+  padding-left: 2px;
+  padding-right: 2px;
+  padding-top: 2px;
+  padding-bottom: 0px;
+
+  .#{$namespace}-dashboard-button {
+    text-decoration: none;
+    padding: 2px 6px 2px 6px;
+    height: auto;
+    line-height: inherit;  
+    border-radius: 3px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
+  }
+
+}
+
+.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-left {
+  float: left;
+  margin-right: 0px;
+}
+
+.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-right {
+  float: right;
+  margin-left: 0px;
+}
+
+.#{$namespace}-dashboard {
+
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  .#{$namespace}-controls-info {
-    margin-left: 2em;
+
+  .#{$namespace}-dashboard-title {
+    font-size: 150%;
+    font-weight: bold;
+    margin-bottom: 0.3em;
   }
-  .#{$namespace}-controls-button {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: #D8D8D8;
-    color: #333333;
-    border: 1px solid #333333;
-    border-radius: 4px;
-    pointer-events: auto;
-  }
-  .#{$namespace}-controls-button:hover {
-    cursor: pointer;
-    background-color: #333333;
-    color: #D8D8D8;
-  }
-  .#{$namespace}-controls-button-selected {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    border: 1px solid #333333;
-    border-radius: 4px;
-    pointer-events: auto;
-    cursor: pointer;
-    background-color: #333333;
-    color: #D8D8D8;
-  }
-  .#{$namespace}-controls-button-disabled {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: #D8D8D8;
-    color: #999999;
-    border: 1px solid #999999;
-    border-radius: 4px;
-    pointer-events: none;
-  }
-  .#{$namespace}-controls-button-disabled:hover {
-    cursor: wait;
-    background-color: #D8D8D8;
-  }
+
 }
 
-.#{$namespace}-locuszoom-panel-controls {
-   padding-top: 6px;
-   padding-right: 2px;
-   .#{$namespace}-panel-controls-button {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(216,216,216,0.4);
-    border: 1px solid rgba(51,51,51,0.4);
-    color: rgba(51,51,51,0.4);
-    border-radius: 4px;
-    pointer-events: auto;
-  }
-  .#{$namespace}-panel-controls-button:hover {
-    cursor: pointer;
-    background-color: rgba(216,216,216,1);
-    border: 1px solid rgba(51,51,51,1);
-    color: rgba(51,51,51,1);
-  }
-  .#{$namespace}-panel-controls-button-selected {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    border: 1px solid rgba(51,51,51,1);
-    border-radius: 4px;
-    pointer-events: auto;
-    cursor: pointer;
-    background-color: rgba(51,51,51,1);
-    color: rgba(216,216,216,1);
-  }
-  .#{$namespace}-panel-controls-button-disabled {
-    text-decoration: none;
-    padding: 0.2em 0.5em 0.2em 0.5em;
-    background-color: rgba(216,216,216,0.4);
-    border: 1px solid rgba(153,153,153,0.4);
-    color: rgba(153,153,153,0.4);
-    border-radius: 4px;
-    pointer-events: none;
-    cursor: wait;
-  }
-}
-
-div.#{$namespace}-panel-description {
+div.#{$namespace}-dashboard-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
   padding: 6px;
-  background: rgba(228,235,240,1);
-  border: 1px solid #{$default_black};
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow};
   overflow: hidden;
 
-  .#{$namespace}-panel-description-content {
+  .#{$namespace}-dashboard-menu-content {
     display: block;
     width: 100%;
     height: 100%;
     overflow-y: auto;
+    padding-right: 20px;
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0.1em;
+      margin-bottom: 0.3em;
+    }
+
+    h1 { font-size: 200%; }
+    h2 { font-size: 175%; }
+    h3 { font-size: 150%; }
+    h4 { font-size: 135%; }
+    h5 { font-size: 125%; }
+    h6 { font-size: 110%; }
+
+    .#{$namespace}-dashboard-button {
+      text-decoration: none;
+      padding: 2px 6px 2px 6px;
+      height: auto;
+      line-height: inherit;  
+      border-radius: 3px;
+      pointer-events: auto;
+      outline: none;
+      white-space: nowrap;
+      cursor: pointer;
+      box-sizing: border-box;
+      align-items: flex-start;
+      text-align: center;
+    }
+
   }
 
+  table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0px;
+    margin-bottom: 0.4em;
+    width: 100%;
+  }
+  th:first-child, td:first-child {
+    vertical-align: top;
+  }
+  tr:nth-child(2) {
+    background-color: rgba(0,0,0,0.08);
+  }
+  th, td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: middle;
+  }
+}
+
+.#{$namespace}-dashboard-button-gray {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(51,51,51,0.6);
+  color: rgba(51,51,51,0.6);
+}
+.#{$namespace}-dashboard-button-gray:not(.#{$namespace}-dashboard-button-gray-disabled):not(.#{$namespace}-dashboard-button-gray-highlighted):hover {
+  background-color: rgba(216,216,216,1);
+  border: 1px solid rgba(51,51,51,1);
+  color: rgba(51,51,51,1);
+}
+.#{$namespace}-dashboard-button-gray-highlighted {
+  border: 1px solid rgba(51,51,51,1);
+  background-color: rgba(51,51,51,1);
+  color: rgba(216,216,216,1);
+}
+.#{$namespace}-dashboard-button-gray-disabled {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(153,153,153,0.6);
+  color: rgba(153,153,153,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-red {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(89,49,49,0.6);
+  color: rgba(89,49,49,0.6);
+}
+.#{$namespace}-dashboard-button-red:not(.#{$namespace}-dashboard-button-red-disabled):not(.#{$namespace}-dashboard-button-red-highlighted):hover {
+  background-color: rgba(230,195,195,1);
+  border: 1px solid rgba(89,49,49,1);
+  color: rgba(89,49,49,1);
+}
+.#{$namespace}-dashboard-button-red-highlighted {
+  border: 1px solid rgba(89,49,49,1);
+  background-color: rgba(89,49,49,1);
+  color: rgba(230,195,195,1);
+}
+.#{$namespace}-dashboard-button-red-disabled {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(179,134,134,0.6);
+  color: rgba(179,134,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-orange {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(89,69,49,0.6);
+  color: rgba(89,69,49,0.6);
+}
+.#{$namespace}-dashboard-button-orange:not(.#{$namespace}-dashboard-button-orange-disabled):not(.#{$namespace}-dashboard-button-orange-highlighted):hover {
+  background-color: rgba(230,213,195,1);
+  border: 1px solid rgba(89,69,49,1);
+  color: rgba(89,69,49,1);
+}
+.#{$namespace}-dashboard-button-orange-highlighted {
+  border: 1px solid rgba(89,69,49,1);
+  background-color: rgba(89,69,49,1);
+  color: rgba(230,213,195,1);
+}
+.#{$namespace}-dashboard-button-orange-disabled {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(179,156,134,0.6);
+  color: rgba(179,156,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-yellow {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(89,89,49,0.6);
+  color: rgba(89,89,49,0.6);
+}
+.#{$namespace}-dashboard-button-yellow:not(.#{$namespace}-dashboard-button-yellow-disabled):not(.#{$namespace}-dashboard-button-yellow-highlighted):hover {
+  background-color: rgba(230,230,195,1);
+  border: 1px solid rgba(89,89,49,1);
+  color: rgba(89,89,49,1);
+}
+.#{$namespace}-dashboard-button-yellow-highlighted {
+  border: 1px solid rgba(89,89,49,1);
+  background-color: rgba(89,89,49,1);
+  color: rgba(230,230,195,1);
+}
+.#{$namespace}-dashboard-button-yellow-disabled {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(179,179,134,0.6);
+  color: rgba(179,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-green {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(59,89,49,0.6);
+  color: rgba(59,89,49,0.6);
+}
+.#{$namespace}-dashboard-button-green:not(.#{$namespace}-dashboard-button-green-disabled):not(.#{$namespace}-dashboard-button-green-highlighted):hover {
+  background-color: rgba(204,230,195,1);
+  border: 1px solid rgba(59,89,49,1);
+  color: rgba(59,89,49,1);
+}
+.#{$namespace}-dashboard-button-green-highlighted {
+  border: 1px solid rgba(59,89,49,1);
+  background-color: rgba(59,89,49,1);
+  color: rgba(204,230,195,1);
+}
+.#{$namespace}-dashboard-button-green-disabled {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(145,179,134,0.6);
+  color: rgba(145,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-blue {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(49,66,89,0.6);
+  color: rgba(49,66,89,0.6);
+}
+.#{$namespace}-dashboard-button-blue:not(.#{$namespace}-dashboard-button-blue-disabled):not(.#{$namespace}-dashboard-button-blue-highlighted):hover {
+  background-color: rgba(195,210,230,1);
+  border: 1px solid rgba(49,66,89,1);
+  color: rgba(49,66,89,1);
+}
+.#{$namespace}-dashboard-button-blue-highlighted {
+  border: 1px solid rgba(49,66,89,1);
+  background-color: rgba(49,66,89,1);
+  color: rgba(195,210,230,1);
+}
+.#{$namespace}-dashboard-button-blue-disabled {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(134,153,179,0.6);
+  color: rgba(134,153,179,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-button-purple {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(80,49,89,0.6);
+  color: rgba(80,49,89,0.6);
+}
+.#{$namespace}-dashboard-button-purple:not(.#{$namespace}-dashboard-button-purple-disabled):not(.#{$namespace}-dashboard-button-purple-highlighted):hover {
+  background-color: rgba(221,195,230,1);
+  border: 1px solid rgba(80,49,89,1);
+  color: rgba(80,49,89,1);
+}
+.#{$namespace}-dashboard-button-purple-highlighted {
+  border: 1px solid rgba(80,49,89,1);
+  background-color: rgba(80,49,89,1);
+  color: rgba(221,195,230,1);
+}
+.#{$namespace}-dashboard-button-purple-disabled {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(167,134,179,0.6);
+  color: rgba(167,134,179,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-dashboard-menu-gray {
+  background-color: rgba(232,232,232,1);
+  border: 1px solid rgba(51,51,51,1);
+}
+
+.#{$namespace}-dashboard-menu-red {
+  background: rgba(240,228,228,1);
+  border: 1px solid rgba(89,49,49,1);
+}
+
+.#{$namespace}-dashboard-menu-orange {
+  background: rgba(240,234,228,1);
+  border: 1px solid rgba(89,69,49,1);
+}
+
+.#{$namespace}-dashboard-menu-yellow {
+  background: rgba(240,240,228,1);
+  border: 1px solid rgba(89,89,49,1);
+}
+
+.#{$namespace}-dashboard-menu-green {
+  background: rgba(231,240,228,1);
+  border: 1px solid rgba(59,89,49,1);
+}
+
+.#{$namespace}-dashboard-menu-blue {
+  background: rgba(228,233,240,1);
+  border: 1px solid rgba(49,66,89,1);
+}
+
+.#{$namespace}-dashboard-menu-purple {
+  background: rgba(237,228,240,1);
+  border: 1px solid rgba(80,49,89,1);
 }
 
 div.#{$namespace}-panel-boundary {

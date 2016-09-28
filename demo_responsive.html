@@ -41,7 +41,8 @@
       .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
 
     // Populate the div with a LocusZoom plot
-    var demo_instance = LocusZoom.populate("#lz-1", data_sources);
+    var layout = LocusZoom.mergeLayouts({ responsive_resize: true }, LocusZoom.StandardLayout);
+    var demo_instance = LocusZoom.populate("#lz-1", data_sources, layout);
 
     /**********************************************************************************
      All of the following code sets up an example form with top hit buttons to jump to

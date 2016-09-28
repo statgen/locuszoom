@@ -72,7 +72,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
     return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
-}
+};
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
     var element_id = "element";
@@ -95,6 +95,37 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
     } else {
         return null;
     }
+};
+
+// Basic method to apply arbitrary methods and properties to data elements.
+// This is called on all data immediately after being fetched.
+LocusZoom.DataLayer.prototype.applyDataMethods = function(){
+    this.data.forEach(function(d, i){
+        // Basic toHTML() method - return the stringified value in the id_field, if defined.
+        this.data[i].toHTML = function(){
+            var id_field = this.layout.id_field || "id";
+            var html = "";
+            if (this.data[i][id_field]){ html = this.data[i][id_field].toString(); }
+            return html;
+        }.bind(this);
+        // getDataLayer() method - return a reference to the data layer
+        this.data[i].getDataLayer = function(){
+            return this;
+        }.bind(this);
+        // deselect() method - shortcut method to deselect the element
+        this.data[i].deselect = function(){
+            var data_layer = this.getDataLayer();
+            data_layer.unselectElement(this);
+        };
+    }.bind(this));
+    this.applyCustomDataMethods();
+    return this;
+};
+
+// Arbitrarily advanced method to apply methods and properties to data elements.
+// May be implemented by data layer classes as needed to do special things.
+LocusZoom.DataLayer.prototype.applyCustomDataMethods = function(){
+    return this;
 };
 
 // Initialize a data layer
@@ -152,7 +183,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
-    // If a floor AND a ceiling are explicitly defined then jsut return that extent and be done
+    // If a floor AND a ceiling are explicitly defined then just return that extent and be done
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
@@ -230,14 +261,16 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
         this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("a")
+        this.tooltips[id].selector.append("button")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
-            .html("×")
+            .text("×")
             .on("click", function(){
                 this.destroyTooltip(id);
             }.bind(this));
     }
+    // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
+    this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
 };
@@ -587,6 +620,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
     promise.then(function(new_data){
         this.data = new_data.body;
+        this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
     return promise;
