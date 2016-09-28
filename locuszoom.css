@@ -17,38 +17,12 @@ svg.lz-locuszoom {
   svg.lz-locuszoom .lz-mouse_guide rect.lz-mouse_guide-horizontal {
     width: 100%;
     height: 1px; }
-  svg.lz-locuszoom .lz-html_module-info_box {
-    position: absolute;
-    border: 1px solid rgba(24, 24, 24, 1);
-    border-radius: 3px; }
-  svg.lz-locuszoom .lz-ui-resize_handle {
-    fill: #d2d2d2;
-    fill-opacity: 0.4;
-    stroke: #2d2d2d;
-    stroke-opacity: 0.4;
-    stroke-width: 1;
-    cursor: nwse-resize;
-    stroke-linejoin: round; }
-  svg.lz-locuszoom .lz-ui-resize_handle:hover {
-    fill: #d2d2d2;
-    fill-opacity: 1;
-    stroke: #2d2d2d;
-    stroke-opacity: 1;
-    stroke-width: 2;
-    stroke-linejoin: round; }
-  svg.lz-locuszoom .lz-ui-resize_handle_dragging {
-    fill: #d2d2d2;
-    fill-opacity: 1;
-    stroke: #2d2d2d;
-    stroke-opacity: 1;
-    stroke-width: 2;
-    cursor: nwse-resize;
-    stroke-linejoin: round; }
   svg.lz-locuszoom .lz-panel-title {
     font-size: 18px;
     font-weight: 600; }
   svg.lz-locuszoom .lz-panel-background {
-    fill: rgba(255, 255, 255, 0.01); }
+    fill: white;
+    fill-opacity: 0.01; }
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
@@ -63,15 +37,17 @@ svg.lz-locuszoom {
     outline-color: #424242;
     outline-offset: 2px; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
-    stroke: rgba(24, 24, 24, 0.4);
-    stroke-width: 1;
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 0.4;
+    stroke-width: 1px;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-scatter-highlighted {
-    stroke: rgba(24, 24, 24, 0.4);
-    stroke-width: 4; }
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 0.4;
+    stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
-    stroke-width: 4; }
+    stroke-width: 4px; }
   svg.lz-locuszoom text.lz-data_layer-scatter-label {
     fill: rgba(24, 24, 24, 1);
     alignment-baseline: middle; }
@@ -80,7 +56,7 @@ svg.lz-locuszoom {
     stroke-width: 1px; }
   svg.lz-locuszoom path.lz-data_layer-line {
     stroke: rgba(24, 24, 24, 1);
-    stroke-width: 1;
+    stroke-width: 1px;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
     fill: none;
@@ -93,27 +69,28 @@ svg.lz-locuszoom {
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box {
     fill: #363696;
     fill-opacity: 0;
-    stroke-width: 0; }
+    stroke-width: 0px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-highlighted {
     fill: #363696;
     fill-opacity: 0.1;
-    stroke-width: 0; }
+    stroke-width: 0px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-selected {
     fill: #363696;
     fill-opacity: 0.15;
     stroke: rgba(24, 24, 24, 1);
-    stroke-width: 1; }
+    stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-boundary {
     stroke: #363696;
     stroke-opacity: 1;
-    stroke-width: 1;
+    stroke-width: 1px;
     fill: #000099; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-exon {
     stroke: #363696;
     stroke-opacity: 1;
-    stroke-width: 1;
+    stroke-width: 1px;
     fill: #000099; }
 
+/* ! LocusZoom HTML Styles */
 div.lz-data_layer-tooltip {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;

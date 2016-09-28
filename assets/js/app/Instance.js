@@ -341,7 +341,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
 
     // Remove all panel-level HTML overlay elements
     this.panels[id].loader.hide();
-    this.panels[id].dashboard.hide();
+    this.panels[id].dashboard.destroy(true);
     this.panels[id].curtain.hide();
 
     // Remove the svg container for the panel if it exists

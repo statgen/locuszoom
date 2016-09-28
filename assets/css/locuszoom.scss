@@ -1,6 +1,10 @@
 $namespace: "lz";
 $default_black: "rgba(24, 24, 24, 1)";
+$default_black_svg: "rgb(24, 24, 24)";
 $default_black_shadow: "rgba(24, 24, 24, 0.4)";
+$default_black_shadow_svg_color: "rgb(24, 24, 24)";
+$default_black_shadow_svg_opacity: "0.4";
+
 $tooltip_arrow_width: "7";
 
 svg.#{$namespace}-locuszoom {
@@ -32,48 +36,14 @@ svg.#{$namespace}-locuszoom {
     }
   }
 
-  .#{$namespace}-html_module-info_box {
-    position: absolute;
-    border: 1px solid #{$default_black};
-    border-radius: 3px;
-  }
-
-  .#{$namespace}-ui-resize_handle {
-    fill: rgb(210,210,210);
-    fill-opacity: 0.4;
-    stroke: rgb(45,45,45);
-    stroke-opacity: 0.4;
-    stroke-width: 1;
-    cursor: nwse-resize;
-    stroke-linejoin: round;
-  }
-
-  .#{$namespace}-ui-resize_handle:hover {
-    fill: rgb(210,210,210);
-    fill-opacity: 1;
-    stroke: rgb(45,45,45);
-    stroke-opacity: 1;
-    stroke-width: 2;
-    stroke-linejoin: round;
-  }
-
-  .#{$namespace}-ui-resize_handle_dragging {
-    fill: rgb(210,210,210);
-    fill-opacity: 1;
-    stroke: rgb(45,45,45);
-    stroke-opacity: 1;
-    stroke-width: 2;
-    cursor: nwse-resize;
-    stroke-linejoin: round;
-  }
-
   .#{$namespace}-panel-title {
     font-size: 18px;
     font-weight: 600;
   }
 
   .#{$namespace}-panel-background {
-    fill: rgba(255,255,255,0.01);
+    fill: rgb(255,255,255);
+    fill-opacity: 0.01;
   }
 
   .#{$namespace}-axis path,
@@ -96,19 +66,21 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-scatter {
-    stroke: #{$default_black_shadow};
-    stroke-width: 1;
+    stroke: #{$default_black_shadow_svg_color};
+    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke-width: 1px;
     cursor: pointer;
   }
 
   path.#{$namespace}-data_layer-scatter-highlighted {
-    stroke: #{$default_black_shadow};
-    stroke-width: 4;
+    stroke: #{$default_black_shadow_svg_color};
+    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke-width: 4px;
   }
 
   path.#{$namespace}-data_layer-scatter-selected {
     stroke: #{$default_black};
-    stroke-width: 4;
+    stroke-width: 4px;
   }
 
   text.#{$namespace}-data_layer-scatter-label {
@@ -123,7 +95,7 @@ svg.#{$namespace}-locuszoom {
 
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
-    stroke-width: 1;
+    stroke-width: 1px;
     cursor: pointer;
   }
 
@@ -144,37 +116,41 @@ svg.#{$namespace}-locuszoom {
   rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box {
     fill: rgb(54, 54, 150);
     fill-opacity: 0;
-    stroke-width: 0;
+    stroke-width: 0px;
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-highlighted {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.1;
-    stroke-width: 0;
+    stroke-width: 0px;
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-selected {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.15;
     stroke: #{$default_black};
-    stroke-width: 1;
+    stroke-width: 1px;
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-boundary {
     stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
-    stroke-width: 1;
+    stroke-width: 1px;
     fill: #000099;
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-exon {
     stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
-    stroke-width: 1;
+    stroke-width: 1px;
     fill: #000099;
   }
 
 }
+
+// The following comment is used by the download dashboard component when generating a CSS string.
+// Since no HTML elements will be in the exported SVG element there's no need to include their styles.
+/* ! LocusZoom HTML Styles */
 
 div.#{$namespace}-data_layer-tooltip {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;

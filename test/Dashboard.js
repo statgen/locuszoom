@@ -88,15 +88,33 @@ describe('LocusZoom.Dashboard', function(){
             assert.equal(this.plot.panels.test.dashboard.selector.empty(), false);
             assert.equal(this.plot.panels.test.dashboard.selector.attr("id"), d3.select("#plot\\.test\\.dashboard").attr("id"));
         });
-        it("should remove its DOM element and null out its selector when hidden", function() {
+        it("should preserve its DOM element and make it invisible when hidden", function() {
             this.plot.dashboard.show();
             this.plot.dashboard.hide();
-            assert.equal(this.plot.dashboard.selector, null);
-            assert.ok(d3.select("#plot\\.dashboard").empty());
+            assert.notEqual(this.plot.dashboard.selector, null);
+            assert.equal(d3.select("#plot\\.dashboard").empty(), false);
+            assert.equal(d3.select("#plot\\.dashboard").style("visibility"), "hidden");
+            this.plot.dashboard.show();
+            assert.equal(d3.select("#plot\\.dashboard").style("visibility"), "visible");
             this.plot.panels.test.dashboard.show();
             this.plot.panels.test.dashboard.hide();
+            assert.notEqual(this.plot.panels.test.dashboard.selector, null);
+            assert.equal(d3.select("#plot\\.test\\.dashboard").empty(), false);
+            assert.equal(d3.select("#plot\\.test\\.dashboard").style("visibility"), "hidden");
+            this.plot.panels.test.dashboard.show();
+            assert.equal(d3.select("#plot\\.test\\.dashboard").style("visibility"), "visible");
+        });
+        it("should remove its DOM element, null out its selector, and reset its components when destroyed", function() {
+            this.plot.dashboard.show();
+            this.plot.dashboard.destroy();
+            assert.equal(this.plot.dashboard.selector, null);
+            assert.ok(d3.select("#plot\\.dashboard").empty());
+            assert.deepEqual(this.plot.dashboard.components, []);
+            this.plot.panels.test.dashboard.show();
+            this.plot.panels.test.dashboard.destroy();
             assert.equal(this.plot.panels.test.dashboard.selector, null);
             assert.ok(d3.select("#plot\\.test\\.dashboard").empty());
+            assert.deepEqual(this.plot.panels.test.dashboard.components, []);
         });
     });
 
