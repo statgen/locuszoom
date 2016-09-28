@@ -141,10 +141,8 @@ LocusZoom.Panel.DefaultLayout = {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: "clear_selections",
-    controls: {
-        description: true,
-        reposition: true,
-        remove: true
+    dashboard: {
+        components: []
     },
     cliparea: {
         height: 0,
@@ -200,7 +198,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // Initialize panel axes
     ["x", "y1", "y2"].forEach(function(axis){
-        if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false){
+        if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render ===false){
             // The default layout sets the axis to an empty object, so set its render boolean here
             this.layout.axes[axis].render = false;
         } else {
@@ -236,11 +234,11 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
     if (this.svg.clipRect){
         this.svg.clipRect.attr("width", this.layout.width).attr("height", this.layout.height);
     }
-    
     if (this.initialized){
         this.render();
         this.curtain.update();
         this.loader.update();
+        this.dashboard.update();
     }
     return this;
 };
@@ -433,177 +431,8 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this)
     };
 
-    // Initialize controls element
-    this.controls = {
-        selector: null,
-        hide_timeout: null,
-        link_selectors: {},
-        show: function(){
-            if (!this.layout.controls || this.controls.selector){ return this.controls; }
-            if (this.curtain.showing || this.parent.curtain.showing){ return this.controls; }
-            this.controls.selector = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
-                .attr("class", "lz-locuszoom-controls lz-locuszoom-panel-controls")
-                .attr("id", this.getBaseId() + ".controls")
-                .style({ position: "absolute" });
-            // Reposition buttons
-            if (this.layout.controls.reposition){
-                this.controls.link_selectors.reposition_up = this.controls.selector.append("a")
-                    .attr("class", "lz-panel-controls-button-disabled")
-                    .attr("title", "Move panel up")
-                    .style({ "font-weight": "bold" })
-                    .text("▴")
-                    .on("click", function(){
-                        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
-                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
-                            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
-                            this.parent.applyPanelYIndexesToPanelLayouts();
-                            this.parent.positionPanels();
-                        }
-                    }.bind(this));
-                this.controls.link_selectors.reposition_down = this.controls.selector.append("a")
-                    .attr("class", "lz-panel-controls-button-disabled")
-                    .attr("title", "Move panel down")
-                    .style({ "font-weight": "bold" })
-                    .text("▾")
-                    .on("click", function(){
-                        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
-                            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
-                            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
-                            this.parent.applyPanelYIndexesToPanelLayouts();
-                            this.parent.positionPanels();
-                        }
-                    }.bind(this));
-            }
-            // Description button
-            if (this.layout.controls.description && this.layout.description){
-                this.controls.link_selectors.description = this.controls.selector.append("a")
-                    .attr("class", "lz-panel-controls-button")
-                    .attr("title", "View panel information")
-                    .style({ "font-weight": "bold" })
-                    .text("?")
-                    .on("click", function(){
-                        if (this.controls.description.showing){
-                            this.controls.description.hide();
-                        } else {
-                            this.controls.description.show();
-                            this.controls.description.position();
-                        }
-                    }.bind(this));
-                this.controls.description = {
-                    showing: false,
-                    selector: null,
-                    content_selector: null,
-                    show: function(){
-                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button-selected");
-                        this.controls.description.selector = d3.select(this.parent.svg.node().parentNode).append("div")
-                            .attr("class", "lz-panel-description")
-                            .attr("id", this.getBaseId() + ".description");
-                        this.controls.description.content_selector = this.controls.description.selector.append("div")
-                            .attr("class", "lz-panel-description-content")
-                            .html(this.layout.description);
-                        this.controls.description.showing = true;
-                        return this.controls.description;
-                    }.bind(this),
-                    position: function(){
-                        if (!this.controls.description.showing){ return this.controls.description; }
-                        var padding = 4; // is there a better place to store this?
-                        var page_origin = this.getPageOrigin();
-                        var controls_client_rect = this.controls.selector.node().getBoundingClientRect();
-                        var desc_client_rect = this.controls.description.selector.node().getBoundingClientRect();
-                        var total_content_height = this.controls.description.content_selector.node().scrollHeight;
-                        var top = (page_origin.y + controls_client_rect.height + padding).toString() + "px";
-                        var left = Math.max(page_origin.x + this.layout.width - desc_client_rect.width - padding, page_origin.x + padding).toString() + "px";
-                        var base_max_width = (this.layout.width - (2 * padding));
-                        var container_max_width = base_max_width.toString() + "px";
-                        var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-                        var base_max_height = (this.layout.height - (7 * padding) - controls_client_rect.height);
-                        var height = Math.min(total_content_height, base_max_height).toString() + "px";
-                        var max_height = base_max_height.toString() + "px";
-                        this.controls.description.selector.style({
-                            top: top, left: left,
-                            "max-width": container_max_width,
-                            "max-height": max_height,
-                            height: height
-                        });
-                        this.controls.description.content_selector.style({ "max-width": content_max_width });
-                        return this.controls.description;
-                    }.bind(this),
-                    hide: function(){
-                        if (!this.controls.description.showing){ return this.controls.description; }
-                        this.controls.link_selectors.description.attr("class", "lz-panel-controls-button");
-                        this.controls.description.selector.remove();
-                        this.controls.description.selector = null;
-                        this.controls.description.content_selector = null;
-                        this.controls.description.showing = false;
-                        return this.controls.description;
-                    }.bind(this)
-                };
-            }
-            // Remove button
-            if (this.layout.controls.remove){
-                this.controls.link_selectors.remove = this.controls.selector.append("a")
-                    .attr("class", "lz-panel-controls-button")
-                    .attr("title", "Remove panel")
-                    .style({ "font-weight": "bold" })
-                    .text("×")
-                    .on("click", function(){
-                        // Hide description and controls
-                        if (this.controls.description && this.controls.description.showing){ this.controls.description.hide(); }
-                        this.controls.hide();
-                        // Remove mouse event listeners for these controls
-                        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", null);
-                        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", null);
-                        // Remove the panel
-                        this.parent.removePanel(this.id);
-                    }.bind(this));
-            }
-            return this.controls;
-        }.bind(this),
-        position: function(){
-            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
-            var page_origin = this.getPageOrigin();
-            var client_rect = this.controls.selector.node().getBoundingClientRect();
-            var top = page_origin.y.toString() + "px";
-            var left = (page_origin.x + this.layout.width - client_rect.width).toString() + "px";
-            this.controls.selector.style({ position: "absolute", top: top, left: left });
-            // Position description box if it's showing
-            if (this.controls.description && this.controls.description.showing){
-                this.controls.description.position();
-            }
-            // Apply appropriate classes to reposition buttons as needed
-            if (this.controls.link_selectors.reposition_up){
-                this.controls.link_selectors.reposition_up.attr("class", (this.layout.y_index == 0) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
-            }
-            if (this.controls.link_selectors.reposition_down){
-                this.controls.link_selectors.reposition_down.attr("class", (this.layout.y_index == this.parent.panel_ids_by_y_index.length - 1) ? "lz-panel-controls-button-disabled" : "lz-panel-controls-button");
-            }
-            return this.controls;
-        }.bind(this),
-        hide: function(){
-            if (!this.layout.controls || !this.controls.selector){ return this.controls; }
-            // Do not hide if this panel is showing a description
-            if (this.controls.description && this.controls.description.showing){ return this.controls; }
-            // Do not hide if actively in an instance-level drag event
-            if (this.parent.panel_boundaries.dragging){ return this.controls; }
-            this.controls.selector.remove();
-            this.controls.selector = null;
-            return this.controls;
-        }.bind(this)
-    };
-
-    // If controls are defined add mouseover controls to the plot container to show/hide them
-    if (this.layout.controls){
-        d3.select(this.parent.svg.node().parentNode).on("mouseover." + this.getBaseId() + ".controls", function(){
-            clearTimeout(this.controls.hide_timeout);
-            this.controls.show();
-            this.controls.position();
-        }.bind(this));
-        d3.select(this.parent.svg.node().parentNode).on("mouseout." + this.getBaseId() + ".controls", function(){
-            this.controls.hide_timeout = setTimeout(function(){
-                this.controls.hide();
-            }.bind(this), 300);
-        }.bind(this));
-    }
+    // Create the dashboard object and hang components on it as defined by panel layout
+    this.dashboard = new LocusZoom.Dashboard(this);
 
     // Inner border
     this.inner_border = this.svg.group.append("rect")
@@ -690,6 +519,30 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     return this;
     
+};
+
+
+// Move a panel up relative to others by y-index
+LocusZoom.Panel.prototype.moveUp = function(){
+    if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
+        this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
+        this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
+        this.parent.applyPanelYIndexesToPanelLayouts();
+        this.parent.positionPanels();
+    }
+    return this;
+};
+
+
+// Move a panel down relative to others by y-index
+LocusZoom.Panel.prototype.moveDown = function(){
+    if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
+        this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
+        this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+        this.parent.applyPanelYIndexesToPanelLayouts();
+        this.parent.positionPanels();
+    }
+    return this;
 };
 
 
@@ -1036,7 +889,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     })(this[axis+"_ticks"]);
 
     // Initialize the axis; set scale and orientation
-    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale"]).orient(axis_params[axis].orientation);
+    this[axis+"_axis"] = d3.svg.axis().scale(this[axis+"_scale"]).orient(axis_params[axis].orientation).tickPadding(3);
 
     // Set tick values and format
     if (ticksAreAllNumbers){

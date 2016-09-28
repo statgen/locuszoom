@@ -42,7 +42,7 @@ LocusZoom.KnownDataSources = (function() {
             console.warn("Data source added does not have a SOURCE_NAME");
         }
         sources.push(source);
-   };
+    };
 
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
@@ -1416,7 +1416,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 };
                 x = function(d){
                     return d.display_range.start;
-                }
+                };
                 y = function(d){
                     return ((d.track-1) * data_layer.getTrackHeight());
                 };

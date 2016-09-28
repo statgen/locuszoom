@@ -13,6 +13,7 @@ var argv = require("yargs").argv;
 var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/DataLayer.js",
                     "./assets/js/app/Singletons.js",
+                    "./assets/js/app/Dashboard.js",
                     "./assets/js/app/Data.js",
                     "./assets/js/app/Instance.js",
                     "./assets/js/app/Panel.js"
@@ -22,6 +23,7 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
 var test_js_files = ["./test/LocusZoom.js",
                      "./test/DataLayer.js",
                      "./test/Singletons.js",
+                     "./test/Dashboard.js",
                      "./test/Data.js",
                      "./test/Instance.js",
                      "./test/Panel.js"

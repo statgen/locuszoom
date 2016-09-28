@@ -9,22 +9,14 @@ var jsdom = require('mocha-jsdom');
 var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
+var _files = require('./_files.js');
 
 describe('LocusZoom Core', function(){
 
     // Load all javascript files
-    jsdom({
-        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
-               fs.readFileSync('./assets/js/vendor/d3.min.js'),
-               fs.readFileSync('./assets/js/vendor/q.min.js'),
-               fs.readFileSync('./assets/js/app/LocusZoom.js'),
-               fs.readFileSync('./assets/js/app/Data.js'),
-               fs.readFileSync('./assets/js/app/Instance.js'),
-               fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js')
-             ]
-    });
+    var src = [];
+    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    jsdom({ src: src });
 
     // Reset DOM after each test
     afterEach(function(){

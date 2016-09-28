@@ -9,22 +9,14 @@ var jsdom = require('mocha-jsdom');
 var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
+var _files = require('./_files.js');
 
 describe('LocusZoom.Instance', function(){
 
     // Load all javascript files
-    jsdom({
-        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
-               fs.readFileSync('./assets/js/vendor/d3.min.js'),
-               fs.readFileSync('./assets/js/vendor/q.min.js'),
-               fs.readFileSync('./assets/js/app/LocusZoom.js'),
-               fs.readFileSync('./assets/js/app/Data.js'),
-               fs.readFileSync('./assets/js/app/Instance.js'),
-               fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js')
-             ]
-    });
+    var src = [];
+    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    jsdom({ src: src });
 
     // Reset DOM after each test
     afterEach(function(){
@@ -53,14 +45,12 @@ describe('LocusZoom.Instance', function(){
         it('should have a layout which is (superficially) a copy of StandardLayout', function(){
             assert.equal(this.instance.layout.width, LocusZoom.StandardLayout.width);
             assert.equal(this.instance.layout.height, LocusZoom.StandardLayout.height);
-            assert.equal(this.instance.layout.min_width, LocusZoom.StandardLayout.min_width);
-            assert.equal(this.instance.layout.min_height, LocusZoom.StandardLayout.min_height);
         });
     });
 
     describe("Geometry and Panels", function() {
         beforeEach(function(){
-            this.layout = {
+            var layout = {
                 width: 100,
                 height: 100,
                 min_width: 1,
@@ -70,7 +60,7 @@ describe('LocusZoom.Instance', function(){
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
-            this.plot = LocusZoom.populate("#plot", {}, this.layout);
+            this.plot = LocusZoom.populate("#plot", {}, layout);
         });
         afterEach(function(){
             d3.select("#plot").remove();
@@ -123,9 +113,9 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.height.should.be.exactly(681);
             this.plot.layout.aspect_ratio.should.be.exactly(563/681);
             this.plot.setDimensions(1, 1);
-            this.plot.layout.width.should.be.exactly(LocusZoom.StandardLayout.min_width);
-            this.plot.layout.height.should.be.exactly(LocusZoom.StandardLayout.min_height);
-            this.plot.layout.aspect_ratio.should.be.exactly(LocusZoom.StandardLayout.min_width/LocusZoom.StandardLayout.min_height);
+            this.plot.layout.width.should.be.exactly(this.plot.layout.min_width);
+            this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
+            this.plot.layout.aspect_ratio.should.be.exactly(this.plot.layout.min_width/this.plot.layout.min_height);
         });
         it('should enforce minimum dimensions based on its panels', function(){
             this.plot.addPanel({ id: "p1", width: 50, height: 30, min_width: 50, min_height: 30 });
@@ -208,7 +198,7 @@ describe('LocusZoom.Instance', function(){
     describe("Dynamic Panel Positioning", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
-            this.layout = {
+            var layout = {
                 width: 100,
                 height: 100,
                 min_width: 100,
@@ -218,7 +208,7 @@ describe('LocusZoom.Instance', function(){
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
-            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
         });
         it('Should adjust the size of the plot if a single panel is added that does not completely fill it', function(){
             var panelA = { id: "panelA", width: 100, height: 50 };
@@ -310,7 +300,7 @@ describe('LocusZoom.Instance', function(){
     describe("Instance Curtain and Loader", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
-            this.layout = {
+            var layout = {
                 width: 100,
                 height: 100,
                 min_width: 100,
@@ -321,7 +311,7 @@ describe('LocusZoom.Instance', function(){
                 controls: false
             };
             d3.select("body").append("div").attr("id", "plot");
-            this.plot = LocusZoom.populate("#plot", datasources, this.layout);
+            this.plot = LocusZoom.populate("#plot", datasources, layout);
         });
         it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
             this.plot.should.have.property("curtain").which.is.an.Object;
