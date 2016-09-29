@@ -2,7 +2,7 @@ svg.lz-locuszoom {
   background-color: #FFFFFF;
   border: none;
   cursor: crosshair;
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 10px; }
   svg.lz-locuszoom rect.lz-clickarea {
     fill: black;
@@ -140,7 +140,7 @@ div.lz-data_layer-tooltip {
   div.lz-data_layer-tooltip button:hover {
     cursor: pointer;
     background-color: rgba(24, 24, 24, 1);
-    color: #ebebeb; }
+    color: rgba(232, 232, 232, 1); }
   div.lz-data_layer-tooltip .lz-tooltip-close-button {
     color: rgba(24, 24, 24, 0.4);
     border: 1px solid rgba(24, 24, 24, 0.4);
