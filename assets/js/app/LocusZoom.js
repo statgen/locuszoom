@@ -518,7 +518,6 @@ LocusZoom.StandardLayout = {
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
                             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
                     }
                 }
             ]
