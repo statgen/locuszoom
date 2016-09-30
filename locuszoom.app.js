@@ -324,6 +324,64 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Validate a (presumed complete) state object against internal rules for consistency
+// as well as any layout-defined constraints
+LocusZoom.validateState = function(new_state, layout){
+
+    new_state = new_state || {};
+    layout = layout || {};
+
+    // If a "chr", "start", and "end" are present then resolve start and end
+    // to numeric values that are not decimal, negative, or flipped
+    var validated_region = false;
+    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+        // Determine a numeric scale and midpoint for the attempted region,
+        var attempted_midpoint = null; var attempted_scale;
+        new_state.start = Math.max(parseInt(new_state.start), 1);
+        new_state.end = Math.max(parseInt(new_state.end), 1);
+        if (isNaN(new_state.start) && isNaN(new_state.end)){
+            new_state.start = 1;
+            new_state.end = 1;
+            attempted_midpoint = 0.5;
+            attempted_scale = 0;
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+            attempted_midpoint = new_state.start || new_state.end;
+            attempted_scale = 0;
+            new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
+            new_state.end = (isNaN(new_state.end) ? new_state.start : new_state.end);
+        } else {
+            attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
+            attempted_scale = new_state.end - new_state.start;
+            if (attempted_scale < 0){
+                var temp = new_state.start;
+                new_state.end = new_state.start;
+                new_state.start = temp;
+                attempted_scale = new_state.end - new_state.start;
+            }
+            if (attempted_midpoint < 0){
+                new_state.start = 1;
+                new_state.end = 1;
+                attempted_scale = 0;
+            }
+        }
+        validated_region = true;
+    }
+
+    // Constrain w/r/t layout-defined mininum region scale
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.min_region_scale;
+    }
+
+    // Constrain w/r/t layout-defined maximum region scale
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.max_region_scale;
+    }
+
+    return new_state;
+};
+
 // Replace placeholders in an html string with field values defined in a data object
 // Only works on scalar values! Will ignore non-scalars.
 LocusZoom.parseFields = function (data, html) {
@@ -366,6 +424,8 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
     dashboard: {
         components: [
             {
@@ -4863,33 +4923,8 @@ LocusZoom.Instance.prototype.initialize = function(){
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
 // LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
 LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
-
     console.warn("Warning: use of LocusZoom.Instance.mapTo() is deprecated. Use LocusZoom.Instance.applyState() instead.");
-
-    // Apply new state values
-    // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.state.chr   = +chr;
-    this.state.start = +start;
-    this.state.end   = +end;
-
-    this.remap_promises = [];
-    // Trigger reMap on each Panel Layer
-    for (var id in this.panels){
-        this.remap_promises.push(this.panels[id].reMap());
-    }
-
-    Q.all(this.remap_promises)
-        .catch(function(error){
-            console.log(error);
-            this.curtain.drop(error);
-        }.bind(this))
-        .done(function(){
-            this.emit("layout_changed");
-            this.emit("data_rendered");
-        }.bind(this));
-
-    return this;
-    
+    return this.applyState({ chr: chr, start: start, end: end });
 };
 
 // Refresh an instance's data from sources without changing position
@@ -4898,28 +4933,32 @@ LocusZoom.Instance.prototype.refresh = function(){
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
-LocusZoom.Instance.prototype.applyState = function(new_state){
+LocusZoom.Instance.prototype.applyState = function(state_changes){
 
-    new_state = new_state || {};
-    if (typeof new_state != "object"){
-        throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
+    state_changes = state_changes || {};
+    if (typeof state_changes != "object"){
+        throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
+    }
+    
+    // First make a copies of the current (old) state to work with
+    var current_state = JSON.parse(JSON.stringify(this.state));
+    var new_state = JSON.parse(JSON.stringify(this.state));
+
+    // Apply changes by top-level property to the new state
+    for (var property in state_changes) {
+        new_state[property] = state_changes[property];
     }
 
-    // First null out all passed properties
-    for (var property in new_state) {
-        this.state[property] = null;
-    }
+    // Validate the new state (may do nothing, may do a lot, depends on how the user has thigns set up)
+    new_state = LocusZoom.validateState(new_state, this.layout);
 
-    // Apply new state properties
+    // Apply new state to the actual state
     for (property in new_state) {
         this.state[property] = new_state[property];
     }
 
+    // Generate requests for all panels given new state
     this.emit("data_requested");
-    this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].emit("data_requested");
-    }.bind(this));
-
     this.remap_promises = [];
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
@@ -5585,6 +5624,7 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
+    this.emit("data_requested");
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){

@@ -292,6 +292,64 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Validate a (presumed complete) state object against internal rules for consistency
+// as well as any layout-defined constraints
+LocusZoom.validateState = function(new_state, layout){
+
+    new_state = new_state || {};
+    layout = layout || {};
+
+    // If a "chr", "start", and "end" are present then resolve start and end
+    // to numeric values that are not decimal, negative, or flipped
+    var validated_region = false;
+    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+        // Determine a numeric scale and midpoint for the attempted region,
+        var attempted_midpoint = null; var attempted_scale;
+        new_state.start = Math.max(parseInt(new_state.start), 1);
+        new_state.end = Math.max(parseInt(new_state.end), 1);
+        if (isNaN(new_state.start) && isNaN(new_state.end)){
+            new_state.start = 1;
+            new_state.end = 1;
+            attempted_midpoint = 0.5;
+            attempted_scale = 0;
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+            attempted_midpoint = new_state.start || new_state.end;
+            attempted_scale = 0;
+            new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
+            new_state.end = (isNaN(new_state.end) ? new_state.start : new_state.end);
+        } else {
+            attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
+            attempted_scale = new_state.end - new_state.start;
+            if (attempted_scale < 0){
+                var temp = new_state.start;
+                new_state.end = new_state.start;
+                new_state.start = temp;
+                attempted_scale = new_state.end - new_state.start;
+            }
+            if (attempted_midpoint < 0){
+                new_state.start = 1;
+                new_state.end = 1;
+                attempted_scale = 0;
+            }
+        }
+        validated_region = true;
+    }
+
+    // Constrain w/r/t layout-defined mininum region scale
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.min_region_scale;
+    }
+
+    // Constrain w/r/t layout-defined maximum region scale
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.max_region_scale;
+    }
+
+    return new_state;
+};
+
 // Replace placeholders in an html string with field values defined in a data object
 // Only works on scalar values! Will ignore non-scalars.
 LocusZoom.parseFields = function (data, html) {
@@ -334,6 +392,8 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
     dashboard: {
         components: [
             {

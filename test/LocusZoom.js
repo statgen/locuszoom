@@ -299,6 +299,61 @@ describe('LocusZoom Core', function(){
             });
         });
 
+        describe("Validate State", function() {
+            it('should have a validateState function', function() {
+                LocusZoom.validateState.should.be.a.Function;
+            });
+            it('should do nothing if passed a state with no predicted rules / structure', function() {
+                var state = { foo: "bar" };
+                state = LocusZoom.validateState(state);
+                state.foo.should.be.exactly("bar");
+                var stateB = { start: "foo", end: "bar" };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly("foo");
+                stateB.end.should.be.exactly("bar");
+            });
+            it('should enforce no zeros for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: 0, end: 123 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1);
+                stateA.end.should.be.exactly(123);
+                var stateB = { chr: 1, start: 1, end: 0 };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(1);
+                stateB.end.should.be.exactly(1);
+            });
+            it('should enforce no negative values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: -235, end: 123 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1);
+                stateA.end.should.be.exactly(123);
+                var stateB = { chr: 1, start: 1, end: -436 };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(1);
+                stateB.end.should.be.exactly(1);
+            });
+            it('should enforce no non-integer values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: 1234.4, end: 4567.8 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1234);
+                stateA.end.should.be.exactly(4567);
+            });
+            it('should enforce no non-numeric values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: "foo", end: 324523 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(324523);
+                stateA.end.should.be.exactly(324523);
+                var stateB = { chr: 1, start: 68756, end: "foo" };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(68756);
+                stateB.end.should.be.exactly(68756);
+                var stateC = { chr: 1, start: "foo", end: "bar" };
+                stateC = LocusZoom.validateState(stateC);
+                stateC.start.should.be.exactly(1);
+                stateC.end.should.be.exactly(1);
+            });
+        });
+
         
     });
 

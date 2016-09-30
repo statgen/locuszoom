@@ -56,8 +56,7 @@ describe('LocusZoom.Instance', function(){
                 min_width: 1,
                 min_height: 1,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", {}, layout);
@@ -204,8 +203,7 @@ describe('LocusZoom.Instance', function(){
                 min_width: 100,
                 min_height: 100,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, layout);
@@ -305,10 +303,8 @@ describe('LocusZoom.Instance', function(){
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                resizable: false,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, layout);
@@ -381,6 +377,48 @@ describe('LocusZoom.Instance', function(){
             this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
             this.plot.loader.setPercentCompleted("foo");
             this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
+        });
+    });
+
+    describe("State and Requests", function() {
+        beforeEach(function(){
+            this.datasources = new LocusZoom.DataSources();
+            this.layout = { width: 100, height: 100 };
+            d3.select("body").append("div").attr("id", "plot");
+        });
+        afterEach(function(){
+            this.plot = null;
+            this.layout = null;
+            d3.select("#plot").remove();
+        });
+        it('Should apply basic start/end state validation when necessary', function(done){
+            this.layout.state = { chr: 1, start: -60, end: 10300050 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 1);
+                assert.equal(this.plot.state.end, 10300050);
+                done();
+            }.bind(this));
+        });
+        it('Should apply minimum region scale state validation if set in the plot layout', function(done){
+            this.layout.min_region_scale = 2000;
+            this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 10299025);
+                assert.equal(this.plot.state.end, 10301025);
+                done();
+            }.bind(this));
+        });
+        it('Should apply maximum region scale state validation if set in the plot layout', function(done){
+            this.layout.max_region_scale = 4000000;
+            this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 10800000);
+                assert.equal(this.plot.state.end, 14800000);
+                done();
+            }.bind(this));
         });
     });
 

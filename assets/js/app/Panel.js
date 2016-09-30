@@ -616,6 +616,7 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 
 // Re-Map a panel to new positions according to the parent instance's state
 LocusZoom.Panel.prototype.reMap = function(){
+    this.emit("data_requested");
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
