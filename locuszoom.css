@@ -373,9 +373,13 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%; }
   .lz-dashboard .lz-dashboard-title {
-    font-size: 150%;
-    font-weight: bold;
     margin-bottom: 0.3em; }
+    .lz-dashboard .lz-dashboard-title h3 {
+      font-size: 150%;
+      font-weight: bold; }
+    .lz-dashboard .lz-dashboard-title small {
+      font-size: 80%;
+      font-weight: normal; }
 
 div.lz-dashboard-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;

@@ -399,6 +399,7 @@ LocusZoom.StandardLayout = {
             {
                 type: "title",
                 title: "LocusZoom",
+                subtitle: "<a href=\"https://github.com/statgen/locuszoom/\" target=\"_blank\">v" + LocusZoom.version + "</a>",
                 position: "left"
             },
             {

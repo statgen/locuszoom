@@ -486,9 +486,15 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   font-size: 80%;
 
   .#{$namespace}-dashboard-title {
-    font-size: 150%;
-    font-weight: bold;
     margin-bottom: 0.3em;
+    h3 {
+      font-size: 150%;
+      font-weight: bold;
+    }
+    small {
+      font-size: 80%;
+      font-weight: normal;
+    }
   }
 
 }
