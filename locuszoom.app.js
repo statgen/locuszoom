@@ -760,7 +760,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging || this.parent.interactions.zooming);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -4960,6 +4960,7 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
     // Generate requests for all panels given new state
     this.emit("data_requested");
     this.remap_promises = [];
+    this.loading_data = true;
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
     }
@@ -4968,6 +4969,7 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
+            this.loading_data = false;
         }.bind(this))
         .done(function(){
 
@@ -5000,6 +5002,8 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+
+            this.loading_data = false;
             
         }.bind(this));
     
@@ -5816,7 +5820,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     if (this.layout.interaction.scroll_to_zoom){
         this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
             .on("zoom", function(){
-                if (this.interactions.dragging){ return; }
+                if (this.interactions.dragging || this.parent.loading_data){ return; }
                 this.interactions.zooming = true;
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }

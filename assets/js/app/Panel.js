@@ -808,7 +808,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     if (this.layout.interaction.scroll_to_zoom){
         this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
             .on("zoom", function(){
-                if (this.interactions.dragging){ return; }
+                if (this.interactions.dragging || this.parent.loading_data){ return; }
                 this.interactions.zooming = true;
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }

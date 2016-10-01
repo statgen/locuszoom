@@ -768,6 +768,7 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
     // Generate requests for all panels given new state
     this.emit("data_requested");
     this.remap_promises = [];
+    this.loading_data = true;
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
     }
@@ -776,6 +777,7 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
+            this.loading_data = false;
         }.bind(this))
         .done(function(){
 
@@ -808,6 +810,8 @@ LocusZoom.Instance.prototype.applyState = function(state_changes){
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+
+            this.loading_data = false;
             
         }.bind(this));
     

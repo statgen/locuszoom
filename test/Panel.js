@@ -541,21 +541,6 @@ describe('LocusZoom.Panel', function(){
                 done();
             }.bind(this));
         });
-        it ("should zoom along x axis when scrolling", function(done){
-            this.layout.panels[0].interaction.scroll_to_zoom = true;
-            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
-                // NOTE: d3 zoom behaviors are much more complicated than drag behaviors and as such are very
-                // difficult to simulate programmatically in a node environment. This test therefore only checks
-                // that the interaction object correctly tracks zoom start and end.
-                this.plot.panels.p.zoom_listener.on("zoom")();
-                this.plot.panels.p.interactions.should.be.an.Object;
-                this.plot.panels.p.interactions.zooming.should.be.true;
-                this.plot.panels.p.zoom_listener.on("zoomend")();
-                this.plot.panels.p.interactions.zooming.should.be.false;
-                done();
-            }.bind(this));
-        });
     });
 
 });
