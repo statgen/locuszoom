@@ -6042,6 +6042,25 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
     return this;
 };
 
+// Add a "basic" loader to a panel
+// This method is jsut a shortcut for adding the most commonly used type of loader
+// which appears when data is requested, animates (e.g. shows an infinitely cycling
+// progress bar as opposed to one that loads from 0-100% based on actual load progress),
+// and disappears when new data is loaded and rendered.
+LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
+    if (typeof show_immediately != "undefined"){ var show_immediately = true; }
+    if (show_immediately){
+        this.loader.show("Loading...").animate();
+    }
+    this.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+    }.bind(this));
+    this.on("data_rendered", function(){
+        this.loader.hide();
+    }.bind(this));
+    return this;
+};
+
 
         if (typeof define === "function" && define.amd){
             this.LocusZoom = LocusZoom, define(LocusZoom);

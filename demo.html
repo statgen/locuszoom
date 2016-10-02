@@ -71,15 +71,9 @@
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);
 
-    // Create event hooks to clear the loader whenever a panel renders new data
+    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function(panel){
-      plot.panels[panel.id].loader.show("Loading...").animate();
-      plot.panels[panel.id].on("data_requested", function(){
-        this.loader.show("Loading...").animate();
-      });
-      plot.panels[panel.id].on("data_rendered", function(){
-        this.loader.hide();
-      });
+      plot.panels[panel.id].addBasicLoader();
     });
 
     /**********************************************************************************
