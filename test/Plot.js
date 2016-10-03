@@ -1,8 +1,8 @@
 "use strict";
 
 /**
-  Instance.js Tests
-  Test composition of the LocusZoom.Instance object and its base classes
+  Plot.js Tests
+  Test composition of the LocusZoom.Plot object and its base classes
 */
 
 var jsdom = require('mocha-jsdom');
@@ -11,7 +11,7 @@ var assert = require('assert');
 var should = require("should");
 var _files = require('./_files.js');
 
-describe('LocusZoom.Instance', function(){
+describe('LocusZoom.Plot', function(){
 
     // Load all javascript files
     var src = [];
@@ -25,26 +25,26 @@ describe('LocusZoom.Instance', function(){
 
     // Tests
     it("creates an object for its name space", function() {
-        should.exist(LocusZoom.Instance);
+        should.exist(LocusZoom.Plot);
     });
 
     it("defines its layout defaults", function() {
-        LocusZoom.Instance.should.have.property('DefaultLayout').which.is.an.Object;
+        LocusZoom.Plot.should.have.property('DefaultLayout').which.is.an.Object;
     });
 
     describe("Constructor", function() {
         beforeEach(function() {
-            this.instance = new LocusZoom.Instance("plot");
+            this.plot = new LocusZoom.Plot("plot");
         });
         it("returns an object", function() {
-            this.instance.should.be.an.Object;
+            this.plot.should.be.an.Object;
         });
         it('should have an id', function(){
-            this.instance.should.have.property('id').which.is.a.String;
+            this.plot.should.have.property('id').which.is.a.String;
         });
         it('should have a layout which is (superficially) a copy of StandardLayout', function(){
-            assert.equal(this.instance.layout.width, LocusZoom.StandardLayout.width);
-            assert.equal(this.instance.layout.height, LocusZoom.StandardLayout.height);
+            assert.equal(this.plot.layout.width, LocusZoom.StandardLayout.width);
+            assert.equal(this.plot.layout.height, LocusZoom.StandardLayout.height);
         });
     });
 
@@ -177,19 +177,19 @@ describe('LocusZoom.Instance', function(){
         describe("Mouse Guide Layer", function() {
             beforeEach(function(){
                 d3.select("body").append("div").attr("id", "plot");
-                this.instance = LocusZoom.populate("#plot");
+                this.plot = LocusZoom.populate("#plot");
             });
             it('first child should be a mouse guide layer group element', function(){
-                d3.select(this.instance.svg.node().firstChild).attr("id").should.be.exactly("plot.mouse_guide");
+                d3.select(this.plot.svg.node().firstChild).attr("id").should.be.exactly("plot.mouse_guide");
             });
             it('should have a mouse guide object with mouse guide svg selectors', function(){
-                this.instance.mouse_guide.should.be.an.Object;
-                this.instance.mouse_guide.svg.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.svg.html(), this.instance.svg.select("#plot\\.mouse_guide").html());
-                this.instance.mouse_guide.vertical.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.vertical.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-vertical").html());
-                this.instance.mouse_guide.horizontal.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
+                this.plot.mouse_guide.should.be.an.Object;
+                this.plot.mouse_guide.svg.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.svg.html(), this.plot.svg.select("#plot\\.mouse_guide").html());
+                this.plot.mouse_guide.vertical.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.vertical.html(), this.plot.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-vertical").html());
+                this.plot.mouse_guide.horizontal.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.horizontal.html(), this.plot.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
             });
         });
     });
@@ -295,7 +295,7 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
-    describe("Instance Curtain and Loader", function() {
+    describe("Plot Curtain and Loader", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
             var layout = {

@@ -34,13 +34,13 @@ describe('LocusZoom.Panel', function(){
 
     describe("Constructor", function() {
         beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
-            this.panel = this.instance.panels.positions;
+            d3.select("body").append("div").attr("id", "plot_id");
+            this.plot = LocusZoom.populate("#plot_id");
+            this.panel = this.plot.panels.positions;
         });
         afterEach(function(){
-            d3.select("#instance_id").remove();
-            this.instance = null;
+            d3.select("#plot_id").remove();
+            this.plot = null;
             this.panel = null;
         });
         it("returns an object", function() {
@@ -76,17 +76,17 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
         });
         it('should generate an ID if passed a layout that does not define one', function(){
-            this.instance.addPanel({ "foo": "bar" });
-            var panel_idx = this.instance.layout.panels.length - 1;
-            this.instance.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
-            this.instance.layout.panels[panel_idx].foo.should.be.exactly("bar");
-            this.instance.panels[this.instance.layout.panels[panel_idx].id].should.be.an.Object;
-            this.instance.panels[this.instance.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
+            this.plot.addPanel({ "foo": "bar" });
+            var panel_idx = this.plot.layout.panels.length - 1;
+            this.plot.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
+            this.plot.layout.panels[panel_idx].foo.should.be.exactly("bar");
+            this.plot.panels[this.plot.layout.panels[panel_idx].id].should.be.an.Object;
+            this.plot.panels[this.plot.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
         });
         it('should throw an error if adding a panel with an ID that is already used', function(){
-            this.instance.addPanel({ "id": "duplicate", "foo": "bar" });
+            this.plot.addPanel({ "id": "duplicate", "foo": "bar" });
             assert.throws(function(){
-                this.instance.addPanel({ "id": "duplicate", "foo2": "bar2" });
+                this.plot.addPanel({ "id": "duplicate", "foo2": "bar2" });
             }.bind(this));
         });
     });
@@ -99,7 +99,7 @@ describe('LocusZoom.Panel', function(){
             this.genes_panel = this.plot.panels.genes;
         });
         afterEach(function(){
-            d3.select("#instance_id").remove();
+            d3.select("#plot_id").remove();
             this.plot = null;
             this.positions_panel = null;
             this.genes_panel = null;

@@ -25,8 +25,8 @@ describe('LocusZoom Singletons', function(){
 
     describe("Label Functions", function() {
         beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
+            d3.select("body").append("div").attr("id", "plot_id");
+            this.plot = LocusZoom.populate("#plot_id");
         });
         it("LocusZoom should have a LabelFunctions singleton", function(){
             LocusZoom.should.have.property("LabelFunctions").which.is.an.Object;
@@ -204,7 +204,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.ScaleFunctions.get("nonexistent", this.instance.state);
+                LocusZoom.ScaleFunctions.get("nonexistent", this.plot.state);
             });
         });
         it('should throw an exception when adding a new scale function with an already in use name', function(){
@@ -346,7 +346,7 @@ describe('LocusZoom Singletons', function(){
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){
             assert.throws(function(){
-                LocusZoom.DataLayers.get("nonexistent", this.instance.state);
+                LocusZoom.DataLayers.get("nonexistent", this.plot.state);
             });
         });
         it('should throw an exception when trying to add a new data layer that is not a function', function(){

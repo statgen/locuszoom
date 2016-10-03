@@ -6,7 +6,7 @@ var LocusZoom = {
     version: "0.4.4"
 };
     
-// Populate a single element with a LocusZoom instance.
+// Populate a single element with a LocusZoom plot.
 // selector can be a string for a DOM Query or a d3 selector.
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
@@ -21,7 +21,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         var base_layout = layout || {};
         layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
     }
-    var instance;
+    var plot;
     d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
@@ -29,41 +29,41 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
             this.attr("id", "#lz-" + iterator);
         }
-        // Create the instance
-        instance = new LocusZoom.Instance(this.node().id, datasource, layout);
+        // Create the plot
+        plot = new LocusZoom.Plot(this.node().id, datasource, layout);
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key){
-                instance.state[key] = parsed_state[key];
+                plot.state[key] = parsed_state[key];
             });
         }
         // Add an SVG to the div and set its dimensions
-        instance.svg = d3.select("div#" + instance.id)
+        plot.svg = d3.select("div#" + plot.id)
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
-        instance.setDimensions();
-        instance.positionPanels();
-        // Initialize the instance
-        instance.initialize();
-        // If the instance has defined data sources then trigger its first mapping based on state values
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+        plot.setDimensions();
+        plot.positionPanels();
+        // Initialize the plot
+        plot.initialize();
+        // If the plot has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
-            instance.refresh();
+            plot.refresh();
         }
     });
-    return instance;
+    return plot;
 };
 
-// Populate arbitrarily many elements each with a LocusZoom instance
+// Populate arbitrarily many elements each with a LocusZoom plot
 // using a common datasource, layout, and/or state
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
-    var instances = [];
+    var plots = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        plots[i] = LocusZoom.populate(this, datasource, layout, state);
     });
-    return instances;
+    return plots;
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))

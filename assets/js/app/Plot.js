@@ -6,14 +6,14 @@
 
 /**
 
-  LocusZoom.Instance Class
+  LocusZoom.Plot Class
 
-  An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
+  An Plot is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
   on a single page, each having its own layout.
 
 */
 
-LocusZoom.Instance = function(id, datasource, layout) {
+LocusZoom.Plot = function(id, datasource, layout) {
 
     this.initialized = false;
 
@@ -35,7 +35,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     this.remap_promises = [];
 
-    // The layout is a serializable object used to describe the composition of the instance
+    // The layout is a serializable object used to describe the composition of the Plot
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
@@ -43,9 +43,9 @@ LocusZoom.Instance = function(id, datasource, layout) {
     } else {
         this.layout = layout;
     }
-    LocusZoom.mergeLayouts(this.layout, LocusZoom.Instance.DefaultLayout);
+    LocusZoom.mergeLayouts(this.layout, LocusZoom.Plot.DefaultLayout);
 
-    // Create a shortcut to the state in the layout on the instance
+    // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;
     
     // LocusZoom.Data.Requester
@@ -82,7 +82,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
         return this;
     };
 
-    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Get an object with the x and y coordinates of the Plot's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
     this.getPageOrigin = function(){
         var bounding_client_rect = this.svg.node().getBoundingClientRect();
@@ -113,7 +113,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
 };
 
 // Default Layout
-LocusZoom.Instance.DefaultLayout = {
+LocusZoom.Plot.DefaultLayout = {
     state: {},
     width: 1,
     height: 1,
@@ -129,9 +129,9 @@ LocusZoom.Instance.DefaultLayout = {
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
-LocusZoom.Instance.prototype.sumProportional = function(dimension){
+LocusZoom.Plot.prototype.sumProportional = function(dimension){
     if (dimension != "height" && dimension != "width"){
-        throw ("Bad dimension value passed to LocusZoom.Instance.prototype.sumProportional");
+        throw ("Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional");
     }
     var total = 0;
     for (var id in this.panels){
@@ -144,24 +144,24 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     return total;
 };
 
-LocusZoom.Instance.prototype.rescaleSVG = function(){
+LocusZoom.Plot.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
     return this;
 };
 
-LocusZoom.Instance.prototype.initializeLayout = function(){
+LocusZoom.Plot.prototype.initializeLayout = function(){
 
     // Sanity check layout values
     // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
     if (isNaN(this.layout.width) || this.layout.width <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.height) || this.layout.height <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0){
-        throw ("Instance layout parameter `aspect_ratio` must be a positive number");
+        throw ("Plot layout parameter `aspect_ratio` must be a positive number");
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
@@ -183,16 +183,16 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
 };
 
 /**
-  Set the dimensions for an instance.
+  Set the dimensions for an plot.
   This function works in two different ways:
   1. If passed a discrete width and height:
-     * Adjust the instance to match those exact values (lower-bounded by minimum panel dimensions)
-     * Resize panels within the instance proportionally to match the new instance dimensions
+     * Adjust the plot to match those exact values (lower-bounded by minimum panel dimensions)
+     * Resize panels within the plot proportionally to match the new plot dimensions
   2. If NOT passed discrete width and height:
      * Assume panels within are sized and positioned correctly
-     * Calculate appropriate instance dimesions from panels contained within and update instance
+     * Calculate appropriate plot dimesions from panels contained within and update plot
 */
-LocusZoom.Instance.prototype.setDimensions = function(width, height){
+LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
     var id;
 
@@ -206,8 +206,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     this.layout.min_width = Math.max(min_width, 1);
     this.layout.min_height = Math.max(min_height, 1);
 
-    // If width and height arguments were passed then adjust them against instance minimums if necessary.
-    // Then resize the instance and proportionally resize panels to fit inside the new instance dimensions.
+    // If width and height arguments were passed then adjust them against plot minimums if necessary.
+    // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
     if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
@@ -236,7 +236,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }.bind(this));
     }
 
-    // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
+    // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
     // by making it conform to panel dimensions, assuming panels are already positioned correctly.
     else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
@@ -263,7 +263,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }
     }
 
-    // If the instance has been initialized then trigger some necessary render functions
+    // If the plot has been initialized then trigger some necessary render functions
     if (this.initialized){
         this.panel_boundaries.position();
         this.dashboard.update();
@@ -275,17 +275,17 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
 };
 
 // Create a new panel from a layout
-LocusZoom.Instance.prototype.addPanel = function(layout){
+LocusZoom.Plot.prototype.addPanel = function(layout){
 
     // Sanity checks
     if (typeof layout !== "object"){
-        throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
+        throw "Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()";
     }
 
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(layout, this);
     
-    // Store the Panel on the Instance
+    // Store the Panel on the Plot
     this.panels[panel.id] = panel;
 
     // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
@@ -328,7 +328,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
 };
 
 // Remove panel by id
-LocusZoom.Instance.prototype.removePanel = function(id){
+LocusZoom.Plot.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
     }
@@ -386,7 +386,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
        but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
-LocusZoom.Instance.prototype.positionPanels = function(){
+LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
 
@@ -412,22 +412,22 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
-    // Update origins on all panels without changing instance-level dimensions yet
+    // Update origins on all panels without changing plot-level dimensions yet
     var y_offset = 0;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setOrigin(0, y_offset);
         this.panels[panel_id].layout.proportional_origin.x = 0;
         y_offset += this.panels[panel_id].layout.height;
     }.bind(this));
-    var calculated_instance_height = y_offset;
+    var calculated_plot_height = y_offset;
     this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_instance_height;
+        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
     }.bind(this));
 
-    // Update dimensions on the instance to accomodate repositioned panels
+    // Update dimensions on the plot to accomodate repositioned panels
     this.setDimensions();
 
-    // Set dimensions on all panels using newly set instance-level dimensions and panel-level proportional dimensions
+    // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                             this.layout.height * this.panels[panel_id].layout.proportional_height);
@@ -437,8 +437,8 @@ LocusZoom.Instance.prototype.positionPanels = function(){
     
 };
 
-// Create all instance-level objects, initialize all child panels
-LocusZoom.Instance.prototype.initialize = function(){
+// Create all plot-level objects, initialize all child panels
+LocusZoom.Plot.prototype.initialize = function(){
 
     // Create an element/layer for containing mouse guides
     var mouse_guide_svg = this.svg.append("g")
@@ -732,21 +732,21 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
-// Map an entire LocusZoom Instance to a new region
+// Map an entire LocusZoom Plot to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
-// LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
-LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
-    console.warn("Warning: use of LocusZoom.Instance.mapTo() is deprecated. Use LocusZoom.Instance.applyState() instead.");
+// LocusZoom.Plot.prototype.applyState() takes a single object, covering far more use cases.
+LocusZoom.Plot.prototype.mapTo = function(chr, start, end){
+    console.warn("Warning: use of LocusZoom.Plot.mapTo() is deprecated. Use LocusZoom.Plot.applyState() instead.");
     return this.applyState({ chr: chr, start: start, end: end });
 };
 
-// Refresh an instance's data from sources without changing position
-LocusZoom.Instance.prototype.refresh = function(){
+// Refresh an plot's data from sources without changing position
+LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
-LocusZoom.Instance.prototype.applyState = function(state_changes){
+LocusZoom.Plot.prototype.applyState = function(state_changes){
 
     state_changes = state_changes || {};
     if (typeof state_changes != "object"){

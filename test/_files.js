@@ -9,7 +9,7 @@ var _files = [
     './assets/js/app/Singletons.js',
     './assets/js/app/Dashboard.js',
     './assets/js/app/Data.js',
-    './assets/js/app/Instance.js',
+    './assets/js/app/Plot.js',
     './assets/js/app/Panel.js'
 ];
 module.exports = _files;

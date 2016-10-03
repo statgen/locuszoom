@@ -116,10 +116,10 @@ LocusZoom.Panel = function(layout, parent) {
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var instance_origin = this.parent.getPageOrigin();
+        var plot_origin = this.parent.getPageOrigin();
         return {
-            x: instance_origin.x + this.layout.origin.x,
-            y: instance_origin.y + this.layout.origin.y
+            x: plot_origin.x + this.layout.origin.x,
+            y: plot_origin.y + this.layout.origin.y
         };
     };
 
@@ -622,7 +622,7 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 };
 
 
-// Re-Map a panel to new positions according to the parent instance's state
+// Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");
     this.data_promises = [];

@@ -1,7 +1,7 @@
 "use strict";
 
 /**
-  Instance.js Tests
+  DataLayer.js Tests
   Test composition of the LocusZoom.Panel object and its base classes
 */
 

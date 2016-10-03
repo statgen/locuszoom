@@ -18,13 +18,13 @@
 LocusZoom.Dashboard = function(parent){
 
     // parent must be a locuszoom plot or panel
-    if (!(parent instanceof LocusZoom.Instance) && !(parent instanceof LocusZoom.Panel)){
+    if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)){
         throw "Unable to create dashboard, parent must be a locuszoom plot or panel";
     }
     this.parent = parent;
     this.id = this.parent.getBaseId() + ".dashboard";
 
-    this.type = (this.parent instanceof LocusZoom.Instance) ? "plot" : "panel";
+    this.type = (this.parent instanceof LocusZoom.Plot) ? "plot" : "panel";
 
     this.selector = null;
     this.components = [];

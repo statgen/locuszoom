@@ -15,7 +15,7 @@ var app_js_files = ["./assets/js/app/LocusZoom.js",
                     "./assets/js/app/Singletons.js",
                     "./assets/js/app/Dashboard.js",
                     "./assets/js/app/Data.js",
-                    "./assets/js/app/Instance.js",
+                    "./assets/js/app/Plot.js",
                     "./assets/js/app/Panel.js"
                    ];
 
@@ -25,7 +25,7 @@ var test_js_files = ["./test/LocusZoom.js",
                      "./test/Singletons.js",
                      "./test/Dashboard.js",
                      "./test/Data.js",
-                     "./test/Instance.js",
+                     "./test/Plot.js",
                      "./test/Panel.js"
                     ];
 

@@ -631,7 +631,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
     return this;
 };
 
-// Re-Map a data layer to new positions according to the parent panel's parent instance's state
+// Re-Map a data layer to new positions according to the parent panel's parent plot's state
 LocusZoom.DataLayer.prototype.reMap = function(){
 
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
