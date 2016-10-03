@@ -96,6 +96,7 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -105,6 +106,7 @@ LocusZoom.Panel = function(layout, parent) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -212,6 +214,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
+
+    return this;
 
 };
 
@@ -673,6 +677,8 @@ LocusZoom.Panel.prototype.generateExtents = function(){
         this.x_extent = [ this.state.start, this.state.end ];
     }
 
+    return this;
+
 };
 
 // Render a given panel
@@ -965,6 +971,8 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
                 .on("mousedown" + namespace, function(){ panel.toggleDragging(axis + "_tick"); });
         }
     }.bind(this));
+
+    return this;
 
 };
 

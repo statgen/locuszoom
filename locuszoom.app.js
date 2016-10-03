@@ -935,6 +935,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
             .attr("id", id + "-tooltip")
     };
     this.updateTooltip(d);
+    return this;
 };
 
 // Update a tool tip (generate its inner HTML)
@@ -963,6 +964,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
+    return this;
 };
 
 // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
@@ -978,6 +980,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
         }
         delete this.tooltips[id];
     }
+    return this;
 };
 
 // Loop through and destroy all tool tips on this data layer
@@ -985,6 +988,7 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
     for (var id in this.tooltips){
         this.destroyTooltip(id);
     }
+    return this;
 };
 
 // Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
@@ -1006,6 +1010,7 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id){
     this.tooltips[id].arrow
         .style("left", "-1px")
         .style("top", "-1px");
+    return this;
 };
 
 // Loop through and position all tool tips on this data layer
@@ -1013,6 +1018,7 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
     for (var id in this.tooltips){
         this.positionTooltip(id);
     }
+    return this;
 };
 
 // Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
@@ -1084,39 +1090,49 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     } else {
         this.destroyTooltip(element);
     }
+
+    return this;
     
 };
 
 // Toggle the highlighted status of an element
 LocusZoom.DataLayer.prototype.highlightElement = function(element){
     this.setElementStatus("highlighted", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
     this.setElementStatus("highlighted", element, false);
+    return this;
 };
 
 // Toggle the highlighted status of all elements
 LocusZoom.DataLayer.prototype.highlightAllElements = function(){
     this.setAllElementStatus("highlighted", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
     this.setAllElementStatus("highlighted", false);
+    return this;
 };
 
 // Toggle the selected status of an element
 LocusZoom.DataLayer.prototype.selectElement = function(element){
     this.setElementStatus("selected", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectElement = function(element){
     this.setElementStatus("selected", element, false);
+    return this;
 };
 
 // Toggle the selected status of all elements
 LocusZoom.DataLayer.prototype.selectAllElements = function(){
     this.setAllElementStatus("selected", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectAllElements = function(){
     this.setAllElementStatus("selected", false);
+    return this;
 };
 
 // Toggle a status (e.g. highlighted, selected) on an element
@@ -1159,6 +1175,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
     this.parent_plot.emit("layout_changed");
+
+    return this;
     
 };
 
@@ -1269,6 +1287,8 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
             handleElementStatusEvent(status, event, element);
         }.bind(this));
     }.bind(this));
+
+    return this;
                     
 };
 
@@ -1278,6 +1298,7 @@ LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
     supported_statuses.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
+    return this;
 };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -1313,6 +1334,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
         this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
+
     return promise;
 
 };
@@ -4265,6 +4287,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -4274,6 +4297,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
@@ -4341,6 +4365,7 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
+    return this;
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -4372,6 +4397,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         this.addPanel(panel_layout);
     }.bind(this));
 
+    return this;
 };
 
 /**
@@ -4463,8 +4489,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.loader.update();
     }
 
-    this.emit("layout_changed");
-    return this;
+    return this.emit("layout_changed");
 };
 
 // Create a new panel from a layout
@@ -4625,6 +4650,8 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                             this.layout.height * this.panels[panel_id].layout.proportional_height);
     }.bind(this));
+
+    return this;
     
 };
 
@@ -4933,7 +4960,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState();
+    return this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
@@ -5112,6 +5139,7 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -5121,6 +5149,7 @@ LocusZoom.Panel = function(layout, parent) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -5228,6 +5257,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
+
+    return this;
 
 };
 
@@ -5689,6 +5720,8 @@ LocusZoom.Panel.prototype.generateExtents = function(){
         this.x_extent = [ this.state.start, this.state.end ];
     }
 
+    return this;
+
 };
 
 // Render a given panel
@@ -5981,6 +6014,8 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
                 .on("mousedown" + namespace, function(){ panel.toggleDragging(axis + "_tick"); });
         }
     }.bind(this));
+
+    return this;
 
 };
 

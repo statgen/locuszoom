@@ -69,6 +69,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -78,6 +79,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
 
     // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
@@ -145,6 +147,7 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
 LocusZoom.Instance.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
+    return this;
 };
 
 LocusZoom.Instance.prototype.initializeLayout = function(){
@@ -176,6 +179,7 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         this.addPanel(panel_layout);
     }.bind(this));
 
+    return this;
 };
 
 /**
@@ -267,8 +271,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.loader.update();
     }
 
-    this.emit("layout_changed");
-    return this;
+    return this.emit("layout_changed");
 };
 
 // Create a new panel from a layout
@@ -429,6 +432,8 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                             this.layout.height * this.panels[panel_id].layout.proportional_height);
     }.bind(this));
+
+    return this;
     
 };
 
@@ -737,7 +742,7 @@ LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
 
 // Refresh an instance's data from sources without changing position
 LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState();
+    return this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
