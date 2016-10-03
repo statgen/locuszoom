@@ -631,7 +631,7 @@ LocusZoom.Panel.prototype.reMap = function(){
         try {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }
     }
@@ -645,7 +645,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }.bind(this));
 };
@@ -740,9 +740,22 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         ranges.y2_shifted = [this.layout.cliparea.height, 0];
     }
 
-    // Shift ranges based on any drag actions currently underway
+    // Shift ranges based on any drag or zoom interactions currently underway
     if (this.interactions.zooming && typeof this.x_scale == "function"){
-        ranges.x_shifted = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
+        var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
+        var zoom_factor = this.interactions.zooming.scale;
+        var potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
+        if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)){
+            zoom_factor = 1 /(Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
+        } else if (zoom_factor > 1 && !isNaN(this.parent.layout.min_region_scale)){
+            zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
+        }
+        var new_extent_size = Math.floor(current_extent_size * zoom_factor);
+        var anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
+        var offset_ratio = anchor / this.layout.cliparea.width;
+        var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
+        ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
     } else if (this.interactions.dragging){
         var anchor, scalar = null;
         switch (this.interactions.dragging.method){
@@ -816,18 +829,20 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
+        this.zoom_listener = d3.behavior.zoom()
             .on("zoom", function(){
-                if (!this.canInteract()){ return; }
-                this.interactions.zooming = true;
+                if (this.interactions.dragging || this.parent.loading_data){ return; }
+                var coords = d3.mouse(this.svg.container.node());
+                this.interactions.zooming = {
+                    scale: (d3.event.scale < 1) ? 0.9 : 1.1,
+                    center: coords[0]
+                };
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
                 this.zoom_timeout = setTimeout(function(){
+                    this.interactions.zooming = false;
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }.bind(this), 500);
-            }.bind(this))
-            .on("zoomend", function(){
-                this.interactions.zooming = false;
             }.bind(this));
         this.svg.container.call(this.zoom_listener);
     }
