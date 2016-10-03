@@ -5124,6 +5124,10 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
+    this.canInteract = function(){
+        return !(this.interactions.dragging || this.interactions.zooming || this.parent.loading_data);
+    };
+
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
@@ -5857,7 +5861,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     if (this.layout.interaction.scroll_to_zoom){
         this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
             .on("zoom", function(){
-                if (this.interactions.dragging || this.parent.loading_data){ return; }
+                if (!this.canInteract()){ return; }
                 this.interactions.zooming = true;
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
@@ -6039,8 +6043,9 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }.bind(this));
     }.bind(this);
     method = method || null;
-    if (!method){
-        if (!this.interactions.dragging){ return; }
+
+    // Stop a current drag event (stopping procedure varies by drag method)
+    if (this.interactions.dragging){
         switch(this.interactions.dragging.method){
         case "background":
         case "x_tick":
@@ -6059,7 +6064,11 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }
         this.interactions.dragging = false;
         this.svg.container.style("cursor", null);
-    } else {
+        return this;
+    }
+
+    // Start a drag event for the supplied method if currently allowed by the rules defined in this.canInteract()
+    else if (this.canInteract()){
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging = {
             method: method,
@@ -6073,7 +6082,9 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         if (method == "y1_tick"){ this.interactions.dragging.on_y1 = true; }
         if (method == "y2_tick"){ this.interactions.dragging.on_y2 = true; }
         this.svg.container.style("cursor", "all-scroll");
+        return this;
     }
+
     return this;
 };
 

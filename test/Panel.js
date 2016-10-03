@@ -385,7 +385,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the x axis when dragging the background", function(done){
             this.layout.panels[0].interaction.drag_background_to_pan = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 50, 50 ]
                 d3.mouse = function(){ return [ 50, 50 ]; };
                 this.plot.panels.p.svg.container.select(".lz-panel-background").node()["__onmousedown.plot.p.interaction.drag.background"]();
@@ -418,7 +418,7 @@ describe('LocusZoom.Panel', function(){
         it ("should scale along the x axis when dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 50, 0 ]; };
                 this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
@@ -449,7 +449,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the x axis when shift+dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 var event = { shiftKey: true, preventDefault: function(){ return null; } };
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 50, 0 ]; };
@@ -481,7 +481,7 @@ describe('LocusZoom.Panel', function(){
         it ("should scale along the y1 axis when dragging a y1 tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 0, 25 ]; };
                 this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
@@ -512,7 +512,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the y axis when shift+dragging a y tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 var event = { shiftKey: true, preventDefault: function(){ return null; } };
                 // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 0, 25 ]; };
