@@ -3,10 +3,10 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.3"
+    version: "0.4.5"
 };
     
-// Populate a single element with a LocusZoom instance.
+// Populate a single element with a LocusZoom plot.
 // selector can be a string for a DOM Query or a d3 selector.
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
@@ -21,7 +21,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         var base_layout = layout || {};
         layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
     }
-    var instance;
+    var plot;
     d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
@@ -29,41 +29,41 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
             this.attr("id", "#lz-" + iterator);
         }
-        // Create the instance
-        instance = new LocusZoom.Instance(this.node().id, datasource, layout);
+        // Create the plot
+        plot = new LocusZoom.Plot(this.node().id, datasource, layout);
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key){
-                instance.state[key] = parsed_state[key];
+                plot.state[key] = parsed_state[key];
             });
         }
         // Add an SVG to the div and set its dimensions
-        instance.svg = d3.select("div#" + instance.id)
+        plot.svg = d3.select("div#" + plot.id)
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
-        instance.setDimensions();
-        instance.positionPanels();
-        // Initialize the instance
-        instance.initialize();
-        // If the instance has defined data sources then trigger its first mapping based on state values
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+        plot.setDimensions();
+        plot.positionPanels();
+        // Initialize the plot
+        plot.initialize();
+        // If the plot has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
-            instance.refresh();
+            plot.refresh();
         }
     });
-    return instance;
+    return plot;
 };
 
-// Populate arbitrarily many elements each with a LocusZoom instance
+// Populate arbitrarily many elements each with a LocusZoom plot
 // using a common datasource, layout, and/or state
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
-    var instances = [];
+    var plots = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        plots[i] = LocusZoom.populate(this, datasource, layout, state);
     });
-    return instances;
+    return plots;
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
@@ -292,6 +292,64 @@ LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
     return custom_layout;
 };
 
+// Validate a (presumed complete) state object against internal rules for consistency
+// as well as any layout-defined constraints
+LocusZoom.validateState = function(new_state, layout){
+
+    new_state = new_state || {};
+    layout = layout || {};
+
+    // If a "chr", "start", and "end" are present then resolve start and end
+    // to numeric values that are not decimal, negative, or flipped
+    var validated_region = false;
+    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+        // Determine a numeric scale and midpoint for the attempted region,
+        var attempted_midpoint = null; var attempted_scale;
+        new_state.start = Math.max(parseInt(new_state.start), 1);
+        new_state.end = Math.max(parseInt(new_state.end), 1);
+        if (isNaN(new_state.start) && isNaN(new_state.end)){
+            new_state.start = 1;
+            new_state.end = 1;
+            attempted_midpoint = 0.5;
+            attempted_scale = 0;
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+            attempted_midpoint = new_state.start || new_state.end;
+            attempted_scale = 0;
+            new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
+            new_state.end = (isNaN(new_state.end) ? new_state.start : new_state.end);
+        } else {
+            attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
+            attempted_scale = new_state.end - new_state.start;
+            if (attempted_scale < 0){
+                var temp = new_state.start;
+                new_state.end = new_state.start;
+                new_state.start = temp;
+                attempted_scale = new_state.end - new_state.start;
+            }
+            if (attempted_midpoint < 0){
+                new_state.start = 1;
+                new_state.end = 1;
+                attempted_scale = 0;
+            }
+        }
+        validated_region = true;
+    }
+
+    // Constrain w/r/t layout-defined mininum region scale
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.min_region_scale;
+    }
+
+    // Constrain w/r/t layout-defined maximum region scale
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.max_region_scale;
+    }
+
+    return new_state;
+};
+
 // Replace placeholders in an html string with field values defined in a data object
 // Only works on scalar values! Will ignore non-scalars.
 LocusZoom.parseFields = function (data, html) {
@@ -312,6 +370,21 @@ LocusZoom.parseFields = function (data, html) {
     return html;
 };
 
+// Shortcut method for getting the data bound to a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipData = function(node){
+    if (typeof node != "object" || typeof node.parentNode == "undefined"){
+        throw("Invalid node object");
+    }
+    // If this node is a locuszoom tool tip then return its data
+    var selector = d3.select(node);
+    if (selector.classed("lz-data_layer-tooltip") && typeof selector.data()[0] != "undefined"){
+        return selector.data()[0];
+    } else {
+        return LocusZoom.getToolTipData(node.parentNode);
+    }
+};
+
 // Standard Layout
 LocusZoom.StandardLayout = {
     state: {},
@@ -319,11 +392,34 @@ LocusZoom.StandardLayout = {
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
+    dashboard: {
+        components: [
+            {
+                type: "title",
+                title: "LocusZoom",
+                subtitle: "<a href=\"https://github.com/statgen/locuszoom/\" target=\"_blank\">v" + LocusZoom.version + "</a>",
+                position: "left"
+            },
+            {
+                type: "dimensions",
+                position: "right"
+            },
+            {
+                type: "region_scale",
+                position: "right"
+            },
+            {
+                type: "download",
+                position: "right"
+            }
+        ]
+    },
     panels: [
         {
             id: "positions",
-            title: "LocusZoom",
-            description: "<b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit.",
+            title: "",
             width: 800,
             height: 225,
             origin: { x: 0, y: 0 },
@@ -334,6 +430,23 @@ LocusZoom.StandardLayout = {
             proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
+            dashboard: {
+                components: [
+                    {
+                        type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "move_panel_up",
+                        position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }
+                ]
+            },
             axes: {
                 x: {
                     label_function: "chromosome",
@@ -465,7 +578,7 @@ LocusZoom.StandardLayout = {
                         hide: { and: ["unhighlighted", "unselected"] },
                         html: "<strong>{{variant}}</strong><br>"
                             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong>"
+                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
                     }
                 }
             ]
@@ -481,6 +594,23 @@ LocusZoom.StandardLayout = {
             proportional_height: 0.5,
             proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
+            dashboard: {
+                components: [
+                    {
+                        type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "move_panel_up",
+                        position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }                    
+                ]
+            },
             axes: {},
             interaction: {
                 drag_background_to_pan: true,

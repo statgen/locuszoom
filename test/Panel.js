@@ -1,7 +1,7 @@
 "use strict";
 
 /**
-  Instance.js Tests
+  Panel.js Tests
   Test composition of the LocusZoom.Panel object and its base classes
 */
 
@@ -9,22 +9,14 @@ var jsdom = require('mocha-jsdom');
 var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
+var _files = require('./_files.js');
 
 describe('LocusZoom.Panel', function(){
 
     // Load all javascript files
-    jsdom({
-        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
-               fs.readFileSync('./assets/js/vendor/d3.min.js'),
-               fs.readFileSync('./assets/js/vendor/q.min.js'),
-               fs.readFileSync('./assets/js/app/LocusZoom.js'),
-               fs.readFileSync('./assets/js/app/Instance.js'),
-               fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js'),
-               fs.readFileSync('./assets/js/app/Data.js')
-             ]
-    });
+    var src = [];
+    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    jsdom({ src: src });
 
     // Reset DOM after each test
     afterEach(function(){
@@ -42,9 +34,14 @@ describe('LocusZoom.Panel', function(){
 
     describe("Constructor", function() {
         beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
-            this.panel = this.instance.panels.positions;
+            d3.select("body").append("div").attr("id", "plot_id");
+            this.plot = LocusZoom.populate("#plot_id");
+            this.panel = this.plot.panels.positions;
+        });
+        afterEach(function(){
+            d3.select("#plot_id").remove();
+            this.plot = null;
+            this.panel = null;
         });
         it("returns an object", function() {
             this.panel.should.be.an.Object;
@@ -64,7 +61,7 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.proportional_width.should.be.a.Number;
             this.panel.layout.proportional_height.should.be.a.Number;
             this.panel.layout.origin.should.be.an.Object;
-            this.panel.layout.origin.should.have.property('x').which.is.a.Number
+            this.panel.layout.origin.should.have.property('x').which.is.a.Number;
             this.panel.layout.origin.should.have.property('y').which.is.a.Number;
             this.panel.layout.margin.should.be.an.Object;
             this.panel.layout.margin.should.have.property('top').which.is.a.Number
@@ -79,90 +76,125 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
         });
         it('should generate an ID if passed a layout that does not define one', function(){
-            this.instance.addPanel({ "foo": "bar" });
-            var panel_idx = this.instance.layout.panels.length - 1;
-            this.instance.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
-            this.instance.layout.panels[panel_idx].foo.should.be.exactly("bar");
-            this.instance.panels[this.instance.layout.panels[panel_idx].id].should.be.an.Object;
-            this.instance.panels[this.instance.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
+            this.plot.addPanel({ "foo": "bar" });
+            var panel_idx = this.plot.layout.panels.length - 1;
+            this.plot.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
+            this.plot.layout.panels[panel_idx].foo.should.be.exactly("bar");
+            this.plot.panels[this.plot.layout.panels[panel_idx].id].should.be.an.Object;
+            this.plot.panels[this.plot.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
         });
         it('should throw an error if adding a panel with an ID that is already used', function(){
-            this.instance.addPanel({ "id": "duplicate", "foo": "bar" });
+            this.plot.addPanel({ "id": "duplicate", "foo": "bar" });
             assert.throws(function(){
-                this.instance.addPanel({ "id": "duplicate", "foo2": "bar2" });
+                this.plot.addPanel({ "id": "duplicate", "foo2": "bar2" });
             }.bind(this));
         });
     });
 
     describe("Geometry methods", function() {
         beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
-            this.instance = LocusZoom.populate("#instance_id");
-            this.panel = this.instance.panels.positions;
+            d3.select("body").append("div").attr("id", "plot_id");
+            this.plot = LocusZoom.populate("#plot_id");
+            this.positions_panel = this.plot.panels.positions;
+            this.genes_panel = this.plot.panels.genes;
+        });
+        afterEach(function(){
+            d3.select("#plot_id").remove();
+            this.plot = null;
+            this.positions_panel = null;
+            this.genes_panel = null;
         });
         it('should allow changing dimensions', function(){
-            this.panel.setDimensions(840, 560);
-            this.panel.layout.should.have.property('width').which.is.exactly(840);
-            this.panel.layout.should.have.property('height').which.is.exactly(560);
-            this.panel.setDimensions(9000, -50);
-            this.panel.layout.should.have.property('width').which.is.exactly(840);
-            this.panel.layout.should.have.property('height').which.is.exactly(560);
-            this.panel.setDimensions("q", 942);
-            this.panel.layout.should.have.property('width').which.is.exactly(840);
-            this.panel.layout.should.have.property('height').which.is.exactly(560);
+            this.positions_panel.setDimensions(840, 560);
+            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
+            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
+            this.positions_panel.setDimensions(9000, -50);
+            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
+            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
+            this.positions_panel.setDimensions("q", 942);
+            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
+            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
         });
         it('should enforce minimum dimensions', function(){
-            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
-            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
-            this.panel.setDimensions(this.panel.layout.min_width / 2, 0);
-            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
-            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
-            this.panel.setDimensions(0, this.panel.layout.min_height / 2);
-            this.panel.layout.width.should.not.be.lessThan(this.panel.layout.min_width);
-            this.panel.layout.height.should.not.be.lessThan(this.panel.layout.min_height);
+            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
+            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
+            this.positions_panel.setDimensions(this.positions_panel.layout.min_width / 2, 0);
+            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
+            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
+            this.positions_panel.setDimensions(0, this.positions_panel.layout.min_height / 2);
+            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
+            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
         });
-        it('should allow setting origin irrespective of instance dimensions', function(){
-            this.instance.setDimensions(500, 600);
-            this.panel.setOrigin(20, 50);
-            this.panel.layout.origin.x.should.be.exactly(20);
-            this.panel.layout.origin.y.should.be.exactly(50);
-            this.panel.setOrigin(0, 0);
-            this.panel.layout.origin.x.should.be.exactly(0);
-            this.panel.layout.origin.y.should.be.exactly(0);
-            this.panel.setOrigin("q", { foo: "bar" });
-            this.panel.layout.origin.x.should.be.exactly(0);
-            this.panel.layout.origin.y.should.be.exactly(0);
-            this.panel.setOrigin(700, 800);
-            this.panel.layout.origin.x.should.be.exactly(700);
-            this.panel.layout.origin.y.should.be.exactly(800);
+        it('should allow setting origin irrespective of plot dimensions', function(){
+            this.plot.setDimensions(500, 600);
+            this.positions_panel.setOrigin(20, 50);
+            this.positions_panel.layout.origin.x.should.be.exactly(20);
+            this.positions_panel.layout.origin.y.should.be.exactly(50);
+            this.positions_panel.setOrigin(0, 0);
+            this.positions_panel.layout.origin.x.should.be.exactly(0);
+            this.positions_panel.layout.origin.y.should.be.exactly(0);
+            this.positions_panel.setOrigin("q", { foo: "bar" });
+            this.positions_panel.layout.origin.x.should.be.exactly(0);
+            this.positions_panel.layout.origin.y.should.be.exactly(0);
+            this.positions_panel.setOrigin(700, 800);
+            this.positions_panel.layout.origin.x.should.be.exactly(700);
+            this.positions_panel.layout.origin.y.should.be.exactly(800);
         });
         it('should allow setting margin, which sets cliparea origin and dimensions', function(){
-            this.panel.setMargin(1, 2, 3, 4);
-            this.panel.layout.margin.top.should.be.exactly(1);
-            this.panel.layout.margin.right.should.be.exactly(2);
-            this.panel.layout.margin.bottom.should.be.exactly(3);
-            this.panel.layout.margin.left.should.be.exactly(4);
-            this.panel.layout.cliparea.origin.x.should.be.exactly(4);
-            this.panel.layout.cliparea.origin.y.should.be.exactly(1);
-            this.panel.layout.cliparea.width.should.be.exactly(this.panel.layout.width - (2 + 4));
-            this.panel.layout.cliparea.height.should.be.exactly(this.panel.layout.height - (1 + 3));
-            this.panel.setMargin(0, "12", -17, {foo: "bar"});
-            this.panel.layout.margin.top.should.be.exactly(0);
-            this.panel.layout.margin.right.should.be.exactly(12);
-            this.panel.layout.margin.bottom.should.be.exactly(3);
-            this.panel.layout.margin.left.should.be.exactly(4);
-            this.panel.layout.cliparea.origin.x.should.be.exactly(4);
-            this.panel.layout.cliparea.origin.y.should.be.exactly(0);
-            this.panel.layout.cliparea.width.should.be.exactly(this.panel.layout.width - (12 + 4));
-            this.panel.layout.cliparea.height.should.be.exactly(this.panel.layout.height - (0 + 3));
+            this.positions_panel.setMargin(1, 2, 3, 4);
+            this.positions_panel.layout.margin.top.should.be.exactly(1);
+            this.positions_panel.layout.margin.right.should.be.exactly(2);
+            this.positions_panel.layout.margin.bottom.should.be.exactly(3);
+            this.positions_panel.layout.margin.left.should.be.exactly(4);
+            this.positions_panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.positions_panel.layout.cliparea.origin.y.should.be.exactly(1);
+            this.positions_panel.layout.cliparea.width.should.be.exactly(this.positions_panel.layout.width - (2 + 4));
+            this.positions_panel.layout.cliparea.height.should.be.exactly(this.positions_panel.layout.height - (1 + 3));
+            this.positions_panel.setMargin(0, "12", -17, {foo: "bar"});
+            this.positions_panel.layout.margin.top.should.be.exactly(0);
+            this.positions_panel.layout.margin.right.should.be.exactly(12);
+            this.positions_panel.layout.margin.bottom.should.be.exactly(3);
+            this.positions_panel.layout.margin.left.should.be.exactly(4);
+            this.positions_panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.positions_panel.layout.cliparea.origin.y.should.be.exactly(0);
+            this.positions_panel.layout.cliparea.width.should.be.exactly(this.positions_panel.layout.width - (12 + 4));
+            this.positions_panel.layout.cliparea.height.should.be.exactly(this.positions_panel.layout.height - (0 + 3));
         });
         it('should prevent margins from overlapping', function(){
-            this.panel.setDimensions(500, 500);
-            this.panel.setMargin(700, 1000, 900, 800);
-            this.panel.layout.margin.should.have.property('top').which.is.exactly(150);
-            this.panel.layout.margin.should.have.property('right').which.is.exactly(350);
-            this.panel.layout.margin.should.have.property('bottom').which.is.exactly(350);
-            this.panel.layout.margin.should.have.property('left').which.is.exactly(150);
+            this.positions_panel.setDimensions(500, 500);
+            this.positions_panel.setMargin(700, 1000, 900, 800);
+            this.positions_panel.layout.margin.should.have.property('top').which.is.exactly(150);
+            this.positions_panel.layout.margin.should.have.property('right').which.is.exactly(350);
+            this.positions_panel.layout.margin.should.have.property('bottom').which.is.exactly(350);
+            this.positions_panel.layout.margin.should.have.property('left').which.is.exactly(150);
+        });
+        it("should have a method for moving panels up that stops at the top", function(){
+            this.genes_panel.should.have.property('moveUp').which.is.a.Function;
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.genes_panel.moveUp();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.genes_panel.moveUp();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
+        });
+        it("should have a method for moving panels down that stops at the bottom", function(){
+            this.genes_panel.should.have.property('moveDown').which.is.a.Function;
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.positions_panel.moveDown();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.positions_panel.moveDown();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
         });
     });
 
@@ -180,8 +212,7 @@ describe('LocusZoom.Panel', function(){
                     { id: "test",
                       width: 100,
                       height: 100 }
-                ],
-                controls: false
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, this.layout);
@@ -354,7 +385,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the x axis when dragging the background", function(done){
             this.layout.panels[0].interaction.drag_background_to_pan = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 50, 50 ]
                 d3.mouse = function(){ return [ 50, 50 ]; };
                 this.plot.panels.p.svg.container.select(".lz-panel-background").node()["__onmousedown.plot.p.interaction.drag.background"]();
@@ -387,7 +418,7 @@ describe('LocusZoom.Panel', function(){
         it ("should scale along the x axis when dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 50, 0 ]; };
                 this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
@@ -418,7 +449,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the x axis when shift+dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 var event = { shiftKey: true, preventDefault: function(){ return null; } };
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 50, 0 ]; };
@@ -450,7 +481,7 @@ describe('LocusZoom.Panel', function(){
         it ("should scale along the y1 axis when dragging a y1 tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 0, 25 ]; };
                 this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"]();
@@ -481,7 +512,7 @@ describe('LocusZoom.Panel', function(){
         it ("should pan along the y axis when shift+dragging a y tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
             this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
+            Q.allSettled(this.plot.remap_promises).then(function(){
                 var event = { shiftKey: true, preventDefault: function(){ return null; } };
                 // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function(){ return [ 0, 25 ]; };
@@ -507,21 +538,6 @@ describe('LocusZoom.Panel', function(){
                 this.plot.panels.p.interactions.dragging.should.be.false;
                 this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(4);
                 this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(8);
-                done();
-            }.bind(this));
-        });
-        it ("should zoom along x axis when scrolling", function(done){
-            this.layout.panels[0].interaction.scroll_to_zoom = true;
-            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function(){
-                // NOTE: d3 zoom behaviors are much more complicated than drag behaviors and as such are very
-                // difficult to simulate programmatically in a node environment. This test therefore only checks
-                // that the interaction object correctly tracks zoom start and end.
-                this.plot.panels.p.zoom_listener.on("zoom")();
-                this.plot.panels.p.interactions.should.be.an.Object;
-                this.plot.panels.p.interactions.zooming.should.be.true;
-                this.plot.panels.p.zoom_listener.on("zoomend")();
-                this.plot.panels.p.interactions.zooming.should.be.false;
                 done();
             }.bind(this));
         });

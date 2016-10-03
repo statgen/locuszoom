@@ -136,7 +136,8 @@
             drag_background_to_pan: true,
             drag_x_ticks_to_scale: true,
             drag_y_ticks_to_scale: true,
-            scroll_to_zoom: true
+            scroll_to_zoom: true,
+            x_linked: true
           },
           data_layers: [
               {
@@ -229,14 +230,9 @@
               }
           ]
       };
-      var panel = plot.addPanel(layout);
-      panel.curtain.show("Loading Study...", { "text-align": "center" });
-      panel.on("data_requested", function(){
-        this.loader.show("Loading...").animate();
-      });
+      var panel = plot.addPanel(layout).addBasicLoader();
       panel.on("data_rendered", function(){
         this.curtain.hide();
-        this.loader.hide();
       });
     }
 
@@ -255,19 +251,13 @@
       plot.on("element_clicked", function(){
         console.log("element clicked: ", this);
       });
-      plot.panels.genes.on("data_requested", function(){
-        this.loader.show("Loading...").animate();
-      });
+      plot.panels.genes.addBasicLoader()
       plot.panels.genes.on("data_rendered", function(){
         this.curtain.hide();
-        this.loader.hide();
       });
-      plot.panels.positions.on("data_requested", function(){
-        this.loader.show("Loading...").animate();
-      });
+      plot.panels.positions.addBasicLoader();
       plot.panels.positions.on("data_rendered", function(){
         this.curtain.hide();
-        this.loader.hide();
       });
       applyOnLayoutChanged();
     }

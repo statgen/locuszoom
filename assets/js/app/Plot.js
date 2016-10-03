@@ -6,14 +6,14 @@
 
 /**
 
-  LocusZoom.Instance Class
+  LocusZoom.Plot Class
 
-  An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
+  An Plot is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
   on a single page, each having its own layout.
 
 */
 
-LocusZoom.Instance = function(id, datasource, layout) {
+LocusZoom.Plot = function(id, datasource, layout) {
 
     this.initialized = false;
 
@@ -29,18 +29,23 @@ LocusZoom.Instance = function(id, datasource, layout) {
         }.bind(this));
     };
 
+    this.getBaseId = function(){
+        return this.id;
+    };
+
     this.remap_promises = [];
 
-    // The layout is a serializable object used to describe the composition of the instance
+    // The layout is a serializable object used to describe the composition of the Plot
     // If no layout was passed, use the Standard Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts(LocusZoom.StandardLayout, LocusZoom.Instance.DefaultLayout);
+        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
     } else {
-        this.layout = LocusZoom.mergeLayouts(layout, LocusZoom.Instance.DefaultLayout);
+        this.layout = layout;
     }
+    LocusZoom.mergeLayouts(this.layout, LocusZoom.Plot.DefaultLayout);
 
-    // Create a shortcut to the state in the layout on the instance
+    // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;
     
     // LocusZoom.Data.Requester
@@ -64,6 +69,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -73,9 +79,10 @@ LocusZoom.Instance = function(id, datasource, layout) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
 
-    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Get an object with the x and y coordinates of the Plot's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
     this.getPageOrigin = function(){
         var bounding_client_rect = this.svg.node().getBoundingClientRect();
@@ -106,7 +113,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
 };
 
 // Default Layout
-LocusZoom.Instance.DefaultLayout = {
+LocusZoom.Plot.DefaultLayout = {
     state: {},
     width: 1,
     height: 1,
@@ -115,14 +122,16 @@ LocusZoom.Instance.DefaultLayout = {
     responsive_resize: false,
     aspect_ratio: 1,
     panels: [],
-    controls: true,
+    dashboard: {
+        components: []
+    },
     panel_boundaries: true
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
-LocusZoom.Instance.prototype.sumProportional = function(dimension){
+LocusZoom.Plot.prototype.sumProportional = function(dimension){
     if (dimension != "height" && dimension != "width"){
-        throw ("Bad dimension value passed to LocusZoom.Instance.prototype.sumProportional");
+        throw ("Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional");
     }
     var total = 0;
     for (var id in this.panels){
@@ -135,23 +144,24 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     return total;
 };
 
-LocusZoom.Instance.prototype.rescaleSVG = function(){
+LocusZoom.Plot.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
+    return this;
 };
 
-LocusZoom.Instance.prototype.initializeLayout = function(){
+LocusZoom.Plot.prototype.initializeLayout = function(){
 
     // Sanity check layout values
     // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
     if (isNaN(this.layout.width) || this.layout.width <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.height) || this.layout.height <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0){
-        throw ("Instance layout parameter `aspect_ratio` must be a positive number");
+        throw ("Plot layout parameter `aspect_ratio` must be a positive number");
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
@@ -169,19 +179,20 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         this.addPanel(panel_layout);
     }.bind(this));
 
+    return this;
 };
 
 /**
-  Set the dimensions for an instance.
+  Set the dimensions for an plot.
   This function works in two different ways:
   1. If passed a discrete width and height:
-     * Adjust the instance to match those exact values (lower-bounded by minimum panel dimensions)
-     * Resize panels within the instance proportionally to match the new instance dimensions
+     * Adjust the plot to match those exact values (lower-bounded by minimum panel dimensions)
+     * Resize panels within the plot proportionally to match the new plot dimensions
   2. If NOT passed discrete width and height:
      * Assume panels within are sized and positioned correctly
-     * Calculate appropriate instance dimesions from panels contained within and update instance
+     * Calculate appropriate plot dimesions from panels contained within and update plot
 */
-LocusZoom.Instance.prototype.setDimensions = function(width, height){
+LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
     var id;
 
@@ -195,8 +206,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     this.layout.min_width = Math.max(min_width, 1);
     this.layout.min_height = Math.max(min_height, 1);
 
-    // If width and height arguments were passed then adjust them against instance minimums if necessary.
-    // Then resize the instance and proportionally resize panels to fit inside the new instance dimensions.
+    // If width and height arguments were passed then adjust them against plot minimums if necessary.
+    // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
     if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
@@ -221,13 +232,11 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
             this.panels[panel_id].layout.proportional_origin.x = 0;
             this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
             y_offset += panel_height;
-            if (this.panels[panel_id].controls.selector){
-                this.panels[panel_id].controls.position();
-            }
+            this.panels[panel_id].dashboard.update();
         }.bind(this));
     }
 
-    // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
+    // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
     // by making it conform to panel dimensions, assuming panels are already positioned correctly.
     else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
@@ -254,33 +263,29 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }
     }
 
-    // If the instance has been initialized then trigger some necessary render functions
+    // If the plot has been initialized then trigger some necessary render functions
     if (this.initialized){
-        // Reposition panel boundaries if showing
-        if (this.panel_boundaries && this.panel_boundaries.showing){
-            this.panel_boundaries.position();
-        }
-        // Reposition plot curtain and loader
+        this.panel_boundaries.position();
+        this.dashboard.update();
         this.curtain.update();
         this.loader.update();
     }
 
-    this.emit("layout_changed");
-    return this;
+    return this.emit("layout_changed");
 };
 
 // Create a new panel from a layout
-LocusZoom.Instance.prototype.addPanel = function(layout){
+LocusZoom.Plot.prototype.addPanel = function(layout){
 
     // Sanity checks
     if (typeof layout !== "object"){
-        throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
+        throw "Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()";
     }
 
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(layout, this);
     
-    // Store the Panel on the Instance
+    // Store the Panel on the Plot
     this.panels[panel.id] = panel;
 
     // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
@@ -323,7 +328,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
 };
 
 // Remove panel by id
-LocusZoom.Instance.prototype.removePanel = function(id){
+LocusZoom.Plot.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
     }
@@ -339,7 +344,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
 
     // Remove all panel-level HTML overlay elements
     this.panels[id].loader.hide();
-    this.panels[id].controls.hide();
+    this.panels[id].dashboard.destroy(true);
     this.panels[id].curtain.hide();
 
     // Remove the svg container for the panel if it exists
@@ -381,7 +386,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
        but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
-LocusZoom.Instance.prototype.positionPanels = function(){
+LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
 
@@ -407,31 +412,33 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
-    // Update origins on all panels without changing instance-level dimensions yet
+    // Update origins on all panels without changing plot-level dimensions yet
     var y_offset = 0;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setOrigin(0, y_offset);
         this.panels[panel_id].layout.proportional_origin.x = 0;
         y_offset += this.panels[panel_id].layout.height;
     }.bind(this));
-    var calculated_instance_height = y_offset;
+    var calculated_plot_height = y_offset;
     this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_instance_height;
+        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
     }.bind(this));
 
-    // Update dimensions on the instance to accomodate repositioned panels
+    // Update dimensions on the plot to accomodate repositioned panels
     this.setDimensions();
 
-    // Set dimensions on all panels using newly set instance-level dimensions and panel-level proportional dimensions
+    // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                             this.layout.height * this.panels[panel_id].layout.proportional_height);
     }.bind(this));
+
+    return this;
     
 };
 
-// Create all instance-level objects, initialize all child panels
-LocusZoom.Instance.prototype.initialize = function(){
+// Create all plot-level objects, initialize all child panels
+LocusZoom.Plot.prototype.initialize = function(){
 
     // Create an element/layer for containing mouse guides
     var mouse_guide_svg = this.svg.append("g")
@@ -615,9 +622,7 @@ LocusZoom.Instance.prototype.initialize = function(){
                             loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                             if (loop_panel_idx > panel_idx){
                                 loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
-                                if (loop_panel.layout.controls){
-                                    loop_panel.controls.position();
-                                }
+                                loop_panel.dashboard.position();
                             }
                         }.bind(this));
                         // Reset dimensions on the entire plot and reposition panel boundaries
@@ -667,7 +672,7 @@ LocusZoom.Instance.prototype.initialize = function(){
             var corner_size = 16;
             this.corner_selector.style({
                 top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + "px",
-                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px",
+                left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + "px"
             });
             return this;
         },
@@ -697,128 +702,8 @@ LocusZoom.Instance.prototype.initialize = function(){
         }.bind(this));
     }
 
-    // Create the controls object with show/update/hide methods
-    this.controls = {
-        parent: this,
-        showing: false,
-        css_string: "",
-        show: function(){
-            if (this.showing){ return this.update(); }
-            this.div = d3.select(this.parent.svg.node().parentNode).insert("div", ".lz-data_layer-tooltip")
-                .attr("class", "lz-locuszoom-controls").attr("id", this.parent.id + ".controls");
-            this.links = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.links")
-                .style("float", "left");
-            // Download SVG Button
-            this.download_svg_button = this.links.append("a")
-                .attr("class", "lz-controls-button")
-                .attr("href-lang", "image/svg+xml")
-                .attr("title", "Download SVG as locuszoom.svg")
-                .attr("download", "locuszoom.svg")
-                .text("Download SVG")
-                .on("mouseover", function() {
-                    this.download_svg_button
-                        .attr("class", "lz-controls-button-disabled")
-                        .text("Preparing SVG");
-                    this.generateBase64SVG().then(function(base64_string){
-                        this.download_svg_button.attr("href", "data:image/svg+xml;base64,\n" + base64_string);
-                        this.download_svg_button
-                            .attr("class", "lz-controls-button")
-                            .text("Download SVG");
-                    }.bind(this));
-                }.bind(this));
-            // Dimensions
-            this.dimensions = this.div.append("div")
-                .attr("class", "lz-controls-info")
-                .attr("id", this.parent.id + ".controls.dimensions")
-                .style("float", "right");
-            // Region Scale
-            this.region_scale = this.div.append("div")
-                .attr("class", "lz-controls-info")
-                .attr("id", this.parent.id + ".controls.region_scale")
-                .style("float", "right");
-            // Clear Element
-            this.clear = this.div.append("div")
-                .attr("id", this.parent.id + ".controls.clear")
-                .style("clear", "both");
-            // Update tracking boolean
-            this.showing = true;
-            // Update all control element values
-            this.update();
-            return this;
-        },
-        update: function(){
-            if (!this.showing){ return this; }
-            this.div.attr("width", this.parent.layout.width);
-            var display_width = this.parent.layout.width.toString().indexOf(".") == -1 ? this.parent.layout.width : this.parent.layout.width.toFixed(2);
-            var display_height = this.parent.layout.height.toString().indexOf(".") == -1 ? this.parent.layout.height : this.parent.layout.height.toFixed(2);
-            this.dimensions.text(display_width + "px × " + display_height + "px");
-            if (!isNaN(this.parent.state.start) && !isNaN(this.parent.state.end)
-                && this.parent.state.start != null && this.parent.state.end != null){
-                this.region_scale.style("display", null);
-                this.region_scale.text(LocusZoom.positionIntToString(this.parent.state.end - this.parent.state.start, null, true));
-            } else {
-                this.region_scale.style("display", "none");
-            }
-            return this;
-        },
-        hide: function(){
-            if (!this.showing){ return this; }
-            this.div.remove();
-            this.showing = false;
-            return this;
-        },
-        generateBase64SVG: function(){
-            return Q.fcall(function () {
-                // Insert a hidden div, clone the node into that so we can modify it with d3
-                var container = this.div.append("div").style("display", "none")
-                    .html(this.parent.svg.node().outerHTML);
-                // Remove unnecessary elements
-                container.selectAll("g.lz-curtain").remove();
-                container.selectAll("g.lz-ui").remove();
-                container.selectAll("g.lz-mouse_guide").remove();
-                // Pull the svg into a string and add the contents of the locuszoom stylesheet
-                // Don't add this with d3 because it will escape the CDATA declaration incorrectly
-                var initial_html = d3.select(container.select("svg").node().parentNode).html();
-                var style_def = "<style type=\"text/css\"><![CDATA[ " + this.css_string + " ]]></style>";
-                var insert_at = initial_html.indexOf(">") + 1;
-                initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
-                // Delete the container node
-                container.remove();
-                // Base64-encode the string and return it
-                return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                    return String.fromCharCode("0x" + p1);
-                }));
-            }.bind(this));
-        }
-    };
-
-    // Populate the CSS string with a CORS request to handle cross-domain CSS loading
-    for (var stylesheet in Object.keys(document.styleSheets)){
-        if ( document.styleSheets[stylesheet].href != null
-             && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") != -1){
-            LocusZoom.createCORSPromise("GET", document.styleSheets[stylesheet].href)
-                .then(function(response){
-                    this.controls.css_string = response;
-                }.bind(this));
-            break;
-        }
-    }   
-
-    // Show controls once or with mouse events as stipulated by the layout
-    if (this.layout.controls === true || this.layout.controls.show == "always"){
-        this.controls.show();
-    } else if (this.layout.controls.show == "onmouseover"){
-        d3.select(this.svg.node().parentNode).on("mouseover." + this.id + ".controls", function(){
-            clearTimeout(this.controls.hide_timeout);
-            this.controls.show();
-        }.bind(this));
-        d3.select(this.svg.node().parentNode).on("mouseout." + this.id + ".controls", function(){
-            this.controls.hide_timeout = setTimeout(function(){
-                this.controls.hide();
-            }.bind(this), this.layout.controls.hide_delay);
-        }.bind(this));
-    }
+    // Create the dashboard object and immediately show it
+    this.dashboard = new LocusZoom.Dashboard(this).show();
 
     // Initialize all panels
     for (var id in this.panels){
@@ -834,9 +719,7 @@ LocusZoom.Instance.prototype.initialize = function(){
         var coords = d3.mouse(this.svg.node());
         this.mouse_guide.vertical.attr("x", coords[0]);
         this.mouse_guide.horizontal.attr("y", coords[1]);
-        if (["onmouseover","always"].indexOf(this.layout.controls.show) != -1){
-            this.controls.update();
-        }
+        this.dashboard.update();
     }.bind(this));
 
     this.initialized = true;
@@ -849,70 +732,48 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
-// Map an entire LocusZoom Instance to a new region
+// Map an entire LocusZoom Plot to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
-// LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
-LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
-
-    console.warn("Warning: use of LocusZoom.Instance.mapTo() is deprecated. Use LocusZoom.Instance.applyState() instead.");
-
-    // Apply new state values
-    // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.state.chr   = +chr;
-    this.state.start = +start;
-    this.state.end   = +end;
-
-    this.remap_promises = [];
-    // Trigger reMap on each Panel Layer
-    for (var id in this.panels){
-        this.remap_promises.push(this.panels[id].reMap());
-    }
-
-    Q.all(this.remap_promises)
-        .catch(function(error){
-            console.log(error);
-            this.curtain.drop(error);
-        }.bind(this))
-        .done(function(){
-            this.emit("layout_changed");
-            this.emit("data_rendered");
-        }.bind(this));
-
-    return this;
-    
+// LocusZoom.Plot.prototype.applyState() takes a single object, covering far more use cases.
+LocusZoom.Plot.prototype.mapTo = function(chr, start, end){
+    console.warn("Warning: use of LocusZoom.Plot.mapTo() is deprecated. Use LocusZoom.Plot.applyState() instead.");
+    return this.applyState({ chr: chr, start: start, end: end });
 };
 
-// Refresh an instance's data from sources without changing position
-LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState({});
+// Refresh an plot's data from sources without changing position
+LocusZoom.Plot.prototype.refresh = function(){
+    return this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
-LocusZoom.Instance.prototype.applyState = function(new_state){
+LocusZoom.Plot.prototype.applyState = function(state_changes){
 
-    if (typeof new_state != "object"){
-        throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
+    state_changes = state_changes || {};
+    if (typeof state_changes != "object"){
+        throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
+    }
+    
+    // First make a copies of the current (old) state to work with
+    var current_state = JSON.parse(JSON.stringify(this.state));
+    var new_state = JSON.parse(JSON.stringify(this.state));
+
+    // Apply changes by top-level property to the new state
+    for (var property in state_changes) {
+        new_state[property] = state_changes[property];
     }
 
-    // First null out all passed properties
-    for (var property in new_state) {
-        this.state[property] = null;
-    }
+    // Validate the new state (may do nothing, may do a lot, depends on how the user has thigns set up)
+    new_state = LocusZoom.validateState(new_state, this.layout);
 
-    // Update the controls to display that the plot is in an interim state
-    this.controls.update();
-
-    // Apply new state properties
+    // Apply new state to the actual state
     for (property in new_state) {
         this.state[property] = new_state[property];
     }
 
+    // Generate requests for all panels given new state
     this.emit("data_requested");
-    this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].emit("data_requested");
-    }.bind(this));
-
     this.remap_promises = [];
+    this.loading_data = true;
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
     }
@@ -921,11 +782,17 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
+            this.loading_data = false;
         }.bind(this))
         .done(function(){
+
+            // Update dashboard / components
+            this.dashboard.update();
+                
             // Apply panel-level state values
             this.panel_ids_by_y_index.forEach(function(panel_id){
                 var panel = this.panels[panel_id];
+                panel.dashboard.update();
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id){
                     var data_layer = this.data_layers[data_layer_id];
@@ -944,11 +811,13 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
                     }
                 }.bind(panel));
             }.bind(this));
-            // Update controls info
-            this.controls.update();
+            
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+
+            this.loading_data = false;
+            
         }.bind(this));
     
 };

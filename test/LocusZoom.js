@@ -9,22 +9,14 @@ var jsdom = require('mocha-jsdom');
 var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
+var _files = require('./_files.js');
 
 describe('LocusZoom Core', function(){
 
     // Load all javascript files
-    jsdom({
-        src: [ fs.readFileSync('./assets/js/vendor/should.min.js'),
-               fs.readFileSync('./assets/js/vendor/d3.min.js'),
-               fs.readFileSync('./assets/js/vendor/q.min.js'),
-               fs.readFileSync('./assets/js/app/LocusZoom.js'),
-               fs.readFileSync('./assets/js/app/Data.js'),
-               fs.readFileSync('./assets/js/app/Instance.js'),
-               fs.readFileSync('./assets/js/app/Panel.js'),
-               fs.readFileSync('./assets/js/app/DataLayer.js'),
-               fs.readFileSync('./assets/js/app/Singletons.js')
-             ]
-    });
+    var src = [];
+    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    jsdom({ src: src });
 
     // Reset DOM after each test
     afterEach(function(){
@@ -39,7 +31,7 @@ describe('LocusZoom Core', function(){
     describe("LocusZoom Core", function() {
 
         beforeEach(function(){
-            d3.select("body").append("div").attr("id", "instance_id");
+            d3.select("body").append("div").attr("id", "plot_id");
         });
 
         afterEach(function(){
@@ -93,40 +85,40 @@ describe('LocusZoom Core', function(){
             assert.deepEqual(LocusZoom.prettyTicks([-187, 762]), [-200, 0, 200, 400, 600, 800]);
         });
 
-        it('should have a method for populating a single element with a LocusZoom instance', function(){
+        it('should have a method for populating a single element with a LocusZoom plot', function(){
             LocusZoom.populate.should.be.a.Function;
-            var instance = LocusZoom.populate("#instance_id", {});
-            instance.should.be.an.Object;
-            instance.id.should.be.exactly("instance_id");
-            var svg_selector = d3.select('div#instance_id svg');
+            var plot = LocusZoom.populate("#plot_id", {});
+            plot.should.be.an.Object;
+            plot.id.should.be.exactly("plot_id");
+            var svg_selector = d3.select('div#plot_id svg');
             svg_selector.should.be.an.Object;
             svg_selector.size().should.be.exactly(1);
-            instance.svg.should.be.an.Object;
-            assert.equal(instance.svg.html(), svg_selector.html());
+            plot.svg.should.be.an.Object;
+            assert.equal(plot.svg.html(), svg_selector.html());
         });
 
-        it('should have a method for populating arbitrarily many elements with LocusZoom instances', function(){
-            d3.select("body").append("div").attr("id", "populated_instance_1").attr("class", "lz");
-            d3.select("body").append("div").attr("id", "populated_instance_2").attr("class", "lz");
+        it('should have a method for populating arbitrarily many elements with LocusZoom plots', function(){
+            d3.select("body").append("div").attr("id", "populated_plot_1").attr("class", "lz");
+            d3.select("body").append("div").attr("id", "populated_plot_2").attr("class", "lz");
             LocusZoom.populateAll.should.be.a.Function;
-            var instances = LocusZoom.populateAll("div.lz");
+            var plots = LocusZoom.populateAll("div.lz");
             d3.selectAll('div.lz').each(function(d, i){
                 var div_selector = d3.select(this);
                 var svg_selector = div_selector.select("svg");
                 svg_selector.should.be.an.Object;
                 svg_selector.size().should.be.exactly(1);
-                instances[i].svg.should.be.an.Object;
-                assert.equal(instances[i].svg.html(), svg_selector.html());
+                plots[i].svg.should.be.an.Object;
+                assert.equal(plots[i].svg.html(), svg_selector.html());
             });
         });
 
         it('should allow for populating an element with a predefined layout and state as separate arguments (DEPRECATED)', function(){
             var layout = { foo: "bar" };
             var state = { chr: 10 };
-            var instance = LocusZoom.populate("#instance_id", {}, layout, state);
-            instance.layout.foo.should.be.exactly("bar");
-            instance.layout.state.chr.should.be.exactly(10);
-            assert.deepEqual(instance.state, instance.layout.state);
+            var plot = LocusZoom.populate("#plot_id", {}, layout, state);
+            plot.layout.foo.should.be.exactly("bar");
+            plot.layout.state.chr.should.be.exactly(10);
+            assert.deepEqual(plot.state, plot.layout.state);
         });
 
         describe("Position Queries", function() {
@@ -304,6 +296,61 @@ describe('LocusZoom Core', function(){
                 html = "<strong>{{field1}}, {{field2}}, {{field3}}, {{field4}}, {{field5}}, {{field6}}</strong>";
                 expected_value = "<strong>123, foo, {{field3}}, {{field4}}, true, NaN</strong>";
                 assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
+        });
+
+        describe("Validate State", function() {
+            it('should have a validateState function', function() {
+                LocusZoom.validateState.should.be.a.Function;
+            });
+            it('should do nothing if passed a state with no predicted rules / structure', function() {
+                var state = { foo: "bar" };
+                state = LocusZoom.validateState(state);
+                state.foo.should.be.exactly("bar");
+                var stateB = { start: "foo", end: "bar" };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly("foo");
+                stateB.end.should.be.exactly("bar");
+            });
+            it('should enforce no zeros for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: 0, end: 123 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1);
+                stateA.end.should.be.exactly(123);
+                var stateB = { chr: 1, start: 1, end: 0 };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(1);
+                stateB.end.should.be.exactly(1);
+            });
+            it('should enforce no negative values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: -235, end: 123 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1);
+                stateA.end.should.be.exactly(123);
+                var stateB = { chr: 1, start: 1, end: -436 };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(1);
+                stateB.end.should.be.exactly(1);
+            });
+            it('should enforce no non-integer values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: 1234.4, end: 4567.8 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(1234);
+                stateA.end.should.be.exactly(4567);
+            });
+            it('should enforce no non-numeric values for start and end (if present with chr)', function() {
+                var stateA = { chr: 1, start: "foo", end: 324523 };
+                stateA = LocusZoom.validateState(stateA);
+                stateA.start.should.be.exactly(324523);
+                stateA.end.should.be.exactly(324523);
+                var stateB = { chr: 1, start: 68756, end: "foo" };
+                stateB = LocusZoom.validateState(stateB);
+                stateB.start.should.be.exactly(68756);
+                stateB.end.should.be.exactly(68756);
+                var stateC = { chr: 1, start: "foo", end: "bar" };
+                stateC = LocusZoom.validateState(stateC);
+                stateC.start.should.be.exactly(1);
+                stateC.end.should.be.exactly(1);
             });
         });
 
