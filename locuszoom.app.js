@@ -2936,7 +2936,7 @@ LocusZoom.Dashboard.prototype.show = function(){
             break;
         case "panel":
             this.selector = d3.select(this.parent.parent.svg.node().parentNode)
-                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu").classed("lz-panel-dashboard", true);
+                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu, .lz-curtain").classed("lz-panel-dashboard", true);
             break;
         }
         this.selector.classed("lz-dashboard", true).classed("lz-"+this.type+"-dashboard", true).attr("id", this.id);
@@ -5674,7 +5674,7 @@ LocusZoom.Panel.prototype.reMap = function(){
         try {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }
     }
@@ -5688,7 +5688,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }.bind(this));
 };

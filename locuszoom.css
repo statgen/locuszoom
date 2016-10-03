@@ -228,7 +228,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 
 .lz-curtain {
   position: absolute;
-  font-size: 2em;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
   font-weight: 600;
   background: rgba(216, 216, 216, 0.8); }
   .lz-curtain .lz-curtain-content {
@@ -244,8 +245,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     position: absolute;
     top: 0px;
     right: 0px;
-    padding: 0.15em 0.5em;
-    font-size: 0.3em;
+    padding: 2px 4px;
+    font-size: 10px;
     font-weight: 300;
     background-color: #D8D8D8;
     color: #333333;
