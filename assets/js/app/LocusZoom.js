@@ -422,12 +422,6 @@ LocusZoom.StandardLayout = {
             title: "",
             width: 800,
             height: 225,
-            origin: { x: 0, y: 0 },
-            min_width:  400,
-            min_height: 200,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0 },
             margin: { top: 35, right: 50, bottom: 40, left: 50 },
             inner_border: "rgba(210, 210, 210, 0.85)",
             dashboard: {
@@ -587,12 +581,8 @@ LocusZoom.StandardLayout = {
             id: "genes",
             width: 800,
             height: 225,
-            origin: { x: 0, y: 225 },
             min_width: 400,
             min_height: 112.5,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0.5 },
             margin: { top: 20, right: 50, bottom: 20, left: 50 },
             dashboard: {
                 components: [
@@ -649,6 +639,62 @@ LocusZoom.StandardLayout = {
                             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
                             + "</table>"
                             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
+                    }
+                }
+            ]
+        },
+        {
+            id: "intervals",
+            width: 800,
+            height: 225,
+            min_width: 400,
+            min_height: 112.5,
+            margin: { top: 20, right: 50, bottom: 20, left: 50 },
+            dashboard: {
+                components: [
+                    {
+                        type: "remove_panel",
+                        position: "right",
+                        color: "red"
+                    },
+                    {
+                        type: "move_panel_up",
+                        position: "right"
+                    },
+                    {
+                        type: "move_panel_down",
+                        position: "right"
+                    }                    
+                ]
+            },
+            axes: {},
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true,
+                x_linked: true
+            },
+            data_layers: [
+                {
+                    id: "intervals",
+                    type: "intervals",
+                    fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
+                    id_field: "interval:start",
+                    highlighted: {
+                        onmouseover: "on",
+                        onmouseout: "off"
+                    },
+                    selected: {
+                        onclick: "toggle_exclusive",
+                        onshiftclick: "toggle"
+                    },
+                    transition: {
+                        duration: 200
+                    },
+                    tooltip: {
+                        closable: true,
+                        show: { or: ["highlighted", "selected"] },
+                        hide: { and: ["unhighlighted", "unselected"] },
+                        html: "..."
                     }
                 }
             ]

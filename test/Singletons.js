@@ -296,7 +296,7 @@ describe('LocusZoom Singletons', function(){
         it('should have a method to list available data layers', function(){
             LocusZoom.DataLayers.should.have.property('list').which.is.a.Function;
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes"];
+            var expected_list = ["scatter", "line", "genes", "intervals"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should have a general method to get a data layer by name', function(){
@@ -313,7 +313,7 @@ describe('LocusZoom Singletons', function(){
             };
             LocusZoom.DataLayers.add("foo", foo);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "foo"];
+            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
             var expected_value = new foo({ id: "bar" });
@@ -332,7 +332,7 @@ describe('LocusZoom Singletons', function(){
             };
             LocusZoom.DataLayers.set("foo", foo_new);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "foo"];
+            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
             var expected_value = new foo_new({ id: "baz" });
@@ -341,7 +341,7 @@ describe('LocusZoom Singletons', function(){
             assert.equal(returned_value.render(), expected_value.render());
             LocusZoom.DataLayers.set("foo");
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes"];
+            var expected_list = ["scatter", "line", "genes", "intervals"];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should throw an exception if asked to get a function that has not been defined', function(){

@@ -170,30 +170,30 @@ describe('LocusZoom.Panel', function(){
         });
         it("should have a method for moving panels up that stops at the top", function(){
             this.genes_panel.should.have.property('moveUp').which.is.a.Function;
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes"]);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes", "intervals"]);
             this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
             this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
             this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
         });
         it("should have a method for moving panels down that stops at the bottom", function(){
             this.genes_panel.should.have.property('moveDown').which.is.a.Function;
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes"]);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes", "intervals"]);
             this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.positions_panel.moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
             this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
-            this.positions_panel.moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.positions_panel.moveDown().moveDown();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "intervals", "positions"]);
+            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(2);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
         });
     });
