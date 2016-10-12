@@ -11,6 +11,7 @@ var argv = require("yargs").argv;
 // App-specific JS files to be watched and concatenate/minify
 // NOTE: Order of inclusion is important!
 var app_js_files = ["./assets/js/app/LocusZoom.js",
+                    "./assets/js/app/Layouts.js",
                     "./assets/js/app/DataLayer.js",
                     "./assets/js/app/Singletons.js",
                     "./assets/js/app/Dashboard.js",
