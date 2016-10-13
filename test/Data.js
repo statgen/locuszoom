@@ -1,5 +1,5 @@
 /* global LocusZoom,d3 */
-/* global it,require,describe,beforeEach,afterEach*/
+/* global it,require,describe,beforeEach,afterEach */
 
 "use strict";
 
@@ -12,13 +12,13 @@ var jsdom = require("mocha-jsdom");
 var fs = require("fs");
 var assert = require("assert");
 var should = require("should");
-var _files = require('./_files.js');
+var files = require("../files.js");
 
 describe("LocusZoom Data", function(){
 
     // Load all javascript files
     var src = [];
-    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
     jsdom({ src: src });
 
     // Reset DOM and LocusZoom singleton after each test
