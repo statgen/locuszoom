@@ -9,13 +9,13 @@ var jsdom = require('mocha-jsdom');
 var fs = require("fs");
 var assert = require('assert');
 var should = require("should");
-var _files = require('./_files.js');
+var files = require('../files.js');
 
 describe('LocusZoom.Dashboard', function(){
 
     // Load all javascript files
     var src = [];
-    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
     jsdom({ src: src });
 
     // Reset DOM after each test

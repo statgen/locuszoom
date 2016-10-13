@@ -1274,7 +1274,6 @@ LocusZoom.Layouts.Plots.StandardGWAS = {
 // Shortcut to "StandardLayout" for backward compatibility
 LocusZoom.StandardLayout = LocusZoom.Layouts.Plots.StandardGWAS;
 
-
 LocusZoom.Layouts.Plots.StandardPheWAS = {
     width: 800,
     height: 500,
