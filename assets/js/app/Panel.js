@@ -741,6 +741,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     }
 
     // Shift ranges based on any drag or zoom interactions currently underway
+    var anchor, scalar = null;
     if (this.interactions.zooming && typeof this.x_scale == "function"){
         var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
         var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
@@ -752,12 +753,11 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
             zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
         }
         var new_extent_size = Math.floor(current_extent_size * zoom_factor);
-        var anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
+        anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
         var offset_ratio = anchor / this.layout.cliparea.width;
         var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
         ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
     } else if (this.interactions.dragging){
-        var anchor, scalar = null;
         switch (this.interactions.dragging.method){
         case "background":
             ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
@@ -1066,7 +1066,7 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
 // progress bar as opposed to one that loads from 0-100% based on actual load progress),
 // and disappears when new data is loaded and rendered.
 LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
-    if (typeof show_immediately != "undefined"){ var show_immediately = true; }
+    if (typeof show_immediately != "undefined"){ show_immediately = true; }
     if (show_immediately){
         this.loader.show("Loading...").animate();
     }

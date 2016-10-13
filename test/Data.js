@@ -1,5 +1,5 @@
 /* global LocusZoom,d3 */
-/* global it,require,describe,beforeEach,afterEach*/
+/* global it,require,describe,beforeEach,afterEach */
 
 "use strict";
 
@@ -12,7 +12,7 @@ var jsdom = require("mocha-jsdom");
 var fs = require("fs");
 var assert = require("assert");
 var should = require("should");
-var files = require('../files.js');
+var files = require("../files.js");
 
 describe("LocusZoom Data", function(){
 

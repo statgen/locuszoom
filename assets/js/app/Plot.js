@@ -753,8 +753,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
     }
     
-    // First make a copies of the current (old) state to work with
-    var current_state = JSON.parse(JSON.stringify(this.state));
+    // First make a copy of the current (old) state to work with
     var new_state = JSON.parse(JSON.stringify(this.state));
 
     // Apply changes by top-level property to the new state

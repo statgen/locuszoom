@@ -1,14 +1,15 @@
+/* global require */
+/* eslint-disable no-console */
+
 var gulp = require("gulp");
 var gutil = require("gulp-util");
 var uglify = require("gulp-uglify");
 var sass = require("gulp-sass");
 var concat = require("gulp-concat");
 var wrap = require("gulp-wrap");
-var watch = require("gulp-watch");
 var mocha = require("gulp-mocha");
-//var merge = require('merge-stream');
 var argv = require("yargs").argv;
-var files = require('./files.js');
+var files = require("./files.js");
 
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task("js", function() {
@@ -19,7 +20,7 @@ gulp.task("js", function() {
 gulp.task("test", function () {
     return gulp.src(files.test_suite)
         .pipe(mocha())
-        .on("end", function(err) {
+        .on("end", function() {
             if (this.failed){
                 gutil.log(gutil.colors.bold.white.bgRed(" Tests failed! "));
             } else {
@@ -27,13 +28,12 @@ gulp.task("test", function () {
             }
         })
         .on("error", function (err) {
-            console.log(err);
+            console.error(err);
             if (argv.force){
                 this.failed = true;
-                this.emit('end');
+                this.emit("end");
             } else {
                 gutil.log(gutil.colors.bold.white.bgRed(" Tests failed! "));
-                process.exit(1);
             }
         });
 });
@@ -80,7 +80,7 @@ gulp.task("vendor_js", function() {
 gulp.task("css", function() {
     return gulp.src("./assets/css/*.scss")
         .pipe(sass())
-        .pipe(gulp.dest('.'))
+        .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.css"));
         })
@@ -95,6 +95,7 @@ gulp.task("watch", function() {
     gulp.watch(files.app_build.concat(files.test_suite), ["app_js"]);
     gulp.watch(["./assets/css/*.scss"], ["css"]);
 });
+
 
 // Default task: make all the javascripts and css
 gulp.task("default", ["js", "css"]); 

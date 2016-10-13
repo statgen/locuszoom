@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.5"
+    version: "0.4.6"
 };
     
 // Populate a single element with a LocusZoom plot.

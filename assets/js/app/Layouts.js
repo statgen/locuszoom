@@ -1,3 +1,4 @@
+/* global LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -830,7 +831,7 @@ LocusZoom.Layouts.Panels.GenomeLegend = {
     data_layers: [
         LocusZoom.Layouts.Layers.GenomeLegend
     ]
-}
+};
 
 
 /**
@@ -866,6 +867,6 @@ LocusZoom.Layouts.Plots.StandardPheWAS = {
     panels: [
         LocusZoom.Layouts.Panels.PheWAS,
         LocusZoom.Layouts.Panels.GenomeLegend,
-        LocusZoom.Layouts.Panels.Genes,
+        LocusZoom.Layouts.Panels.Genes
     ]
 };

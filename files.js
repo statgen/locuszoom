@@ -1,8 +1,10 @@
+/* global module */
+
 "use strict";
 
 /**
 
- _files.js
+ files.js
 
  This file is a single place to keep ordered lists of files
  for use in automated tasks (e.g. running tests and builds)
@@ -33,7 +35,7 @@ var test_include = [
     "./assets/js/app/Dashboard.js",
     "./assets/js/app/Data.js",
     "./assets/js/app/Plot.js",
-    "./assets/js/app/Panel.js",
+    "./assets/js/app/Panel.js"
 ];
 
 // App-specific JS files to be used in the main build
@@ -46,7 +48,7 @@ var app_build = [
     "./assets/js/app/Dashboard.js",
     "./assets/js/app/Data.js",
     "./assets/js/app/Plot.js",
-    "./assets/js/app/Panel.js",
+    "./assets/js/app/Panel.js"
 ];
 
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
