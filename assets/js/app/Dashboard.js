@@ -136,7 +136,7 @@ LocusZoom.Dashboard.prototype.hide = function(){
 
 // Completely remove dashboard
 LocusZoom.Dashboard.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     this.components.forEach(function(component){ component.destroy(true); });
@@ -216,7 +216,7 @@ LocusZoom.Dashboard.Component.prototype.hide = function(){
     return this;
 };
 LocusZoom.Dashboard.Component.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     if (this.button && this.button.menu){ this.button.menu.destroy(); }

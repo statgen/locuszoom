@@ -36,10 +36,10 @@ LocusZoom.Plot = function(id, datasource, layout) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the Plot
-    // If no layout was passed, use the Standard Layout
+    // If no layout was passed, use the Standard GWAS Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
+        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.Layouts.Plots.StandardGWAS);
     } else {
         this.layout = layout;
     }
@@ -753,8 +753,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
     }
     
-    // First make a copies of the current (old) state to work with
-    var current_state = JSON.parse(JSON.stringify(this.state));
+    // First make a copy of the current (old) state to work with
     var new_state = JSON.parse(JSON.stringify(this.state));
 
     // Apply changes by top-level property to the new state

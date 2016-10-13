@@ -1,3 +1,5 @@
+/* global require, describe, d3, Q, LocusZoom, beforeEach, afterEach, it */
+
 "use strict";
 
 /**
@@ -5,17 +7,17 @@
   Test composition of the LocusZoom.Panel object and its base classes
 */
 
-var jsdom = require('mocha-jsdom');
+var jsdom = require("mocha-jsdom");
 var fs = require("fs");
-var assert = require('assert');
+var assert = require("assert");
 var should = require("should");
-var _files = require('./_files.js');
+var files = require("../files.js");
 
-describe('LocusZoom.Panel', function(){
+describe("LocusZoom.Panel", function(){
 
     // Load all javascript files
     var src = [];
-    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
     jsdom({ src: src });
 
     // Reset DOM after each test
@@ -29,14 +31,14 @@ describe('LocusZoom.Panel', function(){
     });
 
     it("defines its layout defaults", function() {
-        LocusZoom.Panel.should.have.property('DefaultLayout').which.is.an.Object;
+        LocusZoom.Panel.should.have.property("DefaultLayout").which.is.an.Object;
     });
 
     describe("Constructor", function() {
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "plot_id");
             this.plot = LocusZoom.populate("#plot_id");
-            this.panel = this.plot.panels.positions;
+            this.panel = this.plot.panels.gwas;
         });
         afterEach(function(){
             d3.select("#plot_id").remove();
@@ -46,14 +48,14 @@ describe('LocusZoom.Panel', function(){
         it("returns an object", function() {
             this.panel.should.be.an.Object;
         });
-        it('should have an id', function(){
-            this.panel.should.have.property('id');
+        it("should have an id", function(){
+            this.panel.should.have.property("id");
         });
-        it('should have an object for tracking data layers', function(){
-            this.panel.should.have.property('data_layers').which.is.an.Object;
+        it("should have an object for tracking data layers", function(){
+            this.panel.should.have.property("data_layers").which.is.an.Object;
         });
-        it('should track dimensions, margins, and positioning with a layout object', function(){
-            this.panel.should.have.property('layout').which.is.an.Object;
+        it("should track dimensions, margins, and positioning with a layout object", function(){
+            this.panel.should.have.property("layout").which.is.an.Object;
             this.panel.layout.width.should.be.a.Number;
             this.panel.layout.height.should.be.a.Number;
             this.panel.layout.min_width.should.be.a.Number;
@@ -61,21 +63,21 @@ describe('LocusZoom.Panel', function(){
             this.panel.layout.proportional_width.should.be.a.Number;
             this.panel.layout.proportional_height.should.be.a.Number;
             this.panel.layout.origin.should.be.an.Object;
-            this.panel.layout.origin.should.have.property('x').which.is.a.Number;
-            this.panel.layout.origin.should.have.property('y').which.is.a.Number;
+            this.panel.layout.origin.should.have.property("x").which.is.a.Number;
+            this.panel.layout.origin.should.have.property("y").which.is.a.Number;
             this.panel.layout.margin.should.be.an.Object;
-            this.panel.layout.margin.should.have.property('top').which.is.a.Number
-            this.panel.layout.margin.should.have.property('right').which.is.a.Number;
-            this.panel.layout.margin.should.have.property('bottom').which.is.a.Number;
-            this.panel.layout.margin.should.have.property('left').which.is.a.Number;
+            this.panel.layout.margin.should.have.property("top").which.is.a.Number;
+            this.panel.layout.margin.should.have.property("right").which.is.a.Number;
+            this.panel.layout.margin.should.have.property("bottom").which.is.a.Number;
+            this.panel.layout.margin.should.have.property("left").which.is.a.Number;
             this.panel.layout.cliparea.should.be.an.Object;
-            this.panel.layout.cliparea.should.have.property('width').which.is.a.Number
-            this.panel.layout.cliparea.should.have.property('height').which.is.a.Number;
-            this.panel.layout.cliparea.should.have.property('origin').which.is.an.Object;
-            this.panel.layout.cliparea.origin.should.have.property('x').which.is.a.Number;
-            this.panel.layout.cliparea.origin.should.have.property('y').which.is.a.Number;
+            this.panel.layout.cliparea.should.have.property("width").which.is.a.Number;
+            this.panel.layout.cliparea.should.have.property("height").which.is.a.Number;
+            this.panel.layout.cliparea.should.have.property("origin").which.is.an.Object;
+            this.panel.layout.cliparea.origin.should.have.property("x").which.is.a.Number;
+            this.panel.layout.cliparea.origin.should.have.property("y").which.is.a.Number;
         });
-        it('should generate an ID if passed a layout that does not define one', function(){
+        it("should generate an ID if passed a layout that does not define one", function(){
             this.plot.addPanel({ "foo": "bar" });
             var panel_idx = this.plot.layout.panels.length - 1;
             this.plot.layout.panels[panel_idx].should.have.property("id").which.is.a.String;
@@ -83,7 +85,7 @@ describe('LocusZoom.Panel', function(){
             this.plot.panels[this.plot.layout.panels[panel_idx].id].should.be.an.Object;
             this.plot.panels[this.plot.layout.panels[panel_idx].id].layout.foo.should.be.exactly("bar");
         });
-        it('should throw an error if adding a panel with an ID that is already used', function(){
+        it("should throw an error if adding a panel with an ID that is already used", function(){
             this.plot.addPanel({ "id": "duplicate", "foo": "bar" });
             assert.throws(function(){
                 this.plot.addPanel({ "id": "duplicate", "foo2": "bar2" });
@@ -95,105 +97,105 @@ describe('LocusZoom.Panel', function(){
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "plot_id");
             this.plot = LocusZoom.populate("#plot_id");
-            this.positions_panel = this.plot.panels.positions;
+            this.gwas_panel = this.plot.panels.gwas;
             this.genes_panel = this.plot.panels.genes;
         });
         afterEach(function(){
             d3.select("#plot_id").remove();
             this.plot = null;
-            this.positions_panel = null;
+            this.gwas_panel = null;
             this.genes_panel = null;
         });
-        it('should allow changing dimensions', function(){
-            this.positions_panel.setDimensions(840, 560);
-            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
-            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
-            this.positions_panel.setDimensions(9000, -50);
-            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
-            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
-            this.positions_panel.setDimensions("q", 942);
-            this.positions_panel.layout.should.have.property('width').which.is.exactly(840);
-            this.positions_panel.layout.should.have.property('height').which.is.exactly(560);
+        it("should allow changing dimensions", function(){
+            this.gwas_panel.setDimensions(840, 560);
+            this.gwas_panel.layout.should.have.property("width").which.is.exactly(840);
+            this.gwas_panel.layout.should.have.property("height").which.is.exactly(560);
+            this.gwas_panel.setDimensions(9000, -50);
+            this.gwas_panel.layout.should.have.property("width").which.is.exactly(840);
+            this.gwas_panel.layout.should.have.property("height").which.is.exactly(560);
+            this.gwas_panel.setDimensions("q", 942);
+            this.gwas_panel.layout.should.have.property("width").which.is.exactly(840);
+            this.gwas_panel.layout.should.have.property("height").which.is.exactly(560);
         });
-        it('should enforce minimum dimensions', function(){
-            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
-            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
-            this.positions_panel.setDimensions(this.positions_panel.layout.min_width / 2, 0);
-            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
-            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
-            this.positions_panel.setDimensions(0, this.positions_panel.layout.min_height / 2);
-            this.positions_panel.layout.width.should.not.be.lessThan(this.positions_panel.layout.min_width);
-            this.positions_panel.layout.height.should.not.be.lessThan(this.positions_panel.layout.min_height);
+        it("should enforce minimum dimensions", function(){
+            this.gwas_panel.layout.width.should.not.be.lessThan(this.gwas_panel.layout.min_width);
+            this.gwas_panel.layout.height.should.not.be.lessThan(this.gwas_panel.layout.min_height);
+            this.gwas_panel.setDimensions(this.gwas_panel.layout.min_width / 2, 0);
+            this.gwas_panel.layout.width.should.not.be.lessThan(this.gwas_panel.layout.min_width);
+            this.gwas_panel.layout.height.should.not.be.lessThan(this.gwas_panel.layout.min_height);
+            this.gwas_panel.setDimensions(0, this.gwas_panel.layout.min_height / 2);
+            this.gwas_panel.layout.width.should.not.be.lessThan(this.gwas_panel.layout.min_width);
+            this.gwas_panel.layout.height.should.not.be.lessThan(this.gwas_panel.layout.min_height);
         });
-        it('should allow setting origin irrespective of plot dimensions', function(){
+        it("should allow setting origin irrespective of plot dimensions", function(){
             this.plot.setDimensions(500, 600);
-            this.positions_panel.setOrigin(20, 50);
-            this.positions_panel.layout.origin.x.should.be.exactly(20);
-            this.positions_panel.layout.origin.y.should.be.exactly(50);
-            this.positions_panel.setOrigin(0, 0);
-            this.positions_panel.layout.origin.x.should.be.exactly(0);
-            this.positions_panel.layout.origin.y.should.be.exactly(0);
-            this.positions_panel.setOrigin("q", { foo: "bar" });
-            this.positions_panel.layout.origin.x.should.be.exactly(0);
-            this.positions_panel.layout.origin.y.should.be.exactly(0);
-            this.positions_panel.setOrigin(700, 800);
-            this.positions_panel.layout.origin.x.should.be.exactly(700);
-            this.positions_panel.layout.origin.y.should.be.exactly(800);
+            this.gwas_panel.setOrigin(20, 50);
+            this.gwas_panel.layout.origin.x.should.be.exactly(20);
+            this.gwas_panel.layout.origin.y.should.be.exactly(50);
+            this.gwas_panel.setOrigin(0, 0);
+            this.gwas_panel.layout.origin.x.should.be.exactly(0);
+            this.gwas_panel.layout.origin.y.should.be.exactly(0);
+            this.gwas_panel.setOrigin("q", { foo: "bar" });
+            this.gwas_panel.layout.origin.x.should.be.exactly(0);
+            this.gwas_panel.layout.origin.y.should.be.exactly(0);
+            this.gwas_panel.setOrigin(700, 800);
+            this.gwas_panel.layout.origin.x.should.be.exactly(700);
+            this.gwas_panel.layout.origin.y.should.be.exactly(800);
         });
-        it('should allow setting margin, which sets cliparea origin and dimensions', function(){
-            this.positions_panel.setMargin(1, 2, 3, 4);
-            this.positions_panel.layout.margin.top.should.be.exactly(1);
-            this.positions_panel.layout.margin.right.should.be.exactly(2);
-            this.positions_panel.layout.margin.bottom.should.be.exactly(3);
-            this.positions_panel.layout.margin.left.should.be.exactly(4);
-            this.positions_panel.layout.cliparea.origin.x.should.be.exactly(4);
-            this.positions_panel.layout.cliparea.origin.y.should.be.exactly(1);
-            this.positions_panel.layout.cliparea.width.should.be.exactly(this.positions_panel.layout.width - (2 + 4));
-            this.positions_panel.layout.cliparea.height.should.be.exactly(this.positions_panel.layout.height - (1 + 3));
-            this.positions_panel.setMargin(0, "12", -17, {foo: "bar"});
-            this.positions_panel.layout.margin.top.should.be.exactly(0);
-            this.positions_panel.layout.margin.right.should.be.exactly(12);
-            this.positions_panel.layout.margin.bottom.should.be.exactly(3);
-            this.positions_panel.layout.margin.left.should.be.exactly(4);
-            this.positions_panel.layout.cliparea.origin.x.should.be.exactly(4);
-            this.positions_panel.layout.cliparea.origin.y.should.be.exactly(0);
-            this.positions_panel.layout.cliparea.width.should.be.exactly(this.positions_panel.layout.width - (12 + 4));
-            this.positions_panel.layout.cliparea.height.should.be.exactly(this.positions_panel.layout.height - (0 + 3));
+        it("should allow setting margin, which sets cliparea origin and dimensions", function(){
+            this.gwas_panel.setMargin(1, 2, 3, 4);
+            this.gwas_panel.layout.margin.top.should.be.exactly(1);
+            this.gwas_panel.layout.margin.right.should.be.exactly(2);
+            this.gwas_panel.layout.margin.bottom.should.be.exactly(3);
+            this.gwas_panel.layout.margin.left.should.be.exactly(4);
+            this.gwas_panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.gwas_panel.layout.cliparea.origin.y.should.be.exactly(1);
+            this.gwas_panel.layout.cliparea.width.should.be.exactly(this.gwas_panel.layout.width - (2 + 4));
+            this.gwas_panel.layout.cliparea.height.should.be.exactly(this.gwas_panel.layout.height - (1 + 3));
+            this.gwas_panel.setMargin(0, "12", -17, {foo: "bar"});
+            this.gwas_panel.layout.margin.top.should.be.exactly(0);
+            this.gwas_panel.layout.margin.right.should.be.exactly(12);
+            this.gwas_panel.layout.margin.bottom.should.be.exactly(3);
+            this.gwas_panel.layout.margin.left.should.be.exactly(4);
+            this.gwas_panel.layout.cliparea.origin.x.should.be.exactly(4);
+            this.gwas_panel.layout.cliparea.origin.y.should.be.exactly(0);
+            this.gwas_panel.layout.cliparea.width.should.be.exactly(this.gwas_panel.layout.width - (12 + 4));
+            this.gwas_panel.layout.cliparea.height.should.be.exactly(this.gwas_panel.layout.height - (0 + 3));
         });
-        it('should prevent margins from overlapping', function(){
-            this.positions_panel.setDimensions(500, 500);
-            this.positions_panel.setMargin(700, 1000, 900, 800);
-            this.positions_panel.layout.margin.should.have.property('top').which.is.exactly(150);
-            this.positions_panel.layout.margin.should.have.property('right').which.is.exactly(350);
-            this.positions_panel.layout.margin.should.have.property('bottom').which.is.exactly(350);
-            this.positions_panel.layout.margin.should.have.property('left').which.is.exactly(150);
+        it("should prevent margins from overlapping", function(){
+            this.gwas_panel.setDimensions(500, 500);
+            this.gwas_panel.setMargin(700, 1000, 900, 800);
+            this.gwas_panel.layout.margin.should.have.property("top").which.is.exactly(150);
+            this.gwas_panel.layout.margin.should.have.property("right").which.is.exactly(350);
+            this.gwas_panel.layout.margin.should.have.property("bottom").which.is.exactly(350);
+            this.gwas_panel.layout.margin.should.have.property("left").which.is.exactly(150);
         });
         it("should have a method for moving panels up that stops at the top", function(){
-            this.genes_panel.should.have.property('moveUp').which.is.a.Function;
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes", "intervals"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.genes_panel.should.have.property("moveUp").which.is.a.Function;
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["gwas", "genes", "intervals"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "gwas", "intervals"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.moveUp();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "gwas", "intervals"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
         });
         it("should have a method for moving panels down that stops at the bottom", function(){
-            this.genes_panel.should.have.property('moveDown').which.is.a.Function;
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["positions", "genes", "intervals"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(0);
+            this.genes_panel.should.have.property("moveDown").which.is.a.Function;
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["gwas", "genes", "intervals"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(0);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(1);
-            this.positions_panel.moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "positions", "intervals"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(1);
+            this.gwas_panel.moveDown();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "gwas", "intervals"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
-            this.positions_panel.moveDown().moveDown();
-            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "intervals", "positions"]);
-            this.positions_panel.layout.should.have.property("y_index").which.is.exactly(2);
+            this.gwas_panel.moveDown().moveDown();
+            assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "intervals", "gwas"]);
+            this.gwas_panel.layout.should.have.property("y_index").which.is.exactly(2);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
         });
     });
