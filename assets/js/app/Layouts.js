@@ -4,18 +4,64 @@
 
 "use strict";
 
-LocusZoom.Layouts = {
-    Plots: {},
-    Panels: {},
-    Layers: {},
-    Dashboards: {}
-};
+LocusZoom.Layouts = (function() {
+    var obj = {};
+    var layouts = {
+        "plot": {},
+        "panel": {},
+        "data_layer": {},
+        "dashboard": {}
+    };
+
+    obj.get = function(type, name, modifications) {
+        if (!type || !name) {
+            return null;
+        } else if (layouts[type][name]) {
+            if (typeof modifications == "object"){
+                return LocusZoom.mergeLayouts(modifications, layouts[type][name]);
+            } else {
+                return JSON.parse(JSON.stringify(layouts[type][name]));
+            }
+        } else {
+            throw("layout type [" + type + "] name [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(type, name, layout) {
+        if (typeof type != "string" || typeof name != "string" || typeof layout != "object"){
+            throw ("unable to set new layout; bad arguments passed to set()");
+        }
+        if (!layouts[type]){
+            layouts[type] = {};
+        }
+        if (layout){
+            layouts[type][name] = JSON.parse(JSON.stringify(layout));
+        } else {
+            delete layouts[type][name];
+        }
+    };
+
+    obj.add = function(type, name, layout) {
+        obj.set(type, name, layout);
+    };
+
+    obj.list = function(type) {
+        if (!layouts[type]){
+            return Object.keys(layouts);
+        } else {
+            return Object.keys(layouts[type]);
+        }
+    };
+
+    return obj;
+})();
+
 
 /**
- Layer Layouts
+ Data Layer Layouts
 */
 
-LocusZoom.Layouts.Layers.Signifigance = {
+LocusZoom.Layouts.add("data_layer", "signifigance", {
     id: "significance",
     type: "line",
     fields: ["sig:x", "sig:y"],
@@ -33,9 +79,9 @@ LocusZoom.Layouts.Layers.Signifigance = {
         axis: 1,
         field: "sig:y"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.RecombRate = {
+LocusZoom.Layouts.add("data_layer", "recomb_rate", {
     id: "recombrate",
     type: "line",
     fields: ["recomb:position", "recomb:recomb_rate"],
@@ -56,9 +102,9 @@ LocusZoom.Layouts.Layers.RecombRate = {
     transition: {
         duration: 200
     }
-};
+});
 
-LocusZoom.Layouts.Layers.GWASPValues = {
+LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
     point_shape: "circle",
@@ -122,9 +168,9 @@ LocusZoom.Layouts.Layers.GWASPValues = {
             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.PheWASPValues = {
+LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     id: "phewaspvalues",
     type: "scatter",
     point_shape: "circle",
@@ -189,9 +235,9 @@ LocusZoom.Layouts.Layers.PheWASPValues = {
             "fill": "#333333"
         }
     }
-};
+});
 
-LocusZoom.Layouts.Layers.Genes = {
+LocusZoom.Layouts.add("data_layer", "genes", {
     id: "genes",
     type: "genes",
     fields: ["gene:gene", "constraint:constraint"],
@@ -223,9 +269,9 @@ LocusZoom.Layouts.Layers.Genes = {
             + "</table>"
             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.GenomeLegend = {
+LocusZoom.Layouts.add("data_layer", "genome_legend", {
     id: "genome_legend",
     type: "genome_legend",
     fields: ["genome:chr", "genome:base_pairs"],
@@ -233,9 +279,9 @@ LocusZoom.Layouts.Layers.GenomeLegend = {
         floor: 0,
         ceiling: 2881033286
     }
-};
+});
 
-LocusZoom.Layouts.Layers.Intervals = {
+LocusZoom.Layouts.add("data_layer", "intervals", {
     id: "intervals",
     type: "intervals",
     fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
@@ -257,14 +303,14 @@ LocusZoom.Layouts.Layers.Intervals = {
         hide: { and: ["unhighlighted", "unselected"] },
         html: "..."
     }
-};
+});
 
 
 /**
  Dashboard Layouts
 */
 
-LocusZoom.Layouts.Dashboards.Panel = {
+LocusZoom.Layouts.add("dashboard", "panel", {
     components: [
         {
             type: "remove_panel",
@@ -280,9 +326,9 @@ LocusZoom.Layouts.Dashboards.Panel = {
             position: "right"
         }
     ]
-};
+});
 
-LocusZoom.Layouts.Dashboards.Plot = {
+LocusZoom.Layouts.add("dashboard", "plot", {
     components: [
         {
             type: "title",
@@ -303,13 +349,13 @@ LocusZoom.Layouts.Dashboards.Plot = {
             position: "right"
         }
     ]
-};
+});
 
 /**
  Panel Layouts
 */
 
-LocusZoom.Layouts.Panels.GWAS = {
+LocusZoom.Layouts.add("panel", "gwas", {
     id: "gwas",
     title: "",
     width: 800,
@@ -322,7 +368,7 @@ LocusZoom.Layouts.Panels.GWAS = {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.Dashboards.Panel,
+    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
     axes: {
         x: {
             label_function: "chromosome",
@@ -348,13 +394,13 @@ LocusZoom.Layouts.Panels.GWAS = {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.Signifigance,
-        LocusZoom.Layouts.Layers.RecombRate,
-        LocusZoom.Layouts.Layers.GWASPValues
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "recomb_rate"),
+        LocusZoom.Layouts.get("data_layer", "gwas_pvalues")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.Genes = {
+LocusZoom.Layouts.add("panel", "genes", {
     id: "genes",
     width: 800,
     height: 225,
@@ -371,13 +417,13 @@ LocusZoom.Layouts.Panels.Genes = {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard:LocusZoom.Layouts.Dashboards.Panel,
+    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
     data_layers: [
-        LocusZoom.Layouts.Layers.Genes
+        LocusZoom.Layouts.get("data_layer", "genes")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.PheWAS = {
+LocusZoom.Layouts.add("panel", "phewas", {
     id: "phewas",
     width: 800,
     height: 300,
@@ -587,12 +633,12 @@ LocusZoom.Layouts.Panels.PheWAS = {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.Signifigance,
-        LocusZoom.Layouts.Layers.PheWASPValues
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "phewas_pvalues")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.GenomeLegend = {
+LocusZoom.Layouts.add("panel", "genome_legend", {
     id: "genome_legend",
     width: 800,
     height: 50,
@@ -854,18 +900,18 @@ LocusZoom.Layouts.Panels.GenomeLegend = {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.GenomeLegend
+        LocusZoom.Layouts.get("data_layer", "genome_legend")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.Intervals = {
+LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
     width: 800,
     height: 225,
     min_width: 400,
     min_height: 112.5,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
-    dashboard: LocusZoom.Layouts.Dashboards.Panel,
+    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
     axes: {},
     interaction: {
         drag_background_to_pan: true,
@@ -873,16 +919,16 @@ LocusZoom.Layouts.Panels.Intervals = {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.Intervals
+        LocusZoom.Layouts.get("data_layer", "intervals")
     ]
-};
+});
 
 
 /**
  Plot Layouts
 */
 
-LocusZoom.Layouts.Plots.StandardGWAS = {
+LocusZoom.Layouts.add("plot", "gwas_standard", {
     state: {},
     width: 800,
     height: 450,
@@ -890,28 +936,28 @@ LocusZoom.Layouts.Plots.StandardGWAS = {
     aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
-    dashboard: LocusZoom.Layouts.Dashboards.Plot,
+    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
     panels: [
-        LocusZoom.Layouts.Panels.GWAS,
-        LocusZoom.Layouts.Panels.Genes,
-        LocusZoom.Layouts.Layers.Intervals
+        LocusZoom.Layouts.get("panel", "gwas"),
+        LocusZoom.Layouts.get("panel", "genes"),
+        LocusZoom.Layouts.get("panel", "intervals")
     ]
-};
+});
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.Plots.StandardGWAS;
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "gwas_standard");
 
-LocusZoom.Layouts.Plots.StandardPheWAS = {
+LocusZoom.Layouts.add("plot", "phewas_standard", {
     width: 800,
     height: 500,
     min_width: 800,
     min_height: 500,
     responsive_resize: true,
     aspect_ratio: 1.6,
-    dashboard: LocusZoom.Layouts.Dashboards.Plot,
+    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
     panels: [
-        LocusZoom.Layouts.Panels.PheWAS,
-        LocusZoom.Layouts.Panels.GenomeLegend,
-        LocusZoom.Layouts.Panels.Genes
+        LocusZoom.Layouts.get("panel", "phewas"),
+        LocusZoom.Layouts.get("panel", "genome_legend"),
+        LocusZoom.Layouts.get("panel", "genes")
     ]
-};
+});
