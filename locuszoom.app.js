@@ -1987,356 +1987,12 @@ LocusZoom.DataLayer.prototype.reMap = function(){
 
 };
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
 
-"use strict";
+/************
+  Data Layers
 
-/**
-
-  Singletons
-
-  LocusZoom has various singleton objects that are used for registering functions or classes.
-  These objects provide safe, standard methods to redefine or delete existing functions/classes
-  as well as define new custom functions/classes to be used in a plot.
-
-*/
-
-
-/* The Collection of "Known" Data Source Endpoints */
-
-LocusZoom.KnownDataSources = (function() {
-    var obj = {};
-    var sources = [];
-
-    var findSourceByName = function(x) {
-        for(var i=0; i<sources.length; i++) {
-            if (!sources[i].SOURCE_NAME) {
-                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
-            }
-            if (sources[i].SOURCE_NAME == x) {
-                return sources[i];
-            }
-        }
-        return null;
-    };
-
-    obj.get = function(name) {
-        return findSourceByName(name);
-    };
-
-    obj.add = function(source) {
-        if (!source.SOURCE_NAME) {
-            console.warn("Data source added does not have a SOURCE_NAME");
-        }
-        sources.push(source);
-    };
-
-    obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
-        obj.add(source);
-    };
-
-    obj.list = function() {
-        return sources.map(function(x) {return x.SOURCE_NAME;});
-    };
-
-    obj.create = function(name) {
-        //create new object (pass additional parameters to constructor)
-        var newObj = findSourceByName(name);
-        if (newObj) {
-            var params = arguments;
-            params[0] = null;
-            return new (Function.prototype.bind.apply(newObj, params));
-        } else {
-            throw("Unable to find data source for name: " + name); 
-        }
-    };
-
-    //getAll, setAll and clear really should only be used by tests
-    obj.getAll = function() {
-        return sources;
-    };
-    
-    obj.setAll = function(x) {
-        sources = x;
-    };
-
-    obj.clear = function() {
-        sources = [];
-    };
-
-    return obj;
-})();
-
-
-/****************
-  Label Functions
-
-  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
-*/
-
-LocusZoom.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Label function for "Chromosome # (Mb)" where # comes from state
-LocusZoom.LabelFunctions.add("chromosome", function(state){
-    if (!isNaN(+state.chr)){ 
-        return "Chromosome " + state.chr + " (Mb)";
-    } else {
-        return "Chromosome (Mb)";
-    }
-});
-
-
-/**************************
-  Transformation Functions
-
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
-  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
-
-  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
-
-  All transformation functions must accept an object of parameters and a value to process.
-*/
-LocusZoom.TransformationFunctions = (function() {
-    var obj = {};
-    var transformations = {};
-
-    var getTrans = function(name) {
-        if (!name) {
-            return null;
-        }
-        var fun = transformations[name];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + name + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(name) {
-        return getTrans(name);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(name) {
-        if (name && name.substring(0,1)=="|") {
-            return parseTransString(name);
-        } else {
-            return parseTrans(name);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                transformations[name] = fn;
-            } else {
-                delete transformations[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (transformations[name]) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(transformations);
-    };
-
-    return obj;
-})();
-
-LocusZoom.TransformationFunctions.add("neglog10", function(x) {
-    return -Math.log(x) / Math.LN10;
-});
-
-LocusZoom.TransformationFunctions.add("scinotation", function(x) {
-    var log;
-    if (Math.abs(x) > 1){
-        log = Math.ceil(Math.log(x) / Math.LN10);
-    } else {
-        log = Math.floor(Math.log(x) / Math.LN10);
-    }
-    if (Math.abs(log) <= 3){
-        return x.toFixed(3);
-    } else {
-        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
-    }
-});
-
-
-/****************
-  Scale Functions
-
-  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
-  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
-
-  All scale functions must accept an object of parameters and a value to process.
-*/
-
-LocusZoom.ScaleFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, parameters, value) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof parameters == "undefined" && typeof value == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](parameters, value);
-            }
-        } else {
-            throw("scale function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("scale function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("if", function(parameters, value){
-    if (typeof value == "undefined" || parameters.field_value != value){
-        if (typeof parameters.else != "undefined"){
-            return parameters.else;
-        } else {
-            return null;
-        }
-    } else {
-        return parameters.then;
-    }
-});
-
-// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
-LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
-    var breaks = parameters.breaks;
-    var values = parameters.values;
-    if (typeof value == "undefined" || value == null || isNaN(+value)){
-        return (parameters.null_value ? parameters.null_value : null);
-    }
-    var threshold = breaks.reduce(function(prev, curr){
-        if (+value < prev || (+value >= prev && +value < curr)){
-            return prev;
-        } else {
-            return curr;
-        }
-    });
-    return values[breaks.indexOf(threshold)];
-});
-
-// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
-        return (parameters.null_value ? parameters.null_value : null); 
-    } else {
-        return parameters.values[parameters.categories.indexOf(value)];
-    }
-});
-
-
-/************************
-  Data Layer Subclasses
-
-  The abstract Data Layer class has general methods and properties that apply universally to all Data Layers
-  Specific data layer subclasses (e.g. a scatter plot, a line plot, gene visualization, etc.) must be defined
-  and registered with this singleton to be accessible.
-
-  All new Data Layer subclasses must be defined by accepting an id string and a layout object.
-  Singleton for storing available Data Layer classes as well as updating existing and/or registering new ones
+  Object for storing data layer definitions. Because data layer definitions tend
+  to be lengthy they are stored in individual files instead of below this collection definition.
 */
 
 LocusZoom.DataLayers = (function() {
@@ -2385,7 +2041,11 @@ LocusZoom.DataLayers = (function() {
     return obj;
 })();
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
 
+"use strict";
 
 /*********************
   Scatter Data Layer
@@ -2804,6 +2464,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
 /*********************
   Line Data Layer
   Implements a standard line plot
@@ -3043,6 +2709,12 @@ LocusZoom.DataLayers.add("line", function(layout){
     return this;
 
 });
+
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
 
 /*********************
   Genes Data Layer
@@ -3488,6 +3160,346 @@ LocusZoom.DataLayers.add("genes", function(layout){
        
     return this;
 
+});
+
+/* global LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Singletons
+
+  LocusZoom has various singleton objects that are used for registering functions or classes.
+  These objects provide safe, standard methods to redefine or delete existing functions/classes
+  as well as define new custom functions/classes to be used in a plot.
+
+*/
+
+
+/* The Collection of "Known" Data Source Endpoints */
+
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
+
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
+            }
+        }
+        return null;
+    };
+
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
+        }
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
+        } else {
+            throw("Unable to find data source for name: " + name); 
+        }
+    };
+
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
+
+    obj.clear = function() {
+        sources = [];
+    };
+
+    return obj;
+})();
+
+
+/****************
+  Label Functions
+
+  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
+*/
+
+LocusZoom.LabelFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, state) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
+        } else {
+            throw("label function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("label function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Label function for "Chromosome # (Mb)" where # comes from state
+LocusZoom.LabelFunctions.add("chromosome", function(state){
+    if (!isNaN(+state.chr)){ 
+        return "Chromosome " + state.chr + " (Mb)";
+    } else {
+        return "Chromosome (Mb)";
+    }
+});
+
+
+/**************************
+  Transformation Functions
+
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+
+  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+
+  All transformation functions must accept an object of parameters and a value to process.
+*/
+LocusZoom.TransformationFunctions = (function() {
+    var obj = {};
+    var transformations = {};
+
+    var getTrans = function(name) {
+        if (!name) {
+            return null;
+        }
+        var fun = transformations[name];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + name + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(name) {
+        return getTrans(name);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(name) {
+        if (name && name.substring(0,1)=="|") {
+            return parseTransString(name);
+        } else {
+            return parseTrans(name);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                transformations[name] = fn;
+            } else {
+                delete transformations[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (transformations[name]) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(transformations);
+    };
+
+    return obj;
+})();
+
+LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    var log;
+    if (Math.abs(x) > 1){
+        log = Math.ceil(Math.log(x) / Math.LN10);
+    } else {
+        log = Math.floor(Math.log(x) / Math.LN10);
+    }
+    if (Math.abs(log) <= 3){
+        return x.toFixed(3);
+    } else {
+        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+    }
+});
+
+
+/****************
+  Scale Functions
+
+  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+
+  All scale functions must accept an object of parameters and a value to process.
+*/
+
+LocusZoom.ScaleFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
+        } else {
+            throw("scale function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("scale function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("if", function(parameters, value){
+    if (typeof value == "undefined" || parameters.field_value != value){
+        if (typeof parameters.else != "undefined"){
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+});
+
+// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
+LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
+    var breaks = parameters.breaks;
+    var values = parameters.values;
+    if (typeof value == "undefined" || value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : null);
+    }
+    var threshold = breaks.reduce(function(prev, curr){
+        if (+value < prev || (+value >= prev && +value < curr)){
+            return prev;
+        } else {
+            return curr;
+        }
+    });
+    return values[breaks.indexOf(threshold)];
+});
+
+// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+        return (parameters.null_value ? parameters.null_value : null); 
+    } else {
+        return parameters.values[parameters.categories.indexOf(value)];
+    }
 });
 
 /* global d3,Q,LocusZoom */
