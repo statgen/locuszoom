@@ -66,7 +66,7 @@
     var layout = {
       resizable: "manual"
     };
-    layout = LocusZoom.mergeLayouts(layout, LocusZoom.StandardLayout);
+    layout = LocusZoom.Layouts.merge(layout, LocusZoom.StandardLayout);
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);

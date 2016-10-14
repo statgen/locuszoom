@@ -25,7 +25,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)

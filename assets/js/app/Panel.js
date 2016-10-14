@@ -47,7 +47,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){

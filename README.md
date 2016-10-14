@@ -111,16 +111,44 @@ A basic example may then look like this:
 
 ### Other Ways To Make a LocusZoom Plot
 
-#### Using the Standard Layout
+#### Use a Predefined Layout
 
-The core LocusZoom library comes equipped with a standard layout. See what its contents are by inspecting `LocusZoom.StandardLayout`.
+The core LocusZoom library comes equipped with several predefined layouts, organized by type ("plot", "panel", "data_layer", and "dashboard"). You can see what layouts are predefined by reading the contents of `assets/js/app/Layouts.js` or in the browser by entering `LocusZoom.Layouts.list()` (or to list one specific type: `LocusZoom.Layouts.list(type)`).
 
-If no layout is passed to `LocusZoom.populate()` the standard layout is used (requiring appropriate data sources to be configured).
+Get any predefined layout by type and name using `LocusZoom.Layouts.get(type, name)`.
+  
+If no layout is passed to `LocusZoom.populate()` the Standard GWAS plot layout is used (requiring appropriate data sources to be configured).
 
-If your use case is similar to the standard layout with only minor changes, use `LocusZoom.mergeLayouts()` to define your layout (rather than editing `LocusZoom.StandardLayout`). This method takes two arguments in order - the first is your customizations, and the second is your "base" or default layout. So, to simply change the width of the standard layout it might look like this:
+#### Build a Layout Using Some Predefined Pieces
+
+`LocusZoom.Layouts.get(type, name)` can also be used to pull predefined layouts of smaller pieces, like data layers or dashboards, into a custom layout:
 
 ```javascript
-var layout = LocusZoom.mergeLayouts({ width: 1000 }, LocusZoom.StandardLayout);
+var layout = {
+  width: 1000,
+  height: 500,
+  panels: [
+    LocusZoom.Layouts.get("panel","gwas"),
+    {
+      id: "custom_panel",
+      ...
+    },
+    LocusZoom.Layouts.get("panel","genes")
+  ]
+  ...
+};
+```
+
+#### Modify a Predefined Layout
+
+The `get()` function also accepts a partial layout to be merged with the predefined layout as a third argument, providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:
+
+```javascript
+var changes = {
+  label_font_size: 20,
+  transition: false
+};
+LocusZoom.Layouts.get("data_layer", "genes", changes);
 ```
 
 #### Predefining State by Building a State Object
@@ -128,7 +156,7 @@ var layout = LocusZoom.mergeLayouts({ width: 1000 }, LocusZoom.StandardLayout);
 **State** is a serializable JSON object that describes orientation to specific data from data sources, and specific interactions with the layout. This can include a specific query against various data sources or pre-selecting specific elements. Essentially, the state object is what tracks these types of user input under the hood in LocusZoom, and it can be predefined at initialization as a top-level parameter in the layout. For example:
 
 ```javascript
-var layout = LocusZoom.mergeLayouts({ state: { chr: 6, start: 20379709, end: 20979709 } }, LocusZoom.StandardLayout);
+var layout = LocusZoom.Layouts.merge({ state: { chr: 6, start: 20379709, end: 20979709 } }, LocusZoom.StandardLayout);
 ```
 
 #### Predefining State With `data-region`

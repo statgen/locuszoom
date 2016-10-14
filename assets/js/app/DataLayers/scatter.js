@@ -21,7 +21,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         },
         id_field: "id"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Extra default for layout spacing
     // Not in default layout since that would make the label attribute always present

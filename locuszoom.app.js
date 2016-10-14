@@ -51,7 +51,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
-        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
     }
     var plot;
     d3.select(selector).call(function(){
@@ -289,41 +289,6 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     return response.promise;
 };
 
-// Merge two layout objects
-// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-// Ensures that all values defined in the second layout are at least present in the first
-// Favors values defined in the first layout if values are defined in both but different
-LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
-    if (typeof custom_layout != "object" || typeof default_layout != "object"){
-        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
-    }
-    for (var property in default_layout) {
-        if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-        // Also separate arrays from objects as a discrete type.
-        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
-        var default_type = typeof default_layout[property];
-        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
-        // Unsupported property types: throw an exception
-        if (custom_type == "function" || default_type == "function"){
-            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
-        }
-        // Undefined custom value: pull the default value
-        if (custom_type == "undefined"){
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-            continue;
-        }
-        // Both values are objects: merge recursively
-        if (custom_type == "object" && default_type == "object"){
-            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
-            continue;
-        }
-    }
-    return custom_layout;
-};
-
 // Validate a (presumed complete) state object against internal rules for consistency
 // as well as any layout-defined constraints
 LocusZoom.validateState = function(new_state, layout){
@@ -437,7 +402,7 @@ LocusZoom.Layouts = (function() {
             return null;
         } else if (layouts[type][name]) {
             if (typeof modifications == "object"){
-                return LocusZoom.mergeLayouts(modifications, layouts[type][name]);
+                return LocusZoom.Layouts.merge(modifications, layouts[type][name]);
             } else {
                 return JSON.parse(JSON.stringify(layouts[type][name]));
             }
@@ -466,10 +431,49 @@ LocusZoom.Layouts = (function() {
 
     obj.list = function(type) {
         if (!layouts[type]){
-            return Object.keys(layouts);
+            var list = {};
+            Object.keys(layouts).forEach(function(type){
+                list[type] =  Object.keys(layouts[type]);
+            });
+            return list;
         } else {
             return Object.keys(layouts[type]);
         }
+    };
+
+    // Merge any two layout objects
+    // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+    // Ensures that all values defined in the second layout are at least present in the first
+    // Favors values defined in the first layout if values are defined in both but different
+    obj.merge = function (custom_layout, default_layout) {
+        if (typeof custom_layout != "object" || typeof default_layout != "object"){
+            throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+        }
+        for (var property in default_layout) {
+            if (!default_layout.hasOwnProperty(property)){ continue; }
+            // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
+            // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+            // Also separate arrays from objects as a discrete type.
+            var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+            var default_type = typeof default_layout[property];
+            if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+            if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
+            // Unsupported property types: throw an exception
+            if (custom_type == "function" || default_type == "function"){
+                throw("LocusZoom.Layouts.merge encountered an unsupported property type");
+            }
+            // Undefined custom value: pull the default value
+            if (custom_type == "undefined"){
+                custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+                continue;
+            }
+            // Both values are objects: merge recursively
+            if (custom_type == "object" && default_type == "object"){
+                custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
+                continue;
+            }
+        }
+        return custom_layout;
     };
 
     return obj;
@@ -704,7 +708,7 @@ LocusZoom.Layouts.add("data_layer", "genome_legend", {
  Dashboard Layouts
 */
 
-LocusZoom.Layouts.add("dashboard", "panel", {
+LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
         {
             type: "remove_panel",
@@ -722,7 +726,7 @@ LocusZoom.Layouts.add("dashboard", "panel", {
     ]
 });
 
-LocusZoom.Layouts.add("dashboard", "plot", {
+LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
             type: "title",
@@ -762,7 +766,7 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     axes: {
         x: {
             label_function: "chromosome",
@@ -811,7 +815,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes")
     ]
@@ -1303,7 +1307,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
  Plot Layouts
 */
 
-LocusZoom.Layouts.add("plot", "gwas_standard", {
+LocusZoom.Layouts.add("plot", "standard_gwas", {
     state: {},
     width: 800,
     height: 450,
@@ -1311,7 +1315,7 @@ LocusZoom.Layouts.add("plot", "gwas_standard", {
     aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
-    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
         LocusZoom.Layouts.get("panel", "gwas"),
         LocusZoom.Layouts.get("panel", "genes")
@@ -1319,16 +1323,16 @@ LocusZoom.Layouts.add("plot", "gwas_standard", {
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "gwas_standard");
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
 
-LocusZoom.Layouts.add("plot", "phewas_standard", {
+LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
     height: 500,
     min_width: 800,
     min_height: 500,
     responsive_resize: true,
     aspect_ratio: 1.6,
-    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
         LocusZoom.Layouts.get("panel", "phewas"),
         LocusZoom.Layouts.get("panel", "genome_legend"),
@@ -1363,7 +1367,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
@@ -2064,7 +2068,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         },
         id_field: "id"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Extra default for layout spacing
     // Not in default layout since that would make the label attribute always present
@@ -2488,7 +2492,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         y_axis: { field: "y", axis: 1 },
         hitarea_width: 5
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Var for storing mouse events for use in tool tip positioning
     this.mouse_event = null;
@@ -2732,7 +2736,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
         track_vertical_spacing: 10,
         hover_element: "bounding_box"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
@@ -4917,11 +4921,11 @@ LocusZoom.Plot = function(id, datasource, layout) {
     // If no layout was passed, use the Standard GWAS Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.Layouts.get("plot", "gwas_standard"));
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
     } else {
         this.layout = layout;
     }
-    LocusZoom.mergeLayouts(this.layout, LocusZoom.Plot.DefaultLayout);
+    LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
     // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;
@@ -5749,7 +5753,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){

@@ -22,7 +22,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         y_axis: { field: "y", axis: 1 },
         hitarea_width: 5
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Var for storing mouse events for use in tool tip positioning
     this.mouse_event = null;

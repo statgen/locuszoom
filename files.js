@@ -14,6 +14,7 @@
 // Test suites. Should be able to be executed in any order.
 var test_suite = [
     "./test/LocusZoom.js",
+    "./test/Layouts.js",
     "./test/DataLayer.js",
     "./test/Singletons.js",
     "./test/Dashboard.js",

@@ -41,7 +41,7 @@
       .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ]);
 
     // Populate the div with a LocusZoom plot
-    var layout = LocusZoom.mergeLayouts({ responsive_resize: true }, LocusZoom.StandardLayout);
+    var layout = LocusZoom.Layouts.merge({ responsive_resize: true }, LocusZoom.StandardLayout);
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);
 
     /**********************************************************************************

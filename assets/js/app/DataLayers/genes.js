@@ -20,7 +20,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
         track_vertical_spacing: 10,
         hover_element: "bounding_box"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);

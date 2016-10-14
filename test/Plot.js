@@ -129,14 +129,14 @@ describe("LocusZoom.Plot", function(){
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
         it("should allow for responsively positioning panels using a proportional dimensions", function(){
-            var responsive_layout = LocusZoom.mergeLayouts({
+            var responsive_layout = LocusZoom.Layouts.get("plot", "standard_gwas", {
                 resposnive_resize: true,
                 aspect_ratio: 2,
                 panels: [
                     { id: "positions", proportional_width: 1, proportional_height: 0.6, min_height: 60 },
                     { id: "genes", proportional_width: 1, proportional_height: 0.4, min_height: 40 }
                 ]
-            }, LocusZoom.StandardLayout);
+            });
             this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             assert.equal(this.plot.layout.panels[0].height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels[1].height/this.plot.layout.height, 0.4);
