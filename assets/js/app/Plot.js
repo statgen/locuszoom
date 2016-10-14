@@ -39,11 +39,11 @@ LocusZoom.Plot = function(id, datasource, layout) {
     // If no layout was passed, use the Standard GWAS Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.Layouts.get("plot", "gwas_standard"));
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
     } else {
         this.layout = layout;
     }
-    LocusZoom.mergeLayouts(this.layout, LocusZoom.Plot.DefaultLayout);
+    LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
     // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;

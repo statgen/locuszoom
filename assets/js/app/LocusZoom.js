@@ -19,7 +19,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
-        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
     }
     var plot;
     d3.select(selector).call(function(){
@@ -255,41 +255,6 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
         xhr.send(body);
     } 
     return response.promise;
-};
-
-// Merge two layout objects
-// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-// Ensures that all values defined in the second layout are at least present in the first
-// Favors values defined in the first layout if values are defined in both but different
-LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
-    if (typeof custom_layout != "object" || typeof default_layout != "object"){
-        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
-    }
-    for (var property in default_layout) {
-        if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-        // Also separate arrays from objects as a discrete type.
-        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
-        var default_type = typeof default_layout[property];
-        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
-        // Unsupported property types: throw an exception
-        if (custom_type == "function" || default_type == "function"){
-            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
-        }
-        // Undefined custom value: pull the default value
-        if (custom_type == "undefined"){
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-            continue;
-        }
-        // Both values are objects: merge recursively
-        if (custom_type == "object" && default_type == "object"){
-            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
-            continue;
-        }
-    }
-    return custom_layout;
 };
 
 // Validate a (presumed complete) state object against internal rules for consistency

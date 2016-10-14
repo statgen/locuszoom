@@ -554,4 +554,116 @@ describe("LocusZoom.DataLayer", function(){
         });
     });
 
+    describe("Data Layers collection object", function() {
+        it("LocusZoom should have a DataLayers collection object", function(){
+            LocusZoom.should.have.property("DataLayers").which.is.an.Object;
+        });
+        it("should have a method to list available data layers", function(){
+            LocusZoom.DataLayers.should.have.property("list").which.is.a.Function;
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes", "intervals"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should have a general method to get a data layer by name", function(){
+            LocusZoom.DataLayers.should.have.property("get").which.is.a.Function;
+        });
+        it("should have a method to add a data layer", function(){
+            LocusZoom.DataLayers.should.have.property("add").which.is.a.Function;
+            var foo = function(layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = {};
+                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                this.render = function(){ return "foo"; };
+                return this;
+            };
+            LocusZoom.DataLayers.add("foo", foo);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
+            var expected_value = new foo({ id: "bar" });
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+        });
+        it("should have a method to change or delete existing data layers", function(){
+            LocusZoom.DataLayers.should.have.property("set").which.is.a.Function;
+            var foo_new = function(layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = { foo: "bar" };
+                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                this.render = function(){ return "bar"; };
+                return this;
+            };
+            LocusZoom.DataLayers.set("foo", foo_new);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
+            var expected_value = new foo_new({ id: "baz" });
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+            LocusZoom.DataLayers.set("foo");
+            returned_list = LocusZoom.DataLayers.list();
+            expected_list = ["scatter", "line", "genes", "intervals"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should throw an exception if asked to get a function that has not been defined", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("nonexistent", this.plot.state);
+            });
+        });
+        it("should throw an exception when trying to add a new data layer that is not a function", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.add("nonfunction", "foo");
+            });
+        });
+        it("should throw an exception when adding a new data layer with an already in use name", function(){
+            assert.throws(function(){
+                var foo = function(layout){
+                    LocusZoom.DataLayer.apply(this, arguments);
+                    this.DefaultLayout = {};
+                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                    this.render = function(){ return "foo"; };
+                    return this;
+                };
+                LocusZoom.DataLayers.add("scatter", foo);
+            });
+        });
+        it("should throw an exception if asked to get a data layer without passing both an ID and a layout", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter");
+            });
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter", "foo");
+            });
+        });
+        describe("predefined data layers", function() {
+            beforeEach(function(){
+                this.list = LocusZoom.DataLayers.list();
+            });
+            it("should each take its ID from the arguments provided", function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
+                    assert.equal(foo.id, "foo");
+                });
+            });
+            it("should each take its layout from the arguments provided and mergit with a built-in DefaultLayout", function(){
+                this.list.forEach(function(name){
+                    var layout = { id: "foo", test: 123 };
+                    var foo = new LocusZoom.DataLayers.get(name, layout);
+                    var expected_layout = LocusZoom.Layouts.merge(layout, foo.DefaultLayout);
+                    assert.deepEqual(foo.layout, expected_layout);
+                });
+            });
+            it("should each implement a render function", function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
+                    foo.should.have.property("render").which.is.a.Function;
+                });
+            });
+        });
+    });
+
 });

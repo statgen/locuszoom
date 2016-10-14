@@ -246,7 +246,7 @@
                               end: 115067678
                             }
                           };
-      var base_layout = LocusZoom.mergeLayouts(initial_state, LocusZoom.StandardLayout);
+      var base_layout = LocusZoom.Layouts.merge(initial_state, LocusZoom.StandardLayout);
       plot = LocusZoom.populate("#plot", data_sources, base_layout);
       plot.on("element_clicked", function(){
         console.log("element clicked: ", this);

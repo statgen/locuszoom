@@ -25,7 +25,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
@@ -648,3 +648,57 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     return promise;
 
 };
+
+
+/************
+  Data Layers
+
+  Object for storing data layer definitions. Because data layer definitions tend
+  to be lengthy they are stored in individual files instead of below this collection definition.
+*/
+
+LocusZoom.DataLayers = (function() {
+    var obj = {};
+    var datalayers = {};
+
+    obj.get = function(name, layout, parent) {
+        if (!name) {
+            return null;
+        } else if (datalayers[name]) {
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
+            } else {
+                return new datalayers[name](layout, parent);
+            }
+        } else {
+            throw("data layer [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, datalayer) {
+        if (datalayer) {
+            if (typeof datalayer != "function"){
+                throw("unable to set data layer [" + name + "], argument provided is not a function");
+            } else {
+                datalayers[name] = datalayer;
+                datalayers[name].prototype = new LocusZoom.DataLayer();
+            }
+        } else {
+            delete datalayers[name];
+        }
+    };
+
+    obj.add = function(name, datalayer) {
+        if (datalayers[name]) {
+            throw("data layer already exists with name: " + name);
+        } else {
+            obj.set(name, datalayer);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(datalayers);
+    };
+
+    return obj;
+})();

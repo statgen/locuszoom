@@ -18,7 +18,7 @@ LocusZoom.Layouts = (function() {
             return null;
         } else if (layouts[type][name]) {
             if (typeof modifications == "object"){
-                return LocusZoom.mergeLayouts(modifications, layouts[type][name]);
+                return LocusZoom.Layouts.merge(modifications, layouts[type][name]);
             } else {
                 return JSON.parse(JSON.stringify(layouts[type][name]));
             }
@@ -47,10 +47,49 @@ LocusZoom.Layouts = (function() {
 
     obj.list = function(type) {
         if (!layouts[type]){
-            return Object.keys(layouts);
+            var list = {};
+            Object.keys(layouts).forEach(function(type){
+                list[type] =  Object.keys(layouts[type]);
+            });
+            return list;
         } else {
             return Object.keys(layouts[type]);
         }
+    };
+
+    // Merge any two layout objects
+    // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+    // Ensures that all values defined in the second layout are at least present in the first
+    // Favors values defined in the first layout if values are defined in both but different
+    obj.merge = function (custom_layout, default_layout) {
+        if (typeof custom_layout != "object" || typeof default_layout != "object"){
+            throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+        }
+        for (var property in default_layout) {
+            if (!default_layout.hasOwnProperty(property)){ continue; }
+            // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
+            // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+            // Also separate arrays from objects as a discrete type.
+            var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+            var default_type = typeof default_layout[property];
+            if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+            if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
+            // Unsupported property types: throw an exception
+            if (custom_type == "function" || default_type == "function"){
+                throw("LocusZoom.Layouts.merge encountered an unsupported property type");
+            }
+            // Undefined custom value: pull the default value
+            if (custom_type == "undefined"){
+                custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+                continue;
+            }
+            // Both values are objects: merge recursively
+            if (custom_type == "object" && default_type == "object"){
+                custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
+                continue;
+            }
+        }
+        return custom_layout;
     };
 
     return obj;
@@ -310,7 +349,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
  Dashboard Layouts
 */
 
-LocusZoom.Layouts.add("dashboard", "panel", {
+LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
         {
             type: "remove_panel",
@@ -328,7 +367,7 @@ LocusZoom.Layouts.add("dashboard", "panel", {
     ]
 });
 
-LocusZoom.Layouts.add("dashboard", "plot", {
+LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
             type: "title",
@@ -368,7 +407,7 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     axes: {
         x: {
             label_function: "chromosome",
@@ -417,7 +456,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes")
     ]
@@ -911,7 +950,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
     min_width: 400,
     min_height: 112.5,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
-    dashboard: LocusZoom.Layouts.get("dashboard", "panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     axes: {},
     interaction: {
         drag_background_to_pan: true,
@@ -928,7 +967,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
  Plot Layouts
 */
 
-LocusZoom.Layouts.add("plot", "gwas_standard", {
+LocusZoom.Layouts.add("plot", "standard_gwas", {
     state: {},
     width: 800,
     height: 450,
@@ -936,25 +975,24 @@ LocusZoom.Layouts.add("plot", "gwas_standard", {
     aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
-    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
         LocusZoom.Layouts.get("panel", "gwas"),
-        LocusZoom.Layouts.get("panel", "genes"),
-        LocusZoom.Layouts.get("panel", "intervals")
+        LocusZoom.Layouts.get("panel", "genes")
     ]
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "gwas_standard");
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
 
-LocusZoom.Layouts.add("plot", "phewas_standard", {
+LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
     height: 500,
     min_width: 800,
     min_height: 500,
     responsive_resize: true,
     aspect_ratio: 1.6,
-    dashboard: LocusZoom.Layouts.get("dashboard", "plot"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
         LocusZoom.Layouts.get("panel", "phewas"),
         LocusZoom.Layouts.get("panel", "genome_legend"),

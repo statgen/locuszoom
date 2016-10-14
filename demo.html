@@ -61,13 +61,8 @@
         .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ]);
     }
 
-    // Define custom LocusZoom layout object to allow manual resizing.
-    // This will be merged with the default layout (LocusZoom.DefaultLayout)
-    // so we only need to specify the values we want to change.
-    var layout = {
-      resizable: "manual"
-    };
-    layout = LocusZoom.mergeLayouts(layout, LocusZoom.StandardLayout);
+    layout = LocusZoom.Layouts.get("plot", "standard_gwas");
+    layout.panels.push(LocusZoom.Layouts.get("panel", "intervals"));
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);
