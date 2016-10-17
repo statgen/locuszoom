@@ -755,6 +755,30 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
+LocusZoom.Layouts.add("dashboard", "interval_panel", {
+    components: [
+        {
+            type: "remove_panel",
+            position: "right",
+            color: "red"
+        },
+        {
+            type: "move_panel_up",
+            position: "right"
+        },
+        {
+            type: "move_panel_down",
+            position: "right"
+        },
+        {
+            type: "toggle_split_tracks",
+            data_layer_id: "intervals",
+            position: "right",
+            color: "yellow"
+        }
+    ]
+});
+
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
@@ -1338,7 +1362,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
     min_width: 400,
     min_height: 112.5,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "interval_panel"),
     axes: {},
     interaction: {
         drag_background_to_pan: true,
@@ -4685,6 +4709,31 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         this.button.show();
 
         return this;
+    };
+});
+
+// Move Panel Down
+LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (!layout.data_layer_id){ layout.data_layer_id = "intervals"; }
+    if (!this.parent_panel.data_layers[layout.data_layer_id]){
+        throw ("Dashboard toggle split tracks component missing valid data layer ID");
+    }
+    this.update = function(){
+        var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
+        var text = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
+        if (this.button){
+            this.button.setText(text);
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(text).setTitle("Toggle whether tracks are split apart or merged together")
+            .setOnclick(function(){
+                data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
+                data_layer.render();
+            }.bind(this));
+        this.button.show();
+        return this.update();
     };
 });
 

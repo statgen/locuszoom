@@ -371,6 +371,30 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
+LocusZoom.Layouts.add("dashboard", "interval_panel", {
+    components: [
+        {
+            type: "remove_panel",
+            position: "right",
+            color: "red"
+        },
+        {
+            type: "move_panel_up",
+            position: "right"
+        },
+        {
+            type: "move_panel_down",
+            position: "right"
+        },
+        {
+            type: "toggle_split_tracks",
+            data_layer_id: "intervals",
+            position: "right",
+            color: "yellow"
+        }
+    ]
+});
+
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
@@ -954,7 +978,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
     min_width: 400,
     min_height: 112.5,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "interval_panel"),
     axes: {},
     interaction: {
         drag_background_to_pan: true,
