@@ -1,5 +1,6 @@
 $namespace: "lz";
 $default_black: "rgba(24, 24, 24, 1)";
+$default_white: "rgba(232, 232, 232, 1)";
 $default_black_svg: "rgb(24, 24, 24)";
 $default_black_shadow: "rgba(24, 24, 24, 0.4)";
 $default_black_shadow_svg_color: "rgb(24, 24, 24)";
@@ -12,7 +13,7 @@ svg.#{$namespace}-locuszoom {
   background-color: #FFFFFF;
   border: none;
   cursor: crosshair;
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 10px;
 
   rect.#{$namespace}-clickarea {
@@ -204,7 +205,7 @@ div.#{$namespace}-data_layer-tooltip {
   button:hover {
     cursor: pointer;
     background-color: #{$default_black};
-    color: rgba(235,235,235,1);
+    color: #{$default_white};
   }
 
   .#{$namespace}-tooltip-close-button {
@@ -308,7 +309,8 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 .#{$namespace}-curtain {
   
   position: absolute;
-  font-size: 2em;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
   font-weight: 600;
   background: rgba(216,216,216,0.8);
 
@@ -327,8 +329,8 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     position: absolute;
     top: 0px;
     right: 0px;
-    padding: 0.15em 0.5em;
-    font-size: 0.3em;
+    padding: 2px 4px;
+    font-size: 10px;
     font-weight: 300;
     background-color: #D8D8D8;
     color: #333333;
@@ -485,9 +487,16 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   font-size: 80%;
 
   .#{$namespace}-dashboard-title {
-    font-size: 150%;
-    font-weight: bold;
     margin-bottom: 0.3em;
+    h3 {
+      font-size: 150%;
+      font-weight: bold;
+      margin: 0em;
+    }
+    small {
+      font-size: 80%;
+      font-weight: normal;
+    }
   }
 
 }

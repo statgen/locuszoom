@@ -35,10 +35,10 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.4"
+    version: "0.4.6"
 };
     
-// Populate a single element with a LocusZoom instance.
+// Populate a single element with a LocusZoom plot.
 // selector can be a string for a DOM Query or a d3 selector.
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
@@ -51,9 +51,9 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
-        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
     }
-    var instance;
+    var plot;
     d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
@@ -61,41 +61,41 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
             this.attr("id", "#lz-" + iterator);
         }
-        // Create the instance
-        instance = new LocusZoom.Instance(this.node().id, datasource, layout);
+        // Create the plot
+        plot = new LocusZoom.Plot(this.node().id, datasource, layout);
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key){
-                instance.state[key] = parsed_state[key];
+                plot.state[key] = parsed_state[key];
             });
         }
         // Add an SVG to the div and set its dimensions
-        instance.svg = d3.select("div#" + instance.id)
+        plot.svg = d3.select("div#" + plot.id)
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
-        instance.setDimensions();
-        instance.positionPanels();
-        // Initialize the instance
-        instance.initialize();
-        // If the instance has defined data sources then trigger its first mapping based on state values
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+        plot.setDimensions();
+        plot.positionPanels();
+        // Initialize the plot
+        plot.initialize();
+        // If the plot has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
-            instance.refresh();
+            plot.refresh();
         }
     });
-    return instance;
+    return plot;
 };
 
-// Populate arbitrarily many elements each with a LocusZoom instance
+// Populate arbitrarily many elements each with a LocusZoom plot
 // using a common datasource, layout, and/or state
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
-    var instances = [];
+    var plots = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        plots[i] = LocusZoom.populate(this, datasource, layout, state);
     });
-    return instances;
+    return plots;
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
@@ -289,39 +289,62 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     return response.promise;
 };
 
-// Merge two layout objects
-// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-// Ensures that all values defined in the second layout are at least present in the first
-// Favors values defined in the first layout if values are defined in both but different
-LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
-    if (typeof custom_layout != "object" || typeof default_layout != "object"){
-        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+// Validate a (presumed complete) state object against internal rules for consistency
+// as well as any layout-defined constraints
+LocusZoom.validateState = function(new_state, layout){
+
+    new_state = new_state || {};
+    layout = layout || {};
+
+    // If a "chr", "start", and "end" are present then resolve start and end
+    // to numeric values that are not decimal, negative, or flipped
+    var validated_region = false;
+    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+        // Determine a numeric scale and midpoint for the attempted region,
+        var attempted_midpoint = null; var attempted_scale;
+        new_state.start = Math.max(parseInt(new_state.start), 1);
+        new_state.end = Math.max(parseInt(new_state.end), 1);
+        if (isNaN(new_state.start) && isNaN(new_state.end)){
+            new_state.start = 1;
+            new_state.end = 1;
+            attempted_midpoint = 0.5;
+            attempted_scale = 0;
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+            attempted_midpoint = new_state.start || new_state.end;
+            attempted_scale = 0;
+            new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
+            new_state.end = (isNaN(new_state.end) ? new_state.start : new_state.end);
+        } else {
+            attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
+            attempted_scale = new_state.end - new_state.start;
+            if (attempted_scale < 0){
+                var temp = new_state.start;
+                new_state.end = new_state.start;
+                new_state.start = temp;
+                attempted_scale = new_state.end - new_state.start;
+            }
+            if (attempted_midpoint < 0){
+                new_state.start = 1;
+                new_state.end = 1;
+                attempted_scale = 0;
+            }
+        }
+        validated_region = true;
     }
-    for (var property in default_layout) {
-        if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-        // Also separate arrays from objects as a discrete type.
-        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
-        var default_type = typeof default_layout[property];
-        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
-        // Unsupported property types: throw an exception
-        if (custom_type == "function" || default_type == "function"){
-            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
-        }
-        // Undefined custom value: pull the default value
-        if (custom_type == "undefined"){
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-            continue;
-        }
-        // Both values are objects: merge recursively
-        if (custom_type == "object" && default_type == "object"){
-            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
-            continue;
-        }
+
+    // Constrain w/r/t layout-defined mininum region scale
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.min_region_scale;
     }
-    return custom_layout;
+
+    // Constrain w/r/t layout-defined maximum region scale
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.max_region_scale;
+    }
+
+    return new_state;
 };
 
 // Replace placeholders in an html string with field values defined in a data object
@@ -359,274 +382,963 @@ LocusZoom.getToolTipData = function(node){
     }
 };
 
-// Standard Layout
-LocusZoom.StandardLayout = {
+/* global LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+LocusZoom.Layouts = (function() {
+    var obj = {};
+    var layouts = {
+        "plot": {},
+        "panel": {},
+        "data_layer": {},
+        "dashboard": {}
+    };
+
+    obj.get = function(type, name, modifications) {
+        if (!type || !name) {
+            return null;
+        } else if (layouts[type][name]) {
+            if (typeof modifications == "object"){
+                return LocusZoom.Layouts.merge(modifications, layouts[type][name]);
+            } else {
+                return JSON.parse(JSON.stringify(layouts[type][name]));
+            }
+        } else {
+            throw("layout type [" + type + "] name [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(type, name, layout) {
+        if (typeof type != "string" || typeof name != "string" || typeof layout != "object"){
+            throw ("unable to set new layout; bad arguments passed to set()");
+        }
+        if (!layouts[type]){
+            layouts[type] = {};
+        }
+        if (layout){
+            layouts[type][name] = JSON.parse(JSON.stringify(layout));
+        } else {
+            delete layouts[type][name];
+        }
+    };
+
+    obj.add = function(type, name, layout) {
+        obj.set(type, name, layout);
+    };
+
+    obj.list = function(type) {
+        if (!layouts[type]){
+            var list = {};
+            Object.keys(layouts).forEach(function(type){
+                list[type] =  Object.keys(layouts[type]);
+            });
+            return list;
+        } else {
+            return Object.keys(layouts[type]);
+        }
+    };
+
+    // Merge any two layout objects
+    // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+    // Ensures that all values defined in the second layout are at least present in the first
+    // Favors values defined in the first layout if values are defined in both but different
+    obj.merge = function (custom_layout, default_layout) {
+        if (typeof custom_layout != "object" || typeof default_layout != "object"){
+            throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+        }
+        for (var property in default_layout) {
+            if (!default_layout.hasOwnProperty(property)){ continue; }
+            // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
+            // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+            // Also separate arrays from objects as a discrete type.
+            var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+            var default_type = typeof default_layout[property];
+            if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+            if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
+            // Unsupported property types: throw an exception
+            if (custom_type == "function" || default_type == "function"){
+                throw("LocusZoom.Layouts.merge encountered an unsupported property type");
+            }
+            // Undefined custom value: pull the default value
+            if (custom_type == "undefined"){
+                custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+                continue;
+            }
+            // Both values are objects: merge recursively
+            if (custom_type == "object" && default_type == "object"){
+                custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
+                continue;
+            }
+        }
+        return custom_layout;
+    };
+
+    return obj;
+})();
+
+
+/**
+ Data Layer Layouts
+*/
+
+LocusZoom.Layouts.add("data_layer", "signifigance", {
+    id: "significance",
+    type: "line",
+    fields: ["sig:x", "sig:y"],
+    z_index: 0,
+    style: {
+        "stroke": "#D3D3D3",
+        "stroke-width": "3px",
+        "stroke-dasharray": "10px 10px"
+    },
+    x_axis: {
+        field: "sig:x",
+        decoupled: true
+    },
+    y_axis: {
+        axis: 1,
+        field: "sig:y"
+    }
+});
+
+LocusZoom.Layouts.add("data_layer", "recomb_rate", {
+    id: "recombrate",
+    type: "line",
+    fields: ["recomb:position", "recomb:recomb_rate"],
+    z_index: 1,
+    style: {
+        "stroke": "#0000FF",
+        "stroke-width": "1.5px"
+    },
+    x_axis: {
+        field: "recomb:position"
+    },
+    y_axis: {
+        axis: 2,
+        field: "recomb:recomb_rate",
+        floor: 0,
+        ceiling: 100
+    },
+    transition: {
+        duration: 200
+    }
+});
+
+LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
+    id: "gwaspvalues",
+    type: "scatter",
+    point_shape: "circle",
+    point_size: {
+        scale_function: "if",
+        field: "ld:isrefvar",
+        parameters: {
+            field_value: 1,
+            then: 80,
+            else: 40
+        }
+    },
+    color: [
+        {
+            scale_function: "if",
+            field: "ld:isrefvar",
+            parameters: {
+                field_value: 1,
+                then: "#9632b8"
+            }
+        },
+        {
+            scale_function: "numerical_bin",
+            field: "ld:state",
+            parameters: {
+                breaks: [0, 0.2, 0.4, 0.6, 0.8],
+                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
+            }
+        },
+        "#B8B8B8"
+    ],
+    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
+    id_field: "variant",
+    z_index: 2,
+    x_axis: {
+        field: "position"
+    },
+    y_axis: {
+        axis: 1,
+        field: "log_pvalue",
+        floor: 0,
+        upper_buffer: 0.10,
+        min_extent: [ 0, 10 ]
+    },
+    transition: {
+        duration: 200
+    },
+    highlighted: {
+        onmouseover: "on",
+        onmouseout: "off"
+    },
+    selected: {
+        onclick: "toggle_exclusive",
+        onshiftclick: "toggle"
+    },
+    tooltip: {
+        closable: true,
+        show: { or: ["highlighted", "selected"] },
+        hide: { and: ["unhighlighted", "unselected"] },
+        html: "<strong>{{variant}}</strong><br>"
+            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
+            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
+    }
+});
+
+LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
+    id: "phewaspvalues",
+    type: "scatter",
+    point_shape: "circle",
+    point_size: 70,
+    id_field: "id",
+    transition: {
+        duration: 500
+    },
+    fields: ["id", "x", "category_name", "num_cases", "num_controls", "phewas_string", "phewas_code", "pval|scinotation", "pval|neglog10"],
+    x_axis: {
+        field: "x"
+    },
+    y_axis: {
+        axis: 1,
+        field: "pval|neglog10",
+        floor: 0,
+        upper_buffer: 0.1
+    },
+    color: {
+        field: "category_name",
+        scale_function: "categorical_bin",
+        parameters: {
+            categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
+            values: ["rgba(57,59,121,0.7)", "rgba(82,84,163,0.7)", "rgba(107,110,207,0.7)", "rgba(156,158,222,0.7)", "rgba(99,121,57,0.7)", "rgba(140,162,82,0.7)", "rgba(181,207,107,0.7)", "rgba(140,109,49,0.7)", "rgba(189,158,57,0.7)", "rgba(231,186,82,0.7)", "rgba(132,60,57,0.7)", "rgba(173,73,74,0.7)", "rgba(214,97,107,0.7)", "rgba(231,150,156,0.7)", "rgba(123,65,115,0.7)", "rgba(165,81,148,0.7)", "rgba(206,109,189,0.7)", "rgba(222,158,214,0.7)"],
+            null_value: "#B8B8B8"
+        }
+    },
+    tooltip: {
+        closable: true,
+        show: { or: ["highlighted", "selected"] },
+        hide: { and: ["unhighlighted", "unselected"] },
+        html: "<div><strong>{{phewas_string}}</strong></div><div>P Value: <strong>{{pval|scinotation}}</strong></div>"
+    },
+    highlighted: {
+        onmouseover: "on",
+        onmouseout: "off"
+    },
+    selected: {
+        onclick: "toggle_exclusive",
+        onshiftclick: "toggle"
+    },
+    label: {
+        text: "{{phewas_string}}",
+        spacing: 6,
+        lines: {
+            style: {
+                "stroke-width": "2px",
+                "stroke": "#333333",
+                "stroke-dasharray": "2px 2px"
+            }
+        },
+        filters: [
+            {
+                field: "pval|neglog10",
+                operator: ">=",
+                value: 5
+            }
+        ],
+        style: {
+            "font-size": "14px",
+            "font-weight": "bold",
+            "fill": "#333333"
+        }
+    }
+});
+
+LocusZoom.Layouts.add("data_layer", "genes", {
+    id: "genes",
+    type: "genes",
+    fields: ["gene:gene", "constraint:constraint"],
+    id_field: "gene_id",
+    highlighted: {
+        onmouseover: "on",
+        onmouseout: "off"
+    },
+    selected: {
+        onclick: "toggle_exclusive",
+        onshiftclick: "toggle"
+    },
+    transition: {
+        duration: 200
+    },
+    tooltip: {
+        closable: true,
+        show: { or: ["highlighted", "selected"] },
+        hide: { and: ["unhighlighted", "unselected"] },
+        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+            + "<div style=\"clear: both;\"></div>"
+            + "<table>"
+            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+            + "</table>"
+            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
+    }
+});
+
+LocusZoom.Layouts.add("data_layer", "genome_legend", {
+    id: "genome_legend",
+    type: "genome_legend",
+    fields: ["genome:chr", "genome:base_pairs"],
+    x_axis: {
+        floor: 0,
+        ceiling: 2881033286
+    }
+});
+
+/**
+ Dashboard Layouts
+*/
+
+LocusZoom.Layouts.add("dashboard", "standard_panel", {
+    components: [
+        {
+            type: "remove_panel",
+            position: "right",
+            color: "red"
+        },
+        {
+            type: "move_panel_up",
+            position: "right"
+        },
+        {
+            type: "move_panel_down",
+            position: "right"
+        }
+    ]
+});
+
+LocusZoom.Layouts.add("dashboard", "standard_plot", {
+    components: [
+        {
+            type: "title",
+            title: "LocusZoom",
+            subtitle: "<a href=\"https://statgen.github.io/locuszoom/\" target=\"_blank\">v" + LocusZoom.version + "</a>",
+            position: "left"
+        },
+        {
+            type: "dimensions",
+            position: "right"
+        },
+        {
+            type: "region_scale",
+            position: "right"
+        },
+        {
+            type: "download",
+            position: "right"
+        }
+    ]
+});
+
+/**
+ Panel Layouts
+*/
+
+LocusZoom.Layouts.add("panel", "gwas", {
+    id: "gwas",
+    title: "",
+    width: 800,
+    height: 225,
+    origin: { x: 0, y: 0 },
+    min_width:  400,
+    min_height: 200,
+    proportional_width: 1,
+    proportional_height: 0.5,
+    proportional_origin: { x: 0, y: 0 },
+    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    inner_border: "rgba(210, 210, 210, 0.85)",
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    axes: {
+        x: {
+            label_function: "chromosome",
+            label_offset: 32,
+            tick_format: "region",
+            extent: "state"
+        },
+        y1: {
+            label: "-log10 p-value",
+            label_offset: 28
+        },
+        y2: {
+            label: "Recombination Rate (cM/Mb)",
+            label_offset: 40
+        }
+    },
+    interaction: {
+        drag_background_to_pan: true,
+        drag_x_ticks_to_scale: true,
+        drag_y1_ticks_to_scale: true,
+        drag_y2_ticks_to_scale: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "recomb_rate"),
+        LocusZoom.Layouts.get("data_layer", "gwas_pvalues")
+    ]
+});
+
+LocusZoom.Layouts.add("panel", "genes", {
+    id: "genes",
+    width: 800,
+    height: 225,
+    origin: { x: 0, y: 225 },
+    min_width: 400,
+    min_height: 112.5,
+    proportional_width: 1,
+    proportional_height: 0.5,
+    proportional_origin: { x: 0, y: 0.5 },
+    margin: { top: 20, right: 50, bottom: 20, left: 50 },
+    axes: {},
+    interaction: {
+        drag_background_to_pan: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "genes")
+    ]
+});
+
+LocusZoom.Layouts.add("panel", "phewas", {
+    id: "phewas",
+    width: 800,
+    height: 300,
+    origin: { x: 0, y: 0 },
+    min_width:  800,
+    min_height: 300,
+    proportional_width: 1,
+    proportional_height: .6,
+    proportional_origin: { x: 0, y: 0 },
+    margin: { top: 20, right: 50, bottom: 120, left: 50 },
+    inner_border: "rgba(210, 210, 210, 0.85)",
+    axes: {
+        x: {
+            ticks: [
+                {
+                    x: 0,
+                    text: "Infectious Disease",
+                    style: {
+                        "fill": "#393b79",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 44,
+                    text: "Neoplasms",
+                    style: {
+                        "fill": "#5254a3",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 174,
+                    text: "Endocrine/Metabolic",
+                    style: {
+                        "fill": "#6b6ecf",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 288,
+                    text: "Hematopoietic",
+                    style: {
+                        "fill": "#9c9ede",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 325,
+                    text: "Mental Disorders",
+                    style: {
+                        "fill": "#637939",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 384,
+                    text: "Neurological",
+                    style: {
+                        "fill": "#8ca252",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 451,
+                    text: "Sense Organs",
+                    style: {
+                        "fill": "#b5cf6b",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 558,
+                    text: "Circulatory System",
+                    style: {
+                        "fill": "#8c6d31",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 705,
+                    text: "Respiratory",
+                    style: {
+                        "fill": "#bd9e39",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 778,
+                    text: "Digestive",
+                    style: {
+                        "fill": "#e7ba52",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 922,
+                    text: "Genitourinary",
+                    style: {
+                        "fill": "#843c39",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1073,
+                    text: "Pregnancy Complications",
+                    style: {
+                        "fill": "#ad494a",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1097,
+                    text: "Dermatologic",
+                    style: {
+                        "fill": "#d6616b",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1170,
+                    text: "Musculoskeletal",
+                    style: {
+                        "fill": "#e7969c",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1282,
+                    text: "Congenital Anomalies",
+                    style: {
+                        "fill": "#7b4173",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1323,
+                    text: "Symptoms",
+                    style: {
+                        "fill": "#a55194",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                },
+                {
+                    x: 1361,
+                    text: "Injuries & Poisonings",
+                    style: {
+                        "fill": "#ce6dbd",
+                        "font-weight": "bold",
+                        "font-size": "11px",
+                        "text-anchor": "start"
+                    },
+                    transform: "translate(15, 0) rotate(50)"
+                }
+            ]
+        },
+        y1: {
+            label: "-log10 p-value",
+            label_offset: 28
+        }
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "phewas_pvalues")
+    ]
+});
+
+LocusZoom.Layouts.add("panel", "genome_legend", {
+    id: "genome_legend",
+    width: 800,
+    height: 50,
+    origin: { x: 0, y: 300 },
+    min_width:  800,
+    min_height: 50,
+    proportional_width: 1,
+    proportional_height: .1,
+    proportional_origin: { x: 0, y: .6 },
+    margin: { top: 0, right: 50, bottom: 35, left: 50 },
+    axes: {
+        x: {
+            label: "Genomic Position (number denotes chromosome)",
+            label_offset: 35,
+            ticks: [
+                {
+                    x: 124625310,
+                    text: "1",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 370850307,
+                    text: "2",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 591461209,
+                    text: "3",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 786049562,
+                    text: "4",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 972084330,
+                    text: "5",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1148099493,
+                    text: "6",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1313226358,
+                    text: "7",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1465977701,
+                    text: "8",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1609766427,
+                    text: "9",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1748140516,
+                    text: "10",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1883411148,
+                    text: "11",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2017840353,
+                    text: "12",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2142351240,
+                    text: "13",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2253610949,
+                    text: "14",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2358551415,
+                    text: "15",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2454994487,
+                    text: "16",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2540769469,
+                    text: "17",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2620405698,
+                    text: "18",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2689008813,
+                    text: "19",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2750086065,
+                    text: "20",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2805663772,
+                    text: "21",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2855381003,
+                    text: "22",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "14px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                }
+            ]
+        }
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "genome_legend")
+    ]
+});
+
+
+/**
+ Plot Layouts
+*/
+
+LocusZoom.Layouts.add("plot", "standard_gwas", {
     state: {},
     width: 800,
     height: 450,
     resizable: "responsive",
     aspect_ratio: (16/9),
-    dashboard: {
-        components: [
-            {
-                type: "title",
-                title: "LocusZoom",
-                position: "left"
-            },
-            {
-                type: "dimensions",
-                position: "right"
-            },
-            {
-                type: "region_scale",
-                position: "right"
-            },
-            {
-                type: "download",
-                position: "right"
-            }
-        ]
-    },
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        {
-            id: "positions",
-            title: "",
-            width: 800,
-            height: 225,
-            origin: { x: 0, y: 0 },
-            min_width:  400,
-            min_height: 200,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0 },
-            margin: { top: 35, right: 50, bottom: 40, left: 50 },
-            inner_border: "rgba(210, 210, 210, 0.85)",
-            dashboard: {
-                components: [
-                    {
-                        type: "remove_panel",
-                        position: "right",
-                        color: "red"
-                    },
-                    {
-                        type: "move_panel_up",
-                        position: "right"
-                    },
-                    {
-                        type: "move_panel_down",
-                        position: "right"
-                    }
-                ]
-            },
-            axes: {
-                x: {
-                    label_function: "chromosome",
-                    label_offset: 32,
-                    tick_format: "region",
-                    extent: "state"
-                },
-                y1: {
-                    label: "-log10 p-value",
-                    label_offset: 28
-                },
-                y2: {
-                    label: "Recombination Rate (cM/Mb)",
-                    label_offset: 40
-                }
-            },
-            interaction: {
-                drag_background_to_pan: true,
-                drag_x_ticks_to_scale: true,
-                drag_y1_ticks_to_scale: true,
-                drag_y2_ticks_to_scale: true,
-                scroll_to_zoom: true,
-                x_linked: true
-            },
-            data_layers: [
-                {
-                    id: "significance",
-                    type: "line",
-                    fields: ["sig:x", "sig:y"],
-                    z_index: 0,
-                    style: {
-                        "stroke": "#D3D3D3",
-                        "stroke-width": "3px",
-                        "stroke-dasharray": "10px 10px"
-                    },
-                    x_axis: {
-                        field: "sig:x",
-                        decoupled: true
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "sig:y"
-                    },
-                    tooltip: {
-                        html: "Significance Threshold: 3 × 10^-5"
-                    }
-                },
-                {
-                    id: "recomb",
-                    type: "line",
-                    fields: ["recomb:position", "recomb:recomb_rate"],
-                    z_index: 1,
-                    style: {
-                        "stroke": "#0000FF",
-                        "stroke-width": "1.5px"
-                    },
-                    x_axis: {
-                        field: "recomb:position"
-                    },
-                    y_axis: {
-                        axis: 2,
-                        field: "recomb:recomb_rate",
-                        floor: 0,
-                        ceiling: 100
-                    },
-                    transition: {
-                        duration: 200
-                    }
-                },
-                {
-                    id: "positions",
-                    type: "scatter",
-                    point_shape: "circle",
-                    point_size: {
-                        scale_function: "if",
-                        field: "ld:isrefvar",
-                        parameters: {
-                            field_value: 1,
-                            then: 80,
-                            else: 40
-                        }
-                    },
-                    color: [
-                        {
-                            scale_function: "if",
-                            field: "ld:isrefvar",
-                            parameters: {
-                                field_value: 1,
-                                then: "#9632b8"
-                            }
-                        },
-                        {
-                            scale_function: "numerical_bin",
-                            field: "ld:state",
-                            parameters: {
-                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
-                            }
-                        },
-                        "#B8B8B8"
-                    ],
-                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
-                    id_field: "variant",
-                    z_index: 2,
-                    x_axis: {
-                        field: "position"
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "log_pvalue",
-                        floor: 0,
-                        upper_buffer: 0.10,
-                        min_extent: [ 0, 10 ]
-                    },
-                    transition: {
-                        duration: 200
-                    },
-                    highlighted: {
-                        onmouseover: "on",
-                        onmouseout: "off"
-                    },
-                    selected: {
-                        onclick: "toggle_exclusive",
-                        onshiftclick: "toggle"
-                    },
-                    tooltip: {
-                        closable: true,
-                        show: { or: ["highlighted", "selected"] },
-                        hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<strong>{{variant}}</strong><br>"
-                            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
-                    }
-                }
-            ]
-        },
-        {
-            id: "genes",
-            width: 800,
-            height: 225,
-            origin: { x: 0, y: 225 },
-            min_width: 400,
-            min_height: 112.5,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 50, bottom: 20, left: 50 },
-            dashboard: {
-                components: [
-                    {
-                        type: "remove_panel",
-                        position: "right",
-                        color: "red"
-                    },
-                    {
-                        type: "move_panel_up",
-                        position: "right"
-                    },
-                    {
-                        type: "move_panel_down",
-                        position: "right"
-                    }                    
-                ]
-            },
-            axes: {},
-            interaction: {
-                drag_background_to_pan: true,
-                scroll_to_zoom: true,
-                x_linked: true
-            },
-            data_layers: [
-                {
-                    id: "genes",
-                    type: "genes",
-                    fields: ["gene:gene", "constraint:constraint"],
-                    id_field: "gene_id",
-                    highlighted: {
-                        onmouseover: "on",
-                        onmouseout: "off"
-                    },
-                    selected: {
-                        onclick: "toggle_exclusive",
-                        onshiftclick: "toggle"
-                    },
-                    transition: {
-                        duration: 200
-                    },
-                    tooltip: {
-                        closable: true,
-                        show: { or: ["highlighted", "selected"] },
-                        hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
-                            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
-                            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
-                            + "<div style=\"clear: both;\"></div>"
-                            + "<table>"
-                            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
-                            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
-                            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
-                            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
-                            + "</table>"
-                            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
-                    }
-                }
-            ]
-        }
+        LocusZoom.Layouts.get("panel", "gwas"),
+        LocusZoom.Layouts.get("panel", "genes")
     ]
-};
+});
+
+// Shortcut to "StandardLayout" for backward compatibility
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
+
+LocusZoom.Layouts.add("plot", "standard_phewas", {
+    width: 800,
+    height: 500,
+    min_width: 800,
+    min_height: 500,
+    responsive_resize: true,
+    aspect_ratio: 1.6,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
+    panels: [
+        LocusZoom.Layouts.get("panel", "phewas"),
+        LocusZoom.Layouts.get("panel", "genome_legend"),
+        LocusZoom.Layouts.get("panel", "genes")
+    ]
+});
 
 /* global d3,LocusZoom */
 /* eslint-env browser */
@@ -655,7 +1367,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
@@ -701,7 +1413,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging || this.parent.interactions.zooming);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -875,6 +1587,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
             .attr("id", id + "-tooltip")
     };
     this.updateTooltip(d);
+    return this;
 };
 
 // Update a tool tip (generate its inner HTML)
@@ -903,6 +1616,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
+    return this;
 };
 
 // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
@@ -918,6 +1632,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
         }
         delete this.tooltips[id];
     }
+    return this;
 };
 
 // Loop through and destroy all tool tips on this data layer
@@ -925,6 +1640,7 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
     for (var id in this.tooltips){
         this.destroyTooltip(id);
     }
+    return this;
 };
 
 // Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
@@ -946,6 +1662,7 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id){
     this.tooltips[id].arrow
         .style("left", "-1px")
         .style("top", "-1px");
+    return this;
 };
 
 // Loop through and position all tool tips on this data layer
@@ -953,6 +1670,7 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
     for (var id in this.tooltips){
         this.positionTooltip(id);
     }
+    return this;
 };
 
 // Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
@@ -1024,39 +1742,49 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     } else {
         this.destroyTooltip(element);
     }
+
+    return this;
     
 };
 
 // Toggle the highlighted status of an element
 LocusZoom.DataLayer.prototype.highlightElement = function(element){
     this.setElementStatus("highlighted", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
     this.setElementStatus("highlighted", element, false);
+    return this;
 };
 
 // Toggle the highlighted status of all elements
 LocusZoom.DataLayer.prototype.highlightAllElements = function(){
     this.setAllElementStatus("highlighted", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
     this.setAllElementStatus("highlighted", false);
+    return this;
 };
 
 // Toggle the selected status of an element
 LocusZoom.DataLayer.prototype.selectElement = function(element){
     this.setElementStatus("selected", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectElement = function(element){
     this.setElementStatus("selected", element, false);
+    return this;
 };
 
 // Toggle the selected status of all elements
 LocusZoom.DataLayer.prototype.selectAllElements = function(){
     this.setAllElementStatus("selected", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectAllElements = function(){
     this.setAllElementStatus("selected", false);
+    return this;
 };
 
 // Toggle a status (e.g. highlighted, selected) on an element
@@ -1099,6 +1827,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
     this.parent_plot.emit("layout_changed");
+
+    return this;
     
 };
 
@@ -1209,6 +1939,8 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
             handleElementStatusEvent(status, event, element);
         }.bind(this));
     }.bind(this));
+
+    return this;
                     
 };
 
@@ -1218,6 +1950,7 @@ LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
     supported_statuses.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
+    return this;
 };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -1240,7 +1973,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
     return this;
 };
 
-// Re-Map a data layer to new positions according to the parent panel's parent instance's state
+// Re-Map a data layer to new positions according to the parent panel's parent plot's state
 LocusZoom.DataLayer.prototype.reMap = function(){
 
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
@@ -1253,360 +1986,17 @@ LocusZoom.DataLayer.prototype.reMap = function(){
         this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
+
     return promise;
 
 };
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
 
-"use strict";
+/************
+  Data Layers
 
-/**
-
-  Singletons
-
-  LocusZoom has various singleton objects that are used for registering functions or classes.
-  These objects provide safe, standard methods to redefine or delete existing functions/classes
-  as well as define new custom functions/classes to be used in a plot.
-
-*/
-
-
-/* The Collection of "Known" Data Source Endpoints */
-
-LocusZoom.KnownDataSources = (function() {
-    var obj = {};
-    var sources = [];
-
-    var findSourceByName = function(x) {
-        for(var i=0; i<sources.length; i++) {
-            if (!sources[i].SOURCE_NAME) {
-                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
-            }
-            if (sources[i].SOURCE_NAME == x) {
-                return sources[i];
-            }
-        }
-        return null;
-    };
-
-    obj.get = function(name) {
-        return findSourceByName(name);
-    };
-
-    obj.add = function(source) {
-        if (!source.SOURCE_NAME) {
-            console.warn("Data source added does not have a SOURCE_NAME");
-        }
-        sources.push(source);
-    };
-
-    obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
-        obj.add(source);
-    };
-
-    obj.list = function() {
-        return sources.map(function(x) {return x.SOURCE_NAME;});
-    };
-
-    obj.create = function(name) {
-        //create new object (pass additional parameters to constructor)
-        var newObj = findSourceByName(name);
-        if (newObj) {
-            var params = arguments;
-            params[0] = null;
-            return new (Function.prototype.bind.apply(newObj, params));
-        } else {
-            throw("Unable to find data source for name: " + name); 
-        }
-    };
-
-    //getAll, setAll and clear really should only be used by tests
-    obj.getAll = function() {
-        return sources;
-    };
-    
-    obj.setAll = function(x) {
-        sources = x;
-    };
-
-    obj.clear = function() {
-        sources = [];
-    };
-
-    return obj;
-})();
-
-
-/****************
-  Label Functions
-
-  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
-*/
-
-LocusZoom.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Label function for "Chromosome # (Mb)" where # comes from state
-LocusZoom.LabelFunctions.add("chromosome", function(state){
-    if (!isNaN(+state.chr)){ 
-        return "Chromosome " + state.chr + " (Mb)";
-    } else {
-        return "Chromosome (Mb)";
-    }
-});
-
-
-/**************************
-  Transformation Functions
-
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
-  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
-
-  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
-
-  All transformation functions must accept an object of parameters and a value to process.
-*/
-LocusZoom.TransformationFunctions = (function() {
-    var obj = {};
-    var transformations = {};
-
-    var getTrans = function(name) {
-        if (!name) {
-            return null;
-        }
-        var fun = transformations[name];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + name + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(name) {
-        return getTrans(name);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(name) {
-        if (name && name.substring(0,1)=="|") {
-            return parseTransString(name);
-        } else {
-            return parseTrans(name);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                transformations[name] = fn;
-            } else {
-                delete transformations[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (transformations[name]) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(transformations);
-    };
-
-    return obj;
-})();
-
-LocusZoom.TransformationFunctions.add("neglog10", function(x) {
-    return -Math.log(x) / Math.LN10;
-});
-
-LocusZoom.TransformationFunctions.add("scinotation", function(x) {
-    var log;
-    if (Math.abs(x) > 1){
-        log = Math.ceil(Math.log(x) / Math.LN10);
-    } else {
-        log = Math.floor(Math.log(x) / Math.LN10);
-    }
-    if (Math.abs(log) <= 3){
-        return x.toFixed(3);
-    } else {
-        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
-    }
-});
-
-
-/****************
-  Scale Functions
-
-  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
-  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
-
-  All scale functions must accept an object of parameters and a value to process.
-*/
-
-LocusZoom.ScaleFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, parameters, value) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof parameters == "undefined" && typeof value == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](parameters, value);
-            }
-        } else {
-            throw("scale function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("scale function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("if", function(parameters, value){
-    if (typeof value == "undefined" || parameters.field_value != value){
-        if (typeof parameters.else != "undefined"){
-            return parameters.else;
-        } else {
-            return null;
-        }
-    } else {
-        return parameters.then;
-    }
-});
-
-// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
-LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
-    var breaks = parameters.breaks;
-    var values = parameters.values;
-    if (typeof value == "undefined" || value == null || isNaN(+value)){
-        return (parameters.null_value ? parameters.null_value : null);
-    }
-    var threshold = breaks.reduce(function(prev, curr){
-        if (+value < prev || (+value >= prev && +value < curr)){
-            return prev;
-        } else {
-            return curr;
-        }
-    });
-    return values[breaks.indexOf(threshold)];
-});
-
-// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
-        return (parameters.null_value ? parameters.null_value : null); 
-    } else {
-        return parameters.values[parameters.categories.indexOf(value)];
-    }
-});
-
-
-/************************
-  Data Layer Subclasses
-
-  The abstract Data Layer class has general methods and properties that apply universally to all Data Layers
-  Specific data layer subclasses (e.g. a scatter plot, a line plot, gene visualization, etc.) must be defined
-  and registered with this singleton to be accessible.
-
-  All new Data Layer subclasses must be defined by accepting an id string and a layout object.
-  Singleton for storing available Data Layer classes as well as updating existing and/or registering new ones
+  Object for storing data layer definitions. Because data layer definitions tend
+  to be lengthy they are stored in individual files instead of below this collection definition.
 */
 
 LocusZoom.DataLayers = (function() {
@@ -1655,7 +2045,11 @@ LocusZoom.DataLayers = (function() {
     return obj;
 })();
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
 
+"use strict";
 
 /*********************
   Scatter Data Layer
@@ -1674,7 +2068,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         },
         id_field: "id"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Extra default for layout spacing
     // Not in default layout since that would make the label attribute always present
@@ -2074,6 +2468,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
 /*********************
   Line Data Layer
   Implements a standard line plot
@@ -2092,7 +2492,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         y_axis: { field: "y", axis: 1 },
         hitarea_width: 5
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Var for storing mouse events for use in tool tip positioning
     this.mouse_event = null;
@@ -2314,6 +2714,12 @@ LocusZoom.DataLayers.add("line", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
 /*********************
   Genes Data Layer
   Implements a data layer that will render gene tracks
@@ -2330,7 +2736,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
         track_vertical_spacing: 10,
         hover_element: "bounding_box"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
@@ -2760,6 +3166,346 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
 });
 
+/* global LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Singletons
+
+  LocusZoom has various singleton objects that are used for registering functions or classes.
+  These objects provide safe, standard methods to redefine or delete existing functions/classes
+  as well as define new custom functions/classes to be used in a plot.
+
+*/
+
+
+/* The Collection of "Known" Data Source Endpoints */
+
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
+
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
+            }
+        }
+        return null;
+    };
+
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
+        }
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
+        } else {
+            throw("Unable to find data source for name: " + name); 
+        }
+    };
+
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
+
+    obj.clear = function() {
+        sources = [];
+    };
+
+    return obj;
+})();
+
+
+/****************
+  Label Functions
+
+  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
+*/
+
+LocusZoom.LabelFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, state) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
+        } else {
+            throw("label function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("label function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Label function for "Chromosome # (Mb)" where # comes from state
+LocusZoom.LabelFunctions.add("chromosome", function(state){
+    if (!isNaN(+state.chr)){ 
+        return "Chromosome " + state.chr + " (Mb)";
+    } else {
+        return "Chromosome (Mb)";
+    }
+});
+
+
+/**************************
+  Transformation Functions
+
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+
+  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+
+  All transformation functions must accept an object of parameters and a value to process.
+*/
+LocusZoom.TransformationFunctions = (function() {
+    var obj = {};
+    var transformations = {};
+
+    var getTrans = function(name) {
+        if (!name) {
+            return null;
+        }
+        var fun = transformations[name];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + name + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(name) {
+        return getTrans(name);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(name) {
+        if (name && name.substring(0,1)=="|") {
+            return parseTransString(name);
+        } else {
+            return parseTrans(name);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                transformations[name] = fn;
+            } else {
+                delete transformations[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (transformations[name]) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(transformations);
+    };
+
+    return obj;
+})();
+
+LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    var log;
+    if (Math.abs(x) > 1){
+        log = Math.ceil(Math.log(x) / Math.LN10);
+    } else {
+        log = Math.floor(Math.log(x) / Math.LN10);
+    }
+    if (Math.abs(log) <= 3){
+        return x.toFixed(3);
+    } else {
+        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+    }
+});
+
+
+/****************
+  Scale Functions
+
+  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+
+  All scale functions must accept an object of parameters and a value to process.
+*/
+
+LocusZoom.ScaleFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
+        } else {
+            throw("scale function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("scale function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("if", function(parameters, value){
+    if (typeof value == "undefined" || parameters.field_value != value){
+        if (typeof parameters.else != "undefined"){
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+});
+
+// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
+LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
+    var breaks = parameters.breaks;
+    var values = parameters.values;
+    if (typeof value == "undefined" || value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : null);
+    }
+    var threshold = breaks.reduce(function(prev, curr){
+        if (+value < prev || (+value >= prev && +value < curr)){
+            return prev;
+        } else {
+            return curr;
+        }
+    });
+    return values[breaks.indexOf(threshold)];
+});
+
+// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+        return (parameters.null_value ? parameters.null_value : null); 
+    } else {
+        return parameters.values[parameters.categories.indexOf(value)];
+    }
+});
+
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -2780,13 +3526,13 @@ LocusZoom.DataLayers.add("genes", function(layout){
 LocusZoom.Dashboard = function(parent){
 
     // parent must be a locuszoom plot or panel
-    if (!(parent instanceof LocusZoom.Instance) && !(parent instanceof LocusZoom.Panel)){
+    if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)){
         throw "Unable to create dashboard, parent must be a locuszoom plot or panel";
     }
     this.parent = parent;
     this.id = this.parent.getBaseId() + ".dashboard";
 
-    this.type = (this.parent instanceof LocusZoom.Instance) ? "plot" : "panel";
+    this.type = (this.parent instanceof LocusZoom.Plot) ? "plot" : "panel";
 
     this.selector = null;
     this.components = [];
@@ -2854,7 +3600,7 @@ LocusZoom.Dashboard.prototype.show = function(){
             break;
         case "panel":
             this.selector = d3.select(this.parent.parent.svg.node().parentNode)
-                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu").classed("lz-panel-dashboard", true);
+                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu, .lz-curtain").classed("lz-panel-dashboard", true);
             break;
         }
         this.selector.classed("lz-dashboard", true).classed("lz-"+this.type+"-dashboard", true).attr("id", this.id);
@@ -2898,7 +3644,7 @@ LocusZoom.Dashboard.prototype.hide = function(){
 
 // Completely remove dashboard
 LocusZoom.Dashboard.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     this.components.forEach(function(component){ component.destroy(true); });
@@ -2978,7 +3724,7 @@ LocusZoom.Dashboard.Component.prototype.hide = function(){
     return this;
 };
 LocusZoom.Dashboard.Component.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     if (this.button && this.button.menu){ this.button.menu.destroy(); }
@@ -3278,12 +4024,15 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
 LocusZoom.Dashboard.Components.add("title", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.show = function(){
-        this.selector = this.parent.selector.append("div")
+        this.div_selector = this.parent.selector.append("div")
             .attr("class", "lz-dashboard-title lz-dashboard-" + this.layout.position);
+        this.title_selector = this.div_selector.append("h3");
         return this.update();
     };
     this.update = function(){
-        this.selector.text(layout.title);
+        var title = layout.title.toString();
+        if (this.layout.subtitle){ title += " <small>" + this.layout.subtitle + "</small>"; }
+        this.title_selector.html(title);
         return this;
     };
 });
@@ -4139,14 +4888,14 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
 
 /**
 
-  LocusZoom.Instance Class
+  LocusZoom.Plot Class
 
-  An Instance is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
+  An Plot is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
   on a single page, each having its own layout.
 
 */
 
-LocusZoom.Instance = function(id, datasource, layout) {
+LocusZoom.Plot = function(id, datasource, layout) {
 
     this.initialized = false;
 
@@ -4168,17 +4917,17 @@ LocusZoom.Instance = function(id, datasource, layout) {
 
     this.remap_promises = [];
 
-    // The layout is a serializable object used to describe the composition of the instance
-    // If no layout was passed, use the Standard Layout
+    // The layout is a serializable object used to describe the composition of the Plot
+    // If no layout was passed, use the Standard GWAS Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.StandardLayout);
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
     } else {
         this.layout = layout;
     }
-    LocusZoom.mergeLayouts(this.layout, LocusZoom.Instance.DefaultLayout);
+    LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
-    // Create a shortcut to the state in the layout on the instance
+    // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;
     
     // LocusZoom.Data.Requester
@@ -4202,6 +4951,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -4211,9 +4961,10 @@ LocusZoom.Instance = function(id, datasource, layout) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
 
-    // Get an object with the x and y coordinates of the instance's origin in terms of the entire page
+    // Get an object with the x and y coordinates of the Plot's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the plot
     this.getPageOrigin = function(){
         var bounding_client_rect = this.svg.node().getBoundingClientRect();
@@ -4244,7 +4995,7 @@ LocusZoom.Instance = function(id, datasource, layout) {
 };
 
 // Default Layout
-LocusZoom.Instance.DefaultLayout = {
+LocusZoom.Plot.DefaultLayout = {
     state: {},
     width: 1,
     height: 1,
@@ -4260,9 +5011,9 @@ LocusZoom.Instance.DefaultLayout = {
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
-LocusZoom.Instance.prototype.sumProportional = function(dimension){
+LocusZoom.Plot.prototype.sumProportional = function(dimension){
     if (dimension != "height" && dimension != "width"){
-        throw ("Bad dimension value passed to LocusZoom.Instance.prototype.sumProportional");
+        throw ("Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional");
     }
     var total = 0;
     for (var id in this.panels){
@@ -4275,23 +5026,24 @@ LocusZoom.Instance.prototype.sumProportional = function(dimension){
     return total;
 };
 
-LocusZoom.Instance.prototype.rescaleSVG = function(){
+LocusZoom.Plot.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().parentNode.getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
+    return this;
 };
 
-LocusZoom.Instance.prototype.initializeLayout = function(){
+LocusZoom.Plot.prototype.initializeLayout = function(){
 
     // Sanity check layout values
     // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
     if (isNaN(this.layout.width) || this.layout.width <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.height) || this.layout.height <= 0){
-        throw ("Instance layout parameter `width` must be a positive number");
+        throw ("Plot layout parameter `width` must be a positive number");
     }
     if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0){
-        throw ("Instance layout parameter `aspect_ratio` must be a positive number");
+        throw ("Plot layout parameter `aspect_ratio` must be a positive number");
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
@@ -4309,19 +5061,20 @@ LocusZoom.Instance.prototype.initializeLayout = function(){
         this.addPanel(panel_layout);
     }.bind(this));
 
+    return this;
 };
 
 /**
-  Set the dimensions for an instance.
+  Set the dimensions for an plot.
   This function works in two different ways:
   1. If passed a discrete width and height:
-     * Adjust the instance to match those exact values (lower-bounded by minimum panel dimensions)
-     * Resize panels within the instance proportionally to match the new instance dimensions
+     * Adjust the plot to match those exact values (lower-bounded by minimum panel dimensions)
+     * Resize panels within the plot proportionally to match the new plot dimensions
   2. If NOT passed discrete width and height:
      * Assume panels within are sized and positioned correctly
-     * Calculate appropriate instance dimesions from panels contained within and update instance
+     * Calculate appropriate plot dimesions from panels contained within and update plot
 */
-LocusZoom.Instance.prototype.setDimensions = function(width, height){
+LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
     var id;
 
@@ -4335,8 +5088,8 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
     this.layout.min_width = Math.max(min_width, 1);
     this.layout.min_height = Math.max(min_height, 1);
 
-    // If width and height arguments were passed then adjust them against instance minimums if necessary.
-    // Then resize the instance and proportionally resize panels to fit inside the new instance dimensions.
+    // If width and height arguments were passed then adjust them against plot minimums if necessary.
+    // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
     if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
@@ -4365,7 +5118,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }.bind(this));
     }
 
-    // If width and height arguments were NOT passed (and panels exist) then determine the instance dimensions
+    // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
     // by making it conform to panel dimensions, assuming panels are already positioned correctly.
     else if (Object.keys(this.panels).length) {
         this.layout.width = 0;
@@ -4392,7 +5145,7 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         }
     }
 
-    // If the instance has been initialized then trigger some necessary render functions
+    // If the plot has been initialized then trigger some necessary render functions
     if (this.initialized){
         this.panel_boundaries.position();
         this.dashboard.update();
@@ -4400,22 +5153,21 @@ LocusZoom.Instance.prototype.setDimensions = function(width, height){
         this.loader.update();
     }
 
-    this.emit("layout_changed");
-    return this;
+    return this.emit("layout_changed");
 };
 
 // Create a new panel from a layout
-LocusZoom.Instance.prototype.addPanel = function(layout){
+LocusZoom.Plot.prototype.addPanel = function(layout){
 
     // Sanity checks
     if (typeof layout !== "object"){
-        throw "Invalid panel layout passed to LocusZoom.Instance.prototype.addPanel()";
+        throw "Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()";
     }
 
     // Create the Panel and set its parent
     var panel = new LocusZoom.Panel(layout, this);
     
-    // Store the Panel on the Instance
+    // Store the Panel on the Plot
     this.panels[panel.id] = panel;
 
     // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
@@ -4458,7 +5210,7 @@ LocusZoom.Instance.prototype.addPanel = function(layout){
 };
 
 // Remove panel by id
-LocusZoom.Instance.prototype.removePanel = function(id){
+LocusZoom.Plot.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
     }
@@ -4516,7 +5268,7 @@ LocusZoom.Instance.prototype.removePanel = function(id){
        but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
-LocusZoom.Instance.prototype.positionPanels = function(){
+LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
 
@@ -4542,31 +5294,33 @@ LocusZoom.Instance.prototype.positionPanels = function(){
         this.panels[id].layout.proportional_height *= proportional_adjustment;
     }
 
-    // Update origins on all panels without changing instance-level dimensions yet
+    // Update origins on all panels without changing plot-level dimensions yet
     var y_offset = 0;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setOrigin(0, y_offset);
         this.panels[panel_id].layout.proportional_origin.x = 0;
         y_offset += this.panels[panel_id].layout.height;
     }.bind(this));
-    var calculated_instance_height = y_offset;
+    var calculated_plot_height = y_offset;
     this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_instance_height;
+        this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
     }.bind(this));
 
-    // Update dimensions on the instance to accomodate repositioned panels
+    // Update dimensions on the plot to accomodate repositioned panels
     this.setDimensions();
 
-    // Set dimensions on all panels using newly set instance-level dimensions and panel-level proportional dimensions
+    // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                             this.layout.height * this.panels[panel_id].layout.proportional_height);
     }.bind(this));
+
+    return this;
     
 };
 
-// Create all instance-level objects, initialize all child panels
-LocusZoom.Instance.prototype.initialize = function(){
+// Create all plot-level objects, initialize all child panels
+LocusZoom.Plot.prototype.initialize = function(){
 
     // Create an element/layer for containing mouse guides
     var mouse_guide_svg = this.svg.append("g")
@@ -4860,68 +5614,47 @@ LocusZoom.Instance.prototype.initialize = function(){
 
 };
 
-// Map an entire LocusZoom Instance to a new region
+// Map an entire LocusZoom Plot to a new region
 // DEPRECATED: This method is specific to only accepting chromosome, start, and end.
-// LocusZoom.Instance.prototype.applyState() takes a single object, covering far more use cases.
-LocusZoom.Instance.prototype.mapTo = function(chr, start, end){
-
-    console.warn("Warning: use of LocusZoom.Instance.mapTo() is deprecated. Use LocusZoom.Instance.applyState() instead.");
-
-    // Apply new state values
-    // TODO: preserve existing state until new state is completely loaded+rendered or aborted?
-    this.state.chr   = +chr;
-    this.state.start = +start;
-    this.state.end   = +end;
-
-    this.remap_promises = [];
-    // Trigger reMap on each Panel Layer
-    for (var id in this.panels){
-        this.remap_promises.push(this.panels[id].reMap());
-    }
-
-    Q.all(this.remap_promises)
-        .catch(function(error){
-            console.log(error);
-            this.curtain.drop(error);
-        }.bind(this))
-        .done(function(){
-            this.emit("layout_changed");
-            this.emit("data_rendered");
-        }.bind(this));
-
-    return this;
-    
+// LocusZoom.Plot.prototype.applyState() takes a single object, covering far more use cases.
+LocusZoom.Plot.prototype.mapTo = function(chr, start, end){
+    console.warn("Warning: use of LocusZoom.Plot.mapTo() is deprecated. Use LocusZoom.Plot.applyState() instead.");
+    return this.applyState({ chr: chr, start: start, end: end });
 };
 
-// Refresh an instance's data from sources without changing position
-LocusZoom.Instance.prototype.refresh = function(){
-    this.applyState();
+// Refresh an plot's data from sources without changing position
+LocusZoom.Plot.prototype.refresh = function(){
+    return this.applyState();
 };
 
 // Update state values and trigger a pull for fresh data on all data sources for all data layers
-LocusZoom.Instance.prototype.applyState = function(new_state){
+LocusZoom.Plot.prototype.applyState = function(state_changes){
 
-    new_state = new_state || {};
-    if (typeof new_state != "object"){
-        throw("LocusZoom.applyState only accepts an object; " + (typeof new_state) + " given");
+    state_changes = state_changes || {};
+    if (typeof state_changes != "object"){
+        throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
+    }
+    
+    // First make a copy of the current (old) state to work with
+    var new_state = JSON.parse(JSON.stringify(this.state));
+
+    // Apply changes by top-level property to the new state
+    for (var property in state_changes) {
+        new_state[property] = state_changes[property];
     }
 
-    // First null out all passed properties
-    for (var property in new_state) {
-        this.state[property] = null;
-    }
+    // Validate the new state (may do nothing, may do a lot, depends on how the user has thigns set up)
+    new_state = LocusZoom.validateState(new_state, this.layout);
 
-    // Apply new state properties
+    // Apply new state to the actual state
     for (property in new_state) {
         this.state[property] = new_state[property];
     }
 
+    // Generate requests for all panels given new state
     this.emit("data_requested");
-    this.panel_ids_by_y_index.forEach(function(panel_id){
-        this.panels[panel_id].emit("data_requested");
-    }.bind(this));
-
     this.remap_promises = [];
+    this.loading_data = true;
     for (var id in this.panels){
         this.remap_promises.push(this.panels[id].reMap());
     }
@@ -4930,6 +5663,7 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
         .catch(function(error){
             console.log(error);
             this.curtain.drop(error);
+            this.loading_data = false;
         }.bind(this))
         .done(function(){
 
@@ -4962,6 +5696,8 @@ LocusZoom.Instance.prototype.applyState = function(new_state){
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+
+            this.loading_data = false;
             
         }.bind(this));
     
@@ -5017,7 +5753,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){
@@ -5051,6 +5787,10 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
+    this.canInteract = function(){
+        return !(this.interactions.dragging || this.interactions.zooming || this.parent.loading_data);
+    };
+
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
@@ -5066,6 +5806,7 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -5075,15 +5816,16 @@ LocusZoom.Panel = function(layout, parent) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var instance_origin = this.parent.getPageOrigin();
+        var plot_origin = this.parent.getPageOrigin();
         return {
-            x: instance_origin.x + this.layout.origin.x,
-            y: instance_origin.y + this.layout.origin.y
+            x: plot_origin.x + this.layout.origin.x,
+            y: plot_origin.y + this.layout.origin.y
         };
     };
 
@@ -5182,6 +5924,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
+
+    return this;
 
 };
 
@@ -5584,15 +6328,16 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 };
 
 
-// Re-Map a panel to new positions according to the parent instance's state
+// Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){
+    this.emit("data_requested");
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
         try {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }
     }
@@ -5606,7 +6351,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }.bind(this));
 };
@@ -5641,6 +6386,8 @@ LocusZoom.Panel.prototype.generateExtents = function(){
     if (this.layout.axes.x && this.layout.axes.x.extent == "state"){
         this.x_extent = [ this.state.start, this.state.end ];
     }
+
+    return this;
 
 };
 
@@ -5699,11 +6446,24 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         ranges.y2_shifted = [this.layout.cliparea.height, 0];
     }
 
-    // Shift ranges based on any drag actions currently underway
+    // Shift ranges based on any drag or zoom interactions currently underway
+    var anchor, scalar = null;
     if (this.interactions.zooming && typeof this.x_scale == "function"){
-        ranges.x_shifted = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
+        var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
+        var zoom_factor = this.interactions.zooming.scale;
+        var potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
+        if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)){
+            zoom_factor = 1 /(Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
+        } else if (zoom_factor > 1 && !isNaN(this.parent.layout.min_region_scale)){
+            zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
+        }
+        var new_extent_size = Math.floor(current_extent_size * zoom_factor);
+        anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
+        var offset_ratio = anchor / this.layout.cliparea.width;
+        var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
+        ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
     } else if (this.interactions.dragging){
-        var anchor, scalar = null;
         switch (this.interactions.dragging.method){
         case "background":
             ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
@@ -5775,18 +6535,20 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
+        this.zoom_listener = d3.behavior.zoom()
             .on("zoom", function(){
-                if (this.interactions.dragging){ return; }
-                this.interactions.zooming = true;
+                if (this.interactions.dragging || this.parent.loading_data){ return; }
+                var coords = d3.mouse(this.svg.container.node());
+                this.interactions.zooming = {
+                    scale: (d3.event.scale < 1) ? 0.9 : 1.1,
+                    center: coords[0]
+                };
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
                 this.zoom_timeout = setTimeout(function(){
+                    this.interactions.zooming = false;
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }.bind(this), 500);
-            }.bind(this))
-            .on("zoomend", function(){
-                this.interactions.zooming = false;
             }.bind(this));
         this.svg.container.call(this.zoom_listener);
     }
@@ -5935,6 +6697,8 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         }
     }.bind(this));
 
+    return this;
+
 };
 
 // Toggle a drag event for the panel
@@ -5957,8 +6721,9 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }.bind(this));
     }.bind(this);
     method = method || null;
-    if (!method){
-        if (!this.interactions.dragging){ return; }
+
+    // Stop a current drag event (stopping procedure varies by drag method)
+    if (this.interactions.dragging){
         switch(this.interactions.dragging.method){
         case "background":
         case "x_tick":
@@ -5977,7 +6742,11 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }
         this.interactions.dragging = false;
         this.svg.container.style("cursor", null);
-    } else {
+        return this;
+    }
+
+    // Start a drag event for the supplied method if currently allowed by the rules defined in this.canInteract()
+    else if (this.canInteract()){
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging = {
             method: method,
@@ -5991,7 +6760,28 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         if (method == "y1_tick"){ this.interactions.dragging.on_y1 = true; }
         if (method == "y2_tick"){ this.interactions.dragging.on_y2 = true; }
         this.svg.container.style("cursor", "all-scroll");
+        return this;
     }
+
+    return this;
+};
+
+// Add a "basic" loader to a panel
+// This method is jsut a shortcut for adding the most commonly used type of loader
+// which appears when data is requested, animates (e.g. shows an infinitely cycling
+// progress bar as opposed to one that loads from 0-100% based on actual load progress),
+// and disappears when new data is loaded and rendered.
+LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
+    if (typeof show_immediately != "undefined"){ show_immediately = true; }
+    if (show_immediately){
+        this.loader.show("Loading...").animate();
+    }
+    this.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+    }.bind(this));
+    this.on("data_rendered", function(){
+        this.loader.hide();
+    }.bind(this));
     return this;
 };
 

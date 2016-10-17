@@ -18,13 +18,13 @@
 LocusZoom.Dashboard = function(parent){
 
     // parent must be a locuszoom plot or panel
-    if (!(parent instanceof LocusZoom.Instance) && !(parent instanceof LocusZoom.Panel)){
+    if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)){
         throw "Unable to create dashboard, parent must be a locuszoom plot or panel";
     }
     this.parent = parent;
     this.id = this.parent.getBaseId() + ".dashboard";
 
-    this.type = (this.parent instanceof LocusZoom.Instance) ? "plot" : "panel";
+    this.type = (this.parent instanceof LocusZoom.Plot) ? "plot" : "panel";
 
     this.selector = null;
     this.components = [];
@@ -92,7 +92,7 @@ LocusZoom.Dashboard.prototype.show = function(){
             break;
         case "panel":
             this.selector = d3.select(this.parent.parent.svg.node().parentNode)
-                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu").classed("lz-panel-dashboard", true);
+                .insert("div", ".lz-data_layer-tooltip, .lz-dashboard-menu, .lz-curtain").classed("lz-panel-dashboard", true);
             break;
         }
         this.selector.classed("lz-dashboard", true).classed("lz-"+this.type+"-dashboard", true).attr("id", this.id);
@@ -136,7 +136,7 @@ LocusZoom.Dashboard.prototype.hide = function(){
 
 // Completely remove dashboard
 LocusZoom.Dashboard.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     this.components.forEach(function(component){ component.destroy(true); });
@@ -216,7 +216,7 @@ LocusZoom.Dashboard.Component.prototype.hide = function(){
     return this;
 };
 LocusZoom.Dashboard.Component.prototype.destroy = function(force){
-    if (typeof force == "undefined"){ var force = false; }
+    if (typeof force == "undefined"){ force = false; }
     if (!this.selector){ return this; }
     if (this.shouldPersist() && !force){ return this; }
     if (this.button && this.button.menu){ this.button.menu.destroy(); }
@@ -516,12 +516,15 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
 LocusZoom.Dashboard.Components.add("title", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.show = function(){
-        this.selector = this.parent.selector.append("div")
+        this.div_selector = this.parent.selector.append("div")
             .attr("class", "lz-dashboard-title lz-dashboard-" + this.layout.position);
+        this.title_selector = this.div_selector.append("h3");
         return this.update();
     };
     this.update = function(){
-        this.selector.text(layout.title);
+        var title = layout.title.toString();
+        if (this.layout.subtitle){ title += " <small>" + this.layout.subtitle + "</small>"; }
+        this.title_selector.html(title);
         return this;
     };
 });

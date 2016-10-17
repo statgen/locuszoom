@@ -1,21 +1,23 @@
+/* global require, describe, d3, LocusZoom, beforeEach, afterEach, it */
+
 "use strict";
 
 /**
-  Instance.js Tests
+  DataLayer.js Tests
   Test composition of the LocusZoom.Panel object and its base classes
 */
 
-var jsdom = require('mocha-jsdom');
+var jsdom = require("mocha-jsdom");
 var fs = require("fs");
-var assert = require('assert');
+var assert = require("assert");
 var should = require("should");
-var _files = require('./_files.js');
+var files = require("../files.js");
 
-describe('LocusZoom.DataLayer', function(){
+describe("LocusZoom.DataLayer", function(){
 
     // Load all javascript files
     var src = [];
-    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
     jsdom({ src: src });
 
     // Reset DOM after each test
@@ -29,7 +31,7 @@ describe('LocusZoom.DataLayer', function(){
     });
 
     it("defines its layout defaults", function() {
-        LocusZoom.DataLayer.should.have.property('DefaultLayout').which.is.an.Object;
+        LocusZoom.DataLayer.should.have.property("DefaultLayout").which.is.an.Object;
     });
 
     describe("Constructor", function() {
@@ -39,20 +41,20 @@ describe('LocusZoom.DataLayer', function(){
         it("returns an object", function() {
             this.datalayer.should.be.an.Object;
         });
-        it('should have an id', function(){
-            this.datalayer.should.have.property('id');
+        it("should have an id", function(){
+            this.datalayer.should.have.property("id");
         });
-        it('should have an array for caching data', function(){
-            this.datalayer.should.have.property('data').which.is.an.Array;
+        it("should have an array for caching data", function(){
+            this.datalayer.should.have.property("data").which.is.an.Array;
         });
-        it('should have an svg object', function(){
-            this.datalayer.should.have.property('svg').which.is.an.Object;
+        it("should have an svg object", function(){
+            this.datalayer.should.have.property("svg").which.is.an.Object;
         });
-        it('should have a layout object', function(){
-            this.datalayer.should.have.property('layout').which.is.an.Object;
+        it("should have a layout object", function(){
+            this.datalayer.should.have.property("layout").which.is.an.Object;
         });
-        it('should have a state object', function(){
-            this.datalayer.should.have.property('state').which.is.an.Object;
+        it("should have a state object", function(){
+            this.datalayer.should.have.property("state").which.is.an.Object;
         });
     });
 
@@ -78,7 +80,7 @@ describe('LocusZoom.DataLayer', function(){
                     field: "test",
                     parameters: {
                         categories: ["lion", "tiger", "bear"],
-                        values: ["dorothy", "toto", "scarecrow"],
+                        values: ["dorothy", "toto", "scarecrow"]
                     }
                 }
             };
@@ -103,7 +105,7 @@ describe('LocusZoom.DataLayer', function(){
                         field: "test",
                         parameters: {
                             categories: ["lion", "tiger", "bear"],
-                            values: ["dorothy", "toto", "scarecrow"],
+                            values: ["dorothy", "toto", "scarecrow"]
                         }
                     },
                     "munchkin"
@@ -122,7 +124,7 @@ describe('LocusZoom.DataLayer', function(){
             this.datalayer.getAxisExtent.should.be.a.Function;
         });
         it("throws an error on invalid axis identifiers", function() {
-            var data_layer = new LocusZoom.DataLayer({ id: "test" });
+            var datalayer = new LocusZoom.DataLayer({ id: "test" });
             assert.throws(function(){ datalayer.getAxisExtent(); });
             assert.throws(function(){ datalayer.getAxisExtent("foo"); });
             assert.throws(function(){ datalayer.getAxisExtent(1); });
@@ -132,7 +134,7 @@ describe('LocusZoom.DataLayer', function(){
             this.layout = {
                 id: "test",
                 x_axis: { field: "x" }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
@@ -158,7 +160,7 @@ describe('LocusZoom.DataLayer', function(){
                     field: "x",
                     lower_buffer: 0.05
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
@@ -170,7 +172,7 @@ describe('LocusZoom.DataLayer', function(){
                     field: "x",
                     upper_buffer: 0.2
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 62 }, { x: 7 }, { x: -18 }, { x: 106 }
@@ -183,7 +185,7 @@ describe('LocusZoom.DataLayer', function(){
                     lower_buffer: 0.35,
                     upper_buffer: 0.6
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 95 }, { x: 0 }, { x: -4 }, { x: 256 }
@@ -197,7 +199,7 @@ describe('LocusZoom.DataLayer', function(){
                     field: "x",
                     min_extent: [ 0, 3 ]
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
@@ -211,7 +213,7 @@ describe('LocusZoom.DataLayer', function(){
                     lower_buffer: 0.2,
                     min_extent: [ 0, 10 ]
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
@@ -235,7 +237,7 @@ describe('LocusZoom.DataLayer', function(){
                     lower_buffer: 0.5,
                     floor: 0
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 8 }, { x: 9 }, { x: 8 }, { x: 8.5 }
@@ -249,7 +251,7 @@ describe('LocusZoom.DataLayer', function(){
                     upper_buffer: 0.8,
                     ceiling: 5
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
@@ -265,7 +267,7 @@ describe('LocusZoom.DataLayer', function(){
                     floor: 4,
                     ceiling: 6
                 }
-            }
+            };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
             this.datalayer.data = [
                 { x: 2 }, { x: 4 }, { x: 5 }, { x: 17 }
@@ -293,7 +295,7 @@ describe('LocusZoom.DataLayer', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it('should allow for explicitly setting data layer z_index', function(){
+        it("should allow for explicitly setting data layer z_index", function(){
             this.layout.panels[0].data_layers = [
                 { id: "d1", type: "line", z_index: 1 },
                 { id: "d2", type: "line", z_index: 0 }
@@ -303,7 +305,7 @@ describe('LocusZoom.DataLayer', function(){
             this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(1);
             this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(0);
         });
-        it('should allow for explicitly setting data layer z_index with a negative value', function(){
+        it("should allow for explicitly setting data layer z_index with a negative value", function(){
             this.layout.panels[0].data_layers = [
                 { id: "d1", type: "line" },
                 { id: "d2", type: "line" },
@@ -348,7 +350,7 @@ describe('LocusZoom.DataLayer', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it('should allow for highlighting and unhighlighting a single element', function(){
+        it("should allow for highlighting and unhighlighting a single element", function(){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -356,7 +358,6 @@ describe('LocusZoom.DataLayer', function(){
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
-                    var b_id = d.getElementId(b);
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
                     this.plot.state[state_id].highlighted.should.be.an.Array;
@@ -375,7 +376,7 @@ describe('LocusZoom.DataLayer', function(){
                     this.plot.state[state_id].highlighted.length.should.be.exactly(0);
                 }.bind(this));
         });
-        it('should allow for highlighting and unhighlighting all elements', function(){
+        it("should allow for highlighting and unhighlighting all elements", function(){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -423,7 +424,7 @@ describe('LocusZoom.DataLayer', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it('should allow for selecting and unselecting a single element', function(){
+        it("should allow for selecting and unselecting a single element", function(){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -431,7 +432,6 @@ describe('LocusZoom.DataLayer', function(){
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
-                    var b_id = d.getElementId(b);
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
                     this.plot.state[state_id].selected.should.be.an.Array;
@@ -450,7 +450,7 @@ describe('LocusZoom.DataLayer', function(){
                     this.plot.state[state_id].selected.length.should.be.exactly(0);
                 }.bind(this));
         });
-        it('should allow for selecting and unselecting all elements', function(){
+        it("should allow for selecting and unselecting all elements", function(){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -488,7 +488,7 @@ describe('LocusZoom.DataLayer', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it('should allow for creating and destroying tool tips', function(){
+        it("should allow for creating and destroying tool tips", function(){
             this.plot.panels.p.addDataLayer({
                 id: "d",
                 type: "scatter",
@@ -496,7 +496,7 @@ describe('LocusZoom.DataLayer', function(){
                     html: "foo"
                 }
             });
-            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" }];
             this.plot.panels.p.data_layers.d.positionTooltip = function(){ return 0; };
             var a = this.plot.panels.p.data_layers.d.data[0];
             var a_id = this.plot.panels.p.data_layers.d.getElementId(a);
@@ -512,7 +512,7 @@ describe('LocusZoom.DataLayer', function(){
             assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], "undefined");
             assert.equal(d3.select(a_id_q).empty(), true);
         });
-        it('should allow for showing or hiding a tool tip based on layout directives and element status', function(){
+        it("should allow for showing or hiding a tool tip based on layout directives and element status", function(){
             this.plot.panels.p.addDataLayer({
                 id: "d",
                 type: "scatter",
@@ -524,8 +524,7 @@ describe('LocusZoom.DataLayer', function(){
                     html: ""
                 }
             });
-            var state_id = this.plot.panels.p.data_layers.d.state_id;
-            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" },];
+            this.plot.panels.p.data_layers.d.data = [{ id: "a" }, { id: "b" },{ id: "c" }];
             this.plot.panels.p.data_layers.d.positionTooltip = function(){ return 0; };
             var d = this.plot.panels.p.data_layers.d;
             var a = d.data[0];
@@ -533,7 +532,7 @@ describe('LocusZoom.DataLayer', function(){
             var b = d.data[1];
             var b_id = d.getElementId(b);
             // Make sure the tooltips object is there
-            d.should.have.property('tooltips').which.is.an.Object;
+            d.should.have.property("tooltips").which.is.an.Object;
             // Test highlighted OR selected
             should(d.tooltips[a_id]).be.type("undefined");
             d.highlightElement(a);
@@ -552,6 +551,118 @@ describe('LocusZoom.DataLayer', function(){
             d.unhighlightElement(b);
             d.unselectElement(b);
             should(d.tooltips[b_id]).be.type("undefined");
+        });
+    });
+
+    describe("Data Layers collection object", function() {
+        it("LocusZoom should have a DataLayers collection object", function(){
+            LocusZoom.should.have.property("DataLayers").which.is.an.Object;
+        });
+        it("should have a method to list available data layers", function(){
+            LocusZoom.DataLayers.should.have.property("list").which.is.a.Function;
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should have a general method to get a data layer by name", function(){
+            LocusZoom.DataLayers.should.have.property("get").which.is.a.Function;
+        });
+        it("should have a method to add a data layer", function(){
+            LocusZoom.DataLayers.should.have.property("add").which.is.a.Function;
+            var foo = function(layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = {};
+                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                this.render = function(){ return "foo"; };
+                return this;
+            };
+            LocusZoom.DataLayers.add("foo", foo);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
+            var expected_value = new foo({ id: "bar" });
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+        });
+        it("should have a method to change or delete existing data layers", function(){
+            LocusZoom.DataLayers.should.have.property("set").which.is.a.Function;
+            var foo_new = function(layout){
+                LocusZoom.DataLayer.apply(this, arguments);
+                this.DefaultLayout = { foo: "bar" };
+                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                this.render = function(){ return "bar"; };
+                return this;
+            };
+            LocusZoom.DataLayers.set("foo", foo_new);
+            var returned_list = LocusZoom.DataLayers.list();
+            var expected_list = ["scatter", "line", "genes", "foo"];
+            assert.deepEqual(returned_list, expected_list);
+            var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
+            var expected_value = new foo_new({ id: "baz" });
+            assert.equal(returned_value.id, expected_value.id);
+            assert.deepEqual(returned_value.layout, expected_value.layout);
+            assert.equal(returned_value.render(), expected_value.render());
+            LocusZoom.DataLayers.set("foo");
+            returned_list = LocusZoom.DataLayers.list();
+            expected_list = ["scatter", "line", "genes"];
+            assert.deepEqual(returned_list, expected_list);
+        });
+        it("should throw an exception if asked to get a function that has not been defined", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("nonexistent", this.plot.state);
+            });
+        });
+        it("should throw an exception when trying to add a new data layer that is not a function", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.add("nonfunction", "foo");
+            });
+        });
+        it("should throw an exception when adding a new data layer with an already in use name", function(){
+            assert.throws(function(){
+                var foo = function(layout){
+                    LocusZoom.DataLayer.apply(this, arguments);
+                    this.DefaultLayout = {};
+                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                    this.render = function(){ return "foo"; };
+                    return this;
+                };
+                LocusZoom.DataLayers.add("scatter", foo);
+            });
+        });
+        it("should throw an exception if asked to get a data layer without passing both an ID and a layout", function(){
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter");
+            });
+            assert.throws(function(){
+                LocusZoom.DataLayers.get("scatter", "foo");
+            });
+        });
+        describe("predefined data layers", function() {
+            beforeEach(function(){
+                this.list = LocusZoom.DataLayers.list();
+            });
+            it("should each take its ID from the arguments provided", function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
+                    assert.equal(foo.id, "foo");
+                });
+            });
+            it("should each take its layout from the arguments provided and mergit with a built-in DefaultLayout", function(){
+                this.list.forEach(function(name){
+                    var layout = { id: "foo", test: 123 };
+                    var foo = new LocusZoom.DataLayers.get(name, layout);
+                    var expected_layout = LocusZoom.Layouts.merge(layout, foo.DefaultLayout);
+                    assert.deepEqual(foo.layout, expected_layout);
+                });
+            });
+            it("should each implement a render function", function(){
+                this.list.forEach(function(name){
+                    var foo = new LocusZoom.DataLayers.get(name, { id: "foo" });
+                    foo.should.have.property("render").which.is.a.Function;
+                });
+            });
         });
     });
 

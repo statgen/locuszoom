@@ -3,10 +3,10 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.4"
+    version: "0.4.6"
 };
     
-// Populate a single element with a LocusZoom instance.
+// Populate a single element with a LocusZoom plot.
 // selector can be a string for a DOM Query or a d3 selector.
 LocusZoom.populate = function(selector, datasource, layout, state) {
     if (typeof selector == "undefined"){
@@ -19,9 +19,9 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
-        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
     }
-    var instance;
+    var plot;
     d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof this.node().id == "undefined"){
@@ -29,41 +29,41 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
             while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
             this.attr("id", "#lz-" + iterator);
         }
-        // Create the instance
-        instance = new LocusZoom.Instance(this.node().id, datasource, layout);
+        // Create the plot
+        plot = new LocusZoom.Plot(this.node().id, datasource, layout);
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key){
-                instance.state[key] = parsed_state[key];
+                plot.state[key] = parsed_state[key];
             });
         }
         // Add an SVG to the div and set its dimensions
-        instance.svg = d3.select("div#" + instance.id)
+        plot.svg = d3.select("div#" + plot.id)
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", instance.id + "_svg").attr("class", "lz-locuszoom");
-        instance.setDimensions();
-        instance.positionPanels();
-        // Initialize the instance
-        instance.initialize();
-        // If the instance has defined data sources then trigger its first mapping based on state values
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+        plot.setDimensions();
+        plot.positionPanels();
+        // Initialize the plot
+        plot.initialize();
+        // If the plot has defined data sources then trigger its first mapping based on state values
         if (typeof datasource == "object" && Object.keys(datasource).length){
-            instance.refresh();
+            plot.refresh();
         }
     });
-    return instance;
+    return plot;
 };
 
-// Populate arbitrarily many elements each with a LocusZoom instance
+// Populate arbitrarily many elements each with a LocusZoom plot
 // using a common datasource, layout, and/or state
 LocusZoom.populateAll = function(selector, datasource, layout, state) {
-    var instances = [];
+    var plots = [];
     d3.selectAll(selector).each(function(d,i) {
-        instances[i] = LocusZoom.populate(this, datasource, layout, state);
+        plots[i] = LocusZoom.populate(this, datasource, layout, state);
     });
-    return instances;
+    return plots;
 };
 
 // Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
@@ -257,39 +257,62 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     return response.promise;
 };
 
-// Merge two layout objects
-// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-// Ensures that all values defined in the second layout are at least present in the first
-// Favors values defined in the first layout if values are defined in both but different
-LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
-    if (typeof custom_layout != "object" || typeof default_layout != "object"){
-        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+// Validate a (presumed complete) state object against internal rules for consistency
+// as well as any layout-defined constraints
+LocusZoom.validateState = function(new_state, layout){
+
+    new_state = new_state || {};
+    layout = layout || {};
+
+    // If a "chr", "start", and "end" are present then resolve start and end
+    // to numeric values that are not decimal, negative, or flipped
+    var validated_region = false;
+    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+        // Determine a numeric scale and midpoint for the attempted region,
+        var attempted_midpoint = null; var attempted_scale;
+        new_state.start = Math.max(parseInt(new_state.start), 1);
+        new_state.end = Math.max(parseInt(new_state.end), 1);
+        if (isNaN(new_state.start) && isNaN(new_state.end)){
+            new_state.start = 1;
+            new_state.end = 1;
+            attempted_midpoint = 0.5;
+            attempted_scale = 0;
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+            attempted_midpoint = new_state.start || new_state.end;
+            attempted_scale = 0;
+            new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
+            new_state.end = (isNaN(new_state.end) ? new_state.start : new_state.end);
+        } else {
+            attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
+            attempted_scale = new_state.end - new_state.start;
+            if (attempted_scale < 0){
+                var temp = new_state.start;
+                new_state.end = new_state.start;
+                new_state.start = temp;
+                attempted_scale = new_state.end - new_state.start;
+            }
+            if (attempted_midpoint < 0){
+                new_state.start = 1;
+                new_state.end = 1;
+                attempted_scale = 0;
+            }
+        }
+        validated_region = true;
     }
-    for (var property in default_layout) {
-        if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-        // Also separate arrays from objects as a discrete type.
-        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
-        var default_type = typeof default_layout[property];
-        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
-        // Unsupported property types: throw an exception
-        if (custom_type == "function" || default_type == "function"){
-            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
-        }
-        // Undefined custom value: pull the default value
-        if (custom_type == "undefined"){
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-            continue;
-        }
-        // Both values are objects: merge recursively
-        if (custom_type == "object" && default_type == "object"){
-            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
-            continue;
-        }
+
+    // Constrain w/r/t layout-defined mininum region scale
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.min_region_scale;
     }
-    return custom_layout;
+
+    // Constrain w/r/t layout-defined maximum region scale
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+        new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
+        new_state.end = new_state.start + layout.max_region_scale;
+    }
+
+    return new_state;
 };
 
 // Replace placeholders in an html string with field values defined in a data object
@@ -325,273 +348,4 @@ LocusZoom.getToolTipData = function(node){
     } else {
         return LocusZoom.getToolTipData(node.parentNode);
     }
-};
-
-// Standard Layout
-LocusZoom.StandardLayout = {
-    state: {},
-    width: 800,
-    height: 450,
-    resizable: "responsive",
-    aspect_ratio: (16/9),
-    dashboard: {
-        components: [
-            {
-                type: "title",
-                title: "LocusZoom",
-                position: "left"
-            },
-            {
-                type: "dimensions",
-                position: "right"
-            },
-            {
-                type: "region_scale",
-                position: "right"
-            },
-            {
-                type: "download",
-                position: "right"
-            }
-        ]
-    },
-    panels: [
-        {
-            id: "positions",
-            title: "",
-            width: 800,
-            height: 225,
-            origin: { x: 0, y: 0 },
-            min_width:  400,
-            min_height: 200,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0 },
-            margin: { top: 35, right: 50, bottom: 40, left: 50 },
-            inner_border: "rgba(210, 210, 210, 0.85)",
-            dashboard: {
-                components: [
-                    {
-                        type: "remove_panel",
-                        position: "right",
-                        color: "red"
-                    },
-                    {
-                        type: "move_panel_up",
-                        position: "right"
-                    },
-                    {
-                        type: "move_panel_down",
-                        position: "right"
-                    }
-                ]
-            },
-            axes: {
-                x: {
-                    label_function: "chromosome",
-                    label_offset: 32,
-                    tick_format: "region",
-                    extent: "state"
-                },
-                y1: {
-                    label: "-log10 p-value",
-                    label_offset: 28
-                },
-                y2: {
-                    label: "Recombination Rate (cM/Mb)",
-                    label_offset: 40
-                }
-            },
-            interaction: {
-                drag_background_to_pan: true,
-                drag_x_ticks_to_scale: true,
-                drag_y1_ticks_to_scale: true,
-                drag_y2_ticks_to_scale: true,
-                scroll_to_zoom: true,
-                x_linked: true
-            },
-            data_layers: [
-                {
-                    id: "significance",
-                    type: "line",
-                    fields: ["sig:x", "sig:y"],
-                    z_index: 0,
-                    style: {
-                        "stroke": "#D3D3D3",
-                        "stroke-width": "3px",
-                        "stroke-dasharray": "10px 10px"
-                    },
-                    x_axis: {
-                        field: "sig:x",
-                        decoupled: true
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "sig:y"
-                    },
-                    tooltip: {
-                        html: "Significance Threshold: 3 × 10^-5"
-                    }
-                },
-                {
-                    id: "recomb",
-                    type: "line",
-                    fields: ["recomb:position", "recomb:recomb_rate"],
-                    z_index: 1,
-                    style: {
-                        "stroke": "#0000FF",
-                        "stroke-width": "1.5px"
-                    },
-                    x_axis: {
-                        field: "recomb:position"
-                    },
-                    y_axis: {
-                        axis: 2,
-                        field: "recomb:recomb_rate",
-                        floor: 0,
-                        ceiling: 100
-                    },
-                    transition: {
-                        duration: 200
-                    }
-                },
-                {
-                    id: "positions",
-                    type: "scatter",
-                    point_shape: "circle",
-                    point_size: {
-                        scale_function: "if",
-                        field: "ld:isrefvar",
-                        parameters: {
-                            field_value: 1,
-                            then: 80,
-                            else: 40
-                        }
-                    },
-                    color: [
-                        {
-                            scale_function: "if",
-                            field: "ld:isrefvar",
-                            parameters: {
-                                field_value: 1,
-                                then: "#9632b8"
-                            }
-                        },
-                        {
-                            scale_function: "numerical_bin",
-                            field: "ld:state",
-                            parameters: {
-                                breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                                values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
-                            }
-                        },
-                        "#B8B8B8"
-                    ],
-                    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
-                    id_field: "variant",
-                    z_index: 2,
-                    x_axis: {
-                        field: "position"
-                    },
-                    y_axis: {
-                        axis: 1,
-                        field: "log_pvalue",
-                        floor: 0,
-                        upper_buffer: 0.10,
-                        min_extent: [ 0, 10 ]
-                    },
-                    transition: {
-                        duration: 200
-                    },
-                    highlighted: {
-                        onmouseover: "on",
-                        onmouseout: "off"
-                    },
-                    selected: {
-                        onclick: "toggle_exclusive",
-                        onshiftclick: "toggle"
-                    },
-                    tooltip: {
-                        closable: true,
-                        show: { or: ["highlighted", "selected"] },
-                        hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<strong>{{variant}}</strong><br>"
-                            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-                            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
-                            + "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this)); LocusZoom.getToolTipData(this).deselect();\">Condition on this Variant</button>"
-                    }
-                }
-            ]
-        },
-        {
-            id: "genes",
-            width: 800,
-            height: 225,
-            origin: { x: 0, y: 225 },
-            min_width: 400,
-            min_height: 112.5,
-            proportional_width: 1,
-            proportional_height: 0.5,
-            proportional_origin: { x: 0, y: 0.5 },
-            margin: { top: 20, right: 50, bottom: 20, left: 50 },
-            dashboard: {
-                components: [
-                    {
-                        type: "remove_panel",
-                        position: "right",
-                        color: "red"
-                    },
-                    {
-                        type: "move_panel_up",
-                        position: "right"
-                    },
-                    {
-                        type: "move_panel_down",
-                        position: "right"
-                    }                    
-                ]
-            },
-            axes: {},
-            interaction: {
-                drag_background_to_pan: true,
-                scroll_to_zoom: true,
-                x_linked: true
-            },
-            data_layers: [
-                {
-                    id: "genes",
-                    type: "genes",
-                    fields: ["gene:gene", "constraint:constraint"],
-                    id_field: "gene_id",
-                    highlighted: {
-                        onmouseover: "on",
-                        onmouseout: "off"
-                    },
-                    selected: {
-                        onclick: "toggle_exclusive",
-                        onshiftclick: "toggle"
-                    },
-                    transition: {
-                        duration: 200
-                    },
-                    tooltip: {
-                        closable: true,
-                        show: { or: ["highlighted", "selected"] },
-                        hide: { and: ["unhighlighted", "unselected"] },
-                        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
-                            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
-                            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
-                            + "<div style=\"clear: both;\"></div>"
-                            + "<table>"
-                            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
-                            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
-                            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
-                            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
-                            + "</table>"
-                            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
-                    }
-                }
-            ]
-        }
-    ]
 };

@@ -1,21 +1,23 @@
+/* global require, describe, d3, Q, LocusZoom, beforeEach, afterEach, it */
+
 "use strict";
 
 /**
-  Instance.js Tests
-  Test composition of the LocusZoom.Instance object and its base classes
+  Plot.js Tests
+  Test composition of the LocusZoom.Plot object and its base classes
 */
 
-var jsdom = require('mocha-jsdom');
+var jsdom = require("mocha-jsdom");
 var fs = require("fs");
-var assert = require('assert');
+var assert = require("assert");
 var should = require("should");
-var _files = require('./_files.js');
+var files = require("../files.js");
 
-describe('LocusZoom.Instance', function(){
+describe("LocusZoom.Plot", function(){
 
     // Load all javascript files
     var src = [];
-    _files.forEach(function(_file){ src.push(fs.readFileSync(_file)); });
+    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
     jsdom({ src: src });
 
     // Reset DOM after each test
@@ -25,26 +27,26 @@ describe('LocusZoom.Instance', function(){
 
     // Tests
     it("creates an object for its name space", function() {
-        should.exist(LocusZoom.Instance);
+        should.exist(LocusZoom.Plot);
     });
 
     it("defines its layout defaults", function() {
-        LocusZoom.Instance.should.have.property('DefaultLayout').which.is.an.Object;
+        LocusZoom.Plot.should.have.property("DefaultLayout").which.is.an.Object;
     });
 
     describe("Constructor", function() {
         beforeEach(function() {
-            this.instance = new LocusZoom.Instance("plot");
+            this.plot = new LocusZoom.Plot("plot");
         });
         it("returns an object", function() {
-            this.instance.should.be.an.Object;
+            this.plot.should.be.an.Object;
         });
-        it('should have an id', function(){
-            this.instance.should.have.property('id').which.is.a.String;
+        it("should have an id", function(){
+            this.plot.should.have.property("id").which.is.a.String;
         });
-        it('should have a layout which is (superficially) a copy of StandardLayout', function(){
-            assert.equal(this.instance.layout.width, LocusZoom.StandardLayout.width);
-            assert.equal(this.instance.layout.height, LocusZoom.StandardLayout.height);
+        it("should have a layout which is (superficially) a copy of StandardLayout", function(){
+            assert.equal(this.plot.layout.width, LocusZoom.StandardLayout.width);
+            assert.equal(this.plot.layout.height, LocusZoom.StandardLayout.height);
         });
     });
 
@@ -56,8 +58,7 @@ describe('LocusZoom.Instance', function(){
                 min_width: 1,
                 min_height: 1,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", {}, layout);
@@ -66,7 +67,7 @@ describe('LocusZoom.Instance', function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it('should allow for adding arbitrarily many panels', function(){
+        it("should allow for adding arbitrarily many panels", function(){
             this.plot.addPanel.should.be.a.Function;
             var panelA = this.plot.addPanel({ id: "panelA", foo: "bar" });
             panelA.should.have.property("id").which.is.exactly("panelA");
@@ -87,11 +88,12 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.panels[1].should.have.property("id").which.is.exactly("panelB");
             this.plot.layout.panels[1].should.have.property("foo").which.is.exactly("baz");
         });
-        it('should allow for removing panels', function(){
+        it("should allow for removing panels", function(){
             this.plot.removePanel.should.be.a.Function;
             var panelA = this.plot.addPanel({ id: "panelA", foo: "bar" });
             var panelB = this.plot.addPanel({ id: "panelB", foo: "baz" });
             this.plot.panels.should.have.property("panelA");
+            this.plot.panels[panelA.id].id.should.be.exactly(panelA.id);
             this.plot.layout.panels.length.should.be.exactly(2);
             this.plot.removePanel("panelA");
             this.plot.panels.should.not.have.property("panelA");
@@ -99,7 +101,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.panels[0].id.should.be.exactly("panelB");
             this.plot.panels[panelB.id].should.have.property("layout_idx").which.is.exactly(0);
         });
-        it('should allow setting dimensions, bounded by layout minimums', function(){          
+        it("should allow setting dimensions, bounded by layout minimums", function(){          
             this.plot.setDimensions(563, 681);
             this.plot.layout.width.should.be.exactly(563);
             this.plot.layout.height.should.be.exactly(681);
@@ -117,7 +119,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
             this.plot.layout.aspect_ratio.should.be.exactly(this.plot.layout.min_width/this.plot.layout.min_height);
         });
-        it('should enforce minimum dimensions based on its panels', function(){
+        it("should enforce minimum dimensions based on its panels", function(){
             this.plot.addPanel({ id: "p1", width: 50, height: 30, min_width: 50, min_height: 30 });
             this.plot.addPanel({ id: "p2", width: 20, height: 10, min_width: 20, min_height: 10 });
             this.plot.setDimensions(1, 1);
@@ -126,15 +128,15 @@ describe('LocusZoom.Instance', function(){
             this.plot.layout.width.should.be.exactly(this.plot.layout.min_width);
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
-        it('should allow for responsively positioning panels using a proportional dimensions', function(){
-            var responsive_layout = LocusZoom.mergeLayouts({
+        it("should allow for responsively positioning panels using a proportional dimensions", function(){
+            var responsive_layout = LocusZoom.Layouts.get("plot", "standard_gwas", {
                 resposnive_resize: true,
                 aspect_ratio: 2,
                 panels: [
                     { id: "positions", proportional_width: 1, proportional_height: 0.6, min_height: 60 },
                     { id: "genes", proportional_width: 1, proportional_height: 0.4, min_height: 40 }
                 ]
-            }, LocusZoom.StandardLayout);
+            });
             this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
             assert.equal(this.plot.layout.panels[0].height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels[1].height/this.plot.layout.height, 0.4);
@@ -148,13 +150,13 @@ describe('LocusZoom.Instance', function(){
             assert.equal(this.plot.layout.panels[0].height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels[1].height/this.plot.layout.height, 0.4);
         });
-        it('should not allow for a non-numerical / non-positive predefined dimensions', function(){
-            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 0, height: 0 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 20, height: -20 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: "foo", height: 40 }) });
-            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 60, height: [1,2] }) });
+        it("should not allow for a non-numerical / non-positive predefined dimensions", function(){
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 0, height: 0 }); });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 20, height: -20 }); });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: "foo", height: 40 }); });
+            assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 60, height: [1,2] }); });
         });
-        it('should not allow for a non-numerical / non-positive predefined aspect ratio', function(){
+        it("should not allow for a non-numerical / non-positive predefined aspect ratio", function(){
             assert.throws(function(){
                 var responsive_layout = { responsive_resize: true, aspect_ratio: 0 };
                 this.plot = LocusZoom.populate("#plot", {}, responsive_layout);
@@ -178,19 +180,19 @@ describe('LocusZoom.Instance', function(){
         describe("Mouse Guide Layer", function() {
             beforeEach(function(){
                 d3.select("body").append("div").attr("id", "plot");
-                this.instance = LocusZoom.populate("#plot");
+                this.plot = LocusZoom.populate("#plot");
             });
-            it('first child should be a mouse guide layer group element', function(){
-                d3.select(this.instance.svg.node().firstChild).attr("id").should.be.exactly("plot.mouse_guide");
+            it("first child should be a mouse guide layer group element", function(){
+                d3.select(this.plot.svg.node().firstChild).attr("id").should.be.exactly("plot.mouse_guide");
             });
-            it('should have a mouse guide object with mouse guide svg selectors', function(){
-                this.instance.mouse_guide.should.be.an.Object;
-                this.instance.mouse_guide.svg.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.svg.html(), this.instance.svg.select("#plot\\.mouse_guide").html());
-                this.instance.mouse_guide.vertical.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.vertical.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-vertical").html());
-                this.instance.mouse_guide.horizontal.should.be.an.Object;
-                assert.equal(this.instance.mouse_guide.horizontal.html(), this.instance.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
+            it("should have a mouse guide object with mouse guide svg selectors", function(){
+                this.plot.mouse_guide.should.be.an.Object;
+                this.plot.mouse_guide.svg.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.svg.html(), this.plot.svg.select("#plot\\.mouse_guide").html());
+                this.plot.mouse_guide.vertical.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.vertical.html(), this.plot.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-vertical").html());
+                this.plot.mouse_guide.horizontal.should.be.an.Object;
+                assert.equal(this.plot.mouse_guide.horizontal.html(), this.plot.svg.select("#plot\\.mouse_guide rect.lz-mouse_guide-horizontal").html());
             });
         });
     });
@@ -204,13 +206,12 @@ describe('LocusZoom.Instance', function(){
                 min_width: 100,
                 min_height: 100,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, layout);
         });
-        it('Should adjust the size of the plot if a single panel is added that does not completely fill it', function(){
+        it("Should adjust the size of the plot if a single panel is added that does not completely fill it", function(){
             var panelA = { id: "panelA", width: 100, height: 50 };
             this.plot.addPanel(panelA);
             var svg = d3.select("#plot svg");
@@ -225,7 +226,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelA.layout.origin.y.should.be.exactly(0);
             this.plot.sumProportional("height").should.be.exactly(1);
         });
-        it('Should extend the size of the plot if panels are added that expand it, and automatically prevent panels from overlapping vertically', function(){
+        it("Should extend the size of the plot if panels are added that expand it, and automatically prevent panels from overlapping vertically", function(){
             var panelA = { id: "panelA", width: 100, height: 60 };
             var panelB = { id: "panelB", width: 100, height: 60 };
             this.plot.addPanel(panelA);
@@ -247,7 +248,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelB.layout.origin.y.should.be.exactly(60);
             this.plot.sumProportional("height").should.be.exactly(1);
         });
-        it('Should resize the plot as panels are removed', function(){
+        it("Should resize the plot as panels are removed", function(){
             var panelA = { id: "panelA", width: 100, height: 60 };
             var panelB = { id: "panelB", width: 100, height: 60 };
             this.plot.addPanel(panelA);
@@ -265,7 +266,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelB.layout.origin.y.should.be.exactly(0);
             this.plot.sumProportional("height").should.be.exactly(1);
         });
-        it('Should allow for inserting panels at discrete y indexes', function(){
+        it("Should allow for inserting panels at discrete y indexes", function(){
             var panelA = { id: "panelA", width: 100, height: 60 };
             var panelB = { id: "panelB", idth: 100, height: 60 };
             this.plot.addPanel(panelA);
@@ -277,7 +278,7 @@ describe('LocusZoom.Instance', function(){
             this.plot.panels.panelC.layout.y_index.should.be.exactly(1);
             assert.deepEqual(this.plot.panel_ids_by_y_index, ["panelA", "panelC", "panelB"]);
         });
-        it('Should allow for inserting panels at negative discrete y indexes', function(){
+        it("Should allow for inserting panels at negative discrete y indexes", function(){
             var panelA = { id: "panelA", width: 100, height: 60 };
             var panelB = { id: "panelB", width: 100, height: 60 };
             var panelC = { id: "panelC", width: 100, height: 60 };
@@ -297,7 +298,7 @@ describe('LocusZoom.Instance', function(){
         });
     });
 
-    describe("Instance Curtain and Loader", function() {
+    describe("Plot Curtain and Loader", function() {
         beforeEach(function(){
             var datasources = new LocusZoom.DataSources();
             var layout = {
@@ -305,10 +306,8 @@ describe('LocusZoom.Instance', function(){
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                resizable: false,
                 aspect_ratio: 1,
-                panels: [],
-                controls: false
+                panels: []
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, layout);
@@ -381,6 +380,48 @@ describe('LocusZoom.Instance', function(){
             this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
             this.plot.loader.setPercentCompleted("foo");
             this.plot.loader.progress_selector.style("width").should.be.exactly("1%");
+        });
+    });
+
+    describe("State and Requests", function() {
+        beforeEach(function(){
+            this.datasources = new LocusZoom.DataSources();
+            this.layout = { width: 100, height: 100 };
+            d3.select("body").append("div").attr("id", "plot");
+        });
+        afterEach(function(){
+            this.plot = null;
+            this.layout = null;
+            d3.select("#plot").remove();
+        });
+        it("Should apply basic start/end state validation when necessary", function(done){
+            this.layout.state = { chr: 1, start: -60, end: 10300050 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 1);
+                assert.equal(this.plot.state.end, 10300050);
+                done();
+            }.bind(this));
+        });
+        it("Should apply minimum region scale state validation if set in the plot layout", function(done){
+            this.layout.min_region_scale = 2000;
+            this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 10299025);
+                assert.equal(this.plot.state.end, 10301025);
+                done();
+            }.bind(this));
+        });
+        it("Should apply maximum region scale state validation if set in the plot layout", function(done){
+            this.layout.max_region_scale = 4000000;
+            this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+            Q.all(this.plot.remap_promises).then(function(){
+                assert.equal(this.plot.state.start, 10800000);
+                assert.equal(this.plot.state.end, 14800000);
+                done();
+            }.bind(this));
         });
     });
 

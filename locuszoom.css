@@ -2,7 +2,7 @@ svg.lz-locuszoom {
   background-color: #FFFFFF;
   border: none;
   cursor: crosshair;
-  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 10px; }
   svg.lz-locuszoom rect.lz-clickarea {
     fill: black;
@@ -140,7 +140,7 @@ div.lz-data_layer-tooltip {
   div.lz-data_layer-tooltip button:hover {
     cursor: pointer;
     background-color: rgba(24, 24, 24, 1);
-    color: #ebebeb; }
+    color: rgba(232, 232, 232, 1); }
   div.lz-data_layer-tooltip .lz-tooltip-close-button {
     color: rgba(24, 24, 24, 0.4);
     border: 1px solid rgba(24, 24, 24, 0.4);
@@ -228,7 +228,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 
 .lz-curtain {
   position: absolute;
-  font-size: 2em;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
   font-weight: 600;
   background: rgba(216, 216, 216, 0.8); }
   .lz-curtain .lz-curtain-content {
@@ -244,8 +245,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     position: absolute;
     top: 0px;
     right: 0px;
-    padding: 0.15em 0.5em;
-    font-size: 0.3em;
+    padding: 2px 4px;
+    font-size: 10px;
     font-weight: 300;
     background-color: #D8D8D8;
     color: #333333;
@@ -373,9 +374,14 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%; }
   .lz-dashboard .lz-dashboard-title {
-    font-size: 150%;
-    font-weight: bold;
     margin-bottom: 0.3em; }
+    .lz-dashboard .lz-dashboard-title h3 {
+      font-size: 150%;
+      font-weight: bold;
+      margin: 0em; }
+    .lz-dashboard .lz-dashboard-title small {
+      font-size: 80%;
+      font-weight: normal; }
 
 div.lz-dashboard-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;

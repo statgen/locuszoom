@@ -25,7 +25,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
@@ -71,7 +71,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging || this.parent.interactions.zooming);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -245,6 +245,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
             .attr("id", id + "-tooltip")
     };
     this.updateTooltip(d);
+    return this;
 };
 
 // Update a tool tip (generate its inner HTML)
@@ -273,6 +274,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     this.tooltips[id].selector.data([d]);
     // Reposition and draw a new arrow
     this.positionTooltip(id);
+    return this;
 };
 
 // Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
@@ -288,6 +290,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
         }
         delete this.tooltips[id];
     }
+    return this;
 };
 
 // Loop through and destroy all tool tips on this data layer
@@ -295,6 +298,7 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
     for (var id in this.tooltips){
         this.destroyTooltip(id);
     }
+    return this;
 };
 
 // Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
@@ -316,6 +320,7 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id){
     this.tooltips[id].arrow
         .style("left", "-1px")
         .style("top", "-1px");
+    return this;
 };
 
 // Loop through and position all tool tips on this data layer
@@ -323,6 +328,7 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
     for (var id in this.tooltips){
         this.positionTooltip(id);
     }
+    return this;
 };
 
 // Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
@@ -394,39 +400,49 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     } else {
         this.destroyTooltip(element);
     }
+
+    return this;
     
 };
 
 // Toggle the highlighted status of an element
 LocusZoom.DataLayer.prototype.highlightElement = function(element){
     this.setElementStatus("highlighted", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
     this.setElementStatus("highlighted", element, false);
+    return this;
 };
 
 // Toggle the highlighted status of all elements
 LocusZoom.DataLayer.prototype.highlightAllElements = function(){
     this.setAllElementStatus("highlighted", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
     this.setAllElementStatus("highlighted", false);
+    return this;
 };
 
 // Toggle the selected status of an element
 LocusZoom.DataLayer.prototype.selectElement = function(element){
     this.setElementStatus("selected", element, true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectElement = function(element){
     this.setElementStatus("selected", element, false);
+    return this;
 };
 
 // Toggle the selected status of all elements
 LocusZoom.DataLayer.prototype.selectAllElements = function(){
     this.setAllElementStatus("selected", true);
+    return this;
 };
 LocusZoom.DataLayer.prototype.unselectAllElements = function(){
     this.setAllElementStatus("selected", false);
+    return this;
 };
 
 // Toggle a status (e.g. highlighted, selected) on an element
@@ -469,6 +485,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Trigger layout changed event hook
     this.parent.emit("layout_changed");
     this.parent_plot.emit("layout_changed");
+
+    return this;
     
 };
 
@@ -579,6 +597,8 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
             handleElementStatusEvent(status, event, element);
         }.bind(this));
     }.bind(this));
+
+    return this;
                     
 };
 
@@ -588,6 +608,7 @@ LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
     supported_statuses.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
+    return this;
 };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -610,7 +631,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
     return this;
 };
 
-// Re-Map a data layer to new positions according to the parent panel's parent instance's state
+// Re-Map a data layer to new positions according to the parent panel's parent plot's state
 LocusZoom.DataLayer.prototype.reMap = function(){
 
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
@@ -623,6 +644,61 @@ LocusZoom.DataLayer.prototype.reMap = function(){
         this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
+
     return promise;
 
 };
+
+
+/************
+  Data Layers
+
+  Object for storing data layer definitions. Because data layer definitions tend
+  to be lengthy they are stored in individual files instead of below this collection definition.
+*/
+
+LocusZoom.DataLayers = (function() {
+    var obj = {};
+    var datalayers = {};
+
+    obj.get = function(name, layout, parent) {
+        if (!name) {
+            return null;
+        } else if (datalayers[name]) {
+            if (typeof layout != "object"){
+                throw("invalid layout argument for data layer [" + name + "]");
+            } else {
+                return new datalayers[name](layout, parent);
+            }
+        } else {
+            throw("data layer [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, datalayer) {
+        if (datalayer) {
+            if (typeof datalayer != "function"){
+                throw("unable to set data layer [" + name + "], argument provided is not a function");
+            } else {
+                datalayers[name] = datalayer;
+                datalayers[name].prototype = new LocusZoom.DataLayer();
+            }
+        } else {
+            delete datalayers[name];
+        }
+    };
+
+    obj.add = function(name, datalayer) {
+        if (datalayers[name]) {
+            throw("data layer already exists with name: " + name);
+        } else {
+            obj.set(name, datalayer);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(datalayers);
+    };
+
+    return obj;
+})();

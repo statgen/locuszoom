@@ -47,7 +47,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){
@@ -81,6 +81,10 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
+    this.canInteract = function(){
+        return !(this.interactions.dragging || this.interactions.zooming || this.parent.loading_data);
+    };
+
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
@@ -96,6 +100,7 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return this;
     };
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -105,15 +110,16 @@ LocusZoom.Panel = function(layout, parent) {
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun.call(context);
         });
+        return this;
     };
     
     // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
     // Necessary for positioning any HTML elements over the panel
     this.getPageOrigin = function(){
-        var instance_origin = this.parent.getPageOrigin();
+        var plot_origin = this.parent.getPageOrigin();
         return {
-            x: instance_origin.x + this.layout.origin.x,
-            y: instance_origin.y + this.layout.origin.y
+            x: plot_origin.x + this.layout.origin.x,
+            y: plot_origin.y + this.layout.origin.y
         };
     };
 
@@ -212,6 +218,8 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.layout.data_layers.forEach(function(data_layer_layout){
         this.addDataLayer(data_layer_layout);
     }.bind(this));
+
+    return this;
 
 };
 
@@ -614,15 +622,16 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 };
 
 
-// Re-Map a panel to new positions according to the parent instance's state
+// Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){
+    this.emit("data_requested");
     this.data_promises = [];
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
         try {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }
     }
@@ -636,7 +645,7 @@ LocusZoom.Panel.prototype.reMap = function(){
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
-            console.log(error);
+            console.warn(error);
             this.curtain.show(error);
         }.bind(this));
 };
@@ -671,6 +680,8 @@ LocusZoom.Panel.prototype.generateExtents = function(){
     if (this.layout.axes.x && this.layout.axes.x.extent == "state"){
         this.x_extent = [ this.state.start, this.state.end ];
     }
+
+    return this;
 
 };
 
@@ -729,11 +740,24 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         ranges.y2_shifted = [this.layout.cliparea.height, 0];
     }
 
-    // Shift ranges based on any drag actions currently underway
+    // Shift ranges based on any drag or zoom interactions currently underway
+    var anchor, scalar = null;
     if (this.interactions.zooming && typeof this.x_scale == "function"){
-        ranges.x_shifted = [this.x_scale(this.x_extent[0]), this.x_scale(this.x_extent[1])];
+        var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
+        var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
+        var zoom_factor = this.interactions.zooming.scale;
+        var potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
+        if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)){
+            zoom_factor = 1 /(Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
+        } else if (zoom_factor > 1 && !isNaN(this.parent.layout.min_region_scale)){
+            zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
+        }
+        var new_extent_size = Math.floor(current_extent_size * zoom_factor);
+        anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
+        var offset_ratio = anchor / this.layout.cliparea.width;
+        var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
+        ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
     } else if (this.interactions.dragging){
-        var anchor, scalar = null;
         switch (this.interactions.dragging.method){
         case "background":
             ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
@@ -805,18 +829,20 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.zoom_listener = d3.behavior.zoom().x(this.x_scale)
+        this.zoom_listener = d3.behavior.zoom()
             .on("zoom", function(){
-                if (this.interactions.dragging){ return; }
-                this.interactions.zooming = true;
+                if (this.interactions.dragging || this.parent.loading_data){ return; }
+                var coords = d3.mouse(this.svg.container.node());
+                this.interactions.zooming = {
+                    scale: (d3.event.scale < 1) ? 0.9 : 1.1,
+                    center: coords[0]
+                };
                 this.render();
                 if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
                 this.zoom_timeout = setTimeout(function(){
+                    this.interactions.zooming = false;
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }.bind(this), 500);
-            }.bind(this))
-            .on("zoomend", function(){
-                this.interactions.zooming = false;
             }.bind(this));
         this.svg.container.call(this.zoom_listener);
     }
@@ -965,6 +991,8 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         }
     }.bind(this));
 
+    return this;
+
 };
 
 // Toggle a drag event for the panel
@@ -987,8 +1015,9 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }.bind(this));
     }.bind(this);
     method = method || null;
-    if (!method){
-        if (!this.interactions.dragging){ return; }
+
+    // Stop a current drag event (stopping procedure varies by drag method)
+    if (this.interactions.dragging){
         switch(this.interactions.dragging.method){
         case "background":
         case "x_tick":
@@ -1007,7 +1036,11 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         }
         this.interactions.dragging = false;
         this.svg.container.style("cursor", null);
-    } else {
+        return this;
+    }
+
+    // Start a drag event for the supplied method if currently allowed by the rules defined in this.canInteract()
+    else if (this.canInteract()){
         var coords = d3.mouse(this.svg.container.node());
         this.interactions.dragging = {
             method: method,
@@ -1021,6 +1054,27 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
         if (method == "y1_tick"){ this.interactions.dragging.on_y1 = true; }
         if (method == "y2_tick"){ this.interactions.dragging.on_y2 = true; }
         this.svg.container.style("cursor", "all-scroll");
+        return this;
     }
+
+    return this;
+};
+
+// Add a "basic" loader to a panel
+// This method is jsut a shortcut for adding the most commonly used type of loader
+// which appears when data is requested, animates (e.g. shows an infinitely cycling
+// progress bar as opposed to one that loads from 0-100% based on actual load progress),
+// and disappears when new data is loaded and rendered.
+LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
+    if (typeof show_immediately != "undefined"){ show_immediately = true; }
+    if (show_immediately){
+        this.loader.show("Loading...").animate();
+    }
+    this.on("data_requested", function(){
+        this.loader.show("Loading...").animate();
+    }.bind(this));
+    this.on("data_rendered", function(){
+        this.loader.hide();
+    }.bind(this));
     return this;
 };

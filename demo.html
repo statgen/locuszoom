@@ -57,7 +57,7 @@
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
         .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?" }])
-        .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+        .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ]);
     }
 
     // Define custom LocusZoom layout object to allow manual resizing.
@@ -66,20 +66,14 @@
     var layout = {
       resizable: "manual"
     };
-    layout = LocusZoom.mergeLayouts(layout, LocusZoom.StandardLayout);
+    layout = LocusZoom.Layouts.merge(layout, LocusZoom.StandardLayout);
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);
 
-    // Create event hooks to clear the loader whenever a panel renders new data
+    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function(panel){
-      plot.panels[panel.id].loader.show("Loading...").animate();
-      plot.panels[panel.id].on("data_requested", function(){
-        this.loader.show("Loading...").animate();
-      });
-      plot.panels[panel.id].on("data_rendered", function(){
-        this.loader.hide();
-      });
+      plot.panels[panel.id].addBasicLoader();
     });
 
     /**********************************************************************************
@@ -106,7 +100,7 @@
       ["5:76427311", "ZBED3"]
     ];
 
-    // Apply form data to a remapping of the demo LocusZoom instance
+    // Apply form data to a remapping of the demo LocusZoom Plot
     function handleFormSubmit(lz_id){
       //var chr   = $("#" + lz_id + "_chr")[0].value;
       //var start = $("#" + lz_id + "_start")[0].value;
