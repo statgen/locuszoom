@@ -51,7 +51,7 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
         console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
         var stateful_layout = { state: state };
         var base_layout = layout || {};
-        layout = LocusZoom.mergeLayouts(stateful_layout, base_layout);
+        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
     }
     var plot;
     d3.select(selector).call(function(){
@@ -289,41 +289,6 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     return response.promise;
 };
 
-// Merge two layout objects
-// Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-// Ensures that all values defined in the second layout are at least present in the first
-// Favors values defined in the first layout if values are defined in both but different
-LocusZoom.mergeLayouts = function (custom_layout, default_layout) {
-    if (typeof custom_layout != "object" || typeof default_layout != "object"){
-        throw("LocusZoom.mergeLayouts only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
-    }
-    for (var property in default_layout) {
-        if (!default_layout.hasOwnProperty(property)){ continue; }
-        // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-        // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-        // Also separate arrays from objects as a discrete type.
-        var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
-        var default_type = typeof default_layout[property];
-        if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-        if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
-        // Unsupported property types: throw an exception
-        if (custom_type == "function" || default_type == "function"){
-            throw("LocusZoom.mergeLayouts encountered an unsupported property type");
-        }
-        // Undefined custom value: pull the default value
-        if (custom_type == "undefined"){
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-            continue;
-        }
-        // Both values are objects: merge recursively
-        if (custom_type == "object" && default_type == "object"){
-            custom_layout[property] = LocusZoom.mergeLayouts(custom_layout[property], default_layout[property]);
-            continue;
-        }
-    }
-    return custom_layout;
-};
-
 // Validate a (presumed complete) state object against internal rules for consistency
 // as well as any layout-defined constraints
 LocusZoom.validateState = function(new_state, layout){
@@ -423,18 +388,103 @@ LocusZoom.getToolTipData = function(node){
 
 "use strict";
 
-LocusZoom.Layouts = {
-    Plots: {},
-    Panels: {},
-    Layers: {},
-    Dashboards: {}
-};
+LocusZoom.Layouts = (function() {
+    var obj = {};
+    var layouts = {
+        "plot": {},
+        "panel": {},
+        "data_layer": {},
+        "dashboard": {}
+    };
+
+    obj.get = function(type, name, modifications) {
+        if (!type || !name) {
+            return null;
+        } else if (layouts[type][name]) {
+            if (typeof modifications == "object"){
+                return LocusZoom.Layouts.merge(modifications, layouts[type][name]);
+            } else {
+                return JSON.parse(JSON.stringify(layouts[type][name]));
+            }
+        } else {
+            throw("layout type [" + type + "] name [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(type, name, layout) {
+        if (typeof type != "string" || typeof name != "string" || typeof layout != "object"){
+            throw ("unable to set new layout; bad arguments passed to set()");
+        }
+        if (!layouts[type]){
+            layouts[type] = {};
+        }
+        if (layout){
+            layouts[type][name] = JSON.parse(JSON.stringify(layout));
+        } else {
+            delete layouts[type][name];
+        }
+    };
+
+    obj.add = function(type, name, layout) {
+        obj.set(type, name, layout);
+    };
+
+    obj.list = function(type) {
+        if (!layouts[type]){
+            var list = {};
+            Object.keys(layouts).forEach(function(type){
+                list[type] =  Object.keys(layouts[type]);
+            });
+            return list;
+        } else {
+            return Object.keys(layouts[type]);
+        }
+    };
+
+    // Merge any two layout objects
+    // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
+    // Ensures that all values defined in the second layout are at least present in the first
+    // Favors values defined in the first layout if values are defined in both but different
+    obj.merge = function (custom_layout, default_layout) {
+        if (typeof custom_layout != "object" || typeof default_layout != "object"){
+            throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
+        }
+        for (var property in default_layout) {
+            if (!default_layout.hasOwnProperty(property)){ continue; }
+            // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
+            // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
+            // Also separate arrays from objects as a discrete type.
+            var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+            var default_type = typeof default_layout[property];
+            if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+            if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
+            // Unsupported property types: throw an exception
+            if (custom_type == "function" || default_type == "function"){
+                throw("LocusZoom.Layouts.merge encountered an unsupported property type");
+            }
+            // Undefined custom value: pull the default value
+            if (custom_type == "undefined"){
+                custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+                continue;
+            }
+            // Both values are objects: merge recursively
+            if (custom_type == "object" && default_type == "object"){
+                custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
+                continue;
+            }
+        }
+        return custom_layout;
+    };
+
+    return obj;
+})();
+
 
 /**
- Layer Layouts
+ Data Layer Layouts
 */
 
-LocusZoom.Layouts.Layers.Signifigance = {
+LocusZoom.Layouts.add("data_layer", "signifigance", {
     id: "significance",
     type: "line",
     fields: ["sig:x", "sig:y"],
@@ -452,9 +502,9 @@ LocusZoom.Layouts.Layers.Signifigance = {
         axis: 1,
         field: "sig:y"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.RecombRate = {
+LocusZoom.Layouts.add("data_layer", "recomb_rate", {
     id: "recombrate",
     type: "line",
     fields: ["recomb:position", "recomb:recomb_rate"],
@@ -475,9 +525,9 @@ LocusZoom.Layouts.Layers.RecombRate = {
     transition: {
         duration: 200
     }
-};
+});
 
-LocusZoom.Layouts.Layers.GWASPValues = {
+LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
     point_shape: "circle",
@@ -541,9 +591,9 @@ LocusZoom.Layouts.Layers.GWASPValues = {
             + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
             + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.PheWASPValues = {
+LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     id: "phewaspvalues",
     type: "scatter",
     point_shape: "circle",
@@ -608,9 +658,9 @@ LocusZoom.Layouts.Layers.PheWASPValues = {
             "fill": "#333333"
         }
     }
-};
+});
 
-LocusZoom.Layouts.Layers.Genes = {
+LocusZoom.Layouts.add("data_layer", "genes", {
     id: "genes",
     type: "genes",
     fields: ["gene:gene", "constraint:constraint"],
@@ -642,9 +692,9 @@ LocusZoom.Layouts.Layers.Genes = {
             + "</table>"
             + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
     }
-};
+});
 
-LocusZoom.Layouts.Layers.GenomeLegend = {
+LocusZoom.Layouts.add("data_layer", "genome_legend", {
     id: "genome_legend",
     type: "genome_legend",
     fields: ["genome:chr", "genome:base_pairs"],
@@ -652,13 +702,13 @@ LocusZoom.Layouts.Layers.GenomeLegend = {
         floor: 0,
         ceiling: 2881033286
     }
-};
+});
 
 /**
  Dashboard Layouts
 */
 
-LocusZoom.Layouts.Dashboards.Panel = {
+LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
         {
             type: "remove_panel",
@@ -674,9 +724,9 @@ LocusZoom.Layouts.Dashboards.Panel = {
             position: "right"
         }
     ]
-};
+});
 
-LocusZoom.Layouts.Dashboards.Plot = {
+LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
             type: "title",
@@ -697,13 +747,13 @@ LocusZoom.Layouts.Dashboards.Plot = {
             position: "right"
         }
     ]
-};
+});
 
 /**
  Panel Layouts
 */
 
-LocusZoom.Layouts.Panels.GWAS = {
+LocusZoom.Layouts.add("panel", "gwas", {
     id: "gwas",
     title: "",
     width: 800,
@@ -716,7 +766,7 @@ LocusZoom.Layouts.Panels.GWAS = {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.Dashboards.Panel,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     axes: {
         x: {
             label_function: "chromosome",
@@ -742,13 +792,13 @@ LocusZoom.Layouts.Panels.GWAS = {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.Signifigance,
-        LocusZoom.Layouts.Layers.RecombRate,
-        LocusZoom.Layouts.Layers.GWASPValues
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "recomb_rate"),
+        LocusZoom.Layouts.get("data_layer", "gwas_pvalues")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.Genes = {
+LocusZoom.Layouts.add("panel", "genes", {
     id: "genes",
     width: 800,
     height: 225,
@@ -765,13 +815,13 @@ LocusZoom.Layouts.Panels.Genes = {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard:LocusZoom.Layouts.Dashboards.Panel,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
     data_layers: [
-        LocusZoom.Layouts.Layers.Genes
+        LocusZoom.Layouts.get("data_layer", "genes")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.PheWAS = {
+LocusZoom.Layouts.add("panel", "phewas", {
     id: "phewas",
     width: 800,
     height: 300,
@@ -981,12 +1031,12 @@ LocusZoom.Layouts.Panels.PheWAS = {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.Signifigance,
-        LocusZoom.Layouts.Layers.PheWASPValues
+        LocusZoom.Layouts.get("data_layer", "signifigance"),
+        LocusZoom.Layouts.get("data_layer", "phewas_pvalues")
     ]
-};
+});
 
-LocusZoom.Layouts.Panels.GenomeLegend = {
+LocusZoom.Layouts.add("panel", "genome_legend", {
     id: "genome_legend",
     width: 800,
     height: 50,
@@ -1248,16 +1298,16 @@ LocusZoom.Layouts.Panels.GenomeLegend = {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.Layers.GenomeLegend
+        LocusZoom.Layouts.get("data_layer", "genome_legend")
     ]
-};
+});
 
 
 /**
  Plot Layouts
 */
 
-LocusZoom.Layouts.Plots.StandardGWAS = {
+LocusZoom.Layouts.add("plot", "standard_gwas", {
     state: {},
     width: 800,
     height: 450,
@@ -1265,30 +1315,31 @@ LocusZoom.Layouts.Plots.StandardGWAS = {
     aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
-    dashboard: LocusZoom.Layouts.Dashboards.Plot,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.Panels.GWAS,
-        LocusZoom.Layouts.Panels.Genes
+        LocusZoom.Layouts.get("panel", "gwas"),
+        LocusZoom.Layouts.get("panel", "genes")
     ]
-};
+});
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.Plots.StandardGWAS;
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
 
-LocusZoom.Layouts.Plots.StandardPheWAS = {
+LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
     height: 500,
     min_width: 800,
     min_height: 500,
     responsive_resize: true,
     aspect_ratio: 1.6,
-    dashboard: LocusZoom.Layouts.Dashboards.Plot,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.Panels.PheWAS,
-        LocusZoom.Layouts.Panels.GenomeLegend,
-        LocusZoom.Layouts.Panels.Genes
+        LocusZoom.Layouts.get("panel", "phewas"),
+        LocusZoom.Layouts.get("panel", "genome_legend"),
+        LocusZoom.Layouts.get("panel", "genes")
     ]
-};
+});
+
 /* global d3,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -1316,7 +1367,7 @@ LocusZoom.DataLayer = function(layout, parent) {
     this.parent_plot = null;
     if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
 
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
     if (this.layout.id){ this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
@@ -1940,356 +1991,12 @@ LocusZoom.DataLayer.prototype.reMap = function(){
 
 };
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
 
-"use strict";
+/************
+  Data Layers
 
-/**
-
-  Singletons
-
-  LocusZoom has various singleton objects that are used for registering functions or classes.
-  These objects provide safe, standard methods to redefine or delete existing functions/classes
-  as well as define new custom functions/classes to be used in a plot.
-
-*/
-
-
-/* The Collection of "Known" Data Source Endpoints */
-
-LocusZoom.KnownDataSources = (function() {
-    var obj = {};
-    var sources = [];
-
-    var findSourceByName = function(x) {
-        for(var i=0; i<sources.length; i++) {
-            if (!sources[i].SOURCE_NAME) {
-                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
-            }
-            if (sources[i].SOURCE_NAME == x) {
-                return sources[i];
-            }
-        }
-        return null;
-    };
-
-    obj.get = function(name) {
-        return findSourceByName(name);
-    };
-
-    obj.add = function(source) {
-        if (!source.SOURCE_NAME) {
-            console.warn("Data source added does not have a SOURCE_NAME");
-        }
-        sources.push(source);
-    };
-
-    obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
-        obj.add(source);
-    };
-
-    obj.list = function() {
-        return sources.map(function(x) {return x.SOURCE_NAME;});
-    };
-
-    obj.create = function(name) {
-        //create new object (pass additional parameters to constructor)
-        var newObj = findSourceByName(name);
-        if (newObj) {
-            var params = arguments;
-            params[0] = null;
-            return new (Function.prototype.bind.apply(newObj, params));
-        } else {
-            throw("Unable to find data source for name: " + name); 
-        }
-    };
-
-    //getAll, setAll and clear really should only be used by tests
-    obj.getAll = function() {
-        return sources;
-    };
-    
-    obj.setAll = function(x) {
-        sources = x;
-    };
-
-    obj.clear = function() {
-        sources = [];
-    };
-
-    return obj;
-})();
-
-
-/****************
-  Label Functions
-
-  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
-*/
-
-LocusZoom.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Label function for "Chromosome # (Mb)" where # comes from state
-LocusZoom.LabelFunctions.add("chromosome", function(state){
-    if (!isNaN(+state.chr)){ 
-        return "Chromosome " + state.chr + " (Mb)";
-    } else {
-        return "Chromosome (Mb)";
-    }
-});
-
-
-/**************************
-  Transformation Functions
-
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
-  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
-
-  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
-
-  All transformation functions must accept an object of parameters and a value to process.
-*/
-LocusZoom.TransformationFunctions = (function() {
-    var obj = {};
-    var transformations = {};
-
-    var getTrans = function(name) {
-        if (!name) {
-            return null;
-        }
-        var fun = transformations[name];
-        if (fun)  {
-            return fun;
-        } else {
-            throw("transformation " + name + " not found");
-        }
-    };
-
-    //a single transformation with any parameters
-    //(parameters not currently supported)
-    var parseTrans = function(name) {
-        return getTrans(name);
-    };
-
-    //a "raw" transformation string with a leading pipe
-    //and one or more transformations
-    var parseTransString = function(x) {
-        var funs = [];
-        var re = /\|([^\|]+)/g;
-        var result;
-        while((result = re.exec(x))!=null) {
-            funs.push(result[1]);
-        }
-        if (funs.length==1) {
-            return parseTrans(funs[0]);
-        } else if (funs.length > 1) {
-            return function(x) {
-                var val = x;
-                for(var i = 0; i<funs.length; i++) {
-                    val = parseTrans(funs[i])(val);
-                }
-                return val;
-            };
-        }
-        return null;
-    };
-
-    //accept both "|name" and "name"
-    obj.get = function(name) {
-        if (name && name.substring(0,1)=="|") {
-            return parseTransString(name);
-        } else {
-            return parseTrans(name);
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
-            throw("transformation name should not start with a pipe");
-        } else {
-            if (fn) {
-                transformations[name] = fn;
-            } else {
-                delete transformations[name];
-            }
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (transformations[name]) {
-            throw("transformation already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(transformations);
-    };
-
-    return obj;
-})();
-
-LocusZoom.TransformationFunctions.add("neglog10", function(x) {
-    return -Math.log(x) / Math.LN10;
-});
-
-LocusZoom.TransformationFunctions.add("scinotation", function(x) {
-    var log;
-    if (Math.abs(x) > 1){
-        log = Math.ceil(Math.log(x) / Math.LN10);
-    } else {
-        log = Math.floor(Math.log(x) / Math.LN10);
-    }
-    if (Math.abs(log) <= 3){
-        return x.toFixed(3);
-    } else {
-        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
-    }
-});
-
-
-/****************
-  Scale Functions
-
-  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
-  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
-
-  All scale functions must accept an object of parameters and a value to process.
-*/
-
-LocusZoom.ScaleFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, parameters, value) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof parameters == "undefined" && typeof value == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](parameters, value);
-            }
-        } else {
-            throw("scale function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("scale function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("if", function(parameters, value){
-    if (typeof value == "undefined" || parameters.field_value != value){
-        if (typeof parameters.else != "undefined"){
-            return parameters.else;
-        } else {
-            return null;
-        }
-    } else {
-        return parameters.then;
-    }
-});
-
-// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
-LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
-    var breaks = parameters.breaks;
-    var values = parameters.values;
-    if (typeof value == "undefined" || value == null || isNaN(+value)){
-        return (parameters.null_value ? parameters.null_value : null);
-    }
-    var threshold = breaks.reduce(function(prev, curr){
-        if (+value < prev || (+value >= prev && +value < curr)){
-            return prev;
-        } else {
-            return curr;
-        }
-    });
-    return values[breaks.indexOf(threshold)];
-});
-
-// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
-        return (parameters.null_value ? parameters.null_value : null); 
-    } else {
-        return parameters.values[parameters.categories.indexOf(value)];
-    }
-});
-
-
-/************************
-  Data Layer Subclasses
-
-  The abstract Data Layer class has general methods and properties that apply universally to all Data Layers
-  Specific data layer subclasses (e.g. a scatter plot, a line plot, gene visualization, etc.) must be defined
-  and registered with this singleton to be accessible.
-
-  All new Data Layer subclasses must be defined by accepting an id string and a layout object.
-  Singleton for storing available Data Layer classes as well as updating existing and/or registering new ones
+  Object for storing data layer definitions. Because data layer definitions tend
+  to be lengthy they are stored in individual files instead of below this collection definition.
 */
 
 LocusZoom.DataLayers = (function() {
@@ -2338,7 +2045,11 @@ LocusZoom.DataLayers = (function() {
     return obj;
 })();
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
 
+"use strict";
 
 /*********************
   Scatter Data Layer
@@ -2357,7 +2068,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         },
         id_field: "id"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Extra default for layout spacing
     // Not in default layout since that would make the label attribute always present
@@ -2757,6 +2468,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
 /*********************
   Line Data Layer
   Implements a standard line plot
@@ -2775,7 +2492,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         y_axis: { field: "y", axis: 1 },
         hitarea_width: 5
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Var for storing mouse events for use in tool tip positioning
     this.mouse_event = null;
@@ -2997,6 +2714,12 @@ LocusZoom.DataLayers.add("line", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
 /*********************
   Genes Data Layer
   Implements a data layer that will render gene tracks
@@ -3013,7 +2736,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
         track_vertical_spacing: 10,
         hover_element: "bounding_box"
     };
-    layout = LocusZoom.mergeLayouts(layout, this.DefaultLayout);
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
@@ -3441,6 +3164,346 @@ LocusZoom.DataLayers.add("genes", function(layout){
        
     return this;
 
+});
+
+/* global LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Singletons
+
+  LocusZoom has various singleton objects that are used for registering functions or classes.
+  These objects provide safe, standard methods to redefine or delete existing functions/classes
+  as well as define new custom functions/classes to be used in a plot.
+
+*/
+
+
+/* The Collection of "Known" Data Source Endpoints */
+
+LocusZoom.KnownDataSources = (function() {
+    var obj = {};
+    var sources = [];
+
+    var findSourceByName = function(x) {
+        for(var i=0; i<sources.length; i++) {
+            if (!sources[i].SOURCE_NAME) {
+                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
+            }
+            if (sources[i].SOURCE_NAME == x) {
+                return sources[i];
+            }
+        }
+        return null;
+    };
+
+    obj.get = function(name) {
+        return findSourceByName(name);
+    };
+
+    obj.add = function(source) {
+        if (!source.SOURCE_NAME) {
+            console.warn("Data source added does not have a SOURCE_NAME");
+        }
+        sources.push(source);
+    };
+
+    obj.push = function(source) {
+        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        obj.add(source);
+    };
+
+    obj.list = function() {
+        return sources.map(function(x) {return x.SOURCE_NAME;});
+    };
+
+    obj.create = function(name) {
+        //create new object (pass additional parameters to constructor)
+        var newObj = findSourceByName(name);
+        if (newObj) {
+            var params = arguments;
+            params[0] = null;
+            return new (Function.prototype.bind.apply(newObj, params));
+        } else {
+            throw("Unable to find data source for name: " + name); 
+        }
+    };
+
+    //getAll, setAll and clear really should only be used by tests
+    obj.getAll = function() {
+        return sources;
+    };
+    
+    obj.setAll = function(x) {
+        sources = x;
+    };
+
+    obj.clear = function() {
+        sources = [];
+    };
+
+    return obj;
+})();
+
+
+/****************
+  Label Functions
+
+  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
+*/
+
+LocusZoom.LabelFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, state) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof state == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](state);
+            }
+        } else {
+            throw("label function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("label function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Label function for "Chromosome # (Mb)" where # comes from state
+LocusZoom.LabelFunctions.add("chromosome", function(state){
+    if (!isNaN(+state.chr)){ 
+        return "Chromosome " + state.chr + " (Mb)";
+    } else {
+        return "Chromosome (Mb)";
+    }
+});
+
+
+/**************************
+  Transformation Functions
+
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+
+  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+
+  All transformation functions must accept an object of parameters and a value to process.
+*/
+LocusZoom.TransformationFunctions = (function() {
+    var obj = {};
+    var transformations = {};
+
+    var getTrans = function(name) {
+        if (!name) {
+            return null;
+        }
+        var fun = transformations[name];
+        if (fun)  {
+            return fun;
+        } else {
+            throw("transformation " + name + " not found");
+        }
+    };
+
+    //a single transformation with any parameters
+    //(parameters not currently supported)
+    var parseTrans = function(name) {
+        return getTrans(name);
+    };
+
+    //a "raw" transformation string with a leading pipe
+    //and one or more transformations
+    var parseTransString = function(x) {
+        var funs = [];
+        var re = /\|([^\|]+)/g;
+        var result;
+        while((result = re.exec(x))!=null) {
+            funs.push(result[1]);
+        }
+        if (funs.length==1) {
+            return parseTrans(funs[0]);
+        } else if (funs.length > 1) {
+            return function(x) {
+                var val = x;
+                for(var i = 0; i<funs.length; i++) {
+                    val = parseTrans(funs[i])(val);
+                }
+                return val;
+            };
+        }
+        return null;
+    };
+
+    //accept both "|name" and "name"
+    obj.get = function(name) {
+        if (name && name.substring(0,1)=="|") {
+            return parseTransString(name);
+        } else {
+            return parseTrans(name);
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (name.substring(0,1)=="|") {
+            throw("transformation name should not start with a pipe");
+        } else {
+            if (fn) {
+                transformations[name] = fn;
+            } else {
+                delete transformations[name];
+            }
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (transformations[name]) {
+            throw("transformation already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(transformations);
+    };
+
+    return obj;
+})();
+
+LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    var log;
+    if (Math.abs(x) > 1){
+        log = Math.ceil(Math.log(x) / Math.LN10);
+    } else {
+        log = Math.floor(Math.log(x) / Math.LN10);
+    }
+    if (Math.abs(log) <= 3){
+        return x.toFixed(3);
+    } else {
+        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+    }
+});
+
+
+/****************
+  Scale Functions
+
+  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+
+  All scale functions must accept an object of parameters and a value to process.
+*/
+
+LocusZoom.ScaleFunctions = (function() {
+    var obj = {};
+    var functions = {};
+
+    obj.get = function(name, parameters, value) {
+        if (!name) {
+            return null;
+        } else if (functions[name]) {
+            if (typeof parameters == "undefined" && typeof value == "undefined"){
+                return functions[name];
+            } else {
+                return functions[name](parameters, value);
+            }
+        } else {
+            throw("scale function [" + name + "] not found");
+        }
+    };
+
+    obj.set = function(name, fn) {
+        if (fn) {
+            functions[name] = fn;
+        } else {
+            delete functions[name];
+        }
+    };
+
+    obj.add = function(name, fn) {
+        if (functions[name]) {
+            throw("scale function already exists with name: " + name);
+        } else {
+            obj.set(name, fn);
+        }
+    };
+
+    obj.list = function() {
+        return Object.keys(functions);
+    };
+
+    return obj;
+})();
+
+// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("if", function(parameters, value){
+    if (typeof value == "undefined" || parameters.field_value != value){
+        if (typeof parameters.else != "undefined"){
+            return parameters.else;
+        } else {
+            return null;
+        }
+    } else {
+        return parameters.then;
+    }
+});
+
+// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
+LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
+    var breaks = parameters.breaks;
+    var values = parameters.values;
+    if (typeof value == "undefined" || value == null || isNaN(+value)){
+        return (parameters.null_value ? parameters.null_value : null);
+    }
+    var threshold = breaks.reduce(function(prev, curr){
+        if (+value < prev || (+value >= prev && +value < curr)){
+            return prev;
+        } else {
+            return curr;
+        }
+    });
+    return values[breaks.indexOf(threshold)];
+});
+
+// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
+LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+        return (parameters.null_value ? parameters.null_value : null); 
+    } else {
+        return parameters.values[parameters.categories.indexOf(value)];
+    }
 });
 
 /* global d3,Q,LocusZoom */
@@ -4858,11 +4921,11 @@ LocusZoom.Plot = function(id, datasource, layout) {
     // If no layout was passed, use the Standard GWAS Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.mergeLayouts({}, LocusZoom.Layouts.Plots.StandardGWAS);
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
     } else {
         this.layout = layout;
     }
-    LocusZoom.mergeLayouts(this.layout, LocusZoom.Plot.DefaultLayout);
+    LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
     // Create a shortcut to the state in the layout on the Plot
     this.state = this.layout.state;
@@ -5690,7 +5753,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.svg = {};
 
     // The layout is a serializable object used to describe the composition of the Panel
-    this.layout = LocusZoom.mergeLayouts(layout || {}, LocusZoom.Panel.DefaultLayout);
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){
