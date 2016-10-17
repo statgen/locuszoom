@@ -325,6 +325,10 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     type: "intervals",
     fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
     id_field: "interval:start",
+    start_field: "interval:start",
+    end_field: "interval:end",
+    track_split_field: "interval:state_id",
+    split_tracks: true,
     highlighted: {
         onmouseover: "on",
         onmouseout: "off"
@@ -337,10 +341,10 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         duration: 200
     },
     tooltip: {
-        closable: true,
+        closable: false,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "..."
+        html: "{{interval:state_id}} {{interval:state_name}}"
     }
 });
 

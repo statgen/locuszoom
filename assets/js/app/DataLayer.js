@@ -83,7 +83,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
         if (typeof element[id_field] == "undefined"){
             throw("Unable to generate element ID");
         }
-        element_id = element[id_field].replace(/\W/g,"");
+        element_id = element[id_field].toString().replace(/\W/g,"");
     }
     return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
 };

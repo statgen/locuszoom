@@ -89,6 +89,22 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px;
     fill: #000099; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box {
+    fill: #363696;
+    fill-opacity: 0;
+    stroke-width: 0px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-highlighted {
+    fill: #363696;
+    fill-opacity: 0.2;
+    stroke-width: 0px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-selected {
+    fill: #363696;
+    fill-opacity: 0.35;
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-interval_rect {
+    stroke-width: 0px;
+    fill: #990000; }
 
 /* ! LocusZoom HTML Styles */
 div.lz-data_layer-tooltip {
