@@ -114,6 +114,11 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         field: "sig:x",
         decoupled: true
     },
+    legend: [
+        { shape: "line", size: 40, label: "GWAS Signif.",
+          style: { "stroke": "#D3D3D3", "stroke-width": "3px", "stroke-dasharray": "10px 10px" }
+        }
+    ],
     y_axis: {
         axis: 1,
         field: "sig:y"
@@ -138,6 +143,9 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         floor: 0,
         ceiling: 100
     },
+    legend: [
+        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, size: 40, label: "Recomb Rate" }
+    ],
     transition: {
         duration: 200
     }
@@ -146,7 +154,15 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
-    point_shape: "circle",
+    point_shape: {
+        scale_function: "if",
+        field: "ld:isrefvar",
+        parameters: {
+            field_value: 1,
+            then: "diamond",
+            else: "circle"
+        }
+    },
     point_size: {
         scale_function: "if",
         field: "ld:isrefvar",
@@ -174,6 +190,15 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
             }
         },
         "#B8B8B8"
+    ],
+    legend: [
+        { shape: "diamond", color: "#9632b8", size: 80, label: "LD Ref Var" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² > 0.8" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² > 0.6" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² > 0.4" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² > 0.2" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² > 0.0" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",
@@ -421,6 +446,10 @@ LocusZoom.Layouts.add("panel", "gwas", {
             label: "Recombination Rate (cM/Mb)",
             label_offset: 40
         }
+    },
+    legend: {
+        orientation: "vertical",
+        origin: { x: 55, y: 40 }
     },
     interaction: {
         drag_background_to_pan: true,

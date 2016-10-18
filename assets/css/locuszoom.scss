@@ -50,7 +50,7 @@ svg.#{$namespace}-locuszoom {
   .#{$namespace}-axis path,
   .#{$namespace}-axis line {
   	fill: none;
-  	stroke: black;
+  	stroke: #{$default_black};
   	shape-rendering: crispEdges;
   }
 
@@ -64,6 +64,13 @@ svg.#{$namespace}-locuszoom {
     outline-width: 1px;
     outline-color: rgb(66,66,66);
     outline-offset: 2px;
+  }
+
+  .#{$namespace}-legend-background {
+    fill: rgb(255,255,255);
+    fill-opacity: 1;
+    stroke: #{$default_black};
+    stroke-width: 1px;
   }
 
   path.#{$namespace}-data_layer-scatter {

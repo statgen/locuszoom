@@ -498,6 +498,11 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         field: "sig:x",
         decoupled: true
     },
+    legend: [
+        { shape: "line", size: 40, label: "GWAS Signif.",
+          style: { "stroke": "#D3D3D3", "stroke-width": "3px", "stroke-dasharray": "10px 10px" }
+        }
+    ],
     y_axis: {
         axis: 1,
         field: "sig:y"
@@ -522,6 +527,9 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         floor: 0,
         ceiling: 100
     },
+    legend: [
+        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, size: 40, label: "Recomb Rate" }
+    ],
     transition: {
         duration: 200
     }
@@ -530,7 +538,15 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
-    point_shape: "circle",
+    point_shape: {
+        scale_function: "if",
+        field: "ld:isrefvar",
+        parameters: {
+            field_value: 1,
+            then: "diamond",
+            else: "circle"
+        }
+    },
     point_size: {
         scale_function: "if",
         field: "ld:isrefvar",
@@ -558,6 +574,15 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
             }
         },
         "#B8B8B8"
+    ],
+    legend: [
+        { shape: "diamond", color: "#9632b8", size: 80, label: "LD Ref Var" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² > 0.8" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² > 0.6" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² > 0.4" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² > 0.2" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² > 0.0" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",
@@ -805,6 +830,10 @@ LocusZoom.Layouts.add("panel", "gwas", {
             label: "Recombination Rate (cM/Mb)",
             label_offset: 40
         }
+    },
+    legend: {
+        orientation: "vertical",
+        origin: { x: 55, y: 40 }
     },
     interaction: {
         drag_background_to_pan: true,
@@ -2491,7 +2520,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         
     };
-       
+ 
     return this;
 
 });
@@ -4362,6 +4391,85 @@ LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
     };
 });
 
+/* global d3,Q,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Legend
+
+  A legend is an SVG object used to display contextual information about a panel.
+  Panel layouts determine basic features of a legend - its position in the panel,
+  its orientation, title, etc. Layouts of child data layers of the panel determine
+  a legend's actual content.
+
+*/
+
+LocusZoom.Legend = function(parent){
+
+    // parent must be a locuszoom panel
+    if (!parent instanceof LocusZoom.Panel){
+        throw "Unable to create legend, parent must be a locuszoom panel";
+    }
+    this.parent = parent;
+    this.id = this.parent.getBaseId() + ".legend";
+
+    this.parent.layout.legend = LocusZoom.Layouts.merge(this.parent.layout.legend || {}, LocusZoom.Legend.DefaultLayout);
+    this.layout = this.parent.layout.legend;
+
+    this.selector = null;
+    this.background_rect = null;
+    this.elements = [];
+    this.hidden = false;
+
+    return this.render();
+
+};
+
+LocusZoom.Legend.DefaultLayout = {
+    orientation: "vertical",
+    origin: { x: 0, y: 0 },
+    padding: 5,
+    hidden: false
+};
+
+LocusZoom.Legend.prototype.render = function(){
+
+    // Get a legend group selector if not yet defined
+    if (!this.selector){
+        this.selector = this.parent.svg.group.append("g")
+            .attr("id", this.parent.getBaseId() + ".legend").attr("class", "lz-legend");
+    }
+
+    // Get a legend background rect selector if not yet defined
+    if (!this.background_rect){
+        this.background_rect = this.selector.append("rect")
+            .attr("width", 100).attr("height", 100).attr("class", "lz-legend-background");
+    }
+
+    // Remove all elements
+    this.elements.forEach(function(element){
+        element.selector.remove();
+    });
+
+    // Draw all elements, positioned by legend layout orientation value (vertical or horizontal)
+    // ...
+
+    // Scale the background rect to the elements in the legend
+    // ...   
+    
+    return this.position();
+    
+};
+
+LocusZoom.Legend.prototype.position = function(){
+    if (!this.selector){ return this; }
+    this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
+};
+
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
@@ -5911,6 +6019,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     },
+    legend: null,
     interaction: {
         drag_background_to_pan: false,
         drag_x_ticks_to_scale: false,
@@ -5998,6 +6107,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.curtain.update();
         this.loader.update();
         this.dashboard.update();
+        if (this.legend){ this.legend.position(); }
     }
     return this;
 };
@@ -6245,6 +6355,12 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
     }.bind(this));
+
+    // Create the legend object as defined by panel layout and child data layer layouts
+    this.legend = null;
+    if (this.layout.legend){
+        this.legend = new LocusZoom.Legend(this);
+    }
 
     // Establish panel background drag interaction mousedown event handler (on the panel background)
     var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
