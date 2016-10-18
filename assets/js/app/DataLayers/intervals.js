@@ -17,8 +17,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         end_field: "end",
         track_split_field: "state_id",
         split_tracks: false,
-        interval_height: 16,
-        track_vertical_spacing: 10,
+        interval_height: 15,
+        track_vertical_spacing: 5,
         bounding_box_padding: 4,
         hover_element: "bounding_box"
     };

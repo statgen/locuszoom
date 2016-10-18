@@ -712,7 +712,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     start_field: "interval:start",
     end_field: "interval:end",
     track_split_field: "interval:state_id",
-    split_tracks: true,
+    split_tracks: false,
     color: {
         field: "interval:state_id",
         scale_function: "categorical_bin",
@@ -846,12 +846,9 @@ LocusZoom.Layouts.add("panel", "gwas", {
     title: "",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 0 },
     min_width:  400,
     min_height: 200,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
@@ -890,12 +887,9 @@ LocusZoom.Layouts.add("panel", "genes", {
     id: "genes",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 225 },
     min_width: 400,
     min_height: 112.5,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0.5 },
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -913,12 +907,9 @@ LocusZoom.Layouts.add("panel", "phewas", {
     id: "phewas",
     width: 800,
     height: 300,
-    origin: { x: 0, y: 0 },
     min_width:  800,
     min_height: 300,
     proportional_width: 1,
-    proportional_height: .6,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     axes: {
@@ -1132,8 +1123,6 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
     min_width:  800,
     min_height: 50,
     proportional_width: 1,
-    proportional_height: .1,
-    proportional_origin: { x: 0, y: .6 },
     margin: { top: 0, right: 50, bottom: 35, left: 50 },
     axes: {
         x: {
@@ -1393,10 +1382,10 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
     width: 800,
-    height: 225,
+    height: 50,
     min_width: 400,
-    min_height: 112.5,
-    margin: { top: 20, right: 50, bottom: 20, left: 50 },
+    min_height: 50,
+    margin: { top: 25, right: 50, bottom: 5, left: 50 },
     dashboard: LocusZoom.Layouts.get("dashboard", "interval_panel"),
     axes: {},
     interaction: {
@@ -1419,13 +1408,12 @@ LocusZoom.Layouts.add("plot", "standard_gwas", {
     width: 800,
     height: 450,
     resizable: "responsive",
-    aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "gwas"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "gwas", { proportional_height: 0.5 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.5 })
     ]
 });
 
@@ -1434,16 +1422,30 @@ LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
 
 LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
-    height: 500,
+    height: 600,
     min_width: 800,
-    min_height: 500,
+    min_height: 600,
     responsive_resize: true,
-    aspect_ratio: 1.6,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "phewas"),
-        LocusZoom.Layouts.get("panel", "genome_legend"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "phewas", { proportional_height: 0.45 }),
+        LocusZoom.Layouts.get("panel", "genome_legend", { proportional_height: 0.1 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.45 })
+    ]
+});
+
+LocusZoom.Layouts.add("plot", "interval_gwas", {
+    state: {},
+    width: 800,
+    height: 500,
+    resizable: "responsive",
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
+    panels: [
+        LocusZoom.Layouts.get("panel", "gwas", { width: 800, proportional_height: 0.45 }),
+        LocusZoom.Layouts.get("panel", "intervals", { proportional_height: 0.1 }),
+        LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: 0.45 })
     ]
 });
 
@@ -3297,8 +3299,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         end_field: "end",
         track_split_field: "state_id",
         split_tracks: false,
-        interval_height: 16,
-        track_vertical_spacing: 10,
+        interval_height: 15,
+        track_vertical_spacing: 5,
         bounding_box_padding: 4,
         hover_element: "bounding_box"
     };
@@ -6337,12 +6339,12 @@ LocusZoom.Panel.DefaultLayout = {
     y_index: null,
     width:  0,
     height: 0,
-    origin: { x: 0, y: 0 },
+    origin: { x: 0, y: null },
     min_width: 1,
     min_height: 1,
     proportional_width: null,
     proportional_height: null,
-    proportional_origin: { x: 0, y: 0 },
+    proportional_origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: "clear_selections",
     dashboard: {

@@ -50,8 +50,7 @@
         .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
         .add("interval", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 16} }]);
     } else {
-      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length)
-              + "staticdata/";
+      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
         .add("base", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
@@ -62,8 +61,7 @@
         .add("interval", ["IntervalLZ", { url: apiBase + "intervals_10_114550452-115067678.json?" }]);
     }
 
-    layout = LocusZoom.Layouts.get("plot", "standard_gwas");
-    layout.panels.splice(1,0,LocusZoom.Layouts.get("panel", "intervals"));
+    layout = LocusZoom.Layouts.get("plot", "interval_gwas");
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);
