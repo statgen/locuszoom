@@ -808,3 +808,20 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         return this;
     };
 });
+
+// Resize to data
+LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        if (this.button){ return this; }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText("Resize to Data")
+            .setTitle("Automatically resize this panel to fit the data its currently showing")
+            .setOnclick(function(){
+                this.parent_panel.scaleHeightToData();
+                this.update();
+            }.bind(this));
+        this.button.show();
+        return this;
+    };
+});

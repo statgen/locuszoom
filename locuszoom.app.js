@@ -726,6 +726,29 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
+LocusZoom.Layouts.add("dashboard", "resize_to_data_panel", {
+    components: [
+        {
+            type: "remove_panel",
+            position: "right",
+            color: "red"
+        },
+        {
+            type: "move_panel_up",
+            position: "right"
+        },
+        {
+            type: "move_panel_down",
+            position: "right"
+        },
+        {
+            type: "resize_to_data",
+            position: "right",
+            color: "blue"
+        },
+    ]
+});
+
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
@@ -815,7 +838,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: LocusZoom.Layouts.get("dashboard", "resize_to_data_panel"),
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes")
     ]
@@ -1409,6 +1432,11 @@ LocusZoom.DataLayer.DefaultLayout = {
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
     return this.parent_plot.id + "." + this.parent.id + "." + this.id;
+};
+
+LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
+    var dataBCR = this.svg.group.node().getBoundingClientRect();
+    return dataBCR.bottom - dataBCR.top;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
@@ -4317,6 +4345,23 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
     };
 });
 
+// Resize to data
+LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        if (this.button){ return this; }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText("Resize to Data")
+            .setTitle("Automatically resize this panel to fit the data its currently showing")
+            .setOnclick(function(){
+                this.parent_panel.scaleHeightToData();
+                this.update();
+            }.bind(this));
+        this.button.show();
+        return this;
+    };
+});
+
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
@@ -6764,6 +6809,28 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
     }
 
     return this;
+};
+
+// Force the height of this panel to the largest absolute height of the data in
+// all child data layers (if not null for any child data layers)
+LocusZoom.Panel.prototype.scaleHeightToData = function(){
+    var target_height = null;
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        var dh = this.data_layers[id].getAbsoluteDataHeight();
+        if (+dh){
+            if (target_height == null){ target_height = +dh; }
+            else { target_height = Math.max(target_height, +dh); }
+        }
+    }.bind(this));
+    if (target_height != null){
+        var delta = target_height - this.layout.height;
+        this.setDimensions(this.layout.width, target_height);
+        this.parent.setDimensions();
+        this.parent.panel_ids_by_y_index.forEach(function(id){
+            this.parent.panels[id].layout.proportional_height = null;
+        }.bind(this));
+        this.parent.positionPanels();
+    }
 };
 
 // Add a "basic" loader to a panel

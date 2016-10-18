@@ -69,6 +69,11 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
     return this.parent_plot.id + "." + this.parent.id + "." + this.id;
 };
 
+LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
+    var dataBCR = this.svg.group.node().getBoundingClientRect();
+    return dataBCR.bottom - dataBCR.top;
+};
+
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
     return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging || this.parent.interactions.zooming);
