@@ -71,7 +71,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
     var dataBCR = this.svg.group.node().getBoundingClientRect();
-    return dataBCR.bottom - dataBCR.top;
+    return dataBCR.height;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){

@@ -1436,7 +1436,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
     var dataBCR = this.svg.group.node().getBoundingClientRect();
-    return dataBCR.bottom - dataBCR.top;
+    return dataBCR.height;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
@@ -6823,6 +6823,7 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
         }
     }.bind(this));
     if (target_height != null){
+        target_height += +this.layout.margin.top + +this.layout.margin.bottom;
         var delta = target_height - this.layout.height;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();
