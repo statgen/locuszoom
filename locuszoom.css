@@ -103,8 +103,7 @@ svg.lz-locuszoom {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-intervals.lz-interval_rect {
-    stroke-width: 0px;
-    fill: #990000; }
+    stroke-width: 0px; }
 
 /* ! LocusZoom HTML Styles */
 div.lz-data_layer-tooltip {

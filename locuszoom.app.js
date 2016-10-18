@@ -713,6 +713,18 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     end_field: "interval:end",
     track_split_field: "interval:state_id",
     split_tracks: true,
+    color: {
+        field: "interval:state_id",
+        scale_function: "categorical_bin",
+        parameters: {
+            categories: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
+            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
+            null_value: "#B8B8B8"
+        }
+    },
+    /*
+Object {1: "Active Promoter", 2: "Weak Promoter", 4: "Strong enhancer", 5: "Strong enhancer", 6: "Weak enhancer", 7: "Weak enhancer", 8: "Insulator", 9: "Transcriptional transition", 10: "Transcriptional elongation", 12: "Polycomb-repressed", 13: "Heterochromatin / low signal"}
+*/
     highlighted: {
         onmouseover: "on",
         onmouseout: "off"
@@ -3360,7 +3372,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
         this.assignTracks();
 
-        var width, height, x, y;
+        var width, height, x, y, fill;
 
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")
@@ -3436,16 +3448,23 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                     return ((d.track-1) * data_layer.getTrackHeight())
                         + data_layer.layout.bounding_box_padding;
                 };
+                fill = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.color, d);
+                };                
                 
                 if (data_layer.canTransition()){
                     rects
                         .transition()
                         .duration(data_layer.layout.transition.duration || 0)
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
                 } else {
                     rects
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
                 }
                 
                 rects.exit().remove();
@@ -4724,6 +4743,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
         var text = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
         if (this.button){
             this.button.setText(text);
+            this.button.show();
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
@@ -4731,6 +4751,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
             .setOnclick(function(){
                 data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                 data_layer.render();
+                this.update();
             }.bind(this));
         this.button.show();
         return this.update();

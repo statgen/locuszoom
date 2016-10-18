@@ -63,7 +63,7 @@
     }
 
     layout = LocusZoom.Layouts.get("plot", "standard_gwas");
-    layout.panels.push(LocusZoom.Layouts.get("panel", "intervals"));
+    layout.panels.splice(1,0,LocusZoom.Layouts.get("panel", "intervals"));
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);

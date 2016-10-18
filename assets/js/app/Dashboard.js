@@ -821,6 +821,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
         var text = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
         if (this.button){
             this.button.setText(text);
+            this.button.show();
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
@@ -828,6 +829,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
             .setOnclick(function(){
                 data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                 data_layer.render();
+                this.update();
             }.bind(this));
         this.button.show();
         return this.update();

@@ -120,7 +120,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
         this.assignTracks();
 
-        var width, height, x, y;
+        var width, height, x, y, fill;
 
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")
@@ -196,16 +196,23 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                     return ((d.track-1) * data_layer.getTrackHeight())
                         + data_layer.layout.bounding_box_padding;
                 };
+                fill = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.color, d);
+                };                
                 
                 if (data_layer.canTransition()){
                     rects
                         .transition()
                         .duration(data_layer.layout.transition.duration || 0)
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
                 } else {
                     rects
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
                 }
                 
                 rects.exit().remove();
