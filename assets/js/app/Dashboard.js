@@ -831,6 +831,10 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                     data_layer.render();
+                    if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
+                    this.scale_timeout = setTimeout(function(){
+                        this.parent_panel.scaleHeightToData();
+                    }.bind(this), +data_layer.layout.transition.duration || 0);
                     this.update();
                 }.bind(this));
             return this.update();
