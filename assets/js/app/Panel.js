@@ -1060,6 +1060,28 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
     return this;
 };
 
+// Force the height of this panel to the largest absolute height of the data in
+// all child data layers (if not null for any child data layers)
+LocusZoom.Panel.prototype.scaleHeightToData = function(){
+    var target_height = null;
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        var dh = this.data_layers[id].getAbsoluteDataHeight();
+        if (+dh){
+            if (target_height == null){ target_height = +dh; }
+            else { target_height = Math.max(target_height, +dh); }
+        }
+    }.bind(this));
+    if (target_height != null){
+        var delta = target_height - this.layout.height;
+        this.setDimensions(this.layout.width, target_height);
+        this.parent.setDimensions();
+        this.parent.panel_ids_by_y_index.forEach(function(id){
+            this.parent.panels[id].layout.proportional_height = null;
+        }.bind(this));
+        this.parent.positionPanels();
+    }
+};
+
 // Add a "basic" loader to a panel
 // This method is jsut a shortcut for adding the most commonly used type of loader
 // which appears when data is requested, animates (e.g. shows an infinitely cycling
