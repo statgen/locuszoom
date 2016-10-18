@@ -809,7 +809,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
     };
 });
 
-// Move Panel Down
+// Toggle Split Tracks
 LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     if (!layout.data_layer_id){ layout.data_layer_id = "intervals"; }
@@ -822,16 +822,18 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
         if (this.button){
             this.button.setText(text);
             this.button.show();
+            this.parent.position();
             return this;
+        } else {
+            this.button = new LocusZoom.Dashboard.Component.Button(this)
+                .setColor(layout.color).setText(text)
+                .setTitle("Toggle whether tracks are split apart or merged together")
+                .setOnclick(function(){
+                    data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
+                    data_layer.render();
+                    this.update();
+                }.bind(this));
+            return this.update();
         }
-        this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(text).setTitle("Toggle whether tracks are split apart or merged together")
-            .setOnclick(function(){
-                data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
-                data_layer.render();
-                this.update();
-            }.bind(this));
-        this.button.show();
-        return this.update();
     };
 });
