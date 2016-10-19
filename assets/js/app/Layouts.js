@@ -114,11 +114,6 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         field: "sig:x",
         decoupled: true
     },
-    legend: [
-        { shape: "line", length: 30, label: "GWAS Signif.",
-          style: { "stroke": "#D3D3D3", "stroke-width": "3px", "stroke-dasharray": "10px 10px" }
-        }
-    ],
     y_axis: {
         axis: 1,
         field: "sig:y"
@@ -143,9 +138,6 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         floor: 0,
         ceiling: 100
     },
-    legend: [
-        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, length: 30, label: "Recomb Rate" }
-    ],
     transition: {
         duration: 200
     }
@@ -367,6 +359,8 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
+
+
 LocusZoom.Layouts.add("dashboard", "resize_to_data_panel", {
     components: [
         {
@@ -430,7 +424,15 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_legend",
+            position: "right",
+            color: "green"
+        });
+        return l;
+    })(),
     axes: {
         x: {
             label_function: "chromosome",

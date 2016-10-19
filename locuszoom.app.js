@@ -498,11 +498,6 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         field: "sig:x",
         decoupled: true
     },
-    legend: [
-        { shape: "line", length: 30, label: "GWAS Signif.",
-          style: { "stroke": "#D3D3D3", "stroke-width": "3px", "stroke-dasharray": "10px 10px" }
-        }
-    ],
     y_axis: {
         axis: 1,
         field: "sig:y"
@@ -527,9 +522,6 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         floor: 0,
         ceiling: 100
     },
-    legend: [
-        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, length: 30, label: "Recomb Rate" }
-    ],
     transition: {
         duration: 200
     }
@@ -751,6 +743,8 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
+
+
 LocusZoom.Layouts.add("dashboard", "resize_to_data_panel", {
     components: [
         {
@@ -814,7 +808,15 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_legend",
+            position: "right",
+            color: "green"
+        });
+        return l;
+    })(),
     axes: {
         x: {
             label_function: "chromosome",
@@ -4391,6 +4393,28 @@ LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
     };
 });
 
+// Toggle legend
+LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        var text = this.parent_panel.legend.layout.hidden ? "Show Legend" : "Hide Legend";
+        if (this.button){
+            this.button.setText(text).show();
+            this.parent.position();
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color)
+            .setTitle("Show or hide the legend for this panel")
+            .setOnclick(function(){
+                this.parent_panel.legend.layout.hidden = !this.parent_panel.legend.layout.hidden;
+                this.parent_panel.legend.render();
+                this.update();
+            }.bind(this));
+        return this.update();
+    };
+});
+
 /* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -4515,11 +4539,8 @@ LocusZoom.Legend.prototype.render = function(){
         .attr("width", bcr.width + (2*this.layout.padding))
         .attr("height", bcr.height + (2*this.layout.padding));
 
-    /*
-    this.selector.on("click", function(event){
-        event.preventDefault();
-    }.bind(this));
-    */
+    // Set the visibility on the legend from the "hidden" flag
+    this.selector.style({ visibility: this.layout.hidden ? "hidden" : "visible" });
     
     return this.position();
     
