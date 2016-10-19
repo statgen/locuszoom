@@ -115,7 +115,7 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         decoupled: true
     },
     legend: [
-        { shape: "line", size: 40, label: "GWAS Signif.",
+        { shape: "line", length: 30, label: "GWAS Signif.",
           style: { "stroke": "#D3D3D3", "stroke-width": "3px", "stroke-dasharray": "10px 10px" }
         }
     ],
@@ -144,7 +144,7 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         ceiling: 100
     },
     legend: [
-        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, size: 40, label: "Recomb Rate" }
+        { shape: "line", style: { "stroke": "#0000FF", "stroke-width": "1.5px" }, length: 30, label: "Recomb Rate" }
     ],
     transition: {
         duration: 200
@@ -192,12 +192,12 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
         "#B8B8B8"
     ],
     legend: [
-        { shape: "diamond", color: "#9632b8", size: 80, label: "LD Ref Var" },
-        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² > 0.8" },
-        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² > 0.6" },
-        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² > 0.4" },
-        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² > 0.2" },
-        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² > 0.0" },
+        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],

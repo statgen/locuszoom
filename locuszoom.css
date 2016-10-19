@@ -37,7 +37,7 @@ svg.lz-locuszoom {
     outline-color: #424242;
     outline-offset: 2px; }
   svg.lz-locuszoom .lz-legend-background {
-    fill: white;
+    fill: whitesmoke;
     fill-opacity: 1;
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1px; }
