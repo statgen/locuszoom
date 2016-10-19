@@ -320,7 +320,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.color = "gray";
     this.setColor = function(color){
         if (typeof color != "undefined"){
-            if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
+            if (["gray", "red", "orange", "yellow", "green", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
             else { this.color = "gray"; }
         }
         return this;
