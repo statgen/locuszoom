@@ -1,4 +1,4 @@
-/* global d3,Q,LocusZoom */
+/* global d3,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -81,18 +81,29 @@ LocusZoom.Legend.prototype.render = function(){
                 var label_size = +element.label_size || +this.layout.label_size || 12;
                 var label_x = 0;
                 var label_y = (label_size/2) + (padding/2);
-                // Draw the legend element symbol (line, shape, etc)
+                // Draw the legend element symbol (line, rect, shape, etc)
                 if (element.shape == "line"){
+                    // Line symbol
                     var length = +element.length || 16;
                     var path_y = (label_size/4) + (padding/2);
-                    selector.append("path").attr("class", "lz-data_layer-line " + (element.class || ""))
+                    selector.append("path").attr("class", element.class || "")
                         .attr("d", "M0," + path_y + "L" + length + "," + path_y)
                         .style(element.style || {});
                     label_x = length + padding;
+                } else if (element.shape == "rect"){
+                    // Rect symbol
+                    var width = +element.width || 16;
+                    var height = +element.height || width;
+                    selector.append("rect").attr("class", element.class || "")
+                        .attr("width", width).attr("height", height)
+                        .attr("fill", element.color || {})
+                        .style(element.style || {});
+                    label_x = width + padding;
                 } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
+                    // Shape symbol (circle, diamond, etc.)
                     var size = +element.size || 40;
                     var radius = Math.ceil(Math.sqrt(size/Math.PI));
-                    selector.append("path").attr("class", "lz-data_layer-scatter " + (element.class || ""))
+                    selector.append("path").attr("class", element.class || "")
                         .attr("d", d3.svg.symbol().size(size).type(element.shape))
                         .attr("transform", "translate(" + radius + "," + (radius+(padding/2)) + ")")
                         .attr("fill", element.color || {})

@@ -184,13 +184,13 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
         "#B8B8B8"
     ],
     legend: [
-        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var" },
-        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8" },
-        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6" },
-        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4" },
-        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2" },
-        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0" },
-        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data" }
+        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",

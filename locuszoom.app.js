@@ -568,13 +568,13 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
         "#B8B8B8"
     ],
     legend: [
-        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var" },
-        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8" },
-        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6" },
-        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4" },
-        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2" },
-        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0" },
-        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data" }
+        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",
@@ -4398,7 +4398,7 @@ LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
     };
 });
 
-/* global d3,Q,LocusZoom */
+/* global d3,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -4481,18 +4481,29 @@ LocusZoom.Legend.prototype.render = function(){
                 var label_size = +element.label_size || +this.layout.label_size || 12;
                 var label_x = 0;
                 var label_y = (label_size/2) + (padding/2);
-                // Draw the legend element symbol (line, shape, etc)
+                // Draw the legend element symbol (line, rect, shape, etc)
                 if (element.shape == "line"){
+                    // Line symbol
                     var length = +element.length || 16;
                     var path_y = (label_size/4) + (padding/2);
-                    selector.append("path").attr("class", "lz-data_layer-line " + (element.class || ""))
+                    selector.append("path").attr("class", element.class || "")
                         .attr("d", "M0," + path_y + "L" + length + "," + path_y)
                         .style(element.style || {});
                     label_x = length + padding;
+                } else if (element.shape == "rect"){
+                    // Rect symbol
+                    var width = +element.width || 16;
+                    var height = +element.height || width;
+                    selector.append("rect").attr("class", element.class || "")
+                        .attr("width", width).attr("height", height)
+                        .attr("fill", element.color || {})
+                        .style(element.style || {});
+                    label_x = width + padding;
                 } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
+                    // Shape symbol (circle, diamond, etc.)
                     var size = +element.size || 40;
                     var radius = Math.ceil(Math.sqrt(size/Math.PI));
-                    selector.append("path").attr("class", "lz-data_layer-scatter " + (element.class || ""))
+                    selector.append("path").attr("class", element.class || "")
                         .attr("d", d3.svg.symbol().size(size).type(element.shape))
                         .attr("transform", "translate(" + radius + "," + (radius+(padding/2)) + ")")
                         .attr("fill", element.color || {})
