@@ -35,7 +35,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.6"
+    version: "0.4.7"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -7033,7 +7033,6 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
     }.bind(this));
     if (target_height != null){
         target_height += +this.layout.margin.top + +this.layout.margin.bottom;
-        var delta = target_height - this.layout.height;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();
         this.parent.panel_ids_by_y_index.forEach(function(id){
