@@ -160,6 +160,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     },
+    legend: null,
     interaction: {
         drag_background_to_pan: false,
         drag_x_ticks_to_scale: false,
@@ -247,6 +248,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.curtain.update();
         this.loader.update();
         this.dashboard.update();
+        if (this.legend){ this.legend.position(); }
     }
     return this;
 };
@@ -494,6 +496,12 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
     }.bind(this));
+
+    // Create the legend object as defined by panel layout and child data layer layouts
+    this.legend = null;
+    if (this.layout.legend){
+        this.legend = new LocusZoom.Legend(this);
+    }
 
     // Establish panel background drag interaction mousedown event handler (on the panel background)
     var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
@@ -1079,7 +1087,6 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
     }.bind(this));
     if (target_height != null){
         target_height += +this.layout.margin.top + +this.layout.margin.bottom;
-        var delta = target_height - this.layout.height;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();
         this.parent.panel_ids_by_y_index.forEach(function(id){

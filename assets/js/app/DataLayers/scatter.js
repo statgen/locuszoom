@@ -416,7 +416,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         
     };
-       
+ 
     return this;
 
 });

@@ -26,7 +26,7 @@ svg.lz-locuszoom {
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
-    stroke: black;
+    stroke: rgba(24, 24, 24, 1);
     shape-rendering: crispEdges; }
   svg.lz-locuszoom .lz-axis .lz-label {
     font-size: 12px;
@@ -36,6 +36,11 @@ svg.lz-locuszoom {
     outline-width: 1px;
     outline-color: #424242;
     outline-offset: 2px; }
+  svg.lz-locuszoom .lz-legend-background {
+    fill: whitesmoke;
+    fill-opacity: 1;
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1px; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 0.4;
