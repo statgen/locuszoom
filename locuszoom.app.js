@@ -765,54 +765,7 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
             position: "right"
         }
     ]
-});
-
-LocusZoom.Layouts.add("dashboard", "resize_to_data_panel", {
-    components: [
-        {
-            type: "remove_panel",
-            position: "right",
-            color: "red"
-        },
-        {
-            type: "move_panel_up",
-            position: "right"
-        },
-        {
-            type: "move_panel_down",
-            position: "right"
-        },
-        {
-            type: "resize_to_data",
-            position: "right",
-            color: "blue"
-        }
-    ]
-});
-
-LocusZoom.Layouts.add("dashboard", "interval_panel", {
-    components: [
-        {
-            type: "remove_panel",
-            position: "right",
-            color: "red"
-        },
-        {
-            type: "move_panel_up",
-            position: "right"
-        },
-        {
-            type: "move_panel_down",
-            position: "right"
-        },
-        {
-            type: "toggle_split_tracks",
-            data_layer_id: "intervals",
-            position: "right",
-            color: "yellow"
-        }
-    ]
-});                    
+});                 
 
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
@@ -897,7 +850,15 @@ LocusZoom.Layouts.add("panel", "genes", {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: LocusZoom.Layouts.get("dashboard", "resize_to_data_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "resize_to_data",
+            position: "right",
+            color: "blue"
+        });
+        return l;
+    })(),   
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes")
     ]
@@ -1386,7 +1347,16 @@ LocusZoom.Layouts.add("panel", "intervals", {
     min_width: 400,
     min_height: 50,
     margin: { top: 25, right: 50, bottom: 5, left: 50 },
-    dashboard: LocusZoom.Layouts.get("dashboard", "interval_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_split_tracks",
+            data_layer_id: "intervals",
+            position: "right",
+            color: "yellow"
+        });
+        return l;
+    })(),
     axes: {},
     interaction: {
         drag_background_to_pan: true,
@@ -1522,7 +1492,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
 
 LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
     var dataBCR = this.svg.group.node().getBoundingClientRect();
-    return dataBCR.bottom - dataBCR.top;
+    return dataBCR.height;
 };
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
@@ -4272,7 +4242,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.color = "gray";
     this.setColor = function(color){
         if (typeof color != "undefined"){
-            if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
+            if (["gray", "red", "orange", "yellow", "green", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
             else { this.color = "gray"; }
         }
         return this;
@@ -7029,22 +6999,28 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.zoom_listener = d3.behavior.zoom()
-            .on("zoom", function(){
-                if (this.interactions.dragging || this.parent.loading_data){ return; }
-                var coords = d3.mouse(this.svg.container.node());
-                this.interactions.zooming = {
-                    scale: (d3.event.scale < 1) ? 0.9 : 1.1,
-                    center: coords[0]
-                };
-                this.render();
-                if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
-                this.zoom_timeout = setTimeout(function(){
-                    this.interactions.zooming = false;
-                    this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
-                }.bind(this), 500);
-            }.bind(this));
-        this.svg.container.call(this.zoom_listener);
+        var zoom_handler = function(){
+            console.log(Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail))));
+            if (this.interactions.dragging || this.parent.loading_data){ return; }
+            var coords = d3.mouse(this.svg.container.node());
+            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
+            if (delta == 0){ return; }
+            this.interactions.zooming = {
+                scale: (delta < 1) ? 0.9 : 1.1,
+                center: coords[0]
+            };
+            this.render();
+            if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
+            this.zoom_timeout = setTimeout(function(){
+                this.interactions.zooming = false;
+                this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
+            }.bind(this), 500);
+        }.bind(this);
+        this.zoom_listener = d3.behavior.zoom();
+        this.svg.container.call(this.zoom_listener)
+            .on("wheel.zoom", zoom_handler)
+            .on("mousewheel.zoom", zoom_handler)
+            .on("DOMMouseScroll.zoom", zoom_handler);
     }
 
     // Render data layers in order by z-index
@@ -7272,6 +7248,7 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
         }
     }.bind(this));
     if (target_height != null){
+        target_height += +this.layout.margin.top + +this.layout.margin.bottom;
         var delta = target_height - this.layout.height;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();
