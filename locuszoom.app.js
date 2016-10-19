@@ -4473,6 +4473,7 @@ LocusZoom.Legend.prototype.render = function(){
     var padding = +this.layout.padding || 1;
     var x = padding;
     var y = padding;
+    var line_height = 0;
     this.parent.data_layer_ids_by_z_index.slice().reverse().forEach(function(id){
         if (Array.isArray(this.parent.data_layers[id].layout.legend)){
             this.parent.data_layers[id].layout.legend.forEach(function(element){
@@ -4481,6 +4482,7 @@ LocusZoom.Legend.prototype.render = function(){
                 var label_size = +element.label_size || +this.layout.label_size || 12;
                 var label_x = 0;
                 var label_y = (label_size/2) + (padding/2);
+                line_height = Math.max(line_height, label_size + padding);
                 // Draw the legend element symbol (line, rect, shape, etc)
                 if (element.shape == "line"){
                     // Line symbol
@@ -4499,6 +4501,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .attr("fill", element.color || {})
                         .style(element.style || {});
                     label_x = width + padding;
+                    line_height = Math.max(line_height, height + padding);
                 } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
                     // Shape symbol (circle, diamond, etc.)
                     var size = +element.size || 40;
@@ -4510,6 +4513,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .style(element.style || {});
                     label_x = (2*radius) + padding;
                     label_y = Math.max((2*radius)+(padding/2), label_y);
+                    line_height = Math.max(line_height, (2*radius) + padding);
                 }
                 // Draw the legend element label
                 selector.append("text").attr("text-anchor", "left").attr("class", "lz-label")
@@ -4518,7 +4522,15 @@ LocusZoom.Legend.prototype.render = function(){
                 var bcr = selector.node().getBoundingClientRect();
                 if (this.layout.orientation == "vertical"){
                     y += bcr.height + padding;
+                    line_height = 0;
                 } else {
+                    // Ensure this element does not exceed the panel width (drop to the next line if it does)
+                    var right_x = this.layout.origin.x + x + bcr.width;
+                    if (right_x > this.parent.layout.width){
+                        y += line_height;
+                        x = padding;
+                        selector.attr("transform", "translate(" + x + "," + y + ")");
+                    }
                     x += bcr.width + (3*padding);
                 }
                 // Store the element
