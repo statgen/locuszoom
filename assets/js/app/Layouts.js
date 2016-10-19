@@ -342,29 +342,6 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
     ]
 });
 
-LocusZoom.Layouts.add("dashboard", "resize_to_data_panel", {
-    components: [
-        {
-            type: "remove_panel",
-            position: "right",
-            color: "red"
-        },
-        {
-            type: "move_panel_up",
-            position: "right"
-        },
-        {
-            type: "move_panel_down",
-            position: "right"
-        },
-        {
-            type: "resize_to_data",
-            position: "right",
-            color: "blue"
-        },
-    ]
-});
-
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
         {
@@ -454,7 +431,15 @@ LocusZoom.Layouts.add("panel", "genes", {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: LocusZoom.Layouts.get("dashboard", "resize_to_data_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "resize_to_data",
+            position: "right",
+            color: "blue"
+        });
+        return l;
+    })(),   
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes")
     ]
