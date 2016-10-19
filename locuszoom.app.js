@@ -530,7 +530,15 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
-    point_shape: "circle",
+    point_shape: {
+        scale_function: "if",
+        field: "ld:isrefvar",
+        parameters: {
+            field_value: 1,
+            then: "diamond",
+            else: "circle"
+        }
+    },
     point_size: {
         scale_function: "if",
         field: "ld:isrefvar",
@@ -558,6 +566,15 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
             }
         },
         "#B8B8B8"
+    ],
+    legend: [
+        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",
@@ -766,7 +783,15 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_legend",
+            position: "right",
+            color: "green"
+        });
+        return l;
+    })(),
     axes: {
         x: {
             label_function: "chromosome",
@@ -782,6 +807,10 @@ LocusZoom.Layouts.add("panel", "gwas", {
             label: "Recombination Rate (cM/Mb)",
             label_offset: 40
         }
+    },
+    legend: {
+        orientation: "vertical",
+        origin: { x: 55, y: 40 }
     },
     interaction: {
         drag_background_to_pan: true,
@@ -2476,7 +2505,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         
     };
-       
+ 
     return this;
 
 });
@@ -4347,6 +4376,187 @@ LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
     };
 });
 
+// Toggle legend
+LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        var text = this.parent_panel.legend.layout.hidden ? "Show Legend" : "Hide Legend";
+        if (this.button){
+            this.button.setText(text).show();
+            this.parent.position();
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color)
+            .setTitle("Show or hide the legend for this panel")
+            .setOnclick(function(){
+                this.parent_panel.legend.layout.hidden = !this.parent_panel.legend.layout.hidden;
+                this.parent_panel.legend.render();
+                this.update();
+            }.bind(this));
+        return this.update();
+    };
+});
+
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/**
+
+  Legend
+
+  A legend is an SVG object used to display contextual information about a panel.
+  Panel layouts determine basic features of a legend - its position in the panel,
+  its orientation, title, etc. Layouts of child data layers of the panel determine
+  a legend's actual content.
+
+*/
+
+LocusZoom.Legend = function(parent){
+
+    // parent must be a locuszoom panel
+    if (!parent instanceof LocusZoom.Panel){
+        throw "Unable to create legend, parent must be a locuszoom panel";
+    }
+    this.parent = parent;
+    this.id = this.parent.getBaseId() + ".legend";
+
+    this.parent.layout.legend = LocusZoom.Layouts.merge(this.parent.layout.legend || {}, LocusZoom.Legend.DefaultLayout);
+    this.layout = this.parent.layout.legend;
+
+    this.selector = null;
+    this.background_rect = null;
+    this.elements = [];
+    this.hidden = false;
+
+    return this.render();
+
+};
+
+LocusZoom.Legend.DefaultLayout = {
+    orientation: "vertical",
+    origin: { x: 0, y: 0 },
+    padding: 5,
+    label_size: 12,
+    hidden: false
+};
+
+LocusZoom.Legend.prototype.render = function(){
+
+    // Get a legend group selector if not yet defined
+    if (!this.selector){
+        this.selector = this.parent.svg.group.append("g")
+            .attr("id", this.parent.getBaseId() + ".legend").attr("class", "lz-legend");
+    }
+
+    // Get a legend background rect selector if not yet defined
+    if (!this.background_rect){
+        this.background_rect = this.selector.append("rect")
+            .attr("width", 100).attr("height", 100).attr("class", "lz-legend-background");
+    }
+
+    // Get a legend elements group selector if not yet defined
+    if (!this.elements_group){
+        this.elements_group = this.selector.append("g");
+    }
+
+    // Remove all elements
+    this.elements.forEach(function(element){
+        element.remove();
+    });
+    this.elements = [];
+
+    // Gather all elements from data layers in order (top to bottom) and render them
+    var padding = +this.layout.padding || 1;
+    var x = padding;
+    var y = padding;
+    var line_height = 0;
+    this.parent.data_layer_ids_by_z_index.slice().reverse().forEach(function(id){
+        if (Array.isArray(this.parent.data_layers[id].layout.legend)){
+            this.parent.data_layers[id].layout.legend.forEach(function(element){
+                var selector = this.elements_group.append("g")
+                    .attr("transform", "translate(" + x + "," + y + ")");
+                var label_size = +element.label_size || +this.layout.label_size || 12;
+                var label_x = 0;
+                var label_y = (label_size/2) + (padding/2);
+                line_height = Math.max(line_height, label_size + padding);
+                // Draw the legend element symbol (line, rect, shape, etc)
+                if (element.shape == "line"){
+                    // Line symbol
+                    var length = +element.length || 16;
+                    var path_y = (label_size/4) + (padding/2);
+                    selector.append("path").attr("class", element.class || "")
+                        .attr("d", "M0," + path_y + "L" + length + "," + path_y)
+                        .style(element.style || {});
+                    label_x = length + padding;
+                } else if (element.shape == "rect"){
+                    // Rect symbol
+                    var width = +element.width || 16;
+                    var height = +element.height || width;
+                    selector.append("rect").attr("class", element.class || "")
+                        .attr("width", width).attr("height", height)
+                        .attr("fill", element.color || {})
+                        .style(element.style || {});
+                    label_x = width + padding;
+                    line_height = Math.max(line_height, height + padding);
+                } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
+                    // Shape symbol (circle, diamond, etc.)
+                    var size = +element.size || 40;
+                    var radius = Math.ceil(Math.sqrt(size/Math.PI));
+                    selector.append("path").attr("class", element.class || "")
+                        .attr("d", d3.svg.symbol().size(size).type(element.shape))
+                        .attr("transform", "translate(" + radius + "," + (radius+(padding/2)) + ")")
+                        .attr("fill", element.color || {})
+                        .style(element.style || {});
+                    label_x = (2*radius) + padding;
+                    label_y = Math.max((2*radius)+(padding/2), label_y);
+                    line_height = Math.max(line_height, (2*radius) + padding);
+                }
+                // Draw the legend element label
+                selector.append("text").attr("text-anchor", "left").attr("class", "lz-label")
+                    .attr("x", label_x).attr("y", label_y).style({"font-size": label_size}).text(element.label);
+                // Position the legend element group based on legend layout orientation
+                var bcr = selector.node().getBoundingClientRect();
+                if (this.layout.orientation == "vertical"){
+                    y += bcr.height + padding;
+                    line_height = 0;
+                } else {
+                    // Ensure this element does not exceed the panel width (drop to the next line if it does)
+                    var right_x = this.layout.origin.x + x + bcr.width;
+                    if (right_x > this.parent.layout.width){
+                        y += line_height;
+                        x = padding;
+                        selector.attr("transform", "translate(" + x + "," + y + ")");
+                    }
+                    x += bcr.width + (3*padding);
+                }
+                // Store the element
+                this.elements.push(selector);
+            }.bind(this));
+        }
+    }.bind(this));
+
+    // Scale the background rect to the elements in the legend
+    var bcr = this.elements_group.node().getBoundingClientRect();
+    this.background_rect
+        .attr("width", bcr.width + (2*this.layout.padding))
+        .attr("height", bcr.height + (2*this.layout.padding));
+
+    // Set the visibility on the legend from the "hidden" flag
+    this.selector.style({ visibility: this.layout.hidden ? "hidden" : "visible" });
+    
+    return this.position();
+    
+};
+
+LocusZoom.Legend.prototype.position = function(){
+    if (!this.selector){ return this; }
+    this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
+};
+
 /* global LocusZoom,Q */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
@@ -5896,6 +6106,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     },
+    legend: null,
     interaction: {
         drag_background_to_pan: false,
         drag_x_ticks_to_scale: false,
@@ -5983,6 +6194,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.curtain.update();
         this.loader.update();
         this.dashboard.update();
+        if (this.legend){ this.legend.position(); }
     }
     return this;
 };
@@ -6230,6 +6442,12 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
     }.bind(this));
+
+    // Create the legend object as defined by panel layout and child data layer layouts
+    this.legend = null;
+    if (this.layout.legend){
+        this.legend = new LocusZoom.Legend(this);
+    }
 
     // Establish panel background drag interaction mousedown event handler (on the panel background)
     var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";

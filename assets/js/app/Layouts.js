@@ -146,7 +146,15 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
     id: "gwaspvalues",
     type: "scatter",
-    point_shape: "circle",
+    point_shape: {
+        scale_function: "if",
+        field: "ld:isrefvar",
+        parameters: {
+            field_value: 1,
+            then: "diamond",
+            else: "circle"
+        }
+    },
     point_size: {
         scale_function: "if",
         field: "ld:isrefvar",
@@ -174,6 +182,15 @@ LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
             }
         },
         "#B8B8B8"
+    ],
+    legend: [
+        { shape: "diamond", color: "#9632b8", size: 40, label: "LD Ref Var", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#d43f3a", size: 40, label: "1.0 > r² ≥ 0.8", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#eea236", size: 40, label: "0.8 > r² ≥ 0.6", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#5cb85c", size: 40, label: "0.6 > r² ≥ 0.4", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#46b8da", size: 40, label: "0.4 > r² ≥ 0.2", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
+        { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
     fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
     id_field: "variant",
@@ -382,7 +399,15 @@ LocusZoom.Layouts.add("panel", "gwas", {
     proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_panel"),
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_legend",
+            position: "right",
+            color: "green"
+        });
+        return l;
+    })(),
     axes: {
         x: {
             label_function: "chromosome",
@@ -398,6 +423,10 @@ LocusZoom.Layouts.add("panel", "gwas", {
             label: "Recombination Rate (cM/Mb)",
             label_offset: 40
         }
+    },
+    legend: {
+        orientation: "vertical",
+        origin: { x: 55, y: 40 }
     },
     interaction: {
         drag_background_to_pan: true,
