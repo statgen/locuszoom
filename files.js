@@ -37,6 +37,7 @@ var test_include = [
     "./assets/js/app/DataLayers/genes.js",
     "./assets/js/app/Singletons.js",
     "./assets/js/app/Dashboard.js",
+    "./assets/js/app/Legend.js",
     "./assets/js/app/Data.js",
     "./assets/js/app/Plot.js",
     "./assets/js/app/Panel.js"
@@ -53,6 +54,7 @@ var app_build = [
     "./assets/js/app/DataLayers/genes.js",
     "./assets/js/app/Singletons.js",
     "./assets/js/app/Dashboard.js",
+    "./assets/js/app/Legend.js",
     "./assets/js/app/Data.js",
     "./assets/js/app/Plot.js",
     "./assets/js/app/Panel.js"

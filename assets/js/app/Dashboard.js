@@ -320,7 +320,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.color = "gray";
     this.setColor = function(color){
         if (typeof color != "undefined"){
-            if (["gray", "red", "orange", "yellow", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
+            if (["gray", "red", "orange", "yellow", "green", "blue", "purple"].indexOf(color) !== -1){ this.color = color; }
             else { this.color = "gray"; }
         }
         return this;
@@ -806,5 +806,44 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         this.button.show();
 
         return this;
+    };
+});
+
+// Resize to data
+LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        if (this.button){ return this; }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText("Resize to Data")
+            .setTitle("Automatically resize this panel to fit the data its currently showing")
+            .setOnclick(function(){
+                this.parent_panel.scaleHeightToData();
+                this.update();
+            }.bind(this));
+        this.button.show();
+        return this;
+    };
+});
+
+// Toggle legend
+LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    this.update = function(){
+        var text = this.parent_panel.legend.layout.hidden ? "Show Legend" : "Hide Legend";
+        if (this.button){
+            this.button.setText(text).show();
+            this.parent.position();
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color)
+            .setTitle("Show or hide the legend for this panel")
+            .setOnclick(function(){
+                this.parent_panel.legend.layout.hidden = !this.parent_panel.legend.layout.hidden;
+                this.parent_panel.legend.render();
+                this.update();
+            }.bind(this));
+        return this.update();
     };
 });

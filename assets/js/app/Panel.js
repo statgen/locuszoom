@@ -160,6 +160,7 @@ LocusZoom.Panel.DefaultLayout = {
         y1: {},
         y2: {}
     },
+    legend: null,
     interaction: {
         drag_background_to_pan: false,
         drag_x_ticks_to_scale: false,
@@ -247,6 +248,7 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
         this.curtain.update();
         this.loader.update();
         this.dashboard.update();
+        if (this.legend){ this.legend.position(); }
     }
     return this;
 };
@@ -494,6 +496,12 @@ LocusZoom.Panel.prototype.initialize = function(){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].initialize();
     }.bind(this));
+
+    // Create the legend object as defined by panel layout and child data layer layouts
+    this.legend = null;
+    if (this.layout.legend){
+        this.legend = new LocusZoom.Legend(this);
+    }
 
     // Establish panel background drag interaction mousedown event handler (on the panel background)
     var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
@@ -829,22 +837,28 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
-        this.zoom_listener = d3.behavior.zoom()
-            .on("zoom", function(){
-                if (this.interactions.dragging || this.parent.loading_data){ return; }
-                var coords = d3.mouse(this.svg.container.node());
-                this.interactions.zooming = {
-                    scale: (d3.event.scale < 1) ? 0.9 : 1.1,
-                    center: coords[0]
-                };
-                this.render();
-                if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
-                this.zoom_timeout = setTimeout(function(){
-                    this.interactions.zooming = false;
-                    this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
-                }.bind(this), 500);
-            }.bind(this));
-        this.svg.container.call(this.zoom_listener);
+        var zoom_handler = function(){
+            console.log(Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail))));
+            if (this.interactions.dragging || this.parent.loading_data){ return; }
+            var coords = d3.mouse(this.svg.container.node());
+            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
+            if (delta == 0){ return; }
+            this.interactions.zooming = {
+                scale: (delta < 1) ? 0.9 : 1.1,
+                center: coords[0]
+            };
+            this.render();
+            if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
+            this.zoom_timeout = setTimeout(function(){
+                this.interactions.zooming = false;
+                this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
+            }.bind(this), 500);
+        }.bind(this);
+        this.zoom_listener = d3.behavior.zoom();
+        this.svg.container.call(this.zoom_listener)
+            .on("wheel.zoom", zoom_handler)
+            .on("mousewheel.zoom", zoom_handler)
+            .on("DOMMouseScroll.zoom", zoom_handler);
     }
 
     // Render data layers in order by z-index
@@ -1058,6 +1072,28 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
     }
 
     return this;
+};
+
+// Force the height of this panel to the largest absolute height of the data in
+// all child data layers (if not null for any child data layers)
+LocusZoom.Panel.prototype.scaleHeightToData = function(){
+    var target_height = null;
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        var dh = this.data_layers[id].getAbsoluteDataHeight();
+        if (+dh){
+            if (target_height == null){ target_height = +dh; }
+            else { target_height = Math.max(target_height, +dh); }
+        }
+    }.bind(this));
+    if (target_height != null){
+        target_height += +this.layout.margin.top + +this.layout.margin.bottom;
+        this.setDimensions(this.layout.width, target_height);
+        this.parent.setDimensions();
+        this.parent.panel_ids_by_y_index.forEach(function(id){
+            this.parent.panels[id].layout.proportional_height = null;
+        }.bind(this));
+        this.parent.positionPanels();
+    }
 };
 
 // Add a "basic" loader to a panel
