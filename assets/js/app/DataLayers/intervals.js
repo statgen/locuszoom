@@ -16,10 +16,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         start_field: "start",
         end_field: "end",
         track_split_field: "state_id",
+        track_split_order: "DESC",
         split_tracks: false,
         interval_height: 15,
-        track_vertical_spacing: 5,
-        bounding_box_padding: 4,
+        track_vertical_spacing: 3,
+        bounding_box_padding: 2,
         hover_element: "bounding_box"
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -48,6 +49,21 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         this.interval_track_index = { 1: [] };
         this.track_split_field_index = {};
 
+        // If splitting tracks by a field's value then do a first pass determine
+        // a value/track mapping that preserves the order of possible values
+        if (this.layout.track_split_field && this.layout.split_tracks){
+            this.data.map(function(d){
+                this.track_split_field_index[d[this.layout.track_split_field]] = null;
+            }.bind(this));
+            var index = Object.keys(this.track_split_field_index);
+            if (this.layout.track_split_order == "DESC"){ index.reverse(); }
+            index.forEach(function(val){
+                this.track_split_field_index[val] = this.tracks + 1;
+                this.interval_track_index[this.tracks + 1] = [];
+                this.tracks++;
+            }.bind(this));
+        }
+
         this.data.map(function(d, i){
 
             // Stash a parent reference on the interval
@@ -69,16 +85,13 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             };
             this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
 
-            // If splitting to tracks based on the value of the designated track spliy field
+            // If splitting to tracks based on the value of the designated track split field
             // then don't bother with collision detection (intervals will be grouped on tracks
             // solely by the value of track_split_field)
             if (this.layout.track_split_field && this.layout.split_tracks){
                 var val = this.data[i][this.layout.track_split_field];
-                if (!this.track_split_field_index[val]){
-                    this.tracks++;
-                    this.track_split_field_index[val] = this.tracks;
-                }
                 this.data[i].track = this.track_split_field_index[val];
+                this.interval_track_index[this.data[i].track].push(i);
             } else {
                 // If not splitting to tracks based on a field value then do so based on collision
                 // detection (as how it's done for genes). Use display range/domain data generated
@@ -112,6 +125,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             }
 
         }.bind(this));
+
         return this;
     };
 

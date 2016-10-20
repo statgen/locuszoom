@@ -154,5 +154,12 @@ LocusZoom.Legend.prototype.render = function(){
 
 LocusZoom.Legend.prototype.position = function(){
     if (!this.selector){ return this; }
+    var bcr = this.selector.node().getBoundingClientRect();
+    if (!isNaN(+this.layout.pad_from_bottom)){
+        this.layout.origin.y = this.parent.layout.height - bcr.height - +this.layout.pad_from_bottom;
+    }
+    if (!isNaN(+this.layout.pad_from_right)){
+        this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
+    }
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 };

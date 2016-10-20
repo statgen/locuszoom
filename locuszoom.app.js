@@ -734,14 +734,25 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         field: "interval:state_id",
         scale_function: "categorical_bin",
         parameters: {
-            categories: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16],
-            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
+            categories: [1,2,3,4,5,6,7,8,9,10,12,13],
+            values: ["rgb(212,63,58)", "rgb(250,120,105)", "rgb(252,168,139)", "rgb(240,189,66)", "rgb(250,224,105)", "rgb(240,238,84)", "rgb(244,252,23)", "rgb(23,232,252)", "rgb(32,191,17)", "rgb(23,166,77)", "rgb(162,133,166)", "rgb(212,212,212)"],
             null_value: "#B8B8B8"
         }
     },
-    /*
-Object {1: "Active Promoter", 2: "Weak Promoter", 4: "Strong enhancer", 5: "Strong enhancer", 6: "Weak enhancer", 7: "Weak enhancer", 8: "Insulator", 9: "Transcriptional transition", 10: "Transcriptional elongation", 12: "Polycomb-repressed", 13: "Heterochromatin / low signal"}
-*/
+    legend: [
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter" },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter" },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter" },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer" },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer" },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer" },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer" },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator" },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition" },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation" },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed" },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal" }
+    ],    
     highlighted: {
         onmouseover: "on",
         onmouseout: "off"
@@ -1372,10 +1383,10 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
     width: 800,
-    height: 50,
+    height: 120,
     min_width: 400,
-    min_height: 50,
-    margin: { top: 25, right: 50, bottom: 5, left: 50 },
+    min_height: 120,
+    margin: { top: 25, right: 50, bottom: 75, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
         l.components.push({
@@ -1391,6 +1402,11 @@ LocusZoom.Layouts.add("panel", "intervals", {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
         x_linked: true
+    },
+    legend: {
+        orientation: "horizontal",
+        origin: { x: 50, y: 0 },
+        pad_from_bottom: 5
     },
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "intervals")
@@ -1436,15 +1452,15 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
 LocusZoom.Layouts.add("plot", "interval_gwas", {
     state: {},
     width: 800,
-    height: 500,
+    height: 550,
     resizable: "responsive",
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "gwas", { width: 800, proportional_height: 0.45 }),
-        LocusZoom.Layouts.get("panel", "intervals", { proportional_height: 0.1 }),
-        LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: 0.45 })
+        LocusZoom.Layouts.get("panel", "gwas", { width: 800, proportional_height: (225/570) }),
+        LocusZoom.Layouts.get("panel", "intervals", { proportional_height: (120/570) }),
+        LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: (225/570) })
     ]
 });
 
@@ -3297,10 +3313,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         start_field: "start",
         end_field: "end",
         track_split_field: "state_id",
+        track_split_order: "DESC",
         split_tracks: false,
         interval_height: 15,
-        track_vertical_spacing: 5,
-        bounding_box_padding: 4,
+        track_vertical_spacing: 3,
+        bounding_box_padding: 2,
         hover_element: "bounding_box"
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -3329,6 +3346,21 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         this.interval_track_index = { 1: [] };
         this.track_split_field_index = {};
 
+        // If splitting tracks by a field's value then do a first pass determine
+        // a value/track mapping that preserves the order of possible values
+        if (this.layout.track_split_field && this.layout.split_tracks){
+            this.data.map(function(d){
+                this.track_split_field_index[d[this.layout.track_split_field]] = null;
+            }.bind(this));
+            var index = Object.keys(this.track_split_field_index);
+            if (this.layout.track_split_order == "DESC"){ index.reverse(); }
+            index.forEach(function(val){
+                this.track_split_field_index[val] = this.tracks + 1;
+                this.interval_track_index[this.tracks + 1] = [];
+                this.tracks++;
+            }.bind(this));
+        }
+
         this.data.map(function(d, i){
 
             // Stash a parent reference on the interval
@@ -3350,16 +3382,13 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             };
             this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
 
-            // If splitting to tracks based on the value of the designated track spliy field
+            // If splitting to tracks based on the value of the designated track split field
             // then don't bother with collision detection (intervals will be grouped on tracks
             // solely by the value of track_split_field)
             if (this.layout.track_split_field && this.layout.split_tracks){
                 var val = this.data[i][this.layout.track_split_field];
-                if (!this.track_split_field_index[val]){
-                    this.tracks++;
-                    this.track_split_field_index[val] = this.tracks;
-                }
                 this.data[i].track = this.track_split_field_index[val];
+                this.interval_track_index[this.data[i].track].push(i);
             } else {
                 // If not splitting to tracks based on a field value then do so based on collision
                 // detection (as how it's done for genes). Use display range/domain data generated
@@ -3393,6 +3422,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             }
 
         }.bind(this));
+
         return this;
     };
 
@@ -4988,6 +5018,13 @@ LocusZoom.Legend.prototype.render = function(){
 
 LocusZoom.Legend.prototype.position = function(){
     if (!this.selector){ return this; }
+    var bcr = this.selector.node().getBoundingClientRect();
+    if (!isNaN(+this.layout.pad_from_bottom)){
+        this.layout.origin.y = this.parent.layout.height - bcr.height - +this.layout.pad_from_bottom;
+    }
+    if (!isNaN(+this.layout.pad_from_right)){
+        this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
+    }
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 };
 
