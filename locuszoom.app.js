@@ -6785,6 +6785,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
         var zoom_handler = function(){
+            d3.event.preventDefault();
             if (this.interactions.dragging || this.parent.loading_data){ return; }
             var coords = d3.mouse(this.svg.container.node());
             var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
