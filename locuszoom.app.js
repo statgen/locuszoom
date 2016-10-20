@@ -1874,7 +1874,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     
 };
 
-// Toggle a status on an all elements in the data layer
+// Toggle a status on all elements in the data layer
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     
     // Sanity check
@@ -4524,9 +4524,10 @@ LocusZoom.Legend.prototype.render = function(){
                     y += bcr.height + padding;
                     line_height = 0;
                 } else {
-                    // Ensure this element does not exceed the panel width (drop to the next line if it does)
+                    // Ensure this element does not exceed the panel width
+                    // (E.g. drop to the next line if it does, but only if it's not the only element on this line)
                     var right_x = this.layout.origin.x + x + bcr.width;
-                    if (right_x > this.parent.layout.width){
+                    if (x > padding && right_x > this.parent.layout.width){
                         y += line_height;
                         x = padding;
                         selector.attr("transform", "translate(" + x + "," + y + ")");
