@@ -61,7 +61,7 @@
         .add("interval", ["IntervalLZ", { url: apiBase + "intervals_10_114550452-115067678.json?" }]);
     }
 
-    layout = LocusZoom.Layouts.get("plot", "interval_gwas");
+    layout = LocusZoom.Layouts.get("plot", "interval_association");
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);

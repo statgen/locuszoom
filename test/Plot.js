@@ -129,7 +129,7 @@ describe("LocusZoom.Plot", function(){
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
         it("should allow for responsively positioning panels using a proportional dimensions", function(){
-            var responsive_layout = LocusZoom.Layouts.get("plot", "standard_gwas", {
+            var responsive_layout = LocusZoom.Layouts.get("plot", "standard_association", {
                 resposnive_resize: true,
                 aspect_ratio: 2,
                 panels: [

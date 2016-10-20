@@ -36,10 +36,10 @@ LocusZoom.Plot = function(id, datasource, layout) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the Plot
-    // If no layout was passed, use the Standard GWAS Layout
+    // If no layout was passed, use the Standard Association Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_association"));
     } else {
         this.layout = layout;
     }

@@ -527,8 +527,8 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
     }
 });
 
-LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
-    id: "gwaspvalues",
+LocusZoom.Layouts.add("data_layer", "association_pvalues", {
+    id: "associationpvalues",
     type: "scatter",
     point_shape: {
         scale_function: "if",
@@ -822,8 +822,8 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
  Panel Layouts
 */
 
-LocusZoom.Layouts.add("panel", "gwas", {
-    id: "gwas",
+LocusZoom.Layouts.add("panel", "association", {
+    id: "association",
     title: "",
     width: 800,
     height: 225,
@@ -872,7 +872,7 @@ LocusZoom.Layouts.add("panel", "gwas", {
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "signifigance"),
         LocusZoom.Layouts.get("data_layer", "recomb_rate"),
-        LocusZoom.Layouts.get("data_layer", "gwas_pvalues")
+        LocusZoom.Layouts.get("data_layer", "association_pvalues")
     ]
 });
 
@@ -1418,7 +1418,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
  Plot Layouts
 */
 
-LocusZoom.Layouts.add("plot", "standard_gwas", {
+LocusZoom.Layouts.add("plot", "standard_association", {
     state: {},
     width: 800,
     height: 450,
@@ -1427,13 +1427,13 @@ LocusZoom.Layouts.add("plot", "standard_gwas", {
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "gwas", { proportional_height: 0.5 }),
+        LocusZoom.Layouts.get("panel", "association", { proportional_height: 0.5 }),
         LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.5 })
     ]
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_association");
 
 LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
@@ -1449,7 +1449,7 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
     ]
 });
 
-LocusZoom.Layouts.add("plot", "interval_gwas", {
+LocusZoom.Layouts.add("plot", "interval_association", {
     state: {},
     width: 800,
     height: 550,
@@ -1458,7 +1458,7 @@ LocusZoom.Layouts.add("plot", "interval_gwas", {
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "gwas", { width: 800, proportional_height: (225/570) }),
+        LocusZoom.Layouts.get("panel", "association", { width: 800, proportional_height: (225/570) }),
         LocusZoom.Layouts.get("panel", "intervals", { proportional_height: (120/570) }),
         LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: (225/570) })
     ]
@@ -5629,10 +5629,10 @@ LocusZoom.Plot = function(id, datasource, layout) {
     this.remap_promises = [];
 
     // The layout is a serializable object used to describe the composition of the Plot
-    // If no layout was passed, use the Standard GWAS Layout
+    // If no layout was passed, use the Standard Association Layout
     // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
-        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_gwas"));
+        this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_association"));
     } else {
         this.layout = layout;
     }
