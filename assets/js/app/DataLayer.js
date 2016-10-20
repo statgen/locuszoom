@@ -525,6 +525,27 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     return this;
 };
 
+// Toggle a status on elements in the data layer based on a set of filters
+LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters){
+    
+    // Sanity check
+    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+        throw("Invalid status passed to setElementStatusByFilters()");
+    }
+    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
+    if (typeof toggle == "undefined"){ toggle = true; }
+    if (!Array.isArray(filters)){ filters = []; }
+
+    // Apply statuses
+    this.filterElements(filters).forEach(function(element){
+        if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
+            this.setElementStatus(status, element, toggle);
+        }
+    }.bind(this));
+    
+    return this;
+};
+
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
@@ -615,6 +636,46 @@ LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
     }.bind(this));
     return this;
 };
+
+// Get an array of element indexes matching a set of filters
+// Filters should be of the form [field, value] (for equivalence testing) or [field, operator, value]
+// Return type can be "indexes" or "elements" and determines whether the returned array contains
+// indexes of matching elements in the data layer's data set or references to the matching elements
+LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
+    if (typeof return_type == "undefined" || ["indexes","elements"].indexOf(return_type) == -1){
+        return_type = "indexes";
+    }
+    if (!Array.isArray(filters)){ return []; }
+    var test = function(element, filter){
+        var operators = {
+            "=": function(a,b){ return a == b; },
+            "<": function(a,b){ return a < b; },
+            "<=": function(a,b){ return a <= b; },
+            ">": function(a,b){ return a > b; },
+            ">=": function(a,b){ return a >= b; },
+            "%": function(a,b){ return a % b; }
+        };
+        if (!Array.isArray(filter)){ return false; }
+        if (filter.length == 2){
+            return element[filter[0]] == filter[1];
+        } else if (filter.length == 3 && operators[filter[1]]){
+            return operators[filter[1]](element[filter[0]], filter[2]);
+        } else {
+            return false;
+        }
+    };
+    var matches = [];
+    this.data.forEach(function(element, idx){
+        var match = true;
+        filters.forEach(function(filter){
+            if (!test(element, filter)){ match = false; }
+        });
+        if (match){ matches.push(return_type == "indexes" ? idx : element); }
+    });
+    return matches;
+};
+LocusZoom.DataLayer.prototype.filterIndexes = function(filters){ return this.filter(filters, "indexes"); };
+LocusZoom.DataLayer.prototype.filterElements = function(filters){ return this.filter(filters, "elements"); };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
 // Necessary for positioning any HTML elements over the panel
