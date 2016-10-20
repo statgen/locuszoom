@@ -143,8 +143,8 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
     }
 });
 
-LocusZoom.Layouts.add("data_layer", "gwas_pvalues", {
-    id: "gwaspvalues",
+LocusZoom.Layouts.add("data_layer", "association_pvalues", {
+    id: "associationpvalues",
     type: "scatter",
     point_shape: {
         scale_function: "if",
@@ -386,8 +386,8 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
  Panel Layouts
 */
 
-LocusZoom.Layouts.add("panel", "gwas", {
-    id: "gwas",
+LocusZoom.Layouts.add("panel", "association", {
+    id: "association",
     title: "",
     width: 800,
     height: 225,
@@ -439,7 +439,7 @@ LocusZoom.Layouts.add("panel", "gwas", {
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "signifigance"),
         LocusZoom.Layouts.get("data_layer", "recomb_rate"),
-        LocusZoom.Layouts.get("data_layer", "gwas_pvalues")
+        LocusZoom.Layouts.get("data_layer", "association_pvalues")
     ]
 });
 
@@ -960,7 +960,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
  Plot Layouts
 */
 
-LocusZoom.Layouts.add("plot", "standard_gwas", {
+LocusZoom.Layouts.add("plot", "standard_association", {
     state: {},
     width: 800,
     height: 450,
@@ -970,13 +970,13 @@ LocusZoom.Layouts.add("plot", "standard_gwas", {
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "gwas"),
+        LocusZoom.Layouts.get("panel", "association"),
         LocusZoom.Layouts.get("panel", "genes")
     ]
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_gwas");
+LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_association");
 
 LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
