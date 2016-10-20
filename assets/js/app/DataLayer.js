@@ -495,7 +495,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     
 };
 
-// Toggle a status on an all elements in the data layer
+// Toggle a status on all elements in the data layer
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     
     // Sanity check
