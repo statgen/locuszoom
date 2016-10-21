@@ -86,6 +86,12 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
+  path.#{$namespace}-data_layer-scatter-identified {
+    stroke: #{$default_black_shadow_svg_color};
+    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke-width: 4px;
+  }
+
   path.#{$namespace}-data_layer-scatter-selected {
     stroke: #{$default_black};
     stroke-width: 4px;
@@ -128,6 +134,12 @@ svg.#{$namespace}-locuszoom {
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-highlighted {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.1;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-identified {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.1;
     stroke-width: 0px;

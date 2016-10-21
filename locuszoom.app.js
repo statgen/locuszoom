@@ -1416,12 +1416,9 @@ LocusZoom.DataLayer = function(layout, parent) {
         this.state = this.parent.state;
         this.state_id = this.parent.id + "." + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
-        if (typeof this.layout.highlighted == "object"){
-            this.state[this.state_id].highlighted = this.state[this.state_id].highlighted || [];
-        }
-        if (typeof this.layout.selected == "object"){
-            this.state[this.state_id].selected = this.state[this.state_id].selected || [];
-        }
+        this.state[this.state_id].highlighted = this.state[this.state_id].highlighted || [];
+        this.state[this.state_id].selected = this.state[this.state_id].selected || [];
+        this.state[this.state_id].identified = this.state[this.state_id].identified || [];
     } else {
         this.state = {};
         this.state_id = null;
@@ -1773,6 +1770,8 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     statuses.unhighlighted = !statuses.highlighted;
     statuses.selected = this.state[this.state_id].selected.indexOf(id) != -1;
     statuses.unselected = !statuses.selected;
+    statuses.identified = this.state[this.state_id].identified.indexOf(id) != -1;
+    statuses.unidentified = !statuses.identified;
 
     var show_resolved = resolveStatus(statuses, show_directive);
     var hide_resolved = resolveStatus(statuses, hide_directive);
@@ -1788,6 +1787,46 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     return this;
     
 };
+
+// Get an array of element indexes matching a set of filters
+// Filters should be of the form [field, value] (for equivalence testing) or [field, operator, value]
+// Return type can be "indexes" or "elements" and determines whether the returned array contains
+// indexes of matching elements in the data layer's data set or references to the matching elements
+LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
+    if (typeof return_type == "undefined" || ["indexes","elements"].indexOf(return_type) == -1){
+        return_type = "indexes";
+    }
+    if (!Array.isArray(filters)){ return []; }
+    var test = function(element, filter){
+        var operators = {
+            "=": function(a,b){ return a == b; },
+            "<": function(a,b){ return a < b; },
+            "<=": function(a,b){ return a <= b; },
+            ">": function(a,b){ return a > b; },
+            ">=": function(a,b){ return a >= b; },
+            "%": function(a,b){ return a % b; }
+        };
+        if (!Array.isArray(filter)){ return false; }
+        if (filter.length == 2){
+            return element[filter[0]] == filter[1];
+        } else if (filter.length == 3 && operators[filter[1]]){
+            return operators[filter[1]](element[filter[0]], filter[2]);
+        } else {
+            return false;
+        }
+    };
+    var matches = [];
+    this.data.forEach(function(element, idx){
+        var match = true;
+        filters.forEach(function(filter){
+            if (!test(element, filter)){ match = false; }
+        });
+        if (match){ matches.push(return_type == "indexes" ? idx : element); }
+    });
+    return matches;
+};
+LocusZoom.DataLayer.prototype.filterIndexes = function(filters){ return this.filter(filters, "indexes"); };
+LocusZoom.DataLayer.prototype.filterElements = function(filters){ return this.filter(filters, "elements"); };
 
 // Toggle the highlighted status of an element
 LocusZoom.DataLayer.prototype.highlightElement = function(element){
@@ -1829,11 +1868,31 @@ LocusZoom.DataLayer.prototype.unselectAllElements = function(){
     return this;
 };
 
-// Toggle a status (e.g. highlighted, selected) on an element
+// Toggle the identified status of an element
+LocusZoom.DataLayer.prototype.identifyElement = function(element){
+    this.setElementStatus("identified", element, true);
+    return this;
+};
+LocusZoom.DataLayer.prototype.unidentifyElement = function(element){
+    this.setElementStatus("identified", element, false);
+    return this;
+};
+
+// Toggle the identified status of all elements
+LocusZoom.DataLayer.prototype.identifyAllElements = function(){
+    this.setAllElementStatus("identified", true);
+    return this;
+};
+LocusZoom.DataLayer.prototype.unidentifyAllElements = function(){
+    this.setAllElementStatus("identified", false);
+    return this;
+};
+
+// Toggle a status (e.g. highlighted, selected, identified) on an element
 LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle){
     
     // Sanity checks
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
         throw("Invalid status passed to setElementStatus()");
     }
     if (typeof element == "undefined"){
@@ -1878,7 +1937,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     
     // Sanity check
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
         throw("Invalid status passed to setAllElementStatus()");
     }
     if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
@@ -1908,7 +1967,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
 LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters){
     
     // Sanity check
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){
+    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
         throw("Invalid status passed to setElementStatusByFilters()");
     }
     if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
@@ -1924,8 +1983,26 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     
     return this;
 };
+LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("highlighted", true, filters);
+};
+LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("highlighted", false, filters);
+};
+LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("selected", true, filters);
+};
+LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("selected", false, filters);
+};
+LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("identified", true, filters);
+};
+LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters){
+    return this.setElementStatusByFilters("identified", false, filters);
+};
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected)
+// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, identified)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
     // Glossary for this function:
@@ -1934,7 +2011,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
     // action - a more verbose locuszoom-layout-specific form of an event (e.g. "onmouseover", "onshiftclick")
 
     // Sanity checks
-    if (typeof status == "undefined" || ["highlighted","selected"].indexOf(status) == -1){ return; }
+    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){ return; }
     if (typeof selection != "object"){ return; }
     if (typeof this.layout[status] != "object" || !this.layout[status]){ return; }
 
@@ -2009,52 +2086,12 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
 // Apply all supported status behaviors to a selection of objects
 LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
-    var supported_statuses = ["highlighted","selected"];
+    var supported_statuses = ["highlighted","selected","identified"];
     supported_statuses.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
     return this;
 };
-
-// Get an array of element indexes matching a set of filters
-// Filters should be of the form [field, value] (for equivalence testing) or [field, operator, value]
-// Return type can be "indexes" or "elements" and determines whether the returned array contains
-// indexes of matching elements in the data layer's data set or references to the matching elements
-LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
-    if (typeof return_type == "undefined" || ["indexes","elements"].indexOf(return_type) == -1){
-        return_type = "indexes";
-    }
-    if (!Array.isArray(filters)){ return []; }
-    var test = function(element, filter){
-        var operators = {
-            "=": function(a,b){ return a == b; },
-            "<": function(a,b){ return a < b; },
-            "<=": function(a,b){ return a <= b; },
-            ">": function(a,b){ return a > b; },
-            ">=": function(a,b){ return a >= b; },
-            "%": function(a,b){ return a % b; }
-        };
-        if (!Array.isArray(filter)){ return false; }
-        if (filter.length == 2){
-            return element[filter[0]] == filter[1];
-        } else if (filter.length == 3 && operators[filter[1]]){
-            return operators[filter[1]](element[filter[0]], filter[2]);
-        } else {
-            return false;
-        }
-    };
-    var matches = [];
-    this.data.forEach(function(element, idx){
-        var match = true;
-        filters.forEach(function(filter){
-            if (!test(element, filter)){ match = false; }
-        });
-        if (match){ matches.push(return_type == "indexes" ? idx : element); }
-    });
-    return matches;
-};
-LocusZoom.DataLayer.prototype.filterIndexes = function(filters){ return this.filter(filters, "indexes"); };
-LocusZoom.DataLayer.prototype.filterElements = function(filters){ return this.filter(filters, "elements"); };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
 // Necessary for positioning any HTML elements over the panel
