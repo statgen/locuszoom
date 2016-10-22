@@ -1096,6 +1096,37 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
     }
 };
 
+// Toggle a status on elements in all child data layers based on a set of filters
+LocusZoom.Panel.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
+    }.bind(this));
+};
+LocusZoom.Panel.prototype.highlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unhighlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
+};
+LocusZoom.Panel.prototype.selectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unselectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", false, filters, exclusive);
+};
+LocusZoom.Panel.prototype.identifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unidentifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", false, filters, exclusive);
+};
+
 // Add a "basic" loader to a panel
 // This method is jsut a shortcut for adding the most commonly used type of loader
 // which appears when data is requested, animates (e.g. shows an infinitely cycling

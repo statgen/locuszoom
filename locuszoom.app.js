@@ -382,6 +382,30 @@ LocusZoom.getToolTipData = function(node){
     }
 };
 
+// Shortcut method for getting a reference to the data layer that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipDataLayer = function(node){
+    var data = LocusZoom.getToolTipData(node);
+    if (data.getDataLayer){ return data.getDataLayer(); }
+    return null;
+};
+
+// Shortcut method for getting a reference to the panel that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPanel = function(node){
+    var data_layer = LocusZoom.getToolTipDataLayer(node);
+    if (data_layer){ return data_layer.parent; }
+    return null;
+};
+
+// Shortcut method for getting a reference to the plot that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPlot = function(node){
+    var panel = LocusZoom.getToolTipPanel(node);
+    if (panel){ return panel.parent; }
+    return null;
+};
+
 /* global LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -707,7 +731,10 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
-            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
+            + "<table width=\"100%\"><tr>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.identifyElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
+            + "</tr></table>"
     }
 });
 
@@ -1964,16 +1991,22 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
 };
 
 // Toggle a status on elements in the data layer based on a set of filters
-LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters){
+LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
     
     // Sanity check
     if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
         throw("Invalid status passed to setElementStatusByFilters()");
     }
     if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-    if (typeof toggle == "undefined"){ toggle = true; }
+    if (typeof toggle == "undefined"){ toggle = true; } else { toggle = !!toggle; }
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)){ filters = []; }
 
+    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    if (exclusive){
+        this.setAllElementStatus(status, !toggle);
+    }
+    
     // Apply statuses
     this.filterElements(filters).forEach(function(element){
         if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
@@ -1983,23 +2016,29 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     
     return this;
 };
-LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("highlighted", true, filters);
+LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("highlighted", false, filters);
+LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("selected", true, filters);
+LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("selected", false, filters);
+LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", false, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("identified", true, filters);
+LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("identified", false, filters);
+LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", false, filters, exclusive);
 };
 
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, identified)
@@ -7139,6 +7178,37 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
         }.bind(this));
         this.parent.positionPanels();
     }
+};
+
+// Toggle a status on elements in all child data layers based on a set of filters
+LocusZoom.Panel.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
+    }.bind(this));
+};
+LocusZoom.Panel.prototype.highlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unhighlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
+};
+LocusZoom.Panel.prototype.selectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unselectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", false, filters, exclusive);
+};
+LocusZoom.Panel.prototype.identifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", true, filters, exclusive);
+};
+LocusZoom.Panel.prototype.unidentifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", false, filters, exclusive);
 };
 
 // Add a "basic" loader to a panel

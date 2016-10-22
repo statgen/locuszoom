@@ -585,16 +585,22 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
 };
 
 // Toggle a status on elements in the data layer based on a set of filters
-LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters){
+LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
     
     // Sanity check
     if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
         throw("Invalid status passed to setElementStatusByFilters()");
     }
     if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-    if (typeof toggle == "undefined"){ toggle = true; }
+    if (typeof toggle == "undefined"){ toggle = true; } else { toggle = !!toggle; }
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)){ filters = []; }
 
+    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    if (exclusive){
+        this.setAllElementStatus(status, !toggle);
+    }
+    
     // Apply statuses
     this.filterElements(filters).forEach(function(element){
         if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
@@ -604,23 +610,29 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     
     return this;
 };
-LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("highlighted", true, filters);
+LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("highlighted", false, filters);
+LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("selected", true, filters);
+LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("selected", false, filters);
+LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("selected", false, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("identified", true, filters);
+LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", true, filters, exclusive);
 };
-LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters){
-    return this.setElementStatusByFilters("identified", false, filters);
+LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters, exclusive){
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    return this.setElementStatusByFilters("identified", false, filters, exclusive);
 };
 
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, identified)

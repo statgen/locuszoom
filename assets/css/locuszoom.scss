@@ -87,8 +87,8 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-scatter-identified {
-    stroke: #{$default_black_shadow_svg_color};
-    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke: rgb(66,66,66);
+    stroke-opacity: 0.8;
     stroke-width: 4px;
   }
 

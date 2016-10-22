@@ -51,8 +51,8 @@ svg.lz-locuszoom {
     stroke-opacity: 0.4;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-identified {
-    stroke: rgb(24, 24, 24);
-    stroke-opacity: 0.4;
+    stroke: #424242;
+    stroke-opacity: 0.8;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
