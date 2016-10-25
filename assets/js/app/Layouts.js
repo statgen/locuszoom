@@ -384,7 +384,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         closable: false,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "{{interval:state_id}} {{interval:state_name}}"
+        html: "{{interval:state_name}}<br>{{interval:start}}-{{interval:end}}"
     }
 });
 

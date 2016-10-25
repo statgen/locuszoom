@@ -831,9 +831,16 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                     data_layer.render();
+                    if (data_layer.layout.split_tracks){
+                        var tracks = +data_layer.tracks || 0;
+                        var track_height = +data_layer.layout.track_height || 0;
+                        var track_spacing =  2 * (+data_layer.layout.bounding_box_padding || 0) + (+data_layer.layout.track_vertical_spacing || 0);
+                        var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+                        this.parent_panel.scaleHeightToData(target_height);
+                    }
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
                     this.scale_timeout = setTimeout(function(){
-                        this.parent_panel.scaleHeightToData();
+                        if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
                     }.bind(this), +data_layer.layout.transition.duration || 0);
                     this.update();
                 }.bind(this));
