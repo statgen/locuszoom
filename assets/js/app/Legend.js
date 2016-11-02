@@ -164,3 +164,13 @@ LocusZoom.Legend.prototype.position = function(){
     }
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 };
+
+LocusZoom.Legend.prototype.hide = function(){
+    this.layout.hidden = true;
+    this.render();
+};
+
+LocusZoom.Legend.prototype.show = function(){
+    this.layout.hidden = false;
+    this.render();
+};

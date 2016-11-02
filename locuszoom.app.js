@@ -1383,11 +1383,11 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
-    width: 800,
+    width: 1000,
     height: 120,
-    min_width: 400,
+    min_width: 500,
     min_height: 120,
-    margin: { top: 25, right: 50, bottom: 75, left: 50 },
+    margin: { top: 25, right: 250, bottom: 75, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
         l.components.push({
@@ -3315,6 +3315,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         end_field: "end",
         track_split_field: "state_id",
         track_split_order: "DESC",
+        track_split_legend_to_y_axis: 2,
         split_tracks: false,
         track_height: 15,
         track_vertical_spacing: 3,
@@ -4811,6 +4812,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setColor(layout.color).setText(text)
                 .setTitle("Toggle whether tracks are split apart or merged together")
                 .setOnclick(function(){
+                    var legend_axis = data_layer.layout.track_split_legend_to_y_axis ? "y" + data_layer.layout.track_split_legend_to_y_axis : false;
                     data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                     data_layer.render();
                     if (data_layer.layout.split_tracks){
@@ -4819,6 +4821,37 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                         var track_spacing =  2 * (+data_layer.layout.bounding_box_padding || 0) + (+data_layer.layout.track_vertical_spacing || 0);
                         var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
                         this.parent_panel.scaleHeightToData(target_height);
+                        if (legend_axis && this.parent_panel.legend){
+                            this.parent_panel.legend.hide();                            
+                            this.parent_panel.layout.axes[legend_axis] = {
+                                render: true,
+                                ticks: [],
+                                range: {
+                                    start: (target_height - (data_layer.layout.track_height/2)),
+                                    end: (data_layer.layout.track_height/2)
+                                }
+                            };
+                            var tick_x = 0;
+                            data_layer.layout.legend.forEach(function(legend_element){
+                                tick_x++;
+                                data_layer.parent.layout.axes[legend_axis].ticks.push({
+                                    x: tick_x,
+                                    text: legend_element.label
+                                });
+                            });
+                            data_layer.layout.y_axis = {
+                                axis: data_layer.layout.track_split_legend_to_y_axis,
+                                floor: 1,
+                                ceiling: tracks
+                            };
+                            this.parent_panel.render();
+                        }
+                    } else {
+                        if (legend_axis && this.parent_panel.legend){
+                            this.parent_panel.legend.show();
+                            this.parent_panel.layout.axes[legend_axis] = { render: false };
+                            this.parent_panel.render();
+                        }
                     }
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
                     this.scale_timeout = setTimeout(function(){
@@ -5035,6 +5068,16 @@ LocusZoom.Legend.prototype.position = function(){
         this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
     }
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
+};
+
+LocusZoom.Legend.prototype.hide = function(){
+    this.layout.hidden = true;
+    this.render();
+};
+
+LocusZoom.Legend.prototype.show = function(){
+    this.layout.hidden = false;
+    this.render();
 };
 
 /* global LocusZoom,Q */
@@ -7180,16 +7223,31 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     // Define default and shifted ranges for all axes
     var ranges = {};
     if (this.x_extent){
-        ranges.x = [0, this.layout.cliparea.width];
-        ranges.x_shifted = [0, this.layout.cliparea.width];
+        var base_x_range = { start: 0, end: this.layout.cliparea.width };
+        if (this.layout.axes.x.range){
+            base_x_range.start = this.layout.axes.x.range.start || base_x_range.start;
+            base_x_range.end = this.layout.axes.x.range.end || base_x_range.end;
+        }
+        ranges.x = [base_x_range.start, base_x_range.end];
+        ranges.x_shifted = [base_x_range.start, base_x_range.end];
     }
     if (this.y1_extent){
-        ranges.y1 = [this.layout.cliparea.height, 0];
-        ranges.y1_shifted = [this.layout.cliparea.height, 0];
+        var base_y1_range = { start: this.layout.cliparea.height, end: 0 };
+        if (this.layout.axes.y1.range){
+            base_y1_range.start = this.layout.axes.y1.range.start || base_y1_range.start;
+            base_y1_range.end = this.layout.axes.y1.range.end || base_y1_range.end;
+        }
+        ranges.y1 = [base_y1_range.start, base_y1_range.end];
+        ranges.y1_shifted = [base_y1_range.start, base_y1_range.end];
     }
     if (this.y2_extent){
-        ranges.y2 = [this.layout.cliparea.height, 0];
-        ranges.y2_shifted = [this.layout.cliparea.height, 0];
+        var base_y2_range = { start: this.layout.cliparea.height, end: 0 };
+        if (this.layout.axes.y2.range){
+            base_y2_range.start = this.layout.axes.y2.range.start || base_y2_range.start;
+            base_y2_range.end = this.layout.axes.y2.range.end || base_y2_range.end;
+        }
+        ranges.y2 = [base_y2_range.start, base_y2_range.end];
+        ranges.y2_shifted = [base_y2_range.start, base_y2_range.end];
     }
 
     // Shift ranges based on any drag or zoom interactions currently underway
@@ -7241,7 +7299,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         }
     }
 
-    // Generate scales and ticks for all axes
+    // Generate scales and ticks for all axes, then render them
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
         // Base Scale
@@ -7260,24 +7318,9 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         } else {
             this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
+        // Render
+        this.renderAxis(axis);
     }.bind(this));
-
-    // Render axes and labels
-    var canRenderAxis = function(axis){
-        return (typeof this[axis + "_scale"] == "function" && !isNaN(this[axis + "_scale"](0)));
-    }.bind(this);
-    
-    if (this.layout.axes.x.render && canRenderAxis("x")){
-        this.renderAxis("x");
-    }
-
-    if (this.layout.axes.y1.render && canRenderAxis("y1")){
-        this.renderAxis("y1");
-    }
-
-    if (this.layout.axes.y2.render && canRenderAxis("y2")){
-        this.renderAxis("y2");
-    }
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
@@ -7336,6 +7379,18 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     if (["x", "y1", "y2"].indexOf(axis) == -1){
         throw("Unable to render axis; invalid axis identifier: " + axis);
     }
+
+    var canRender = this.layout.axes[axis].render
+        && typeof this[axis + "_scale"] == "function"
+        && !isNaN(this[axis + "_scale"](0));
+
+    // If the axis has already been rendered then check if we can/can't render it
+    // Make sure the axis element is shown/hidden to suit
+    if (this[axis+"_axis"]){
+        this.svg.container.select("g.lz-axis.lz-"+axis).style("display", canRender ? null : "none");
+    }
+
+    if (!canRender){ return this; }
 
     // Axis-specific values to plug in where needed
     var axis_params = {

@@ -17,6 +17,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         end_field: "end",
         track_split_field: "state_id",
         track_split_order: "DESC",
+        track_split_legend_to_y_axis: 2,
         split_tracks: false,
         track_height: 15,
         track_vertical_spacing: 3,

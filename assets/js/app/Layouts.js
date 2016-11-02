@@ -999,11 +999,11 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
-    width: 800,
+    width: 1000,
     height: 120,
-    min_width: 400,
+    min_width: 500,
     min_height: 120,
-    margin: { top: 25, right: 50, bottom: 75, left: 50 },
+    margin: { top: 25, right: 250, bottom: 75, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
         l.components.push({
