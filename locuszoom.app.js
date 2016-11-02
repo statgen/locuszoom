@@ -768,7 +768,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         closable: false,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "{{interval:state_id}} {{interval:state_name}}"
+        html: "{{interval:state_name}}<br>{{interval:start}}-{{interval:end}}"
     }
 });
 
@@ -3315,7 +3315,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_split_field: "state_id",
         track_split_order: "DESC",
         split_tracks: false,
-        interval_height: 15,
+        track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
         hover_element: "bounding_box"
@@ -3327,7 +3327,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     
     // Helper function to sum layout values to derive total height for a single interval track
     this.getTrackHeight = function(){
-        return this.layout.interval_height
+        return this.layout.track_height
             + this.layout.track_vertical_spacing
             + (2 * this.layout.bounding_box_padding);
     };
@@ -3496,7 +3496,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 rects.enter().append("rect")
                     .attr("class", "lz-data_layer-intervals lz-interval_rect");
 
-                height = data_layer.layout.interval_height;
+                height = data_layer.layout.track_height;
                 width = function(d){
                     return d.display_range.width;
                 };
@@ -4812,9 +4812,16 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
                     data_layer.render();
+                    if (data_layer.layout.split_tracks){
+                        var tracks = +data_layer.tracks || 0;
+                        var track_height = +data_layer.layout.track_height || 0;
+                        var track_spacing =  2 * (+data_layer.layout.bounding_box_padding || 0) + (+data_layer.layout.track_vertical_spacing || 0);
+                        var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+                        this.parent_panel.scaleHeightToData(target_height);
+                    }
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
                     this.scale_timeout = setTimeout(function(){
-                        this.parent_panel.scaleHeightToData();
+                        if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
                     }.bind(this), +data_layer.layout.transition.duration || 0);
                     this.update();
                 }.bind(this));
@@ -7492,16 +7499,20 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
 
 // Force the height of this panel to the largest absolute height of the data in
 // all child data layers (if not null for any child data layers)
-LocusZoom.Panel.prototype.scaleHeightToData = function(){
-    var target_height = null;
-    this.data_layer_ids_by_z_index.forEach(function(id){
-        var dh = this.data_layers[id].getAbsoluteDataHeight();
-        if (+dh){
-            if (target_height == null){ target_height = +dh; }
-            else { target_height = Math.max(target_height, +dh); }
-        }
-    }.bind(this));
-    if (target_height != null){
+// May optionally take an arbitrary target height (useful for when data layers are transitioning
+// and the ending target height can be pre-calculated)
+LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
+    var target_height = +target_height || null;
+    if (target_height == null){
+        this.data_layer_ids_by_z_index.forEach(function(id){
+            var dh = this.data_layers[id].getAbsoluteDataHeight();
+            if (+dh){
+                if (target_height == null){ target_height = +dh; }
+                else { target_height = Math.max(target_height, +dh); }
+            }
+        }.bind(this));
+    }
+    if (+target_height){
         target_height += +this.layout.margin.top + +this.layout.margin.bottom;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();

@@ -1075,16 +1075,20 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
 
 // Force the height of this panel to the largest absolute height of the data in
 // all child data layers (if not null for any child data layers)
-LocusZoom.Panel.prototype.scaleHeightToData = function(){
-    var target_height = null;
-    this.data_layer_ids_by_z_index.forEach(function(id){
-        var dh = this.data_layers[id].getAbsoluteDataHeight();
-        if (+dh){
-            if (target_height == null){ target_height = +dh; }
-            else { target_height = Math.max(target_height, +dh); }
-        }
-    }.bind(this));
-    if (target_height != null){
+// May optionally take an arbitrary target height (useful for when data layers are transitioning
+// and the ending target height can be pre-calculated)
+LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
+    var target_height = +target_height || null;
+    if (target_height == null){
+        this.data_layer_ids_by_z_index.forEach(function(id){
+            var dh = this.data_layers[id].getAbsoluteDataHeight();
+            if (+dh){
+                if (target_height == null){ target_height = +dh; }
+                else { target_height = Math.max(target_height, +dh); }
+            }
+        }.bind(this));
+    }
+    if (+target_height){
         target_height += +this.layout.margin.top + +this.layout.margin.bottom;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();
