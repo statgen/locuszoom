@@ -390,6 +390,11 @@ LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
 
+    // We want to enforce that all x-linked panels have consistent horizontal margins
+    // (to ensure that aligned items stay aligned despite inconsistent initial layout parameters)
+    // NOTE: This assumes panels have consistent widths already. That should probably be enforced too!
+    var x_linked_margins = { left: 0, right: 0 };
+
     // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
     // proportional heights for all panels with a null value from discretely set dimensions.
     // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
@@ -399,6 +404,10 @@ LocusZoom.Plot.prototype.positionPanels = function(){
         }
         if (this.panels[id].layout.proportional_width == null){
             this.panels[id].layout.proportional_width = 1;
+        }
+        if (this.panels[id].layout.interaction.x_linked){
+            x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
+            x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
         }
     }
 
@@ -413,16 +422,25 @@ LocusZoom.Plot.prototype.positionPanels = function(){
     }
 
     // Update origins on all panels without changing plot-level dimensions yet
+    // Also apply x-linked margins to x-linked panels, updating widths as needed
     var y_offset = 0;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].setOrigin(0, y_offset);
         this.panels[panel_id].layout.proportional_origin.x = 0;
         y_offset += this.panels[panel_id].layout.height;
+        if (this.panels[panel_id].layout.interaction.x_linked){
+            var delta = Math.max(x_linked_margins.left - this.panels[panel_id].layout.margin.left, 0)
+                      + Math.max(x_linked_margins.right - this.panels[panel_id].layout.margin.right, 0);
+            this.panels[panel_id].layout.width += delta;
+            this.panels[panel_id].layout.margin.left = x_linked_margins.left;
+            this.panels[panel_id].layout.margin.right = x_linked_margins.right;
+            this.panels[panel_id].layout.cliparea.origin.x = x_linked_margins.left;
+        }
     }.bind(this));
     var calculated_plot_height = y_offset;
     this.panel_ids_by_y_index.forEach(function(panel_id){
         this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
-    }.bind(this));
+    }.bind(this));    
 
     // Update dimensions on the plot to accomodate repositioned panels
     this.setDimensions();

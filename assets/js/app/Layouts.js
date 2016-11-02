@@ -475,7 +475,8 @@ LocusZoom.Layouts.add("panel", "association", {
     },
     legend: {
         orientation: "vertical",
-        origin: { x: 55, y: 40 }
+        origin: { x: 55, y: 40 },
+        hidden: true
     },
     interaction: {
         drag_background_to_pan: true,
