@@ -38,6 +38,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     };
 
     this.tracks = 1;
+    this.previous_tracks = 1;
     this.group_hover_elements = {};
     
     // track-number-indexed object with arrays of interval indexes in the dataset
@@ -48,6 +49,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.assignTracks = function(){
 
         // Reinitialize some metadata
+        this.previous_tracks = this.tracks;
         this.tracks = 0;
         this.interval_track_index = { 1: [] };
         this.track_split_field_index = {};
@@ -138,21 +140,27 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         this.assignTracks();
 
         // First: render or remove group bounding boxes based on whether we're track split
-        Object.keys(this.group_hover_elements).forEach(function(key){
-            this.group_hover_elements[key].remove();
-        }.bind(this));
         if (this.layout.split_tracks){
-            this.group_hover_elements = {};
+            Object.keys(this.group_hover_elements).forEach(function(key){
+                if (!this.track_split_field_index[key]){ this.group_hover_elements[key].remove(); }
+            }.bind(this));
             Object.keys(this.track_split_field_index).forEach(function(key){
-                this.group_hover_elements[key] = this.svg.group.insert("rect", ":first-child")
-                    .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box")
+                if (!this.group_hover_elements[key]){
+                    this.group_hover_elements[key] = this.svg.group.insert("rect", ":first-child")
+                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
+                }
+                this.group_hover_elements[key]
                     .attr("rx", this.layout.bounding_box_padding).attr("ry", this.layout.bounding_box_padding)
                     .attr("width", this.parent.layout.cliparea.width)
                     .attr("height", this.getTrackHeight() - this.layout.track_vertical_spacing)
                     .attr("x", 0)
                     .attr("y", (this.track_split_field_index[key]-1) * this.getTrackHeight());
             }.bind(this));
-            console.log(this.group_hover_elements);
+        } else {
+            Object.keys(this.group_hover_elements).forEach(function(key){
+                this.group_hover_elements[key].remove();
+            }.bind(this));
+            this.group_hover_elements = {};
         }
 
         var width, height, x, y, fill;
@@ -308,12 +316,17 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 // Apply selectable, tooltip, etc to clickareas
                 data_layer.applyAllStatusBehaviors(clickareas);
 
-                //data_layer.layout.split_tracks
-
             });
 
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Update the legend axis if the number of ticks changed
+        if (this.previous_tracks != this.tracks){
+            this.updateSplitTrackAxis();
+        }
+
+        return this;
 
     };
     
@@ -330,8 +343,12 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var interval_bbox_id = this.getElementId(tooltip.data) + "_bounding_box";
-        var interval_bbox = d3.select("#" + interval_bbox_id).node().getBBox();
+        var interval_bbox;
+        if (this.layout.split_tracks){
+            interval_bbox = d3.select("#" + this.getElementId(tooltip.data)).node().getBBox();
+        } else {
+            interval_bbox = d3.select("#" + this.getElementId(tooltip.data) + "_bounding_box").node().getBBox();
+        }
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
         // Position horizontally: attempt to center on the portion of the interval that's visible,
@@ -362,6 +379,66 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
             .style("left", arrow_left + "px")
             .style("top", arrow_top + "px");
+    };
+
+    // Redraw split track axis or hide it, and show/hide the legend, as determined
+    // by current layout parameters and data
+    this.updateSplitTrackAxis = function(){
+        var legend_axis = this.layout.track_split_legend_to_y_axis ? "y" + this.layout.track_split_legend_to_y_axis : false;
+        if (this.layout.split_tracks){
+            var tracks = +this.tracks || 0;
+            var track_height = +this.layout.track_height || 0;
+            var track_spacing =  2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
+            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+            this.parent.scaleHeightToData(target_height);
+            if (legend_axis && this.parent.legend){
+                this.parent.legend.hide();                            
+                this.parent.layout.axes[legend_axis] = {
+                    render: true,
+                    ticks: [],
+                    range: {
+                        start: (target_height - (this.layout.track_height/2)),
+                        end: (this.layout.track_height/2)
+                    }
+                };
+                this.layout.legend.forEach(function(element){
+                    var key = element[this.layout.track_split_field];
+                    var track = this.track_split_field_index[key];
+                    if (track){
+                        if (this.layout.track_split_order == "DESC"){
+                            track = Math.abs(track - tracks - 1);
+                        }
+                        this.parent.layout.axes[legend_axis].ticks.push({
+                            x: track,
+                            text: element.label
+                        });
+                    }
+                }.bind(this));
+                this.layout.y_axis = {
+                    axis: this.layout.track_split_legend_to_y_axis,
+                    floor: 1,
+                    ceiling: tracks
+                };
+                this.parent.render();
+            }
+        } else {
+            if (legend_axis && this.parent.legend){
+                this.parent.legend.show();
+                this.parent.layout.axes[legend_axis] = { render: false };
+                this.parent.render();
+            }
+        }
+        return this;
+    };
+
+    // Method to not only toggle the split tracks boolean but also update
+    // necessary display values to animate a complete merge/split
+    this.toggleSplitTracks = function(){
+        this.layout.split_tracks = !this.layout.split_tracks;
+        this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
+        this.render();
+        this.updateSplitTrackAxis();
+        return this;
     };
        
     return this;

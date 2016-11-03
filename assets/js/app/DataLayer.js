@@ -471,7 +471,6 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     var attr_class = "lz-data_layer-" + this.layout.type + "-" + status;
     if (this.layout.hover_element){
         if (this.layout.group_hover_elements_on_field){
-            console.log(element, this.group_hover_elements, element[this.layout.group_hover_elements_on_field]);
             selector = this.group_hover_elements[element[this.layout.group_hover_elements_on_field]];
         } else {
             selector = d3.select("#" + element_id + "_" + this.layout.hover_element);

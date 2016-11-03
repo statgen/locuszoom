@@ -829,53 +829,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setColor(layout.color).setText(text)
                 .setTitle("Toggle whether tracks are split apart or merged together")
                 .setOnclick(function(){
-                    var legend_axis = data_layer.layout.track_split_legend_to_y_axis ? "y" + data_layer.layout.track_split_legend_to_y_axis : false;
-                    data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
-                    data_layer.layout.group_hover_elements_on_field = data_layer.layout.split_tracks ? data_layer.layout.track_split_field : null;
-                    data_layer.render();
-                    if (data_layer.layout.split_tracks){
-                        var tracks = +data_layer.tracks || 0;
-                        var track_height = +data_layer.layout.track_height || 0;
-                        var track_spacing =  2 * (+data_layer.layout.bounding_box_padding || 0) + (+data_layer.layout.track_vertical_spacing || 0);
-                        var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
-                        this.parent_panel.scaleHeightToData(target_height);
-                        if (legend_axis && this.parent_panel.legend){
-                            this.parent_panel.legend.hide();                            
-                            this.parent_panel.layout.axes[legend_axis] = {
-                                render: true,
-                                ticks: [],
-                                range: {
-                                    start: (target_height - (data_layer.layout.track_height/2)),
-                                    end: (data_layer.layout.track_height/2)
-                                }
-                            };
-                            data_layer.layout.legend.forEach(function(element){
-                                var key = element[data_layer.layout.track_split_field];
-                                var track = data_layer.track_split_field_index[key];
-                                if (track){
-                                    if (data_layer.layout.track_split_order == "DESC"){
-                                        track = Math.abs(track - tracks - 1);
-                                    }
-                                    data_layer.parent.layout.axes[legend_axis].ticks.push({
-                                        x: track,
-                                        text: element.label
-                                    });
-                                }
-                            });
-                            data_layer.layout.y_axis = {
-                                axis: data_layer.layout.track_split_legend_to_y_axis,
-                                floor: 1,
-                                ceiling: tracks
-                            };
-                            this.parent_panel.render();
-                        }
-                    } else {
-                        if (legend_axis && this.parent_panel.legend){
-                            this.parent_panel.legend.show();
-                            this.parent_panel.layout.axes[legend_axis] = { render: false };
-                            this.parent_panel.render();
-                        }
-                    }
+                    data_layer.toggleSplitTracks();
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
                     this.scale_timeout = setTimeout(function(){
                         if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
