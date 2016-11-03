@@ -22,7 +22,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
-        hover_element: "bounding_box"
+        hover_element: "bounding_box",
+        group_hover_elements_on_field: null
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -37,6 +38,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     };
 
     this.tracks = 1;
+    this.group_hover_elements = {};
     
     // track-number-indexed object with arrays of interval indexes in the dataset
     this.interval_track_index = { 1: [] };
@@ -135,8 +137,26 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
         this.assignTracks();
 
-        var width, height, x, y, fill;
+        // First: render or remove group bounding boxes based on whether we're track split
+        Object.keys(this.group_hover_elements).forEach(function(key){
+            this.group_hover_elements[key].remove();
+        }.bind(this));
+        if (this.layout.split_tracks){
+            this.group_hover_elements = {};
+            Object.keys(this.track_split_field_index).forEach(function(key){
+                this.group_hover_elements[key] = this.svg.group.insert("rect", ":first-child")
+                    .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box")
+                    .attr("rx", this.layout.bounding_box_padding).attr("ry", this.layout.bounding_box_padding)
+                    .attr("width", this.parent.layout.cliparea.width)
+                    .attr("height", this.getTrackHeight() - this.layout.track_vertical_spacing)
+                    .attr("x", 0)
+                    .attr("y", (this.track_split_field_index[key]-1) * this.getTrackHeight());
+            }.bind(this));
+            console.log(this.group_hover_elements);
+        }
 
+        var width, height, x, y, fill;
+            
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
@@ -150,48 +170,51 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 var data_layer = interval.parent;
 
                 // Render interval bounding box (displayed behind intervals to show highlight
-                // without needing to modify interval display element(s))
+                // without needing to modify interval display element(s)) if not in split view
                 var bboxes = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box")
                     .data([interval], function(d){ return d[data_layer.layout.id_field] + "_bbox"; });
-
-                bboxes.enter().append("rect")
-                    .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
-                
-                bboxes
-                    .attr("id", function(d){
-                        return data_layer.getElementId(d) + "_bounding_box";
-                    })
-                    .attr("rx", function(){
-                        return data_layer.layout.bounding_box_padding;
-                    })
-                    .attr("ry", function(){
-                        return data_layer.layout.bounding_box_padding;
-                    });
-
-                width = function(d){
-                    return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
-                };
-                height = function(){
-                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                };
-                x = function(d){
-                    return d.display_range.start - data_layer.layout.bounding_box_padding;
-                };
-                y = function(d){
-                    return ((d.track-1) * data_layer.getTrackHeight());
-                };
-                if (data_layer.canTransition()){
+                if (data_layer.layout.split_tracks){
+                    bboxes.remove();
+                } else {                    
+                    bboxes.enter().append("rect")
+                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
+                    
                     bboxes
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
-                } else {
-                    bboxes
-                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                        .attr("id", function(d){
+                            return data_layer.getElementId(d) + "_bounding_box";
+                        })
+                        .attr("rx", function(){
+                            return data_layer.layout.bounding_box_padding;
+                        })
+                        .attr("ry", function(){
+                            return data_layer.layout.bounding_box_padding;
+                        });
+                    
+                    width = function(d){
+                        return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
+                    };
+                    height = function(){
+                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                    };
+                    x = function(d){
+                        return d.display_range.start - data_layer.layout.bounding_box_padding;
+                    };
+                    y = function(d){
+                        return ((d.track-1) * data_layer.getTrackHeight());
+                    };
+                    if (data_layer.canTransition()){
+                        bboxes
+                            .transition()
+                            .duration(data_layer.layout.transition.duration || 0)
+                            .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                    } else {
+                        bboxes
+                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                    }
+                    
+                    bboxes.exit().remove();
                 }
-
-                bboxes.exit().remove();
 
                 // Render primary interval rects
                 var rects = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-interval_rect")
@@ -284,6 +307,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
                 // Apply selectable, tooltip, etc to clickareas
                 data_layer.applyAllStatusBehaviors(clickareas);
+
+                //data_layer.layout.split_tracks
 
             });
 

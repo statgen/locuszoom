@@ -464,21 +464,28 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         toggle = true;
     }
 
-    var id = this.getElementId(element);
+    var element_id = this.getElementId(element);
     
     // Set/unset the proper status class on the appropriate DOM element
-    var element_id = id;
+    var selector = d3.select("#" + element_id);
     var attr_class = "lz-data_layer-" + this.layout.type + "-" + status;
     if (this.layout.hover_element){
-        element_id += "_" + this.layout.hover_element;
+        if (this.layout.group_hover_elements_on_field){
+            console.log(element, this.group_hover_elements, element[this.layout.group_hover_elements_on_field]);
+            selector = this.group_hover_elements[element[this.layout.group_hover_elements_on_field]];
+        } else {
+            selector = d3.select("#" + element_id + "_" + this.layout.hover_element);
+        }
         attr_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
     }
-    d3.select("#" + element_id).classed(attr_class, toggle);
+    if (selector && !selector.empty()){
+        selector.classed(attr_class, toggle);
+    }
     
     // Track element ID in the proper status state array
-    var element_status_idx = this.state[this.state_id][status].indexOf(id);
+    var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
     if (toggle && element_status_idx == -1){
-        this.state[this.state_id][status].push(id);
+        this.state[this.state_id][status].push(element_id);
     }
     if (!toggle && element_status_idx != -1){
         this.state[this.state_id][status].splice(element_status_idx, 1);

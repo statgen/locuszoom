@@ -831,6 +831,7 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     var legend_axis = data_layer.layout.track_split_legend_to_y_axis ? "y" + data_layer.layout.track_split_legend_to_y_axis : false;
                     data_layer.layout.split_tracks = !data_layer.layout.split_tracks;
+                    data_layer.layout.group_hover_elements_on_field = data_layer.layout.split_tracks ? data_layer.layout.track_split_field : null;
                     data_layer.render();
                     if (data_layer.layout.split_tracks){
                         var tracks = +data_layer.tracks || 0;
