@@ -848,13 +848,18 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                                     end: (data_layer.layout.track_height/2)
                                 }
                             };
-                            var tick_x = 0;
-                            data_layer.layout.legend.forEach(function(legend_element){
-                                tick_x++;
-                                data_layer.parent.layout.axes[legend_axis].ticks.push({
-                                    x: tick_x,
-                                    text: legend_element.label
-                                });
+                            data_layer.layout.legend.forEach(function(element){
+                                var key = element[data_layer.layout.track_split_field];
+                                var track = data_layer.track_split_field_index[key];
+                                if (track){
+                                    if (data_layer.layout.track_split_order == "DESC"){
+                                        track = Math.abs(track - tracks - 1);
+                                    }
+                                    data_layer.parent.layout.axes[legend_axis].ticks.push({
+                                        x: track,
+                                        text: element.label
+                                    });
+                                }
                             });
                             data_layer.layout.y_axis = {
                                 axis: data_layer.layout.track_split_legend_to_y_axis,

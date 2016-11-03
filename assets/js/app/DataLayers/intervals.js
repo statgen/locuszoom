@@ -49,7 +49,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         this.tracks = 0;
         this.interval_track_index = { 1: [] };
         this.track_split_field_index = {};
-
+        
         // If splitting tracks by a field's value then do a first pass determine
         // a value/track mapping that preserves the order of possible values
         if (this.layout.track_split_field && this.layout.split_tracks){

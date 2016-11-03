@@ -740,18 +740,18 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         }
     },
     legend: [
-        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter" },
-        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter" },
-        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter" },
-        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer" },
-        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer" },
-        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer" },
-        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer" },
-        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator" },
-        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition" },
-        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation" },
-        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed" },
-        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal" }
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "interval:state_id": 1 },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "interval:state_id": 2 },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "interval:state_id": 3 },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "interval:state_id": 4 },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "interval:state_id": 5 },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "interval:state_id": 6 },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "interval:state_id": 7 },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "interval:state_id": 8 },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "interval:state_id": 9 },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "interval:state_id": 10 },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "interval:state_id": 12 },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "interval:state_id": 13 }
     ],    
     highlighted: {
         onmouseover: "on",
@@ -3347,7 +3347,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         this.tracks = 0;
         this.interval_track_index = { 1: [] };
         this.track_split_field_index = {};
-
+        
         // If splitting tracks by a field's value then do a first pass determine
         // a value/track mapping that preserves the order of possible values
         if (this.layout.track_split_field && this.layout.split_tracks){
@@ -4831,13 +4831,19 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                                     end: (data_layer.layout.track_height/2)
                                 }
                             };
-                            var tick_x = 0;
-                            data_layer.layout.legend.forEach(function(legend_element){
-                                tick_x++;
-                                data_layer.parent.layout.axes[legend_axis].ticks.push({
-                                    x: tick_x,
-                                    text: legend_element.label
-                                });
+                            data_layer.layout.legend.forEach(function(element){
+                                var key = element[data_layer.layout.track_split_field];
+                                var track = data_layer.track_split_field_index[key];
+                                if (track){
+                                    console.log(key, track);
+                                    if (data_layer.layout.track_split_order == "DESC"){
+                                        track = Math.abs(track - tracks - 1);
+                                    }
+                                    data_layer.parent.layout.axes[legend_axis].ticks.push({
+                                        x: track,
+                                        text: element.label
+                                    });
+                                }
                             });
                             data_layer.layout.y_axis = {
                                 axis: data_layer.layout.track_split_legend_to_y_axis,
