@@ -171,6 +171,14 @@ svg.#{$namespace}-locuszoom {
     fill: #000099;
   }
 
+  g.#{$namespace}-data_layer-intervals-dimmed {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-intervals-hidden {
+    display: none;
+  }
+
   rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box {
     fill: rgb(54, 54, 150);
     fill-opacity: 0;

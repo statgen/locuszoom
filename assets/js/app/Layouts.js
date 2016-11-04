@@ -324,7 +324,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
             + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.undimElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['interval:start','>=','{{start}}'],['interval:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
             + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
             + "</tr></table>"
     }
@@ -1006,7 +1006,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
     height: 120,
     min_width: 500,
     min_height: 120,
-    margin: { top: 25, right: 250, bottom: 75, left: 50 },
+    margin: { top: 25, right: 150, bottom: 75, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
         l.components.push({

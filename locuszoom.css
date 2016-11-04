@@ -103,6 +103,10 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px;
     fill: #000099; }
+  svg.lz-locuszoom g.lz-data_layer-intervals-dimmed {
+    opacity: 0.1; }
+  svg.lz-locuszoom g.lz-data_layer-intervals-hidden {
+    display: none; }
   svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box {
     fill: #363696;
     fill-opacity: 0;
