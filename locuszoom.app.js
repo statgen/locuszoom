@@ -732,7 +732,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
             + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.identifyElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.undimElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
             + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
             + "</tr></table>"
     }
@@ -1475,8 +1475,8 @@ LocusZoom.DataLayer.DefaultLayout = {
 // names and applied or removed from elements to have a visual representation of the status,
 // as well as used as keys in the state for tracking which elements are in which status(es)
 LocusZoom.DataLayer.Statuses = {
-    verbs: ["highlight", "select", "idenfity", "dim", "hide"],
-    adjectives: ["highlighted", "selected", "idenfitied", "dimmed", "hidden"]
+    verbs: ["highlight", "select", "dim", "hide"],
+    adjectives: ["highlighted", "selected", "dimmed", "hidden"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -1869,12 +1869,14 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
     var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
     var antiverb = "un" + verb;
     // Set/unset a single element's status
-    LocusZoom.DataLayer.prototype[verb + "Element"] = function(element){
-        this.setElementStatus(adjective, element, true);
+    LocusZoom.DataLayer.prototype[verb + "Element"] = function(element, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        this.setElementStatus(adjective, element, true, exclusive);
         return this;
     };
-    LocusZoom.DataLayer.prototype[antiverb + "Element"] = function(element){
-        this.setElementStatus(adjective, element, false);
+    LocusZoom.DataLayer.prototype[antiverb + "Element"] = function(element, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        this.setElementStatus(adjective, element, false, exclusive);
         return this;
     };
     // Set/unset status for arbitrarily many elements given a set of filters
@@ -1898,7 +1900,7 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
 });
 
 // Toggle a status (e.g. highlighted, selected, identified) on an element
-LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle){
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive){
     
     // Sanity checks
     if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
@@ -1911,21 +1913,30 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         toggle = true;
     }
 
-    var id = this.getElementId(element);
-    
-    // Set/unset the proper status class on the appropriate DOM element
-    var element_id = id;
-    var attr_class = "lz-data_layer-" + this.layout.type + "-" + status;
-    if (this.layout.hover_element){
-        element_id += "_" + this.layout.hover_element;
-        attr_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
+    // Get an ID for the elment or return having changed nothing
+    try {
+        var element_id = this.getElementId(element);
+    } catch (get_element_id_error){
+        return this;
     }
-    d3.select("#" + element_id).classed(attr_class, toggle);
+
+    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    if (exclusive){
+        this.setAllElementStatus(status, !toggle);
+    }
+    
+    // Set/unset the proper status class on the appropriate DOM element(s)
+    d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
+    if (this.layout.hover_element){
+        var hover_element_id = element_id + "_" + this.layout.hover_element;
+        var hover_element_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
+        d3.select("#" + hover_element_id).classed(hover_element_class, toggle);
+    }
     
     // Track element ID in the proper status state array
-    var element_status_idx = this.state[this.state_id][status].indexOf(id);
+    var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
     if (toggle && element_status_idx == -1){
-        this.state[this.state_id][status].push(id);
+        this.state[this.state_id][status].push(element_id);
     }
     if (!toggle && element_status_idx != -1){
         this.state[this.state_id][status].splice(element_status_idx, 1);
@@ -1961,9 +1972,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     
     // Apply statuses
     this.filterElements(filters).forEach(function(element){
-        //if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
-            this.setElementStatus(status, element, toggle);
-        //}
+        this.setElementStatus(status, element, toggle);
     }.bind(this));
     
     return this;
@@ -1982,9 +1991,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     // Apply statuses
     if (toggle){
         this.data.forEach(function(element){
-            if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
-                this.setElementStatus(status, element, true);
-            }
+            this.setElementStatus(status, element, true);
         }.bind(this));
     } else {
         var status_ids = this.state[this.state_id][status].slice();
@@ -1999,7 +2006,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     return this;
 };
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, identified)
+// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, dimmed, hidden...)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
     // Glossary for this function:

@@ -53,13 +53,9 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4px; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-identified {
-    stroke: #424242;
-    stroke-opacity: 0.8;
-    stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-dimmed {
-    fill-opacity: 0.2;
-    stroke-opacity: 0.2; }
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1; }
   svg.lz-locuszoom path.lz-data_layer-scatter-hidden {
     display: none; }
   svg.lz-locuszoom text.lz-data_layer-scatter-label {
@@ -76,8 +72,12 @@ svg.lz-locuszoom {
     fill: none;
     stroke: none;
     cursor: pointer; }
-  svg.lz-locuszoom g.lz-data_layer-gene {
+  svg.lz-locuszoom g.lz-data_layer-genes {
     cursor: pointer; }
+  svg.lz-locuszoom g.lz-data_layer-genes-dimmed {
+    opacity: 0.1; }
+  svg.lz-locuszoom g.lz-data_layer-genes-hidden {
+    display: none; }
   svg.lz-locuszoom text.lz-data_layer-genes.lz-label {
     font-style: italic; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box {
@@ -85,10 +85,6 @@ svg.lz-locuszoom {
     fill-opacity: 0;
     stroke-width: 0px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-highlighted {
-    fill: #363696;
-    fill-opacity: 0.1;
-    stroke-width: 0px; }
-  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-identified {
     fill: #363696;
     fill-opacity: 0.1;
     stroke-width: 0px; }
