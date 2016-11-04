@@ -1096,36 +1096,39 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
     }
 };
 
-// Toggle a status on elements in all child data layers based on a set of filters
+// Methods to set/unset element statuses across all data layers
 LocusZoom.Panel.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
     }.bind(this));
 };
-LocusZoom.Panel.prototype.highlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
+LocusZoom.Panel.prototype.setAllElementStatus = function(status, toggle){
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        this.data_layers[id].setAllElementStatus(status, toggle);
+    }.bind(this));
 };
-LocusZoom.Panel.prototype.unhighlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
-};
-LocusZoom.Panel.prototype.selectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", true, filters, exclusive);
-};
-LocusZoom.Panel.prototype.unselectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", false, filters, exclusive);
-};
-LocusZoom.Panel.prototype.identifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", true, filters, exclusive);
-};
-LocusZoom.Panel.prototype.unidentifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", false, filters, exclusive);
-};
+LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
+    var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
+    var antiverb = "un" + verb;
+    // Set/unset status for arbitrarily many elements given a set of filters
+    LocusZoom.Panel.prototype[verb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
+    };
+    LocusZoom.Panel.prototype[antiverb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
+    };
+    // Set/unset status for all elements
+    LocusZoom.Panel.prototype[verb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, true);
+        return this;
+    };
+    LocusZoom.Panel.prototype[antiverb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, false);
+        return this;
+    };
+});
 
 // Add a "basic" loader to a panel
 // This method is jsut a shortcut for adding the most commonly used type of loader

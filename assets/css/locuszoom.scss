@@ -86,15 +86,24 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
+  path.#{$namespace}-data_layer-scatter-selected {
+    stroke: #{$default_black};
+    stroke-width: 4px;
+  }
+
   path.#{$namespace}-data_layer-scatter-identified {
     stroke: rgb(66,66,66);
     stroke-opacity: 0.8;
     stroke-width: 4px;
   }
 
-  path.#{$namespace}-data_layer-scatter-selected {
-    stroke: #{$default_black};
-    stroke-width: 4px;
+  path.#{$namespace}-data_layer-scatter-dimmed {
+    fill-opacity: 0.2;
+    stroke-opacity: 0.2;
+  }
+
+  path.#{$namespace}-data_layer-scatter-hidden {
+    display: none;
   }
 
   text.#{$namespace}-data_layer-scatter-label {

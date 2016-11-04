@@ -1444,9 +1444,9 @@ LocusZoom.DataLayer = function(layout, parent) {
         this.state = this.parent.state;
         this.state_id = this.parent.id + "." + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
-        this.state[this.state_id].highlighted = this.state[this.state_id].highlighted || [];
-        this.state[this.state_id].selected = this.state[this.state_id].selected || [];
-        this.state[this.state_id].identified = this.state[this.state_id].identified || [];
+        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
+        }.bind(this));
     } else {
         this.state = {};
         this.state_id = null;
@@ -1467,6 +1467,16 @@ LocusZoom.DataLayer.DefaultLayout = {
     fields: [],
     x_axis: {},
     y_axis: {}
+};
+
+// Available statuses that individual elements can have. Each status is described by
+// a verb/antiverb and an adjective. Verbs and antiverbs are used to generate data layer
+// methods for updating the status on one or more elements. Adjectives are used in class
+// names and applied or removed from elements to have a visual representation of the status,
+// as well as used as keys in the state for tracking which elements are in which status(es)
+LocusZoom.DataLayer.Statuses = {
+    verbs: ["highlight", "select", "idenfity", "dim", "hide"],
+    adjectives: ["highlighted", "selected", "idenfitied", "dimmed", "hidden"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -1794,12 +1804,11 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     }
 
     var statuses = {};
-    statuses.highlighted = this.state[this.state_id].highlighted.indexOf(id) != -1;
-    statuses.unhighlighted = !statuses.highlighted;
-    statuses.selected = this.state[this.state_id].selected.indexOf(id) != -1;
-    statuses.unselected = !statuses.selected;
-    statuses.identified = this.state[this.state_id].identified.indexOf(id) != -1;
-    statuses.unidentified = !statuses.identified;
+    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+        var antistatus = "un" + status;
+        statuses[status] = this.state[this.state_id][status].indexOf(id) != -1;
+        statuses[antistatus] = !statuses[status];
+    }.bind(this));
 
     var show_resolved = resolveStatus(statuses, show_directive);
     var hide_resolved = resolveStatus(statuses, hide_directive);
@@ -1856,75 +1865,47 @@ LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
 LocusZoom.DataLayer.prototype.filterIndexes = function(filters){ return this.filter(filters, "indexes"); };
 LocusZoom.DataLayer.prototype.filterElements = function(filters){ return this.filter(filters, "elements"); };
 
-// Toggle the highlighted status of an element
-LocusZoom.DataLayer.prototype.highlightElement = function(element){
-    this.setElementStatus("highlighted", element, true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unhighlightElement = function(element){
-    this.setElementStatus("highlighted", element, false);
-    return this;
-};
-
-// Toggle the highlighted status of all elements
-LocusZoom.DataLayer.prototype.highlightAllElements = function(){
-    this.setAllElementStatus("highlighted", true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unhighlightAllElements = function(){
-    this.setAllElementStatus("highlighted", false);
-    return this;
-};
-
-// Toggle the selected status of an element
-LocusZoom.DataLayer.prototype.selectElement = function(element){
-    this.setElementStatus("selected", element, true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unselectElement = function(element){
-    this.setElementStatus("selected", element, false);
-    return this;
-};
-
-// Toggle the selected status of all elements
-LocusZoom.DataLayer.prototype.selectAllElements = function(){
-    this.setAllElementStatus("selected", true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unselectAllElements = function(){
-    this.setAllElementStatus("selected", false);
-    return this;
-};
-
-// Toggle the identified status of an element
-LocusZoom.DataLayer.prototype.identifyElement = function(element){
-    this.setElementStatus("identified", element, true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unidentifyElement = function(element){
-    this.setElementStatus("identified", element, false);
-    return this;
-};
-
-// Toggle the identified status of all elements
-LocusZoom.DataLayer.prototype.identifyAllElements = function(){
-    this.setAllElementStatus("identified", true);
-    return this;
-};
-LocusZoom.DataLayer.prototype.unidentifyAllElements = function(){
-    this.setAllElementStatus("identified", false);
-    return this;
-};
+LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
+    var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
+    var antiverb = "un" + verb;
+    // Set/unset a single element's status
+    LocusZoom.DataLayer.prototype[verb + "Element"] = function(element){
+        this.setElementStatus(adjective, element, true);
+        return this;
+    };
+    LocusZoom.DataLayer.prototype[antiverb + "Element"] = function(element){
+        this.setElementStatus(adjective, element, false);
+        return this;
+    };
+    // Set/unset status for arbitrarily many elements given a set of filters
+    LocusZoom.DataLayer.prototype[verb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
+    };
+    LocusZoom.DataLayer.prototype[antiverb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
+    };
+    // Set/unset status for all elements
+    LocusZoom.DataLayer.prototype[verb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, true);
+        return this;
+    };
+    LocusZoom.DataLayer.prototype[antiverb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, false);
+        return this;
+    };
+});
 
 // Toggle a status (e.g. highlighted, selected, identified) on an element
 LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle){
     
     // Sanity checks
-    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
-        throw("Invalid status passed to setElementStatus()");
+    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+        throw("Invalid status passed to DataLayer.setElementStatus()");
     }
     if (typeof element == "undefined"){
-        throw("Invalid element passed to setElementStatus()");
+        throw("Invalid element passed to DataLayer.setElementStatus()");
     }
     if (typeof toggle == "undefined"){
         toggle = true;
@@ -1961,12 +1942,39 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     
 };
 
+// Toggle a status on elements in the data layer based on a set of filters
+LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
+    
+    // Sanity check
+    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+        throw("Invalid status passed to DataLayer.setElementStatusByFilters()");
+    }
+    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
+    if (typeof toggle == "undefined"){ toggle = true; } else { toggle = !!toggle; }
+    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    if (!Array.isArray(filters)){ filters = []; }
+
+    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    if (exclusive){
+        this.setAllElementStatus(status, !toggle);
+    }
+    
+    // Apply statuses
+    this.filterElements(filters).forEach(function(element){
+        //if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
+            this.setElementStatus(status, element, toggle);
+        //}
+    }.bind(this));
+    
+    return this;
+};
+
 // Toggle a status on all elements in the data layer
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     
     // Sanity check
-    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
-        throw("Invalid status passed to setAllElementStatus()");
+    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+        throw("Invalid status passed to DataLayer.setAllElementStatus()");
     }
     if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
     if (typeof toggle == "undefined"){ toggle = true; }
@@ -1991,57 +1999,6 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     return this;
 };
 
-// Toggle a status on elements in the data layer based on a set of filters
-LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
-    
-    // Sanity check
-    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){
-        throw("Invalid status passed to setElementStatusByFilters()");
-    }
-    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-    if (typeof toggle == "undefined"){ toggle = true; } else { toggle = !!toggle; }
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    if (!Array.isArray(filters)){ filters = []; }
-
-    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
-    if (exclusive){
-        this.setAllElementStatus(status, !toggle);
-    }
-    
-    // Apply statuses
-    this.filterElements(filters).forEach(function(element){
-        if (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1){
-            this.setElementStatus(status, element, toggle);
-        }
-    }.bind(this));
-    
-    return this;
-};
-LocusZoom.DataLayer.prototype.highlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
-};
-LocusZoom.DataLayer.prototype.unhighlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
-};
-LocusZoom.DataLayer.prototype.selectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", true, filters, exclusive);
-};
-LocusZoom.DataLayer.prototype.unselectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", false, filters, exclusive);
-};
-LocusZoom.DataLayer.prototype.identifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", true, filters, exclusive);
-};
-LocusZoom.DataLayer.prototype.unidentifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", false, filters, exclusive);
-};
-
 // Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, identified)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
@@ -2051,7 +2008,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
     // action - a more verbose locuszoom-layout-specific form of an event (e.g. "onmouseover", "onshiftclick")
 
     // Sanity checks
-    if (typeof status == "undefined" || ["highlighted","selected","identified"].indexOf(status) == -1){ return; }
+    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){ return; }
     if (typeof selection != "object"){ return; }
     if (typeof this.layout[status] != "object" || !this.layout[status]){ return; }
 
@@ -2126,8 +2083,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
 // Apply all supported status behaviors to a selection of objects
 LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
-    var supported_statuses = ["highlighted","selected","identified"];
-    supported_statuses.forEach(function(status){
+    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
         this.applyStatusBehavior(status, selection);
     }.bind(this));
     return this;
@@ -7199,36 +7155,39 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(){
     }
 };
 
-// Toggle a status on elements in all child data layers based on a set of filters
+// Methods to set/unset element statuses across all data layers
 LocusZoom.Panel.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
     }.bind(this));
 };
-LocusZoom.Panel.prototype.highlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", true, filters, exclusive);
+LocusZoom.Panel.prototype.setAllElementStatus = function(status, toggle){
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        this.data_layers[id].setAllElementStatus(status, toggle);
+    }.bind(this));
 };
-LocusZoom.Panel.prototype.unhighlightElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("highlighted", false, filters, exclusive);
-};
-LocusZoom.Panel.prototype.selectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", true, filters, exclusive);
-};
-LocusZoom.Panel.prototype.unselectElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("selected", false, filters, exclusive);
-};
-LocusZoom.Panel.prototype.identifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", true, filters, exclusive);
-};
-LocusZoom.Panel.prototype.unidentifyElementsByFilters = function(filters, exclusive){
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    return this.setElementStatusByFilters("identified", false, filters, exclusive);
-};
+LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
+    var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
+    var antiverb = "un" + verb;
+    // Set/unset status for arbitrarily many elements given a set of filters
+    LocusZoom.Panel.prototype[verb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
+    };
+    LocusZoom.Panel.prototype[antiverb + "ElementsByFilters"] = function(filters, exclusive){
+        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
+    };
+    // Set/unset status for all elements
+    LocusZoom.Panel.prototype[verb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, true);
+        return this;
+    };
+    LocusZoom.Panel.prototype[antiverb + "AllElements"] = function(){
+        this.setAllElementStatus(adjective, false);
+        return this;
+    };
+});
 
 // Add a "basic" loader to a panel
 // This method is jsut a shortcut for adding the most commonly used type of loader
