@@ -91,6 +91,15 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
+  path.#{$namespace}-data_layer-scatter-dimmed {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1;
+  }
+
+  path.#{$namespace}-data_layer-scatter-hidden {
+    display: none;
+  }
+
   text.#{$namespace}-data_layer-scatter-label {
     fill: #{$default_black};
     alignment-baseline: middle;
@@ -113,8 +122,16 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
-  g.#{$namespace}-data_layer-gene {
+  g.#{$namespace}-data_layer-genes {
     cursor: pointer;
+  }
+
+  g.#{$namespace}-data_layer-genes-dimmed {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-genes-hidden {
+    display: none;
   }
 
   text.#{$namespace}-data_layer-genes.#{$namespace}-label {
