@@ -323,7 +323,10 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
-            + "<div style=\"width: 100%; text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></div>"
+            + "<table width=\"100%\"><tr>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.undimElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
+            + "</tr></table>"
     }
 });
 
