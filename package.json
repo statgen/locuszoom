@@ -18,7 +18,11 @@
     "url": "https://github.com/statgen/locuszoom.git"
   },
   "scripts": {
-    "test": "gulp"
+    "test": "gulp test"
+  },
+  "dependencies": {
+    "q": "~1.4.0",
+    "d3": "~3.5.0"
   },
   "devDependencies": {
     "gulp": "~3.9.0",
@@ -34,9 +38,5 @@
     "should": "~8.0.0",
     "jsdom": "~7.2.0",
     "mocha-jsdom": "~1.0.0"
-  },
-  "dependencies": {
-    "q": "1.4.1",
-    "d3": "~3.5.0"
   }
 }
