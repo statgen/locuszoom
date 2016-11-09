@@ -53,6 +53,11 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4px; }
+  svg.lz-locuszoom path.lz-data_layer-scatter-dimmed {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1; }
+  svg.lz-locuszoom path.lz-data_layer-scatter-hidden {
+    display: none; }
   svg.lz-locuszoom text.lz-data_layer-scatter-label {
     fill: rgba(24, 24, 24, 1);
     alignment-baseline: middle; }
@@ -67,8 +72,12 @@ svg.lz-locuszoom {
     fill: none;
     stroke: none;
     cursor: pointer; }
-  svg.lz-locuszoom g.lz-data_layer-gene {
+  svg.lz-locuszoom g.lz-data_layer-genes {
     cursor: pointer; }
+  svg.lz-locuszoom g.lz-data_layer-genes-dimmed {
+    opacity: 0.1; }
+  svg.lz-locuszoom g.lz-data_layer-genes-hidden {
+    display: none; }
   svg.lz-locuszoom text.lz-data_layer-genes.lz-label {
     font-style: italic; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box {
@@ -94,6 +103,25 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px;
     fill: #000099; }
+  svg.lz-locuszoom g.lz-data_layer-intervals-dimmed {
+    opacity: 0.1; }
+  svg.lz-locuszoom g.lz-data_layer-intervals-hidden {
+    display: none; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box {
+    fill: #363696;
+    fill-opacity: 0;
+    stroke-width: 0px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-highlighted {
+    fill: #363696;
+    fill-opacity: 0.2;
+    stroke-width: 0px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-selected {
+    fill: #363696;
+    fill-opacity: 0.35;
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 1px; }
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-interval_rect {
+    stroke-width: 0px; }
 
 /* ! LocusZoom HTML Styles */
 div.lz-data_layer-tooltip {

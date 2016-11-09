@@ -91,6 +91,15 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
+  path.#{$namespace}-data_layer-scatter-dimmed {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1;
+  }
+
+  path.#{$namespace}-data_layer-scatter-hidden {
+    display: none;
+  }
+
   text.#{$namespace}-data_layer-scatter-label {
     fill: #{$default_black};
     alignment-baseline: middle;
@@ -113,8 +122,16 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
-  g.#{$namespace}-data_layer-gene {
+  g.#{$namespace}-data_layer-genes {
     cursor: pointer;
+  }
+
+  g.#{$namespace}-data_layer-genes-dimmed {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-genes-hidden {
+    display: none;
   }
 
   text.#{$namespace}-data_layer-genes.#{$namespace}-label {
@@ -152,6 +169,37 @@ svg.#{$namespace}-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px;
     fill: #000099;
+  }
+
+  g.#{$namespace}-data_layer-intervals-dimmed {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-intervals-hidden {
+    display: none;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-highlighted {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.2;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-selected {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.35;
+    stroke: #{$default_black};
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-interval_rect {
+    stroke-width: 0px;
   }
 
 }

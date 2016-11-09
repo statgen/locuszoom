@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.7"
+    version: "0.4.8"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -348,4 +348,28 @@ LocusZoom.getToolTipData = function(node){
     } else {
         return LocusZoom.getToolTipData(node.parentNode);
     }
+};
+
+// Shortcut method for getting a reference to the data layer that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipDataLayer = function(node){
+    var data = LocusZoom.getToolTipData(node);
+    if (data.getDataLayer){ return data.getDataLayer(); }
+    return null;
+};
+
+// Shortcut method for getting a reference to the panel that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPanel = function(node){
+    var data_layer = LocusZoom.getToolTipDataLayer(node);
+    if (data_layer){ return data_layer.parent; }
+    return null;
+};
+
+// Shortcut method for getting a reference to the plot that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPlot = function(node){
+    var panel = LocusZoom.getToolTipPanel(node);
+    if (panel){ return panel.parent; }
+    return null;
 };

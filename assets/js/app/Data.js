@@ -530,14 +530,14 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 /**
-  Known Data Source for Annotation Track (BED Track) Data
+  Known Data Source for Interval Annotation Data (e.g. BED Tracks)
 */
 
-LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
+LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-}, "BEDLZ");
+}, "IntervalLZ");
 
-LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
+LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
     var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
     return this.url + "?filter=id in " + source + 
         " and chromosome eq '" + state.chr + "'" + 
