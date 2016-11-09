@@ -732,7 +732,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
             + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.undimElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['interval:start','>=','{{start}}'],['interval:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
             + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
             + "</tr></table>"
     }
@@ -747,6 +747,58 @@ LocusZoom.Layouts.add("data_layer", "genome_legend", {
         ceiling: 2881033286
     }
 });
+
+LocusZoom.Layouts.add("data_layer", "intervals", {
+    id: "intervals",
+    type: "intervals",
+    fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
+    id_field: "interval:start",
+    start_field: "interval:start",
+    end_field: "interval:end",
+    track_split_field: "interval:state_id",
+    split_tracks: false,
+    color: {
+        field: "interval:state_id",
+        scale_function: "categorical_bin",
+        parameters: {
+            categories: [1,2,3,4,5,6,7,8,9,10,12,13],
+            values: ["rgb(212,63,58)", "rgb(250,120,105)", "rgb(252,168,139)", "rgb(240,189,66)", "rgb(250,224,105)", "rgb(240,238,84)", "rgb(244,252,23)", "rgb(23,232,252)", "rgb(32,191,17)", "rgb(23,166,77)", "rgb(162,133,166)", "rgb(212,212,212)"],
+            null_value: "#B8B8B8"
+        }
+    },
+    legend: [
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "interval:state_id": 1 },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "interval:state_id": 2 },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "interval:state_id": 3 },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "interval:state_id": 4 },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "interval:state_id": 5 },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "interval:state_id": 6 },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "interval:state_id": 7 },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "interval:state_id": 8 },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "interval:state_id": 9 },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "interval:state_id": 10 },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "interval:state_id": 12 },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "interval:state_id": 13 }
+    ],    
+    highlighted: {
+        onmouseover: "on",
+        onmouseout: "off"
+    },
+    selected: {
+        onclick: "toggle_exclusive",
+        onshiftclick: "toggle"
+    },
+    transition: {
+        duration: 200
+    },
+    tooltip: {
+        closable: false,
+        show: { or: ["highlighted", "selected"] },
+        hide: { and: ["unhighlighted", "unselected"] },
+        html: "{{interval:state_name}}<br>{{interval:start}}-{{interval:end}}"
+    }
+});
+
 
 /**
  Dashboard Layouts
@@ -768,7 +820,7 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
             position: "right"
         }
     ]
-});
+});                 
 
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
@@ -802,12 +854,9 @@ LocusZoom.Layouts.add("panel", "association", {
     title: "",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 0 },
     min_width:  400,
     min_height: 200,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     dashboard: (function(){
@@ -859,12 +908,9 @@ LocusZoom.Layouts.add("panel", "genes", {
     id: "genes",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 225 },
     min_width: 400,
     min_height: 112.5,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0.5 },
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -890,12 +936,9 @@ LocusZoom.Layouts.add("panel", "phewas", {
     id: "phewas",
     width: 800,
     height: 300,
-    origin: { x: 0, y: 0 },
     min_width:  800,
     min_height: 300,
     proportional_width: 1,
-    proportional_height: .6,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     axes: {
@@ -1109,8 +1152,6 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
     min_width:  800,
     min_height: 50,
     proportional_width: 1,
-    proportional_height: .1,
-    proportional_origin: { x: 0, y: .6 },
     margin: { top: 0, right: 50, bottom: 35, left: 50 },
     axes: {
         x: {
@@ -1367,6 +1408,39 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
     ]
 });
 
+LocusZoom.Layouts.add("panel", "intervals", {
+    id: "intervals",
+    width: 1000,
+    height: 120,
+    min_width: 500,
+    min_height: 120,
+    margin: { top: 25, right: 150, bottom: 75, left: 50 },
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_split_tracks",
+            data_layer_id: "intervals",
+            position: "right",
+            color: "yellow"
+        });
+        return l;
+    })(),
+    axes: {},
+    interaction: {
+        drag_background_to_pan: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    legend: {
+        orientation: "horizontal",
+        origin: { x: 50, y: 0 },
+        pad_from_bottom: 5
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "intervals")
+    ]
+});
+
 
 /**
  Plot Layouts
@@ -1377,13 +1451,12 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     width: 800,
     height: 450,
     resizable: "responsive",
-    aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "association"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "association", { proportional_height: 0.5 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.5 })
     ]
 });
 
@@ -1392,16 +1465,30 @@ LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_association")
 
 LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
-    height: 500,
+    height: 600,
     min_width: 800,
-    min_height: 500,
+    min_height: 600,
     responsive_resize: true,
-    aspect_ratio: 1.6,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "phewas"),
-        LocusZoom.Layouts.get("panel", "genome_legend"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "phewas", { proportional_height: 0.45 }),
+        LocusZoom.Layouts.get("panel", "genome_legend", { proportional_height: 0.1 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.45 })
+    ]
+});
+
+LocusZoom.Layouts.add("plot", "interval_association", {
+    state: {},
+    width: 800,
+    height: 550,
+    resizable: "responsive",
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
+    panels: [
+        LocusZoom.Layouts.get("panel", "association", { width: 800, proportional_height: (225/570) }),
+        LocusZoom.Layouts.get("panel", "intervals", { proportional_height: (120/570) }),
+        LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: (225/570) })
     ]
 });
 
@@ -1502,7 +1589,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
         if (typeof element[id_field] == "undefined"){
             throw("Unable to generate element ID");
         }
-        element_id = element[id_field].replace(/\W/g,"");
+        element_id = element[id_field].toString().replace(/\W/g,"");
     }
     return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
 };
@@ -1928,9 +2015,12 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Set/unset the proper status class on the appropriate DOM element(s)
     d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
     if (this.layout.hover_element){
-        var hover_element_id = element_id + "_" + this.layout.hover_element;
         var hover_element_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
-        d3.select("#" + hover_element_id).classed(hover_element_class, toggle);
+        var selector = d3.select("#" + element_id + "_" + this.layout.hover_element);
+        if (this.layout.group_hover_elements_on_field){
+            selector = this.group_hover_elements[element[this.layout.group_hover_elements_on_field]];
+        }
+        selector.classed(hover_element_class, toggle);
     }
     
     // Track element ID in the proper status state array
@@ -3309,6 +3399,453 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
 });
 
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/*********************
+  Intervals Data Layer
+  Implements a data layer that will render gene tracks
+*/
+
+LocusZoom.DataLayers.add("intervals", function(layout){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        start_field: "start",
+        end_field: "end",
+        track_split_field: "state_id",
+        track_split_order: "DESC",
+        track_split_legend_to_y_axis: 2,
+        split_tracks: false,
+        track_height: 15,
+        track_vertical_spacing: 3,
+        bounding_box_padding: 2,
+        hover_element: "bounding_box",
+        group_hover_elements_on_field: null
+    };
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+    
+    // Helper function to sum layout values to derive total height for a single interval track
+    this.getTrackHeight = function(){
+        return this.layout.track_height
+            + this.layout.track_vertical_spacing
+            + (2 * this.layout.bounding_box_padding);
+    };
+
+    this.tracks = 1;
+    this.previous_tracks = 1;
+    this.group_hover_elements = {};
+    
+    // track-number-indexed object with arrays of interval indexes in the dataset
+    this.interval_track_index = { 1: [] };
+
+    // After we've loaded interval data interpret it to assign
+    // each to a track so that they do not overlap in the view
+    this.assignTracks = function(){
+
+        // Reinitialize some metadata
+        this.previous_tracks = this.tracks;
+        this.tracks = 0;
+        this.interval_track_index = { 1: [] };
+        this.track_split_field_index = {};
+        
+        // If splitting tracks by a field's value then do a first pass determine
+        // a value/track mapping that preserves the order of possible values
+        if (this.layout.track_split_field && this.layout.split_tracks){
+            this.data.map(function(d){
+                this.track_split_field_index[d[this.layout.track_split_field]] = null;
+            }.bind(this));
+            var index = Object.keys(this.track_split_field_index);
+            if (this.layout.track_split_order == "DESC"){ index.reverse(); }
+            index.forEach(function(val){
+                this.track_split_field_index[val] = this.tracks + 1;
+                this.interval_track_index[this.tracks + 1] = [];
+                this.tracks++;
+            }.bind(this));
+        }
+
+        this.data.map(function(d, i){
+
+            // Stash a parent reference on the interval
+            this.data[i].parent = this;
+
+            // Determine display range start and end, based on minimum allowable interval display width,
+            // bounded by what we can see (range: values in terms of pixels on the screen)
+            this.data[i].display_range = {
+                start: this.parent.x_scale(Math.max(d[this.layout.start_field], this.state.start)),
+                end:   this.parent.x_scale(Math.min(d[this.layout.end_field], this.state.end))
+            };
+            this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
+            
+            // Convert and stash display range values into domain values
+            // (domain: values in terms of the data set, e.g. megabases)
+            this.data[i].display_domain = {
+                start: this.parent.x_scale.invert(this.data[i].display_range.start),
+                end:   this.parent.x_scale.invert(this.data[i].display_range.end)
+            };
+            this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
+
+            // If splitting to tracks based on the value of the designated track split field
+            // then don't bother with collision detection (intervals will be grouped on tracks
+            // solely by the value of track_split_field)
+            if (this.layout.track_split_field && this.layout.split_tracks){
+                var val = this.data[i][this.layout.track_split_field];
+                this.data[i].track = this.track_split_field_index[val];
+                this.interval_track_index[this.data[i].track].push(i);
+            } else {
+                // If not splitting to tracks based on a field value then do so based on collision
+                // detection (as how it's done for genes). Use display range/domain data generated
+                // above and cast each interval to tracks such that none overlap
+                this.tracks = 1;
+                this.data[i].track = null;
+                var potential_track = 1;
+                while (this.data[i].track == null){
+                    var collision_on_potential_track = false;
+                    this.interval_track_index[potential_track].map(function(placed_interval){
+                        if (!collision_on_potential_track){
+                            var min_start = Math.min(placed_interval.display_range.start, this.display_range.start);
+                            var max_end = Math.max(placed_interval.display_range.end, this.display_range.end);
+                            if ((max_end - min_start) < (placed_interval.display_range.width + this.display_range.width)){
+                                collision_on_potential_track = true;
+                            }
+                        }
+                    }.bind(this.data[i]));
+                    if (!collision_on_potential_track){
+                        this.data[i].track = potential_track;
+                        this.interval_track_index[potential_track].push(this.data[i]);
+                    } else {
+                        potential_track++;
+                        if (potential_track > this.tracks){
+                            this.tracks = potential_track;
+                            this.interval_track_index[potential_track] = [];
+                        }
+                    }
+                }
+
+            }
+
+        }.bind(this));
+
+        return this;
+    };
+
+    // Implement the main render function
+    this.render = function(){
+
+        this.assignTracks();
+
+        // First: render or remove group bounding boxes based on whether we're track split
+        if (this.layout.split_tracks){
+            Object.keys(this.group_hover_elements).forEach(function(key){
+                if (!this.track_split_field_index[key]){ this.group_hover_elements[key].remove(); }
+            }.bind(this));
+            Object.keys(this.track_split_field_index).forEach(function(key){
+                if (!this.group_hover_elements[key]){
+                    this.group_hover_elements[key] = this.svg.group.insert("rect", ":first-child")
+                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
+                }
+                this.group_hover_elements[key]
+                    .attr("rx", this.layout.bounding_box_padding).attr("ry", this.layout.bounding_box_padding)
+                    .attr("width", this.parent.layout.cliparea.width)
+                    .attr("height", this.getTrackHeight() - this.layout.track_vertical_spacing)
+                    .attr("x", 0)
+                    .attr("y", (this.track_split_field_index[key]-1) * this.getTrackHeight());
+            }.bind(this));
+        } else {
+            Object.keys(this.group_hover_elements).forEach(function(key){
+                this.group_hover_elements[key].remove();
+            }.bind(this));
+            this.group_hover_elements = {};
+        }
+
+        var width, height, x, y, fill;
+            
+        // Render interval groups
+        var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")
+            .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
+
+        selection.enter().append("g")
+            .attr("class", "lz-data_layer-intervals");
+        
+        selection.attr("id", function(d){ return this.getElementId(d); }.bind(this))
+            .each(function(interval){
+
+                var data_layer = interval.parent;
+
+                // Render interval bounding box (displayed behind intervals to show highlight
+                // without needing to modify interval display element(s)) if not in split view
+                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box")
+                    .data([interval], function(d){ return d[data_layer.layout.id_field] + "_bbox"; });
+                if (data_layer.layout.split_tracks){
+                    bboxes.remove();
+                } else {                    
+                    bboxes.enter().append("rect")
+                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
+                    
+                    bboxes
+                        .attr("id", function(d){
+                            return data_layer.getElementId(d) + "_bounding_box";
+                        })
+                        .attr("rx", function(){
+                            return data_layer.layout.bounding_box_padding;
+                        })
+                        .attr("ry", function(){
+                            return data_layer.layout.bounding_box_padding;
+                        });
+                    
+                    width = function(d){
+                        return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
+                    };
+                    height = function(){
+                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                    };
+                    x = function(d){
+                        return d.display_range.start - data_layer.layout.bounding_box_padding;
+                    };
+                    y = function(d){
+                        return ((d.track-1) * data_layer.getTrackHeight());
+                    };
+                    if (data_layer.canTransition()){
+                        bboxes
+                            .transition()
+                            .duration(data_layer.layout.transition.duration || 0)
+                            .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                    } else {
+                        bboxes
+                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                    }
+                    
+                    bboxes.exit().remove();
+                }
+
+                // Render primary interval rects
+                var rects = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-interval_rect")
+                    .data([interval], function(d){ return d[data_layer.layout.id_field] + "_interval_rect"; });
+
+                rects.enter().append("rect")
+                    .attr("class", "lz-data_layer-intervals lz-interval_rect");
+
+                height = data_layer.layout.track_height;
+                width = function(d){
+                    return d.display_range.width;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding;
+                };
+                fill = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.color, d);
+                };                
+                
+                if (data_layer.canTransition()){
+                    rects
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
+                } else {
+                    rects
+                        .attr("width", width).attr("height", height)
+                        .attr("x", x).attr("y", y)
+                        .attr("fill", fill);
+                }
+                
+                rects.exit().remove();
+
+                // Render interval click areas
+                var clickareas = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-clickarea")
+                    .data([interval], function(d){ return d.interval_name + "_clickarea"; });
+
+                clickareas.enter().append("rect")
+                    .attr("class", "lz-data_layer-intervals lz-clickarea");
+
+                clickareas
+                    .attr("id", function(d){
+                        return data_layer.getElementId(d) + "_clickarea";
+                    })
+                    .attr("rx", function(){
+                        return data_layer.layout.bounding_box_padding;
+                    })
+                    .attr("ry", function(){
+                        return data_layer.layout.bounding_box_padding;
+                    });
+
+                width = function(d){
+                    return d.display_range.width;
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start;
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    clickareas
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    clickareas
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                }
+
+                // Remove old clickareas as needed
+                clickareas.exit().remove();
+
+                // Apply default event emitters to clickareas
+                clickareas.on("click", function(element){
+                    this.parent.emit("element_clicked", element);
+                    this.parent_plot.emit("element_clicked", element);
+                }.bind(this));
+
+                // Apply selectable, tooltip, etc to clickareas
+                data_layer.applyAllStatusBehaviors(clickareas);
+
+            });
+
+        // Remove old elements as needed
+        selection.exit().remove();
+
+        // Update the legend axis if the number of ticks changed
+        if (this.previous_tracks != this.tracks){
+            this.updateSplitTrackAxis();
+        }
+
+        return this;
+
+    };
+    
+    // Reimplement the positionTooltip() method to be interval-specific
+    this.positionTooltip = function(id){
+        if (typeof id != "string"){
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        if (!this.tooltips[id]){
+            throw ("Unable to position tooltip: id does not point to a valid tooltip");
+        }
+        var tooltip = this.tooltips[id];
+        var arrow_width = 7; // as defined in the default stylesheet
+        var stroke_width = 1; // as defined in the default stylesheet
+        var page_origin = this.getPageOrigin();
+        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+        var interval_bbox;
+        if (this.layout.split_tracks){
+            interval_bbox = d3.select("#" + this.getElementId(tooltip.data)).node().getBBox();
+        } else {
+            interval_bbox = d3.select("#" + this.getElementId(tooltip.data) + "_bounding_box").node().getBBox();
+        }
+        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        // Position horizontally: attempt to center on the portion of the interval that's visible,
+        // pad to either side if bumping up against the edge of the data layer
+        var interval_center_x = ((tooltip.data.display_range.start + tooltip.data.display_range.end) / 2) - (this.layout.bounding_box_padding / 2);
+        var offset_right = Math.max((tooltip_box.width / 2) - interval_center_x, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + interval_center_x - data_layer_width, 0);
+        var left = page_origin.x + interval_center_x - (tooltip_box.width / 2) - offset_left + offset_right;
+        var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right;
+        // Position vertically below the interval unless there's insufficient space
+        var top, arrow_type, arrow_top;
+        if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (interval_bbox.y + interval_bbox.height)){
+            top = page_origin.y + interval_bbox.y - (tooltip_box.height + stroke_width + arrow_width);
+            arrow_type = "down";
+            arrow_top = tooltip_box.height - stroke_width;
+        } else {
+            top = page_origin.y + interval_bbox.y + interval_bbox.height + stroke_width + arrow_width;
+            arrow_type = "up";
+            arrow_top = 0 - stroke_width - arrow_width;
+        }
+        // Apply positions to the main div
+        tooltip.selector.style("left", left + "px").style("top", top + "px");
+        // Create / update position on arrow connecting tooltip to data
+        if (!tooltip.arrow){
+            tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
+        }
+        tooltip.arrow
+            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
+            .style("left", arrow_left + "px")
+            .style("top", arrow_top + "px");
+    };
+
+    // Redraw split track axis or hide it, and show/hide the legend, as determined
+    // by current layout parameters and data
+    this.updateSplitTrackAxis = function(){
+        var legend_axis = this.layout.track_split_legend_to_y_axis ? "y" + this.layout.track_split_legend_to_y_axis : false;
+        if (this.layout.split_tracks){
+            var tracks = +this.tracks || 0;
+            var track_height = +this.layout.track_height || 0;
+            var track_spacing =  2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
+            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+            this.parent.scaleHeightToData(target_height);
+            if (legend_axis && this.parent.legend){
+                this.parent.legend.hide();                            
+                this.parent.layout.axes[legend_axis] = {
+                    render: true,
+                    ticks: [],
+                    range: {
+                        start: (target_height - (this.layout.track_height/2)),
+                        end: (this.layout.track_height/2)
+                    }
+                };
+                this.layout.legend.forEach(function(element){
+                    var key = element[this.layout.track_split_field];
+                    var track = this.track_split_field_index[key];
+                    if (track){
+                        if (this.layout.track_split_order == "DESC"){
+                            track = Math.abs(track - tracks - 1);
+                        }
+                        this.parent.layout.axes[legend_axis].ticks.push({
+                            x: track,
+                            text: element.label
+                        });
+                    }
+                }.bind(this));
+                this.layout.y_axis = {
+                    axis: this.layout.track_split_legend_to_y_axis,
+                    floor: 1,
+                    ceiling: tracks
+                };
+                this.parent.render();
+            }
+        } else {
+            if (legend_axis && this.parent.legend){
+                this.parent.legend.show();
+                this.parent.layout.axes[legend_axis] = { render: false };
+                this.parent.render();
+            }
+        }
+        return this;
+    };
+
+    // Method to not only toggle the split tracks boolean but also update
+    // necessary display values to animate a complete merge/split
+    this.toggleSplitTracks = function(){
+        this.layout.split_tracks = !this.layout.split_tracks;
+        this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
+        this.render();
+        this.updateSplitTrackAxis();
+        return this;
+    };
+       
+    return this;
+
+});
+
 /* global LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -4460,6 +4997,38 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
     };
 });
 
+// Toggle Split Tracks
+LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (!layout.data_layer_id){ layout.data_layer_id = "intervals"; }
+    if (!this.parent_panel.data_layers[layout.data_layer_id]){
+        throw ("Dashboard toggle split tracks component missing valid data layer ID");
+    }
+    this.update = function(){
+        var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
+        var text = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
+        if (this.button){
+            this.button.setText(text);
+            this.button.show();
+            this.parent.position();
+            return this;
+        } else {
+            this.button = new LocusZoom.Dashboard.Component.Button(this)
+                .setColor(layout.color).setText(text)
+                .setTitle("Toggle whether tracks are split apart or merged together")
+                .setOnclick(function(){
+                    data_layer.toggleSplitTracks();
+                    if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
+                    this.scale_timeout = setTimeout(function(){
+                        if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
+                    }.bind(this), +data_layer.layout.transition.duration || 0);
+                    this.update();
+                }.bind(this));
+            return this.update();
+        }
+    };
+});
+
 // Resize to data
 LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
@@ -4656,7 +5225,24 @@ LocusZoom.Legend.prototype.render = function(){
 
 LocusZoom.Legend.prototype.position = function(){
     if (!this.selector){ return this; }
+    var bcr = this.selector.node().getBoundingClientRect();
+    if (!isNaN(+this.layout.pad_from_bottom)){
+        this.layout.origin.y = this.parent.layout.height - bcr.height - +this.layout.pad_from_bottom;
+    }
+    if (!isNaN(+this.layout.pad_from_right)){
+        this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
+    }
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
+};
+
+LocusZoom.Legend.prototype.hide = function(){
+    this.layout.hidden = true;
+    this.render();
+};
+
+LocusZoom.Legend.prototype.show = function(){
+    this.layout.hidden = false;
+    this.render();
 };
 
 /* global LocusZoom,Q */
@@ -5191,14 +5777,14 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 /**
-  Known Data Source for Annotation Track (BED Track) Data
+  Known Data Source for Interval Annotation Data (e.g. BED Tracks)
 */
 
-LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
+LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-}, "BEDLZ");
+}, "IntervalLZ");
 
-LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
+LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
     var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
     return this.url + "?filter=id in " + source + 
         " and chromosome eq '" + state.chr + "'" + 
@@ -6205,12 +6791,12 @@ LocusZoom.Panel.DefaultLayout = {
     y_index: null,
     width:  0,
     height: 0,
-    origin: { x: 0, y: 0 },
+    origin: { x: 0, y: null },
     min_width: 1,
     min_height: 1,
     proportional_width: null,
     proportional_height: null,
-    proportional_origin: { x: 0, y: 0 },
+    proportional_origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: "clear_selections",
     dashboard: {
@@ -6802,16 +7388,31 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     // Define default and shifted ranges for all axes
     var ranges = {};
     if (this.x_extent){
-        ranges.x = [0, this.layout.cliparea.width];
-        ranges.x_shifted = [0, this.layout.cliparea.width];
+        var base_x_range = { start: 0, end: this.layout.cliparea.width };
+        if (this.layout.axes.x.range){
+            base_x_range.start = this.layout.axes.x.range.start || base_x_range.start;
+            base_x_range.end = this.layout.axes.x.range.end || base_x_range.end;
+        }
+        ranges.x = [base_x_range.start, base_x_range.end];
+        ranges.x_shifted = [base_x_range.start, base_x_range.end];
     }
     if (this.y1_extent){
-        ranges.y1 = [this.layout.cliparea.height, 0];
-        ranges.y1_shifted = [this.layout.cliparea.height, 0];
+        var base_y1_range = { start: this.layout.cliparea.height, end: 0 };
+        if (this.layout.axes.y1.range){
+            base_y1_range.start = this.layout.axes.y1.range.start || base_y1_range.start;
+            base_y1_range.end = this.layout.axes.y1.range.end || base_y1_range.end;
+        }
+        ranges.y1 = [base_y1_range.start, base_y1_range.end];
+        ranges.y1_shifted = [base_y1_range.start, base_y1_range.end];
     }
     if (this.y2_extent){
-        ranges.y2 = [this.layout.cliparea.height, 0];
-        ranges.y2_shifted = [this.layout.cliparea.height, 0];
+        var base_y2_range = { start: this.layout.cliparea.height, end: 0 };
+        if (this.layout.axes.y2.range){
+            base_y2_range.start = this.layout.axes.y2.range.start || base_y2_range.start;
+            base_y2_range.end = this.layout.axes.y2.range.end || base_y2_range.end;
+        }
+        ranges.y2 = [base_y2_range.start, base_y2_range.end];
+        ranges.y2_shifted = [base_y2_range.start, base_y2_range.end];
     }
 
     // Shift ranges based on any drag or zoom interactions currently underway
@@ -6863,7 +7464,7 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         }
     }
 
-    // Generate scales and ticks for all axes
+    // Generate scales and ticks for all axes, then render them
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
         // Base Scale
@@ -6882,24 +7483,9 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
         } else {
             this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
+        // Render
+        this.renderAxis(axis);
     }.bind(this));
-
-    // Render axes and labels
-    var canRenderAxis = function(axis){
-        return (typeof this[axis + "_scale"] == "function" && !isNaN(this[axis + "_scale"](0)));
-    }.bind(this);
-    
-    if (this.layout.axes.x.render && canRenderAxis("x")){
-        this.renderAxis("x");
-    }
-
-    if (this.layout.axes.y1.render && canRenderAxis("y1")){
-        this.renderAxis("y1");
-    }
-
-    if (this.layout.axes.y2.render && canRenderAxis("y2")){
-        this.renderAxis("y2");
-    }
 
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
@@ -6958,6 +7544,18 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
     if (["x", "y1", "y2"].indexOf(axis) == -1){
         throw("Unable to render axis; invalid axis identifier: " + axis);
     }
+
+    var canRender = this.layout.axes[axis].render
+        && typeof this[axis + "_scale"] == "function"
+        && !isNaN(this[axis + "_scale"](0));
+
+    // If the axis has already been rendered then check if we can/can't render it
+    // Make sure the axis element is shown/hidden to suit
+    if (this[axis+"_axis"]){
+        this.svg.container.select("g.lz-axis.lz-"+axis).style("display", canRender ? null : "none");
+    }
+
+    if (!canRender){ return this; }
 
     // Axis-specific values to plug in where needed
     var axis_params = {
@@ -7142,16 +7740,20 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
 
 // Force the height of this panel to the largest absolute height of the data in
 // all child data layers (if not null for any child data layers)
-LocusZoom.Panel.prototype.scaleHeightToData = function(){
-    var target_height = null;
-    this.data_layer_ids_by_z_index.forEach(function(id){
-        var dh = this.data_layers[id].getAbsoluteDataHeight();
-        if (+dh){
-            if (target_height == null){ target_height = +dh; }
-            else { target_height = Math.max(target_height, +dh); }
-        }
-    }.bind(this));
-    if (target_height != null){
+// May optionally take an arbitrary target height (useful for when data layers are transitioning
+// and the ending target height can be pre-calculated)
+LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
+    var target_height = +target_height || null;
+    if (target_height == null){
+        this.data_layer_ids_by_z_index.forEach(function(id){
+            var dh = this.data_layers[id].getAbsoluteDataHeight();
+            if (+dh){
+                if (target_height == null){ target_height = +dh; }
+                else { target_height = Math.max(target_height, +dh); }
+            }
+        }.bind(this));
+    }
+    if (+target_height){
         target_height += +this.layout.margin.top + +this.layout.margin.bottom;
         this.setDimensions(this.layout.width, target_height);
         this.parent.setDimensions();

@@ -171,6 +171,37 @@ svg.#{$namespace}-locuszoom {
     fill: #000099;
   }
 
+  g.#{$namespace}-data_layer-intervals-dimmed {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-intervals-hidden {
+    display: none;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-highlighted {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.2;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-selected {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.35;
+    stroke: #{$default_black};
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-interval_rect {
+    stroke-width: 0px;
+  }
+
 }
 
 // The following comment is used by the download dashboard component when generating a CSS string.

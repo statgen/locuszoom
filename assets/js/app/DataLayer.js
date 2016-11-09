@@ -95,7 +95,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
         if (typeof element[id_field] == "undefined"){
             throw("Unable to generate element ID");
         }
-        element_id = element[id_field].replace(/\W/g,"");
+        element_id = element[id_field].toString().replace(/\W/g,"");
     }
     return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
 };
@@ -521,9 +521,12 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     // Set/unset the proper status class on the appropriate DOM element(s)
     d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
     if (this.layout.hover_element){
-        var hover_element_id = element_id + "_" + this.layout.hover_element;
         var hover_element_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
-        d3.select("#" + hover_element_id).classed(hover_element_class, toggle);
+        var selector = d3.select("#" + element_id + "_" + this.layout.hover_element);
+        if (this.layout.group_hover_elements_on_field){
+            selector = this.group_hover_elements[element[this.layout.group_hover_elements_on_field]];
+        }
+        selector.classed(hover_element_class, toggle);
     }
     
     // Track element ID in the proper status state array

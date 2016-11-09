@@ -324,7 +324,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
             + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panels.association.undimElementsByFilters([['position','>','{{start}}'],['position','<','{{end}}']], true); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify variants in region</button></td>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['interval:start','>=','{{start}}'],['interval:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
             + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
             + "</tr></table>"
     }
@@ -339,6 +339,58 @@ LocusZoom.Layouts.add("data_layer", "genome_legend", {
         ceiling: 2881033286
     }
 });
+
+LocusZoom.Layouts.add("data_layer", "intervals", {
+    id: "intervals",
+    type: "intervals",
+    fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
+    id_field: "interval:start",
+    start_field: "interval:start",
+    end_field: "interval:end",
+    track_split_field: "interval:state_id",
+    split_tracks: false,
+    color: {
+        field: "interval:state_id",
+        scale_function: "categorical_bin",
+        parameters: {
+            categories: [1,2,3,4,5,6,7,8,9,10,12,13],
+            values: ["rgb(212,63,58)", "rgb(250,120,105)", "rgb(252,168,139)", "rgb(240,189,66)", "rgb(250,224,105)", "rgb(240,238,84)", "rgb(244,252,23)", "rgb(23,232,252)", "rgb(32,191,17)", "rgb(23,166,77)", "rgb(162,133,166)", "rgb(212,212,212)"],
+            null_value: "#B8B8B8"
+        }
+    },
+    legend: [
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "interval:state_id": 1 },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "interval:state_id": 2 },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "interval:state_id": 3 },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "interval:state_id": 4 },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "interval:state_id": 5 },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "interval:state_id": 6 },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "interval:state_id": 7 },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "interval:state_id": 8 },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "interval:state_id": 9 },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "interval:state_id": 10 },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "interval:state_id": 12 },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "interval:state_id": 13 }
+    ],    
+    highlighted: {
+        onmouseover: "on",
+        onmouseout: "off"
+    },
+    selected: {
+        onclick: "toggle_exclusive",
+        onshiftclick: "toggle"
+    },
+    transition: {
+        duration: 200
+    },
+    tooltip: {
+        closable: false,
+        show: { or: ["highlighted", "selected"] },
+        hide: { and: ["unhighlighted", "unselected"] },
+        html: "{{interval:state_name}}<br>{{interval:start}}-{{interval:end}}"
+    }
+});
+
 
 /**
  Dashboard Layouts
@@ -360,7 +412,7 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
             position: "right"
         }
     ]
-});
+});                 
 
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
@@ -394,12 +446,9 @@ LocusZoom.Layouts.add("panel", "association", {
     title: "",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 0 },
     min_width:  400,
     min_height: 200,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     dashboard: (function(){
@@ -451,12 +500,9 @@ LocusZoom.Layouts.add("panel", "genes", {
     id: "genes",
     width: 800,
     height: 225,
-    origin: { x: 0, y: 225 },
     min_width: 400,
     min_height: 112.5,
     proportional_width: 1,
-    proportional_height: 0.5,
-    proportional_origin: { x: 0, y: 0.5 },
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -482,12 +528,9 @@ LocusZoom.Layouts.add("panel", "phewas", {
     id: "phewas",
     width: 800,
     height: 300,
-    origin: { x: 0, y: 0 },
     min_width:  800,
     min_height: 300,
     proportional_width: 1,
-    proportional_height: .6,
-    proportional_origin: { x: 0, y: 0 },
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: "rgba(210, 210, 210, 0.85)",
     axes: {
@@ -701,8 +744,6 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
     min_width:  800,
     min_height: 50,
     proportional_width: 1,
-    proportional_height: .1,
-    proportional_origin: { x: 0, y: .6 },
     margin: { top: 0, right: 50, bottom: 35, left: 50 },
     axes: {
         x: {
@@ -959,6 +1000,39 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
     ]
 });
 
+LocusZoom.Layouts.add("panel", "intervals", {
+    id: "intervals",
+    width: 1000,
+    height: 120,
+    min_width: 500,
+    min_height: 120,
+    margin: { top: 25, right: 150, bottom: 75, left: 50 },
+    dashboard: (function(){
+        var l = LocusZoom.Layouts.get("dashboard", "standard_panel");
+        l.components.push({
+            type: "toggle_split_tracks",
+            data_layer_id: "intervals",
+            position: "right",
+            color: "yellow"
+        });
+        return l;
+    })(),
+    axes: {},
+    interaction: {
+        drag_background_to_pan: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    legend: {
+        orientation: "horizontal",
+        origin: { x: 50, y: 0 },
+        pad_from_bottom: 5
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "intervals")
+    ]
+});
+
 
 /**
  Plot Layouts
@@ -969,13 +1043,12 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     width: 800,
     height: 450,
     resizable: "responsive",
-    aspect_ratio: (16/9),
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "association"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "association", { proportional_height: 0.5 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.5 })
     ]
 });
 
@@ -984,15 +1057,29 @@ LocusZoom.StandardLayout = LocusZoom.Layouts.get("plot", "standard_association")
 
 LocusZoom.Layouts.add("plot", "standard_phewas", {
     width: 800,
-    height: 500,
+    height: 600,
     min_width: 800,
-    min_height: 500,
+    min_height: 600,
     responsive_resize: true,
-    aspect_ratio: 1.6,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
     panels: [
-        LocusZoom.Layouts.get("panel", "phewas"),
-        LocusZoom.Layouts.get("panel", "genome_legend"),
-        LocusZoom.Layouts.get("panel", "genes")
+        LocusZoom.Layouts.get("panel", "phewas", { proportional_height: 0.45 }),
+        LocusZoom.Layouts.get("panel", "genome_legend", { proportional_height: 0.1 }),
+        LocusZoom.Layouts.get("panel", "genes", { proportional_height: 0.45 })
+    ]
+});
+
+LocusZoom.Layouts.add("plot", "interval_association", {
+    state: {},
+    width: 800,
+    height: 550,
+    resizable: "responsive",
+    min_region_scale: 20000,
+    max_region_scale: 4000000,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot"),
+    panels: [
+        LocusZoom.Layouts.get("panel", "association", { width: 800, proportional_height: (225/570) }),
+        LocusZoom.Layouts.get("panel", "intervals", { proportional_height: (120/570) }),
+        LocusZoom.Layouts.get("panel", "genes", { width: 800, proportional_height: (225/570) })
     ]
 });
