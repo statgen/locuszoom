@@ -227,6 +227,9 @@ describe("Layouts", function(){
                     }
                 };
                 LocusZoom.Layouts.add("test", "test", base_layout);
+                // Explicit directive to NOT apply namespaces: no changes
+                var unnamespaced_layout = LocusZoom.Layouts.get("test","test",{ unnamespaced: true });
+                assert.deepEqual(unnamespaced_layout, base_layout);
                 // No defined namespaces: drop all namespaces
                 var no_namespace_layout = LocusZoom.Layouts.get("test","test");
                 no_namespace_layout["scalar_1"].should.be.exactly("aardvark");

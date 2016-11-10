@@ -566,11 +566,8 @@ LocusZoom.Panel.prototype.moveDown = function(){
 LocusZoom.Panel.prototype.addDataLayer = function(layout){
 
     // Sanity checks
-    if (typeof layout !== "object"){
+    if (typeof layout !== "object" || typeof layout.id !== "string" || !layout.id.length){
         throw "Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()";
-    }
-    if (typeof layout.id !== "string" || !layout.id.length){
-        throw "Invalid paneldata layer id passed to LocusZoom.Panel.prototype.addDataLayer()";
     }
     if (typeof this.data_layers[layout.id] !== "undefined"){
         throw "Cannot create data_layer with id [" + layout.id + "]; data layer with that id already exists in the panel";
