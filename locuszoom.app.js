@@ -422,14 +422,56 @@ LocusZoom.Layouts = (function() {
     };
 
     obj.get = function(type, name, modifications) {
-        if (!type || !name) {
-            return null;
+        if (typeof type != "string" || typeof name != "string") {
+            throw("invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)");
         } else if (layouts[type][name]) {
-            if (typeof modifications == "object"){
-                return LocusZoom.Layouts.merge(modifications, layouts[type][name]);
-            } else {
-                return JSON.parse(JSON.stringify(layouts[type][name]));
+            // Get the base layout
+            var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
+            // Determine the default namespace for namespaced values
+            var default_namespace = "";
+            if (typeof layout.namespace == "string"){
+                default_namespace = layout.namespace;
+            } else if (typeof layout.namespace == "object" && Object.keys(layout.namespace).length){
+                if (typeof layout.namespace.default != "undefined"){
+                    default_namespace = layout.namespace.default;
+                } else {
+                    default_namespace = layout.namespace[Object.keys(layout.namespace)[0]].toString();
+                }
             }
+            default_namespace += default_namespace.length ? ":" : "";
+            // Apply namespaces to layout, recursively
+            var applyNamespaces = function(element){
+                if (typeof element == "string"){
+                    var re = /\{\{namespace(\[[A-Za-z_0-9]+\]|)\}\}/g;
+                    var match, base, key, namespace;
+                    var replace = [];
+                    while ((match = re.exec(element)) !== null){
+                        base = match[0];
+                        key  = match[1].length ? match[1].replace(/(\[|\])/g,"") : null;
+                        namespace = default_namespace;
+                        if (typeof layout.namespace == "object" && typeof layout.namespace[key] != "undefined"){
+                            namespace = layout.namespace[key] + (layout.namespace[key].length ? ":" : "");
+                        }
+                        replace.push({ base: base, namespace: namespace });
+                    }
+                    for (var r in replace){
+                        element = element.replace(replace[r].base, replace[r].namespace);
+                    }
+                } else if (typeof element == "object" && element != null){
+                    for (var property in element) {
+                        var namespaced_element = applyNamespaces(element[property]);
+                        var namespaced_property = applyNamespaces(property);
+                        if (property != namespaced_property){
+                            delete element[property];
+                        }
+                        element[namespaced_property] = namespaced_element;
+                    }
+                }
+                return element;
+            };
+            layout = applyNamespaces(layout);
+            // Return the layout as valid JSON only
+            return JSON.parse(JSON.stringify(layout));
         } else {
             throw("layout type [" + type + "] name [" + name + "] not found");
         }
@@ -509,9 +551,10 @@ LocusZoom.Layouts = (function() {
 */
 
 LocusZoom.Layouts.add("data_layer", "signifigance", {
+    namespace: "sig",
     id: "significance",
     type: "line",
-    fields: ["sig:x", "sig:y"],
+    fields: ["{{namespace}}x", "{{namespace}}y"],
     z_index: 0,
     style: {
         "stroke": "#D3D3D3",
@@ -519,30 +562,31 @@ LocusZoom.Layouts.add("data_layer", "signifigance", {
         "stroke-dasharray": "10px 10px"
     },
     x_axis: {
-        field: "sig:x",
+        field: "{{namespace}}x",
         decoupled: true
     },
     y_axis: {
         axis: 1,
-        field: "sig:y"
+        field: "{{namespace}}y"
     }
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
+    namespace: "recomb",
     id: "recombrate",
     type: "line",
-    fields: ["recomb:position", "recomb:recomb_rate"],
+    fields: ["{{namespace}}position", "{{namespace}}recomb_rate"],
     z_index: 1,
     style: {
         "stroke": "#0000FF",
         "stroke-width": "1.5px"
     },
     x_axis: {
-        field: "recomb:position"
+        field: "{{namespace}}position"
     },
     y_axis: {
         axis: 2,
-        field: "recomb:recomb_rate",
+        field: "{{namespace}}recomb_rate",
         floor: 0,
         ceiling: 100
     },
@@ -552,11 +596,12 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 });
 
 LocusZoom.Layouts.add("data_layer", "association_pvalues", {
+    namespace: { "default": "", "ld": "ld" },
     id: "associationpvalues",
     type: "scatter",
     point_shape: {
         scale_function: "if",
-        field: "ld:isrefvar",
+        field: "{{namespace[ld]}}isrefvar",
         parameters: {
             field_value: 1,
             then: "diamond",
@@ -565,7 +610,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
     },
     point_size: {
         scale_function: "if",
-        field: "ld:isrefvar",
+        field: "{{namespace[ld]}}isrefvar",
         parameters: {
             field_value: 1,
             then: 80,
@@ -575,7 +620,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
     color: [
         {
             scale_function: "if",
-            field: "ld:isrefvar",
+            field: "{{namespace[ld]}}isrefvar",
             parameters: {
                 field_value: 1,
                 then: "#9632b8"
@@ -583,7 +628,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         },
         {
             scale_function: "numerical_bin",
-            field: "ld:state",
+            field: "{{namespace[ld]}}state",
             parameters: {
                 breaks: [0, 0.2, 0.4, 0.6, 0.8],
                 values: ["#357ebd","#46b8da","#5cb85c","#eea236","#d43f3a"]
@@ -600,15 +645,15 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["variant", "position", "pvalue|scinotation", "pvalue|neglog10", "log_pvalue", "ref_allele", "ld:state", "ld:isrefvar"],
-    id_field: "variant",
+    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    id_field: "{{namespace}}variant",
     z_index: 2,
     x_axis: {
-        field: "position"
+        field: "{{namespace}}position"
     },
     y_axis: {
         axis: 1,
-        field: "log_pvalue",
+        field: "{{namespace}}log_pvalue",
         floor: 0,
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
@@ -628,9 +673,9 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "<strong>{{variant}}</strong><br>"
-            + "P Value: <strong>{{pvalue|scinotation}}</strong><br>"
-            + "Ref. Allele: <strong>{{ref_allele}}</strong><br>"
+        html: "<strong>{{{{namespace}}variant}}</strong><br>"
+            + "P Value: <strong>{{{{namespace}}pvalue|scinotation}}</strong><br>"
+            + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
     }
 });
 
@@ -639,22 +684,22 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     type: "scatter",
     point_shape: "circle",
     point_size: 70,
-    id_field: "id",
+    id_field: "{{namespace}}id",
     transition: {
         duration: 500
     },
-    fields: ["id", "x", "category_name", "num_cases", "num_controls", "phewas_string", "phewas_code", "pval|scinotation", "pval|neglog10"],
+    fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
     x_axis: {
-        field: "x"
+        field: "{{namespace}}x"
     },
     y_axis: {
         axis: 1,
-        field: "pval|neglog10",
+        field: "{{namespace}}pval|neglog10",
         floor: 0,
         upper_buffer: 0.1
     },
     color: {
-        field: "category_name",
+        field: "{{namespace}}category_name",
         scale_function: "categorical_bin",
         parameters: {
             categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
@@ -666,7 +711,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "<div><strong>{{phewas_string}}</strong></div><div>P Value: <strong>{{pval|scinotation}}</strong></div>"
+        html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
     },
     highlighted: {
         onmouseover: "on",
@@ -677,7 +722,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         onshiftclick: "toggle"
     },
     label: {
-        text: "{{phewas_string}}",
+        text: "{{{{namespace}}phewas_string}}",
         spacing: 6,
         lines: {
             style: {
@@ -688,7 +733,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         },
         filters: [
             {
-                field: "pval|neglog10",
+                field: "{{namespace}}pval|neglog10",
                 operator: ">=",
                 value: 5
             }
@@ -702,9 +747,10 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
 });
 
 LocusZoom.Layouts.add("data_layer", "genes", {
+    namespace: { "gene": "gene", "constraint": "constraint" },
     id: "genes",
     type: "genes",
-    fields: ["gene:gene", "constraint:constraint"],
+    fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
     id_field: "gene_id",
     highlighted: {
         onmouseover: "on",
@@ -732,16 +778,17 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
             + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['interval:start','>=','{{start}}'],['interval:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
+            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['intervals:start','>=','{{start}}'],['intervals:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
             + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
             + "</tr></table>"
     }
 });
 
 LocusZoom.Layouts.add("data_layer", "genome_legend", {
+    namespace: "genome",
     id: "genome_legend",
     type: "genome_legend",
-    fields: ["genome:chr", "genome:base_pairs"],
+    fields: ["{{namespace}}chr", "{{namespace}}base_pairs"],
     x_axis: {
         floor: 0,
         ceiling: 2881033286
@@ -749,16 +796,17 @@ LocusZoom.Layouts.add("data_layer", "genome_legend", {
 });
 
 LocusZoom.Layouts.add("data_layer", "intervals", {
+    namespace: "intervals",
     id: "intervals",
     type: "intervals",
-    fields: ["interval:start","interval:end","interval:state_id","interval:state_name"],
-    id_field: "interval:start",
-    start_field: "interval:start",
-    end_field: "interval:end",
-    track_split_field: "interval:state_id",
+    fields: ["{{namespace}}start","{{namespace}}end","{{namespace}}state_id","{{namespace}}state_name"],
+    id_field: "{{namespace}}start",
+    start_field: "{{namespace}}start",
+    end_field: "{{namespace}}end",
+    track_split_field: "{{namespace}}state_id",
     split_tracks: false,
     color: {
-        field: "interval:state_id",
+        field: "{{namespace}}state_id",
         scale_function: "categorical_bin",
         parameters: {
             categories: [1,2,3,4,5,6,7,8,9,10,12,13],
@@ -767,18 +815,18 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         }
     },
     legend: [
-        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "interval:state_id": 1 },
-        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "interval:state_id": 2 },
-        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "interval:state_id": 3 },
-        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "interval:state_id": 4 },
-        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "interval:state_id": 5 },
-        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "interval:state_id": 6 },
-        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "interval:state_id": 7 },
-        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "interval:state_id": 8 },
-        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "interval:state_id": 9 },
-        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "interval:state_id": 10 },
-        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "interval:state_id": 12 },
-        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "interval:state_id": 13 }
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "{{namespace}}state_id": 1 },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "{{namespace}}state_id": 2 },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "{{namespace}}state_id": 3 },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "{{namespace}}state_id": 4 },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "{{namespace}}state_id": 5 },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "{{namespace}}state_id": 6 },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "{{namespace}}state_id": 7 },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "{{namespace}}state_id": 8 },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "{{namespace}}state_id": 9 },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "{{namespace}}state_id": 10 },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "{{namespace}}state_id": 12 },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "{{namespace}}state_id": 13 }
     ],    
     highlighted: {
         onmouseover: "on",
@@ -795,7 +843,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         closable: false,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "{{interval:state_name}}<br>{{interval:start}}-{{interval:end}}"
+        html: "{{{{namespace}}state_name}}<br>{{{{namespace}}start}}-{{{{namespace}}end}}"
     }
 });
 
@@ -3790,7 +3838,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             var tracks = +this.tracks || 0;
             var track_height = +this.layout.track_height || 0;
             var track_spacing =  2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
-            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);
             this.parent.scaleHeightToData(target_height);
             if (legend_axis && this.parent.legend){
                 this.parent.legend.hide();                            

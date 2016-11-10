@@ -389,7 +389,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             var tracks = +this.tracks || 0;
             var track_height = +this.layout.track_height || 0;
             var track_spacing =  2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
-            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);
             this.parent.scaleHeightToData(target_height);
             if (legend_axis && this.parent.legend){
                 this.parent.legend.hide();                            
