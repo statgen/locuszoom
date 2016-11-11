@@ -197,7 +197,7 @@ describe("Layouts", function(){
                 LocusZoom.Layouts.add("test", "test", base_layout);
                 assert.deepEqual(LocusZoom.Layouts.get("test","test", mods), expected_layout);
             });
-            it ("Allows for namespacing arbitrary values", function(){
+            it ("Allows for namespacing arbitrary keys and values at all nesting levels", function(){
                 var base_layout = {
                     scalar_0: 123,
                     "{{namespace}}scalar_1": "aardvark",
@@ -307,6 +307,33 @@ describe("Layouts", function(){
                 object_namespace_layout.nested_object.property_0.object.array[1].should.be.exactly("ns_default:tortoise");
                 object_namespace_layout.nested_object.property_0.object.array[2].should.be.exactly("ns_default:vulture");
                 object_namespace_layout.nested_object.property_0.object.array[3].should.be.exactly("ns_default:xerus");
+            });
+            it ("Allows for inheriting namespaces", function(){
+                var layout_0 = {
+                    namespace: { dingo: "ns_dingo", jackal: "ns_jackal", default: "ns_0" },
+                    "{{namespace[dingo]}}scalar_1": "aardvark",
+                    "{{namespace[dingo]}}scalar_2": "{{namespace[jackal]}}albacore",
+                    scalar_3: "{{namespace}}badger"
+                };
+                LocusZoom.Layouts.add("test", "layout_0", layout_0);
+                var layout_1 = {
+                    namespace: { ferret: "ns_ferret", default: "ns_1" },
+                    "{{namespace}}scalar_1": "emu",
+                    "{{namespace[ferret]}}scalar_2": "{{namespace}}kangaroo",
+                    nested_layout: LocusZoom.Layouts.get("test", "layout_0", { unnamespaced: true })
+                };
+                LocusZoom.Layouts.add("test", "layout_1", layout_1);
+                var ns_layout_1 = LocusZoom.Layouts.get("test", "layout_1", { namespace: { dingo: "ns_dingo_mod", default: "ns_mod" } });
+                ns_layout_1["ns_mod:scalar_1"].should.exist;
+                ns_layout_1["ns_mod:scalar_1"].should.be.exactly("emu");
+                ns_layout_1["ns_ferret:scalar_2"].should.exist;
+                ns_layout_1["ns_ferret:scalar_2"].should.be.exactly("ns_mod:kangaroo");
+                ns_layout_1.nested_layout.should.be.an.Object;
+                ns_layout_1.nested_layout["ns_dingo_mod:scalar_1"].should.exist;
+                ns_layout_1.nested_layout["ns_dingo_mod:scalar_1"].should.be.exactly("aardvark");
+                ns_layout_1.nested_layout["ns_dingo_mod:scalar_2"].should.exist;
+                ns_layout_1.nested_layout["ns_dingo_mod:scalar_2"].should.be.exactly("ns_jackal:albacore");
+                ns_layout_1.nested_layout.scalar_3.should.be.exactly("ns_mod:badger");                
             });
         });
 

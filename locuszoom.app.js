@@ -6073,11 +6073,13 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     var id;
 
     // Update minimum allowable width and height by aggregating minimums from panels.
-    var min_width = null;
-    var min_height = null;
+    var min_width = 0;
+    var min_height = 0;
     for (id in this.panels){
         min_width = Math.max(min_width, this.panels[id].layout.min_width);
-        min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
+        if (parseFloat(this.panels[id].layout.min_height) > 0 && parseFloat(this.panels[id].layout.proportional_height) > 0){
+            min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
+        }
     }
     this.layout.min_width = Math.max(min_width, 1);
     this.layout.min_height = Math.max(min_height, 1);
@@ -6087,6 +6089,7 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
         this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
         this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+        this.layout.aspect_ratio = this.layout.width / this.layout.height;
         // Override discrete values if resizing responsively
         if (this.layout.responsive_resize){
             if (this.svg){
