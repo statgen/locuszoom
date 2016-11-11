@@ -18,7 +18,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_split_field: "state_id",
         track_split_order: "DESC",
         track_split_legend_to_y_axis: 2,
-        split_tracks: false,
+        split_tracks: true,
         track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
@@ -436,6 +436,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
         this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
+        this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
         this.render();
         this.updateSplitTrackAxis();
         return this;

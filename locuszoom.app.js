@@ -1477,10 +1477,10 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
     width: 1000,
-    height: 120,
+    height: 50,
     min_width: 500,
-    min_height: 120,
-    margin: { top: 25, right: 150, bottom: 75, left: 50 },
+    min_height: 50,
+    margin: { top: 25, right: 150, bottom: 5, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
@@ -1498,6 +1498,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
         x_linked: true
     },
     legend: {
+        hidden: true,
         orientation: "horizontal",
         origin: { x: 50, y: 0 },
         pad_from_bottom: 5
@@ -3485,7 +3486,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_split_field: "state_id",
         track_split_order: "DESC",
         track_split_legend_to_y_axis: 2,
-        split_tracks: false,
+        split_tracks: true,
         track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
@@ -3903,6 +3904,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
         this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
+        this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
         this.render();
         this.updateSplitTrackAxis();
         return this;
@@ -4678,6 +4680,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.menu = {
         outer_selector: null,
         inner_selector: null,
+        hidden: true,
         show: function(){
             if (!this.menu.outer_selector){
                 this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append("div")
@@ -4687,6 +4690,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                     .attr("class", "lz-dashboard-menu-content");
             }
             this.menu.outer_selector.style({ visibility: "visible" });
+            this.menu.hidden = false;
             return this.menu.update();
         }.bind(this),
         update: function(){
@@ -4698,11 +4702,12 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             if (!this.menu.outer_selector){ return this.menu; }
             var padding = 3;
             var scrollbar_padding = 20;
+            var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
             var page_origin = this.parent_svg.getPageOrigin();
             var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
             var button_client_rect = this.selector.node().getBoundingClientRect();
             var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-            var total_content_height = this.menu.inner_selector.node().scrollHeight;
+            var total_content_height = this.menu.inner_selector.node().scrollHeight + menu_height_padding;
             var top = 0; var left = 0;
             if (this.parent_dashboard.type == "panel"){
                 top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
@@ -4714,7 +4719,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
             var container_max_width = base_max_width.toString() + "px";
             var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-            var base_max_height = (this.parent_svg.layout.height - (7 * padding));
+            var base_max_height = Math.max(this.parent_svg.layout.height - (7 * padding) - menu_height_padding, menu_height_padding);
             var height = Math.min(total_content_height, base_max_height).toString() + "px";
             var max_height = base_max_height.toString() + "px";
             this.menu.outer_selector.style({
@@ -4729,6 +4734,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         hide: function(){
             if (!this.menu.outer_selector){ return this.menu; }
             this.menu.outer_selector.style({ visibility: "hidden" });
+            this.menu.hidden = true;
             return this.menu;
         }.bind(this),
         destroy: function(){
@@ -4747,7 +4753,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             if (typeof menu_populate_function == "function"){
                 this.menu.populate = menu_populate_function;
                 this.setOnclick(function(){
-                    if (!this.menu.outer_selector){
+                    if (this.menu.hidden){
                         this.menu.show();
                         this.highlight().update();
                         this.persist = true;
@@ -4943,10 +4949,7 @@ LocusZoom.Dashboard.Components.add("menu", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
-            .setOnclick(function(){
-                this.button.menu.populate();
-            }.bind(this));
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title);
         this.button.menu.setPopulate(function(){
             this.button.menu.inner_selector.html(layout.menu_html);
         }.bind(this));
@@ -5175,6 +5178,8 @@ LocusZoom.Legend = function(parent){
 LocusZoom.Legend.DefaultLayout = {
     orientation: "vertical",
     origin: { x: 0, y: 0 },
+    width: 10,
+    height: 10,
     padding: 5,
     label_size: 12,
     hidden: false
@@ -5278,9 +5283,11 @@ LocusZoom.Legend.prototype.render = function(){
 
     // Scale the background rect to the elements in the legend
     var bcr = this.elements_group.node().getBoundingClientRect();
+    this.layout.width = bcr.width + (2*this.layout.padding);
+    this.layout.height = bcr.height + (2*this.layout.padding);
     this.background_rect
-        .attr("width", bcr.width + (2*this.layout.padding))
-        .attr("height", bcr.height + (2*this.layout.padding));
+        .attr("width", this.layout.width)
+        .attr("height", this.layout.height);
 
     // Set the visibility on the legend from the "hidden" flag
     this.selector.style({ visibility: this.layout.hidden ? "hidden" : "visible" });
@@ -7016,7 +7023,7 @@ LocusZoom.Panel.prototype.initialize = function(){
     // Position with initial layout parameters
     this.svg.container = this.parent.svg.append("g")
         .attr("id", this.getBaseId() + ".panel_container")
-        .attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
+        .attr("transform", "translate(" + (this.layout.origin.x || 0) + "," + (this.layout.origin.y || 0) + ")");
 
     // Append clip path to the parent svg element, size with initial layout parameters
     var clipPath = this.svg.container.append("clipPath")

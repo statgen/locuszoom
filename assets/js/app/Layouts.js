@@ -1069,10 +1069,10 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
 LocusZoom.Layouts.add("panel", "intervals", {
     id: "intervals",
     width: 1000,
-    height: 120,
+    height: 50,
     min_width: 500,
-    min_height: 120,
-    margin: { top: 25, right: 150, bottom: 75, left: 50 },
+    min_height: 50,
+    margin: { top: 25, right: 150, bottom: 5, left: 50 },
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
@@ -1090,6 +1090,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
         x_linked: true
     },
     legend: {
+        hidden: true,
         orientation: "horizontal",
         origin: { x: 50, y: 0 },
         pad_from_bottom: 5
