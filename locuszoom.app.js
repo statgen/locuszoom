@@ -663,7 +663,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
     id_field: "{{namespace}}variant",
     z_index: 2,
     x_axis: {
@@ -692,7 +692,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
         html: "<strong>{{{{namespace}}variant}}</strong><br>"
-            + "P Value: <strong>{{{{namespace}}pvalue|scinotation}}</strong><br>"
+            + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
             + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
     }
 });
@@ -3492,7 +3492,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
         hover_element: "bounding_box",
-        group_hover_elements_on_field: null
+        group_hover_elements_on_field: null,
+        always_hide_legend: false
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -3892,7 +3893,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             }
         } else {
             if (legend_axis && this.parent.legend){
-                this.parent.legend.show();
+                if (!this.layout.always_hide_legend){ this.parent.legend.show(); }
                 this.parent.layout.axes[legend_axis] = { render: false };
                 this.parent.render();
             }
@@ -3905,7 +3906,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
         this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
-        this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
+        if (this.parent.legend && !this.layout.always_hide_legend){
+            this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
+        }
         this.render();
         this.updateSplitTrackAxis();
         return this;
@@ -4149,6 +4152,13 @@ LocusZoom.TransformationFunctions = (function() {
 
 LocusZoom.TransformationFunctions.add("neglog10", function(x) {
     return -Math.log(x) / Math.LN10;
+});
+
+LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
+    var exp = Math.ceil(x);
+    var dif = exp - x;
+    var base = Math.pow(10, dif);
+    return base.toFixed(2) + " × 10^" + exp;
 });
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
@@ -5653,7 +5663,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         return null;
     };};
     var dataFields = {id: this.params.id_field, position: this.params.position_field, 
-        pvalue: this.params.pvalue_field, _names_:null};
+                      pvalue: this.params.pvalue_field, _names_:null};
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);

@@ -255,7 +255,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
     id_field: "{{namespace}}variant",
     z_index: 2,
     x_axis: {
@@ -284,7 +284,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
         html: "<strong>{{{{namespace}}variant}}</strong><br>"
-            + "P Value: <strong>{{{{namespace}}pvalue|scinotation}}</strong><br>"
+            + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
             + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
     }
 });

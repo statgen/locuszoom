@@ -23,7 +23,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
         hover_element: "bounding_box",
-        group_hover_elements_on_field: null
+        group_hover_elements_on_field: null,
+        always_hide_legend: false
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -423,7 +424,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             }
         } else {
             if (legend_axis && this.parent.legend){
-                this.parent.legend.show();
+                if (!this.layout.always_hide_legend){ this.parent.legend.show(); }
                 this.parent.layout.axes[legend_axis] = { render: false };
                 this.parent.render();
             }
@@ -436,7 +437,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
         this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
-        this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
+        if (this.parent.legend && !this.layout.always_hide_legend){
+            this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
+        }
         this.render();
         this.updateSplitTrackAxis();
         return this;

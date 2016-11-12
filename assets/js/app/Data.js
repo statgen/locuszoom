@@ -332,7 +332,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         return null;
     };};
     var dataFields = {id: this.params.id_field, position: this.params.position_field, 
-        pvalue: this.params.pvalue_field, _names_:null};
+                      pvalue: this.params.pvalue_field, _names_:null};
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
