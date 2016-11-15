@@ -47,13 +47,17 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
         // Function to get the width in pixels of a label given the text and layout attributes
         this.getLabelWidth = function(gene_name, font_size){
-            var temp_text = this.svg.group.append("text")
-                .attr("x", 0).attr("y", 0).attr("class", "lz-data_layer-genes lz-label")
-                .style("font-size", font_size)
-                .text(gene_name + "→");
-            var label_width = temp_text.node().getBBox().width;
-            temp_text.remove();
-            return label_width;
+            try {
+                var temp_text = this.svg.group.append("text")
+                    .attr("x", 0).attr("y", 0).attr("class", "lz-data_layer-genes lz-label")
+                    .style("font-size", font_size)
+                    .text(gene_name + "→");
+                var label_width = temp_text.node().getBBox().width;
+                temp_text.remove();
+                return label_width;
+            } catch (e){
+                return 0;
+            }
         };
 
         // Reinitialize some metadata
