@@ -1,6 +1,6 @@
 {
   "name": "locuszoom",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "description": "Generate interactive visualizations of statistical genetic data",
   "keywords": [
     "visualization",
