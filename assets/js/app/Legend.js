@@ -39,6 +39,8 @@ LocusZoom.Legend = function(parent){
 LocusZoom.Legend.DefaultLayout = {
     orientation: "vertical",
     origin: { x: 0, y: 0 },
+    width: 10,
+    height: 10,
     padding: 5,
     label_size: 12,
     hidden: false
@@ -142,9 +144,11 @@ LocusZoom.Legend.prototype.render = function(){
 
     // Scale the background rect to the elements in the legend
     var bcr = this.elements_group.node().getBoundingClientRect();
+    this.layout.width = bcr.width + (2*this.layout.padding);
+    this.layout.height = bcr.height + (2*this.layout.padding);
     this.background_rect
-        .attr("width", bcr.width + (2*this.layout.padding))
-        .attr("height", bcr.height + (2*this.layout.padding));
+        .attr("width", this.layout.width)
+        .attr("height", this.layout.height);
 
     // Set the visibility on the legend from the "hidden" flag
     this.selector.style({ visibility: this.layout.hidden ? "hidden" : "visible" });

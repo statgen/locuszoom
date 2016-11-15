@@ -18,12 +18,13 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_split_field: "state_id",
         track_split_order: "DESC",
         track_split_legend_to_y_axis: 2,
-        split_tracks: false,
+        split_tracks: true,
         track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
         hover_element: "bounding_box",
-        group_hover_elements_on_field: null
+        group_hover_elements_on_field: null,
+        always_hide_legend: false
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -389,7 +390,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             var tracks = +this.tracks || 0;
             var track_height = +this.layout.track_height || 0;
             var track_spacing =  2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
-            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing)
+            var target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);
             this.parent.scaleHeightToData(target_height);
             if (legend_axis && this.parent.legend){
                 this.parent.legend.hide();                            
@@ -423,7 +424,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             }
         } else {
             if (legend_axis && this.parent.legend){
-                this.parent.legend.show();
+                if (!this.layout.always_hide_legend){ this.parent.legend.show(); }
                 this.parent.layout.axes[legend_axis] = { render: false };
                 this.parent.render();
             }
@@ -436,6 +437,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
         this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
+        if (this.parent.legend && !this.layout.always_hide_legend){
+            this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
+        }
         this.render();
         this.updateSplitTrackAxis();
         return this;

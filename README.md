@@ -103,7 +103,7 @@ A basic example may then look like this:
           }
         ]
       };
-      var plot = LocusZoom.populate("#plot", datasource, layout); 
+      var plot = LocusZoom.populate("#plot", data_sources, layout);
     </script>
   </body>
 </html>

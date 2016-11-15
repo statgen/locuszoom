@@ -234,6 +234,13 @@ LocusZoom.TransformationFunctions.add("neglog10", function(x) {
     return -Math.log(x) / Math.LN10;
 });
 
+LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
+    var exp = Math.ceil(x);
+    var dif = exp - x;
+    var base = Math.pow(10, dif);
+    return base.toFixed(2) + " × 10^" + exp;
+});
+
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     var log;
     if (Math.abs(x) > 1){
