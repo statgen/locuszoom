@@ -663,7 +663,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}pvalue", "{{namespace}}pvalue|scinotation", "{{namespace}}pvalue|neglog10", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
     id_field: "{{namespace}}variant",
     z_index: 2,
     x_axis: {
@@ -5656,7 +5656,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         for(var i=0; i<regexes.length; i++) {
             var regex = regexes[i];
             var m = arr.filter(function(x) {return x.match(regex);});
-            if (m.length==1) {
+            if (m.length){
                 return m[0];
             }
         }
@@ -5669,7 +5669,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         var nameMatch = exactMatch(names);
         dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
         dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
-        dataFields.pvalue = dataFields.pvalue || nameMatch(/\blog_pvalue\b/i) || nameMatch(/\bpvalue\|neglog10\b/i);
+        dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
         dataFields._names_ = names;
     }
     return dataFields;
@@ -5714,8 +5714,11 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
             throw("No association data found to find best pvalue");
         }
         var keys = this.findMergeFields(chain);
-        if(!keys.pvalue || !keys.id) {
-            throw("Unable to find columns for both pvalue and id for merge: " + keys._names_);
+        if (!keys.pvalue || !keys.id) {
+            var columns = "";
+            if (!keys.id){ columns += (columns.length ? ", " : "") + "id"; }
+            if (!keys.pvalue){ columns += (columns.length ? ", " : "") + "pvalue"; }
+            throw("Unable to find necessary column(s) for merge: " + columns + " (available: " + keys._names_ + ")");
         }
         refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
