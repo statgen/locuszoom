@@ -6042,7 +6042,7 @@ LocusZoom.Plot.prototype.sumProportional = function(dimension){
 };
 
 LocusZoom.Plot.prototype.rescaleSVG = function(){
-    var clientRect = this.svg.node().parentNode.getBoundingClientRect();
+    var clientRect = this.svg.node().getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
     return this;
 };
@@ -6068,7 +6068,9 @@ LocusZoom.Plot.prototype.initializeLayout = function(){
         }.bind(this));
         // Forcing one additional setDimensions() call after the page is loaded clears up
         // any disagreements between the initial layout and the loaded responsive container's size
-        d3.select(window).on("load.lz-"+this.id, function(){ this.setDimensions(); }.bind(this));
+        d3.select(window).on("load.lz-"+this.id, function(){ 
+            this.setDimensions();
+        }.bind(this));
     }
 
     // Add panels
