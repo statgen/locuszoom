@@ -198,9 +198,9 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
     var id;
 
-    // Update minimum allowable width and height by aggregating minimums from panels.
-    var min_width = 0;
-    var min_height = 0;
+    // Update minimum allowable width and height by aggregating minimums from panels, then apply minimums to containing element.
+    var min_width = parseFloat(this.layout.min_width) || 0;
+    var min_height = parseFloat(this.layout.min_height) || 0;
     for (id in this.panels){
         min_width = Math.max(min_width, this.panels[id].layout.min_width);
         if (parseFloat(this.panels[id].layout.min_height) > 0 && parseFloat(this.panels[id].layout.proportional_height) > 0){
@@ -209,6 +209,10 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     }
     this.layout.min_width = Math.max(min_width, 1);
     this.layout.min_height = Math.max(min_height, 1);
+    d3.select(this.svg.node().parentNode).style({
+        "min-width": this.layout.min_width + "px",
+        "min-height": this.layout.min_height + "px"
+    });
 
     // If width and height arguments were passed then adjust them against plot minimums if necessary.
     // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
