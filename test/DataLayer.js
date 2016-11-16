@@ -320,6 +320,111 @@ describe("LocusZoom.DataLayer", function(){
         });
     });
 
+    describe("Data Access", function() {
+        beforeEach(function(){
+            this.plot = null;
+            this.ds1_src_data = [
+                { id: 2, pvalue: 32.7, ref_allele: "G" },
+                { id: 5, pvalue: 0.53, ref_allele: null },
+                { id: 21, pvalue: 412.5, ref_allele: NaN }
+            ];
+            this.ds1_expected_json_data = JSON.stringify([
+                { "ds1:id": 2, "ds1:pvalue": 32.7, "ds1:pvalue|logtoscinotation": "2.00 × 10^33", "ds1:ref_allele": "G" },
+                { "ds1:id": 5, "ds1:pvalue": 0.53, "ds1:pvalue|logtoscinotation": "2.95 × 10^1", "ds1:ref_allele": null },
+                { "ds1:id": 21, "ds1:pvalue": 412.5, "ds1:pvalue|logtoscinotation": "3.16 × 10^413", "ds1:ref_allele": NaN }
+            ]);
+            this.ds1_expected_csv_data = "\"ds1:id\",\"ds1:pvalue\",\"ds1:pvalue|logtoscinotation\",\"ds1:ref_allele\"\n"
+                                       + "2,32.7,\"2.00 × 10^33\",\"G\"\n"
+                                       + "5,0.53,\"2.95 × 10^1\",null\n"
+                                       + "21,412.5,\"3.16 × 10^413\",null";
+            this.ds2_src_data = [
+                { id: 3, bp: 1234, exons: [ { start: 603, strand: "+" }, { start: 4, strand: "+" } ] },
+                { id: 35, bp: { a: 1, b: 2 }, exons: [ { start: 34, strand: "+", bar: true } ] },
+                { id: 64, bp: false, exons: [], other: true }
+            ];
+            this.ds2_expected_json_data = JSON.stringify([
+                { "ds2:id": 3, "ds2:bp": 1234, "ds2:exons": [ { start: 603, strand: "+" }, { start: 4, strand: "+" } ] },
+                { "ds2:id": 35, "ds2:bp": { a: 1, b: 2 }, "ds2:exons": [ { start: 34, strand: "+", bar: true } ] },
+                { "ds2:id": 64, "ds2:bp": false, "ds2:exons": [], "ds2:other": true }
+            ]);
+            this.ds2_expected_csv_data = "\"ds2:id\",\"ds2:bp\",\"ds2:exons\",\"ds2:other\"\n"
+                                       + "3,1234,\"[Array(2)]\",null\n"
+                                       + "35,\"[Object]\",\"[Array(1)]\",null\n"
+                                       + "64,false,\"[Array(0)]\",true";
+            var data_sources = new LocusZoom.DataSources()
+                .add("ds1", ["StaticJSON", this.ds1_src_data])
+                .add("ds2", ["StaticJSON", this.ds2_src_data]);
+            var layout = {
+                panels: [
+                    {
+                        id: "p",
+                        data_layers: [
+                            {
+                                id: "dl1",
+                                fields: ["ds1:id", "ds1:pvalue", "ds1:pvalue|logtoscinotation", "ds1:ref_allele"],
+                                id_field: "ds1:id",
+                                type: "scatter"
+                            },
+                            {
+                                id: "dl2",
+                                fields: ["ds2:id", "ds2:bp", "ds2:exons", "ds2:other"],
+                                id_field: "ds2:id",
+                                type: "scatter"
+                            }
+                        ]
+                    }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", data_sources, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it("should create a exportData() function on the data layer prototype", function(){
+            assert.equal(true,true);
+            should.exist(LocusZoom.DataLayer.prototype.exportData);
+            LocusZoom.DataLayer.prototype.exportData.should.be.a.Function;
+            should.exist(this.plot.panels.p.data_layers.dl1.exportData);
+            this.plot.panels.p.data_layers.dl1.exportData.should.be.a.Function;
+            should.exist(this.plot.panels.p.data_layers.dl2.exportData);
+            this.plot.panels.p.data_layers.dl2.exportData.should.be.a.Function;
+        });
+        it("exportData() should export clean JSON of a data layer's underlying data by default", function(done){
+            this.plot.applyState({ start: 0, end: 100 })
+                .then(function(){
+                    var json0 = this.plot.panels.p.data_layers.dl1.exportData();
+                    var json1 = this.plot.panels.p.data_layers.dl1.exportData("json");
+                    var json2 = this.plot.panels.p.data_layers.dl2.exportData("json");
+                    assert.deepEqual(json0, this.ds1_expected_json_data);
+                    assert.deepEqual(json1, this.ds1_expected_json_data);
+                    assert.deepEqual(json2, this.ds2_expected_json_data);
+                    done();
+                }.bind(this)).fail(done);
+        });
+        it("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function(done){
+            this.plot.applyState({ start: 0, end: 100 })
+                .then(function(){
+                    var csv1 = this.plot.panels.p.data_layers.dl1.exportData("csv");
+                    var csv2 = this.plot.panels.p.data_layers.dl2.exportData("csv");
+                    assert.deepEqual(csv1, this.ds1_expected_csv_data);
+                    assert.deepEqual(csv2, this.ds2_expected_csv_data);
+                    done();
+                }.bind(this)).fail(done);
+        });
+        it("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function(done){
+            this.plot.applyState({ start: 0, end: 100 })
+                .then(function(){
+                    var tsv1 = this.plot.panels.p.data_layers.dl1.exportData("tsv");
+                    var tsv2 = this.plot.panels.p.data_layers.dl2.exportData("tsv");
+                    assert.deepEqual(tsv1, this.ds1_expected_csv_data.replace(/,/g,"\t"));
+                    assert.deepEqual(tsv2, this.ds2_expected_csv_data.replace(/,/g,"\t"));
+                    done();
+                }.bind(this)).fail(done);
+        });
+    });
+
     describe("Highlight functions", function() {
         beforeEach(function(){
             this.plot = null;

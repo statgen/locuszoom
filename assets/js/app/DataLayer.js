@@ -703,6 +703,55 @@ LocusZoom.DataLayer.prototype.getPageOrigin = function(){
     };
 };
 
+// Get a data layer's current underlying data in a standard format (e.g. JSON or CSV)
+LocusZoom.DataLayer.prototype.exportData = function(format){
+    var default_format = "json";
+    format = format || default_format;
+    format = (typeof format == "string" ? format.toLowerCase() : default_format);
+    if (["json","csv","tsv"].indexOf(format) == -1){ format = default_format; }
+    var ret;
+    switch (format){
+    case "json":
+        try {
+            ret = JSON.stringify(this.data);
+        } catch (e){
+            ret = null;
+            console.error("Unable to export JSON data from data layer: " + this.getBaseId() + ";", e);
+        }
+        break;
+    case "tsv":
+    case "csv":
+        try {
+            var jsonified = JSON.parse(JSON.stringify(this.data));
+            if (typeof jsonified != "object"){
+                ret = jsonified.toString();
+            } else if (!Array.isArray(jsonified)){
+                ret = "Object";
+            } else {
+                var delimiter = (format == "tsv") ? "\t" : ",";
+                var header = this.layout.fields.map(function(header){
+                    return JSON.stringify(header);
+                }).join(delimiter) + "\n";
+                ret = header + jsonified.map(function(record){
+                    return this.layout.fields.map(function(field){
+                        if (typeof record[field] == "undefined"){
+                            return JSON.stringify(null);
+                        } else if (typeof record[field] == "object" && record[field] != null){
+                            return Array.isArray(record[field]) ? "\"[Array(" + record[field].length + ")]\"" : "\"[Object]\"";
+                        } else {
+                            return JSON.stringify(record[field]);
+                        }
+                    }).join(delimiter);
+                }.bind(this)).join("\n");
+            }
+        } catch (e){
+            ret = null;
+            console.error("Unable to export CSV data from data layer: " + this.getBaseId() + ";", e);
+        }
+        break;
+    }
+    return ret;
+};
 
 LocusZoom.DataLayer.prototype.draw = function(){
     this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
