@@ -286,8 +286,7 @@ describe("LocusZoom.DataLayer", function(){
                         id: "p1",
                         data_layers: []
                     }
-                ],
-                controls: false
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
         });
@@ -340,8 +339,7 @@ describe("LocusZoom.DataLayer", function(){
                             }
                         ]
                     }
-                ],
-                controls: false
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", data_sources, layout);
@@ -350,7 +348,7 @@ describe("LocusZoom.DataLayer", function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it("should allow for highlighting and unhighlighting a single element", function(){
+        it("should allow for highlighting and unhighlighting a single element", function(done){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -374,9 +372,10 @@ describe("LocusZoom.DataLayer", function(){
                     this.plot.state[state_id].highlighted.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
                     this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                }.bind(this));
+                    done();
+                }.bind(this)).fail(done);
         });
-        it("should allow for highlighting and unhighlighting all elements", function(){
+        it("should allow for highlighting and unhighlighting all elements", function(done){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -391,7 +390,8 @@ describe("LocusZoom.DataLayer", function(){
                     this.plot.state[state_id].highlighted[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
                     this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                }.bind(this));
+                    done();
+                }.bind(this)).fail(done);
         });
     });
 
@@ -414,8 +414,7 @@ describe("LocusZoom.DataLayer", function(){
                             }
                         ]
                     }
-                ],
-                controls: false
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", data_sources, layout);
@@ -424,7 +423,7 @@ describe("LocusZoom.DataLayer", function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it("should allow for selecting and unselecting a single element", function(){
+        it("should allow for selecting and unselecting a single element", function(done){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -448,9 +447,10 @@ describe("LocusZoom.DataLayer", function(){
                     this.plot.state[state_id].selected.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unselectElement(c);
                     this.plot.state[state_id].selected.length.should.be.exactly(0);
-                }.bind(this));
+                    done();
+                }.bind(this)).fail(done);
         });
-        it("should allow for selecting and unselecting all elements", function(){
+        it("should allow for selecting and unselecting all elements", function(done){
             this.plot.lzd.getData({}, ["d:id"])
                 .then(function(){
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
@@ -465,7 +465,8 @@ describe("LocusZoom.DataLayer", function(){
                     this.plot.state[state_id].selected[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unselectAllElements();
                     this.plot.state[state_id].selected.length.should.be.exactly(0);
-                }.bind(this));
+                    done();
+                }.bind(this)).fail(done);
         });
     });
 
@@ -478,8 +479,7 @@ describe("LocusZoom.DataLayer", function(){
                         id: "p",
                         data_layers: []
                     }
-                ],
-                controls: false
+                ]
             };
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", {}, this.layout);

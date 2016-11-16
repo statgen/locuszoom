@@ -421,7 +421,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("Should apply minimum region scale state validation if set in the plot layout", function(done){
             this.layout.min_region_scale = 2000;
@@ -431,7 +431,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("Should apply maximum region scale state validation if set in the plot layout", function(done){
             this.layout.max_region_scale = 4000000;
@@ -441,7 +441,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
     });
 

@@ -1,4 +1,4 @@
-/* global require, describe, d3, Q, LocusZoom, beforeEach, afterEach, it, done */
+/* global require, describe, d3, LocusZoom, beforeEach, afterEach, it */
 
 "use strict";
 
@@ -206,12 +206,11 @@ describe("LocusZoom.Dashboard", function(){
         it("Should show initial region scale from state", function(){
             this.plot.dashboard.components[0].selector.html().should.be.exactly("300.00 Kb");
         });
-        it("Should show updated regions scale from state as state region boundaries change", function(){
-            this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 });
-            Q.all(this.plot.remap_promises).then(function(){
+        it("Should show updated region scale from state as state region boundaries change", function(done){
+            this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(function(){
                 this.plot.dashboard.components[0].selector.html().should.be.exactly("400.00 Kb");
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
     });
 

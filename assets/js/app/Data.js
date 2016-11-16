@@ -560,6 +560,5 @@ LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields
 };
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
-    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
-        this._data];
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
 };

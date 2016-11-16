@@ -2159,6 +2159,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
                 this.setElementStatus(status, element, false);
             }
         }.bind(this));
+        this.state[this.state_id][status] = [];
     }
     
     return this;
@@ -5895,8 +5896,7 @@ LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields
 };
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
-    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
-        this._data];
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
 };
 
 /* global d3,Q,LocusZoom */
@@ -6112,7 +6112,7 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     this.layout.min_height = Math.max(min_height, 1);
     d3.select(this.svg.node().parentNode).style({
         "min-width": this.layout.min_width + "px",
-        "min-height": this.layout.min_height + "px",
+        "min-height": this.layout.min_height + "px"
     });
 
     // If width and height arguments were passed then adjust them against plot minimums if necessary.
@@ -6711,7 +6711,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             this.curtain.drop(error);
             this.loading_data = false;
         }.bind(this))
-        .done(function(){
+        .then(function(){
 
             // Update dashboard / components
             this.dashboard.update();
@@ -6746,7 +6746,6 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             this.loading_data = false;
             
         }.bind(this));
-    
 };
 
 

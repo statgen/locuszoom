@@ -597,6 +597,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
                 this.setElementStatus(status, element, false);
             }
         }.bind(this));
+        this.state[this.state_id][status] = [];
     }
     
     return this;

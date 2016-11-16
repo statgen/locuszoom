@@ -354,7 +354,7 @@ describe("LocusZoom.Panel", function(){
                 assert.equal(typeof this.plot.svg.node()["__onmouseup.plot.p.interaction.drag"], "function");
                 assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("should establish x tick drag interaction handlers when the layout directives are present", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
@@ -364,7 +364,7 @@ describe("LocusZoom.Panel", function(){
                 assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
                 assert.equal(typeof this.plot.panels.p.svg.container.select(".lz-axis.lz-x .tick text").node()["__onmousedown.plot.p.interaction.drag"], "function");
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("should establish y1 tick drag interaction handlers when the layout directives are present", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
@@ -374,7 +374,7 @@ describe("LocusZoom.Panel", function(){
                 assert.equal(typeof this.plot.svg.node()["__onmousemove.plot.p.interaction.drag"], "function");
                 assert.equal(typeof this.plot.panels.p.svg.container.select(".lz-axis.lz-y1 .tick text").node()["__onmousedown.plot.p.interaction.drag"], "function");
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("should establish a zoom interaction handler on the panel when the layout directive is present", function(done){
             this.layout.panels[0].interaction.scroll_to_zoom = true;
@@ -382,7 +382,7 @@ describe("LocusZoom.Panel", function(){
             Q.all(this.plot.remap_promises).then(function(){
                 assert.equal(typeof this.plot.panels.p.svg.container.node()["__onmousedown.zoom"], "function");
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it ("should pan along the x axis when dragging the background", function(done){
             this.layout.panels[0].interaction.drag_background_to_pan = true;
@@ -415,7 +415,7 @@ describe("LocusZoom.Panel", function(){
                 this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(2);
                 this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(6);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it ("should scale along the x axis when dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
@@ -446,7 +446,7 @@ describe("LocusZoom.Panel", function(){
                 this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(1);
                 this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(9);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it ("should pan along the x axis when shift+dragging an x tick", function(done){
             this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
@@ -478,7 +478,7 @@ describe("LocusZoom.Panel", function(){
                 this.plot.panels.p.data_layers.d.layout.x_axis.floor.should.be.exactly(2);
                 this.plot.panels.p.data_layers.d.layout.x_axis.ceiling.should.be.exactly(6);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it ("should scale along the y1 axis when dragging a y1 tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
@@ -509,7 +509,7 @@ describe("LocusZoom.Panel", function(){
                 this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(2);
                 this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(14);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it ("should pan along the y axis when shift+dragging a y tick", function(done){
             this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
@@ -541,7 +541,7 @@ describe("LocusZoom.Panel", function(){
                 this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(4);
                 this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(8);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
     });
 

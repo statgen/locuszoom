@@ -810,7 +810,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             this.curtain.drop(error);
             this.loading_data = false;
         }.bind(this))
-        .done(function(){
+        .then(function(){
 
             // Update dashboard / components
             this.dashboard.update();
@@ -845,6 +845,5 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             this.loading_data = false;
             
         }.bind(this));
-    
 };
 

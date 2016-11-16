@@ -1088,7 +1088,7 @@ LocusZoom.Panel.prototype.toggleDragging = function(method){
 // May optionally take an arbitrary target height (useful for when data layers are transitioning
 // and the ending target height can be pre-calculated)
 LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
-    var target_height = +target_height || null;
+    target_height = +target_height || null;
     if (target_height == null){
         this.data_layer_ids_by_z_index.forEach(function(id){
             var dh = this.data_layers[id].getAbsoluteDataHeight();
