@@ -607,9 +607,6 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
         field: "{{namespace[recomb]}}recomb_rate",
         floor: 0,
         ceiling: 100
-    },
-    transition: {
-        duration: 200
     }
 });
 
@@ -676,9 +673,6 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
     },
-    transition: {
-        duration: 200
-    },
     highlighted: {
         onmouseover: "on",
         onmouseout: "off"
@@ -703,9 +697,6 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     point_shape: "circle",
     point_size: 70,
     id_field: "{{namespace}}id",
-    transition: {
-        duration: 500
-    },
     fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
     x_axis: {
         field: "{{namespace}}x"
@@ -777,9 +768,6 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     selected: {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
-    },
-    transition: {
-        duration: 200
     },
     tooltip: {
         closable: true,
@@ -854,9 +842,6 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     selected: {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
-    },
-    transition: {
-        duration: 200
     },
     tooltip: {
         closable: false,
