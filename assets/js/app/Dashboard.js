@@ -832,9 +832,11 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     data_layer.toggleSplitTracks();
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
+                    var timeout = data_layer.layout.transition ? +data_layer.layout.transition.duration || 0 : 0;
                     this.scale_timeout = setTimeout(function(){
-                        if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
-                    }.bind(this), +data_layer.layout.transition.duration || 0);
+                        this.parent_panel.scaleHeightToData();
+                        this.parent_plot.positionPanels();
+                    }.bind(this), timeout);
                     this.update();
                 }.bind(this));
             return this.update();

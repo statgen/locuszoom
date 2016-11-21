@@ -810,7 +810,8 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     start_field: "{{namespace[intervals]}}start",
     end_field: "{{namespace[intervals]}}end",
     track_split_field: "{{namespace[intervals]}}state_id",
-    split_tracks: false,
+    split_tracks: true,
+    always_hide_legend: false,
     color: {
         field: "{{namespace[intervals]}}state_id",
         scale_function: "categorical_bin",
@@ -5138,9 +5139,11 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
                 .setOnclick(function(){
                     data_layer.toggleSplitTracks();
                     if (this.scale_timeout){ clearTimeout(this.scale_timeout); }
+                    var timeout = data_layer.layout.transition ? +data_layer.layout.transition.duration || 0 : 0;
                     this.scale_timeout = setTimeout(function(){
-                        if (!data_layer.layout.split_tracks){ this.parent_panel.scaleHeightToData(); }
-                    }.bind(this), +data_layer.layout.transition.duration || 0);
+                        this.parent_panel.scaleHeightToData();
+                        this.parent_plot.positionPanels();
+                    }.bind(this), timeout);
                     this.update();
                 }.bind(this));
             return this.update();

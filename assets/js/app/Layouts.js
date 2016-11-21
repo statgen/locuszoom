@@ -402,7 +402,8 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     start_field: "{{namespace[intervals]}}start",
     end_field: "{{namespace[intervals]}}end",
     track_split_field: "{{namespace[intervals]}}state_id",
-    split_tracks: false,
+    split_tracks: true,
+    always_hide_legend: false,
     color: {
         field: "{{namespace[intervals]}}state_id",
         scale_function: "categorical_bin",
