@@ -1,5 +1,15 @@
-!function() {
-    
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) {
+        define(["postal"], function(d3, Q){
+            return (root.LocusZoom = factory(d3, Q));
+        });
+    } else if(typeof module === "object" && module.exports) {
+        module.exports = (root.LocusZoom = factory(require("d3"), require("Q")));
+    } else {
+        root.LocusZoom = factory(root.d3, root.Q);
+    }
+}(this, function(d3, Q) {
+
     var semanticVersionIsOk = function(minimum_version, current_version){
         // handle the trivial case
         if (current_version == minimum_version){ return true; }
@@ -14,22 +24,23 @@
         });
         return version_is_ok;
     };
-    
+
     try {
 
         // Verify dependency: d3.js
         var minimum_d3_version = "3.5.6";
         if (typeof d3 != "object"){
-            throw("LocusZoom unable to load: d3 dependency not met. Library missing.");
-        } else if (!semanticVersionIsOk(minimum_d3_version, d3.version)){
-            throw("LocusZoom unable to load: d3 dependency not met. Outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher (found: " + d3.version + ").");
+            throw("d3 dependency not met. Library missing.");
         }
-
-        // Verify dependency: Q.js
-        if (typeof Q != "function"){
-            throw("LocusZoom unable to load: Q dependency not met. Library missing.");
+        if (!semanticVersionIsOk(minimum_d3_version, d3.version)){
+            throw("d3 dependency not met. Outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher (found: " + d3.version + ").");
         }
         
+        // Verify dependency: Q.js
+        if (typeof Q != "function"){
+            throw("Q dependency not met. Library missing.");
+        }
+
         /* global d3,Q */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -783,10 +794,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
             + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
             + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
             + "</table>"
-            + "<table width=\"100%\"><tr>"
-            + "<td><button onclick=\"LocusZoom.getToolTipPlot(this).panel_ids_by_y_index.forEach(function(panel){ if(panel == 'genes'){ return; } var filters = (panel.indexOf('intervals') != -1 ? [['intervals:start','>=','{{start}}'],['intervals:end','<=','{{end}}']] : [['position','>','{{start}}'],['position','<','{{end}}']]); LocusZoom.getToolTipPlot(this).panels[panel].undimElementsByFilters(filters, true); }.bind(this)); LocusZoom.getToolTipPanel(this).data_layers.genes.unselectAllElements();\">Identify data in region</button></td>"
-            + "<td style=\"text-align: right;\"><a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a></td>"
-            + "</tr></table>"
+            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a>"
     }
 });
 
@@ -1631,7 +1639,7 @@ LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -2985,8 +2993,8 @@ LocusZoom.DataLayers.add("line", function(layout){
 
         // Generate the line
         this.line = d3.svg.line()
-            .x(function(d) { return panel[x_scale](d[x_field]); })
-            .y(function(d) { return panel[y_scale](d[y_field]); })
+            .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+            .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
@@ -3015,8 +3023,8 @@ LocusZoom.DataLayers.add("line", function(layout){
                 .attr("class", "lz-data_layer-line-hitarea")
                 .style("stroke-width", hitarea_width);
             var hitarea_line = d3.svg.line()
-                .x(function(d) { return panel[x_scale](d[x_field]); })
-                .y(function(d) { return panel[y_scale](d[y_field]); })
+                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+                .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
                 .interpolate(this.layout.interpolate);
             hitarea
                 .attr("d", hitarea_line)
@@ -7982,16 +7990,10 @@ LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
 };
 
 
-        if (typeof define === "function" && define.amd){
-            this.LocusZoom = LocusZoom, define(LocusZoom);
-        } else if (typeof module === "object" && module.exports) {
-            module.exports = LocusZoom;
-        } else {
-            this.LocusZoom = LocusZoom;
-        }
-
     } catch (plugin_loading_error){
-        console.log("LocusZoom Plugin error: " + plugin_loading_error);
+        console.error("LocusZoom Plugin error: " + plugin_loading_error);
     }
 
-}();
+    return LocusZoom;
+
+}));

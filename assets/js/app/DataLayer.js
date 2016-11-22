@@ -83,7 +83,7 @@ LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
