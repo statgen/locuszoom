@@ -114,10 +114,12 @@ describe("LocusZoom Core", function(){
             });
         });
 
-        it("should allow for populating an element with a predefined layout and state as separate arguments (DEPRECATED)", function(){
-            var layout = { foo: "bar" };
-            var state = { chr: 10 };
-            var plot = LocusZoom.populate("#plot_id", {}, layout, state);
+        it("should allow for populating an element with a predefined layout that parses any included state", function(){
+            var layout = {
+                foo: "bar",
+                state: { chr: 10 }
+            };
+            var plot = LocusZoom.populate("#plot_id", {}, layout);
             plot.layout.foo.should.be.exactly("bar");
             plot.layout.state.chr.should.be.exactly(10);
             assert.deepEqual(plot.state, plot.layout.state);

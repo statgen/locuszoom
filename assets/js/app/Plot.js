@@ -790,14 +790,6 @@ LocusZoom.Plot.prototype.initialize = function(){
 
 };
 
-// Map an entire LocusZoom Plot to a new region
-// DEPRECATED: This method is specific to only accepting chromosome, start, and end.
-// LocusZoom.Plot.prototype.applyState() takes a single object, covering far more use cases.
-LocusZoom.Plot.prototype.mapTo = function(chr, start, end){
-    console.warn("Warning: use of LocusZoom.Plot.mapTo() is deprecated. Use LocusZoom.Plot.applyState() instead.");
-    return this.applyState({ chr: chr, start: start, end: end });
-};
-
 // Refresh an plot's data from sources without changing position
 LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
