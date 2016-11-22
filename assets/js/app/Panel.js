@@ -81,10 +81,6 @@ LocusZoom.Panel = function(layout, parent) {
         return this.parent.id + "." + this.id;
     };
 
-    this.canInteract = function(){
-        return !(this.interactions.dragging || this.interactions.zooming || this.parent.loading_data);
-    };
-
     // Event hooks
     this.event_hooks = {
         "layout_changed": [],
@@ -122,9 +118,6 @@ LocusZoom.Panel = function(layout, parent) {
             y: plot_origin.y + this.layout.origin.y
         };
     };
-
-    // Object for storing in-progress mouse interactions
-    this.interactions = {};
 
     // Initialize the layout
     this.initializeLayout();
@@ -504,39 +497,33 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     // Establish panel background drag interaction mousedown event handler (on the panel background)
-    var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
     if (this.layout.interaction.drag_background_to_pan){
-        var panel = this;
-        var mousedown = function(){ panel.toggleDragging("background"); };
+        var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
+        var mousedown = function(){
+            this.parent.startDrag(this, "background");
+        }.bind(this);
         this.svg.container.select(".lz-panel-background")
             .on("mousedown" + namespace + ".background", mousedown)
             .on("touchstart" + namespace + ".background", mousedown);
-    }
-
-    // Establish panel mouse up and move handlers for any/all drag events for the plot (on the parent plot)
-    if (this.layout.interaction.drag_background_to_pan || this.layout.interaction.drag_x_ticks_to_scale
-        || this.layout.interaction.drag_y1_ticks_to_scale || this.layout.interaction.drag_y2_ticks_to_scale){
-        var mouseup = function(){ this.toggleDragging(); }.bind(this);
-        var mousemove = function(){
-            if (!this.interactions.dragging){ return; }
-            if (this.interactions.dragging.panel_id != this.id){ return; }
-            if (d3.event){ d3.event.preventDefault(); }
-            var coords = d3.mouse(this.svg.container.node());
-            this.interactions.dragging.dragged_x = coords[0] - this.interactions.dragging.start_x;
-            this.interactions.dragging.dragged_y = coords[1] - this.interactions.dragging.start_y;
-            this.render();
-        }.bind(this);
-        this.parent.svg
-            .on("mouseup" + namespace, mouseup)
-            .on("touchend" + namespace, mouseup)
-            .on("mousemove" + namespace, mousemove)
-            .on("touchmove" + namespace, mousemove);
     }
 
     return this;
     
 };
 
+// Get an array of panel IDs that are axis-linked to this panel
+LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
+    axis = axis || null;
+    var linked_panel_ids = [];
+    if (["x","y1","y2"].indexOf(axis) == -1){ return linked_panel_ids; }
+    if (!this.layout.interaction[axis + "_linked"]){ return linked_panel_ids; }
+    this.parent.panel_ids_by_y_index.forEach(function(panel_id){
+        if (panel_id != this.id && this.parent.panels[panel_id].layout.interaction[axis + "_linked"]){
+            linked_panel_ids.push(panel_id);
+        }
+    }.bind(this));
+    return linked_panel_ids;
+};
 
 // Move a panel up relative to others by y-index
 LocusZoom.Panel.prototype.moveUp = function(){
@@ -691,11 +678,7 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 };
 
 // Render a given panel
-LocusZoom.Panel.prototype.render = function(called_from_broadcast){
-
-    // Whether this function was called as a broadcast of another panel's rendering
-    // (i.e. don't keep broadcasting, skip that step at the bottom of the render loop)
-    if (typeof called_from_broadcast == "undefined"){ called_from_broadcast = false; }
+LocusZoom.Panel.prototype.render = function(){
 
     // Position the panel container
     this.svg.container.attr("transform", "translate(" + this.layout.origin.x +  "," + this.layout.origin.y + ")");
@@ -761,50 +744,52 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     }
 
     // Shift ranges based on any drag or zoom interactions currently underway
-    var anchor, scalar = null;
-    if (this.interactions.zooming && typeof this.x_scale == "function"){
-        var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
-        var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
-        var zoom_factor = this.interactions.zooming.scale;
-        var potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
-        if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)){
-            zoom_factor = 1 /(Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
-        } else if (zoom_factor > 1 && !isNaN(this.parent.layout.min_region_scale)){
-            zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
-        }
-        var new_extent_size = Math.floor(current_extent_size * zoom_factor);
-        anchor = this.interactions.zooming.center - this.layout.margin.left - this.layout.origin.x;
-        var offset_ratio = anchor / this.layout.cliparea.width;
-        var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
-        ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
-    } else if (this.interactions.dragging){
-        switch (this.interactions.dragging.method){
-        case "background":
-            ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
-            ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
-            break;
-        case "x_tick":
-            if (d3.event && d3.event.shiftKey){
-                ranges.x_shifted[0] = 0 + this.interactions.dragging.dragged_x;
-                ranges.x_shifted[1] = this.layout.cliparea.width + this.interactions.dragging.dragged_x;
-            } else {
-                anchor = this.interactions.dragging.start_x - this.layout.margin.left - this.layout.origin.x;
-                scalar = constrain(anchor / (anchor + this.interactions.dragging.dragged_x), 3);
-                ranges.x_shifted[0] = 0;
-                ranges.x_shifted[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
+    if (this.parent.interaction.panel_id && (this.parent.interaction.panel_id == this.id || this.parent.interaction.linked_panel_ids.indexOf(this.id) != -1)){
+        var anchor, scalar = null;
+        if (this.parent.interaction.zooming && typeof this.x_scale == "function"){
+            var current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
+            var current_scaled_extent_size = Math.round(this.x_scale.invert(ranges.x_shifted[1])) - Math.round(this.x_scale.invert(ranges.x_shifted[0]));
+            var zoom_factor = this.parent.interaction.zooming.scale;
+            var potential_extent_size = Math.floor(current_scaled_extent_size * (1 / zoom_factor));
+            if (zoom_factor < 1 && !isNaN(this.parent.layout.max_region_scale)){
+                zoom_factor = 1 /(Math.min(potential_extent_size, this.parent.layout.max_region_scale) / current_scaled_extent_size);
+            } else if (zoom_factor > 1 && !isNaN(this.parent.layout.min_region_scale)){
+                zoom_factor = 1 / (Math.max(potential_extent_size, this.parent.layout.min_region_scale) / current_scaled_extent_size);
             }
-            break;
-        case "y1_tick":
-        case "y2_tick":
-            var y_shifted = "y" + this.interactions.dragging.method[1] + "_shifted";
-            if (d3.event && d3.event.shiftKey){
-                ranges[y_shifted][0] = this.layout.cliparea.height + this.interactions.dragging.dragged_y;
-                ranges[y_shifted][1] = 0 + this.interactions.dragging.dragged_y;
-            } else {
-                anchor = this.layout.cliparea.height - (this.interactions.dragging.start_y - this.layout.margin.top - this.layout.origin.y);
-                scalar = constrain(anchor / (anchor - this.interactions.dragging.dragged_y), 3);
-                ranges[y_shifted][0] = this.layout.cliparea.height;
-                ranges[y_shifted][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
+            var new_extent_size = Math.floor(current_extent_size * zoom_factor);
+            anchor = this.parent.interaction.zooming.center - this.layout.margin.left - this.layout.origin.x;
+            var offset_ratio = anchor / this.layout.cliparea.width;
+            var new_x_extent_start = Math.max(Math.floor(this.x_scale.invert(ranges.x_shifted[0]) - ((new_extent_size - current_scaled_extent_size) * offset_ratio)), 1);
+            ranges.x_shifted = [ this.x_scale(new_x_extent_start), this.x_scale(new_x_extent_start + new_extent_size) ];
+        } else if (this.parent.interaction.dragging){
+            switch (this.parent.interaction.dragging.method){
+            case "background":
+                ranges.x_shifted[0] = 0 + this.parent.interaction.dragging.dragged_x;
+                ranges.x_shifted[1] = this.layout.cliparea.width + this.parent.interaction.dragging.dragged_x;
+                break;
+            case "x_tick":
+                if (d3.event && d3.event.shiftKey){
+                    ranges.x_shifted[0] = 0 + this.parent.interaction.dragging.dragged_x;
+                    ranges.x_shifted[1] = this.layout.cliparea.width + this.parent.interaction.dragging.dragged_x;
+                } else {
+                    anchor = this.parent.interaction.dragging.start_x - this.layout.margin.left - this.layout.origin.x;
+                    scalar = constrain(anchor / (anchor + this.parent.interaction.dragging.dragged_x), 3);
+                    ranges.x_shifted[0] = 0;
+                    ranges.x_shifted[1] = Math.max(this.layout.cliparea.width * (1 / scalar), 1);
+                }
+                break;
+            case "y1_tick":
+            case "y2_tick":
+                var y_shifted = "y" + this.parent.interaction.dragging.method[1] + "_shifted";
+                if (d3.event && d3.event.shiftKey){
+                    ranges[y_shifted][0] = this.layout.cliparea.height + this.parent.interaction.dragging.dragged_y;
+                    ranges[y_shifted][1] = 0 + this.parent.interaction.dragging.dragged_y;
+                } else {
+                    anchor = this.layout.cliparea.height - (this.parent.interaction.dragging.start_y - this.layout.margin.top - this.layout.origin.y);
+                    scalar = constrain(anchor / (anchor - this.parent.interaction.dragging.dragged_y), 3);
+                    ranges[y_shifted][0] = this.layout.cliparea.height;
+                    ranges[y_shifted][1] = this.layout.cliparea.height - (this.layout.cliparea.height * (1 / scalar));
+                }
             }
         }
     }
@@ -836,18 +821,25 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     if (this.layout.interaction.scroll_to_zoom){
         var zoom_handler = function(){
             d3.event.preventDefault();
-            if (this.interactions.dragging || this.parent.loading_data){ return; }
+            if (!this.parent.canInteract(this.id)){ return; }
             var coords = d3.mouse(this.svg.container.node());
             var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
             if (delta == 0){ return; }
-            this.interactions.zooming = {
-                scale: (delta < 1) ? 0.9 : 1.1,
-                center: coords[0]
+            this.parent.interaction = {
+                panel_id: this.id,
+                linked_panel_ids: this.getLinkedPanelIds("x"),
+                zooming: {
+                    scale: (delta < 1) ? 0.9 : 1.1,
+                    center: coords[0]
+                }
             };
             this.render();
+            this.parent.interaction.linked_panel_ids.forEach(function(panel_id){
+                this.parent.panels[panel_id].render();
+            }.bind(this));
             if (this.zoom_timeout != null){ clearTimeout(this.zoom_timeout); }
             this.zoom_timeout = setTimeout(function(){
-                this.interactions.zooming = false;
+                this.parent.interaction = {};
                 this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
             }.bind(this), 500);
         }.bind(this);
@@ -862,21 +854,6 @@ LocusZoom.Panel.prototype.render = function(called_from_broadcast){
     this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
         this.data_layers[data_layer_id].draw().render();
     }.bind(this));
-    
-    // Broadcast this panel's interaction, extent, and scale to other axis-linked panels, if necessary
-    if (called_from_broadcast){ return this; }
-    if (this.layout.interaction.x_linked || this.layout.interaction.y1_linked || this.layout.interaction.y2_linked){
-        ["x", "y1", "y2"].forEach(function(axis){
-            if (!this.layout.interaction[axis + "_linked"]){ return; }
-            if (!(this.interactions.zooming || (this.interactions.dragging && this.interactions.dragging["on_" + axis]))){ return; }
-            this.parent.panel_ids_by_y_index.forEach(function(panel_id){
-                if (panel_id == this.id || !this.parent.panels[panel_id].layout.interaction[axis + "_linked"]){ return; }
-                this.parent.panels[panel_id][axis + "_scale"] = this[axis + "_scale"];
-                this.parent.panels[panel_id].interactions = this.interactions;
-                this.parent.panels[panel_id].render(true);
-            }.bind(this));
-        }.bind(this));
-    }
 
     return this;
     
@@ -991,9 +968,8 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
 
     // Attach interactive handlers to ticks as needed
     ["x", "y1", "y2"].forEach(function(axis){
-        var panel = this;
-        var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
         if (this.layout.interaction["drag_" + axis + "_ticks_to_scale"]){
+            var namespace = "." + this.parent.id + "." + this.id + ".interaction.drag";
             var tick_mouseover = function(){
                 if (typeof d3.select(this).node().focus == "function"){ d3.select(this).node().focus(); }
                 var cursor = (axis == "x") ? "ew-resize" : "ns-resize";
@@ -1010,77 +986,14 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
                     d3.select(this).style({"font-weight": "normal"});
                     d3.select(this).on("keydown" + namespace, null).on("keyup" + namespace, null);
                 })
-                .on("mousedown" + namespace, function(){ panel.toggleDragging(axis + "_tick"); });
+                .on("mousedown" + namespace, function(){
+                    this.parent.startDrag(this, axis + "_tick");
+                }.bind(this));
         }
     }.bind(this));
 
     return this;
 
-};
-
-// Toggle a drag event for the panel
-// If passed a method will initialize dragging for that method
-// If not passed a method will disable dragging for the current method
-LocusZoom.Panel.prototype.toggleDragging = function(method){
-    // Helper function to find the appropriate axis layouts on child data layers
-    // Once found, apply the extent as floor/ceiling and remove all other directives
-    // This forces all associated axes to conform to the extent generated by a drag action
-    var overrideAxisLayout = function(axis, axis_number, extent){
-        this.data_layer_ids_by_z_index.forEach(function(id){
-            if (this.data_layers[id].layout[axis+"_axis"].axis == axis_number){
-                this.data_layers[id].layout[axis+"_axis"].floor = extent[0];
-                this.data_layers[id].layout[axis+"_axis"].ceiling = extent[1];
-                delete this.data_layers[id].layout[axis+"_axis"].lower_buffer;
-                delete this.data_layers[id].layout[axis+"_axis"].upper_buffer;
-                delete this.data_layers[id].layout[axis+"_axis"].min_extent;
-                delete this.data_layers[id].layout[axis+"_axis"].ticks;
-            }
-        }.bind(this));
-    }.bind(this);
-    method = method || null;
-
-    // Stop a current drag event (stopping procedure varies by drag method)
-    if (this.interactions.dragging){
-        switch(this.interactions.dragging.method){
-        case "background":
-        case "x_tick":
-            if (this.interactions.dragging.dragged_x != 0){
-                overrideAxisLayout("x", 1, this.x_extent);
-                this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
-            }
-            break;
-        case "y1_tick":
-        case "y2_tick":
-            if (this.interactions.dragging.dragged_y != 0){
-                var y_axis_number = this.interactions.dragging.method[1];
-                overrideAxisLayout("y", y_axis_number, this["y"+y_axis_number+"_extent"]);
-            }
-            break;
-        }
-        this.interactions.dragging = false;
-        this.svg.container.style("cursor", null);
-        return this;
-    }
-
-    // Start a drag event for the supplied method if currently allowed by the rules defined in this.canInteract()
-    else if (this.canInteract()){
-        var coords = d3.mouse(this.svg.container.node());
-        this.interactions.dragging = {
-            method: method,
-            panel_id: this.id,
-            start_x: coords[0],
-            start_y: coords[1],
-            dragged_x: 0,
-            dragged_y: 0
-        };
-        if (method == "background" || method == "x_tick"){ this.interactions.dragging.on_x = true; }
-        if (method == "y1_tick"){ this.interactions.dragging.on_y1 = true; }
-        if (method == "y2_tick"){ this.interactions.dragging.on_y2 = true; }
-        this.svg.container.style("cursor", "all-scroll");
-        return this;
-    }
-
-    return this;
 };
 
 // Force the height of this panel to the largest absolute height of the data in

@@ -83,7 +83,7 @@ LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
 
 LocusZoom.DataLayer.prototype.canTransition = function(){
     if (!this.layout.transition){ return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent.interactions.dragging || this.parent.interactions.zooming);
+    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction);
 };
 
 LocusZoom.DataLayer.prototype.getElementId = function(element){
@@ -682,7 +682,7 @@ LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
     }.bind(this));
 
     return this;
-                    
+
 };
 
 // Apply all supported status behaviors to a selection of objects

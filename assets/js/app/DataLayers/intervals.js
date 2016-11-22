@@ -422,6 +422,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 };
                 this.parent.render();
             }
+            this.parent_plot.positionPanels();
         } else {
             if (legend_axis && this.parent.legend){
                 if (!this.layout.always_hide_legend){ this.parent.legend.show(); }

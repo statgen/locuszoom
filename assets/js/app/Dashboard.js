@@ -23,8 +23,8 @@ LocusZoom.Dashboard = function(parent){
     }
     this.parent = parent;
     this.id = this.parent.getBaseId() + ".dashboard";
-
     this.type = (this.parent instanceof LocusZoom.Plot) ? "plot" : "panel";
+    this.parent_plot = this.type == "plot" ? this.parent : this.parent.parent;
 
     this.selector = null;
     this.components = [];
@@ -74,11 +74,7 @@ LocusZoom.Dashboard.prototype.shouldPersist = function(){
         persist = persist || component.shouldPersist();
     });
     // Persist if in a parent drag event
-    if (this.type == "plot"){
-        persist = persist || this.parent.panel_boundaries.dragging;
-    } else {
-        persist = persist || (!!this.parent.parent.panel_boundaries.dragging || !!this.parent.interactions.dragging);
-    }
+    persist = persist || (!!this.parent_plot.panel_boundaries.dragging || !!this.parent_plot.interaction.dragging);
     return persist;
 };
 
