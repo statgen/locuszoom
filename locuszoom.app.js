@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.9"
+    version: "0.5.0"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -6715,6 +6715,14 @@ LocusZoom.Plot.prototype.initialize = function(){
         .on("touchend" + namespace, mouseup)
         .on("mousemove" + namespace, mousemove)
         .on("touchmove" + namespace, mousemove);
+    
+    // Add an extra namespaced mouseup handler to the containing body, if there is one
+    // This helps to stop interaction events gracefully when dragging outside of the plot element
+    if (!d3.select("body").empty()){
+        d3.select("body")
+            .on("mouseup" + namespace, mouseup)
+            .on("touchend" + namespace, mouseup);
+    }
 
     this.initialized = true;
 
