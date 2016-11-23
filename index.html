@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
-    <title>LocusZoom</title>
+    <title>LocusZoom.js</title>
     <style>
     .button-blue {
       color: #FFF;
@@ -34,7 +34,7 @@
     <div class="container">
 
       <div class="row">
-        <h1 style="margin-top: 1em;"><strong>Locuszoom</strong></h1>
+        <h1 style="margin-top: 1em;"><strong>Locuszoom.js</strong></h1>
         <h5 style="color: #777">A Javascript/d3 embeddable plugin for interactively visualizing statistical genetic data from customizable sources.</h5>
       </div>
 
@@ -66,91 +66,75 @@
       <hr>
 
       <div class="row">
-        <h3>Download LocusZoom</h3>
-        <h5>Full Source (Latest Version)</h5>
-        <p>The links below will lead to the full source for the current version of LocusZoom. If you're looking to just plug LocusZoom in somewhere and are not interested in building/developing on the core, see <a href="#compiled_versions">Compiled Versions</a>.</p>
-        <div>
-          <a class="button button-yellow" href="https://github.com/statgen/locuszoom/zipball/master"><span>Download .zip</span></a>
-          <a class="button button-yellow" href="https://github.com/statgen/locuszoom/tarball/master"><span>Download .tar.gz</span></a>
-          <a class="button button-green" href="https://github.com/statgen/locuszoom" id="view-on-github"><span>View on GitHub</span></a>
+        <div class="twelve columns">
+          
+          <h3>Download LocusZoom.js</h3>
+          <h5>Full Source (Latest Version)</h5>
+          <p>The links below will lead to the full source for the current version of LocusZoom. If you're looking to just plug LocusZoom in somewhere and are not interested in building/developing on the core, see <a href="#compiled_versions">Compiled Versions</a>.</p>
+          <div>
+            <a class="button button-yellow" href="https://github.com/statgen/locuszoom/zipball/master"><span>Download .zip</span></a>
+            <a class="button button-yellow" href="https://github.com/statgen/locuszoom/tarball/master"><span>Download .tar.gz</span></a>
+            <a class="button button-green" href="https://github.com/statgen/locuszoom" id="view-on-github"><span>View on GitHub</span></a>
+          </div>
+          
+          <br>
+          
+          <a name="compiled_versions"></a><h5>Compiled Versions</h5>
+          <p>To use LocusZoom in your application you will need <i>both</i> LocusZoom's compiled JavaScript and CSS.</p>
+          <h6><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.5.0">v0.5.0</a></strong></h6>
+          <div class="row">
+            <div class="three columns">
+              <strong>JavaScript (uncompressed)</strong>
+            </div>
+            <div class="nine columns">
+              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js</a></tt>
+            </div>
+          </div>
+          <div class="row">
+            <div class="three columns">
+              <strong>JavaScript (minified)</strong>
+            </div>
+            <div class="nine columns">
+              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.min.js">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.min.js</a></tt>
+            </div>
+          </div>
+          <div class="row">
+            <div class="three columns">
+              <strong>CSS</strong>
+            </div>
+            <div class="nine columns">
+              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css</a></tt>
+            </div>
+          </div>
+          <br>
+          <p>LocusZoom also requires two third-party JavaScript libraries to work: <a href="https://github.com/d3/d3">d3</a> and <a href="https://github.com/kriskowal/Q">Q</a>. Download/link to these individually or download/link to this minified vendor file to get correct versions of both dependencies: <tt><a href="https://statgen.github.io/locuszoom/locuszoom.vendor.min.js">https://statgen.github.io/locuszoom/locuszoom.vendor.min.js</a></tt></p>
+          <h6><strong>Past releases</strong></h6>
+          <p>Detail of all available past releases can be seen <a href="https://github.com/statgen/locuszoom/releases">here</a>. Use the following URL format to download or link to specific releases via this site:</p>
+          <div class="row">
+            <div class="three columns">
+              <strong>JavaScript (uncompressed)</strong>
+            </div>
+            <div class="nine columns">
+              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.app.js</tt>
+            </div>
+          </div>
+          <div class="row">
+            <div class="three columns">
+              <strong>JavaScript (minified)</strong>
+            </div>
+            <div class="nine columns">
+              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.app.min.js</tt>
+            </div>
+          </div>
+          <div class="row">
+            <div class="three columns">
+              <strong>CSS</strong>
+            </div>
+            <div class="nine columns">
+              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.css</tt>
+            </div>
+          </div>        
         </div>
-        <br>
-        <a name="compiled_versions"></a><h5>Compiled Versions</h5>
-        <p>To use LocusZoom in your application you will need LocusZoom's compiled JavaScript and CSS. Download current and past versions using the links below, or use the links below to point you application to these resources hosted on this site.</p>
-        <p>See more detail on the contents of specific releases <a href="https://github.com/statgen/locuszoom/releases">here</a>.</p>
-        <table class="u-full-width">
-          <thead>
-            <tr>
-              <th>Version</th>
-              <th>JavaScript</th>
-              <th>JavaScript (minified)</th>
-              <th>CSS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="font-weight: bold;">
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.7">v0.4.9</a> (latest)</td>
-              <td><a href="versions/0.4.9/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.9/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.9/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.7">v0.4.8</a></td>
-              <td><a href="versions/0.4.8/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.8/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.8/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.7">v0.4.7</a></td>
-              <td><a href="versions/0.4.7/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.7/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.7/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.6">v0.4.6</a></td>
-              <td><a href="versions/0.4.6/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.6/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.6/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.5">v0.4.5</a></td>
-              <td><a href="versions/0.4.5/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.5/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.5/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.4">v0.4.4</a></td>
-              <td><a href="versions/0.4.4/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.4/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.4/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.3">v0.4.3</a></td>
-              <td><a href="versions/0.4.3/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.3/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.3/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.2">v0.4.2</a></td>
-              <td><a href="versions/0.4.2/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.2/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.2/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.1">v0.4.1</a></td>
-              <td><a href="versions/0.4.1/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.1/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.1/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-            <tr>
-              <td><a href="https://github.com/statgen/locuszoom/releases/tag/v0.4.0">v0.4.0</a></td>
-              <td><a href="versions/0.4.0/locuszoom.app.js">locuszoom.app.js</a></td>
-              <td><a href="versions/0.4.0/locuszoom.app.min.js">locuszoom.app.min.js</a></td>
-              <td><a href="versions/0.4.0/locuszoom.css">locuszoom.css</a></td>
-            </tr>
-          </tbody>
-        </table>
-        <br>
       </div>
 
       <hr>
