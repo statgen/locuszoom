@@ -178,8 +178,8 @@ LocusZoom.DataLayers.add("line", function(layout){
 
         // Generate the line
         this.line = d3.svg.line()
-            .x(function(d) { return panel[x_scale](d[x_field]); })
-            .y(function(d) { return panel[y_scale](d[y_field]); })
+            .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+            .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
             .interpolate(this.layout.interpolate);
 
         // Apply line and style
@@ -208,8 +208,8 @@ LocusZoom.DataLayers.add("line", function(layout){
                 .attr("class", "lz-data_layer-line-hitarea")
                 .style("stroke-width", hitarea_width);
             var hitarea_line = d3.svg.line()
-                .x(function(d) { return panel[x_scale](d[x_field]); })
-                .y(function(d) { return panel[y_scale](d[y_field]); })
+                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+                .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
                 .interpolate(this.layout.interpolate);
             hitarea
                 .attr("d", hitarea_line)

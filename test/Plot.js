@@ -130,7 +130,7 @@ describe("LocusZoom.Plot", function(){
         });
         it("should allow for responsively positioning panels using a proportional dimensions", function(){
             var responsive_layout = LocusZoom.Layouts.get("plot", "standard_association", {
-                resposnive_resize: true,
+                responsive_resize: true,
                 aspect_ratio: 2,
                 panels: [
                     { id: "positions", proportional_width: 1, proportional_height: 0.6, min_height: 60 },
@@ -149,6 +149,26 @@ describe("LocusZoom.Plot", function(){
             this.plot.setDimensions(100, 100);
             assert.equal(this.plot.layout.panels[0].height/this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels[1].height/this.plot.layout.height, 0.4);
+        });
+        it("should enforce consistent data layer widths and x-offsets across x-linked panels", function(){
+            var layout = {
+                width: 1000,
+                height: 500,
+                aspect_ratio: 2,
+                panels: [
+                    LocusZoom.Layouts.get("panel", "association", { margin: { left: 200 } }),
+                    LocusZoom.Layouts.get("panel", "association", { id: "assoc2", margin: { right: 300 } })
+                ]
+            };
+            this.plot = LocusZoom.populate("#plot", {}, layout);
+            assert.equal(this.plot.layout.panels[0].margin.left, 200);
+            assert.equal(this.plot.layout.panels[1].margin.left, 200);
+            assert.equal(this.plot.layout.panels[0].margin.right, 300);
+            assert.equal(this.plot.layout.panels[1].margin.right, 300);
+            assert.equal(this.plot.layout.panels[0].cliparea.origin.x, 200);
+            assert.equal(this.plot.layout.panels[1].cliparea.origin.x, 200);
+            assert.equal(this.plot.layout.panels[0].width, this.plot.layout.panels[0].width);
+            assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
         });
         it("should not allow for a non-numerical / non-positive predefined dimensions", function(){
             assert.throws(function(){ this.plot = LocusZoom.populate("#plot", {}, { width: 0, height: 0 }); });
@@ -216,11 +236,11 @@ describe("LocusZoom.Plot", function(){
             this.plot.addPanel(panelA);
             var svg = d3.select("#plot svg");
             this.plot.layout.width.should.be.exactly(100);
-            this.plot.layout.height.should.be.exactly(50);
+            this.plot.layout.height.should.be.exactly(100);
             (+svg.attr("width")).should.be.exactly(100);
-            (+svg.attr("height")).should.be.exactly(50);
+            (+svg.attr("height")).should.be.exactly(100);
             this.plot.panels.panelA.layout.width.should.be.exactly(100);
-            this.plot.panels.panelA.layout.height.should.be.exactly(50);
+            this.plot.panels.panelA.layout.height.should.be.exactly(100);
             this.plot.panels.panelA.layout.proportional_height.should.be.exactly(1);
             this.plot.panels.panelA.layout.proportional_origin.y.should.be.exactly(0);
             this.plot.panels.panelA.layout.origin.y.should.be.exactly(0);
@@ -233,19 +253,19 @@ describe("LocusZoom.Plot", function(){
             this.plot.addPanel(panelB);
             var svg = d3.select("#plot svg");
             this.plot.layout.width.should.be.exactly(100);
-            this.plot.layout.height.should.be.exactly(120);
+            this.plot.layout.height.should.be.exactly(160);
             (+svg.attr("width")).should.be.exactly(100);
-            (+svg.attr("height")).should.be.exactly(120);
+            (+svg.attr("height")).should.be.exactly(160);
             this.plot.panels.panelA.layout.width.should.be.exactly(100);
-            this.plot.panels.panelA.layout.height.should.be.exactly(60);
-            this.plot.panels.panelA.layout.proportional_height.should.be.exactly(0.5);
+            this.plot.panels.panelA.layout.height.should.be.exactly(100);
+            this.plot.panels.panelA.layout.proportional_height.should.be.exactly(0.625);
             this.plot.panels.panelA.layout.proportional_origin.y.should.be.exactly(0);
             this.plot.panels.panelA.layout.origin.y.should.be.exactly(0);
             this.plot.panels.panelB.layout.width.should.be.exactly(100);
             this.plot.panels.panelB.layout.height.should.be.exactly(60);
-            this.plot.panels.panelB.layout.proportional_height.should.be.exactly(0.5);
-            this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(0.5);
-            this.plot.panels.panelB.layout.origin.y.should.be.exactly(60);
+            this.plot.panels.panelB.layout.proportional_height.should.be.exactly(0.375);
+            this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(0.625);
+            this.plot.panels.panelB.layout.origin.y.should.be.exactly(100);
             this.plot.sumProportional("height").should.be.exactly(1);
         });
         it("Should resize the plot as panels are removed", function(){
@@ -256,11 +276,11 @@ describe("LocusZoom.Plot", function(){
             this.plot.removePanel("panelA");
             var svg = d3.select("#plot svg");
             this.plot.layout.width.should.be.exactly(100);
-            this.plot.layout.height.should.be.exactly(60);
+            this.plot.layout.height.should.be.exactly(100);
             (+svg.attr("width")).should.be.exactly(100);
-            (+svg.attr("height")).should.be.exactly(60);
+            (+svg.attr("height")).should.be.exactly(100);
             this.plot.panels.panelB.layout.width.should.be.exactly(100);
-            this.plot.panels.panelB.layout.height.should.be.exactly(60);
+            this.plot.panels.panelB.layout.height.should.be.exactly(100);
             this.plot.panels.panelB.layout.proportional_height.should.be.exactly(1);
             this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(0);
             this.plot.panels.panelB.layout.origin.y.should.be.exactly(0);
@@ -401,7 +421,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("Should apply minimum region scale state validation if set in the plot layout", function(done){
             this.layout.min_region_scale = 2000;
@@ -411,7 +431,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
         it("Should apply maximum region scale state validation if set in the plot layout", function(done){
             this.layout.max_region_scale = 4000000;
@@ -421,7 +441,7 @@ describe("LocusZoom.Plot", function(){
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
                 done();
-            }.bind(this));
+            }.bind(this)).fail(done);
         });
     });
 

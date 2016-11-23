@@ -325,20 +325,20 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         for(var i=0; i<regexes.length; i++) {
             var regex = regexes[i];
             var m = arr.filter(function(x) {return x.match(regex);});
-            if (m.length==1) {
+            if (m.length){
                 return m[0];
             }
         }
         return null;
     };};
     var dataFields = {id: this.params.id_field, position: this.params.position_field, 
-        pvalue: this.params.pvalue_field, _names_:null};
+                      pvalue: this.params.pvalue_field, _names_:null};
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
         dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
         dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
-        dataFields.pvalue = dataFields.pvalue || nameMatch(/\blog_pvalue\b/i) || nameMatch(/\bpvalue\|neglog10\b/i);
+        dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
         dataFields._names_ = names;
     }
     return dataFields;
@@ -383,8 +383,11 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
             throw("No association data found to find best pvalue");
         }
         var keys = this.findMergeFields(chain);
-        if(!keys.pvalue || !keys.id) {
-            throw("Unable to find columns for both pvalue and id for merge: " + keys._names_);
+        if (!keys.pvalue || !keys.id) {
+            var columns = "";
+            if (!keys.id){ columns += (columns.length ? ", " : "") + "id"; }
+            if (!keys.pvalue){ columns += (columns.length ? ", " : "") + "pvalue"; }
+            throw("Unable to find necessary column(s) for merge: " + columns + " (available: " + keys._names_ + ")");
         }
         refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
@@ -530,14 +533,14 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 /**
-  Known Data Source for Annotation Track (BED Track) Data
+  Known Data Source for Interval Annotation Data (e.g. BED Tracks)
 */
 
-LocusZoom.Data.BEDTrackSource = LocusZoom.Data.Source.extend(function(init) {
+LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
-}, "BEDLZ");
+}, "IntervalLZ");
 
-LocusZoom.Data.BEDTrackSource.prototype.getURL = function(state, chain, fields) {
+LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
     var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
     return this.url + "?filter=id in " + source + 
         " and chromosome eq '" + state.chr + "'" + 
@@ -557,6 +560,5 @@ LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields
 };
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
-    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
-        this._data];
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
 };

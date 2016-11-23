@@ -206,21 +206,14 @@ describe("LocusZoom Data", function(){
     });
 
     describe("Static JSON Data Source", function() {
-        var datasources, namespace, data;
         beforeEach(function(){
-            datasources = new LocusZoom.DataSources();
-            namespace = "test";
-            data = [ { x: 0, y: 3, z: 8 },
-                     { x: 2, y: 7, h: 5 },
-                     { x: 8, y: 1, q: 6 } ];
-            datasources.add( namespace, [ "StaticJSON", data ] );
-        });
-        it("should pass arbitrary static JSON through a get() request on the data sources object", function() {           
-            var get = datasources.get(namespace);
-            assert.deepEqual(get._data, data);
-        });
-        it("should pass only specifically requested fields on static JSON through a getData() request", function() {
-            var layout = {
+            this.datasources = new LocusZoom.DataSources();
+            this.namespace = "test";
+            this.data = [ { x: 0, y: 3, z: 8 },
+                          { x: 2, y: 7, h: 5 },
+                          { x: 8, y: 1, q: 6 } ];
+            this.datasources.add( this.namespace, [ "StaticJSON", this.data ] );
+            this.layout = {
                 panels: [
                     {
                         id: "foo",
@@ -235,21 +228,35 @@ describe("LocusZoom Data", function(){
                 ]
             };
             d3.select("body").append("div").attr("id", "plot");
-            var plot = LocusZoom.populate("#plot", datasources, layout);
-            plot.lzd.getData({}, ["test:x"])
+            this.plot = LocusZoom.populate("#plot", this.datasources, this.layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            delete this.plot;
+        });
+        it("should pass arbitrary static JSON through a get() request on the data sources object", function() {           
+            var get = this.datasources.get(this.namespace);
+            assert.deepEqual(get._data, this.data);
+        });
+        it("should pass only specifically requested fields on static JSON through a getData() request (1)", function(done) {
+            this.plot.lzd.getData({}, ["test:x"])
                 .then(function(data){
                     var expected_data = [ { "test:x": 0 }, { "test:x": 2 }, { "test:x": 8 } ];
                     data.should.have.property("header").which.is.an.Object;
                     data.should.have.property("body").which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
-                });
-            plot.lzd.getData({}, ["test:q"])
+                    done();
+                }).fail(done);
+        });
+        it("should pass only specifically requested fields on static JSON through a getData() request (2)", function(done) {
+            this.plot.lzd.getData({}, ["test:q"])
                 .then(function(data){
-                    var expected_data = [ { "test:q": 6 } ];
+                    var expected_data = [ { "test:q": undefined }, { "test:q": undefined }, { "test:q": 6 } ];
                     data.should.have.property("header").which.is.an.Object;
                     data.should.have.property("body").which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
-                });
+                    done();
+                }).fail(done);
         });
     });
 

@@ -47,17 +47,18 @@
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
-        .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ]);
+        .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
+        //.add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 16} }]);
     } else {
-      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length)
-              + "staticdata/";
+      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
         .add("base", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
         .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?" }])
-        .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ]);
+        .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ])
+        //.add("intervals", ["IntervalLZ", { url: apiBase + "intervals_10_114550452-115067678.json?" }]);
     }
 
     layout = LocusZoom.Layouts.get("plot", "standard_association");

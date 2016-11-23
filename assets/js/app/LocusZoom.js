@@ -3,24 +3,17 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.4.7"
+    version: "0.5.0"
 };
     
 // Populate a single element with a LocusZoom plot.
 // selector can be a string for a DOM Query or a d3 selector.
-LocusZoom.populate = function(selector, datasource, layout, state) {
+LocusZoom.populate = function(selector, datasource, layout) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");
     }
     // Empty the selector of any existing content
     d3.select(selector).html("");
-    // If state was passed as a fourth argument then merge it with layout (for backward compatibility)
-    if (typeof state != "undefined"){
-        console.warn("Warning: state passed to LocusZoom.populate as fourth argument. This behavior is deprecated. Please include state as a parameter of layout");
-        var stateful_layout = { state: state };
-        var base_layout = layout || {};
-        layout = LocusZoom.Layouts.merge(stateful_layout, base_layout);
-    }
     var plot;
     d3.select(selector).call(function(){
         // Require each containing element have an ID. If one isn't present, create one.
@@ -57,11 +50,11 @@ LocusZoom.populate = function(selector, datasource, layout, state) {
 };
 
 // Populate arbitrarily many elements each with a LocusZoom plot
-// using a common datasource, layout, and/or state
-LocusZoom.populateAll = function(selector, datasource, layout, state) {
+// using a common datasource and layout
+LocusZoom.populateAll = function(selector, datasource, layout) {
     var plots = [];
     d3.selectAll(selector).each(function(d,i) {
-        plots[i] = LocusZoom.populate(this, datasource, layout, state);
+        plots[i] = LocusZoom.populate(this, datasource, layout);
     });
     return plots;
 };
@@ -348,4 +341,28 @@ LocusZoom.getToolTipData = function(node){
     } else {
         return LocusZoom.getToolTipData(node.parentNode);
     }
+};
+
+// Shortcut method for getting a reference to the data layer that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipDataLayer = function(node){
+    var data = LocusZoom.getToolTipData(node);
+    if (data.getDataLayer){ return data.getDataLayer(); }
+    return null;
+};
+
+// Shortcut method for getting a reference to the panel that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPanel = function(node){
+    var data_layer = LocusZoom.getToolTipDataLayer(node);
+    if (data_layer){ return data_layer.parent; }
+    return null;
+};
+
+// Shortcut method for getting a reference to the plot that generated a tool tip.
+// Accepts the node object for any element contained within the tool tip.
+LocusZoom.getToolTipPlot = function(node){
+    var panel = LocusZoom.getToolTipPanel(node);
+    if (panel){ return panel.parent; }
+    return null;
 };
