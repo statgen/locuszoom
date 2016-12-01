@@ -416,6 +416,25 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         
     };
+
+    // Method to set a passed element as the LD reference in the plot-level state
+    this.makeLDReference = function(element){
+        var ref = null;
+        if (typeof element == "undefined"){
+            throw("makeLDReference requires one argument of any type");
+        } else if (typeof element == "object"){
+            if (this.layout.id_field && typeof element[this.layout.id_field] != "undefined"){
+                ref = element[this.layout.id_field].toString();
+            } else if (typeof element["id"] != "undefined"){
+                ref = element["id"].toString();
+            } else {
+                ref = element.toString();
+            }
+        } else {
+            ref = element.toString();
+        }
+        this.parent_plot.applyState({ ldrefvar: ref });
+    };
  
     return this;
 

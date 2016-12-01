@@ -62,15 +62,8 @@
     }
 
     layout = LocusZoom.Layouts.get("plot", "standard_association");
-    layout.dashboard.components.push(
-      {
-        type: "covariates_model",
-        button_html: "Model",
-        button_title: "Description to show on mouse over",
-        position: "left"
-      }
-    );
-    layout.panels[0].data_layers[2].tooltip.html += "<button onclick=\"plot.CovariatesModel.add(LocusZoom.getToolTipData(this));\">Add to model</a>";
+    //layout.dashboard = LocusZoom.Layouts.get("dashboard", "covariates_model_plot");
+    //layout.panels[0].data_layers[2].tooltip = LocusZoom.Layouts.get("tooltip", "covariates_model_association");
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);

@@ -440,6 +440,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         }.bind(this),
         position: function(){
             if (!this.menu.outer_selector){ return this.menu; }
+            // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
+            this.menu.outer_selector.style({ height: null });
             var padding = 3;
             var scrollbar_padding = 20;
             var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
@@ -447,28 +449,29 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
             var button_client_rect = this.selector.node().getBoundingClientRect();
             var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-            var total_content_height = this.menu.inner_selector.node().scrollHeight + menu_height_padding;
+            var total_content_height = this.menu.inner_selector.node().scrollHeight;
             var top = 0; var left = 0;
             if (this.parent_dashboard.type == "panel"){
-                top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
-                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+                top = (page_origin.y + dashboard_client_rect.height + (3 * padding));
+                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
             } else {
-                top = (button_client_rect.bottom + padding).toString() + "px";
-                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
+                top = (button_client_rect.bottom + padding);
+                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width, page_origin.x + padding);
             }
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
-            var container_max_width = base_max_width.toString() + "px";
-            var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
+            var container_max_width = base_max_width;
+            var content_max_width = (base_max_width - (4 * padding));
             var base_max_height = Math.max(this.parent_svg.layout.height - (7 * padding) - menu_height_padding, menu_height_padding);
-            var height = Math.min(total_content_height, base_max_height).toString() + "px";
-            var max_height = base_max_height.toString() + "px";
+            var height = Math.min(total_content_height, base_max_height);
+            var max_height = base_max_height;
             this.menu.outer_selector.style({
-                top: top, left: left,
-                "max-width": container_max_width,
-                "max-height": max_height,
-                height: height
+                "top": top.toString() + "px",
+                "left": left.toString() + "px",
+                "max-width": container_max_width.toString() + "px",
+                "max-height": max_height.toString() + "px",
+                "height": height.toString() + "px"
             });
-            this.menu.inner_selector.style({ "max-width": content_max_width });        
+            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });        
             return this.menu;
         }.bind(this),
         hide: function(){

@@ -10,7 +10,8 @@ LocusZoom.Layouts = (function() {
         "plot": {},
         "panel": {},
         "data_layer": {},
-        "dashboard": {}
+        "dashboard": {},
+        "tooltip": {}
     };
 
     obj.get = function(type, name, modifications) {
@@ -95,14 +96,15 @@ LocusZoom.Layouts = (function() {
             layouts[type] = {};
         }
         if (layout){
-            layouts[type][name] = JSON.parse(JSON.stringify(layout));
+            return (layouts[type][name] = JSON.parse(JSON.stringify(layout)));
         } else {
             delete layouts[type][name];
+            return null;
         }
     };
 
     obj.add = function(type, name, layout) {
-        obj.set(type, name, layout);
+        return obj.set(type, name, layout);
     };
 
     obj.list = function(type) {
@@ -155,6 +157,48 @@ LocusZoom.Layouts = (function() {
     return obj;
 })();
 
+
+/**
+ Tooltip Layouts
+*/
+
+LocusZoom.Layouts.add("tooltip", "standard_association", {
+    closable: true,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "<strong>{{{{namespace}}variant}}</strong><br>"
+        + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
+        + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
+        + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));\">Make LD Reference</a><br>"
+});
+
+var covariates_model_association = LocusZoom.Layouts.get("tooltip", "standard_association");
+covariates_model_association.html += "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Condition on Variant</a><br>";
+LocusZoom.Layouts.add("tooltip", "covariates_model_association", covariates_model_association);
+
+LocusZoom.Layouts.add("tooltip", "standard_genes", {
+    closable: true,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+        + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+        + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+        + "<div style=\"clear: both;\"></div>"
+        + "<table>"
+        + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+        + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+        + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+        + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+        + "</table>"
+        + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a>"
+});
+
+LocusZoom.Layouts.add("tooltip", "standard_intervals", {
+    closable: false,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
+});
 
 /**
  Data Layer Layouts
@@ -273,14 +317,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: true,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "<strong>{{{{namespace}}variant}}</strong><br>"
-            + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
-            + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association")
 });
 
 LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
@@ -361,22 +398,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: true,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
-            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
-            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
-            + "<div style=\"clear: both;\"></div>"
-            + "<table>"
-            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
-            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
-            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
-            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
-            + "</table>"
-            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a>"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes")
 });
 
 LocusZoom.Layouts.add("data_layer", "genome_legend", {
@@ -433,12 +455,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: false,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals")
 });
 
 
@@ -486,6 +503,16 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
         }
     ]
 });
+
+var covariates_model_plot_dashboard = LocusZoom.Layouts.get("dashboard", "standard_plot");
+covariates_model_plot_dashboard.components.push({
+    type: "covariates_model",
+    button_html: "Model",
+    button_title: "Show and edit covariates currently in model",
+    position: "left",
+    color: "purple"
+});
+LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
 
 /**
  Panel Layouts
