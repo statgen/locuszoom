@@ -709,9 +709,13 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         // Create an object at the plot level for easy access to interface methods in custom client-side JS
         this.parent_plot.CovariatesModel = {
             button: this,
-            add: function(element){
-                // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
-                // may have functions that would trip up more basic equality checking
+            add: function(element_reference){
+                // Generate element json from passed reference to evaluate against / add to state
+                var element = JSON.parse(JSON.stringify(element_reference));
+                if (typeof element_reference == "object" && typeof element.html != "string"){
+                    element.html = ( (typeof element_reference.toHTML == "function") ? element_reference.toHTML() : element_reference.toString());
+                }
+                // Check if the element is already in the model covariates array and return if it is.
                 for (var i = 0; i < this.state.model.covariates.length; i++) {
                     if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
                         return this;
@@ -768,10 +772,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
                 selector.append("h5").html("Model Covariates (" + this.parent_plot.state.model.covariates.length + ")");
                 var table = selector.append("table");
                 this.parent_plot.state.model.covariates.forEach(function(covariate, idx){
-                    var html = covariate.toString();
-                    if (typeof covariate == "object" && typeof covariate.toHTML == "function"){
-                        html = covariate.toHTML();
-                    }
+                    var html = ( (typeof covariate == "object" && typeof covariate.html == "string") ? covariate.html : covariate.toString() );
                     var row = table.append("tr");
                     row.append("td").append("button")
                         .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color)
