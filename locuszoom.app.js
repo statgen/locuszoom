@@ -410,6 +410,160 @@ LocusZoom.getToolTipPlot = function(node){
     return null;
 };
 
+// Generate a curtain object for a plot, panel, or any other subdivision of a layout
+LocusZoom.generateCurtain = function(){
+    var curtain = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        hide_delay: null,
+        show: function(content, css){
+            // Generate curtain
+            if (!this.curtain.showing){
+                this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
+                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
+                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
+                    .on("click", function(){
+                        this.curtain.hide();
+                    }.bind(this));
+                this.curtain.showing = true;
+            }
+            return this.curtain.update(content, css);
+        }.bind(this),
+        update: function(content, css){
+            if (!this.curtain.showing){ return this.curtain; }
+            clearTimeout(this.curtain.hide_delay);
+            // Apply CSS if provided
+            if (typeof css == "object"){
+                this.curtain.selector.style(css);
+            }
+            // Update size and position
+            var page_origin = this.getPageOrigin();
+            this.curtain.selector.style({
+                top: page_origin.y + "px",
+                left: page_origin.x + "px",
+                width: this.layout.width + "px",
+                height: this.layout.height + "px"
+            });
+            this.curtain.content_selector.style({
+                "max-width": (this.layout.width - 40) + "px",
+                "max-height": (this.layout.height - 40) + "px"
+            });
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.curtain.content_selector.html(content);
+            }
+            return this.curtain;
+        }.bind(this),
+        hide: function(delay){
+            if (!this.curtain.showing){ return this.curtain; }
+            // If a delay was passed then defer to a timeout
+            if (typeof delay == "number"){
+                clearTimeout(this.curtain.hide_delay);
+                this.curtain.hide_delay = setTimeout(this.curtain.hide, delay);
+                return this.curtain;
+            }
+            // Remove curtain
+            this.curtain.selector.remove();
+            this.curtain.selector = null;
+            this.curtain.content_selector = null;
+            this.curtain.showing = false;
+            return this.curtain;
+        }.bind(this)
+    };
+    return curtain;
+};
+
+// Generate a loader object for a plot, panel, or any other subdivision of a layout
+LocusZoom.generateLoader = function(){
+    var loader = {
+        showing: false,
+        selector: null,
+        content_selector: null,
+        progress_selector: null,
+        cancel_selector: null,
+        show: function(content){
+            // Generate loader
+            if (!this.loader.showing){
+                this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert("div")
+                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
+                this.loader.content_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-content");
+                this.loader.progress_selector = this.loader.selector
+                    .append("div").attr("class", "lz-loader-progress-container")
+                    .append("div").attr("class", "lz-loader-progress");
+                /* TODO: figure out how to make this cancel button work
+                this.loader.cancel_selector = this.loader.selector.append("div")
+                    .attr("class", "lz-loader-cancel").html("Cancel")
+                    .on("click", function(){
+                        this.loader.hide();
+                    }.bind(this));
+                */
+                this.loader.showing = true;
+                if (typeof content == "undefined"){ content = "Loading..."; }
+            }
+            return this.loader.update(content);
+        }.bind(this),
+        update: function(content, percent){
+            if (!this.loader.showing){ return this.loader; }
+            clearTimeout(this.loader.hide_delay);
+            // Apply content if provided
+            if (typeof content == "string"){
+                this.loader.content_selector.html(content);
+            }
+            // Update size and position
+            var padding = 6; // is there a better place to store/define this?
+            var page_origin = this.getPageOrigin();
+            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
+            this.loader.selector.style({
+                top: (page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
+                left: (page_origin.x + padding) + "px"
+            });
+            /* Uncomment this code when a functional cancel button can be shown
+            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
+            this.loader.content_selector.style({
+                "padding-right": (cancel_boundrect.width + padding) + "px"
+            });
+            */
+            // Apply percent if provided
+            if (typeof percent == "number"){
+                this.loader.progress_selector.style({
+                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                });
+            }
+            return this.loader;
+        }.bind(this),
+        animate: function(){
+            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
+            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+            return this.loader;
+        }.bind(this),
+        setPercentCompleted: function(percent){
+            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+            return this.loader.update(null, percent);
+        }.bind(this),
+        hide: function(delay){
+            if (!this.loader.showing){ return this.loader; }
+            // If a delay was passed then defer to a timeout
+            if (typeof delay == "number"){
+                clearTimeout(this.loader.hide_delay);
+                this.loader.hide_delay = setTimeout(this.loader.hide, delay);
+                return this.loader;
+            }
+            // Remove loader
+            this.loader.selector.remove();
+            this.loader.selector = null;
+            this.loader.content_selector = null;
+            this.loader.progress_selector = null;
+            this.loader.cancel_selector = null;
+            this.loader.showing = false;
+            return this.loader;
+        }.bind(this)
+    };
+    return loader;
+};
+
 /* global LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-console */
@@ -6002,6 +6156,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
 LocusZoom.Plot = function(id, datasource, layout) {
 
     this.initialized = false;
+    this.parent_plot = this;
 
     this.id = id;
     
@@ -6477,138 +6632,9 @@ LocusZoom.Plot.prototype.initialize = function(){
         horizontal: mouse_guide_horizontal_svg
     };
 
-    // Create the curtain object with show/update/hide methods
-    this.curtain = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        show: function(content, css){
-            // Generate curtain
-            if (!this.curtain.showing){
-                this.curtain.selector = d3.select(this.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
-                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
-                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
-                    .on("click", function(){
-                        this.curtain.hide();
-                    }.bind(this));
-                this.curtain.showing = true;
-            }
-            return this.curtain.update(content, css);
-        }.bind(this),
-        update: function(content, css){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Apply CSS if provided
-            if (typeof css == "object" && css != null){
-                this.curtain.selector.style(css);
-            }
-            // Update size and position
-            var plot_page_origin = this.getPageOrigin();
-            this.curtain.selector.style({
-                top: plot_page_origin.y + "px",
-                left: plot_page_origin.x + "px",
-                width: this.layout.width + "px",
-                height: this.layout.height + "px"
-            });
-            this.curtain.content_selector.style({
-                "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px"
-            });
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.curtain.content_selector.html(content);
-            }
-            return this.curtain;
-        }.bind(this),
-        hide: function(){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Remove curtain
-            this.curtain.selector.remove();
-            this.curtain.selector = null;
-            this.curtain.content_selector = null;
-            this.curtain.showing = false;
-            return this.curtain;
-        }.bind(this)
-    };
-
-    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
-    this.loader = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        progress_selector: null,
-        cancel_selector: null,
-        show: function(content){
-            // Generate loader
-            if (!this.loader.showing){
-                this.loader.selector = d3.select(this.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
-                this.loader.content_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-content");
-                this.loader.progress_selector = this.loader.selector
-                    .append("div").attr("class", "lz-loader-progress-container")
-                    .append("div").attr("class", "lz-loader-progress");
-                /* TODO: figure out how to make this cancel button work
-                this.loader.cancel_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-cancel").html("Cancel")
-                    .on("click", function(){
-                        this.loader.hide();
-                    }.bind(this));
-                */
-                this.loader.showing = true;
-                if (typeof content == "undefined"){ content = "Loading..."; }
-            }
-            return this.loader.update(content);
-        }.bind(this),
-        update: function(content, percent){
-            if (!this.loader.showing){ return this.loader; }
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.loader.content_selector.html(content);
-            }
-            // Update size and position
-            var padding = 6; // is there a better place to store/define this?
-            var plot_page_origin = this.getPageOrigin();
-            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
-            this.loader.selector.style({
-                top: (plot_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (plot_page_origin.x + padding) + "px"
-            });
-            /* Uncomment this code when a functional cancel button can be shown
-            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
-            this.loader.content_selector.style({
-                "padding-right": (cancel_boundrect.width + padding) + "px"
-            });
-            */
-            // Apply percent if provided
-            if (typeof percent == "number"){
-                this.loader.progress_selector.style({
-                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
-                });
-            }
-            return this.loader;
-        }.bind(this),
-        animate: function(){
-            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
-            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
-            return this.loader;
-        }.bind(this),
-        setPercentCompleted: function(percent){
-            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
-            return this.loader.update(null, percent);
-        }.bind(this),
-        hide: function(){
-            if (!this.loader.showing){ return this.loader; }
-            // Remove loader
-            this.loader.selector.remove();
-            this.loader.selector = null;
-            this.loader.content_selector = null;
-            this.loader.progress_selector = null;
-            this.loader.cancel_selector = null;
-            this.loader.showing = false;
-            return this.loader;
-        }.bind(this)
-    };
+    // Add curtain and loader prototpyes to the plot
+    this.curtain = LocusZoom.generateCurtain.call(this);
+    this.loader = LocusZoom.generateLoader.call(this);
 
     // Create the panel_boundaries object with show/position/hide methods
     this.panel_boundaries = {
@@ -6977,6 +7003,7 @@ LocusZoom.Panel = function(layout, parent) {
     }
 
     this.parent = parent || null;
+    this.parent_plot = parent;
 
     // Ensure a valid ID is present. If there is no valid ID then generate one
     if (typeof layout.id !== "string" || !layout.id.length){
@@ -7258,138 +7285,9 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Create the curtain object with show/update/hide methods
-    this.curtain = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        show: function(content, css){
-            // Generate curtain
-            if (!this.curtain.showing){
-                this.curtain.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
-                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
-                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
-                    .on("click", function(){
-                        this.curtain.hide();
-                    }.bind(this));
-                this.curtain.showing = true;
-            }
-            return this.curtain.update(content, css);
-        }.bind(this),
-        update: function(content, css){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Apply CSS if provided
-            if (typeof css == "object"){
-                this.curtain.selector.style(css);
-            }
-            // Update size and position
-            var panel_page_origin = this.getPageOrigin();
-            this.curtain.selector.style({
-                top: panel_page_origin.y + "px",
-                left: panel_page_origin.x + "px",
-                width: this.layout.width + "px",
-                height: this.layout.height + "px"
-            });
-            this.curtain.content_selector.style({
-                "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px"
-            });
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.curtain.content_selector.html(content);
-            }
-            return this.curtain;
-        }.bind(this),
-        hide: function(){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Remove curtain
-            this.curtain.selector.remove();
-            this.curtain.selector = null;
-            this.curtain.content_selector = null;
-            this.curtain.showing = false;
-            return this.curtain;
-        }.bind(this)
-    };
-
-    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
-    this.loader = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        progress_selector: null,
-        cancel_selector: null,
-        show: function(content){
-            // Generate loader
-            if (!this.loader.showing){
-                this.loader.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
-                this.loader.content_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-content");
-                this.loader.progress_selector = this.loader.selector
-                    .append("div").attr("class", "lz-loader-progress-container")
-                    .append("div").attr("class", "lz-loader-progress");
-                /* TODO: figure out how to make this cancel button work
-                this.loader.cancel_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-cancel").html("Cancel")
-                    .on("click", function(){
-                        this.loader.hide();
-                    }.bind(this));
-                */
-                this.loader.showing = true;
-                if (typeof content == "undefined"){ content = "Loading..."; }
-            }
-            return this.loader.update(content);
-        }.bind(this),
-        update: function(content, percent){
-            if (!this.loader.showing){ return this.loader; }
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.loader.content_selector.html(content);
-            }
-            // Update size and position
-            var padding = 6; // is there a better place to store/define this?
-            var panel_page_origin = this.getPageOrigin();
-            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
-            this.loader.selector.style({
-                top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (panel_page_origin.x + padding) + "px"
-            });
-            /* Uncomment this code when a functional cancel button can be shown
-            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
-            this.loader.content_selector.style({
-                "padding-right": (cancel_boundrect.width + padding) + "px"
-            });
-            */
-            // Apply percent if provided
-            if (typeof percent == "number"){
-                this.loader.progress_selector.style({
-                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
-                });
-            }
-            return this.loader;
-        }.bind(this),
-        animate: function(){
-            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
-            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
-            return this.loader;
-        }.bind(this),
-        setPercentCompleted: function(percent){
-            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
-            return this.loader.update(null, percent);
-        }.bind(this),
-        hide: function(){
-            if (!this.loader.showing){ return this.loader; }
-            // Remove loader
-            this.loader.selector.remove();
-            this.loader.selector = null;
-            this.loader.content_selector = null;
-            this.loader.progress_selector = null;
-            this.loader.cancel_selector = null;
-            this.loader.showing = false;
-            return this.loader;
-        }.bind(this)
-    };
+    // Add curtain and loader prototpyes to the panel
+    this.curtain = LocusZoom.generateCurtain.call(this);
+    this.loader = LocusZoom.generateLoader.call(this);
 
     // Create the dashboard object and hang components on it as defined by panel layout
     this.dashboard = new LocusZoom.Dashboard(this);
@@ -7779,6 +7677,11 @@ LocusZoom.Panel.prototype.render = function(){
         var zoom_handler = function(){
             d3.event.preventDefault();
             if (!this.parent.canInteract(this.id)){ return; }
+            // Look for a shift key press while scrolling to execute. If not present, gracefully raise a notification
+            if (!d3.event.shiftKey){
+                this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(500);
+                return;
+            }
             var coords = d3.mouse(this.svg.container.node());
             var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
             if (delta == 0){ return; }
