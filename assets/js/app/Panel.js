@@ -692,13 +692,16 @@ LocusZoom.Panel.prototype.render = function(){
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
         var zoom_handler = function(){
-            d3.event.preventDefault();
-            if (!this.parent.canInteract(this.id)){ return; }
-            // Look for a shift key press while scrolling to execute. If not present, gracefully raise a notification
+            // Look for a shift key press while scrolling to execute.
+            // If not present, gracefully raise a notification and allow conventional scrolling
             if (!d3.event.shiftKey){
-                this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(1000);
+                if (this.parent.canInteract(this.id)){
+                    this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(1000);
+                }
                 return;
             }
+            d3.event.preventDefault();
+            if (!this.parent.canInteract(this.id)){ return; }
             var coords = d3.mouse(this.svg.container.node());
             var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
             if (delta == 0){ return; }
