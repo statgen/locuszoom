@@ -79,7 +79,8 @@ LocusZoom.populate = function(selector, datasource, layout) {
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom")
+            .style(plot.layout.style);
         plot.setDimensions();
         plot.positionPanels();
         // Initialize the plot
@@ -1686,7 +1687,7 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     state: {},
     width: 800,
     height: 450,
-    resizable: "responsive",
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
@@ -1717,7 +1718,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     state: {},
     width: 800,
     height: 550,
-    resizable: "responsive",
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
@@ -6271,6 +6272,7 @@ LocusZoom.Plot.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
+    style: {},
     responsive_resize: false,
     aspect_ratio: 1,
     panels: [],
@@ -7679,7 +7681,7 @@ LocusZoom.Panel.prototype.render = function(){
             if (!this.parent.canInteract(this.id)){ return; }
             // Look for a shift key press while scrolling to execute. If not present, gracefully raise a notification
             if (!d3.event.shiftKey){
-                this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(500);
+                this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(1000);
                 return;
             }
             var coords = d3.mouse(this.svg.container.node());

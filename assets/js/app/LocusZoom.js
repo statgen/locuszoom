@@ -36,7 +36,8 @@ LocusZoom.populate = function(selector, datasource, layout) {
             .append("svg")
             .attr("version", "1.1")
             .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom");
+            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom")
+            .style(plot.layout.style);
         plot.setDimensions();
         plot.positionPanels();
         // Initialize the plot
