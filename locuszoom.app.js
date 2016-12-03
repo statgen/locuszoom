@@ -4621,10 +4621,10 @@ LocusZoom.Dashboard.prototype.position = function(){
     // Position the dashboard itself (panel only)
     if (this.type == "panel"){
         var page_origin = this.parent.getPageOrigin();
-        var client_rect = this.selector.node().getBoundingClientRect();
-        var top = (page_origin.y + 3).toString() + "px";
-        var left = (page_origin.x + this.parent.layout.width - client_rect.width).toString() + "px";
-        this.selector.style({ position: "absolute", top: top, left: left });
+        var top = (page_origin.y + 3.5).toString() + "px";
+        var left = page_origin.x.toString() + "px";
+        var width = (this.parent.layout.width - 4).toString() + "px";
+        this.selector.style({ position: "absolute", top: top, left: left, width: width });
     }
     // Recursively position components
     this.components.forEach(function(component){ component.position(); });
@@ -4962,7 +4962,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var total_content_height = this.menu.inner_selector.node().scrollHeight;
             var top = 0; var left = 0;
             if (this.parent_dashboard.type == "panel"){
-                top = (page_origin.y + dashboard_client_rect.height + (3 * padding));
+                top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
                 left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
             } else {
                 top = (button_client_rect.bottom + padding);
@@ -4971,7 +4971,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
             var container_max_width = base_max_width;
             var content_max_width = (base_max_width - (4 * padding));
-            var base_max_height = Math.max(this.parent_svg.layout.height - (7 * padding) - menu_height_padding, menu_height_padding);
+            var base_max_height = Math.max(this.parent_svg.layout.height - (9 * padding) - menu_height_padding, menu_height_padding);
             var height = Math.min(total_content_height, base_max_height);
             var max_height = base_max_height;
             this.menu.outer_selector.style({

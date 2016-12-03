@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
     
     <!-- Necessary includes for LocusZoom library -->
@@ -17,11 +17,9 @@
   <body style="background-color: #FAFAFA; margin-left: 20px; margin-right: 20px;">
     <div class="container">
 
-      <div class="row">
-        <h1 style="margin-top: 1em;"><strong>Locuszoom.js</strong></h1>
-        <h5 style="color: #777">A Javascript/d3 embeddable plugin for interactively visualizing and navigating statistical genetic data from customizable sources.</h5>
-      </div>
-
+      <h1 style="margin-top: 1em;"><strong>Locuszoom.js</strong></h1>
+      <h5 style="color: #777">A Javascript/d3 embeddable plugin for interactively visualizing and navigating statistical genetic data from customizable sources.</h5>
+      
       <hr>
 
       <h3>Try LocusZoom.js</h3>
@@ -55,79 +53,63 @@
 
       <hr>
 
+      <h3>Get LocusZoom.js</h3>
+      
+      <h5><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.5.0">v0.5.0</a></strong></h5>
+      <p>To use LocusZoom.js in your application you will need <i>both</i> LocusZoom's compiled Javascript and CSS <i>and</i> two third-party Javascript libraries (available here in a single vendor bundle).</p>
+      
       <div class="row">
-        <div class="twelve columns">
-          
-          <h3>Get LocusZoom.js</h3>
-          
-          <h5>Download Full Source (Latest Version)</h5>
-          <p>The links below will lead to the full source for the current version of LocusZoom. If you're looking to just plug LocusZoom in somewhere and are not interested in building/developing on the core, see <a href="#builds">Builds for Inclusion in Web Applications</a>.</p>
-          <div>
-            <a class="button lz-dashboard-button-yellow" href="https://github.com/statgen/locuszoom/zipball/master"><span>Download .zip</span></a>
-            <a class="button lz-dashboard-button-yellow" href="https://github.com/statgen/locuszoom/tarball/master"><span>Download .tar.gz</span></a>
-            <a class="button lz-dashboard-button-green" href="https://github.com/statgen/locuszoom" id="view-on-github"><span>View on GitHub</span></a>
-          </div>
-          
+        <div class="three columns">
+          <h6><strong>Javascript</strong></h6>
+        </div>
+        <div class="nine columns">
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js</a></tt>
           <br>
-          
-          <a name="builds"></a><h5>Builds for Inclusion in Web Applications</h5>
-          <p>To use LocusZoom in your application you will need <i>both</i> LocusZoom's compiled JavaScript and CSS.</p>
-          <h6><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.5.0">v0.5.0</a></strong></h6>
-          <div class="row">
-            <div class="three columns">
-              <strong>JavaScript (uncompressed)</strong>
-            </div>
-            <div class="nine columns">
-              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.js</a></tt>
-            </div>
-          </div>
-          <div class="row">
-            <div class="three columns">
-              <strong>JavaScript (minified)</strong>
-            </div>
-            <div class="nine columns">
-              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.min.js">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.min.js</a></tt>
-            </div>
-          </div>
-          <div class="row">
-            <div class="three columns">
-              <strong>CSS</strong>
-            </div>
-            <div class="nine columns">
-              <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css</a></tt>
-            </div>
-          </div>
+          <small><i>minified:</i> <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.app.min.js">locuszoom.app.min.js</a></tt></small>
+        </div>
+      </div>
+      
+      <br>
+      
+      <div class="row">
+        <div class="three columns">
+          <h6><strong>CSS</strong></h6>
+        </div>
+        <div class="nine columns">
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.5.0/locuszoom.css</a></tt>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="three columns">
+          <h6><strong>Dependencies</strong></h6>
+        </div>
+        <div class="nine columns">
+          <tt><a href="https://statgen.github.io/locuszoom/locuszoom.vendor.min.js">https://statgen.github.io/locuszoom/locuszoom.vendor.min.js</a></tt>
           <br>
-          <p>LocusZoom also requires two third-party JavaScript libraries to work: <a href="https://github.com/d3/d3">d3</a> and <a href="https://github.com/kriskowal/Q">Q</a>. Download/link to these individually or download/link to this minified vendor file to get correct versions of both dependencies: <tt><a href="https://statgen.github.io/locuszoom/locuszoom.vendor.min.js">https://statgen.github.io/locuszoom/locuszoom.vendor.min.js</a></tt></p>
-          <h6><strong>Past releases</strong></h6>
-          <p>Detail of all available past releases can be seen <a href="https://github.com/statgen/locuszoom/releases">here</a>. Use the following URL format to download or link to specific releases via this site:</p>
-          <div class="row">
-            <div class="three columns">
-              <strong>JavaScript (uncompressed)</strong>
-            </div>
-            <div class="nine columns">
-              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.app.js</tt>
-            </div>
-          </div>
-          <div class="row">
-            <div class="three columns">
-              <strong>JavaScript (minified)</strong>
-            </div>
-            <div class="nine columns">
-              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.app.min.js</tt>
-            </div>
-          </div>
-          <div class="row">
-            <div class="three columns">
-              <strong>CSS</strong>
-            </div>
-            <div class="nine columns">
-              <tt>https://statgen.github.io/locuszoom/versions/<strong>{VERSION_NUMBER}</strong>/locuszoom.css</tt>
-            </div>
-          </div>        
+          <small><i><a href="https://github.com/d3/d3">d3</a> v3.5.6 and <a href="https://github.com/kriskowal/Q">Q</a> (any version)</i></small>
         </div>
       </div>
 
+      <br>
+      
+      <p>To download or link to past builds of LocusZoom.js use the URL structure above and the version number of your choice. A complete list of past releases can be seen <a href="https://github.com/statgen/locuszoom/releases">here</a>.</p>
+
+      <h5>Download Full Source (Latest Version)</h5>
+      <div>
+        <a class="button lz-dashboard-button-yellow" href="https://github.com/statgen/locuszoom/zipball/master">Download .zip</a>
+        <a class="button lz-dashboard-button-yellow" href="https://github.com/statgen/locuszoom/tarball/master">Download .tar.gz</a>
+        <a class="button lz-dashboard-button-green" href="https://github.com/statgen/locuszoom" id="view-on-github">View on GitHub</a>
+      </div>        
+
+      <hr>
+
+      <h3>Documentation and Support</h3>
+      
+      <a class="button lz-dashboard-button-blue" href="https://github.com/statgen/locuszoom/wiki">Complete LocusZoom.js API Documentation</a>
+      <br>
+      <a class="button lz-dashboard-button-purple" href="https://groups.google.com/forum/#!forum/locuszoom">LocusZoom Message Board</a>
+      
       <hr>
 
       <div class="row">
@@ -166,10 +148,20 @@
         .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ])
     }
 
-    var mods = { style: { border: "1px dotted #AAA" }};
-    layout = LocusZoom.Layouts.get("plot", "standard_association", mods);
+    // Get the standard assocation plot layout from LocusZoom's built-in layouts
+    layout = LocusZoom.Layouts.get("plot", "standard_association");
 
-    // Populate the div with a LocusZoom plot using the default layout
+    // Add a button to show the study abstract the layout
+    var abstract = "<h4 style=\"margin-top: 0px;\"><a href=\"https://www.ncbi.nlm.nih.gov/pubmed/?term=22885922\" target=\"_new\">Type 2 diabetes meta-analysis</a></h4>1. Nat Genet. 2012 Sep;44(9):981-90. doi: 10.1038/ng.2383. Epub 2012 Aug 12.<br><br>Large-scale association analysis provides insights into the genetic architecture <br>and pathophysiology of type 2 diabetes.<br><br>Morris AP, Voight BF, Teslovich TM, Ferreira T, Segrè AV, Steinthorsdottir V,<br>Strawbridge RJ, Khan H, Grallert H, Mahajan A, Prokopenko I, Kang HM, Dina C,<br>Esko T, Fraser RM, Kanoni S, Kumar A, Lagou V, Langenberg C, Luan J, Lindgren CM,<br>Müller-Nurasyid M, Pechlivanis S, Rayner NW, Scott LJ, Wiltshire S, Yengo L,<br>Kinnunen L, Rossin EJ, Raychaudhuri S, Johnson AD, Dimas AS, Loos RJ, Vedantam S,<br>Chen H, Florez JC, Fox C, Liu CT, Rybin D, Couper DJ, Kao WH, Li M, Cornelis MC, <br>Kraft P, Sun Q, van Dam RM, Stringham HM, Chines PS, Fischer K, Fontanillas P,<br>Holmen OL, Hunt SE, Jackson AU, Kong A, Lawrence R, Meyer J, Perry JR, Platou CG,<br>Potter S, Rehnberg E, Robertson N, Sivapalaratnam S, Stančáková A, Stirrups K,<br>Thorleifsson G, Tikkanen E, Wood AR, Almgren P, Atalay M, Benediktsson R,<br>Bonnycastle LL, Burtt N, Carey J, Charpentier G, Crenshaw AT, Doney AS, Dorkhan<br>M, Edkins S, Emilsson V, Eury E, Forsen T, Gertow K, Gigante B, Grant GB, Groves <br>CJ, Guiducci C, Herder C, Hreidarsson AB, Hui J, James A, Jonsson A, Rathmann W, <br>Klopp N, Kravic J, Krjutškov K, Langford C, Leander K, Lindholm E, Lobbens S,<br>Männistö S, Mirza G, Mühleisen TW, Musk B, Parkin M, Rallidis L, Saramies J,<br>Sennblad B, Shah S, Sigurðsson G, Silveira A, Steinbach G, Thorand B, Trakalo J, <br>Veglia F, Wennauer R, Winckler W, Zabaneh D, Campbell H, van Duijn C,<br>Uitterlinden AG, Hofman A, Sijbrands E, Abecasis GR, Owen KR, Zeggini E, Trip MD,<br>Forouhi NG, Syvänen AC, Eriksson JG, Peltonen L, Nöthen MM, Balkau B, Palmer CN, <br>Lyssenko V, Tuomi T, Isomaa B, Hunter DJ, Qi L; Wellcome Trust Case Control<br>Consortium; Meta-Analyses of Glucose and Insulin-related traits Consortium<br>(MAGIC) Investigators; Genetic Investigation of ANthropometric Traits (GIANT)<br>Consortium; Asian Genetic Epidemiology Network–Type 2 Diabetes (AGEN-T2D)<br>Consortium; South Asian Type 2 Diabetes (SAT2D) Consortium, Shuldiner AR, Roden<br>M, Barroso I, Wilsgaard T, Beilby J, Hovingh K, Price JF, Wilson JF, Rauramaa R, <br>Lakka TA, Lind L, Dedoussis G, Njølstad I, Pedersen NL, Khaw KT, Wareham NJ,<br>Keinanen-Kiukaanniemi SM, Saaristo TE, Korpi-Hyövälti E, Saltevo J, Laakso M,<br>Kuusisto J, Metspalu A, Collins FS, Mohlke KL, Bergman RN, Tuomilehto J, Boehm<br>BO, Gieger C, Hveem K, Cauchi S, Froguel P, Baldassarre D, Tremoli E, Humphries<br>SE, Saleheen D, Danesh J, Ingelsson E, Ripatti S, Salomaa V, Erbel R, Jöckel KH, <br>Moebus S, Peters A, Illig T, de Faire U, Hamsten A, Morris AD, Donnelly PJ,<br>Frayling TM, Hattersley AT, Boerwinkle E, Melander O, Kathiresan S, Nilsson PM,<br>Deloukas P, Thorsteinsdottir U, Groop LC, Stefansson K, Hu F, Pankow JS, Dupuis<br>J, Meigs JB, Altshuler D, Boehnke M, McCarthy MI; DIAbetes Genetics Replication<br>And Meta-analysis (DIAGRAM) Consortium.<br><br>To extend understanding of the genetic architecture and molecular basis of type 2<br>diabetes (T2D), we conducted a meta-analysis of genetic variants on the<br>Metabochip, including 34,840 cases and 114,981 controls, overwhelmingly of<br>European descent. We identified ten previously unreported T2D susceptibility<br>loci, including two showing sex-differentiated association. Genome-wide analyses <br>of these data are consistent with a long tail of additional common variant loci<br>explaining much of the variation in susceptibility to T2D. Exploration of the<br>enlarged set of susceptibility loci implicates several processes, including<br>CREBBP-related transcription, adipocytokine signaling and cell cycle regulation, <br>in diabetes pathogenesis.<br><br>DOI: 10.1038/ng.2383 <br>PMCID: PMC3442244<br>PMID: 22885922  [PubMed - indexed for MEDLINE]</div>";
+    layout.panels[0].dashboard.components.push({
+        type: "menu",
+        color: "yellow",
+        position: "right",
+        button_html: "Study",
+        menu_html: abstract
+    });
+
+    // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);
 
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
@@ -177,12 +169,7 @@
       plot.panels[panel.id].addBasicLoader();
     });
 
-    /**********************************************************************************
-     All of the following code sets up an example form with top hit buttons to jump to
-     different regions in the plot, as an example of some ways to build an app around
-     a single LocusZoom plot.
-    **********************************************************************************/
-
+    // Define some top hits for the plot
     var topHits = [
       ["16:53819169", "FTO"],
       ["9:22051670", "CDKN2A/B"],
@@ -201,6 +188,7 @@
       ["5:76427311", "ZBED3"]
     ];
 
+    // Create a method to parse a region string into a 600Kb genome range and load it
     function jumpTo(region) {
       var target = region.split(":");
       var chr = target[0];
