@@ -730,16 +730,17 @@ LocusZoom.Layouts = (function() {
 */
 
 LocusZoom.Layouts.add("tooltip", "standard_association", {
+    namespace: { "assoc": "assoc" },
     closable: true,
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
-    html: "<strong>{{{{namespace}}variant}}</strong><br>"
-        + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
-        + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
+    html: "<strong>{{{{namespace[assoc]}}variant}}</strong><br>"
+        + "P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>"
+        + "Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele}}</strong><br>"
         + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));\">Make LD Reference</a><br>"
 });
 
-var covariates_model_association = LocusZoom.Layouts.get("tooltip", "standard_association");
+var covariates_model_association = LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true });
 covariates_model_association.html += "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Condition on Variant</a><br>";
 LocusZoom.Layouts.add("tooltip", "covariates_model_association", covariates_model_association);
 
@@ -761,6 +762,7 @@ LocusZoom.Layouts.add("tooltip", "standard_genes", {
 });
 
 LocusZoom.Layouts.add("tooltip", "standard_intervals", {
+    namespace: { "intervals": "intervals" },
     closable: false,
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
@@ -814,7 +816,7 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 });
 
 LocusZoom.Layouts.add("data_layer", "association_pvalues", {
-    namespace: { "default": "", "ld": "ld" },
+    namespace: { "assoc": "assoc", "ld": "ld" },
     id: "associationpvalues",
     type: "scatter",
     point_shape: {
@@ -863,15 +865,15 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
-    id_field: "{{namespace}}variant",
+    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}log_pvalue|logtoscinotation", "{{namespace[assoc]}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    id_field: "{{namespace[assoc]}}variant",
     z_index: 2,
     x_axis: {
-        field: "{{namespace}}position"
+        field: "{{namespace[assoc]}}position"
     },
     y_axis: {
         axis: 1,
-        field: "{{namespace}}log_pvalue",
+        field: "{{namespace[assoc]}}log_pvalue",
         floor: 0,
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
@@ -884,7 +886,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association")
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
@@ -965,14 +967,14 @@ LocusZoom.Layouts.add("data_layer", "genes", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes")
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes", { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add("data_layer", "genome_legend", {
-    namespace: "genome",
+    namespace: { "genome": "genome" },
     id: "genome_legend",
     type: "genome_legend",
-    fields: ["{{namespace}}chr", "{{namespace}}base_pairs"],
+    fields: ["{{namespace[genome]}}chr", "{{namespace[genome]}}base_pairs"],
     x_axis: {
         floor: 0,
         ceiling: 2881033286
@@ -1022,7 +1024,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals")
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
 
@@ -1657,7 +1659,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
             type: "toggle_split_tracks",
             data_layer_id: "intervals",
             position: "right",
-            color: "yellow"
+            color: "orange"
         });
         return l;
     })(),
@@ -6811,7 +6813,10 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
     // positioning. TODO: make this additional call unnecessary.
-    this.setDimensions(this.layout.width, this.layout.height);
+    var client_rect = this.svg.node().getBoundingClientRect();
+    var width = client_rect.width ? client_rect.width : this.layout.width;
+    var height = client_rect.height ? client_rect.height : this.layout.height;
+    this.setDimensions(width, height);
     
     return this;
 

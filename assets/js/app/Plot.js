@@ -664,7 +664,10 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
     // positioning. TODO: make this additional call unnecessary.
-    this.setDimensions(this.layout.width, this.layout.height);
+    var client_rect = this.svg.node().getBoundingClientRect();
+    var width = client_rect.width ? client_rect.width : this.layout.width;
+    var height = client_rect.height ? client_rect.height : this.layout.height;
+    this.setDimensions(width, height);
     
     return this;
 
