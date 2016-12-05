@@ -420,6 +420,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.menu = {
         outer_selector: null,
         inner_selector: null,
+        scroll_position: 0,
         hidden: true,
         show: function(){
             if (!this.menu.outer_selector){
@@ -428,6 +429,9 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                     .attr("id", this.parent_svg.getBaseId() + ".dashboard.menu");
                 this.menu.inner_selector = this.menu.outer_selector.append("div")
                     .attr("class", "lz-dashboard-menu-content");
+                this.menu.inner_selector.on("scroll", function(){
+                    this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
+                }.bind(this));
             }
             this.menu.outer_selector.style({ visibility: "visible" });
             this.menu.hidden = false;
@@ -436,6 +440,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         update: function(){
             if (!this.menu.outer_selector){ return this.menu; }
             this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+            if (this.menu.inner_selector){ this.menu.inner_selector.node().scrollTop = this.menu.scroll_position; }
             return this.menu.position();
         }.bind(this),
         position: function(){
@@ -471,7 +476,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                 "max-height": max_height.toString() + "px",
                 "height": height.toString() + "px"
             });
-            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });        
+            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });
+            this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
             return this.menu;
         }.bind(this),
         hide: function(){

@@ -634,7 +634,6 @@ LocusZoom.Plot.prototype.initialize = function(){
         var coords = d3.mouse(this.svg.node());
         this.mouse_guide.vertical.attr("x", coords[0]);
         this.mouse_guide.horizontal.attr("y", coords[1]);
-        this.dashboard.update();
         if (this.interaction.dragging){
             if (d3.event){ d3.event.preventDefault(); }
             this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;

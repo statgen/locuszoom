@@ -4930,6 +4930,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.menu = {
         outer_selector: null,
         inner_selector: null,
+        scroll_position: 0,
         hidden: true,
         show: function(){
             if (!this.menu.outer_selector){
@@ -4938,6 +4939,9 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                     .attr("id", this.parent_svg.getBaseId() + ".dashboard.menu");
                 this.menu.inner_selector = this.menu.outer_selector.append("div")
                     .attr("class", "lz-dashboard-menu-content");
+                this.menu.inner_selector.on("scroll", function(){
+                    this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
+                }.bind(this));
             }
             this.menu.outer_selector.style({ visibility: "visible" });
             this.menu.hidden = false;
@@ -4946,6 +4950,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         update: function(){
             if (!this.menu.outer_selector){ return this.menu; }
             this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+            if (this.menu.inner_selector){ this.menu.inner_selector.node().scrollTop = this.menu.scroll_position; }
             return this.menu.position();
         }.bind(this),
         position: function(){
@@ -4971,7 +4976,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
             var container_max_width = base_max_width;
             var content_max_width = (base_max_width - (4 * padding));
-            var base_max_height = Math.max(this.parent_svg.layout.height - (9 * padding) - menu_height_padding, menu_height_padding);
+            var base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
             var height = Math.min(total_content_height, base_max_height);
             var max_height = base_max_height;
             this.menu.outer_selector.style({
@@ -4981,7 +4986,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                 "max-height": max_height.toString() + "px",
                 "height": height.toString() + "px"
             });
-            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });        
+            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });
+            this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
             return this.menu;
         }.bind(this),
         hide: function(){
@@ -6775,7 +6781,6 @@ LocusZoom.Plot.prototype.initialize = function(){
         var coords = d3.mouse(this.svg.node());
         this.mouse_guide.vertical.attr("x", coords[0]);
         this.mouse_guide.horizontal.attr("y", coords[1]);
-        this.dashboard.update();
         if (this.interaction.dragging){
             if (d3.event){ d3.event.preventDefault(); }
             this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;
