@@ -669,13 +669,16 @@ LocusZoom.Panel.prototype.render = function(){
     // Generate scales and ticks for all axes, then render them
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
+
         // Base Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"])
             .range(ranges[axis + "_shifted"]);
+
         // Shift the extent
-        this[axis + "_extent"] = [ Math.round(this[axis + "_scale"].invert(ranges[axis][0])),
-                                   Math.round(this[axis + "_scale"].invert(ranges[axis][1])) ];
+        this[axis + "_extent"] = [ this[axis + "_scale"].invert(ranges[axis][0]),
+                                   this[axis + "_scale"].invert(ranges[axis][1]) ];
+
         // Finalize Scale
         this[axis + "_scale"] = d3.scale.linear()
                 .domain(this[axis + "_extent"]).range(ranges[axis]);
@@ -685,6 +688,7 @@ LocusZoom.Panel.prototype.render = function(){
         } else {
             this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
+
         // Render
         this.renderAxis(axis);
     }.bind(this));
@@ -805,7 +809,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         }
     } else {
         var ticks = this[axis+"_ticks"].map(function(t){
-            return(t.x);
+            return(t[axis.substr(0,1)]);
         });
         this[axis+"_axis"].tickValues(ticks)
             .tickFormat(function(t, i) { return this[axis+"_ticks"][i].text; }.bind(this));

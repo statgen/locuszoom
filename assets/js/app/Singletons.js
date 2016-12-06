@@ -236,9 +236,15 @@ LocusZoom.TransformationFunctions.add("neglog10", function(x) {
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
     var exp = Math.ceil(x);
-    var dif = exp - x;
-    var base = Math.pow(10, dif);
-    return base.toFixed(2) + " × 10^" + exp;
+    var diff = exp - x;
+    var base = Math.pow(10, diff);
+    if (exp == 1){
+        return (base / 10).toFixed(4);
+    } else if (exp == 2){
+        return (base / 100).toFixed(3);
+    } else {
+        return base.toFixed(2) + " × 10^-" + exp;
+    }
 });
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
@@ -307,8 +313,8 @@ LocusZoom.ScaleFunctions = (function() {
 })();
 
 // Boolean scale function: bin a dataset numerically by matching against an array of distinct values
-LocusZoom.ScaleFunctions.add("if", function(parameters, value){
-    if (typeof value == "undefined" || parameters.field_value != value){
+LocusZoom.ScaleFunctions.add("if", function(parameters, input){
+    if (typeof input == "undefined" || parameters.field_value != input){
         if (typeof parameters.else != "undefined"){
             return parameters.else;
         } else {
@@ -320,14 +326,14 @@ LocusZoom.ScaleFunctions.add("if", function(parameters, value){
 });
 
 // Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
-LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, value){
-    var breaks = parameters.breaks;
-    var values = parameters.values;
-    if (typeof value == "undefined" || value == null || isNaN(+value)){
+LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
+    var breaks = parameters.breaks || [];
+    var values = parameters.values || [];
+    if (typeof input == "undefined" || input == null || isNaN(+input)){
         return (parameters.null_value ? parameters.null_value : null);
     }
     var threshold = breaks.reduce(function(prev, curr){
-        if (+value < prev || (+value >= prev && +value < curr)){
+        if (+input < prev || (+input >= prev && +input < curr)){
             return prev;
         } else {
             return curr;
@@ -342,5 +348,29 @@ LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
         return (parameters.null_value ? parameters.null_value : null); 
     } else {
         return parameters.values[parameters.categories.indexOf(value)];
+    }
+});
+
+// Interpolate scale function
+LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
+    var breaks = parameters.breaks || [];
+    var values = parameters.values || [];
+    var nullval = (parameters.null_value ? parameters.null_value : null);
+    if (breaks.length < 2 || breaks.length != values.length){ return nullval; }
+    if (typeof input == "undefined" || input == null || isNaN(+input)){ return nullval; }
+    if (+input <= parameters.breaks[0]){
+        return values[0];
+    } else if (+input >= parameters.breaks[parameters.breaks.length-1]){
+        return values[breaks.length-1];
+    } else {
+        var upper_idx = null;
+        breaks.forEach(function(brk, idx){
+            if (!idx){ return; }
+            if (breaks[idx-1] <= +input && breaks[idx] >= +input){ upper_idx = idx; }
+        });
+        if (upper_idx == null){ return nullval; }
+        var normalized_input = (+input - breaks[upper_idx-1]) / (breaks[upper_idx] - breaks[upper_idx-1]);
+        if (!isFinite(normalized_input)){ return nullval; }
+        return d3.interpolate(values[upper_idx-1], values[upper_idx])(normalized_input);
     }
 });

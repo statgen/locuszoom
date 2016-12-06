@@ -410,7 +410,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                             track = Math.abs(track - tracks - 1);
                         }
                         this.parent.layout.axes[legend_axis].ticks.push({
-                            x: track,
+                            y: track,
                             text: element.label
                         });
                     }
