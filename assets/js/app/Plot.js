@@ -480,6 +480,11 @@ LocusZoom.Plot.prototype.positionPanels = function(){
 // Create all plot-level objects, initialize all child panels
 LocusZoom.Plot.prototype.initialize = function(){
 
+    // Ensure proper responsive class is present on the containing node if called for
+    if (this.layout.responsive_resize){
+        d3.select(this.svg.node().parentNode).classed("lz-container-responsive", true);
+    }
+    
     // Create an element/layer for containing mouse guides
     var mouse_guide_svg = this.svg.append("g")
         .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");

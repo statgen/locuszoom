@@ -52,7 +52,7 @@
           </ul>
         </div>
         <div class="ten columns">
-          <div id="plot" class="lz-container-responsive"></div>
+          <div id="plot"></div>
         </div>
       </div>
 
@@ -132,9 +132,24 @@
           }
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
+        layout.panels[0].margin.top = 32;
+        layout.panels[2].data_layers.push({
+          id: "variant",
+          type: "line",
+          fields: ["variant:x", "variant:y"],
+          id_field: "variant:y",
+          style: {
+            "stroke": "#FF3333",
+            "stroke-width": "2px",
+            "stroke-dasharray": "4px 4px"
+          },
+          x_axis: { field: "variant:x" },
+          y_axis: { field: "variant:y", axis: 1, },
+        });
 
         // Generate the plot
         var plot = LocusZoom.populate("#plot", data_sources, layout);
+        plot.panels.phewas.setTitle("Variant 10:123352136 C/T");
 
         // Function to load new PheWAS data into the plot
         function loadPheWAS(variant_tag){
@@ -148,6 +163,7 @@
           };
           data_sources.sources.variant._data[0].x = locus;
           data_sources.sources.variant._data[1].x = locus;
+          plot.panels.phewas.setTitle("Variant " + variant[0] + ":" + variant[1] + " " + variant[2] + "/" + variant[3]);
           plot.applyState(state);
         }
 

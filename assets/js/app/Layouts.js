@@ -835,7 +835,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -846,7 +846,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -857,7 +857,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -868,7 +868,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -879,7 +879,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -890,7 +890,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -901,7 +901,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -912,7 +912,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -923,7 +923,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -934,7 +934,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -945,7 +945,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -956,7 +956,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -967,7 +967,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -978,7 +978,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -989,7 +989,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1000,7 +1000,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1011,7 +1011,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1022,7 +1022,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1033,7 +1033,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1044,7 +1044,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1055,7 +1055,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1066,7 +1066,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1145,7 +1145,18 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
     panels: [
         LocusZoom.Layouts.get("panel", "phewas", { unnamespaced: true, proportional_height: 0.45 }),
         LocusZoom.Layouts.get("panel", "genome_legend", { unnamespaced: true, proportional_height: 0.1 }),
-        LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, proportional_height: 0.45 })
+        LocusZoom.Layouts.get("panel", "genes", {
+            unnamespaced: true, proportional_height: 0.45,
+            margin: { bottom: 40 },
+            axes: {
+                x: {
+                    label_function: "chromosome",
+                    label_offset: 32,
+                    tick_format: "region",
+                    extent: "state"
+                }
+            }
+        })
     ]
 });
 

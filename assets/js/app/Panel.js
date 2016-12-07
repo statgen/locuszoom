@@ -118,7 +118,7 @@ LocusZoom.Panel = function(layout, parent) {
             x: plot_origin.x + this.layout.origin.x,
             y: plot_origin.y + this.layout.origin.y
         };
-    };
+    };        
 
     // Initialize the layout
     this.initializeLayout();
@@ -128,8 +128,7 @@ LocusZoom.Panel = function(layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    title: null,
-    description: null,
+    title: { text: "", style: {}, x: 10, y: 22 },
     y_index: null,
     width:  0,
     height: 0,
@@ -282,6 +281,24 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     return this;
 };
 
+LocusZoom.Panel.prototype.setTitle = function(title){
+    if (typeof title == "string"){
+        this.layout.title.text = title;
+    } else if (typeof title == "object" && title != null){
+        this.layout.title.text = LocusZoom.Layouts.merge(title, this.layout.title);
+    }
+    if (this.layout.title.text){
+        this.title.attr("display", null)
+            .attr("x", parseFloat(this.layout.title.x))
+            .attr("y", parseFloat(this.layout.title.y))
+            .style(this.layout.title.style)
+            .text(this.layout.title.text);
+    } else {
+        this.title.attr("display", "none")
+    }
+        
+};
+
 // Initialize a panel
 LocusZoom.Panel.prototype.initialize = function(){
 
@@ -316,23 +333,9 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.layout.background_click == "clear_selections"){ this.clearSelections(); }
         }.bind(this));
 
-    // Add the title, if defined
-    if (this.layout.title){
-        var default_x = 10;
-        var default_y = 22;
-        if (typeof this.layout.title == "string"){
-            this.layout.title = {
-                text: this.layout.title,
-                x: default_x,
-                y: default_y
-            };
-        }
-        this.svg.group.append("text")
-            .attr("class", "lz-panel-title")
-            .attr("x", parseFloat(this.layout.title.x) || default_x)
-            .attr("y", parseFloat(this.layout.title.y) || default_y)
-            .text(this.layout.title.text);
-    }
+    // Add the title
+    this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
+    if (this.layout.title){ this.setTitle(); }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g")
@@ -566,6 +569,9 @@ LocusZoom.Panel.prototype.render = function(){
     if (this.layout.inner_border){
         this.inner_border.style({ "stroke-width": 1, "stroke": this.layout.inner_border });
     }
+
+    // Set/update panel title if necessary
+    this.setTitle();
 
     // Regenerate all extents
     this.generateExtents();
