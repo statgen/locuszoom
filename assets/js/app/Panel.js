@@ -20,6 +20,7 @@ LocusZoom.Panel = function(layout, parent) {
     }
 
     this.parent = parent || null;
+    this.parent_plot = parent;
 
     // Ensure a valid ID is present. If there is no valid ID then generate one
     if (typeof layout.id !== "string" || !layout.id.length){
@@ -117,7 +118,7 @@ LocusZoom.Panel = function(layout, parent) {
             x: plot_origin.x + this.layout.origin.x,
             y: plot_origin.y + this.layout.origin.y
         };
-    };
+    };        
 
     // Initialize the layout
     this.initializeLayout();
@@ -127,8 +128,7 @@ LocusZoom.Panel = function(layout, parent) {
 };
 
 LocusZoom.Panel.DefaultLayout = {
-    title: null,
-    description: null,
+    title: { text: "", style: {}, x: 10, y: 22 },
     y_index: null,
     width:  0,
     height: 0,
@@ -281,6 +281,24 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     return this;
 };
 
+LocusZoom.Panel.prototype.setTitle = function(title){
+    if (typeof title == "string"){
+        this.layout.title.text = title;
+    } else if (typeof title == "object" && title != null){
+        this.layout.title.text = LocusZoom.Layouts.merge(title, this.layout.title);
+    }
+    if (this.layout.title.text){
+        this.title.attr("display", null)
+            .attr("x", parseFloat(this.layout.title.x))
+            .attr("y", parseFloat(this.layout.title.y))
+            .style(this.layout.title.style)
+            .text(this.layout.title.text);
+    } else {
+        this.title.attr("display", "none")
+    }
+        
+};
+
 // Initialize a panel
 LocusZoom.Panel.prototype.initialize = function(){
 
@@ -301,138 +319,9 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Create the curtain object with show/update/hide methods
-    this.curtain = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        show: function(content, css){
-            // Generate curtain
-            if (!this.curtain.showing){
-                this.curtain.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
-                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
-                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
-                    .on("click", function(){
-                        this.curtain.hide();
-                    }.bind(this));
-                this.curtain.showing = true;
-            }
-            return this.curtain.update(content, css);
-        }.bind(this),
-        update: function(content, css){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Apply CSS if provided
-            if (typeof css == "object"){
-                this.curtain.selector.style(css);
-            }
-            // Update size and position
-            var panel_page_origin = this.getPageOrigin();
-            this.curtain.selector.style({
-                top: panel_page_origin.y + "px",
-                left: panel_page_origin.x + "px",
-                width: this.layout.width + "px",
-                height: this.layout.height + "px"
-            });
-            this.curtain.content_selector.style({
-                "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px"
-            });
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.curtain.content_selector.html(content);
-            }
-            return this.curtain;
-        }.bind(this),
-        hide: function(){
-            if (!this.curtain.showing){ return this.curtain; }
-            // Remove curtain
-            this.curtain.selector.remove();
-            this.curtain.selector = null;
-            this.curtain.content_selector = null;
-            this.curtain.showing = false;
-            return this.curtain;
-        }.bind(this)
-    };
-
-    // Create the loader object with show/update/animate/setPercentCompleted/hide methods
-    this.loader = {
-        showing: false,
-        selector: null,
-        content_selector: null,
-        progress_selector: null,
-        cancel_selector: null,
-        show: function(content){
-            // Generate loader
-            if (!this.loader.showing){
-                this.loader.selector = d3.select(this.parent.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
-                this.loader.content_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-content");
-                this.loader.progress_selector = this.loader.selector
-                    .append("div").attr("class", "lz-loader-progress-container")
-                    .append("div").attr("class", "lz-loader-progress");
-                /* TODO: figure out how to make this cancel button work
-                this.loader.cancel_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-cancel").html("Cancel")
-                    .on("click", function(){
-                        this.loader.hide();
-                    }.bind(this));
-                */
-                this.loader.showing = true;
-                if (typeof content == "undefined"){ content = "Loading..."; }
-            }
-            return this.loader.update(content);
-        }.bind(this),
-        update: function(content, percent){
-            if (!this.loader.showing){ return this.loader; }
-            // Apply content if provided
-            if (typeof content == "string"){
-                this.loader.content_selector.html(content);
-            }
-            // Update size and position
-            var padding = 6; // is there a better place to store/define this?
-            var panel_page_origin = this.getPageOrigin();
-            var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
-            this.loader.selector.style({
-                top: (panel_page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (panel_page_origin.x + padding) + "px"
-            });
-            /* Uncomment this code when a functional cancel button can be shown
-            var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
-            this.loader.content_selector.style({
-                "padding-right": (cancel_boundrect.width + padding) + "px"
-            });
-            */
-            // Apply percent if provided
-            if (typeof percent == "number"){
-                this.loader.progress_selector.style({
-                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
-                });
-            }
-            return this.loader;
-        }.bind(this),
-        animate: function(){
-            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
-            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
-            return this.loader;
-        }.bind(this),
-        setPercentCompleted: function(percent){
-            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
-            return this.loader.update(null, percent);
-        }.bind(this),
-        hide: function(){
-            if (!this.loader.showing){ return this.loader; }
-            // Remove loader
-            this.loader.selector.remove();
-            this.loader.selector = null;
-            this.loader.content_selector = null;
-            this.loader.progress_selector = null;
-            this.loader.cancel_selector = null;
-            this.loader.showing = false;
-            return this.loader;
-        }.bind(this)
-    };
+    // Add curtain and loader prototpyes to the panel
+    this.curtain = LocusZoom.generateCurtain.call(this);
+    this.loader = LocusZoom.generateLoader.call(this);
 
     // Create the dashboard object and hang components on it as defined by panel layout
     this.dashboard = new LocusZoom.Dashboard(this);
@@ -444,23 +333,9 @@ LocusZoom.Panel.prototype.initialize = function(){
             if (this.layout.background_click == "clear_selections"){ this.clearSelections(); }
         }.bind(this));
 
-    // Add the title, if defined
-    if (this.layout.title){
-        var default_x = 10;
-        var default_y = 22;
-        if (typeof this.layout.title == "string"){
-            this.layout.title = {
-                text: this.layout.title,
-                x: default_x,
-                y: default_y
-            };
-        }
-        this.svg.group.append("text")
-            .attr("class", "lz-panel-title")
-            .attr("x", parseFloat(this.layout.title.x) || default_x)
-            .attr("y", parseFloat(this.layout.title.y) || default_y)
-            .text(this.layout.title.text);
-    }
+    // Add the title
+    this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
+    if (this.layout.title){ this.setTitle(); }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g")
@@ -695,6 +570,9 @@ LocusZoom.Panel.prototype.render = function(){
         this.inner_border.style({ "stroke-width": 1, "stroke": this.layout.inner_border });
     }
 
+    // Set/update panel title if necessary
+    this.setTitle();
+
     // Regenerate all extents
     this.generateExtents();
 
@@ -797,13 +675,16 @@ LocusZoom.Panel.prototype.render = function(){
     // Generate scales and ticks for all axes, then render them
     ["x", "y1", "y2"].forEach(function(axis){
         if (!this[axis + "_extent"]){ return; }
+
         // Base Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"])
             .range(ranges[axis + "_shifted"]);
+
         // Shift the extent
-        this[axis + "_extent"] = [ Math.round(this[axis + "_scale"].invert(ranges[axis][0])),
-                                   Math.round(this[axis + "_scale"].invert(ranges[axis][1])) ];
+        this[axis + "_extent"] = [ this[axis + "_scale"].invert(ranges[axis][0]),
+                                   this[axis + "_scale"].invert(ranges[axis][1]) ];
+
         // Finalize Scale
         this[axis + "_scale"] = d3.scale.linear()
                 .domain(this[axis + "_extent"]).range(ranges[axis]);
@@ -813,6 +694,7 @@ LocusZoom.Panel.prototype.render = function(){
         } else {
             this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
         }
+
         // Render
         this.renderAxis(axis);
     }.bind(this));
@@ -820,6 +702,14 @@ LocusZoom.Panel.prototype.render = function(){
     // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
     if (this.layout.interaction.scroll_to_zoom){
         var zoom_handler = function(){
+            // Look for a shift key press while scrolling to execute.
+            // If not present, gracefully raise a notification and allow conventional scrolling
+            if (!d3.event.shiftKey){
+                if (this.parent.canInteract(this.id)){
+                    this.loader.show("Press <tt>[SHIFT]</tt> while scrolling to zoom").hide(1000);
+                }
+                return;
+            }
             d3.event.preventDefault();
             if (!this.parent.canInteract(this.id)){ return; }
             var coords = d3.mouse(this.svg.container.node());
@@ -925,7 +815,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
         }
     } else {
         var ticks = this[axis+"_ticks"].map(function(t){
-            return(t.x);
+            return(t[axis.substr(0,1)]);
         });
         this[axis+"_axis"].tickValues(ticks)
             .tickFormat(function(t, i) { return this[axis+"_ticks"][i].text; }.bind(this));

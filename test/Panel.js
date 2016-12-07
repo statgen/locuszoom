@@ -528,12 +528,12 @@ describe("LocusZoom.Panel", function(){
                 this.plot.interaction.dragging.start_y.should.be.exactly(25);
                 this.plot.interaction.dragging.dragged_x.should.be.exactly(0);
                 this.plot.interaction.dragging.dragged_y.should.be.exactly(50);
-                assert.deepEqual(this.plot.panels.p.y1_extent, [2,14]);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2,14.000000000000004]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()["__onmouseup.plot"]();
                 assert.deepEqual(this.plot.interaction, {});
                 this.plot.panels.p.data_layers.d.layout.y_axis.floor.should.be.exactly(2);
-                this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(14);
+                this.plot.panels.p.data_layers.d.layout.y_axis.ceiling.should.be.exactly(14.000000000000004);
                 done();
             }.bind(this)).fail(done);
         });

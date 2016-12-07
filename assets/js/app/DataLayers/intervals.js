@@ -6,7 +6,7 @@
 
 /*********************
   Intervals Data Layer
-  Implements a data layer that will render gene tracks
+  Implements a data layer that will render interval annotation tracks
 */
 
 LocusZoom.DataLayers.add("intervals", function(layout){
@@ -410,7 +410,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                             track = Math.abs(track - tracks - 1);
                         }
                         this.parent.layout.axes[legend_axis].ticks.push({
-                            x: track,
+                            y: track,
                             text: element.label
                         });
                     }

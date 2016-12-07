@@ -171,7 +171,7 @@ describe("LocusZoom Singletons", function(){
         it("should have a method to list available scale functions", function(){
             LocusZoom.ScaleFunctions.should.have.property("list").which.is.a.Function;
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["if", "numerical_bin", "categorical_bin"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin", "interpolate"];
             assert.deepEqual(returned_list, expected_list);
         });
         it("should have a general method to get a scale by function name", function(){
@@ -182,7 +182,7 @@ describe("LocusZoom Singletons", function(){
             var foo = function(){ return "#000000"; };
             LocusZoom.ScaleFunctions.add("foo", foo);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["if", "numerical_bin", "categorical_bin", "foo"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin", "interpolate", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get("foo", {}, 0);
             var expected_value = "#000000";
@@ -193,14 +193,14 @@ describe("LocusZoom Singletons", function(){
             var foo_new = function(){ return "#FFFFFF"; };
             LocusZoom.ScaleFunctions.set("foo", foo_new);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ["if", "numerical_bin", "categorical_bin", "foo"];
+            var expected_list = ["if", "numerical_bin", "categorical_bin", "interpolate", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get("foo", {}, 0);
             var expected_value = "#FFFFFF";
             assert.equal(returned_value, expected_value);
             LocusZoom.ScaleFunctions.set("foo");
             returned_list = LocusZoom.ScaleFunctions.list();
-            expected_list = ["if", "numerical_bin", "categorical_bin"];
+            expected_list = ["if", "numerical_bin", "categorical_bin", "interpolate"];
             assert.deepEqual(returned_list, expected_list);
         });
         it("should throw an exception if asked to get a function that has not been defined", function(){
@@ -286,6 +286,35 @@ describe("LocusZoom Singletons", function(){
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, "CAT"), "null_value");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters, 53), "null_value");
                 assert.equal(LocusZoom.ScaleFunctions.get("categorical_bin", parameters), "null_value");
+            });
+        });
+        describe("interpolate", function() {
+            it("should work with arbitrarily many breaks/values", function(){
+                var parameters = {
+                    breaks: [-167, -45, 15, 23, 76.8, 952],
+                    values: [0, 10, 100, 1000, 10000, 100000],
+                    null_value: -1
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, -50000), 0);
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 0), 77.5);
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 76.799999999), 9999.999999832713);
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 481329), 100000);
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, "foo"), -1);
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters), -1);
+            });
+            it("should interpolate colors", function(){
+                var parameters = {
+                    breaks: [-100, -50, 0, 50, 100],
+                    values: ["#a6611a", "#dfc27d", "#f5f5f5", "#80cdc1", "#018571"],
+                    null_value: "#333333"
+                };
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 0), "#f5f5f5");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, -12), "#f0e9d8");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 0.97), "#f3f4f4");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 74.1), "#43aa9a");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, 3246), "#018571");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters, "foo"), "#333333");
+                assert.equal(LocusZoom.ScaleFunctions.get("interpolate", parameters), "#333333");
             });
         });
     });

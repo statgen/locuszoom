@@ -329,14 +329,14 @@ describe("LocusZoom.DataLayer", function(){
                 { id: 21, pvalue: 412.5, ref_allele: NaN }
             ];
             this.ds1_expected_json_data = JSON.stringify([
-                { "ds1:id": 2, "ds1:pvalue": 32.7, "ds1:pvalue|logtoscinotation": "2.00 × 10^33", "ds1:ref_allele": "G" },
-                { "ds1:id": 5, "ds1:pvalue": 0.53, "ds1:pvalue|logtoscinotation": "2.95 × 10^1", "ds1:ref_allele": null },
-                { "ds1:id": 21, "ds1:pvalue": 412.5, "ds1:pvalue|logtoscinotation": "3.16 × 10^413", "ds1:ref_allele": NaN }
+                { "ds1:id": 2, "ds1:pvalue": 32.7, "ds1:pvalue|logtoscinotation": "2.00 × 10^-33", "ds1:ref_allele": "G" },
+                { "ds1:id": 5, "ds1:pvalue": 0.53, "ds1:pvalue|logtoscinotation": "0.2951", "ds1:ref_allele": null },
+                { "ds1:id": 21, "ds1:pvalue": 412.5, "ds1:pvalue|logtoscinotation": "3.16 × 10^-413", "ds1:ref_allele": NaN }
             ]);
             this.ds1_expected_csv_data = "\"ds1:id\",\"ds1:pvalue\",\"ds1:pvalue|logtoscinotation\",\"ds1:ref_allele\"\n"
-                                       + "2,32.7,\"2.00 × 10^33\",\"G\"\n"
-                                       + "5,0.53,\"2.95 × 10^1\",null\n"
-                                       + "21,412.5,\"3.16 × 10^413\",null";
+                                       + "2,32.7,\"2.00 × 10^-33\",\"G\"\n"
+                                       + "5,0.53,\"0.2951\",null\n"
+                                       + "21,412.5,\"3.16 × 10^-413\",null";
             this.ds2_src_data = [
                 { id: 3, bp: 1234, exons: [ { start: 603, strand: "+" }, { start: 4, strand: "+" } ] },
                 { id: 35, bp: { a: 1, b: 2 }, exons: [ { start: 34, strand: "+", bar: true } ] },
@@ -666,7 +666,7 @@ describe("LocusZoom.DataLayer", function(){
         it("should have a method to list available data layers", function(){
             LocusZoom.DataLayers.should.have.property("list").which.is.a.Function;
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals"];
+            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend"];
             assert.deepEqual(returned_list, expected_list);
         });
         it("should have a general method to get a data layer by name", function(){
@@ -683,7 +683,7 @@ describe("LocusZoom.DataLayer", function(){
             };
             LocusZoom.DataLayers.add("foo", foo);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
+            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
             var expected_value = new foo({ id: "bar" });
@@ -702,7 +702,7 @@ describe("LocusZoom.DataLayer", function(){
             };
             LocusZoom.DataLayers.set("foo", foo_new);
             var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals", "foo"];
+            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "foo"];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
             var expected_value = new foo_new({ id: "baz" });
@@ -711,7 +711,7 @@ describe("LocusZoom.DataLayer", function(){
             assert.equal(returned_value.render(), expected_value.render());
             LocusZoom.DataLayers.set("foo");
             returned_list = LocusZoom.DataLayers.list();
-            expected_list = ["scatter", "line", "genes", "intervals"];
+            expected_list = ["scatter", "line", "genes", "intervals", "genome_legend"];
             assert.deepEqual(returned_list, expected_list);
         });
         it("should throw an exception if asked to get a function that has not been defined", function(){

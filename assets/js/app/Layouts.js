@@ -10,7 +10,8 @@ LocusZoom.Layouts = (function() {
         "plot": {},
         "panel": {},
         "data_layer": {},
-        "dashboard": {}
+        "dashboard": {},
+        "tooltip": {}
     };
 
     obj.get = function(type, name, modifications) {
@@ -95,14 +96,15 @@ LocusZoom.Layouts = (function() {
             layouts[type] = {};
         }
         if (layout){
-            layouts[type][name] = JSON.parse(JSON.stringify(layout));
+            return (layouts[type][name] = JSON.parse(JSON.stringify(layout)));
         } else {
             delete layouts[type][name];
+            return null;
         }
     };
 
     obj.add = function(type, name, layout) {
-        obj.set(type, name, layout);
+        return obj.set(type, name, layout);
     };
 
     obj.list = function(type) {
@@ -157,6 +159,50 @@ LocusZoom.Layouts = (function() {
 
 
 /**
+ Tooltip Layouts
+*/
+
+LocusZoom.Layouts.add("tooltip", "standard_association", {
+    namespace: { "assoc": "assoc" },
+    closable: true,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "<strong>{{{{namespace[assoc]}}variant}}</strong><br>"
+        + "P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>"
+        + "Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele}}</strong><br>"
+        + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));\">Make LD Reference</a><br>"
+});
+
+var covariates_model_association = LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true });
+covariates_model_association.html += "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Condition on Variant</a><br>";
+LocusZoom.Layouts.add("tooltip", "covariates_model_association", covariates_model_association);
+
+LocusZoom.Layouts.add("tooltip", "standard_genes", {
+    closable: true,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
+        + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
+        + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
+        + "<div style=\"clear: both;\"></div>"
+        + "<table>"
+        + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
+        + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
+        + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
+        + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
+        + "</table>"
+        + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a>"
+});
+
+LocusZoom.Layouts.add("tooltip", "standard_intervals", {
+    namespace: { "intervals": "intervals" },
+    closable: false,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
+});
+
+/**
  Data Layer Layouts
 */
 
@@ -203,7 +249,7 @@ LocusZoom.Layouts.add("data_layer", "recomb_rate", {
 });
 
 LocusZoom.Layouts.add("data_layer", "association_pvalues", {
-    namespace: { "default": "", "ld": "ld" },
+    namespace: { "assoc": "assoc", "ld": "ld" },
     id: "associationpvalues",
     type: "scatter",
     point_shape: {
@@ -252,15 +298,15 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
-    fields: ["{{namespace}}variant", "{{namespace}}position", "{{namespace}}log_pvalue", "{{namespace}}log_pvalue|logtoscinotation", "{{namespace}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
-    id_field: "{{namespace}}variant",
+    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}log_pvalue|logtoscinotation", "{{namespace[assoc]}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
+    id_field: "{{namespace[assoc]}}variant",
     z_index: 2,
     x_axis: {
-        field: "{{namespace}}position"
+        field: "{{namespace[assoc]}}position"
     },
     y_axis: {
         axis: 1,
-        field: "{{namespace}}log_pvalue",
+        field: "{{namespace[assoc]}}log_pvalue",
         floor: 0,
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
@@ -273,14 +319,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: true,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "<strong>{{{{namespace}}variant}}</strong><br>"
-            + "P Value: <strong>{{{{namespace}}log_pvalue|logtoscinotation}}</strong><br>"
-            + "Ref. Allele: <strong>{{{{namespace}}ref_allele}}</strong><br>"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
@@ -361,29 +400,14 @@ LocusZoom.Layouts.add("data_layer", "genes", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: true,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "<h4><strong><i>{{gene_name}}</i></strong></h4>"
-            + "<div style=\"float: left;\">Gene ID: <strong>{{gene_id}}</strong></div>"
-            + "<div style=\"float: right;\">Transcript ID: <strong>{{transcript_id}}</strong></div>"
-            + "<div style=\"clear: both;\"></div>"
-            + "<table>"
-            + "<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>"
-            + "<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>"
-            + "<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>"
-            + "<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>"
-            + "</table>"
-            + "<a href=\"http://exac.broadinstitute.org/gene/{{gene_id}}\" target=\"_new\">More data on ExAC</a>"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes", { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add("data_layer", "genome_legend", {
-    namespace: "genome",
+    namespace: { "genome": "genome" },
     id: "genome_legend",
     type: "genome_legend",
-    fields: ["{{namespace}}chr", "{{namespace}}base_pairs"],
+    fields: ["{{namespace[genome]}}chr", "{{namespace[genome]}}base_pairs"],
     x_axis: {
         floor: 0,
         ceiling: 2881033286
@@ -433,12 +457,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         onclick: "toggle_exclusive",
         onshiftclick: "toggle"
     },
-    tooltip: {
-        closable: false,
-        show: { or: ["highlighted", "selected"] },
-        hide: { and: ["unhighlighted", "unselected"] },
-        html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
-    }
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
 
@@ -486,6 +505,16 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
         }
     ]
 });
+
+var covariates_model_plot_dashboard = LocusZoom.Layouts.get("dashboard", "standard_plot");
+covariates_model_plot_dashboard.components.push({
+    type: "covariates_model",
+    button_html: "Model",
+    button_title: "Show and edit covariates currently in model",
+    position: "left",
+    color: "purple"
+});
+LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
 
 /**
  Panel Layouts
@@ -806,7 +835,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -817,7 +846,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -828,7 +857,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -839,7 +868,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -850,7 +879,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -861,7 +890,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -872,7 +901,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -883,7 +912,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -894,7 +923,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -905,7 +934,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -916,7 +945,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -927,7 +956,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -938,7 +967,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -949,7 +978,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -960,7 +989,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -971,7 +1000,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -982,7 +1011,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -993,7 +1022,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1004,7 +1033,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1015,7 +1044,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1026,7 +1055,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(120, 120, 186)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1037,7 +1066,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
                     style: {
                         "fill": "rgb(0, 0, 66)",
                         "text-anchor": "center",
-                        "font-size": "14px",
+                        "font-size": "13px",
                         "font-weight": "bold"
                     },
                     transform: "translate(0, 2)"
@@ -1063,7 +1092,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
             type: "toggle_split_tracks",
             data_layer_id: "intervals",
             position: "right",
-            color: "yellow"
+            color: "orange"
         });
         return l;
     })(),
@@ -1093,7 +1122,7 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     state: {},
     width: 800,
     height: 450,
-    resizable: "responsive",
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
@@ -1116,7 +1145,18 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
     panels: [
         LocusZoom.Layouts.get("panel", "phewas", { unnamespaced: true, proportional_height: 0.45 }),
         LocusZoom.Layouts.get("panel", "genome_legend", { unnamespaced: true, proportional_height: 0.1 }),
-        LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, proportional_height: 0.45 })
+        LocusZoom.Layouts.get("panel", "genes", {
+            unnamespaced: true, proportional_height: 0.45,
+            margin: { bottom: 40 },
+            axes: {
+                x: {
+                    label_function: "chromosome",
+                    label_offset: 32,
+                    tick_format: "region",
+                    extent: "state"
+                }
+            }
+        })
     ]
 });
 
@@ -1124,7 +1164,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     state: {},
     width: 800,
     height: 550,
-    resizable: "responsive",
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 4000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),

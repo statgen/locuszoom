@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+    
+    <!-- Necessary includes for LocusZoom.js -->
+    <script src="../locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="../locuszoom.app.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
+    
+    <title>LocusZoom.js ~ PheWAS Example ~ Gallery</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body>
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>Locuszoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">PheWAS Example</h3>
+      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>This example shows a basic approach to visualizing Phenome-Wide Association Study (PheWAS) results. Data is sampled from the <a href="https://www.michigangenomics.org/genetic_data.html" target="_blank">Michigan Genomics Initiative</a> data set. Phenotypes are generated from EHR data by combining ICD-9 codes and are groups into broad categories to be listed as custom x-axis ticks. Otherwise points are plotted along the y-axis by their p-value, similar to how a "standard" LocusZoom plot would look.<p>
+      <p>This plot also shows the LocusZoom.js label system, which renders label annotations on scatter points with logic to keep labels from running over each other. It also features a "genome legend" panel to provide genome-wide context for the variant cross-section represented by the data currently shown in the plot.</p>
+      <p>Use the links to the left to see a selection of different loci with their corresponding PheWAS results.</p>
+
+      <div class="row">
+        <div class="two columns">
+          <h4>Genes</h4>
+          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;">
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('10_123352136_C_T')"><strong>FGFR2</strong><br><small>(Breast Cancer)</small></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('4_111704536_A_T')"><strong>PITX2</strong><br><small>(Atrial Fibrillation)</small></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('10_114758349_C_T')"><strong>TCF7L2</strong><br><small>(Type 2 Diabetes)</small></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('1_169519049_T_C')"><strong>Factor 5</strong><br><small>(Thrombosis)</small></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('19_45411941_T_C')"><strong>APOE</strong><br><small>(Dementia)</small></a></li>
+          </ul>
+        </div>
+        <div class="ten columns">
+          <div id="plot"></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright 2016 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+
+      <script type="text/javascript">
+
+        // Genome base pairs static data
+        var genome_data =  [
+          { chr: 1, base_pairs: 249250621 },
+          { chr: 2, base_pairs: 243199373 },
+          { chr: 3, base_pairs: 198022430 },
+          { chr: 4, base_pairs: 191154276 },
+          { chr: 5, base_pairs: 180915260 },
+          { chr: 6, base_pairs: 171115067 },
+          { chr: 7, base_pairs: 159138663 },
+          { chr: 8, base_pairs: 146364022 },
+          { chr: 9, base_pairs: 141213431 },
+          { chr: 10, base_pairs: 135534747 },
+          { chr: 11, base_pairs: 135006516 },
+          { chr: 12, base_pairs: 133851895 },
+          { chr: 13, base_pairs: 115169878 },
+          { chr: 14, base_pairs: 107349540 },
+          { chr: 15, base_pairs: 102531392 },
+          { chr: 16, base_pairs: 90354753 },
+          { chr: 17, base_pairs: 81195210 },
+          { chr: 18, base_pairs: 78077248 },
+          { chr: 19, base_pairs: 59128983 },
+          { chr: 20, base_pairs: 63025520 },
+          { chr: 21, base_pairs: 48129895 },
+          { chr: 22, base_pairs: 51304566 }
+        ];
+
+        // Custom data source for PheWAS data from JSON files
+        LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
+          this.parseInit(init);
+        }, "PheWASLZ");
+        LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
+          return this.url + state.variant + ".json";
+        };
+        LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+          var data = JSON.parse(resp);
+          data.forEach(function(d, i){
+            data[i].x = i;
+            data[i].id = i.toString();
+            trans.forEach(function(transformation, t){
+              if (typeof transformation == "function"){
+                data[i][outnames[t]] = transformation(data[i][fields[t]]);
+              }
+            });
+          });
+          return {header: chain.header, body: data};
+        };
+
+        // Define data sources object
+        var data_sources = new LocusZoom.DataSources()
+          .add("base", ["PheWASLZ", { url: "https://www.michigangenomics.org/data/" }])
+          .add("gene", ["GeneLZ", { url: "http://portaldev.sph.umich.edu/api/v1/annotation/genes/", params: {source: 2} }])
+          .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
+          .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 1448, "y": 7.30103 }]])
+          .add("variant", ["StaticJSON", [{ "x": 123352136, "y": 0 }, { "x": 123352136, "y": 1 }]])
+          .add("genome", ["StaticJSON", genome_data]);
+
+        // Define the layout
+        var mods = {
+          state: {
+            variant: "10_123352136_C_T",
+            start: 123102136,
+            end: 123602136,
+            chr: 10
+          }
+        };
+        var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
+        layout.panels[0].margin.top = 32;
+        layout.panels[2].data_layers.push({
+          id: "variant",
+          type: "line",
+          fields: ["variant:x", "variant:y"],
+          id_field: "variant:y",
+          style: {
+            "stroke": "#FF3333",
+            "stroke-width": "2px",
+            "stroke-dasharray": "4px 4px"
+          },
+          x_axis: { field: "variant:x" },
+          y_axis: { field: "variant:y", axis: 1, },
+        });
+
+        // Generate the plot
+        var plot = LocusZoom.populate("#plot", data_sources, layout);
+        plot.panels.phewas.setTitle("Variant 10:123352136 C/T");
+
+        // Function to load new PheWAS data into the plot
+        function loadPheWAS(variant_tag){
+          var variant = variant_tag.split("_");
+          var locus = +variant[1];
+          var state = {
+              variant: variant_tag,
+              start: (locus - 250000),
+              end: (locus + 250000),
+              chr: +variant[0]
+          };
+          data_sources.sources.variant._data[0].x = locus;
+          data_sources.sources.variant._data[1].x = locus;
+          plot.panels.phewas.setTitle("Variant " + variant[0] + ":" + variant[1] + " " + variant[2] + "/" + variant[3]);
+          plot.applyState(state);
+        }
+
+      </script>
+
+    </div>
+
+  </body>
+</html>

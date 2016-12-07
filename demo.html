@@ -26,7 +26,7 @@
           </form>
           <br>
         </div>
-        <div id="lz-1" class="lz-locuszoom-container" data-region="10:114550452-115067678"></div>
+        <div id="lz-1" class="lz-locuszoom-container" data-region="10:114550452-115067678" style="width: 800px; height: 450px;"></div>
       </td>
       <td style="vertical-align:top">
         <h3>Top Hits</h3>
@@ -62,6 +62,8 @@
     }
 
     layout = LocusZoom.Layouts.get("plot", "standard_association");
+    //layout.dashboard = LocusZoom.Layouts.get("dashboard", "covariates_model_plot");
+    //layout.panels[0].data_layers[2].tooltip = LocusZoom.Layouts.get("tooltip", "covariates_model_association");
 
     // Populate the div with a LocusZoom plot using the default layout
     var plot = LocusZoom.populate("#lz-1", data_sources, layout);

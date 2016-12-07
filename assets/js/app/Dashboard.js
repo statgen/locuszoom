@@ -111,10 +111,10 @@ LocusZoom.Dashboard.prototype.position = function(){
     // Position the dashboard itself (panel only)
     if (this.type == "panel"){
         var page_origin = this.parent.getPageOrigin();
-        var client_rect = this.selector.node().getBoundingClientRect();
-        var top = (page_origin.y + 3).toString() + "px";
-        var left = (page_origin.x + this.parent.layout.width - client_rect.width).toString() + "px";
-        this.selector.style({ position: "absolute", top: top, left: left });
+        var top = (page_origin.y + 3.5).toString() + "px";
+        var left = page_origin.x.toString() + "px";
+        var width = (this.parent.layout.width - 4).toString() + "px";
+        this.selector.style({ position: "absolute", top: top, left: left, width: width });
     }
     // Recursively position components
     this.components.forEach(function(component){ component.position(); });
@@ -420,6 +420,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.menu = {
         outer_selector: null,
         inner_selector: null,
+        scroll_position: 0,
         hidden: true,
         show: function(){
             if (!this.menu.outer_selector){
@@ -428,6 +429,9 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                     .attr("id", this.parent_svg.getBaseId() + ".dashboard.menu");
                 this.menu.inner_selector = this.menu.outer_selector.append("div")
                     .attr("class", "lz-dashboard-menu-content");
+                this.menu.inner_selector.on("scroll", function(){
+                    this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
+                }.bind(this));
             }
             this.menu.outer_selector.style({ visibility: "visible" });
             this.menu.hidden = false;
@@ -436,10 +440,13 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         update: function(){
             if (!this.menu.outer_selector){ return this.menu; }
             this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+            if (this.menu.inner_selector){ this.menu.inner_selector.node().scrollTop = this.menu.scroll_position; }
             return this.menu.position();
         }.bind(this),
         position: function(){
             if (!this.menu.outer_selector){ return this.menu; }
+            // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
+            this.menu.outer_selector.style({ height: null });
             var padding = 3;
             var scrollbar_padding = 20;
             var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
@@ -447,28 +454,30 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
             var button_client_rect = this.selector.node().getBoundingClientRect();
             var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-            var total_content_height = this.menu.inner_selector.node().scrollHeight + menu_height_padding;
+            var total_content_height = this.menu.inner_selector.node().scrollHeight;
             var top = 0; var left = 0;
             if (this.parent_dashboard.type == "panel"){
-                top = (page_origin.y + dashboard_client_rect.height + (3 * padding)).toString() + "px";
-                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding).toString() + "px";
+                top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
+                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
             } else {
-                top = (button_client_rect.bottom + padding).toString() + "px";
-                left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width, page_origin.x + padding).toString() + "px";
+                top = (button_client_rect.bottom + padding);
+                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width, page_origin.x + padding);
             }
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
-            var container_max_width = base_max_width.toString() + "px";
-            var content_max_width = (base_max_width - (4 * padding)).toString() + "px";
-            var base_max_height = Math.max(this.parent_svg.layout.height - (7 * padding) - menu_height_padding, menu_height_padding);
-            var height = Math.min(total_content_height, base_max_height).toString() + "px";
-            var max_height = base_max_height.toString() + "px";
+            var container_max_width = base_max_width;
+            var content_max_width = (base_max_width - (4 * padding));
+            var base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
+            var height = Math.min(total_content_height, base_max_height);
+            var max_height = base_max_height;
             this.menu.outer_selector.style({
-                top: top, left: left,
-                "max-width": container_max_width,
-                "max-height": max_height,
-                height: height
+                "top": top.toString() + "px",
+                "left": left.toString() + "px",
+                "max-width": container_max_width.toString() + "px",
+                "max-height": max_height.toString() + "px",
+                "height": height.toString() + "px"
             });
-            this.menu.inner_selector.style({ "max-width": content_max_width });        
+            this.menu.inner_selector.style({ "max-width": content_max_width.toString() + "px" });
+            this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
             return this.menu;
         }.bind(this),
         hide: function(){
@@ -709,9 +718,13 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         // Create an object at the plot level for easy access to interface methods in custom client-side JS
         this.parent_plot.CovariatesModel = {
             button: this,
-            add: function(element){
-                // Check if the element is already in the model covariates array. Do this with JSON.stringify since elements
-                // may have functions that would trip up more basic equality checking
+            add: function(element_reference){
+                // Generate element json from passed reference to evaluate against / add to state
+                var element = JSON.parse(JSON.stringify(element_reference));
+                if (typeof element_reference == "object" && typeof element.html != "string"){
+                    element.html = ( (typeof element_reference.toHTML == "function") ? element_reference.toHTML() : element_reference.toString());
+                }
+                // Check if the element is already in the model covariates array and return if it is.
                 for (var i = 0; i < this.state.model.covariates.length; i++) {
                     if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
                         return this;
@@ -768,10 +781,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
                 selector.append("h5").html("Model Covariates (" + this.parent_plot.state.model.covariates.length + ")");
                 var table = selector.append("table");
                 this.parent_plot.state.model.covariates.forEach(function(covariate, idx){
-                    var html = covariate.toString();
-                    if (typeof covariate == "object" && typeof covariate.toHTML == "function"){
-                        html = covariate.toHTML();
-                    }
+                    var html = ( (typeof covariate == "object" && typeof covariate.html == "string") ? covariate.html : covariate.toString() );
                     var row = table.append("tr");
                     row.append("td").append("button")
                         .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color)
