@@ -112,27 +112,27 @@
       
       <hr>
 
-      <h3>Plot Gallery</h3>
+      <h3>Example Plots</h3>
 
       <p>LocusZoom.js is customizable, extensible, and highly flexible. It can work with a wide variety of different types of data. Below are some examples to show some of LocusZoom.js's variability.</p>
 
       <div class="row">
         <div class="four columns">
-          <a href="gallery/interval_annotations.html">
+          <a href="examples/interval_annotations.html">
             <h6><strong>Interval Annotations</strong></h6>
-            <img src="gallery/interval_annotations.png" alt="Interval Annotations" style="border: 1px solid #8A8A8A;">
+            <img src="examples/interval_annotations.png" alt="Interval Annotations" style="border: 1px solid #8A8A8A;">
           </a>
         </div>
         <div class="four columns">
-          <a href="gallery/phewas.html">
+          <a href="examples/phewas.html">
             <h6><strong>PheWAS</strong></h6>
-            <img src="gallery/phewas.png" alt="PheWAS" style="border: 1px solid #8A8A8A;">
+            <img src="examples/phewas.png" alt="PheWAS" style="border: 1px solid #8A8A8A;">
           </a>
         </div>
         <div class="four columns">
-          <a href="gallery/phewas_effect_sizes_1.html">
+          <a href="examples/phewas_effect_sizes_1.html">
             <h6><strong>PheWAS with Effect Sizes (1)</strong></h6>
-            <img src="gallery/phewas_effect_sizes_1.png" alt="PheWAS with Effect Sizes (1)" style="border: 1px solid #8A8A8A;">
+            <img src="examples/phewas_effect_sizes_1.png" alt="PheWAS with Effect Sizes (1)" style="border: 1px solid #8A8A8A;">
           </a>
         </div>
       </div>
@@ -156,7 +156,7 @@
     // Define LocusZoom Data Sources object differently depending on online status
     var apiBase, data_sources;
     if (online){
-      apiBase = "http://portaldev.sph.umich.edu/api/v1/";
+      apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
