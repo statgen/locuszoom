@@ -116,7 +116,7 @@
         // Define data sources object
         var data_sources = new LocusZoom.DataSources()
           .add("base", ["PheWASLZ", { url: "https://www.michigangenomics.org/data/" }])
-          .add("gene", ["GeneLZ", { url: "http://portaldev.sph.umich.edu/api/v1/annotation/genes/", params: {source: 2} }])
+          .add("gene", ["GeneLZ", { url: "https://portaldev.sph.umich.edu/api/v1/annotation/genes/", params: {source: 2} }])
           .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
           .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 1448, "y": 7.30103 }]])
           .add("variant", ["StaticJSON", [{ "x": 123352136, "y": 0 }, { "x": 123352136, "y": 1 }]])
