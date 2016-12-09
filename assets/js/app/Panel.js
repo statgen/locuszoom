@@ -294,7 +294,7 @@ LocusZoom.Panel.prototype.setTitle = function(title){
             .style(this.layout.title.style)
             .text(this.layout.title.text);
     } else {
-        this.title.attr("display", "none")
+        this.title.attr("display", "none");
     }
         
 };

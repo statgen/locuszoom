@@ -202,6 +202,38 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 0px;
   }
 
+  path.#{$namespace}-data_layer-forest {
+    stroke: #{$default_black_shadow_svg_color};
+    stroke-opacity: 0.6;
+    stroke-width: 1px;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-forest-highlighted {
+    stroke: #{$default_black_shadow_svg_color};
+    stroke-opacity: 0.6;
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-forest-selected {
+    stroke: #{$default_black};
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-forest-dimmed {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1;
+  }
+
+  path.#{$namespace}-data_layer-forest-hidden {
+    display: none;
+  }
+
+  rect.#{$namespace}-data_layer-forest.#{$namespace}-data_layer-ci {
+    stroke: #{$default_black_svg};
+    stroke-width: 1px;
+  }
+
 }
 
 // The following comment is used by the download dashboard component when generating a CSS string.

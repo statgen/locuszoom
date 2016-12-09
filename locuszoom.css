@@ -122,6 +122,26 @@ svg.lz-locuszoom {
     stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-intervals.lz-interval_rect {
     stroke-width: 0px; }
+  svg.lz-locuszoom path.lz-data_layer-forest {
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 0.6;
+    stroke-width: 1px;
+    cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-forest-highlighted {
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 0.6;
+    stroke-width: 4px; }
+  svg.lz-locuszoom path.lz-data_layer-forest-selected {
+    stroke: rgba(24, 24, 24, 1);
+    stroke-width: 4px; }
+  svg.lz-locuszoom path.lz-data_layer-forest-dimmed {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1; }
+  svg.lz-locuszoom path.lz-data_layer-forest-hidden {
+    display: none; }
+  svg.lz-locuszoom rect.lz-data_layer-forest.lz-data_layer-ci {
+    stroke: rgb(24, 24, 24);
+    stroke-width: 1px; }
 
 /* ! LocusZoom HTML Styles */
 div.lz-data_layer-tooltip {
