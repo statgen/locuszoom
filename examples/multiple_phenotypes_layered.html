@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+    
+    <!-- Necessary includes for LocusZoom.js -->
+    <script src="../locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="../locuszoom.app.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
+    
+    <title>LocusZoom.js ~ Multiple Phenotypes (Layered) Example</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body style="background-color: #FAFAFA; margin-left: 20px; margin-right: 20px;">
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Multiple Phenotypes (Layered) Example</h3>
+      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>This example shows an approach to showing a common region covering multiple studies/phenotypes by rendered each phenotype as a different data layer in the same panel.</p>
+      <p>The top panel shows results in the region from four different studies, each rendered with a different color. LD information is not shown. Being a region view interactivity is enabled, so panning and zooming is possible. As the plot is navigated around the genome all layers will stay aligned and move in unison.</p>
+      <p>When clicking on any p-value result the tool tip offers controls to dim or un-dim the entire data layer. The LocusZoom.js API provides methods for toggling dimming, hiding, highlighting, and selecting entire data layers, individual elements in a data layer, or a subset of elements based on arbitrarily many filters against actual data.</p>
+
+      <div class="row">
+        <div class="two columns">
+          <h4>Top Hits</h4>
+          <style>ul.top_hits li { margin-bottom: 0rem; }</style>
+          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
+        </div>
+        <div class="ten columns">
+          <div id="plot" data-region="10:114550452-115067678"></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright 2016 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+
+    </div>
+
+    <script type="text/javascript">
+      
+    // Define base data sources
+    var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+    var data_sources = new LocusZoom.DataSources()
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+      .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
+
+    // Build the base layout
+    var association_panel_mods = {
+        data_layers: [
+            LocusZoom.Layouts.get("data_layer", "signifigance", { namespace: { "sig": "sig" } }),
+            LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" } })
+        ]
+    };
+    layout = {
+        width: 800,
+        height: 500,
+        responsive_resize: true,
+        panels: [
+            LocusZoom.Layouts.get("panel", "association", association_panel_mods),
+            LocusZoom.Layouts.get("panel", "genes", { namespace: { "gene": "gene" } })
+        ]
+    };
+
+    // Define a set of studies/phenotypes and loop through them to add a data source and data layer for each one
+    var phenos = [
+        { namespace: "fasting_glucose", title: "Fasting glucose meta-analysis", color: "rgb(212, 63, 58)", study_id: 23 },
+        { namespace: "fasting_insulin", title: "Fasting insulin meta-analysis", color: "rgb(238, 162, 54)", study_id: 24 },
+        { namespace: "triglycerides", title: "Triglycerides meta-analysis", color: "rgb(92, 184, 92)", study_id: 47 },
+        { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 48 }
+    ];
+    phenos.forEach(function(pheno){
+        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: pheno.study_id, id_field: "variant"}}]);
+        var association_data_layer_mods = {
+            namespace: { "assoc": pheno.namespace },
+            id: "associationpvalues_" + pheno.namespace,
+            point_shape: "circle",
+            point_size: 40,
+            color: pheno.color,
+            legend: [
+                { shape: "circle", color: pheno.color, size: 40, label: pheno.title, class: "lz-data_layer-scatter" },
+            ],
+            fields: [pheno.namespace+":variant", pheno.namespace+":position", pheno.namespace+":log_pvalue", pheno.namespace+":log_pvalue|logtoscinotation", pheno.namespace+":ref_allele"],
+            tooltip: {
+                closable: true,
+                show: { or: ["highlighted", "selected"] },
+                hide: { and: ["unhighlighted", "unselected"] },
+                html: "<strong>" + pheno.title + "</strong><br>"
+                    + "<strong>{{" + pheno.namespace + ":variant}}</strong><br>"
+                    + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation}}</strong><br>"
+                    + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele}}</strong><br>"
+                    + "<a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).dimAllElements()\">Dim this layer</a> | <a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).undimAllElements()\">Un-dim this layer</a>"
+            }
+        };
+        layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));
+    });
+
+    // Generate the LocusZoom plot
+    var plot = LocusZoom.populate("#plot", data_sources, layout);
+
+    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
+    plot.layout.panels.forEach(function(panel){
+      plot.panels[panel.id].addBasicLoader();
+    });
+
+    // Create a method to parse a region string into a 600Kb genome range and load it
+    function jumpTo(region) {
+      var target = region.split(":");
+      var chr = target[0];
+      var pos = target[1];
+      var start = 0;
+      var end = 0;
+      if (!pos.match(/[-+]/)) {
+        start = +pos - 300000
+        end = +pos + 300000
+      }
+      plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
+      return false;
+    }
+
+    // Populate a list of top hits links for the plot
+    var top_hits = [
+      ["16:53819169", "FTO"],
+      ["15:58680954", "LIPC"],
+      ["2:21231524", "APOB"],
+      ["16:56959412", "CETP"],
+      ["7:44196069", "GCK"],
+      ["2:27518370", "GCKR"],
+      ["10:114758349", "TCF7L2"],
+      ["7:15052860", "DGKB"],
+      ["2:27772914", "MRPL33"],
+      ["6:20679709", "CDKAL1"],
+      ["19:11091630", "LDLR"],
+      ["11:116778201", "APOA1"],
+      ["8:19986711", "LPL"],
+      ["11:92708710", "MTNR1B"]
+    ];
+    top_hits.forEach(function(hit){
+      d3.select("ul.top_hits").append("li")
+        .html("<a href=\"javascript:void(0);\" onclick=\"javascript:jumpTo('" + hit[0] + "');\">" + hit[1] + "</a>");
+    });
+
+  </script>
+
+  </body>
+</html>
