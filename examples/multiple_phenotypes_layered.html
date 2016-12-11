@@ -11,7 +11,7 @@
     <script src="../locuszoom.app.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
     
-    <title>LocusZoom.js ~ Multiple Phenotypes (Stacked) Example</title>
+    <title>LocusZoom.js ~ Multiple Phenotypes (Layered) Example</title>
 
     <style>
       body {
@@ -31,13 +31,14 @@
 
       <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
-      <h3 style="float: left; color: #777">Multiple Phenotypes (Stacked) Example</h3>
+      <h3 style="float: left; color: #777">Multiple Phenotypes (Layered) Example</h3>
       <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
 
       <hr style="clear: both;">
 
-      <p>This example shows an approach to showing a common region covering multiple studies/phenotypes by stacking results as different data layers in the same panel.</p>
-      <p>The top panel shows results in the region from X different studies, each rendered with a different color. LD information is not shown. Being a region view interactivity is enabled, so panning and zooming is possible. As the plot is navigated around the genome all layers will stay aligned and move in unison.</p>
+      <p>This example shows an approach to showing a common region covering multiple studies/phenotypes by rendered each phenotype as a different data layer in the same panel.</p>
+      <p>The top panel shows results in the region from four different studies, each rendered with a different color. LD information is not shown. Being a region view interactivity is enabled, so panning and zooming is possible. As the plot is navigated around the genome all layers will stay aligned and move in unison.</p>
+      <p>When clicking on any p-value result the tool tip offers controls to dim or un-dim the entire data layer. The LocusZoom.js API provides methods for toggling dimming, hiding, highlighting, and selecting entire data layers, individual elements in a data layer, or a subset of elements based on arbitrarily many filters against actual data.</p>
 
       <div class="row">
         <div class="two columns">
@@ -114,6 +115,7 @@
                     + "<strong>{{" + pheno.namespace + ":variant}}</strong><br>"
                     + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation}}</strong><br>"
                     + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele}}</strong><br>"
+                    + "<a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).dimAllElements()\">Dim this layer</a> | <a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).undimAllElements()\">Un-dim this layer</a>"
             }
         };
         layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));
