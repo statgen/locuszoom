@@ -282,12 +282,16 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 };
 
 LocusZoom.Panel.prototype.setTitle = function(title){
+    if (typeof this.layout.title == "string"){
+        var text = this.layout.title;
+        this.layout.title = { text: text, x: 0, y: 0, style: {} };
+    }
     if (typeof title == "string"){
         this.layout.title.text = title;
     } else if (typeof title == "object" && title != null){
-        this.layout.title.text = LocusZoom.Layouts.merge(title, this.layout.title);
+        this.layout.title = LocusZoom.Layouts.merge(title, this.layout.title);
     }
-    if (this.layout.title.text){
+    if (this.layout.title.text.length){
         this.title.attr("display", null)
             .attr("x", parseFloat(this.layout.title.x))
             .attr("y", parseFloat(this.layout.title.y))
@@ -296,7 +300,7 @@ LocusZoom.Panel.prototype.setTitle = function(title){
     } else {
         this.title.attr("display", "none");
     }
-        
+    return this;
 };
 
 // Initialize a panel
@@ -335,7 +339,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Add the title
     this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
-    if (this.layout.title){ this.setTitle(); }
+    if (typeof this.layout.title != "undefined"){ this.setTitle(); }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g")
@@ -843,13 +847,10 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
 
     // Render the axis label if necessary
     var label = this.layout.axes[axis].label || null;
-    if (this.layout.axes[axis].label_function){
-        label = LocusZoom.LabelFunctions.get(this.layout.axes[axis].label_function, this.state);
-    }
     if (label != null){
         this.svg[axis+"_axis_label"]
             .attr("x", axis_params[axis].label_x).attr("y", axis_params[axis].label_y)
-            .text(label);
+            .text(LocusZoom.parseFields(this.state, label));
         if (axis_params[axis].label_rotate != null){
             this.svg[axis+"_axis_label"]
                 .attr("transform", "rotate(" + axis_params[axis].label_rotate + " " + axis_params[axis].label_x + "," + axis_params[axis].label_y + ")");

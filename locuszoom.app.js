@@ -1089,7 +1089,6 @@ LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plo
 
 LocusZoom.Layouts.add("panel", "association", {
     id: "association",
-    title: "",
     width: 800,
     height: 225,
     min_width:  400,
@@ -1108,7 +1107,7 @@ LocusZoom.Layouts.add("panel", "association", {
     })(),
     axes: {
         x: {
-            label_function: "chromosome",
+            label: "Chromosome {{chr}} (Mb)",
             label_offset: 32,
             tick_format: "region",
             extent: "state"
@@ -1717,7 +1716,7 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
             margin: { bottom: 40 },
             axes: {
                 x: {
-                    label_function: "chromosome",
+                    label: "Chromosome {{chr}} (Mb)",
                     label_offset: 32,
                     tick_format: "region",
                     extent: "state"
@@ -4556,64 +4555,6 @@ LocusZoom.KnownDataSources = (function() {
     return obj;
 })();
 
-
-/****************
-  Label Functions
-
-  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
-*/
-
-LocusZoom.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Label function for "Chromosome # (Mb)" where # comes from state
-LocusZoom.LabelFunctions.add("chromosome", function(state){
-    if (!isNaN(+state.chr)){ 
-        return "Chromosome " + state.chr + " (Mb)";
-    } else {
-        return "Chromosome (Mb)";
-    }
-});
-
-
 /**************************
   Transformation Functions
 
@@ -6620,7 +6561,6 @@ LocusZoom.Plot.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    style: {},
     responsive_resize: false,
     aspect_ratio: 1,
     panels: [],
@@ -7622,12 +7562,16 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 };
 
 LocusZoom.Panel.prototype.setTitle = function(title){
+    if (typeof this.layout.title == "string"){
+        var text = this.layout.title;
+        this.layout.title = { text: text, x: 0, y: 0, style: {} };
+    }
     if (typeof title == "string"){
         this.layout.title.text = title;
     } else if (typeof title == "object" && title != null){
-        this.layout.title.text = LocusZoom.Layouts.merge(title, this.layout.title);
+        this.layout.title = LocusZoom.Layouts.merge(title, this.layout.title);
     }
-    if (this.layout.title.text){
+    if (this.layout.title.text.length){
         this.title.attr("display", null)
             .attr("x", parseFloat(this.layout.title.x))
             .attr("y", parseFloat(this.layout.title.y))
@@ -7636,7 +7580,7 @@ LocusZoom.Panel.prototype.setTitle = function(title){
     } else {
         this.title.attr("display", "none");
     }
-        
+    return this;
 };
 
 // Initialize a panel
@@ -7675,7 +7619,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Add the title
     this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
-    if (this.layout.title){ this.setTitle(); }
+    if (typeof this.layout.title != "undefined"){ this.setTitle(); }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g")
@@ -8183,13 +8127,10 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
 
     // Render the axis label if necessary
     var label = this.layout.axes[axis].label || null;
-    if (this.layout.axes[axis].label_function){
-        label = LocusZoom.LabelFunctions.get(this.layout.axes[axis].label_function, this.state);
-    }
     if (label != null){
         this.svg[axis+"_axis_label"]
             .attr("x", axis_params[axis].label_x).attr("y", axis_params[axis].label_y)
-            .text(label);
+            .text(LocusZoom.parseFields(this.state, label));
         if (axis_params[axis].label_rotate != null){
             this.svg[axis+"_axis_label"]
                 .attr("transform", "rotate(" + axis_params[axis].label_rotate + " " + axis_params[axis].label_x + "," + axis_params[axis].label_y + ")");

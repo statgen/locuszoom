@@ -131,7 +131,6 @@ LocusZoom.Plot.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    style: {},
     responsive_resize: false,
     aspect_ratio: 1,
     panels: [],

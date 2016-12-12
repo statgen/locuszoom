@@ -522,7 +522,6 @@ LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plo
 
 LocusZoom.Layouts.add("panel", "association", {
     id: "association",
-    title: "",
     width: 800,
     height: 225,
     min_width:  400,
@@ -541,7 +540,7 @@ LocusZoom.Layouts.add("panel", "association", {
     })(),
     axes: {
         x: {
-            label_function: "chromosome",
+            label: "Chromosome {{chr}} (Mb)",
             label_offset: 32,
             tick_format: "region",
             extent: "state"
@@ -1150,7 +1149,7 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
             margin: { bottom: 40 },
             axes: {
                 x: {
-                    label_function: "chromosome",
+                    label: "Chromosome {{chr}} (Mb)",
                     label_offset: 32,
                     tick_format: "region",
                     extent: "state"
