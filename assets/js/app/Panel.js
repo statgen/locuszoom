@@ -62,6 +62,11 @@ LocusZoom.Panel = function(layout, parent) {
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
+    this.applyDataLayerZIndexesToDataLayerLayouts = function(){
+        this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
+            this.data_layers[dlid].layout.z_index = idx;
+        }.bind(this));
+    };
     this.data_promises = [];
 
     this.x_scale  = null;
@@ -390,6 +395,16 @@ LocusZoom.Panel.prototype.initialize = function(){
     
 };
 
+// Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+LocusZoom.Panel.prototype.resortDataLayers = function(){
+    var sort = [];
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        sort.push(this.data_layers[id].layout.z_index);
+    }.bind(this));
+    this.svg.group.selectAll("g.lz-data_layer-container").data(sort).sort(d3.ascending);
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+};
+
 // Get an array of panel IDs that are axis-linked to this panel
 LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
     axis = axis || null;
@@ -415,7 +430,6 @@ LocusZoom.Panel.prototype.moveUp = function(){
     return this;
 };
 
-
 // Move a panel down relative to others by y-index
 LocusZoom.Panel.prototype.moveDown = function(){
     if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
@@ -426,7 +440,6 @@ LocusZoom.Panel.prototype.moveDown = function(){
     }
     return this;
 };
-
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(layout){

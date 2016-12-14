@@ -53,12 +53,11 @@ LocusZoom.Dashboard.prototype.initialize = function(){
     if (this.type == "panel"){
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseover." + this.id, function(){
             clearTimeout(this.hide_timeout);
-            this.show();
+            if (!this.selector || this.selector.style("visibility") == "hidden"){ this.show(); }
         }.bind(this));
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseout." + this.id, function(){
-            this.hide_timeout = setTimeout(function(){
-                this.hide();
-            }.bind(this), 300);
+            clearTimeout(this.hide_timeout);
+            this.hide_timeout = setTimeout(function(){ this.hide(); }.bind(this), 300);
         }.bind(this));
     }
 
@@ -974,5 +973,76 @@ LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
                 this.update();
             }.bind(this));
         return this.update();
+    };
+});
+
+// Data Layers - menu for manipulating data layers in a panel
+LocusZoom.Dashboard.Components.add("data_layers", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    this.update = function(){
+
+        if (typeof layout.button_html != "string"){ layout.button_html = "Data Layers"; }
+        if (typeof layout.button_title != "string"){ layout.button_title = "Manipulate Data Layers (sort, dim, show/hide, etc.)"; }
+
+        if (this.button){ return this; }
+
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                this.button.menu.populate();
+            }.bind(this));
+
+        this.button.menu.setPopulate(function(){
+            this.button.menu.inner_selector.html("");
+            var table = this.button.menu.inner_selector.append("table");
+            this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach(function(id, idx){
+                var data_layer = this.parent_panel.data_layers[id];
+                var name = (typeof data_layer.layout.name != "string") ? data_layer_id : data_layer.layout.name;
+                var row = table.append("tr");
+                // Layer name
+                row.append("td").html(name);
+                // Status toggle buttons
+                layout.statuses.forEach(function(status_adj){
+                    var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
+                    var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                    var status_antiverb = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                    var text, onclick, highlight;
+                    if (data_layer.global_statuses[status_adj]){
+                        text = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                        onclick = "un" + status_verb + "AllElements";
+                        highlight = "-highlighted";
+                    } else {
+                        text = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                        onclick = status_verb + "AllElements";
+                        highlight = "";
+                    }
+                    row.append("td").append("a")
+                        .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color + highlight)
+                        .style({ "margin-left": "0em" })
+                        .on("click", function(){ data_layer[onclick](); this.button.menu.populate(); }.bind(this))
+                        .text(text);
+                }.bind(this));
+                // Sort layer buttons
+                var at_top = (idx == 0);
+                var at_bottom = (idx == (this.parent_panel.data_layer_ids_by_z_index.length - 1));
+                var td = row.append("td");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-" + this.layout.color + (at_bottom ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveDown(); this.button.menu.populate(); }.bind(this))
+                    .text("▾").attr("title", "Move layer down (further back)");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveUp(); this.button.menu.populate(); }.bind(this))
+                    .text("▴").attr("title", "Move layer up (further front)");
+            }.bind(this));
+            return this;
+        }.bind(this));
+
+        this.button.show();
+
+        return this;
     };
 });

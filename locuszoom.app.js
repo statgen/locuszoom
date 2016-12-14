@@ -1840,6 +1840,14 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.tooltip){
         this.tooltips = {};
     }
+
+    // Initialize flags for tracking global statuses
+    this.global_statuses = {
+        "highlighted": false,
+        "selected": false,
+        "faded": false,
+        "hidden": false
+    };
     
     return this;
 
@@ -1858,8 +1866,9 @@ LocusZoom.DataLayer.DefaultLayout = {
 // names and applied or removed from elements to have a visual representation of the status,
 // as well as used as keys in the state for tracking which elements are in which status(es)
 LocusZoom.DataLayer.Statuses = {
-    verbs: ["highlight", "select", "dim", "hide"],
-    adjectives: ["highlighted", "selected", "dimmed", "hidden"]
+    verbs: ["highlight", "select", "fade", "hide"],
+    adjectives: ["highlighted", "selected", "faded", "hidden"],
+    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"],
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -1935,6 +1944,7 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
     this.svg.container = this.parent.svg.group.append("g")
+        .attr("class", "lz-data_layer-container")
         .attr("id", this.getBaseId() + ".data_layer_container");
         
     // Append clip path to the container element
@@ -1949,6 +1959,26 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     return this;
 
+};
+
+// Move a data layer up relative to others by z-index
+LocusZoom.DataLayer.prototype.moveUp = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
+};
+
+// Move a data layer down relative to others by z-index
+LocusZoom.DataLayer.prototype.moveDown = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
 };
 
 // Resolve a scalable parameter for an element into a single value based on its layout and the element's data
@@ -2389,11 +2419,14 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
         }.bind(this));
         this.state[this.state_id][status] = [];
     }
-    
+
+    // Update global status flag
+    this.global_statuses[status] = toggle;
+
     return this;
 };
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, dimmed, hidden...)
+// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, faded, hidden...)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
     // Glossary for this function:
@@ -4893,12 +4926,11 @@ LocusZoom.Dashboard.prototype.initialize = function(){
     if (this.type == "panel"){
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseover." + this.id, function(){
             clearTimeout(this.hide_timeout);
-            this.show();
+            if (!this.selector || this.selector.style("visibility") == "hidden"){ this.show(); }
         }.bind(this));
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseout." + this.id, function(){
-            this.hide_timeout = setTimeout(function(){
-                this.hide();
-            }.bind(this), 300);
+            clearTimeout(this.hide_timeout);
+            this.hide_timeout = setTimeout(function(){ this.hide(); }.bind(this), 300);
         }.bind(this));
     }
 
@@ -5814,6 +5846,77 @@ LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
                 this.update();
             }.bind(this));
         return this.update();
+    };
+});
+
+// Data Layers - menu for manipulating data layers in a panel
+LocusZoom.Dashboard.Components.add("data_layers", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    this.update = function(){
+
+        if (typeof layout.button_html != "string"){ layout.button_html = "Data Layers"; }
+        if (typeof layout.button_title != "string"){ layout.button_title = "Manipulate Data Layers (sort, dim, show/hide, etc.)"; }
+
+        if (this.button){ return this; }
+
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                this.button.menu.populate();
+            }.bind(this));
+
+        this.button.menu.setPopulate(function(){
+            this.button.menu.inner_selector.html("");
+            var table = this.button.menu.inner_selector.append("table");
+            this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach(function(id, idx){
+                var data_layer = this.parent_panel.data_layers[id];
+                var name = (typeof data_layer.layout.name != "string") ? data_layer_id : data_layer.layout.name;
+                var row = table.append("tr");
+                // Layer name
+                row.append("td").html(name);
+                // Status toggle buttons
+                layout.statuses.forEach(function(status_adj){
+                    var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
+                    var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                    var status_antiverb = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                    var text, onclick, highlight;
+                    if (data_layer.global_statuses[status_adj]){
+                        text = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                        onclick = "un" + status_verb + "AllElements";
+                        highlight = "-highlighted";
+                    } else {
+                        text = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                        onclick = status_verb + "AllElements";
+                        highlight = "";
+                    }
+                    row.append("td").append("a")
+                        .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color + highlight)
+                        .style({ "margin-left": "0em" })
+                        .on("click", function(){ data_layer[onclick](); this.button.menu.populate(); }.bind(this))
+                        .text(text);
+                }.bind(this));
+                // Sort layer buttons
+                var at_top = (idx == 0);
+                var at_bottom = (idx == (this.parent_panel.data_layer_ids_by_z_index.length - 1));
+                var td = row.append("td");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-" + this.layout.color + (at_bottom ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveDown(); this.button.menu.populate(); }.bind(this))
+                    .text("▾").attr("title", "Move layer down (further back)");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveUp(); this.button.menu.populate(); }.bind(this))
+                    .text("▴").attr("title", "Move layer up (further front)");
+            }.bind(this));
+            return this;
+        }.bind(this));
+
+        this.button.show();
+
+        return this;
     };
 });
 
@@ -7477,6 +7580,11 @@ LocusZoom.Panel = function(layout, parent) {
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
+    this.applyDataLayerZIndexesToDataLayerLayouts = function(){
+        this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
+            this.data_layers[dlid].layout.z_index = idx;
+        }.bind(this));
+    };
     this.data_promises = [];
 
     this.x_scale  = null;
@@ -7805,6 +7913,16 @@ LocusZoom.Panel.prototype.initialize = function(){
     
 };
 
+// Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+LocusZoom.Panel.prototype.resortDataLayers = function(){
+    var sort = [];
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        sort.push(this.data_layers[id].layout.z_index);
+    }.bind(this));
+    this.svg.group.selectAll("g.lz-data_layer-container").data(sort).sort(d3.ascending);
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+};
+
 // Get an array of panel IDs that are axis-linked to this panel
 LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
     axis = axis || null;
@@ -7830,7 +7948,6 @@ LocusZoom.Panel.prototype.moveUp = function(){
     return this;
 };
 
-
 // Move a panel down relative to others by y-index
 LocusZoom.Panel.prototype.moveDown = function(){
     if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
@@ -7841,7 +7958,6 @@ LocusZoom.Panel.prototype.moveDown = function(){
     }
     return this;
 };
-
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(layout){
