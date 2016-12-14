@@ -470,15 +470,19 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
         {
             type: "remove_panel",
             position: "right",
-            color: "red"
+            color: "red",
+            group_position: "end"
         },
         {
             type: "move_panel_up",
-            position: "right"
+            position: "right",
+            group_position: "middle"
         },
         {
             type: "move_panel_down",
-            position: "right"
+            position: "right",
+            group_position: "start",
+            style: { "margin-left": "0.75em" }
         }
     ]
 });                 
@@ -522,39 +526,40 @@ region_nav_plot_dashboard.components.push({
     step: 500000,
     button_html: ">>",
     position: "right",
-    style: { "margin-left": "0em" }
+    group_position: "end"
 });
 region_nav_plot_dashboard.components.push({
     type: "shift_region",
     step: 50000,
     button_html: ">",
     position: "right",
-    style: { "margin-left": "0em" }
+    group_position: "middle"
 });
 region_nav_plot_dashboard.components.push({
     type: "zoom_region",
     step: 0.2,
     position: "right",
-    style: { "margin-left": "0em" }
+    group_position: "middle"
 });
 region_nav_plot_dashboard.components.push({
     type: "zoom_region",
     step: -0.2,
     position: "right",
-    style: { "margin-left": "0em" }
+    group_position: "middle"
 });
 region_nav_plot_dashboard.components.push({
     type: "shift_region",
     step: -50000,
     button_html: "<",
     position: "right",
-    style: { "margin-left": "0em" }
+    group_position: "middle"
 });
 region_nav_plot_dashboard.components.push({
     type: "shift_region",
     step: -500000,
     button_html: "<<",
-    position: "right"
+    position: "right",
+    group_position: "start"
 });
 LocusZoom.Layouts.add("dashboard", "region_nav_plot", region_nav_plot_dashboard);
 

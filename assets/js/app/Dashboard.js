@@ -186,8 +186,9 @@ LocusZoom.Dashboard.Component = function(layout, parent) {
 LocusZoom.Dashboard.Component.prototype.show = function(){
     if (!this.parent || !this.parent.selector){ return; }
     if (!this.selector){
+        var group_position = (["start","middle","end"].indexOf(this.layout.group_position) != -1 ? " lz-dashboard-group-" + this.layout.group_position : "");
         this.selector = this.parent.selector.append("div")
-            .attr("class", "lz-dashboard-" + this.layout.position);
+            .attr("class", "lz-dashboard-" + this.layout.position + group_position);
         if (this.layout.style){ this.selector.style(this.layout.style); }
         if (typeof this.initialize == "function"){ this.initialize(); }
     }
@@ -330,6 +331,12 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return this;
     };
 
+    // Method to generate a class string
+    this.getClass = function(){
+        var group_position = (["start","middle","end"].indexOf(this.parent.layout.group_position) != -1 ? " lz-dashboard-button-group-" + this.parent.layout.group_position : "");
+        return "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : "") + group_position;
+    };
+
     // Permanance
     this.persist = false;
     this.permanent = false;
@@ -386,8 +393,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.show = function(){
         if (!this.parent){ return; }
         if (!this.selector){
-            this.selector = this.parent.selector.append(this.tag)
-                .attr("class", "lz-dashboard-button");
+            this.selector = this.parent.selector.append(this.tag).attr("class", this.getClass());
         }
         return this.update();
     };
@@ -396,7 +402,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         if (!this.selector){ return this; }
         this.preUpdate();
         this.selector
-            .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : ""))
+            .attr("class", this.getClass())
             .attr("title", this.title).style(this.style)
             .on("mouseover", (this.status == "disabled") ? null : this.onmouseover)
             .on("mouseout", (this.status == "disabled") ? null : this.onmouseout)
