@@ -516,6 +516,48 @@ covariates_model_plot_dashboard.components.push({
 });
 LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
 
+var region_nav_plot_dashboard = LocusZoom.Layouts.get("dashboard", "standard_plot");
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: 500000,
+    button_html: ">>",
+    position: "right",
+    style: { "margin-left": "0em" }
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: 50000,
+    button_html: ">",
+    position: "right",
+    style: { "margin-left": "0em" }
+});
+region_nav_plot_dashboard.components.push({
+    type: "zoom_region",
+    step: 0.2,
+    position: "right",
+    style: { "margin-left": "0em" }
+});
+region_nav_plot_dashboard.components.push({
+    type: "zoom_region",
+    step: -0.2,
+    position: "right",
+    style: { "margin-left": "0em" }
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: -50000,
+    button_html: "<",
+    position: "right",
+    style: { "margin-left": "0em" }
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: -500000,
+    button_html: "<<",
+    position: "right"
+});
+LocusZoom.Layouts.add("dashboard", "region_nav_plot", region_nav_plot_dashboard);
+
 /**
  Panel Layouts
 */

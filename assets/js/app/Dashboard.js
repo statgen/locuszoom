@@ -188,6 +188,7 @@ LocusZoom.Dashboard.Component.prototype.show = function(){
     if (!this.selector){
         this.selector = this.parent.selector.append("div")
             .attr("class", "lz-dashboard-" + this.layout.position);
+        if (this.layout.style){ this.selector.style(this.layout.style); }
         if (typeof this.initialize == "function"){ this.initialize(); }
     }
     if (this.button && this.button.status == "highlighted"){ this.button.menu.show(); }
@@ -545,6 +546,8 @@ LocusZoom.Dashboard.Components.add("dimensions", function(layout){
         var display_width = this.parent_plot.layout.width.toString().indexOf(".") == -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
         var display_height = this.parent_plot.layout.height.toString().indexOf(".") == -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
         this.selector.text(display_width + "px × " + display_height + "px");
+        if (layout.class){ this.selector.attr("class", layout.class); }
+        if (layout.style){ this.selector.style(layout.style); }
         return this;
     };
 });
@@ -560,6 +563,8 @@ LocusZoom.Dashboard.Components.add("region_scale", function(layout){
         } else {
             this.selector.style("display", "none");
         }
+        if (layout.class){ this.selector.attr("class", layout.class); }
+        if (layout.style){ this.selector.style(layout.style); }
         return this;
     };
 });
@@ -689,6 +694,83 @@ LocusZoom.Dashboard.Components.add("move_panel_down", function(layout){
             }.bind(this));
         this.button.show();
         return this.update();
+    };
+});
+
+// Shift Region
+LocusZoom.Dashboard.Components.add("shift_region", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)){
+        this.update = function(){ return; };
+        console.warn("Unable to add shift_region dashboard component: plot state does not have region bounds");
+        return;
+    }
+    if (isNaN(layout.step) || layout.step == 0){ layout.step = 50000; }
+    if (typeof layout.button_html != "string"){ layout.button_html = layout.step > 0 ? ">" : "<"; }
+    if (typeof layout.button_title != "string"){
+        layout.button_title = "Shift region by " + (layout.step > 0 ? "+" : "-") + LocusZoom.positionIntToString(Math.abs(layout.step),null,true);
+    }
+    this.update = function(){
+        if (this.button){ return this; }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                this.parent_plot.applyState({
+                    start: Math.max(this.parent_plot.state.start + layout.step, 1),
+                    end: this.parent_plot.state.end + layout.step
+                });
+            }.bind(this));
+        this.button.show();
+        return this;
+    };
+});
+
+// Zoom Region
+LocusZoom.Dashboard.Components.add("zoom_region", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)){
+        this.update = function(){ return; };
+        console.warn("Unable to add zoom_region dashboard component: plot state does not have region bounds");
+        return;
+    }
+    if (isNaN(layout.step) || layout.step == 0){ layout.step = 0.2; }
+    if (typeof layout.button_html != "string"){ layout.button_html = layout.step > 0 ? "z–" : "z+"; }
+    if (typeof layout.button_title != "string"){
+        layout.button_title = "Zoom region " + (layout.step > 0 ? "out" : "in") + " by " + (Math.abs(layout.step)*100).toFixed(1) + "%";
+    }
+    this.update = function(){
+        if (this.button){
+            var can_zoom = true;
+            var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
+            if (layout.step > 0 && !isNaN(this.parent_plot.layout.max_region_scale) && current_region_scale >= this.parent_plot.layout.max_region_scale){
+                can_zoom = false;
+            }
+            if (layout.step < 0 && !isNaN(this.parent_plot.layout.min_region_scale) && current_region_scale <= this.parent_plot.layout.min_region_scale){
+                can_zoom = false;
+            }
+            this.button.disable(!can_zoom);
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
+                var zoom_factor = 1 + layout.step;
+                var new_region_scale = current_region_scale * zoom_factor;
+                if (!isNaN(this.parent_plot.layout.max_region_scale)){
+                    new_region_scale = Math.min(new_region_scale, this.parent_plot.layout.max_region_scale);
+                }
+                if (!isNaN(this.parent_plot.layout.min_region_scale)){
+                    new_region_scale = Math.max(new_region_scale, this.parent_plot.layout.min_region_scale);
+                }
+                var delta = Math.floor((new_region_scale - current_region_scale) / 2);
+                this.parent_plot.applyState({
+                    start: Math.max(this.parent_plot.state.start - delta, 1),
+                    end: this.parent_plot.state.end + delta
+                });
+            }.bind(this));
+        this.button.show();
+        return this;
     };
 });
 
