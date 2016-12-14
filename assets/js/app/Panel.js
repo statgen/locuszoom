@@ -717,7 +717,7 @@ LocusZoom.Panel.prototype.render = function(){
             d3.event.preventDefault();
             if (!this.parent.canInteract(this.id)){ return; }
             var coords = d3.mouse(this.svg.container.node());
-            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
+            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail || -d3.event.deltaY)));
             if (delta == 0){ return; }
             this.parent.interaction = {
                 panel_id: this.id,

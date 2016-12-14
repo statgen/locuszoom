@@ -206,7 +206,7 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
  Data Layer Layouts
 */
 
-LocusZoom.Layouts.add("data_layer", "signifigance", {
+LocusZoom.Layouts.add("data_layer", "significance", {
     namespace: { "sig": "sig" },
     id: "significance",
     type: "line",
@@ -568,7 +568,7 @@ LocusZoom.Layouts.add("panel", "association", {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "signifigance", { unnamespaced: true }),
+        LocusZoom.Layouts.get("data_layer", "significance", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "recomb_rate", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "association_pvalues", { unnamespaced: true })
     ]
@@ -809,7 +809,7 @@ LocusZoom.Layouts.add("panel", "phewas", {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "signifigance", { unnamespaced: true }),
+        LocusZoom.Layouts.get("data_layer", "significance", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "phewas_pvalues", { unnamespaced: true })
     ]
 });
