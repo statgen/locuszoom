@@ -4,7 +4,11 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 [![Build Status](https://api.travis-ci.org/statgen/locuszoom.svg?branch=master)](https://api.travis-ci.org/statgen/locuszoom)
 
-See [API Reference](https://github.com/statgen/locuszoom/wiki) if already up and running or the introduction below.
+See [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki) for full documentation and API reference.
+
+To see funcitonal examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
+
+![LocusZoom.js Standard Association Plot (v0.5.2)](http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png)
 
 ## Making a LocusZoom Plot
 
@@ -21,9 +25,11 @@ The page you build that embeds the LocusZoom plugin must include the following r
 * `locuszoom.css`  
   This is the primary stylesheet. It is namespaced so as not to conflict with any other styles defined on the same page.
 
+CDN links are available for these resources (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
+
 ### 2. Define Data Sources
 
-**Data Sources** is an object representing a collection of arbitrarily many sources from which data for the plot can be requested. When adding sources to the collection they can be namespaced so that retrieving specific fields can be done with respect to specific data sources.
+**Data Sources** is an object representing a collection of arbitrarily many sources from which data for the plot can be requested. When adding sources to the collection they must be namespaced so that retrieving specific fields can be done with respect to specific data sources.
 
 Here's an example of defining a data sources object:
 
@@ -65,7 +71,7 @@ var layout = {
 
 The above example defines a basic plot that is 500 pixels on a side and has one panel with one scatter plot data layer that pulls in position and pvalue from the "trait" data source, mapping position to the x axis and pvalue to the y axis.
 
-Refer to the [Layout Documentation](https://github.com/statgen/locuszoom/wiki/Layout) for more information on all supported layout parameters.
+The LocusZoom.js library provides several pre-defined layouts for entire plots and subdivisions of plots such as panels, data layers, tool tips, etc. Refer to the [Layout Documentation](https://github.com/statgen/locuszoom/wiki/Layout) for more information.
 
 ### 4. Put it Together with `LocusZoom.populate()`
 
@@ -238,4 +244,10 @@ LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located
 
 All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
 
+## Help and Support
 
+Full documentation can be found here: [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki)
+
+A LocusZoom discussion forum is available here: [groups.google.com/forum/#!forum/locuszoom](https://groups.google.com/forum/#!forum/locuszoom)
+
+If you have questions or feedback please file an issue on the [LocusZoom.js GitHub repository](https://github.com/statgen/locuszoom/issues) or post at the discussion forum referenced above.
