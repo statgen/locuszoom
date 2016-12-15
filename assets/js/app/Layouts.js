@@ -515,8 +515,7 @@ covariates_model_plot_dashboard.components.push({
     type: "covariates_model",
     button_html: "Model",
     button_title: "Show and edit covariates currently in model",
-    position: "left",
-    color: "purple"
+    position: "left"
 });
 LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
 
@@ -580,8 +579,7 @@ LocusZoom.Layouts.add("panel", "association", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "toggle_legend",
-            position: "right",
-            color: "green"
+            position: "right"
         });
         return l;
     })(),
@@ -639,8 +637,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "resize_to_data",
-            position: "right",
-            color: "blue"
+            position: "right"
         });
         return l;
     })(),   
@@ -1137,8 +1134,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
         l.components.push({
             type: "toggle_split_tracks",
             data_layer_id: "intervals",
-            position: "right",
-            color: "orange"
+            position: "right"
         });
         return l;
     })(),

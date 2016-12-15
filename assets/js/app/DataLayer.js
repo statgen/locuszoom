@@ -78,7 +78,7 @@ LocusZoom.DataLayer.DefaultLayout = {
 LocusZoom.DataLayer.Statuses = {
     verbs: ["highlight", "select", "fade", "hide"],
     adjectives: ["highlighted", "selected", "faded", "hidden"],
-    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"],
+    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){

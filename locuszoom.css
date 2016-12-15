@@ -67,7 +67,12 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-line {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1px;
+    stroke-opacity: 1;
     cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-line-faded {
+    stroke-opacity: 0.2; }
+  svg.lz-locuszoom path.lz-data_layer-line-hidden {
+    display: none; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
     fill: none;
     stroke: none;

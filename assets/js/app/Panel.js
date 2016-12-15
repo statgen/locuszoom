@@ -66,7 +66,7 @@ LocusZoom.Panel = function(layout, parent) {
         this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
             this.data_layers[dlid].layout.z_index = idx;
         }.bind(this));
-    };
+    }.bind(this);
     this.data_promises = [];
 
     this.x_scale  = null;
@@ -496,6 +496,36 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     return this.data_layers[data_layer.id];
 };
 
+// Remove a data layer by id
+LocusZoom.Panel.prototype.removeDataLayer = function(id){
+    if (!this.data_layers[id]){
+        throw ("Unable to remove data layer, ID not found: " + id);
+    }
+
+    // Destroy all tooltips for the data layer
+    this.data_layers[id].destroyAllTooltips();
+
+    // Remove the svg container for the data layer if it exists
+    if (this.data_layers[id].svg.container){
+        this.data_layers[id].svg.container.remove();
+    }
+
+    // Delete the data layer and its presence in the panel layout and state
+    this.layout.data_layers.splice(this.data_layers[id].layout_idx, 1);
+    delete this.state[this.data_layers[id].state_id];
+    delete this.data_layers[id];
+
+    // Remove the data_layer id from the z_index array
+    this.data_layer_ids_by_z_index.splice(this.data_layer_ids_by_z_index.indexOf(id), 1);
+
+    // Update layout_idx and layout.z_index values for all remaining data_layers
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+    this.layout.data_layers.forEach(function(data_layer_layout, idx){
+        this.data_layers[data_layer_layout.id].layout_idx = idx;
+    }.bind(this));
+
+    return this;
+};
 
 // Clear all selections on all data layers
 LocusZoom.Panel.prototype.clearSelections = function(){
@@ -504,7 +534,6 @@ LocusZoom.Panel.prototype.clearSelections = function(){
     }.bind(this));
     return this;
 };
-
 
 // Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){

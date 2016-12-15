@@ -1082,8 +1082,7 @@ covariates_model_plot_dashboard.components.push({
     type: "covariates_model",
     button_html: "Model",
     button_title: "Show and edit covariates currently in model",
-    position: "left",
-    color: "purple"
+    position: "left"
 });
 LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
 
@@ -1147,8 +1146,7 @@ LocusZoom.Layouts.add("panel", "association", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "toggle_legend",
-            position: "right",
-            color: "green"
+            position: "right"
         });
         return l;
     })(),
@@ -1206,8 +1204,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "resize_to_data",
-            position: "right",
-            color: "blue"
+            position: "right"
         });
         return l;
     })(),   
@@ -1704,8 +1701,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
         l.components.push({
             type: "toggle_split_tracks",
             data_layer_id: "intervals",
-            position: "right",
-            color: "orange"
+            position: "right"
         });
         return l;
     })(),
@@ -1868,7 +1864,7 @@ LocusZoom.DataLayer.DefaultLayout = {
 LocusZoom.DataLayer.Statuses = {
     verbs: ["highlight", "select", "fade", "hide"],
     adjectives: ["highlighted", "selected", "faded", "hidden"],
-    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"],
+    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -3273,7 +3269,7 @@ LocusZoom.DataLayers.add("line", function(layout){
             .data([this.data]);
 
         // Create path element, apply class
-        selection.enter()
+        this.path = selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-line");
 
@@ -3340,7 +3336,39 @@ LocusZoom.DataLayers.add("line", function(layout){
         selection.exit().remove();
         
     };
-       
+
+    // Redefine setElementStatus family of methods as line data layers will only ever have a single path element
+    this.setElementStatus = function(status, element, toggle){
+        return this.setAllElementStatus(status, toggle);
+    };
+    this.setElementStatusByFilters = function(status, toggle){
+        return this.setAllElementStatus(status, toggle);
+    };
+    this.setAllElementStatus = function(status, toggle){
+        // Sanity check
+        if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+            throw("Invalid status passed to DataLayer.setAllElementStatus()");
+        }
+        if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
+        if (typeof toggle == "undefined"){ toggle = true; }
+
+        // Update global status flag
+        this.global_statuses[status] = toggle;
+
+        // Apply class to path based on global status flags
+        var path_class = "lz-data_layer-line";
+        Object.keys(this.global_statuses).forEach(function(global_status){
+            if (this.global_statuses[global_status]){ path_class += " lz-data_layer-line-" + global_status; }
+        }.bind(this));
+        this.path.attr("class", path_class);
+
+        // Trigger layout changed event hook
+        this.parent.emit("layout_changed");
+        this.parent_plot.emit("layout_changed");
+        
+        return this;
+    };
+
     return this;
 
 });
@@ -5524,11 +5552,14 @@ LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
         this.button = new LocusZoom.Dashboard.Component.Button(this)
             .setColor(layout.color).setText("×").setTitle("Remove panel")
             .setOnclick(function(){
-                var panel = this.parent_panel;
-                panel.dashboard.hide(true);
-                d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
-                d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
-                panel.parent.removePanel(panel.id);
+                if (confirm("Are you sure you want to remove this panel? This cannot be undone!")){
+                    var panel = this.parent_panel;
+                    panel.dashboard.hide(true);
+                    d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
+                    d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
+                    return panel.parent.removePanel(panel.id);
+                }
+                return false;
             }.bind(this));
         this.button.show();
         return this;
@@ -5871,7 +5902,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
             var table = this.button.menu.inner_selector.append("table");
             this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach(function(id, idx){
                 var data_layer = this.parent_panel.data_layers[id];
-                var name = (typeof data_layer.layout.name != "string") ? data_layer_id : data_layer.layout.name;
+                var name = (typeof data_layer.layout.name != "string") ? data_layer.id : data_layer.layout.name;
                 var row = table.append("tr");
                 // Layer name
                 row.append("td").html(name);
@@ -5879,7 +5910,6 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                 layout.statuses.forEach(function(status_adj){
                     var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
                     var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
-                    var status_antiverb = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
                     var text, onclick, highlight;
                     if (data_layer.global_statuses[status_adj]){
                         text = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
@@ -5906,10 +5936,20 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                     .on("click", function(){ data_layer.moveDown(); this.button.menu.populate(); }.bind(this))
                     .text("▾").attr("title", "Move layer down (further back)");
                 td.append("a")
-                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-middle lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
                     .style({ "margin-left": "0em" })
                     .on("click", function(){ data_layer.moveUp(); this.button.menu.populate(); }.bind(this))
                     .text("▴").attr("title", "Move layer up (further front)");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-red")
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){
+                        if (confirm("Are you sure you want to remove the " + name + " layer? This cannot be undone!")){
+                            data_layer.parent.removeDataLayer(id);
+                        }
+                        return this.button.menu.populate();
+                    }.bind(this))
+                    .text("×").attr("title", "Remove layer");
             }.bind(this));
             return this;
         }.bind(this));
@@ -7584,7 +7624,7 @@ LocusZoom.Panel = function(layout, parent) {
         this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
             this.data_layers[dlid].layout.z_index = idx;
         }.bind(this));
-    };
+    }.bind(this);
     this.data_promises = [];
 
     this.x_scale  = null;
@@ -8014,6 +8054,36 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     return this.data_layers[data_layer.id];
 };
 
+// Remove a data layer by id
+LocusZoom.Panel.prototype.removeDataLayer = function(id){
+    if (!this.data_layers[id]){
+        throw ("Unable to remove data layer, ID not found: " + id);
+    }
+
+    // Destroy all tooltips for the data layer
+    this.data_layers[id].destroyAllTooltips();
+
+    // Remove the svg container for the data layer if it exists
+    if (this.data_layers[id].svg.container){
+        this.data_layers[id].svg.container.remove();
+    }
+
+    // Delete the data layer and its presence in the panel layout and state
+    this.layout.data_layers.splice(this.data_layers[id].layout_idx, 1);
+    delete this.state[this.data_layers[id].state_id];
+    delete this.data_layers[id];
+
+    // Remove the data_layer id from the z_index array
+    this.data_layer_ids_by_z_index.splice(this.data_layer_ids_by_z_index.indexOf(id), 1);
+
+    // Update layout_idx and layout.z_index values for all remaining data_layers
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+    this.layout.data_layers.forEach(function(data_layer_layout, idx){
+        this.data_layers[data_layer_layout.id].layout_idx = idx;
+    }.bind(this));
+
+    return this;
+};
 
 // Clear all selections on all data layers
 LocusZoom.Panel.prototype.clearSelections = function(){
@@ -8022,7 +8092,6 @@ LocusZoom.Panel.prototype.clearSelections = function(){
     }.bind(this));
     return this;
 };
-
 
 // Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){

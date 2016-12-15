@@ -58,6 +58,75 @@ describe("LocusZoom.DataLayer", function(){
         });
     });
 
+    describe("Z-index sorting", function() {
+        beforeEach(function(){
+            var layout = {
+                width: 800,
+                height: 400,
+                panels: [
+                    { id: "panel0", width: 800, proportional_width: 1, height: 400, proportional_height: 1,
+                      data_layers: [
+                          { id: "layerA", type: "line" },
+                          { id: "layerB", type: "line" },
+                          { id: "layerC", type: "line" },
+                          { id: "layerD", type: "line" }
+                      ]
+                    }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+        it("should have a chainable method for moving layers up that stops at the top", function() {
+            this.plot.panels.panel0.data_layers.layerB.moveUp.should.be.a.Function;
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerB", "layerC", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerD", "layerB"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerB.moveUp().moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerD", "layerB"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+        });
+        it("should have a chainable method for moving layers down that stops at the bottom", function() {
+            this.plot.panels.panel0.data_layers.layerC.moveDown.should.be.a.Function;
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerB", "layerC", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerC", "layerA", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.moveDown().moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerC", "layerA", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+        });
+    });
+
     describe("Scalable parameter resolution", function() {
         it("has a method to resolve scalable parameters into discrete values", function() {
             this.datalayer = new LocusZoom.DataLayer({ id: "test" });

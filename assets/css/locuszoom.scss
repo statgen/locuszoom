@@ -113,7 +113,16 @@ svg.#{$namespace}-locuszoom {
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
     stroke-width: 1px;
+    stroke-opacity: 1;
     cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-line-faded {
+    stroke-opacity: 0.2;
+  }
+
+  path.#{$namespace}-data_layer-line-hidden {
+    display: none;
   }
 
   path.#{$namespace}-data_layer-line-hitarea {
