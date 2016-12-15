@@ -172,7 +172,7 @@ LocusZoom.DataLayers.add("line", function(layout){
             .data([this.data]);
 
         // Create path element, apply class
-        selection.enter()
+        this.path = selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-line");
 
@@ -239,7 +239,39 @@ LocusZoom.DataLayers.add("line", function(layout){
         selection.exit().remove();
         
     };
-       
+
+    // Redefine setElementStatus family of methods as line data layers will only ever have a single path element
+    this.setElementStatus = function(status, element, toggle){
+        return this.setAllElementStatus(status, toggle);
+    };
+    this.setElementStatusByFilters = function(status, toggle){
+        return this.setAllElementStatus(status, toggle);
+    };
+    this.setAllElementStatus = function(status, toggle){
+        // Sanity check
+        if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+            throw("Invalid status passed to DataLayer.setAllElementStatus()");
+        }
+        if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
+        if (typeof toggle == "undefined"){ toggle = true; }
+
+        // Update global status flag
+        this.global_statuses[status] = toggle;
+
+        // Apply class to path based on global status flags
+        var path_class = "lz-data_layer-line";
+        Object.keys(this.global_statuses).forEach(function(global_status){
+            if (this.global_statuses[global_status]){ path_class += " lz-data_layer-line-" + global_status; }
+        }.bind(this));
+        this.path.attr("class", path_class);
+
+        // Trigger layout changed event hook
+        this.parent.emit("layout_changed");
+        this.parent_plot.emit("layout_changed");
+        
+        return this;
+    };
+
     return this;
 
 });

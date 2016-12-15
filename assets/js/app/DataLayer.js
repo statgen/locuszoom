@@ -50,6 +50,14 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.tooltip){
         this.tooltips = {};
     }
+
+    // Initialize flags for tracking global statuses
+    this.global_statuses = {
+        "highlighted": false,
+        "selected": false,
+        "faded": false,
+        "hidden": false
+    };
     
     return this;
 
@@ -68,8 +76,9 @@ LocusZoom.DataLayer.DefaultLayout = {
 // names and applied or removed from elements to have a visual representation of the status,
 // as well as used as keys in the state for tracking which elements are in which status(es)
 LocusZoom.DataLayer.Statuses = {
-    verbs: ["highlight", "select", "dim", "hide"],
-    adjectives: ["highlighted", "selected", "dimmed", "hidden"]
+    verbs: ["highlight", "select", "fade", "hide"],
+    adjectives: ["highlighted", "selected", "faded", "hidden"],
+    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -145,6 +154,7 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
     this.svg.container = this.parent.svg.group.append("g")
+        .attr("class", "lz-data_layer-container")
         .attr("id", this.getBaseId() + ".data_layer_container");
         
     // Append clip path to the container element
@@ -159,6 +169,26 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     return this;
 
+};
+
+// Move a data layer up relative to others by z-index
+LocusZoom.DataLayer.prototype.moveUp = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
+};
+
+// Move a data layer down relative to others by z-index
+LocusZoom.DataLayer.prototype.moveDown = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
 };
 
 // Resolve a scalable parameter for an element into a single value based on its layout and the element's data
@@ -599,11 +629,14 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
         }.bind(this));
         this.state[this.state_id][status] = [];
     }
-    
+
+    // Update global status flag
+    this.global_statuses[status] = toggle;
+
     return this;
 };
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, dimmed, hidden...)
+// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, faded, hidden...)
 LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
 
     // Glossary for this function:

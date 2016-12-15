@@ -53,7 +53,7 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4px; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-dimmed {
+  svg.lz-locuszoom path.lz-data_layer-scatter-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1; }
   svg.lz-locuszoom path.lz-data_layer-scatter-hidden {
@@ -67,14 +67,19 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-line {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 1px;
+    stroke-opacity: 1;
     cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-line-faded {
+    stroke-opacity: 0.2; }
+  svg.lz-locuszoom path.lz-data_layer-line-hidden {
+    display: none; }
   svg.lz-locuszoom path.lz-data_layer-line-hitarea {
     fill: none;
     stroke: none;
     cursor: pointer; }
   svg.lz-locuszoom g.lz-data_layer-genes {
     cursor: pointer; }
-  svg.lz-locuszoom g.lz-data_layer-genes-dimmed {
+  svg.lz-locuszoom g.lz-data_layer-genes-faded {
     opacity: 0.1; }
   svg.lz-locuszoom g.lz-data_layer-genes-hidden {
     display: none; }
@@ -103,7 +108,7 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px;
     fill: #000099; }
-  svg.lz-locuszoom g.lz-data_layer-intervals-dimmed {
+  svg.lz-locuszoom g.lz-data_layer-intervals-faded {
     opacity: 0.1; }
   svg.lz-locuszoom g.lz-data_layer-intervals-hidden {
     display: none; }
@@ -134,7 +139,7 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-forest-selected {
     stroke: rgba(24, 24, 24, 1);
     stroke-width: 4px; }
-  svg.lz-locuszoom path.lz-data_layer-forest-dimmed {
+  svg.lz-locuszoom path.lz-data_layer-forest-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1; }
   svg.lz-locuszoom path.lz-data_layer-forest-hidden {
@@ -387,6 +392,14 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     box-sizing: border-box;
     align-items: flex-start;
     text-align: center; }
+  .lz-plot-dashboard .lz-dashboard-button-group-start {
+    border-radius: 4px 0px 0px 4px !important; }
+  .lz-plot-dashboard .lz-dashboard-button-group-middle {
+    border-radius: 0px !important;
+    border-left-width: 0px !important; }
+  .lz-plot-dashboard .lz-dashboard-button-group-end {
+    border-radius: 0px 4px 4px 0px !important;
+    border-left-width: 0px !important; }
 
 .lz-plot-dashboard > .lz-dashboard-left {
   float: left;
@@ -395,6 +408,16 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
 .lz-plot-dashboard > .lz-dashboard-right {
   float: right;
   margin-left: 1.5em; }
+
+.lz-plot-dashboard > .lz-dashboard-group-start {
+  margin-right: 0em !important; }
+
+.lz-plot-dashboard > .lz-dashboard-group-middle {
+  margin-left: 0em !important;
+  margin-right: 0em !important; }
+
+.lz-plot-dashboard > .lz-dashboard-group-end {
+  margin-left: 0em !important; }
 
 .lz-panel-dashboard {
   padding-left: 2px;
@@ -414,6 +437,14 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
     box-sizing: border-box;
     align-items: flex-start;
     text-align: center; }
+  .lz-panel-dashboard .lz-dashboard-button-group-start {
+    border-radius: 3px 0px 0px 3px !important; }
+  .lz-panel-dashboard .lz-dashboard-button-group-middle {
+    border-radius: 0px !important;
+    border-left-width: 0px !important; }
+  .lz-panel-dashboard .lz-dashboard-button-group-end {
+    border-radius: 0px 3px 3px 0px !important;
+    border-left-width: 0px !important; }
 
 .lz-panel-dashboard > .lz-dashboard-left {
   float: left;
@@ -478,15 +509,23 @@ div.lz-dashboard-menu {
       box-sizing: border-box;
       align-items: flex-start;
       text-align: center; }
+    div.lz-dashboard-menu .lz-dashboard-menu-content .lz-dashboard-button-group-start {
+      border-radius: 3px 0px 0px 3px !important; }
+    div.lz-dashboard-menu .lz-dashboard-menu-content .lz-dashboard-button-group-middle {
+      border-radius: 0px !important;
+      border-left-width: 0px !important; }
+    div.lz-dashboard-menu .lz-dashboard-menu-content .lz-dashboard-button-group-end {
+      border-radius: 0px 3px 3px 0px !important;
+      border-left-width: 0px !important; }
   div.lz-dashboard-menu table {
     display: table;
-    border-collapse: separate;
+    border-collapse: collapse;
     border-spacing: 0px;
     margin-bottom: 0.4em;
     width: 100%; }
   div.lz-dashboard-menu th:first-child, div.lz-dashboard-menu td:first-child {
     vertical-align: top; }
-  div.lz-dashboard-menu tr:nth-child(2) {
+  div.lz-dashboard-menu tr:nth-child(even) {
     background-color: rgba(0, 0, 0, 0.08); }
   div.lz-dashboard-menu th, div.lz-dashboard-menu td {
     padding: 4px;

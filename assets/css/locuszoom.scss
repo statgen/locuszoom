@@ -91,7 +91,7 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
-  path.#{$namespace}-data_layer-scatter-dimmed {
+  path.#{$namespace}-data_layer-scatter-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1;
   }
@@ -113,7 +113,16 @@ svg.#{$namespace}-locuszoom {
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
     stroke-width: 1px;
+    stroke-opacity: 1;
     cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-line-faded {
+    stroke-opacity: 0.2;
+  }
+
+  path.#{$namespace}-data_layer-line-hidden {
+    display: none;
   }
 
   path.#{$namespace}-data_layer-line-hitarea {
@@ -126,7 +135,7 @@ svg.#{$namespace}-locuszoom {
     cursor: pointer;
   }
 
-  g.#{$namespace}-data_layer-genes-dimmed {
+  g.#{$namespace}-data_layer-genes-faded {
     opacity: 0.1;
   }
 
@@ -171,7 +180,7 @@ svg.#{$namespace}-locuszoom {
     fill: #000099;
   }
 
-  g.#{$namespace}-data_layer-intervals-dimmed {
+  g.#{$namespace}-data_layer-intervals-faded {
     opacity: 0.1;
   }
 
@@ -220,7 +229,7 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 4px;
   }
 
-  path.#{$namespace}-data_layer-forest-dimmed {
+  path.#{$namespace}-data_layer-forest-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1;
   }
@@ -522,7 +531,11 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     align-items: flex-start;
     text-align: center;
   }
-
+  
+  .#{$namespace}-dashboard-button-group-start { border-radius: 4px 0px 0px 4px !important; }
+  .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-dashboard-button-group-end { border-radius: 0px 4px 4px 0px !important; border-left-width: 0px !important; }
+  
 }
 
 .#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
@@ -533,6 +546,19 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 .#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-right {
   float: right;
   margin-left: 1.5em;
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-start {
+  margin-right: 0em !important;
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-middle {
+  margin-left: 0em !important;
+  margin-right: 0em !important;
+}
+
+.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-end {
+  margin-left: 0em !important;
 }
 
 .#{$namespace}-panel-dashboard {
@@ -556,6 +582,10 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     text-align: center;
   }
 
+  .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+  .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-dashboard-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+  
 }
 
 .#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-left {
@@ -631,11 +661,15 @@ div.#{$namespace}-dashboard-menu {
       text-align: center;
     }
 
+    .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+    .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+    .#{$namespace}-dashboard-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+
   }
 
   table {
     display: table;
-    border-collapse: separate;
+    border-collapse: collapse;
     border-spacing: 0px;
     margin-bottom: 0.4em;
     width: 100%;
@@ -643,7 +677,7 @@ div.#{$namespace}-dashboard-menu {
   th:first-child, td:first-child {
     vertical-align: top;
   }
-  tr:nth-child(2) {
+  tr:nth-child(even) {
     background-color: rgba(0,0,0,0.08);
   }
   th, td {

@@ -206,7 +206,7 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
  Data Layer Layouts
 */
 
-LocusZoom.Layouts.add("data_layer", "signifigance", {
+LocusZoom.Layouts.add("data_layer", "significance", {
     namespace: { "sig": "sig" },
     id: "significance",
     type: "line",
@@ -470,15 +470,19 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
         {
             type: "remove_panel",
             position: "right",
-            color: "red"
+            color: "red",
+            group_position: "end"
         },
         {
             type: "move_panel_up",
-            position: "right"
+            position: "right",
+            group_position: "middle"
         },
         {
             type: "move_panel_down",
-            position: "right"
+            position: "right",
+            group_position: "start",
+            style: { "margin-left": "0.75em" }
         }
     ]
 });                 
@@ -511,10 +515,52 @@ covariates_model_plot_dashboard.components.push({
     type: "covariates_model",
     button_html: "Model",
     button_title: "Show and edit covariates currently in model",
-    position: "left",
-    color: "purple"
+    position: "left"
 });
 LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plot_dashboard);
+
+var region_nav_plot_dashboard = LocusZoom.Layouts.get("dashboard", "standard_plot");
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: 500000,
+    button_html: ">>",
+    position: "right",
+    group_position: "end"
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: 50000,
+    button_html: ">",
+    position: "right",
+    group_position: "middle"
+});
+region_nav_plot_dashboard.components.push({
+    type: "zoom_region",
+    step: 0.2,
+    position: "right",
+    group_position: "middle"
+});
+region_nav_plot_dashboard.components.push({
+    type: "zoom_region",
+    step: -0.2,
+    position: "right",
+    group_position: "middle"
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: -50000,
+    button_html: "<",
+    position: "right",
+    group_position: "middle"
+});
+region_nav_plot_dashboard.components.push({
+    type: "shift_region",
+    step: -500000,
+    button_html: "<<",
+    position: "right",
+    group_position: "start"
+});
+LocusZoom.Layouts.add("dashboard", "region_nav_plot", region_nav_plot_dashboard);
 
 /**
  Panel Layouts
@@ -522,7 +568,6 @@ LocusZoom.Layouts.add("dashboard", "covariates_model_plot", covariates_model_plo
 
 LocusZoom.Layouts.add("panel", "association", {
     id: "association",
-    title: "",
     width: 800,
     height: 225,
     min_width:  400,
@@ -534,14 +579,13 @@ LocusZoom.Layouts.add("panel", "association", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "toggle_legend",
-            position: "right",
-            color: "green"
+            position: "right"
         });
         return l;
     })(),
     axes: {
         x: {
-            label_function: "chromosome",
+            label: "Chromosome {{chr}} (Mb)",
             label_offset: 32,
             tick_format: "region",
             extent: "state"
@@ -569,7 +613,7 @@ LocusZoom.Layouts.add("panel", "association", {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "signifigance", { unnamespaced: true }),
+        LocusZoom.Layouts.get("data_layer", "significance", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "recomb_rate", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "association_pvalues", { unnamespaced: true })
     ]
@@ -593,8 +637,7 @@ LocusZoom.Layouts.add("panel", "genes", {
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
             type: "resize_to_data",
-            position: "right",
-            color: "blue"
+            position: "right"
         });
         return l;
     })(),   
@@ -810,7 +853,7 @@ LocusZoom.Layouts.add("panel", "phewas", {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "signifigance", { unnamespaced: true }),
+        LocusZoom.Layouts.get("data_layer", "significance", { unnamespaced: true }),
         LocusZoom.Layouts.get("data_layer", "phewas_pvalues", { unnamespaced: true })
     ]
 });
@@ -1091,8 +1134,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
         l.components.push({
             type: "toggle_split_tracks",
             data_layer_id: "intervals",
-            position: "right",
-            color: "orange"
+            position: "right"
         });
         return l;
     })(),
@@ -1150,7 +1192,7 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
             margin: { bottom: 40 },
             axes: {
                 x: {
-                    label_function: "chromosome",
+                    label: "Chromosome {{chr}} (Mb)",
                     label_offset: 32,
                     tick_format: "region",
                     extent: "state"

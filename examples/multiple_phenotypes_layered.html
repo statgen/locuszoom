@@ -74,10 +74,16 @@
     // Build the base layout
     var association_panel_mods = {
         data_layers: [
-            LocusZoom.Layouts.get("data_layer", "signifigance", { namespace: { "sig": "sig" } }),
-            LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" } })
-        ]
+            LocusZoom.Layouts.get("data_layer", "significance", { namespace: { "sig": "sig" }, name: "Line of GWAS Significance" }),
+            LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" }, name: "Recombination Rate" })
+        ],
+        dashboard: LocusZoom.Layouts.get("panel", "association")["dashboard"]
     };
+    association_panel_mods.dashboard.components.push({
+        type: "data_layers",
+        position: "right",
+        statuses: ["faded", "hidden"]
+    });
     layout = {
         width: 800,
         height: 500,
@@ -85,7 +91,8 @@
         panels: [
             LocusZoom.Layouts.get("panel", "association", association_panel_mods),
             LocusZoom.Layouts.get("panel", "genes", { namespace: { "gene": "gene" } })
-        ]
+        ],
+        dashboard: LocusZoom.Layouts.get("dashboard","region_nav_plot")
     };
 
     // Define a set of studies/phenotypes and loop through them to add a data source and data layer for each one
@@ -100,6 +107,7 @@
         var association_data_layer_mods = {
             namespace: { "assoc": pheno.namespace },
             id: "associationpvalues_" + pheno.namespace,
+            name: pheno.title,
             point_shape: "circle",
             point_size: 40,
             color: pheno.color,
@@ -115,7 +123,6 @@
                     + "<strong>{{" + pheno.namespace + ":variant}}</strong><br>"
                     + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation}}</strong><br>"
                     + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele}}</strong><br>"
-                    + "<a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).dimAllElements()\">Dim this layer</a> | <a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).undimAllElements()\">Un-dim this layer</a>"
             }
         };
         layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));
