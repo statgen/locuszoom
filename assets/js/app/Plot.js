@@ -385,6 +385,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
+    this.applyPanelYIndexesToPanelLayouts();
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
