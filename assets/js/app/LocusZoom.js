@@ -24,6 +24,7 @@ LocusZoom.populate = function(selector, datasource, layout) {
         }
         // Create the plot
         plot = new LocusZoom.Plot(this.node().id, datasource, layout);
+        plot.container = this.node();
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);

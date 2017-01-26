@@ -659,6 +659,10 @@ div.#{$namespace}-dashboard-menu {
       box-sizing: border-box;
       align-items: flex-start;
       text-align: center;
+      font-weight: 300;
+      letter-spacing: 0;
+      text-transform: none;
+      margin: 0;
     }
 
     .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
@@ -677,13 +681,15 @@ div.#{$namespace}-dashboard-menu {
   th:first-child, td:first-child {
     vertical-align: top;
   }
-  tr:nth-child(even) {
+  tr:nth-child(odd) {
     background-color: rgba(0,0,0,0.08);
   }
   th, td {
     padding: 4px;
     text-align: left;
     vertical-align: middle;
+    border: none;
+    line-height: 1;
   }
 }
 
