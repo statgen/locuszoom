@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.2"
+    version: "0.5.3"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -67,6 +67,7 @@ LocusZoom.populate = function(selector, datasource, layout) {
         }
         // Create the plot
         plot = new LocusZoom.Plot(this.node().id, datasource, layout);
+        plot.container = this.node();
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
@@ -5358,6 +5359,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var scrollbar_padding = 20;
             var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
             var page_origin = this.parent_svg.getPageOrigin();
+            var page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
+            var container_offset = this.parent_plot.getContainerOffset();
             var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
             var button_client_rect = this.selector.node().getBoundingClientRect();
             var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
@@ -5367,8 +5370,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                 top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
                 left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
             } else {
-                top = (button_client_rect.bottom + padding);
-                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width, page_origin.x + padding);
+                top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
+                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
             }
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
             var container_max_width = base_max_width;
@@ -6728,6 +6731,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
 
     this.id = id;
     
+    this.container = null;
     this.svg = null;
 
     this.panels = {};
@@ -6812,6 +6816,18 @@ LocusZoom.Plot = function(id, datasource, layout) {
             width: bounding_client_rect.width,
             height: bounding_client_rect.height
         };
+    };
+
+    // Get the top and left offset values for the plot's container element (the div that was populated)
+    this.getContainerOffset = function(){
+        var offset = { top: 0, left: 0 };
+        var container = this.container.offsetParent || null;
+        while (container != null){
+            offset.top += container.offsetTop;
+            offset.left += container.offsetLeft;
+            container = container.offsetParent || null;
+        }
+        return offset;
     };
 
     // Event information describing interaction (e.g. panning and zooming) is stored on the plot
@@ -7093,6 +7109,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
+    this.applyPanelYIndexesToPanelLayouts();
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
@@ -7189,7 +7206,7 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // Ensure proper responsive class is present on the containing node if called for
     if (this.layout.responsive_resize){
-        d3.select(this.svg.node().parentNode).classed("lz-container-responsive", true);
+        d3.select(this.container).classed("lz-container-responsive", true);
     }
     
     // Create an element/layer for containing mouse guides

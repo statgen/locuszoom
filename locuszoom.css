@@ -508,7 +508,11 @@ div.lz-dashboard-menu {
       cursor: pointer;
       box-sizing: border-box;
       align-items: flex-start;
-      text-align: center; }
+      text-align: center;
+      font-weight: 300;
+      letter-spacing: 0;
+      text-transform: none;
+      margin: 0; }
     div.lz-dashboard-menu .lz-dashboard-menu-content .lz-dashboard-button-group-start {
       border-radius: 3px 0px 0px 3px !important; }
     div.lz-dashboard-menu .lz-dashboard-menu-content .lz-dashboard-button-group-middle {
@@ -525,12 +529,14 @@ div.lz-dashboard-menu {
     width: 100%; }
   div.lz-dashboard-menu th:first-child, div.lz-dashboard-menu td:first-child {
     vertical-align: top; }
-  div.lz-dashboard-menu tr:nth-child(even) {
+  div.lz-dashboard-menu tr:nth-child(odd) {
     background-color: rgba(0, 0, 0, 0.08); }
   div.lz-dashboard-menu th, div.lz-dashboard-menu td {
     padding: 4px;
     text-align: left;
-    vertical-align: middle; }
+    vertical-align: middle;
+    border: none;
+    line-height: 1; }
 
 .lz-dashboard-button-gray {
   background-color: rgba(216, 216, 216, 0.6);

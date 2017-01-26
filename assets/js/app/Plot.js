@@ -20,6 +20,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
 
     this.id = id;
     
+    this.container = null;
     this.svg = null;
 
     this.panels = {};
@@ -104,6 +105,18 @@ LocusZoom.Plot = function(id, datasource, layout) {
             width: bounding_client_rect.width,
             height: bounding_client_rect.height
         };
+    };
+
+    // Get the top and left offset values for the plot's container element (the div that was populated)
+    this.getContainerOffset = function(){
+        var offset = { top: 0, left: 0 };
+        var container = this.container.offsetParent || null;
+        while (container != null){
+            offset.top += container.offsetTop;
+            offset.left += container.offsetLeft;
+            container = container.offsetParent || null;
+        }
+        return offset;
     };
 
     // Event information describing interaction (e.g. panning and zooming) is stored on the plot
@@ -385,6 +398,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
     // Remove the panel id from the y_index array
     this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
+    this.applyPanelYIndexesToPanelLayouts();
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
@@ -481,7 +495,7 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // Ensure proper responsive class is present on the containing node if called for
     if (this.layout.responsive_resize){
-        d3.select(this.svg.node().parentNode).classed("lz-container-responsive", true);
+        d3.select(this.container).classed("lz-container-responsive", true);
     }
     
     // Create an element/layer for containing mouse guides
