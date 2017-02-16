@@ -1734,7 +1734,7 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, proportional_height: 0.5 }),
@@ -1776,7 +1776,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     height: 550,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
