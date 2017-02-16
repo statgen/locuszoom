@@ -106,8 +106,7 @@
         });
 
         var data_sources = new LocusZoom.DataSources()
-        .add("base", ["StaticJSON", phewas])
-        .add("zeroline", ["StaticJSON", [{ x: 0, y: 0 }, { x: 0, y: 800 }]]);
+          .add("base", ["StaticJSON", phewas]);
 
         var layout = {
             width: 800,
@@ -204,22 +203,10 @@
                         },
                         {
                             id: "zeroline",
-                            type: "line",
+                            type: "orthogonal_line",
                             z_index: 0,
-                            fields: ["zeroline:x", "zeroline:y"],
-                            style: {
-                                "stroke": "#D3D3D3",
-                                "stroke-width": "2px",
-                                "stroke-dasharray": "4px 4px"
-                            },
-                            x_axis: {
-                                field: "zeroline:x",
-                                decoupled: true
-                            },
-                            y_axis: {
-                                axis: 1,
-                                field: "zeroline:y"
-                            }
+                            orientation: "vertical",
+                            offset: 0
                         }
                     ]
                 }

@@ -207,24 +207,10 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
 */
 
 LocusZoom.Layouts.add("data_layer", "significance", {
-    namespace: { "sig": "sig" },
     id: "significance",
-    type: "line",
-    fields: ["{{namespace[sig]}}x", "{{namespace[sig]}}y"],
-    z_index: 0,
-    style: {
-        "stroke": "#D3D3D3",
-        "stroke-width": "3px",
-        "stroke-dasharray": "10px 10px"
-    },
-    x_axis: {
-        field: "{{namespace[sig]}}x",
-        decoupled: true
-    },
-    y_axis: {
-        axis: 1,
-        field: "{{namespace[sig]}}y"
-    }
+    type: "orthogonal_line",
+    orientation: "horizontal",
+    offset: 4.522
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
