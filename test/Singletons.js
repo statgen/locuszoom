@@ -71,6 +71,7 @@ describe("LocusZoom Singletons", function(){
         });
         describe("neglog10", function() {
             var tests = [
+                { arg: 0,         expected: "zero" },
                 { arg: 1,         expected: 0 },
                 { arg: 10,        expected: -1 },
                 { arg: 0.001,     expected: 2.9999999999999996 },
@@ -84,6 +85,7 @@ describe("LocusZoom Singletons", function(){
         });
         describe("scinotation", function() {
             var tests = [
+                { arg: 0,               expected: "zero" },
                 { arg: 1,               expected: "1.000" },
                 { arg: 0.0562435,       expected: "0.056" },
                 { arg: 14000,           expected: "1.40 × 10^4" },
