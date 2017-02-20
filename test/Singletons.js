@@ -71,7 +71,9 @@ describe("LocusZoom Singletons", function(){
         });
         describe("neglog10", function() {
             var tests = [
-                { arg: 0,         expected: "zero" },
+                { arg: 0,         expected: null },
+                { arg: -0.001,    expected: null },
+                { arg: "foo",     expected: null },
                 { arg: 1,         expected: 0 },
                 { arg: 10,        expected: -1 },
                 { arg: 0.001,     expected: 2.9999999999999996 },
@@ -85,11 +87,12 @@ describe("LocusZoom Singletons", function(){
         });
         describe("scinotation", function() {
             var tests = [
-                { arg: 0,               expected: "zero" },
+                { arg: 0,               expected: "0" },
                 { arg: 1,               expected: "1.000" },
                 { arg: 0.0562435,       expected: "0.056" },
                 { arg: 14000,           expected: "1.40 × 10^4" },
-                { arg: 0.0000002436246, expected: "2.44 × 10^-7" }
+                { arg: 0.0000002436246, expected: "2.44 × 10^-7" },
+                { arg: "foo",           expected: "NaN" }
             ];
             tests.forEach(function(test) {
                 it("should return correct scientific notation for " + test.arg, function() {
