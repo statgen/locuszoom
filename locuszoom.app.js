@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.3"
+    version: "0.5.4"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -775,24 +775,10 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
 */
 
 LocusZoom.Layouts.add("data_layer", "significance", {
-    namespace: { "sig": "sig" },
     id: "significance",
-    type: "line",
-    fields: ["{{namespace[sig]}}x", "{{namespace[sig]}}y"],
-    z_index: 0,
-    style: {
-        "stroke": "#D3D3D3",
-        "stroke-width": "3px",
-        "stroke-dasharray": "10px 10px"
-    },
-    x_axis: {
-        field: "{{namespace[sig]}}x",
-        decoupled: true
-    },
-    y_axis: {
-        axis: 1,
-        field: "{{namespace[sig]}}y"
-    }
+    type: "orthogonal_line",
+    orientation: "horizontal",
+    offset: 4.522
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
@@ -879,13 +865,19 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
@@ -911,23 +903,30 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         scale_function: "categorical_bin",
         parameters: {
             categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
-            values: ["rgba(57,59,121,0.7)", "rgba(82,84,163,0.7)", "rgba(107,110,207,0.7)", "rgba(156,158,222,0.7)", "rgba(99,121,57,0.7)", "rgba(140,162,82,0.7)", "rgba(181,207,107,0.7)", "rgba(140,109,49,0.7)", "rgba(189,158,57,0.7)", "rgba(231,186,82,0.7)", "rgba(132,60,57,0.7)", "rgba(173,73,74,0.7)", "rgba(214,97,107,0.7)", "rgba(231,150,156,0.7)", "rgba(123,65,115,0.7)", "rgba(165,81,148,0.7)", "rgba(206,109,189,0.7)", "rgba(222,158,214,0.7)"],
+            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
             null_value: "#B8B8B8"
         }
     },
+    fill_opacity: 0.7,
     tooltip: {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
         html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     label: {
         text: "{{{{namespace}}phewas_string}}",
@@ -960,13 +959,19 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     type: "genes",
     fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
     id_field: "gene_id",
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes", { unnamespaced: true })
 });
@@ -1016,14 +1021,20 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         { shape: "rect", color: "rgb(136,240,129)", width: 9, label: "Weak transcribed", "{{namespace[intervals]}}state_id": 11 },
         { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "{{namespace[intervals]}}state_id": 12 },
         { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "{{namespace[intervals]}}state_id": 13 }
-    ],    
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    ],
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
@@ -1142,7 +1153,7 @@ LocusZoom.Layouts.add("panel", "association", {
     min_height: 200,
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
@@ -1222,7 +1233,7 @@ LocusZoom.Layouts.add("panel", "phewas", {
     min_height: 300,
     proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
             ticks: [
@@ -1734,7 +1745,7 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, proportional_height: 0.5 }),
@@ -1776,7 +1787,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     height: 550,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
@@ -2423,94 +2434,80 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     return this;
 };
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, faded, hidden...)
-LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
-
-    // Glossary for this function:
-    // status - an element property that can be tied to mouse behavior (e.g. highighted, selected)
-    // event - a mouse event that can be bound to a watch function (e.g. "mouseover", "click")
-    // action - a more verbose locuszoom-layout-specific form of an event (e.g. "onmouseover", "onshiftclick")
-
-    // Sanity checks
-    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){ return; }
-    if (typeof selection != "object"){ return; }
-    if (typeof this.layout[status] != "object" || !this.layout[status]){ return; }
-
-    // Map of supported d3 events and the locuszoom layout events they map to
-    var event_directive_map = {
-        "mouseover": ["onmouseover", "onctrlmouseover", "onshiftmouseover", "onctrlshiftmouseover"],
-        "mouseout": ["onmouseout"],
-        "click": ["onclick", "onctrlclick", "onshiftclick", "onctrlshiftclick"]
-    };
-
-    // General function to process mouse events and layout directives into discrete element status update calls
-    var handleElementStatusEvent = function(status, event, element){
-        var status_boolean = null;
-        var ctrl = d3.event.ctrlKey;
-        var shift = d3.event.shiftKey;
-        if (!event_directive_map[event]){ return; }
-        // Determine the directive by building the action string to use. Default down to basic actions
-        // if more precise actions are not defined (e.g. if onclick is defined and onshiftclick is not,
-        // but this click event happened with the shift key pressed, just treat it as a regular click)
-        var base_action = "on" + event;
-        var precise_action = "on" + (ctrl ? "ctrl" : "") + (shift ? "shift" : "") + event;
-        var directive = this.layout[status][precise_action] || this.layout[status][base_action] || null;
-        if (!directive){ return; }
-        // Resolve the value of the status boolean from the directive and the element's current status
-        switch (directive){
-        case "on":
-            status_boolean = true;
-            break;
-        case "off":
-            status_boolean = false;
-            break;
-        case "toggle":
-        case "toggle_exclusive":
-            status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
-            break;
-        }
-        if (status_boolean == null){ return; }
-        // Special handling for toggle_exclusive - if the new status_boolean is true then first set the
-        // status to off for all other elements
-        if (status_boolean && directive == "toggle_exclusive"){
-            this.setAllElementStatus(status, false);
-        }
-        // Apply the new status
-        this.setElementStatus(status, element, status_boolean);
-        // Trigger event emitters as needed
-        if (event == "click"){
-            this.parent.emit("element_clicked", element);
-            this.parent_plot.emit("element_clicked", element);
-        }
-    }.bind(this);
-    
-    // Determine which bindings to set up
-    var events_to_bind = {};
-    Object.keys(event_directive_map).forEach(function(event){ events_to_bind[event] = false; });
-    Object.keys(this.layout[status]).forEach(function(action){
-        Object.keys(event_directive_map).forEach(function(event){
-            if (event_directive_map[event].indexOf(action) != -1){ events_to_bind[event] = true; }
-        });
-    });
-
-    // Set up the bindings
-    Object.keys(events_to_bind).forEach(function(event){
-        if (!events_to_bind[event]){ return; }
-        selection.on(event, function(element){
-            handleElementStatusEvent(status, event, element);
-        }.bind(this));
+// Apply all layout-defined behaviors to a selection of elements with event handlers
+LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
+    if (typeof this.layout.behaviors != "object"){ return; }
+    Object.keys(this.layout.behaviors).forEach(function(directive){
+        var event_match = /(click|mouseover|mouseout)/.exec(directive);
+        if (!event_match){ return; }
+        selection.on(event_match[0] + "." + directive, this.executeBehaviors(directive, this.layout.behaviors[directive]));
     }.bind(this));
-
-    return this;
-
 };
 
-// Apply all supported status behaviors to a selection of objects
-LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
-    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-        this.applyStatusBehavior(status, selection);
-    }.bind(this));
-    return this;
+// Generate a function that executes the an arbitrary list of behaviors on an element during an event
+LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) {
+
+    // Determine the required state of control and shift keys during the event
+    var requiredKeyStates = {
+        "ctrl": (directive.indexOf("ctrl") != -1),
+        "shift": (directive.indexOf("shift") != -1)
+    };
+
+    // Return a function that handles the event in context with the behavior and the element
+    return function(element){
+
+        // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
+        if (requiredKeyStates.ctrl != !!d3.event.ctrlKey || requiredKeyStates.shift != !!d3.event.shiftKey){ return; }
+
+        // Loop through behaviors making each one go in succession
+        behaviors.forEach(function(behavior){
+            
+            // Route first by the action, if defined
+            if (typeof behavior != "object" || behavior == null){ return; }
+            
+            switch (behavior.action){
+                
+            // Set a status (set to true regardless of current status, optionally with exclusivity)
+            case "set":
+                this.setElementStatus(behavior.status, element, true, behavior.exclusive);
+                break;
+                
+            // Unset a status (set to false regardless of current status, optionally with exclusivity)
+            case "unset":
+                this.setElementStatus(behavior.status, element, false, behavior.exclusive);
+                break;
+                
+            // Toggle a status
+            case "toggle":
+                var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) != -1);
+                var exclusive = behavior.exclusive && !current_status_boolean;
+                this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
+                break;
+                
+            // Link to a dynamic URL
+            case "link":
+                if (typeof behavior.href == "string"){
+                    var url = LocusZoom.parseFields(element, behavior.href);
+                    if (typeof behavior.target == "string"){
+                        window.open(url, behavior.target);
+                    } else {
+                        window.location.href = url;
+                    }
+                }
+                break;
+                
+            // Action not defined, just return
+            default:
+                break;
+                
+            }
+            
+            return;
+            
+        }.bind(this));
+
+    }.bind(this);
+
 };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -2672,6 +2669,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 1
         },
@@ -3030,6 +3028,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -3044,11 +3043,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
@@ -3056,13 +3057,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         selection.exit().remove();
 
         // Apply default event emitters to selection
-        selection.on("click", function(element){
+        selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element);
             this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
+        // Apply mouse behaviors
+        this.applyBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
@@ -3368,6 +3369,118 @@ LocusZoom.DataLayers.add("line", function(layout){
         this.parent_plot.emit("layout_changed");
         
         return this;
+    };
+
+    return this;
+
+});
+
+
+/***************************
+  Orthogonal Line Data Layer
+  Implements a horizontal or vertical line given an orientation and an offset in the layout
+  Does not require a data source
+*/
+
+LocusZoom.DataLayers.add("orthogonal_line", function(layout){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        style: {
+            "stroke": "#D3D3D3",
+            "stroke-width": "3px",
+            "stroke-dasharray": "10px 10px"
+        },
+        orientation: "horizontal",
+        x_axis: {
+            axis: 1,
+            decoupled: true
+        },
+        y_axis: {
+            axis: 1,
+            decoupled: true
+        },
+        offset: 0
+    };
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+
+    // Require that orientation be "horizontal" or "vertical" only
+    if (["horizontal","vertical"].indexOf(layout.orientation) == -1){
+        layout.orientation = "horizontal";
+    }
+
+    // Vars for storing the data generated line
+    this.data = [];
+    this.line = null;
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Implement the main render function
+    this.render = function(){
+
+        // Several vars needed to be in scope
+        var data_layer = this;
+        var panel = this.parent;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var x_extent = "x_extent";
+        var y_extent = "y" + this.layout.y_axis.axis + "_extent";
+        var x_range = "x_range";
+        var y_range = "y" + this.layout.y_axis.axis + "_range";
+
+        // Generate data using extents depending on orientation
+        if (this.layout.orientation == "horizontal"){
+            this.data = [
+                { x: panel[x_extent][0], y: this.layout.offset },
+                { x: panel[x_extent][1], y: this.layout.offset }
+            ];
+        } else {
+            this.data = [
+                { x: this.layout.offset, y: panel[y_extent][0] },
+                { x: this.layout.offset, y: panel[y_extent][1] }
+            ];
+        }
+
+        // Join data to the line selection
+        var selection = this.svg.group
+            .selectAll("path.lz-data_layer-line")
+            .data([this.data]);
+
+        // Create path element, apply class
+        this.path = selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-line");
+
+        // Generate the line
+        this.line = d3.svg.line()
+            .x(function(d, i) {
+                var x = parseFloat(panel[x_scale](d["x"]));
+                return isNaN(x) ? panel[x_range][i] : x;
+            })
+            .y(function(d, i) {
+                var y = parseFloat(panel[y_scale](d["y"]));
+                return isNaN(y) ? panel[y_range][i] : y;
+            })
+            .interpolate("linear");
+
+        // Apply line and style
+        if (this.canTransition()){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("d", this.line)
+                .style(this.layout.style);
+        } else {
+            selection
+                .attr("d", this.line)
+                .style(this.layout.style);
+        }
+
+        // Remove old elements as needed
+        selection.exit().remove();
+        
     };
 
     return this;
@@ -3764,13 +3877,13 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 clickareas.exit().remove();
 
                 // Apply default event emitters to clickareas
-                clickareas.on("click", function(element){
-                    this.parent.emit("element_clicked", element);
-                    this.parent_plot.emit("element_clicked", element);
-                }.bind(this));
+                clickareas.on("click.event_emitter", function(element){
+                    element.parent.parent.emit("element_clicked", element);
+                    element.parent.parent_plot.emit("element_clicked", element);
+                });
 
-                // Apply selectable, tooltip, etc to clickareas
-                data_layer.applyAllStatusBehaviors(clickareas);
+                // Apply mouse behaviors to clickareas
+                data_layer.applyBehaviors(clickareas);
 
             });
 
@@ -3856,7 +3969,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         bounding_box_padding: 2,
         hover_element: "bounding_box",
         group_hover_elements_on_field: null,
-        always_hide_legend: false
+        always_hide_legend: false,
+        color: "#B8B8B8",
+        fill_opacity: 1
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -4077,7 +4192,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 };
                 fill = function(d){
                     return data_layer.resolveScalableParameter(data_layer.layout.color, d);
-                };                
+                };
+                fill_opacity = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                };
+                
                 
                 if (data_layer.canTransition()){
                     rects
@@ -4086,12 +4205,14 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 } else {
                     rects
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 }
                 
                 rects.exit().remove();
@@ -4142,12 +4263,12 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
-                    this.parent.emit("element_clicked", element);
-                    this.parent_plot.emit("element_clicked", element);
+                    element.parent.parent.emit("element_clicked", element);
+                    element.parent.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
-                // Apply selectable, tooltip, etc to clickareas
-                data_layer.applyAllStatusBehaviors(clickareas);
+                // Apply mouse behaviors to clickareas
+                data_layer.applyBehaviors(clickareas);
 
             });
 
@@ -4299,8 +4420,8 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         chromosome_fill_colors: {
-            light: "rgba(120, 120, 186, 0.5)",
-            dark: "rgba(0, 0, 66, 0.5)"
+            light: "rgb(155, 155, 188)",
+            dark: "rgb(95, 95, 128)"
         },
         chromosome_label_colors: {
             light: "rgb(120, 120, 186)",
@@ -4400,6 +4521,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         point_size: 40,
         point_shape: "square",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 2
         },
@@ -4542,6 +4664,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -4555,11 +4678,13 @@ LocusZoom.DataLayers.add("forest", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             points_selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
@@ -4567,13 +4692,13 @@ LocusZoom.DataLayers.add("forest", function(layout){
         points_selection.exit().remove();
 
         // Apply default event emitters to selection
-        points_selection.on("click", function(element){
+        points_selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element);
             this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(points_selection);
+        // Apply behaviors to points
+        this.applyBehaviors(points_selection);
         
     };
  
@@ -4756,10 +4881,13 @@ LocusZoom.TransformationFunctions = (function() {
 })();
 
 LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    if (isNaN(x) || x <= 0){ return null; }
     return -Math.log(x) / Math.LN10;
 });
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "1"; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
@@ -4773,6 +4901,8 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
 });
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "0"; }
     var log;
     if (Math.abs(x) > 1){
         log = Math.ceil(Math.log(x) / Math.LN10);
@@ -4784,6 +4914,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     } else {
         return x.toExponential(2).replace("+", "").replace("e", " × 10^");
     }
+});
+
+LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+    return encodeURIComponent(str);
 });
 
 

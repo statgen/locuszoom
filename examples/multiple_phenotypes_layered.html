@@ -67,14 +67,13 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
-      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 
     // Build the base layout
     var association_panel_mods = {
         data_layers: [
-            LocusZoom.Layouts.get("data_layer", "significance", { namespace: { "sig": "sig" }, name: "Line of GWAS Significance" }),
+            LocusZoom.Layouts.get("data_layer", "significance", { name: "Line of GWAS Significance" }),
             LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" }, name: "Recombination Rate" })
         ],
         dashboard: LocusZoom.Layouts.get("panel", "association")["dashboard"]

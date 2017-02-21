@@ -15,8 +15,8 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         chromosome_fill_colors: {
-            light: "rgba(120, 120, 186, 0.5)",
-            dark: "rgba(0, 0, 66, 0.5)"
+            light: "rgb(155, 155, 188)",
+            dark: "rgb(95, 95, 128)"
         },
         chromosome_label_colors: {
             light: "rgb(120, 120, 186)",

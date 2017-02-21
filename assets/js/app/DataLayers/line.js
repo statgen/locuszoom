@@ -275,3 +275,115 @@ LocusZoom.DataLayers.add("line", function(layout){
     return this;
 
 });
+
+
+/***************************
+  Orthogonal Line Data Layer
+  Implements a horizontal or vertical line given an orientation and an offset in the layout
+  Does not require a data source
+*/
+
+LocusZoom.DataLayers.add("orthogonal_line", function(layout){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        style: {
+            "stroke": "#D3D3D3",
+            "stroke-width": "3px",
+            "stroke-dasharray": "10px 10px"
+        },
+        orientation: "horizontal",
+        x_axis: {
+            axis: 1,
+            decoupled: true
+        },
+        y_axis: {
+            axis: 1,
+            decoupled: true
+        },
+        offset: 0
+    };
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+
+    // Require that orientation be "horizontal" or "vertical" only
+    if (["horizontal","vertical"].indexOf(layout.orientation) == -1){
+        layout.orientation = "horizontal";
+    }
+
+    // Vars for storing the data generated line
+    this.data = [];
+    this.line = null;
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Implement the main render function
+    this.render = function(){
+
+        // Several vars needed to be in scope
+        var data_layer = this;
+        var panel = this.parent;
+        var x_scale = "x_scale";
+        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var x_extent = "x_extent";
+        var y_extent = "y" + this.layout.y_axis.axis + "_extent";
+        var x_range = "x_range";
+        var y_range = "y" + this.layout.y_axis.axis + "_range";
+
+        // Generate data using extents depending on orientation
+        if (this.layout.orientation == "horizontal"){
+            this.data = [
+                { x: panel[x_extent][0], y: this.layout.offset },
+                { x: panel[x_extent][1], y: this.layout.offset }
+            ];
+        } else {
+            this.data = [
+                { x: this.layout.offset, y: panel[y_extent][0] },
+                { x: this.layout.offset, y: panel[y_extent][1] }
+            ];
+        }
+
+        // Join data to the line selection
+        var selection = this.svg.group
+            .selectAll("path.lz-data_layer-line")
+            .data([this.data]);
+
+        // Create path element, apply class
+        this.path = selection.enter()
+            .append("path")
+            .attr("class", "lz-data_layer-line");
+
+        // Generate the line
+        this.line = d3.svg.line()
+            .x(function(d, i) {
+                var x = parseFloat(panel[x_scale](d["x"]));
+                return isNaN(x) ? panel[x_range][i] : x;
+            })
+            .y(function(d, i) {
+                var y = parseFloat(panel[y_scale](d["y"]));
+                return isNaN(y) ? panel[y_range][i] : y;
+            })
+            .interpolate("linear");
+
+        // Apply line and style
+        if (this.canTransition()){
+            selection
+                .transition()
+                .duration(this.layout.transition.duration || 0)
+                .ease(this.layout.transition.ease || "cubic-in-out")
+                .attr("d", this.line)
+                .style(this.layout.style);
+        } else {
+            selection
+                .attr("d", this.line)
+                .style(this.layout.style);
+        }
+
+        // Remove old elements as needed
+        selection.exit().remove();
+        
+    };
+
+    return this;
+
+});

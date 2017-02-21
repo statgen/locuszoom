@@ -201,11 +201,11 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 
 ### Build System and Automated Testing
 
-The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary Gulp plug-ins can be installed for this project using npm and the following commands:
+The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary dev dependencies can be installed for this project from the top-level directory using the following commands:
 
 ```
-$ npm install gulp gulp-util gulp-watch gulp-concat gulp-uglify gulp-mocha gulp-sass gulp-wrap yargs
-$ npm install mocha should jsdom mocha-jsdom
+$ sudo npm install gulp-cli -g    # If you don't already have gulp-cli installed globally
+$ npm install
 ```
 
 Once complete run or `gulp` from the top of the application directory to run all tests and build the following files:

@@ -173,10 +173,13 @@ LocusZoom.TransformationFunctions = (function() {
 })();
 
 LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    if (isNaN(x) || x <= 0){ return null; }
     return -Math.log(x) / Math.LN10;
 });
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "1"; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
@@ -190,6 +193,8 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
 });
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "0"; }
     var log;
     if (Math.abs(x) > 1){
         log = Math.ceil(Math.log(x) / Math.LN10);
@@ -201,6 +206,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     } else {
         return x.toExponential(2).replace("+", "").replace("e", " × 10^");
     }
+});
+
+LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+    return encodeURIComponent(str);
 });
 
 

@@ -207,24 +207,10 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
 */
 
 LocusZoom.Layouts.add("data_layer", "significance", {
-    namespace: { "sig": "sig" },
     id: "significance",
-    type: "line",
-    fields: ["{{namespace[sig]}}x", "{{namespace[sig]}}y"],
-    z_index: 0,
-    style: {
-        "stroke": "#D3D3D3",
-        "stroke-width": "3px",
-        "stroke-dasharray": "10px 10px"
-    },
-    x_axis: {
-        field: "{{namespace[sig]}}x",
-        decoupled: true
-    },
-    y_axis: {
-        axis: 1,
-        field: "{{namespace[sig]}}y"
-    }
+    type: "orthogonal_line",
+    orientation: "horizontal",
+    offset: 4.522
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
@@ -311,13 +297,19 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
@@ -343,23 +335,30 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         scale_function: "categorical_bin",
         parameters: {
             categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
-            values: ["rgba(57,59,121,0.7)", "rgba(82,84,163,0.7)", "rgba(107,110,207,0.7)", "rgba(156,158,222,0.7)", "rgba(99,121,57,0.7)", "rgba(140,162,82,0.7)", "rgba(181,207,107,0.7)", "rgba(140,109,49,0.7)", "rgba(189,158,57,0.7)", "rgba(231,186,82,0.7)", "rgba(132,60,57,0.7)", "rgba(173,73,74,0.7)", "rgba(214,97,107,0.7)", "rgba(231,150,156,0.7)", "rgba(123,65,115,0.7)", "rgba(165,81,148,0.7)", "rgba(206,109,189,0.7)", "rgba(222,158,214,0.7)"],
+            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
             null_value: "#B8B8B8"
         }
     },
+    fill_opacity: 0.7,
     tooltip: {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
         html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     label: {
         text: "{{{{namespace}}phewas_string}}",
@@ -392,13 +391,19 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     type: "genes",
     fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
     id_field: "gene_id",
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes", { unnamespaced: true })
 });
@@ -448,14 +453,20 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         { shape: "rect", color: "rgb(136,240,129)", width: 9, label: "Weak transcribed", "{{namespace[intervals]}}state_id": 11 },
         { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "{{namespace[intervals]}}state_id": 12 },
         { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "{{namespace[intervals]}}state_id": 13 }
-    ],    
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    ],
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
@@ -574,7 +585,7 @@ LocusZoom.Layouts.add("panel", "association", {
     min_height: 200,
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
@@ -654,7 +665,7 @@ LocusZoom.Layouts.add("panel", "phewas", {
     min_height: 300,
     proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
             ticks: [
@@ -1166,7 +1177,7 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, proportional_height: 0.5 }),
@@ -1208,7 +1219,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     height: 550,
     responsive_resize: true,
     min_region_scale: 20000,
-    max_region_scale: 4000000,
+    max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
