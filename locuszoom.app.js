@@ -3064,12 +3064,14 @@ LocusZoom.DataLayers.add("scatter", function(layout){
        
         // Apply mouse behaviors
         this.applyBehaviors(selection);
-
+        
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
             this.flip_labels();
             this.seperate_iterations = 0;
             this.separate_labels();
+            // Extend mouse behaviors to labels
+            this.applyBehaviors(this.label_texts);
         }
         
     };
