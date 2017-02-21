@@ -24,7 +24,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         bounding_box_padding: 2,
         hover_element: "bounding_box",
         group_hover_elements_on_field: null,
-        always_hide_legend: false
+        always_hide_legend: false,
+        color: "#B8B8B8",
+        fill_opacity: 1
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -245,7 +247,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 };
                 fill = function(d){
                     return data_layer.resolveScalableParameter(data_layer.layout.color, d);
-                };                
+                };
+                fill_opacity = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                };
+                
                 
                 if (data_layer.canTransition()){
                     rects
@@ -254,12 +260,14 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 } else {
                     rects
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 }
                 
                 rects.exit().remove();

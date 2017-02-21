@@ -3969,7 +3969,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         bounding_box_padding: 2,
         hover_element: "bounding_box",
         group_hover_elements_on_field: null,
-        always_hide_legend: false
+        always_hide_legend: false,
+        color: "#B8B8B8",
+        fill_opacity: 1
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -4190,7 +4192,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 };
                 fill = function(d){
                     return data_layer.resolveScalableParameter(data_layer.layout.color, d);
-                };                
+                };
+                fill_opacity = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                };
+                
                 
                 if (data_layer.canTransition()){
                     rects
@@ -4199,12 +4205,14 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 } else {
                     rects
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 }
                 
                 rects.exit().remove();
@@ -4513,6 +4521,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         point_size: 40,
         point_shape: "square",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 2
         },
@@ -4655,6 +4664,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -4668,11 +4678,13 @@ LocusZoom.DataLayers.add("forest", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             points_selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
