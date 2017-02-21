@@ -16,6 +16,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 1
         },
@@ -374,6 +375,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -388,11 +390,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 

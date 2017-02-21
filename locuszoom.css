@@ -26,7 +26,8 @@ svg.lz-locuszoom {
   svg.lz-locuszoom .lz-axis path,
   svg.lz-locuszoom .lz-axis line {
     fill: none;
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     shape-rendering: crispEdges; }
   svg.lz-locuszoom .lz-axis .lz-label {
     font-size: 12px;
@@ -39,7 +40,8 @@ svg.lz-locuszoom {
   svg.lz-locuszoom .lz-legend-background {
     fill: whitesmoke;
     fill-opacity: 1;
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom path.lz-data_layer-scatter {
     stroke: rgb(24, 24, 24);
@@ -51,7 +53,8 @@ svg.lz-locuszoom {
     stroke-opacity: 0.4;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-selected {
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-scatter-faded {
     fill-opacity: 0.1;
@@ -59,15 +62,17 @@ svg.lz-locuszoom {
   svg.lz-locuszoom path.lz-data_layer-scatter-hidden {
     display: none; }
   svg.lz-locuszoom text.lz-data_layer-scatter-label {
-    fill: rgba(24, 24, 24, 1);
+    fill: rgb(24, 24, 24);
+    fill-opacity: 1;
     alignment-baseline: middle; }
   svg.lz-locuszoom line.lz-data_layer-scatter-label {
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom path.lz-data_layer-line {
-    stroke: rgba(24, 24, 24, 1);
-    stroke-width: 1px;
+    stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
+    stroke-width: 1px;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-line-faded {
     stroke-opacity: 0.2; }
@@ -96,7 +101,8 @@ svg.lz-locuszoom {
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-selected {
     fill: #363696;
     fill-opacity: 0.15;
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-boundary {
     stroke: #363696;
@@ -123,21 +129,23 @@ svg.lz-locuszoom {
   svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-selected {
     fill: #363696;
     fill-opacity: 0.35;
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-intervals.lz-interval_rect {
     stroke-width: 0px; }
   svg.lz-locuszoom path.lz-data_layer-forest {
     stroke: rgb(24, 24, 24);
-    stroke-opacity: 0.6;
+    stroke-opacity: 0.4;
     stroke-width: 1px;
     cursor: pointer; }
   svg.lz-locuszoom path.lz-data_layer-forest-highlighted {
     stroke: rgb(24, 24, 24);
-    stroke-opacity: 0.6;
+    stroke-opacity: 0.4;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-forest-selected {
-    stroke: rgba(24, 24, 24, 1);
+    stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 4px; }
   svg.lz-locuszoom path.lz-data_layer-forest-faded {
     fill-opacity: 0.1;
@@ -146,6 +154,7 @@ svg.lz-locuszoom {
     display: none; }
   svg.lz-locuszoom rect.lz-data_layer-forest.lz-data_layer-ci {
     stroke: rgb(24, 24, 24);
+    stroke-opacity: 1;
     stroke-width: 1px; }
 
 /* ! LocusZoom HTML Styles */
@@ -155,7 +164,7 @@ div.lz-data_layer-tooltip {
   position: absolute;
   padding: 6px;
   background: #ebebeb;
-  border: 1px solid rgba(24, 24, 24, 1);
+  border: 1px solid rgb(24, 24, 24);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
   div.lz-data_layer-tooltip h1, div.lz-data_layer-tooltip h2, div.lz-data_layer-tooltip h3, div.lz-data_layer-tooltip h4, div.lz-data_layer-tooltip h5, div.lz-data_layer-tooltip h6 {
@@ -190,15 +199,15 @@ div.lz-data_layer-tooltip {
     line-height: inherit;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: #d8d8d8;
-    color: rgba(24, 24, 24, 1);
-    border: 1px solid rgba(24, 24, 24, 1);
+    color: rgb(24, 24, 24);
+    border: 1px solid rgb(24, 24, 24);
     border-radius: 4px;
     pointer-events: auto;
     outline: none; }
   div.lz-data_layer-tooltip button:hover {
     cursor: pointer;
-    background-color: rgba(24, 24, 24, 1);
-    color: rgba(232, 232, 232, 1); }
+    background-color: rgb(24, 24, 24);
+    color: rgb(232, 232, 232); }
   div.lz-data_layer-tooltip .lz-tooltip-close-button {
     color: rgba(24, 24, 24, 0.4);
     border: 1px solid rgba(24, 24, 24, 0.4);
@@ -213,7 +222,7 @@ div.lz-data_layer-tooltip-arrow_up {
   pointer-events: none;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-bottom: 7px solid rgba(24, 24, 24, 1); }
+  border-bottom: 7px solid rgb(24, 24, 24); }
 
 div.lz-data_layer-tooltip-arrow_down {
   width: 0;
@@ -221,7 +230,7 @@ div.lz-data_layer-tooltip-arrow_down {
   pointer-events: none;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-top: 7px solid rgba(24, 24, 24, 1); }
+  border-top: 7px solid rgb(24, 24, 24); }
 
 div.lz-data_layer-tooltip-arrow_right {
   width: 0;
@@ -229,7 +238,7 @@ div.lz-data_layer-tooltip-arrow_right {
   pointer-events: none;
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
-  border-left: 7px solid rgba(24, 24, 24, 1); }
+  border-left: 7px solid rgb(24, 24, 24); }
 
 div.lz-data_layer-tooltip-arrow_left {
   width: 0;
@@ -237,14 +246,14 @@ div.lz-data_layer-tooltip-arrow_left {
   pointer-events: none;
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
-  border-right: 7px solid rgba(24, 24, 24, 1); }
+  border-right: 7px solid rgb(24, 24, 24); }
 
 div.lz-data_layer-tooltip-arrow_top_left {
   width: 0;
   height: 0;
   pointer-events: none;
-  border-top: 7px solid rgba(24, 24, 24, 1);
-  border-left: 7px solid rgba(24, 24, 24, 1);
+  border-top: 7px solid rgb(24, 24, 24);
+  border-left: 7px solid rgb(24, 24, 24);
   border-bottom: 7px solid transparent;
   border-right: 7px solid transparent; }
 
@@ -252,18 +261,18 @@ div.lz-data_layer-tooltip-arrow_top_right {
   width: 0;
   height: 0;
   pointer-events: none;
-  border-top: 7px solid rgba(24, 24, 24, 1);
+  border-top: 7px solid rgb(24, 24, 24);
   border-left: 7px solid transparent;
   border-bottom: 7px solid transparent;
-  border-right: 7px solid rgba(24, 24, 24, 1); }
+  border-right: 7px solid rgb(24, 24, 24); }
 
 div.lz-data_layer-tooltip-arrow_bottom_left {
   width: 0;
   height: 0;
   pointer-events: none;
   border-top: 7px solid transparent;
-  border-left: 7px solid rgba(24, 24, 24, 1);
-  border-bottom: 7px solid rgba(24, 24, 24, 1);
+  border-left: 7px solid rgb(24, 24, 24);
+  border-bottom: 7px solid rgb(24, 24, 24);
   border-right: 7px solid transparent; }
 
 div.lz-data_layer-tooltip-arrow_bottom_right {
@@ -272,8 +281,8 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   pointer-events: none;
   border-top: 7px solid transparent;
   border-left: 7px solid transparent;
-  border-bottom: 7px solid rgba(24, 24, 24, 1);
-  border-right: 7px solid rgba(24, 24, 24, 1); }
+  border-bottom: 7px solid rgb(24, 24, 24);
+  border-right: 7px solid rgb(24, 24, 24); }
 
 .lz-container {
   display: inline-block;
@@ -322,7 +331,7 @@ div.lz-data_layer-tooltip-arrow_bottom_right {
   font-size: 12px;
   padding: 6px;
   background: #f0ebe4;
-  border: 1px solid rgba(24, 24, 24, 1);
+  border: 1px solid rgb(24, 24, 24);
   border-radius: 4px;
   box-shadow: 2px 2px 2px rgba(24, 24, 24, 0.4); }
   .lz-loader .lz-loader-content {
@@ -737,11 +746,11 @@ div.lz-panel-boundary span {
 
 div.lz-panel-boundary:hover span {
   background: #d8d8d8;
-  border: 1px solid rgba(24, 24, 24, 1); }
+  border: 1px solid rgb(24, 24, 24); }
 
 div.lz-panel-boundary:active span {
   background: #a6a6a6;
-  border: 1px solid rgba(24, 24, 24, 1); }
+  border: 1px solid rgb(24, 24, 24); }
 
 div.lz-panel-corner-boundary {
   position: absolute;
@@ -772,7 +781,7 @@ div.lz-panel-corner-boundary span.lz-panel-corner-boundary-inner {
   left: 12px; }
 
 div.lz-panel-corner-boundary:hover span.lz-panel-corner-boundary-outer {
-  border-bottom: 16px solid rgba(24, 24, 24, 1); }
+  border-bottom: 16px solid rgb(24, 24, 24); }
 
 div.lz-panel-corner-boundary:hover span.lz-panel-corner-boundary-inner {
   border-bottom: 13px solid #d8d8d8; }

@@ -903,10 +903,11 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         scale_function: "categorical_bin",
         parameters: {
             categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
-            values: ["rgba(57,59,121,0.7)", "rgba(82,84,163,0.7)", "rgba(107,110,207,0.7)", "rgba(156,158,222,0.7)", "rgba(99,121,57,0.7)", "rgba(140,162,82,0.7)", "rgba(181,207,107,0.7)", "rgba(140,109,49,0.7)", "rgba(189,158,57,0.7)", "rgba(231,186,82,0.7)", "rgba(132,60,57,0.7)", "rgba(173,73,74,0.7)", "rgba(214,97,107,0.7)", "rgba(231,150,156,0.7)", "rgba(123,65,115,0.7)", "rgba(165,81,148,0.7)", "rgba(206,109,189,0.7)", "rgba(222,158,214,0.7)"],
+            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
             null_value: "#B8B8B8"
         }
     },
+    fill_opacity: 0.7,
     tooltip: {
         closable: true,
         show: { or: ["highlighted", "selected"] },
@@ -1152,7 +1153,7 @@ LocusZoom.Layouts.add("panel", "association", {
     min_height: 200,
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     dashboard: (function(){
         var l = LocusZoom.Layouts.get("dashboard", "standard_panel", { unnamespaced: true });
         l.components.push({
@@ -1232,7 +1233,7 @@ LocusZoom.Layouts.add("panel", "phewas", {
     min_height: 300,
     proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
-    inner_border: "rgba(210, 210, 210, 0.85)",
+    inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
             ticks: [
@@ -2668,6 +2669,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 1
         },
@@ -3026,6 +3028,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -3040,11 +3043,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
@@ -4407,8 +4412,8 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         chromosome_fill_colors: {
-            light: "rgba(120, 120, 186, 0.5)",
-            dark: "rgba(0, 0, 66, 0.5)"
+            light: "rgb(155, 155, 188)",
+            dark: "rgb(95, 95, 128)"
         },
         chromosome_label_colors: {
             light: "rgb(120, 120, 186)",

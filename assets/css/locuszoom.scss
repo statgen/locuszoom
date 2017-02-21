@@ -1,10 +1,11 @@
 $namespace: "lz";
-$default_black: "rgba(24, 24, 24, 1)";
-$default_white: "rgba(232, 232, 232, 1)";
-$default_black_svg: "rgb(24, 24, 24)";
-$default_black_shadow: "rgba(24, 24, 24, 0.4)";
-$default_black_shadow_svg_color: "rgb(24, 24, 24)";
-$default_black_shadow_svg_opacity: "0.4";
+$default_black: "rgb(24, 24, 24)";
+$default_black_opacity: "1"; 
+$default_white: "rgb(232, 232, 232)";
+$default_white_opacity: "1"; 
+$default_black_shadow: "rgb(24, 24, 24)";
+$default_black_shadow_opacity: "0.4";
+$default_black_shadow_rgba: "rgba(24, 24, 24, 0.4)";
 
 $tooltip_arrow_width: "7";
 
@@ -51,6 +52,7 @@ svg.#{$namespace}-locuszoom {
   .#{$namespace}-axis line {
   	fill: none;
   	stroke: #{$default_black};
+  	stroke-opacity: #{$default_black_opacity};
   	shape-rendering: crispEdges;
   }
 
@@ -70,24 +72,26 @@ svg.#{$namespace}-locuszoom {
     fill: rgb(245,245,245);
     fill-opacity: 1;
     stroke: #{$default_black};
+  	stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
   }
 
   path.#{$namespace}-data_layer-scatter {
-    stroke: #{$default_black_shadow_svg_color};
-    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 1px;
     cursor: pointer;
   }
 
   path.#{$namespace}-data_layer-scatter-highlighted {
-    stroke: #{$default_black_shadow_svg_color};
-    stroke-opacity: #{$default_black_shadow_svg_opacity};
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 4px;
   }
 
   path.#{$namespace}-data_layer-scatter-selected {
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 4px;
   }
 
@@ -102,18 +106,20 @@ svg.#{$namespace}-locuszoom {
 
   text.#{$namespace}-data_layer-scatter-label {
     fill: #{$default_black};
+    fill-opacity: #{$default_black_opacity};
     alignment-baseline: middle;
   }
 
   line.#{$namespace}-data_layer-scatter-label {
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
   }
 
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
-    stroke-opacity: 1;
     cursor: pointer;
   }
 
@@ -163,6 +169,7 @@ svg.#{$namespace}-locuszoom {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.15;
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
   }
 
@@ -204,6 +211,7 @@ svg.#{$namespace}-locuszoom {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.35;
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
   }
 
@@ -212,20 +220,21 @@ svg.#{$namespace}-locuszoom {
   }
 
   path.#{$namespace}-data_layer-forest {
-    stroke: #{$default_black_shadow_svg_color};
-    stroke-opacity: 0.6;
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 1px;
     cursor: pointer;
   }
 
   path.#{$namespace}-data_layer-forest-highlighted {
-    stroke: #{$default_black_shadow_svg_color};
-    stroke-opacity: 0.6;
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 4px;
   }
 
   path.#{$namespace}-data_layer-forest-selected {
     stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 4px;
   }
 
@@ -239,7 +248,8 @@ svg.#{$namespace}-locuszoom {
   }
 
   rect.#{$namespace}-data_layer-forest.#{$namespace}-data_layer-ci {
-    stroke: #{$default_black_svg};
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
   }
 
@@ -257,7 +267,7 @@ div.#{$namespace}-data_layer-tooltip {
   background: rgba(235,235,235,1);
   border: 1px solid #{$default_black};
   border-radius: 4px;
-  box-shadow: 2px 2px 2px #{$default_black_shadow};
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
 
   h1, h2, h3, h4, h5, h6 {
     margin-top: 0.1em;
@@ -305,8 +315,8 @@ div.#{$namespace}-data_layer-tooltip {
   }
 
   .#{$namespace}-tooltip-close-button {
-    color: #{$default_black_shadow};
-    border: 1px solid #{$default_black_shadow};
+    color: #{$default_black_shadow_rgba};
+    border: 1px solid #{$default_black_shadow_rgba};
     background-color: rgba(235,235,235,0.4);
     position: absolute;
     right: -1px;
@@ -452,7 +462,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   background: rgba(240,235,228,1);
   border: 1px solid #{$default_black};
   border-radius: 4px;
-  box-shadow: 2px 2px 2px #{$default_black_shadow};
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
 
   .#{$namespace}-loader-content {
     position: relative;
@@ -493,7 +503,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     left: 0%;
     width: 0%;
     height: 2px;
-    background-color: #{$default_black_shadow};
+    background-color: #{$default_black_shadow_rgba};
   }
 
   .#{$namespace}-loader-progress-animated {
@@ -624,7 +634,7 @@ div.#{$namespace}-dashboard-menu {
   position: absolute;
   padding: 6px;
   border-radius: 4px;
-  box-shadow: 2px 2px 2px #{$default_black_shadow};
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
   overflow: hidden;
 
   .#{$namespace}-dashboard-menu-content {
