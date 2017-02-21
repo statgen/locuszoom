@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.3"
+    version: "0.5.4"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -4887,7 +4887,7 @@ LocusZoom.TransformationFunctions.add("neglog10", function(x) {
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
-    if (x == 0){ return "0"; }
+    if (x == 0){ return "1"; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
