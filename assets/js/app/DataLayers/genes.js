@@ -389,9 +389,9 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click.event_emitter", function(element){
-                    this.parent.emit("element_clicked", element);
-                    this.parent_plot.emit("element_clicked", element);
-                }.bind(this));
+                    element.parent.parent.emit("element_clicked", element);
+                    element.parent.parent_plot.emit("element_clicked", element);
+                });
 
                 // Apply mouse behaviors to clickareas
                 data_layer.applyBehaviors(clickareas);

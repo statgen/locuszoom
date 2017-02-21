@@ -310,8 +310,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
-                    this.parent.emit("element_clicked", element);
-                    this.parent_plot.emit("element_clicked", element);
+                    element.parent.parent.emit("element_clicked", element);
+                    element.parent.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
                 // Apply mouse behaviors to clickareas
