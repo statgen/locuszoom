@@ -2433,7 +2433,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
     return this;
 };
 
-// Apply all supported status behaviors to a selection of objects
+// Apply all layout-defined behaviors to a selection of elements with event handlers
 LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
     if (typeof this.layout.behaviors != "object"){ return; }
     Object.keys(this.layout.behaviors).forEach(function(directive){
@@ -2490,7 +2490,7 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
                     if (typeof behavior.target == "string"){
                         window.open(url, behavior.target);
                     } else {
-                        window.location.href = url;                        
+                        window.location.href = url;
                     }
                 }
                 break;
@@ -4897,6 +4897,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     } else {
         return x.toExponential(2).replace("+", "").replace("e", " × 10^");
     }
+});
+
+LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+    return encodeURIComponent(str);
 });
 
 

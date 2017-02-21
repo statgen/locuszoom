@@ -208,6 +208,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     }
 });
 
+LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+    return encodeURIComponent(str);
+});
+
 
 /****************
   Scale Functions
