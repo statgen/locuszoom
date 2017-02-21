@@ -297,13 +297,19 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         upper_buffer: 0.10,
         min_extent: [ 0, 10 ]
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
@@ -339,13 +345,19 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         hide: { and: ["unhighlighted", "unselected"] },
         html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
     },
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     label: {
         text: "{{{{namespace}}phewas_string}}",
@@ -378,13 +390,19 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     type: "genes",
     fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
     id_field: "gene_id",
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_genes", { unnamespaced: true })
 });
@@ -434,14 +452,20 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         { shape: "rect", color: "rgb(136,240,129)", width: 9, label: "Weak transcribed", "{{namespace[intervals]}}state_id": 11 },
         { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "{{namespace[intervals]}}state_id": 12 },
         { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "{{namespace[intervals]}}state_id": 13 }
-    ],    
-    highlighted: {
-        onmouseover: "on",
-        onmouseout: "off"
-    },
-    selected: {
-        onclick: "toggle_exclusive",
-        onshiftclick: "toggle"
+    ],
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
     },
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });

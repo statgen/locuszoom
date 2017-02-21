@@ -314,8 +314,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                     this.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
-                // Apply selectable, tooltip, etc to clickareas
-                data_layer.applyAllStatusBehaviors(clickareas);
+                // Apply mouse behaviors to clickareas
+                data_layer.applyBehaviors(clickareas);
 
             });
 

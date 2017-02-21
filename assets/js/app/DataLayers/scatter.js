@@ -400,13 +400,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         selection.exit().remove();
 
         // Apply default event emitters to selection
-        selection.on("click", function(element){
+        selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element);
             this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
+        // Apply mouse behaviors
+        this.applyBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
