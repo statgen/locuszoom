@@ -239,7 +239,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             return +f.resolve(d);
         }.bind(this));
 
-        // Apply floor/ceiling, for calculation of `original_extent_span`
+        // Apply floor/ceiling
         if (!isNaN(this.layout[axis].floor)) {
             extent[0] = this.layout[axis].floor;
             extent[1] = d3.max(extent);
@@ -251,25 +251,21 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
         // Apply upper/lower buffers, if applicable
         var original_extent_span = extent[1] - extent[0];
-        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
+        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
+            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
+        }
+        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
+            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
+        }
 
         // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
-        }
-
-        // Generate a new base extent
-        extent = d3.extent(extent);
-
-        // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)) {
-            extent[0] = this.layout[axis].floor;
-            extent[1] = d3.max(extent);
-        }
-        if (!isNaN(this.layout[axis].ceiling)) {
-            extent[1] = this.layout[axis].ceiling;
-            extent[0] = d3.min(extent);
+        if (typeof this.layout[axis].min_extent == "object") {
+            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
+                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
+            }
+            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
+                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
+            }
         }
 
         return extent;
