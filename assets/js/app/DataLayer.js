@@ -253,8 +253,14 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
         extent = d3.extent(extent);
 
         // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+        if (!isNaN(this.layout[axis].floor)) {
+            extent[0] = this.layout[axis].floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(this.layout[axis].ceiling)) {
+            extent[1] = this.layout[axis].ceiling;
+            extent[0] = d3.min(extent);
+        }
 
         return extent;
 
