@@ -73,13 +73,54 @@ LocusZoom.DataSources.prototype.toJSON = function() {
     return this.sources;
 };
 
+LocusZoom.Data.Field = function(field){
+    
+    var parts = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/.exec(field);
+
+    this.full_name = field;
+    
+    this.namespace = parts[1] || null;
+    this.name = parts[2] || null;
+    this.transformations = [];
+    
+    if (typeof parts[3] == "string" && parts[3].length > 1){
+        this.transformations = parts[3].substring(1).split("|");
+        this.transformations.forEach(function(transform, i){
+            this.transformations[i] = LocusZoom.TransformationFunctions.get(transform);
+        }.bind(this));
+    }
+
+    this.applyTransformations = function(val){
+        this.transformations.forEach(function(transform){
+            val = transform(val);
+        });
+        return val;
+    };
+
+    // Resolve the field for a given data element.
+    // First look for a full match with transformations already applied by the data requester.
+    // Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
+    this.resolve = function(d){
+        if (typeof d[this.full_name] != "undefined"){
+            return d[this.full_name];
+        } else {
+            var val = null;
+            if (typeof d[this.namespace+":"+this.name] != "undefined"){ val = d[this.namespace+":"+this.name]; }
+            else if (typeof d[this.name] != "undefined"){ val = d[this.name]; }
+            d[this.full_name] = this.applyTransformations(val);
+            return d[this.full_name];
+        }
+    };
+    
+};
+
 /* The Requester passes state information to data sources to pull data */
 
 LocusZoom.Data.Requester = function(sources) {
 
     function split_requests(fields) {
         var requests = {};
-        // Regular expressopn finds namespace:field|trans
+        // Regular expression finds namespace:field|trans
         var re = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/;
         fields.forEach(function(raw) {
             var parts = re.exec(raw);
@@ -275,7 +316,7 @@ LocusZoom.Data.Source.prototype.toJSON = function() {
 };
 
 /**
-  Known Data Source for Association Data
+  Data Source for Association Data
 */
 LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -302,7 +343,7 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 };
 
 /**
-  Known Data Source for LD Data
+  Data Source for LD Data
 */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -439,7 +480,7 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
 };
 
 /**
-  Known Data Source for Gene Data
+  Data Source for Gene Data
 */
 LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -459,7 +500,7 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
 };
 
 /**
-  Known Data Source for Gene Constraint Data
+  Data Source for Gene Constraint Data
 */
 LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -518,7 +559,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
 };
 
 /**
-  Known Data Source for Recombination Rate Data
+  Data Source for Recombination Rate Data
 */
 LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -533,7 +574,7 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
 };
 
 /**
-  Known Data Source for Interval Annotation Data (e.g. BED Tracks)
+  Data Source for Interval Annotation Data (e.g. BED Tracks)
 */
 
 LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
@@ -549,7 +590,7 @@ LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) 
 };
 
 /**
-  Known Data Source for Static JSON Data
+  Data Source for Static JSON Data
 */
 LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
     this._data = data;
@@ -561,4 +602,22 @@ LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
+};
+
+/**
+  Data source for PheWAS data served from JSON files
+*/
+LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "PheWASLZ");
+LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
+    return this.url + state.variant + ".json";
+};
+LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    var data = JSON.parse(resp);
+    data.forEach(function(d, i){
+        data[i].x = i;
+        data[i].id = i.toString();
+    });
+    return {header: chain.header, body: data};
 };
