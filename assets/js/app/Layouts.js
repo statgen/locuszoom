@@ -321,10 +321,6 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     point_size: 70,
     id_field: "{{namespace}}id",
     fields: ["{{namespace}}phewas"],
-    /*
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
-    */
     x_axis: {
         field: "{{namespace}}x"
     },
