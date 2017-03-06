@@ -16,6 +16,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         point_size: 40,
         point_shape: "square",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 2
         },
@@ -158,6 +159,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -171,11 +173,13 @@ LocusZoom.DataLayers.add("forest", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             points_selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
@@ -183,13 +187,13 @@ LocusZoom.DataLayers.add("forest", function(layout){
         points_selection.exit().remove();
 
         // Apply default event emitters to selection
-        points_selection.on("click", function(element){
+        points_selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element);
             this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(points_selection);
+        // Apply behaviors to points
+        this.applyBehaviors(points_selection);
         
     };
  

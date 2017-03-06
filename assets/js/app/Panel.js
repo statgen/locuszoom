@@ -62,6 +62,11 @@ LocusZoom.Panel = function(layout, parent) {
     
     this.data_layers = {};
     this.data_layer_ids_by_z_index = [];
+    this.applyDataLayerZIndexesToDataLayerLayouts = function(){
+        this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
+            this.data_layers[dlid].layout.z_index = idx;
+        }.bind(this));
+    }.bind(this);
     this.data_promises = [];
 
     this.x_scale  = null;
@@ -282,12 +287,16 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
 };
 
 LocusZoom.Panel.prototype.setTitle = function(title){
+    if (typeof this.layout.title == "string"){
+        var text = this.layout.title;
+        this.layout.title = { text: text, x: 0, y: 0, style: {} };
+    }
     if (typeof title == "string"){
         this.layout.title.text = title;
     } else if (typeof title == "object" && title != null){
-        this.layout.title.text = LocusZoom.Layouts.merge(title, this.layout.title);
+        this.layout.title = LocusZoom.Layouts.merge(title, this.layout.title);
     }
-    if (this.layout.title.text){
+    if (this.layout.title.text.length){
         this.title.attr("display", null)
             .attr("x", parseFloat(this.layout.title.x))
             .attr("y", parseFloat(this.layout.title.y))
@@ -296,7 +305,7 @@ LocusZoom.Panel.prototype.setTitle = function(title){
     } else {
         this.title.attr("display", "none");
     }
-        
+    return this;
 };
 
 // Initialize a panel
@@ -335,7 +344,7 @@ LocusZoom.Panel.prototype.initialize = function(){
 
     // Add the title
     this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
-    if (this.layout.title){ this.setTitle(); }
+    if (typeof this.layout.title != "undefined"){ this.setTitle(); }
 
     // Initialize Axes
     this.svg.x_axis = this.svg.group.append("g")
@@ -386,6 +395,16 @@ LocusZoom.Panel.prototype.initialize = function(){
     
 };
 
+// Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+LocusZoom.Panel.prototype.resortDataLayers = function(){
+    var sort = [];
+    this.data_layer_ids_by_z_index.forEach(function(id){
+        sort.push(this.data_layers[id].layout.z_index);
+    }.bind(this));
+    this.svg.group.selectAll("g.lz-data_layer-container").data(sort).sort(d3.ascending);
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+};
+
 // Get an array of panel IDs that are axis-linked to this panel
 LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
     axis = axis || null;
@@ -411,7 +430,6 @@ LocusZoom.Panel.prototype.moveUp = function(){
     return this;
 };
 
-
 // Move a panel down relative to others by y-index
 LocusZoom.Panel.prototype.moveDown = function(){
     if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
@@ -422,7 +440,6 @@ LocusZoom.Panel.prototype.moveDown = function(){
     }
     return this;
 };
-
 
 // Create a new data layer by layout object
 LocusZoom.Panel.prototype.addDataLayer = function(layout){
@@ -479,6 +496,36 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     return this.data_layers[data_layer.id];
 };
 
+// Remove a data layer by id
+LocusZoom.Panel.prototype.removeDataLayer = function(id){
+    if (!this.data_layers[id]){
+        throw ("Unable to remove data layer, ID not found: " + id);
+    }
+
+    // Destroy all tooltips for the data layer
+    this.data_layers[id].destroyAllTooltips();
+
+    // Remove the svg container for the data layer if it exists
+    if (this.data_layers[id].svg.container){
+        this.data_layers[id].svg.container.remove();
+    }
+
+    // Delete the data layer and its presence in the panel layout and state
+    this.layout.data_layers.splice(this.data_layers[id].layout_idx, 1);
+    delete this.state[this.data_layers[id].state_id];
+    delete this.data_layers[id];
+
+    // Remove the data_layer id from the z_index array
+    this.data_layer_ids_by_z_index.splice(this.data_layer_ids_by_z_index.indexOf(id), 1);
+
+    // Update layout_idx and layout.z_index values for all remaining data_layers
+    this.applyDataLayerZIndexesToDataLayerLayouts();
+    this.layout.data_layers.forEach(function(data_layer_layout, idx){
+        this.data_layers[data_layer_layout.id].layout_idx = idx;
+    }.bind(this));
+
+    return this;
+};
 
 // Clear all selections on all data layers
 LocusZoom.Panel.prototype.clearSelections = function(){
@@ -487,7 +534,6 @@ LocusZoom.Panel.prototype.clearSelections = function(){
     }.bind(this));
     return this;
 };
-
 
 // Re-Map a panel to new positions according to the parent plot's state
 LocusZoom.Panel.prototype.reMap = function(){
@@ -713,7 +759,7 @@ LocusZoom.Panel.prototype.render = function(){
             d3.event.preventDefault();
             if (!this.parent.canInteract(this.id)){ return; }
             var coords = d3.mouse(this.svg.container.node());
-            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail)));
+            var delta = Math.max(-1, Math.min(1, (d3.event.wheelDelta || -d3.event.detail || -d3.event.deltaY)));
             if (delta == 0){ return; }
             this.parent.interaction = {
                 panel_id: this.id,
@@ -843,13 +889,10 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
 
     // Render the axis label if necessary
     var label = this.layout.axes[axis].label || null;
-    if (this.layout.axes[axis].label_function){
-        label = LocusZoom.LabelFunctions.get(this.layout.axes[axis].label_function, this.state);
-    }
     if (label != null){
         this.svg[axis+"_axis_label"]
             .attr("x", axis_params[axis].label_x).attr("y", axis_params[axis].label_y)
-            .text(label);
+            .text(LocusZoom.parseFields(this.state, label));
         if (axis_params[axis].label_rotate != null){
             this.svg[axis+"_axis_label"]
                 .attr("transform", "rotate(" + axis_params[axis].label_rotate + " " + axis_params[axis].label_x + "," + axis_params[axis].label_y + ")");

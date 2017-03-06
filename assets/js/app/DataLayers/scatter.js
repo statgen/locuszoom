@@ -16,6 +16,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         point_size: 40,
         point_shape: "circle",
         color: "#888888",
+        fill_opacity: 1,
         y_axis: {
             axis: 1
         },
@@ -374,6 +375,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }.bind(this);
 
         var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
             .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
@@ -388,11 +390,13 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .ease(this.layout.transition.ease || "cubic-in-out")
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         } else {
             selection
                 .attr("transform", transform)
                 .attr("fill", fill)
+                .attr("fill-opacity", fill_opacity)
                 .attr("d", shape);
         }
 
@@ -400,19 +404,21 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         selection.exit().remove();
 
         // Apply default event emitters to selection
-        selection.on("click", function(element){
+        selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element);
             this.parent_plot.emit("element_clicked", element);
         }.bind(this));
        
-        // Apply selectable, tooltip, etc
-        this.applyAllStatusBehaviors(selection);
-
+        // Apply mouse behaviors
+        this.applyBehaviors(selection);
+        
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
             this.flip_labels();
             this.seperate_iterations = 0;
             this.separate_labels();
+            // Extend mouse behaviors to labels
+            this.applyBehaviors(this.label_texts);
         }
         
     };

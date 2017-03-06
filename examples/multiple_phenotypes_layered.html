@@ -38,7 +38,7 @@
 
       <p>This example shows an approach to showing a common region covering multiple studies/phenotypes by rendered each phenotype as a different data layer in the same panel.</p>
       <p>The top panel shows results in the region from four different studies, each rendered with a different color. LD information is not shown. Being a region view interactivity is enabled, so panning and zooming is possible. As the plot is navigated around the genome all layers will stay aligned and move in unison.</p>
-      <p>When clicking on any p-value result the tool tip offers controls to dim or un-dim the entire data layer. The LocusZoom.js API provides methods for toggling dimming, hiding, highlighting, and selecting entire data layers, individual elements in a data layer, or a subset of elements based on arbitrarily many filters against actual data.</p>
+      <p>This example also features the <strong>Data Layers</strong> menu on the association panel. This menu is useful when working with multiple layers that may run together. Each layer can be faded (made mostly transparent), hidden, or removed altogether. Layers can also be sorted relative to one another in terms of z-index (depth).</p>
 
       <div class="row">
         <div class="two columns">
@@ -67,17 +67,22 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
-      .add("sig", ["StaticJSON", [{ "x": 0, "y": 4.522 }, { "x": 2881033286, "y": 4.522 }] ])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 
     // Build the base layout
     var association_panel_mods = {
         data_layers: [
-            LocusZoom.Layouts.get("data_layer", "signifigance", { namespace: { "sig": "sig" } }),
-            LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" } })
-        ]
+            LocusZoom.Layouts.get("data_layer", "significance", { name: "Line of GWAS Significance" }),
+            LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" }, name: "Recombination Rate" })
+        ],
+        dashboard: LocusZoom.Layouts.get("panel", "association")["dashboard"]
     };
+    association_panel_mods.dashboard.components.push({
+        type: "data_layers",
+        position: "right",
+        statuses: ["faded", "hidden"]
+    });
     layout = {
         width: 800,
         height: 500,
@@ -85,7 +90,8 @@
         panels: [
             LocusZoom.Layouts.get("panel", "association", association_panel_mods),
             LocusZoom.Layouts.get("panel", "genes", { namespace: { "gene": "gene" } })
-        ]
+        ],
+        dashboard: LocusZoom.Layouts.get("dashboard","region_nav_plot")
     };
 
     // Define a set of studies/phenotypes and loop through them to add a data source and data layer for each one
@@ -100,6 +106,7 @@
         var association_data_layer_mods = {
             namespace: { "assoc": pheno.namespace },
             id: "associationpvalues_" + pheno.namespace,
+            name: pheno.title,
             point_shape: "circle",
             point_size: 40,
             color: pheno.color,
@@ -115,7 +122,6 @@
                     + "<strong>{{" + pheno.namespace + ":variant}}</strong><br>"
                     + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation}}</strong><br>"
                     + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele}}</strong><br>"
-                    + "<a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).dimAllElements()\">Dim this layer</a> | <a href=\"javascript:void(0)\" onclick=\"LocusZoom.getToolTipDataLayer(this).undimAllElements()\">Un-dim this layer</a>"
             }
         };
         layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));

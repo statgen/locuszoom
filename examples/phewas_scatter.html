@@ -92,33 +92,11 @@
           { chr: 22, base_pairs: 51304566 }
         ];
 
-        // Custom data source for PheWAS data from JSON files
-        LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
-          this.parseInit(init);
-        }, "PheWASLZ");
-        LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
-          return this.url + state.variant + ".json";
-        };
-        LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-          var data = JSON.parse(resp);
-          data.forEach(function(d, i){
-            data[i].x = i;
-            data[i].id = i.toString();
-            trans.forEach(function(transformation, t){
-              if (typeof transformation == "function"){
-                data[i][outnames[t]] = transformation(data[i][fields[t]]);
-              }
-            });
-          });
-          return {header: chain.header, body: data};
-        };
-
         // Define data sources object
         var data_sources = new LocusZoom.DataSources()
           .add("base", ["PheWASLZ", { url: "https://www.michigangenomics.org/data/" }])
           .add("gene", ["GeneLZ", { url: "https://portaldev.sph.umich.edu/api/v1/annotation/genes/", params: {source: 2} }])
           .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
-          .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 1448, "y": 7.30103 }]])
           .add("variant", ["StaticJSON", [{ "x": 123352136, "y": 0 }, { "x": 123352136, "y": 1 }]])
           .add("genome", ["StaticJSON", genome_data]);
 
@@ -133,18 +111,17 @@
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
         layout.panels[0].margin.top = 32;
+        layout.panels[0].data_layers[0].offset = 7.30103; // Higher offset for line of GWAS significance than the default 4.522
         layout.panels[2].data_layers.push({
           id: "variant",
-          type: "line",
-          fields: ["variant:x", "variant:y"],
-          id_field: "variant:y",
+          type: "orthogonal_line",
+          orientation: "vertical",
+          offset: 123352136,
           style: {
             "stroke": "#FF3333",
             "stroke-width": "2px",
             "stroke-dasharray": "4px 4px"
-          },
-          x_axis: { field: "variant:x" },
-          y_axis: { field: "variant:y", axis: 1, },
+          }
         });
 
         // Generate the plot
@@ -161,8 +138,7 @@
               end: (locus + 250000),
               chr: +variant[0]
           };
-          data_sources.sources.variant._data[0].x = locus;
-          data_sources.sources.variant._data[1].x = locus;
+          plot.panels.genes.data_layers.variant.layout.offset = locus;
           plot.panels.phewas.setTitle("Variant " + variant[0] + ":" + variant[1] + " " + variant[2] + "/" + variant[3]);
           plot.applyState(state);
         }

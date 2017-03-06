@@ -53,12 +53,11 @@ LocusZoom.Dashboard.prototype.initialize = function(){
     if (this.type == "panel"){
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseover." + this.id, function(){
             clearTimeout(this.hide_timeout);
-            this.show();
+            if (!this.selector || this.selector.style("visibility") == "hidden"){ this.show(); }
         }.bind(this));
         d3.select(this.parent.parent.svg.node().parentNode).on("mouseout." + this.id, function(){
-            this.hide_timeout = setTimeout(function(){
-                this.hide();
-            }.bind(this), 300);
+            clearTimeout(this.hide_timeout);
+            this.hide_timeout = setTimeout(function(){ this.hide(); }.bind(this), 300);
         }.bind(this));
     }
 
@@ -186,8 +185,10 @@ LocusZoom.Dashboard.Component = function(layout, parent) {
 LocusZoom.Dashboard.Component.prototype.show = function(){
     if (!this.parent || !this.parent.selector){ return; }
     if (!this.selector){
+        var group_position = (["start","middle","end"].indexOf(this.layout.group_position) != -1 ? " lz-dashboard-group-" + this.layout.group_position : "");
         this.selector = this.parent.selector.append("div")
-            .attr("class", "lz-dashboard-" + this.layout.position);
+            .attr("class", "lz-dashboard-" + this.layout.position + group_position);
+        if (this.layout.style){ this.selector.style(this.layout.style); }
         if (typeof this.initialize == "function"){ this.initialize(); }
     }
     if (this.button && this.button.status == "highlighted"){ this.button.menu.show(); }
@@ -329,6 +330,12 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return this;
     };
 
+    // Method to generate a class string
+    this.getClass = function(){
+        var group_position = (["start","middle","end"].indexOf(this.parent.layout.group_position) != -1 ? " lz-dashboard-button-group-" + this.parent.layout.group_position : "");
+        return "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : "") + group_position;
+    };
+
     // Permanance
     this.persist = false;
     this.permanent = false;
@@ -385,8 +392,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
     this.show = function(){
         if (!this.parent){ return; }
         if (!this.selector){
-            this.selector = this.parent.selector.append(this.tag)
-                .attr("class", "lz-dashboard-button");
+            this.selector = this.parent.selector.append(this.tag).attr("class", this.getClass());
         }
         return this.update();
     };
@@ -395,7 +401,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         if (!this.selector){ return this; }
         this.preUpdate();
         this.selector
-            .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : ""))
+            .attr("class", this.getClass())
             .attr("title", this.title).style(this.style)
             .on("mouseover", (this.status == "disabled") ? null : this.onmouseover)
             .on("mouseout", (this.status == "disabled") ? null : this.onmouseout)
@@ -451,6 +457,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             var scrollbar_padding = 20;
             var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
             var page_origin = this.parent_svg.getPageOrigin();
+            var page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
+            var container_offset = this.parent_plot.getContainerOffset();
             var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
             var button_client_rect = this.selector.node().getBoundingClientRect();
             var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
@@ -460,8 +468,8 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
                 top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
                 left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
             } else {
-                top = (button_client_rect.bottom + padding);
-                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width, page_origin.x + padding);
+                top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
+                left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
             }
             var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
             var container_max_width = base_max_width;
@@ -545,6 +553,8 @@ LocusZoom.Dashboard.Components.add("dimensions", function(layout){
         var display_width = this.parent_plot.layout.width.toString().indexOf(".") == -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
         var display_height = this.parent_plot.layout.height.toString().indexOf(".") == -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
         this.selector.text(display_width + "px × " + display_height + "px");
+        if (layout.class){ this.selector.attr("class", layout.class); }
+        if (layout.style){ this.selector.style(layout.style); }
         return this;
     };
 });
@@ -560,6 +570,8 @@ LocusZoom.Dashboard.Components.add("region_scale", function(layout){
         } else {
             this.selector.style("display", "none");
         }
+        if (layout.class){ this.selector.attr("class", layout.class); }
+        if (layout.style){ this.selector.style(layout.style); }
         return this;
     };
 });
@@ -641,11 +653,14 @@ LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
         this.button = new LocusZoom.Dashboard.Component.Button(this)
             .setColor(layout.color).setText("×").setTitle("Remove panel")
             .setOnclick(function(){
-                var panel = this.parent_panel;
-                panel.dashboard.hide(true);
-                d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
-                d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
-                panel.parent.removePanel(panel.id);
+                if (confirm("Are you sure you want to remove this panel? This cannot be undone!")){
+                    var panel = this.parent_panel;
+                    panel.dashboard.hide(true);
+                    d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
+                    d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
+                    return panel.parent.removePanel(panel.id);
+                }
+                return false;
             }.bind(this));
         this.button.show();
         return this;
@@ -689,6 +704,83 @@ LocusZoom.Dashboard.Components.add("move_panel_down", function(layout){
             }.bind(this));
         this.button.show();
         return this.update();
+    };
+});
+
+// Shift Region
+LocusZoom.Dashboard.Components.add("shift_region", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)){
+        this.update = function(){ return; };
+        console.warn("Unable to add shift_region dashboard component: plot state does not have region bounds");
+        return;
+    }
+    if (isNaN(layout.step) || layout.step == 0){ layout.step = 50000; }
+    if (typeof layout.button_html != "string"){ layout.button_html = layout.step > 0 ? ">" : "<"; }
+    if (typeof layout.button_title != "string"){
+        layout.button_title = "Shift region by " + (layout.step > 0 ? "+" : "-") + LocusZoom.positionIntToString(Math.abs(layout.step),null,true);
+    }
+    this.update = function(){
+        if (this.button){ return this; }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                this.parent_plot.applyState({
+                    start: Math.max(this.parent_plot.state.start + layout.step, 1),
+                    end: this.parent_plot.state.end + layout.step
+                });
+            }.bind(this));
+        this.button.show();
+        return this;
+    };
+});
+
+// Zoom Region
+LocusZoom.Dashboard.Components.add("zoom_region", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+    if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)){
+        this.update = function(){ return; };
+        console.warn("Unable to add zoom_region dashboard component: plot state does not have region bounds");
+        return;
+    }
+    if (isNaN(layout.step) || layout.step == 0){ layout.step = 0.2; }
+    if (typeof layout.button_html != "string"){ layout.button_html = layout.step > 0 ? "z–" : "z+"; }
+    if (typeof layout.button_title != "string"){
+        layout.button_title = "Zoom region " + (layout.step > 0 ? "out" : "in") + " by " + (Math.abs(layout.step)*100).toFixed(1) + "%";
+    }
+    this.update = function(){
+        if (this.button){
+            var can_zoom = true;
+            var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
+            if (layout.step > 0 && !isNaN(this.parent_plot.layout.max_region_scale) && current_region_scale >= this.parent_plot.layout.max_region_scale){
+                can_zoom = false;
+            }
+            if (layout.step < 0 && !isNaN(this.parent_plot.layout.min_region_scale) && current_region_scale <= this.parent_plot.layout.min_region_scale){
+                can_zoom = false;
+            }
+            this.button.disable(!can_zoom);
+            return this;
+        }
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
+                var zoom_factor = 1 + layout.step;
+                var new_region_scale = current_region_scale * zoom_factor;
+                if (!isNaN(this.parent_plot.layout.max_region_scale)){
+                    new_region_scale = Math.min(new_region_scale, this.parent_plot.layout.max_region_scale);
+                }
+                if (!isNaN(this.parent_plot.layout.min_region_scale)){
+                    new_region_scale = Math.max(new_region_scale, this.parent_plot.layout.min_region_scale);
+                }
+                var delta = Math.floor((new_region_scale - current_region_scale) / 2);
+                this.parent_plot.applyState({
+                    start: Math.max(this.parent_plot.state.start - delta, 1),
+                    end: this.parent_plot.state.end + delta
+                });
+            }.bind(this));
+        this.button.show();
+        return this;
     };
 });
 
@@ -886,5 +978,85 @@ LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
                 this.update();
             }.bind(this));
         return this.update();
+    };
+});
+
+// Data Layers - menu for manipulating data layers in a panel
+LocusZoom.Dashboard.Components.add("data_layers", function(layout){
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    this.update = function(){
+
+        if (typeof layout.button_html != "string"){ layout.button_html = "Data Layers"; }
+        if (typeof layout.button_title != "string"){ layout.button_title = "Manipulate Data Layers (sort, dim, show/hide, etc.)"; }
+
+        if (this.button){ return this; }
+
+        this.button = new LocusZoom.Dashboard.Component.Button(this)
+            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function(){
+                this.button.menu.populate();
+            }.bind(this));
+
+        this.button.menu.setPopulate(function(){
+            this.button.menu.inner_selector.html("");
+            var table = this.button.menu.inner_selector.append("table");
+            this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach(function(id, idx){
+                var data_layer = this.parent_panel.data_layers[id];
+                var name = (typeof data_layer.layout.name != "string") ? data_layer.id : data_layer.layout.name;
+                var row = table.append("tr");
+                // Layer name
+                row.append("td").html(name);
+                // Status toggle buttons
+                layout.statuses.forEach(function(status_adj){
+                    var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
+                    var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                    var text, onclick, highlight;
+                    if (data_layer.global_statuses[status_adj]){
+                        text = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                        onclick = "un" + status_verb + "AllElements";
+                        highlight = "-highlighted";
+                    } else {
+                        text = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                        onclick = status_verb + "AllElements";
+                        highlight = "";
+                    }
+                    row.append("td").append("a")
+                        .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color + highlight)
+                        .style({ "margin-left": "0em" })
+                        .on("click", function(){ data_layer[onclick](); this.button.menu.populate(); }.bind(this))
+                        .text(text);
+                }.bind(this));
+                // Sort layer buttons
+                var at_top = (idx == 0);
+                var at_bottom = (idx == (this.parent_panel.data_layer_ids_by_z_index.length - 1));
+                var td = row.append("td");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-" + this.layout.color + (at_bottom ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveDown(); this.button.menu.populate(); }.bind(this))
+                    .text("▾").attr("title", "Move layer down (further back)");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-middle lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){ data_layer.moveUp(); this.button.menu.populate(); }.bind(this))
+                    .text("▴").attr("title", "Move layer up (further front)");
+                td.append("a")
+                    .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-red")
+                    .style({ "margin-left": "0em" })
+                    .on("click", function(){
+                        if (confirm("Are you sure you want to remove the " + name + " layer? This cannot be undone!")){
+                            data_layer.parent.removeDataLayer(id);
+                        }
+                        return this.button.menu.populate();
+                    }.bind(this))
+                    .text("×").attr("title", "Remove layer");
+            }.bind(this));
+            return this;
+        }.bind(this));
+
+        this.button.show();
+
+        return this;
     };
 });

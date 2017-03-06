@@ -93,7 +93,7 @@ describe("LocusZoom.Panel", function(){
         });
     });
 
-    describe("Geometry methods", function() {
+    describe("Geometry Methods", function() {
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "plot_id");
             this.plot = LocusZoom.populate("#plot_id");
@@ -197,6 +197,55 @@ describe("LocusZoom.Panel", function(){
             assert.deepEqual(this.plot.panel_ids_by_y_index, ["genes", "association"]);
             this.association_panel.layout.should.have.property("y_index").which.is.exactly(1);
             this.genes_panel.layout.should.have.property("y_index").which.is.exactly(0);
+        });
+    });
+
+    describe("Data Layer Methods", function() {
+        beforeEach(function(){
+            var layout = {
+                width: 800,
+                height: 400,
+                panels: [
+                    { id: "panel0", width: 800, proportional_width: 1, height: 400, proportional_height: 1 }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+        it("should have a method for adding data layers", function(){
+            this.plot.panels.panel0.should.have.property("addDataLayer").which.is.a.Function;
+            this.plot.panels.panel0.addDataLayer({ id: "layerA", type: "line" });
+            this.plot.panels.panel0.addDataLayer({ id: "layerB", type: "line" });
+            this.plot.panels.panel0.data_layers.layerA.should.be.an.Object;
+            this.plot.panels.panel0.data_layers.layerA.id.should.be.exactly("layerA");
+            this.plot.panels.panel0.data_layers.layerA.layout_idx.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.should.be.an.Object;
+            this.plot.panels.panel0.data_layers.layerB.id.should.be.exactly("layerB");
+            this.plot.panels.panel0.data_layers.layerB.layout_idx.should.be.exactly(1);
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerB"]);
+            assert.equal(typeof this.plot.state[this.plot.panels.panel0.data_layers.layerA.state_id], "object");
+            assert.equal(typeof this.plot.state[this.plot.panels.panel0.data_layers.layerB.state_id], "object");
+        });
+        it("should have a method for removing data layers by id", function(){
+            this.plot.panels.panel0.should.have.property("removeDataLayer").which.is.a.Function;
+            this.plot.panels.panel0.addDataLayer({ id: "layerA", type: "line" });
+            this.plot.panels.panel0.addDataLayer({ id: "layerB", type: "line" });
+            this.plot.panels.panel0.addDataLayer({ id: "layerC", type: "line" });
+            var state_id = this.plot.panels.panel0.data_layers.layerB.state_id;
+            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, "object");
+            assert.equal(typeof this.plot.state[state_id], "object");
+            this.plot.panels.panel0.removeDataLayer("layerB");
+            assert.equal(typeof this.plot.panels.panel0.data_layers.layerB, "undefined");
+            assert.equal(typeof this.plot.state[state_id], "undefined");
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout_idx, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout_idx, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC"]);
         });
     });
 

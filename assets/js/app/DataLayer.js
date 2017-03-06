@@ -50,6 +50,14 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.tooltip){
         this.tooltips = {};
     }
+
+    // Initialize flags for tracking global statuses
+    this.global_statuses = {
+        "highlighted": false,
+        "selected": false,
+        "faded": false,
+        "hidden": false
+    };
     
     return this;
 
@@ -68,8 +76,9 @@ LocusZoom.DataLayer.DefaultLayout = {
 // names and applied or removed from elements to have a visual representation of the status,
 // as well as used as keys in the state for tracking which elements are in which status(es)
 LocusZoom.DataLayer.Statuses = {
-    verbs: ["highlight", "select", "dim", "hide"],
-    adjectives: ["highlighted", "selected", "dimmed", "hidden"]
+    verbs: ["highlight", "select", "fade", "hide"],
+    adjectives: ["highlighted", "selected", "faded", "hidden"],
+    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"]
 };
 
 LocusZoom.DataLayer.prototype.getBaseId = function(){
@@ -145,6 +154,7 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     // Append a container group element to house the main data layer group element and the clip path
     this.svg.container = this.parent.svg.group.append("g")
+        .attr("class", "lz-data_layer-container")
         .attr("id", this.getBaseId() + ".data_layer_container");
         
     // Append clip path to the container element
@@ -159,6 +169,26 @@ LocusZoom.DataLayer.prototype.initialize = function(){
 
     return this;
 
+};
+
+// Move a data layer up relative to others by z-index
+LocusZoom.DataLayer.prototype.moveUp = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
+};
+
+// Move a data layer down relative to others by z-index
+LocusZoom.DataLayer.prototype.moveDown = function(){
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]){
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
+        this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
+        this.parent.resortDataLayers();
+    }
+    return this;
 };
 
 // Resolve a scalable parameter for an element into a single value based on its layout and the element's data
@@ -178,7 +208,8 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             break;
         case "object":
             if (layout.scale_function && layout.field) {
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data[layout.field]);
+                var f = new LocusZoom.Data.Field(layout.field);
+                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
             }
             break;
         }
@@ -204,7 +235,8 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     if (this.layout[axis].field && this.data && this.data.length){
 
         var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout[axis].field];
+            var f = new LocusZoom.Data.Field(this.layout[axis].field);
+            return +f.resolve(d);
         }.bind(this));
 
         // Apply upper/lower buffers, if applicable
@@ -599,98 +631,87 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
         }.bind(this));
         this.state[this.state_id][status] = [];
     }
-    
+
+    // Update global status flag
+    this.global_statuses[status] = toggle;
+
     return this;
 };
 
-// Apply mouse event bindings to create status-related behavior (e.g. highlighted, selected, dimmed, hidden...)
-LocusZoom.DataLayer.prototype.applyStatusBehavior = function(status, selection){
+// Apply all layout-defined behaviors to a selection of elements with event handlers
+LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
+    if (typeof this.layout.behaviors != "object"){ return; }
+    Object.keys(this.layout.behaviors).forEach(function(directive){
+        var event_match = /(click|mouseover|mouseout)/.exec(directive);
+        if (!event_match){ return; }
+        selection.on(event_match[0] + "." + directive, this.executeBehaviors(directive, this.layout.behaviors[directive]));
+    }.bind(this));
+};
 
-    // Glossary for this function:
-    // status - an element property that can be tied to mouse behavior (e.g. highighted, selected)
-    // event - a mouse event that can be bound to a watch function (e.g. "mouseover", "click")
-    // action - a more verbose locuszoom-layout-specific form of an event (e.g. "onmouseover", "onshiftclick")
+// Generate a function that executes the an arbitrary list of behaviors on an element during an event
+LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) {
 
-    // Sanity checks
-    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){ return; }
-    if (typeof selection != "object"){ return; }
-    if (typeof this.layout[status] != "object" || !this.layout[status]){ return; }
-
-    // Map of supported d3 events and the locuszoom layout events they map to
-    var event_directive_map = {
-        "mouseover": ["onmouseover", "onctrlmouseover", "onshiftmouseover", "onctrlshiftmouseover"],
-        "mouseout": ["onmouseout"],
-        "click": ["onclick", "onctrlclick", "onshiftclick", "onctrlshiftclick"]
+    // Determine the required state of control and shift keys during the event
+    var requiredKeyStates = {
+        "ctrl": (directive.indexOf("ctrl") != -1),
+        "shift": (directive.indexOf("shift") != -1)
     };
 
-    // General function to process mouse events and layout directives into discrete element status update calls
-    var handleElementStatusEvent = function(status, event, element){
-        var status_boolean = null;
-        var ctrl = d3.event.ctrlKey;
-        var shift = d3.event.shiftKey;
-        if (!event_directive_map[event]){ return; }
-        // Determine the directive by building the action string to use. Default down to basic actions
-        // if more precise actions are not defined (e.g. if onclick is defined and onshiftclick is not,
-        // but this click event happened with the shift key pressed, just treat it as a regular click)
-        var base_action = "on" + event;
-        var precise_action = "on" + (ctrl ? "ctrl" : "") + (shift ? "shift" : "") + event;
-        var directive = this.layout[status][precise_action] || this.layout[status][base_action] || null;
-        if (!directive){ return; }
-        // Resolve the value of the status boolean from the directive and the element's current status
-        switch (directive){
-        case "on":
-            status_boolean = true;
-            break;
-        case "off":
-            status_boolean = false;
-            break;
-        case "toggle":
-        case "toggle_exclusive":
-            status_boolean = (this.state[this.state_id][status].indexOf(this.getElementId(element)) == -1);
-            break;
-        }
-        if (status_boolean == null){ return; }
-        // Special handling for toggle_exclusive - if the new status_boolean is true then first set the
-        // status to off for all other elements
-        if (status_boolean && directive == "toggle_exclusive"){
-            this.setAllElementStatus(status, false);
-        }
-        // Apply the new status
-        this.setElementStatus(status, element, status_boolean);
-        // Trigger event emitters as needed
-        if (event == "click"){
-            this.parent.emit("element_clicked", element);
-            this.parent_plot.emit("element_clicked", element);
-        }
-    }.bind(this);
-    
-    // Determine which bindings to set up
-    var events_to_bind = {};
-    Object.keys(event_directive_map).forEach(function(event){ events_to_bind[event] = false; });
-    Object.keys(this.layout[status]).forEach(function(action){
-        Object.keys(event_directive_map).forEach(function(event){
-            if (event_directive_map[event].indexOf(action) != -1){ events_to_bind[event] = true; }
-        });
-    });
+    // Return a function that handles the event in context with the behavior and the element
+    return function(element){
 
-    // Set up the bindings
-    Object.keys(events_to_bind).forEach(function(event){
-        if (!events_to_bind[event]){ return; }
-        selection.on(event, function(element){
-            handleElementStatusEvent(status, event, element);
+        // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
+        if (requiredKeyStates.ctrl != !!d3.event.ctrlKey || requiredKeyStates.shift != !!d3.event.shiftKey){ return; }
+
+        // Loop through behaviors making each one go in succession
+        behaviors.forEach(function(behavior){
+            
+            // Route first by the action, if defined
+            if (typeof behavior != "object" || behavior == null){ return; }
+            
+            switch (behavior.action){
+                
+            // Set a status (set to true regardless of current status, optionally with exclusivity)
+            case "set":
+                this.setElementStatus(behavior.status, element, true, behavior.exclusive);
+                break;
+                
+            // Unset a status (set to false regardless of current status, optionally with exclusivity)
+            case "unset":
+                this.setElementStatus(behavior.status, element, false, behavior.exclusive);
+                break;
+                
+            // Toggle a status
+            case "toggle":
+                var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) != -1);
+                var exclusive = behavior.exclusive && !current_status_boolean;
+                this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
+                break;
+                
+            // Link to a dynamic URL
+            case "link":
+                if (typeof behavior.href == "string"){
+                    var url = LocusZoom.parseFields(element, behavior.href);
+                    if (typeof behavior.target == "string"){
+                        window.open(url, behavior.target);
+                    } else {
+                        window.location.href = url;
+                    }
+                }
+                break;
+                
+            // Action not defined, just return
+            default:
+                break;
+                
+            }
+            
+            return;
+            
         }.bind(this));
-    }.bind(this));
 
-    return this;
+    }.bind(this);
 
-};
-
-// Apply all supported status behaviors to a selection of objects
-LocusZoom.DataLayer.prototype.applyAllStatusBehaviors = function(selection){
-    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-        this.applyStatusBehavior(status, selection);
-    }.bind(this));
-    return this;
 };
 
 // Get an object with the x and y coordinates of the panel's origin in terms of the entire page

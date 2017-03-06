@@ -1,4 +1,4 @@
-/* global LocusZoom */
+/* global LocusZoom,d3 */
 /* eslint-env browser */
 /* eslint-disable no-console */
 
@@ -80,64 +80,6 @@ LocusZoom.KnownDataSources = (function() {
 
     return obj;
 })();
-
-
-/****************
-  Label Functions
-
-  These functions will generate a string based on a provided state object. Useful for dynamic axis labels.
-*/
-
-LocusZoom.LabelFunctions = (function() {
-    var obj = {};
-    var functions = {};
-
-    obj.get = function(name, state) {
-        if (!name) {
-            return null;
-        } else if (functions[name]) {
-            if (typeof state == "undefined"){
-                return functions[name];
-            } else {
-                return functions[name](state);
-            }
-        } else {
-            throw("label function [" + name + "] not found");
-        }
-    };
-
-    obj.set = function(name, fn) {
-        if (fn) {
-            functions[name] = fn;
-        } else {
-            delete functions[name];
-        }
-    };
-
-    obj.add = function(name, fn) {
-        if (functions[name]) {
-            throw("label function already exists with name: " + name);
-        } else {
-            obj.set(name, fn);
-        }
-    };
-
-    obj.list = function() {
-        return Object.keys(functions);
-    };
-
-    return obj;
-})();
-
-// Label function for "Chromosome # (Mb)" where # comes from state
-LocusZoom.LabelFunctions.add("chromosome", function(state){
-    if (!isNaN(+state.chr)){ 
-        return "Chromosome " + state.chr + " (Mb)";
-    } else {
-        return "Chromosome (Mb)";
-    }
-});
-
 
 /**************************
   Transformation Functions
@@ -231,10 +173,13 @@ LocusZoom.TransformationFunctions = (function() {
 })();
 
 LocusZoom.TransformationFunctions.add("neglog10", function(x) {
+    if (isNaN(x) || x <= 0){ return null; }
     return -Math.log(x) / Math.LN10;
 });
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "1"; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
@@ -248,6 +193,8 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
 });
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
+    if (isNaN(x)){ return "NaN"; }
+    if (x == 0){ return "0"; }
     var log;
     if (Math.abs(x) > 1){
         log = Math.ceil(Math.log(x) / Math.LN10);
@@ -259,6 +206,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     } else {
         return x.toExponential(2).replace("+", "").replace("e", " × 10^");
     }
+});
+
+LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+    return encodeURIComponent(str);
 });
 
 

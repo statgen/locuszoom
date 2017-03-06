@@ -58,6 +58,75 @@ describe("LocusZoom.DataLayer", function(){
         });
     });
 
+    describe("Z-index sorting", function() {
+        beforeEach(function(){
+            var layout = {
+                width: 800,
+                height: 400,
+                panels: [
+                    { id: "panel0", width: 800, proportional_width: 1, height: 400, proportional_height: 1,
+                      data_layers: [
+                          { id: "layerA", type: "line" },
+                          { id: "layerB", type: "line" },
+                          { id: "layerC", type: "line" },
+                          { id: "layerD", type: "line" }
+                      ]
+                    }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, layout);
+        });
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+        it("should have a chainable method for moving layers up that stops at the top", function() {
+            this.plot.panels.panel0.data_layers.layerB.moveUp.should.be.a.Function;
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerB", "layerC", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerD", "layerB"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerB.moveUp().moveUp();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerD", "layerB"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+        });
+        it("should have a chainable method for moving layers down that stops at the bottom", function() {
+            this.plot.panels.panel0.data_layers.layerC.moveDown.should.be.a.Function;
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerB", "layerC", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerA", "layerC", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerC", "layerA", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            this.plot.panels.panel0.data_layers.layerC.moveDown().moveDown();
+            assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ["layerC", "layerA", "layerB", "layerD"]);
+            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
+            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
+            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
+            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+        });
+    });
+
     describe("Scalable parameter resolution", function() {
         it("has a method to resolve scalable parameters into discrete values", function() {
             this.datalayer = new LocusZoom.DataLayer({ id: "test" });
@@ -665,15 +734,20 @@ describe("LocusZoom.DataLayer", function(){
         });
         it("should have a method to list available data layers", function(){
             LocusZoom.DataLayers.should.have.property("list").which.is.a.Function;
-            var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "forest"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.DataLayers.list().should.containEql("scatter");
+            LocusZoom.DataLayers.list().should.containEql("line");
+            LocusZoom.DataLayers.list().should.containEql("orthogonal_line");
+            LocusZoom.DataLayers.list().should.containEql("genes");
+            LocusZoom.DataLayers.list().should.containEql("intervals");
+            LocusZoom.DataLayers.list().should.containEql("genome_legend");
+            LocusZoom.DataLayers.list().should.containEql("forest");
         });
         it("should have a general method to get a data layer by name", function(){
             LocusZoom.DataLayers.should.have.property("get").which.is.a.Function;
         });
         it("should have a method to add a data layer", function(){
             LocusZoom.DataLayers.should.have.property("add").which.is.a.Function;
+            LocusZoom.DataLayers.list().should.not.containEql("foo");
             var foo = function(layout){
                 LocusZoom.DataLayer.apply(this, arguments);
                 this.DefaultLayout = {};
@@ -682,9 +756,14 @@ describe("LocusZoom.DataLayer", function(){
                 return this;
             };
             LocusZoom.DataLayers.add("foo", foo);
-            var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "forest", "foo"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.DataLayers.list().should.containEql("scatter");
+            LocusZoom.DataLayers.list().should.containEql("line");
+            LocusZoom.DataLayers.list().should.containEql("orthogonal_line");
+            LocusZoom.DataLayers.list().should.containEql("genes");
+            LocusZoom.DataLayers.list().should.containEql("intervals");
+            LocusZoom.DataLayers.list().should.containEql("genome_legend");
+            LocusZoom.DataLayers.list().should.containEql("forest");
+            LocusZoom.DataLayers.list().should.containEql("foo");
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "bar" });
             var expected_value = new foo({ id: "bar" });
             assert.equal(returned_value.id, expected_value.id);
@@ -701,18 +780,28 @@ describe("LocusZoom.DataLayer", function(){
                 return this;
             };
             LocusZoom.DataLayers.set("foo", foo_new);
-            var returned_list = LocusZoom.DataLayers.list();
-            var expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "forest", "foo"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.DataLayers.list().should.containEql("scatter");
+            LocusZoom.DataLayers.list().should.containEql("line");
+            LocusZoom.DataLayers.list().should.containEql("orthogonal_line");
+            LocusZoom.DataLayers.list().should.containEql("genes");
+            LocusZoom.DataLayers.list().should.containEql("intervals");
+            LocusZoom.DataLayers.list().should.containEql("genome_legend");
+            LocusZoom.DataLayers.list().should.containEql("forest");
+            LocusZoom.DataLayers.list().should.containEql("foo");
             var returned_value = LocusZoom.DataLayers.get("foo", { id: "baz" });
             var expected_value = new foo_new({ id: "baz" });
             assert.equal(returned_value.id, expected_value.id);
             assert.deepEqual(returned_value.layout, expected_value.layout);
             assert.equal(returned_value.render(), expected_value.render());
             LocusZoom.DataLayers.set("foo");
-            returned_list = LocusZoom.DataLayers.list();
-            expected_list = ["scatter", "line", "genes", "intervals", "genome_legend", "forest"];
-            assert.deepEqual(returned_list, expected_list);
+            LocusZoom.DataLayers.list().should.containEql("scatter");
+            LocusZoom.DataLayers.list().should.containEql("line");
+            LocusZoom.DataLayers.list().should.containEql("orthogonal_line");
+            LocusZoom.DataLayers.list().should.containEql("genes");
+            LocusZoom.DataLayers.list().should.containEql("intervals");
+            LocusZoom.DataLayers.list().should.containEql("genome_legend");
+            LocusZoom.DataLayers.list().should.containEql("forest");
+            LocusZoom.DataLayers.list().should.not.containEql("foo");
         });
         it("should throw an exception if asked to get a function that has not been defined", function(){
             assert.throws(function(){

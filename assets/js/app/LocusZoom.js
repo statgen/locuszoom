@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.1"
+    version: "0.5.5"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -24,6 +24,7 @@ LocusZoom.populate = function(selector, datasource, layout) {
         }
         // Create the plot
         plot = new LocusZoom.Plot(this.node().id, datasource, layout);
+        plot.container = this.node();
         // Detect data-region and fill in state values if present
         if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
@@ -318,13 +319,21 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    var regex, replace;
-    for (var field in data) {
-        if (!data.hasOwnProperty(field)){ continue; }
-        if (typeof data[field] != "string" && typeof data[field] != "number" && typeof data[field] != "boolean" && data[field] != null){ continue; }
-        regex = new RegExp("\\{\\{" + field.replace("|","\\|").replace(":","\\:") + "\\}\\}","g");
-        replace = (data[field] == null ? "" : data[field]);
-        html = html.replace(regex, replace);
+    // Match all things that look like fields in the HTML
+    var matches = html.match(/{{[A-Za-z0-9_:|]+}}/g);
+    if (matches){
+        // Remove duplicates
+        matches.reduce(function(a,b){if(a.indexOf(b)<0)a.push(b);return a;},[]);
+        // Replace matches with resolved values from the data object
+        matches.forEach(function(match){
+            var field = new LocusZoom.Data.Field(match.substring(2, match.length-2));
+            var value = field.resolve(data);
+            if (["string","number","boolean"].indexOf(typeof value) != -1){
+                html = html.replace(match, value);
+            } else if (value == null){
+                html = html.replace(match, "");
+            }
+        });
     }
     return html;
 };

@@ -24,7 +24,9 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         bounding_box_padding: 2,
         hover_element: "bounding_box",
         group_hover_elements_on_field: null,
-        always_hide_legend: false
+        always_hide_legend: false,
+        color: "#B8B8B8",
+        fill_opacity: 1
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -164,7 +166,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             this.group_hover_elements = {};
         }
 
-        var width, height, x, y, fill;
+        var width, height, x, y, fill, fill_opacity;
             
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")
@@ -245,7 +247,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 };
                 fill = function(d){
                     return data_layer.resolveScalableParameter(data_layer.layout.color, d);
-                };                
+                };
+                fill_opacity = function(d){
+                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                };
+                
                 
                 if (data_layer.canTransition()){
                     rects
@@ -254,12 +260,14 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         .ease(data_layer.layout.transition.ease || "cubic-in-out")
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 } else {
                     rects
                         .attr("width", width).attr("height", height)
                         .attr("x", x).attr("y", y)
-                        .attr("fill", fill);
+                        .attr("fill", fill)
+                        .attr("fill-opacity", fill_opacity);
                 }
                 
                 rects.exit().remove();
@@ -310,12 +318,12 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click", function(element){
-                    this.parent.emit("element_clicked", element);
-                    this.parent_plot.emit("element_clicked", element);
+                    element.parent.parent.emit("element_clicked", element);
+                    element.parent.parent_plot.emit("element_clicked", element);
                 }.bind(this));
 
-                // Apply selectable, tooltip, etc to clickareas
-                data_layer.applyAllStatusBehaviors(clickareas);
+                // Apply mouse behaviors to clickareas
+                data_layer.applyBehaviors(clickareas);
 
             });
 
