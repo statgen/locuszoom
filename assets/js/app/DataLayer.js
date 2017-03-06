@@ -208,7 +208,8 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             break;
         case "object":
             if (layout.scale_function && layout.field) {
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data[layout.field]);
+                var f = new LocusZoom.Data.Field(layout.field);
+                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
             }
             break;
         }
@@ -234,7 +235,8 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     if (this.layout[axis].field && this.data && this.data.length){
 
         var extent = d3.extent(this.data, function(d) {
-            return +d[this.layout[axis].field];
+            var f = new LocusZoom.Data.Field(this.layout[axis].field);
+            return +f.resolve(d);
         }.bind(this));
 
         // Apply upper/lower buffers, if applicable

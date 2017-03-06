@@ -159,6 +159,14 @@ describe("LocusZoom Core", function(){
         });
 
         describe("Parse Fields", function() {
+            beforeEach(function() {
+                LocusZoom.TransformationFunctions.add("herp", function(x) { return x.toString() + "herp"; });
+                LocusZoom.TransformationFunctions.add("derp", function(x) { return x.toString() + "derp"; });
+            });
+            afterEach(function() {
+                LocusZoom.TransformationFunctions.set("herp");
+                LocusZoom.TransformationFunctions.set("derp");
+            });
             it("should have a parseFields function", function() {
                 LocusZoom.parseFields.should.be.a.Function;
             });
@@ -202,8 +210,17 @@ describe("LocusZoom Core", function(){
                 expected_value = "<strong>123, foo, {{field3}}, {{field4}}, true, NaN</strong>";
                 assert.equal(LocusZoom.parseFields(data, html), expected_value);
             });
+            it("should parse all fields that match the general field pattern whether explicitly present in the data object or not", function() {
+                var data = {
+                    "foo:field_1": 123,
+                    "bar:field2": "foo"
+                };
+                var html = "<strong>{{foo:field_1}} and {{bar:field2}}, {{bar:field2|herp|derp}}; {{field3}}</strong>";
+                var expected_value = "<strong>123 and foo, fooherpderp; </strong>";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
         });
-
+        
         describe("Validate State", function() {
             it("should have a validateState function", function() {
                 LocusZoom.validateState.should.be.a.Function;

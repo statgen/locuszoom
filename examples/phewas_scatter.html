@@ -92,27 +92,6 @@
           { chr: 22, base_pairs: 51304566 }
         ];
 
-        // Custom data source for PheWAS data from JSON files
-        LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
-          this.parseInit(init);
-        }, "PheWASLZ");
-        LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
-          return this.url + state.variant + ".json";
-        };
-        LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-          var data = JSON.parse(resp);
-          data.forEach(function(d, i){
-            data[i].x = i;
-            data[i].id = i.toString();
-            trans.forEach(function(transformation, t){
-              if (typeof transformation == "function"){
-                data[i][outnames[t]] = transformation(data[i][fields[t]]);
-              }
-            });
-          });
-          return {header: chain.header, body: data};
-        };
-
         // Define data sources object
         var data_sources = new LocusZoom.DataSources()
           .add("base", ["PheWASLZ", { url: "https://www.michigangenomics.org/data/" }])
