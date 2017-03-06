@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.4"
+    version: "0.5.5"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -3436,7 +3436,6 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     this.render = function(){
 
         // Several vars needed to be in scope
-        var data_layer = this;
         var panel = this.parent;
         var x_scale = "x_scale";
         var y_scale = "y" + this.layout.y_axis.axis + "_scale";
@@ -4127,7 +4126,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             this.group_hover_elements = {};
         }
 
-        var width, height, x, y, fill;
+        var width, height, x, y, fill, fill_opacity;
             
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")

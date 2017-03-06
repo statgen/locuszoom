@@ -166,7 +166,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
             this.group_hover_elements = {};
         }
 
-        var width, height, x, y, fill;
+        var width, height, x, y, fill, fill_opacity;
             
         // Render interval groups
         var selection = this.svg.group.selectAll("g.lz-data_layer-intervals")

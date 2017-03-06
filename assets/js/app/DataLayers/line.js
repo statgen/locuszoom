@@ -321,7 +321,6 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     this.render = function(){
 
         // Several vars needed to be in scope
-        var data_layer = this;
         var panel = this.parent;
         var x_scale = "x_scale";
         var y_scale = "y" + this.layout.y_axis.axis + "_scale";
