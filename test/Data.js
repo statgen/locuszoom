@@ -27,6 +27,79 @@ describe("LocusZoom Data", function(){
     });
 
     // Tests
+    describe("LocusZoom.Data.Field", function() {
+        beforeEach(function() {
+            LocusZoom.TransformationFunctions.add("herp", function(x) { return x.toString() + "herp"; });
+            LocusZoom.TransformationFunctions.add("derp", function(x) { return x.toString() + "derp"; });
+        });
+        afterEach(function() {
+            LocusZoom.TransformationFunctions.set("herp");
+            LocusZoom.TransformationFunctions.set("derp");
+        });
+        it("should have a Data Field object", function(){
+            LocusZoom.Data.should.have.property("Field").which.is.a.Function;
+        });
+        it("should correctly parse name-only field string into components", function(){
+            var f = new LocusZoom.Data.Field("foo");
+            f.should.be.an.Object;
+            f.should.have.property("full_name").which.is.exactly("foo");
+            f.should.have.property("name").which.is.exactly("foo");
+            f.should.have.property("namespace").which.is.exactly(null);
+            f.should.have.property("transformations").which.is.an.Array;
+            f.transformations.length.should.be.exactly(0);
+        });
+        it("should correctly parse namespaced field string into components", function(){
+            var f = new LocusZoom.Data.Field("foo:bar");
+            f.should.be.an.Object;
+            f.should.have.property("full_name").which.is.exactly("foo:bar");
+            f.should.have.property("name").which.is.exactly("bar");
+            f.should.have.property("namespace").which.is.exactly("foo");
+            f.should.have.property("transformations").which.is.an.Array;
+            f.transformations.length.should.be.exactly(0);
+        });
+        it("should correctly parse namespaced field string with single transformation into components", function(){
+            var f = new LocusZoom.Data.Field("foo:bar|herp");
+            f.should.be.an.Object;
+            f.should.have.property("full_name").which.is.exactly("foo:bar|herp");
+            f.should.have.property("name").which.is.exactly("bar");
+            f.should.have.property("namespace").which.is.exactly("foo");
+            f.should.have.property("transformations").which.is.an.Array;
+            f.transformations.length.should.be.exactly(1);
+            f.transformations[0].should.be.a.Function;
+        });
+        it("should correctly parse namespaced field string with multiple transformations into components", function(){
+            var f = new LocusZoom.Data.Field("foo:bar|herp|derp");
+            f.should.be.an.Object;
+            f.should.have.property("full_name").which.is.exactly("foo:bar|herp|derp");
+            f.should.have.property("name").which.is.exactly("bar");
+            f.should.have.property("namespace").which.is.exactly("foo");
+            f.should.have.property("transformations").which.is.an.Array;
+            f.transformations.length.should.be.exactly(2);
+            f.transformations[0].should.be.a.Function;
+            f.transformations[1].should.be.a.Function;
+        });
+        it("should resolve a value when passed a data object", function(){
+            var d = { "foo:bar": 123 };
+            var f = new LocusZoom.Data.Field("foo:bar");
+            var v = f.resolve(d);
+            v.should.be.exactly(123);
+        });
+        it("should resolve to an unnamespaced value if its present and the explicitly namespaced value is not, and cache the value for future lookups", function(){
+            var d = { "bar": 123 };
+            var f = new LocusZoom.Data.Field("foo:bar");
+            var v = f.resolve(d);
+            v.should.be.exactly(123);
+            d.should.have.property("foo:bar").which.is.exactly(123);
+        });
+        it("should apply arbitrarily many transformations in the order defined", function(){
+            var d = { "foo:bar": 123 };
+            var f = new LocusZoom.Data.Field("foo:bar|herp|derp|herp");
+            var v = f.resolve(d);
+            v.should.be.exactly("123herpderpherp");
+            d.should.have.property("foo:bar|herp|derp|herp").which.is.exactly("123herpderpherp");
+        });
+    });
+    
     describe("LocusZoom.DataSources", function() {
 
         var TestSource1, TestSource2;
