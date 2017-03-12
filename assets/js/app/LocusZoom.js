@@ -319,6 +319,25 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
+    // Handle conditional blocks {{#if attr}}...{{/if}} from back to front to handle nesting correctly
+    var if_regex = /\{\{#if ([0-9A-Za-z_:|]+)\}\}/g;
+    var fi_regex = /^(.*?)\{\{\/if\}\}(.*)/;
+    while(1) {
+        var m, match = false;
+        while(m = if_regex.exec(html)) { match = m; }
+        if (!match) break;
+        var before = html.slice(0, match.index);
+        var condition = match[1];
+        var x = fi_regex.exec(html.slice(match.index + match[0].length));
+        if (!x) { throw("failed to find {{/if}} after {{#if " + condition + "}}"); }
+        var then = x[1];
+        var rest = x[2];
+        if ((new LocusZoom.Data.Field(condition)).resolve(data)) {
+            html = before + then + rest;
+        } else {
+            html = before + rest;
+        }
+    }
     // Match all things that look like fields in the HTML
     var matches = html.match(/{{[A-Za-z0-9_:|]+}}/g);
     if (matches){
