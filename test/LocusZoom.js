@@ -246,7 +246,7 @@ describe("LocusZoom Core", function(){
                 var html2 = "{{#if fieldA}}A1<br>{{/if}}"
                           + "{{#if fieldA|derp}}A2<br>{{/if}}"
                           + "{{#if foo:fieldB}}B1<br>{{/if}}"
-                          + "{{#if foo:fieldB|derp}}B2<br>{{/if}}"
+                          + "{{#if foo:fieldB|derp}}B2<br>{{/if}}";
                 var expected_value2 = "A2<br>B2<br>";
                 assert.equal(LocusZoom.parseFields(data2, html2), expected_value2);
             });

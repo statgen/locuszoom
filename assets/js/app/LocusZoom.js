@@ -325,12 +325,12 @@ LocusZoom.parseFields = function (data, html) {
     var regex = /\{\{(?:(#if )?([A-Za-z0-9_:\|]+)|(\/if))\}\}/;
     while (html.length > 0){
         var m = regex.exec(html);
-        if (!m) { tokens.push({text: html}); html = ''; }
+        if (!m) { tokens.push({text: html}); html = ""; }
         else if (m.index != 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
         else if (m[1] == "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
         else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
-        else if (m[3] == "/if") { tokens.push({close: 'if'}); html = html.slice(m[0].length); }
-        else { console.error('Error tokenizing tooltip when remaining template is: ' + html); html=html.slice(m[0].length); }
+        else if (m[3] == "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
+        else { console.error("Error tokenizing tooltip when remaining template is: " + html); html=html.slice(m[0].length); }
     }
     var astify = function() {
         var token = tokens.shift();
@@ -339,17 +339,17 @@ LocusZoom.parseFields = function (data, html) {
         } else if (token.condition) {
             token.then = [];
             while(tokens.length > 0) {
-                if (tokens[0].close == 'if') { tokens.shift(); break; }
+                if (tokens[0].close == "if") { tokens.shift(); break; }
                 token.then.push(astify());
             }
             return token;
         } else {
-            return { text: '' };
-            console.error('Error making tooltip AST due to unknown token ' + JSON.stringify(token));
+            console.error("Error making tooltip AST due to unknown token " + JSON.stringify(token));
+            return { text: "" };
         }
     };
     // `ast` is like [thing,...]
-    // `thing` is like {text: '...'} or {variable:'foo|bar'} or {condition: 'foo|bar', then:[thing,...]}
+    // `thing` is like {text: "..."} or {variable:"foo|bar"} or {condition: "foo|bar", then:[thing,...]}
     var ast = [];
     while (tokens.length > 0) ast.push(astify());
 
@@ -367,19 +367,19 @@ LocusZoom.parseFields = function (data, html) {
             try {
                 var value = resolve(node.variable);
                 if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
-                if (value == null) { return ''; }
+                if (value == null) { return ""; }
             } catch (error) { console.error("Error while processing variable " + JSON.stringify(node.variable)); }
-            return '{{' + node.variable + '}}';
+            return "{{" + node.variable + "}}";
         } else if (node.condition) {
             try {
                 if (resolve(node.condition)) {
-                    return node.then.map(render_node).join('');
+                    return node.then.map(render_node).join("");
                 }
             } catch (error) { console.error("Error while processign condition " + JSON.stringify(node.variable)); }
-            return '';
-        } else { console.error('Error rendering tooltip due to unknown AST node ' + JSON.stringify(node)); }
+            return "";
+        } else { console.error("Error rendering tooltip due to unknown AST node " + JSON.stringify(node)); }
     };
-    return ast.map(render_node).join('');
+    return ast.map(render_node).join("");
 };
 
 // Shortcut method for getting the data bound to a tool tip.
