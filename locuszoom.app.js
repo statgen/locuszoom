@@ -362,6 +362,25 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
+    // Handle conditional blocks {{#if field}}...{{/if}} from back to front to handle nesting correctly
+    var if_regex = /\{\{#if ([0-9A-Za-z_:|]+)\}\}/g;
+    var fi_regex = /^(.*?)\{\{\/if\}\}(.*)/;
+    while(1) {
+        var m, match = false;
+        while(m = if_regex.exec(html)) { match = m; }
+        if (!match) break;
+        var before = html.slice(0, match.index);
+        var condition = match[1];
+        var x = fi_regex.exec(html.slice(match.index + match[0].length));
+        if (!x) { throw("failed to find {{/if}} after {{#if " + condition + "}}"); }
+        var then = x[1];
+        var rest = x[2];
+        if ((new LocusZoom.Data.Field(condition)).resolve(data)) {
+            html = before + then + rest;
+        } else {
+            html = before + rest;
+        }
+    }
     // Match all things that look like fields in the HTML
     var matches = html.match(/{{[A-Za-z0-9_:|]+}}/g);
     if (matches){
@@ -897,10 +916,6 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     point_size: 70,
     id_field: "{{namespace}}id",
     fields: ["{{namespace}}phewas"],
-    /*
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
-    */
     x_axis: {
         field: "{{namespace}}x"
     },
@@ -2049,22 +2064,34 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             return +f.resolve(d);
         }.bind(this));
 
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+        // Apply floor/ceiling
+        if (!isNaN(this.layout[axis].floor)) {
+            extent[0] = this.layout[axis].floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(this.layout[axis].ceiling)) {
+            extent[1] = this.layout[axis].ceiling;
+            extent[0] = d3.min(extent);
         }
 
-        // Generate a new base extent
-        extent = d3.extent(extent);
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
+            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
+        }
+        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
+            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
+        }
 
-        // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+        // Apply minimum extent
+        if (typeof this.layout[axis].min_extent == "object") {
+            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
+                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
+            }
+            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
+                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
+            }
+        }
 
         return extent;
 
