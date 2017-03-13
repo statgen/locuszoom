@@ -254,24 +254,25 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                     // Start by assuming a match, run through all filters to test if not a match on any one
                     var match = true;
                     data_layer.layout.label.filters.forEach(function(filter){
-                        if (isNaN(d[filter.field])){
+                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
+                        if (isNaN(field_value)){
                             match = false;
                         } else {
                             switch (filter.operator){
                             case "<":
-                                if (!(d[filter.field] < filter.value)){ match = false; }
+                                if (!(field_value < filter.value)){ match = false; }
                                 break;
                             case "<=":
-                                if (!(d[filter.field] <= filter.value)){ match = false; }
+                                if (!(field_value <= filter.value)){ match = false; }
                                 break;
                             case ">":
-                                if (!(d[filter.field] > filter.value)){ match = false; }
+                                if (!(field_value > filter.value)){ match = false; }
                                 break;
                             case ">=":
-                                if (!(d[filter.field] >= filter.value)){ match = false; }
+                                if (!(field_value >= filter.value)){ match = false; }
                                 break;
                             case "=":
-                                if (!(d[filter.field] == filter.value)){ match = false; }
+                                if (!(field_value == filter.value)){ match = false; }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
