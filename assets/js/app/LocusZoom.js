@@ -355,12 +355,7 @@ LocusZoom.parseFields = function (data, html) {
 
     var resolve = function(variable) {
         if (!resolve.cache.hasOwnProperty(variable)) {
-            try {
-                resolve.cache[variable] = (new LocusZoom.Data.Field(variable)).resolve(data);
-            } catch (error) {
-                console.error('Error while evaluating field ' + JSON.stringify(variable) + ': ' + error);
-                resolve.cache[variable] = variable;
-            }
+            resolve.cache[variable] = (new LocusZoom.Data.Field(variable)).resolve(data);
         }
         return resolve.cache[variable];
     };
@@ -369,13 +364,19 @@ LocusZoom.parseFields = function (data, html) {
         if (node.text) {
             return node.text;
         } else if (node.variable) {
-            var value = resolve(node.variable);
-            if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
-            else if (value == null) { return ''; }
-            else { return '{{' + node.variable + '}}'; }
+            try {
+                var value = resolve(node.variable);
+                if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
+                if (value == null) { return ''; }
+            } catch (error) { console.error("Error while processing variable " + JSON.stringify(node.variable)); }
+            return '{{' + node.variable + '}}';
         } else if (node.condition) {
-            if (resolve(node.condition)) { return node.then.map(render_node).join(''); }
-            else { return ''; }
+            try {
+                if (resolve(node.condition)) {
+                    return node.then.map(render_node).join('');
+                }
+            } catch (error) { console.error("Error while processign condition " + JSON.stringify(node.variable)); }
+            return '';
         } else { console.error('Error rendering tooltip due to unknown AST node ' + JSON.stringify(node)); }
     };
     return ast.map(render_node).join('');
