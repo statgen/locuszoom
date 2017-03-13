@@ -321,10 +321,6 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
             .text("×")
-            .style("float", "right")
-            .style("position", "relative")
-            .style("top", "-6px")
-            .style("right", "-6px")
             .on("click", function(){
                 this.destroyTooltip(id);
             }.bind(this));
