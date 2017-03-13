@@ -221,11 +221,11 @@ describe("LocusZoom Core", function(){
             });
             it("should handle conditional blocks", function() {
                 var data = {
-                    "foo:field_1": 123,
+                    "foo:field_1": 1234,
                     "bar:field2": "foo"
                 };
                 var html = "{{#if foo:field_1}}<strong>{{foo:field_1}}{{#if bar:field2}} and {{bar:field2}}{{/if}}, {{#if nope}}wat{{/if}}{{bar:field2|herp|derp}}; {{field3}}</strong>{{/if}}";
-                var expected_value = "<strong>123 and foo, fooherpderp; </strong>";
+                var expected_value = "<strong>1234 and foo, fooherpderp; </strong>";
                 assert.equal(LocusZoom.parseFields(data, html), expected_value);
                 var data2 = {
                     "fieldA": "",
