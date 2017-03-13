@@ -101,15 +101,13 @@ LocusZoom.Data.Field = function(field){
     // First look for a full match with transformations already applied by the data requester.
     // Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
     this.resolve = function(d){
-        if (typeof d[this.full_name] != "undefined"){
-            return d[this.full_name];
-        } else {
+        if (typeof d[this.full_name] == "undefined"){
             var val = null;
             if (typeof d[this.namespace+":"+this.name] != "undefined"){ val = d[this.namespace+":"+this.name]; }
             else if (typeof d[this.name] != "undefined"){ val = d[this.name]; }
             d[this.full_name] = this.applyTransformations(val);
-            return d[this.full_name];
         }
+        return d[this.full_name];
     };
     
 };
