@@ -330,7 +330,7 @@ LocusZoom.parseFields = function (data, html) {
         else if (m[1] == "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
         else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
         else if (m[3] == "/if") { tokens.push({close: 'if'}); html = html.slice(m[0].length); }
-        else { throw [m, html] }
+        else { console.error('Error tokenizing tooltip when remaining template is: ' + html); html=html.slice(m[0].length); }
     }
     var astify = function() {
         var token = tokens.shift();
@@ -338,10 +338,15 @@ LocusZoom.parseFields = function (data, html) {
             return token;
         } else if (token.condition) {
             token.then = [];
-            while(tokens[0].close != 'if') token.then.push(astify());
-            tokens.shift(); //consume {{/if}}
+            while(tokens.length > 0) {
+                if (tokens[0].close == 'if') { tokens.shift(); break; }
+                token.then.push(astify());
+            }
             return token;
-        } else { throw 'what?' }
+        } else {
+            return { text: '' };
+            console.error('Error making tooltip AST due to unknown token ' + JSON.stringify(token));
+        }
     };
     // `ast` is like [thing,...]
     // `thing` is like {text: '...'} or {variable:'foo|bar'} or {condition: 'foo|bar', then:[thing,...]}
@@ -349,8 +354,14 @@ LocusZoom.parseFields = function (data, html) {
     while (tokens.length > 0) ast.push(astify());
 
     var resolve = function(variable) {
-        if (!resolve.cache.hasOwnProperty(variable))
-            resolve.cache[variable] = (new LocusZoom.Data.Field(variable)).resolve(data);
+        if (!resolve.cache.hasOwnProperty(variable)) {
+            try {
+                resolve.cache[variable] = (new LocusZoom.Data.Field(variable)).resolve(data);
+            } catch (error) {
+                console.error('Error while evaluating field ' + JSON.stringify(variable) + ': ' + error);
+                resolve.cache[variable] = variable;
+            }
+        }
         return resolve.cache[variable];
     };
     resolve.cache = {};
@@ -359,12 +370,13 @@ LocusZoom.parseFields = function (data, html) {
             return node.text;
         } else if (node.variable) {
             var value = resolve(node.variable);
-            return (["string","number","boolean"].indexOf(typeof value) != -1) ? value :
-                (value == null) ? '' :
-                '{{' + node.variable + '}}';
+            if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
+            else if (value == null) { return ''; }
+            else { return '{{' + node.variable + '}}'; }
         } else if (node.condition) {
-            return resolve(node.condition) ? node.then.map(render_node).join('') : '';
-        } else { throw 'foo' }
+            if (resolve(node.condition)) { return node.then.map(render_node).join(''); }
+            else { return ''; }
+        } else { console.error('Error rendering tooltip due to unknown AST node ' + JSON.stringify(node)); }
     };
     return ast.map(render_node).join('');
 };

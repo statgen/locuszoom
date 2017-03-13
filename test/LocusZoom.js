@@ -238,6 +238,15 @@ describe("LocusZoom Core", function(){
                 var expected_value2 = "A2<br>B2<br>";
                 assert.equal(LocusZoom.parseFields(data2, html2), expected_value2);
             });
+            it("should handle bad input", function() {
+                var data = {
+                    "foo:field_1": 12345,
+                    "bar:field2": "foo"
+                };
+                var html = "{{#iff foo:field_1}}<strong>{{{foo:field_1}}{{#if bar:field2}}} and {{{bar:field2|nope}}{{/if}}{{/if}}{{/if}}, {{#if {{wat}}}}{{#if nope}}{{#if unclosed}}wat{{bar:field2|herp||derp}}; {{field3}}</strong>";
+                var expected_value = "{{#iff foo:field_1}}<strong>{12345} and {bar:field2|nope, {{#if }}";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
         });
         
         describe("Validate State", function() {
