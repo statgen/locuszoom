@@ -227,6 +227,16 @@ describe("LocusZoom Core", function(){
                 var html = "{{#if foo:field_1}}<strong>{{foo:field_1}}{{#if bar:field2}} and {{bar:field2}}{{/if}}, {{#if nope}}wat{{/if}}{{bar:field2|herp|derp}}; {{field3}}</strong>{{/if}}";
                 var expected_value = "<strong>123 and foo, fooherpderp; </strong>";
                 assert.equal(LocusZoom.parseFields(data, html), expected_value);
+                var data2 = {
+                    "fieldA": "",
+                    "fieldB": ""
+                };
+                var html2 = "{{#if fieldA}}A1<br>{{/if}}"
+                          + "{{#if fieldA|derp}}A2<br>{{/if}}"
+                          + "{{#if foo:fieldB}}B1<br>{{/if}}"
+                          + "{{#if foo:fieldB|derp}}B2<br>{{/if}}"
+                var expected_value2 = "A2<br>B2<br>";
+                assert.equal(LocusZoom.parseFields(data2, html2), expected_value2);
             });
         });
         

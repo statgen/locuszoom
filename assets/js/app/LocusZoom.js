@@ -319,7 +319,7 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    // Handle conditional blocks {{#if attr}}...{{/if}} from back to front to handle nesting correctly
+    // Handle conditional blocks {{#if field}}...{{/if}} from back to front to handle nesting correctly
     var if_regex = /\{\{#if ([0-9A-Za-z_:|]+)\}\}/g;
     var fi_regex = /^(.*?)\{\{\/if\}\}(.*)/;
     while(1) {
