@@ -15,6 +15,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     this.DefaultLayout = {
         point_size: 40,
         point_shape: "circle",
+        tooltip_positioning: "horizontal",
         color: "#888888",
         fill_opacity: 1,
         y_axis: {
@@ -41,8 +42,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         if (!this.tooltips[id]){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
+        var top, left, arrow_type, arrow_top, arrow_left;
         var tooltip = this.tooltips[id];
         var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var offset = Math.sqrt(point_size / Math.PI);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -51,31 +54,49 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var y_scale  = "y"+this.layout.y_axis.axis+"_scale";
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        // Position horizontally on the left or the right depending on which side of the plot the point is on
-        var offset = Math.sqrt(point_size / Math.PI);
-        var left, arrow_type, arrow_left;
-        if (x_center <= this.parent.layout.width / 2){
-            left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-            arrow_type = "left";
-            arrow_left = -1 * (arrow_width + stroke_width);
-        } else {
-            left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-            arrow_type = "right";
-            arrow_left = tooltip_box.width - stroke_width;
-        }
-        // Position vertically centered unless we're at the top or bottom of the plot
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var top, arrow_top;
-        if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
-            top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
-            arrow_top = border_radius;
-        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
-            top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-            arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
-        } else { // vertically centered
-            top = page_origin.y + y_center - (tooltip_box.height / 2);
-            arrow_top = (tooltip_box.height / 2) - arrow_width;
-        }        
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        if (this.layout.tooltip_positioning == "vertical"){
+            // Position horizontally centered above the point
+            var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
+            var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
+            var left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+            var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
+            // Position vertically above the point unless there's insufficient space, then go below
+            if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)){
+                top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
+                arrow_type = "down";
+                arrow_top = tooltip_box.height - stroke_width;
+            } else {
+                top = page_origin.y + y_center + offset + stroke_width + arrow_width;
+                arrow_type = "up";
+                arrow_top = 0 - stroke_width - arrow_width;
+            }
+        } else {
+            // Position horizontally on the left or the right depending on which side of the plot the point is on
+            if (x_center <= this.parent.layout.width / 2){
+                left = page_origin.x + x_center + offset + arrow_width + stroke_width;
+                arrow_type = "left";
+                arrow_left = -1 * (arrow_width + stroke_width);
+            } else {
+                left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
+                arrow_type = "right";
+                arrow_left = tooltip_box.width - stroke_width;
+            }
+            // Position vertically centered unless we're at the top or bottom of the plot
+            var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+            var top, arrow_top;
+            if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+                top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
+                arrow_top = border_radius;
+            } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+                top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
+                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+            } else { // vertically centered
+                top = page_origin.y + y_center - (tooltip_box.height / 2);
+                arrow_top = (tooltip_box.height / 2) - arrow_width;
+            }
+        }
         // Apply positions to the main div
         tooltip.selector.style("left", left + "px").style("top", top + "px");
         // Create / update position on arrow connecting tooltip to data

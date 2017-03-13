@@ -319,6 +319,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     type: "scatter",
     point_shape: "circle",
     point_size: 70,
+    tooltip_positioning: "vertical",
     id_field: "{{namespace}}id",
     fields: ["{{namespace}}phewas"],
     x_axis: {
