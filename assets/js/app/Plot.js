@@ -643,22 +643,27 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // Define plot-level mouse events
     var namespace = "." + this.id;
-    var mouseout = function(){
-        if (this.layout.mouse_guide) {
+    if (this.layout.mouse_guide) {
+        var mouseout_mouse_guide = function(){
             this.mouse_guide.vertical.attr("x", -1);
             this.mouse_guide.horizontal.attr("y", -1);
-        }
-    }.bind(this);
+        }.bind(this);
+        var mousemove_mouse_guide = function(){
+            var coords = d3.mouse(this.svg.node());
+            this.mouse_guide.vertical.attr("x", coords[0]);
+            this.mouse_guide.horizontal.attr("y", coords[1]);
+        }.bind(this);
+        this.svg
+            .on("mouseout" + namespace + "-mouse_guide", mouseout_mouse_guide)
+            .on("touchleave" + namespace + "-mouse_guide", mouseout_mouse_guide)
+            .on("mousemove" + namespace + "-mouse_guide", mousemove_mouse_guide);
+    }
     var mouseup = function(){
         this.stopDrag();
     }.bind(this);
     var mousemove = function(){
-        var coords = d3.mouse(this.svg.node());
-        if (this.layout.mouse_guide) {
-            this.mouse_guide.vertical.attr("x", coords[0]);
-            this.mouse_guide.horizontal.attr("y", coords[1]);
-        }
         if (this.interaction.dragging){
+            var coords = d3.mouse(this.svg.node());
             if (d3.event){ d3.event.preventDefault(); }
             this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;
             this.interaction.dragging.dragged_y = coords[1] - this.interaction.dragging.start_y;
@@ -669,8 +674,6 @@ LocusZoom.Plot.prototype.initialize = function(){
         }
     }.bind(this);
     this.svg
-        .on("mouseout" + namespace, mouseout)
-        .on("touchleave" + namespace, mouseout)
         .on("mouseup" + namespace, mouseup)
         .on("touchend" + namespace, mouseup)
         .on("mousemove" + namespace, mousemove)
