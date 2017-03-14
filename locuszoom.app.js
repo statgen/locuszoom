@@ -1803,7 +1803,8 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, proportional_height: 0.5 }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, proportional_height: 0.5 })
-    ]
+    ],
+    mouse_guide: true
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
@@ -1831,7 +1832,8 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
-    ]
+    ],
+    mouse_guide: false
 });
 
 LocusZoom.Layouts.add("plot", "interval_association", {
@@ -1846,7 +1848,8 @@ LocusZoom.Layouts.add("plot", "interval_association", {
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
         LocusZoom.Layouts.get("panel", "intervals", { unnamespaced: true, proportional_height: (120/570) }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, width: 800, proportional_height: (225/570) })
-    ]
+    ],
+    mouse_guide: true
 });
 
 /* global d3,LocusZoom */
@@ -7491,17 +7494,19 @@ LocusZoom.Plot.prototype.initialize = function(){
     }
     
     // Create an element/layer for containing mouse guides
-    var mouse_guide_svg = this.svg.append("g")
-        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
-    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
-    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
-    this.mouse_guide = {
-        svg: mouse_guide_svg,
-        vertical: mouse_guide_vertical_svg,
-        horizontal: mouse_guide_horizontal_svg
-    };
+    if (this.layout.mouse_guide) {
+        var mouse_guide_svg = this.svg.append("g")
+            .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
+        var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
+            .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
+        var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
+            .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
+        this.mouse_guide = {
+            svg: mouse_guide_svg,
+            vertical: mouse_guide_vertical_svg,
+            horizontal: mouse_guide_horizontal_svg
+        };
+    }
 
     // Add curtain and loader prototpyes to the plot
     this.curtain = LocusZoom.generateCurtain.call(this);
@@ -7634,16 +7639,20 @@ LocusZoom.Plot.prototype.initialize = function(){
     // Define plot-level mouse events
     var namespace = "." + this.id;
     var mouseout = function(){
-        this.mouse_guide.vertical.attr("x", -1);
-        this.mouse_guide.horizontal.attr("y", -1);
+        if (this.layout.mouse_guide) {
+            this.mouse_guide.vertical.attr("x", -1);
+            this.mouse_guide.horizontal.attr("y", -1);
+        }
     }.bind(this);
     var mouseup = function(){
         this.stopDrag();
     }.bind(this);
     var mousemove = function(){
         var coords = d3.mouse(this.svg.node());
-        this.mouse_guide.vertical.attr("x", coords[0]);
-        this.mouse_guide.horizontal.attr("y", coords[1]);
+        if (this.layout.mouse_guide) {
+            this.mouse_guide.vertical.attr("x", coords[0]);
+            this.mouse_guide.horizontal.attr("y", coords[1]);
+        }
         if (this.interaction.dragging){
             if (d3.event){ d3.event.preventDefault(); }
             this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;

@@ -1183,7 +1183,8 @@ LocusZoom.Layouts.add("plot", "standard_association", {
     panels: [
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, proportional_height: 0.5 }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, proportional_height: 0.5 })
-    ]
+    ],
+    mouse_guide: true
 });
 
 // Shortcut to "StandardLayout" for backward compatibility
@@ -1211,7 +1212,8 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
-    ]
+    ],
+    mouse_guide: false
 });
 
 LocusZoom.Layouts.add("plot", "interval_association", {
@@ -1226,5 +1228,6 @@ LocusZoom.Layouts.add("plot", "interval_association", {
         LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
         LocusZoom.Layouts.get("panel", "intervals", { unnamespaced: true, proportional_height: (120/570) }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, width: 800, proportional_height: (225/570) })
-    ]
+    ],
+    mouse_guide: true
 });
