@@ -1211,7 +1211,8 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
-    ]
+    ],
+    mouse_guide: false
 });
 
 LocusZoom.Layouts.add("plot", "interval_association", {
