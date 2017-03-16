@@ -150,7 +150,8 @@ LocusZoom.Plot.DefaultLayout = {
     dashboard: {
         components: []
     },
-    panel_boundaries: true
+    panel_boundaries: true,
+    mouse_guide: true
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
