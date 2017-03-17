@@ -320,8 +320,10 @@ div.#{$namespace}-data_layer-tooltip {
     border: 1px solid #{$default_black_shadow_rgba};
     background-color: rgba(235,235,235,0.4);
     float: right;
+    position: relative;
     top: -#{$tooltip_padding}px;
     right: -#{$tooltip_padding}px;
+    margin: 0px 0px 6px 6px;
   }
   
 }
