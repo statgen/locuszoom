@@ -2059,9 +2059,13 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             ret = layout;
             break;
         case "object":
-            if (layout.scale_function && layout.field) {
-                var f = new LocusZoom.Data.Field(layout.field);
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+            if (layout.scale_function){
+                if(layout.field) {
+                    var f = new LocusZoom.Data.Field(layout.field);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                } else {
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                }
             }
             break;
         }
@@ -5061,7 +5065,7 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+// If scale function: apply a boolean conditional to a single field
 LocusZoom.ScaleFunctions.add("if", function(parameters, input){
     if (typeof input == "undefined" || parameters.field_value != input){
         if (typeof parameters.else != "undefined"){

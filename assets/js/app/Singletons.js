@@ -263,7 +263,7 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+// If scale function: apply a boolean conditional to a single field
 LocusZoom.ScaleFunctions.add("if", function(parameters, input){
     if (typeof input == "undefined" || parameters.field_value != input){
         if (typeof parameters.else != "undefined"){

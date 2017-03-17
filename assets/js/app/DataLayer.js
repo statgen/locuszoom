@@ -207,9 +207,13 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             ret = layout;
             break;
         case "object":
-            if (layout.scale_function && layout.field) {
-                var f = new LocusZoom.Data.Field(layout.field);
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+            if (layout.scale_function){
+                if(layout.field) {
+                    var f = new LocusZoom.Data.Field(layout.field);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                } else {
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                }
             }
             break;
         }
