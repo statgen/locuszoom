@@ -323,7 +323,7 @@ div.#{$namespace}-data_layer-tooltip {
     position: relative;
     top: -#{$tooltip_padding}px;
     right: -#{$tooltip_padding}px;
-    margin: 0px 0px 6px 6px;
+    margin: 0px 0px #{$tooltip_padding}px #{$tooltip_padding}px;
   }
   
 }
