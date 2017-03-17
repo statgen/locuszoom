@@ -2169,8 +2169,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // If the layout allows tool tips on this data layer to be closable then add the close button
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
-        this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("button")
+        this.tooltips[id].selector.insert("button", ":first-child")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
             .text("×")

@@ -8,6 +8,7 @@ $default_black_shadow_opacity: "0.4";
 $default_black_shadow_rgba: "rgba(24, 24, 24, 0.4)";
 
 $tooltip_arrow_width: "7";
+$tooltip_padding: "6";
 
 svg.#{$namespace}-locuszoom {
 
@@ -263,7 +264,7 @@ div.#{$namespace}-data_layer-tooltip {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
-  padding: 6px;
+  padding: #{$tooltip_padding}px;
   background: rgba(235,235,235,1);
   border: 1px solid #{$default_black};
   border-radius: 4px;
@@ -318,9 +319,11 @@ div.#{$namespace}-data_layer-tooltip {
     color: #{$default_black_shadow_rgba};
     border: 1px solid #{$default_black_shadow_rgba};
     background-color: rgba(235,235,235,0.4);
-    position: absolute;
-    right: -1px;
-    top: -1px;
+    float: right;
+    position: relative;
+    top: -#{$tooltip_padding}px;
+    right: -#{$tooltip_padding}px;
+    margin: 0px 0px 6px 6px;
   }
   
 }
