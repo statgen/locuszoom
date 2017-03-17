@@ -46,7 +46,7 @@
 /* eslint-disable no-console */
 
 var LocusZoom = {
-    version: "0.5.5"
+    version: "0.5.6"
 };
     
 // Populate a single element with a LocusZoom plot.
@@ -362,23 +362,67 @@ LocusZoom.parseFields = function (data, html) {
     if (typeof html != "string"){
         throw ("LocusZoom.parseFields invalid arguments: html is not a string");
     }
-    // Match all things that look like fields in the HTML
-    var matches = html.match(/{{[A-Za-z0-9_:|]+}}/g);
-    if (matches){
-        // Remove duplicates
-        matches.reduce(function(a,b){if(a.indexOf(b)<0)a.push(b);return a;},[]);
-        // Replace matches with resolved values from the data object
-        matches.forEach(function(match){
-            var field = new LocusZoom.Data.Field(match.substring(2, match.length-2));
-            var value = field.resolve(data);
-            if (["string","number","boolean"].indexOf(typeof value) != -1){
-                html = html.replace(match, value);
-            } else if (value == null){
-                html = html.replace(match, "");
-            }
-        });
+    // `tokens` is like [token,...]
+    // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
+    var tokens = [];
+    var regex = /\{\{(?:(#if )?([A-Za-z0-9_:\|]+)|(\/if))\}\}/;
+    while (html.length > 0){
+        var m = regex.exec(html);
+        if (!m) { tokens.push({text: html}); html = ""; }
+        else if (m.index != 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
+        else if (m[1] == "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
+        else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
+        else if (m[3] == "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
+        else { console.error("Error tokenizing tooltip when remaining template is: " + html); html=html.slice(m[0].length); }
     }
-    return html;
+    var astify = function() {
+        var token = tokens.shift();
+        if (token.text || token.variable) {
+            return token;
+        } else if (token.condition) {
+            token.then = [];
+            while(tokens.length > 0) {
+                if (tokens[0].close == "if") { tokens.shift(); break; }
+                token.then.push(astify());
+            }
+            return token;
+        } else {
+            console.error("Error making tooltip AST due to unknown token " + JSON.stringify(token));
+            return { text: "" };
+        }
+    };
+    // `ast` is like [thing,...]
+    // `thing` is like {text: "..."} or {variable:"foo|bar"} or {condition: "foo|bar", then:[thing,...]}
+    var ast = [];
+    while (tokens.length > 0) ast.push(astify());
+
+    var resolve = function(variable) {
+        if (!resolve.cache.hasOwnProperty(variable)) {
+            resolve.cache[variable] = (new LocusZoom.Data.Field(variable)).resolve(data);
+        }
+        return resolve.cache[variable];
+    };
+    resolve.cache = {};
+    var render_node = function(node) {
+        if (node.text) {
+            return node.text;
+        } else if (node.variable) {
+            try {
+                var value = resolve(node.variable);
+                if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
+                if (value == null) { return ""; }
+            } catch (error) { console.error("Error while processing variable " + JSON.stringify(node.variable)); }
+            return "{{" + node.variable + "}}";
+        } else if (node.condition) {
+            try {
+                if (resolve(node.condition)) {
+                    return node.then.map(render_node).join("");
+                }
+            } catch (error) { console.error("Error while processign condition " + JSON.stringify(node.variable)); }
+            return "";
+        } else { console.error("Error rendering tooltip due to unknown AST node " + JSON.stringify(node)); }
+    };
+    return ast.map(render_node).join("");
 };
 
 // Shortcut method for getting the data bound to a tool tip.
@@ -895,12 +939,9 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     type: "scatter",
     point_shape: "circle",
     point_size: 70,
+    tooltip_positioning: "vertical",
     id_field: "{{namespace}}id",
     fields: ["{{namespace}}phewas"],
-    /*
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
-    */
     x_axis: {
         field: "{{namespace}}x"
     },
@@ -1790,7 +1831,8 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
-    ]
+    ],
+    mouse_guide: false
 });
 
 LocusZoom.Layouts.add("plot", "interval_association", {
@@ -2017,9 +2059,13 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             ret = layout;
             break;
         case "object":
-            if (layout.scale_function && layout.field) {
-                var f = new LocusZoom.Data.Field(layout.field);
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+            if (layout.scale_function){
+                if(layout.field) {
+                    var f = new LocusZoom.Data.Field(layout.field);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                } else {
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                }
             }
             break;
         }
@@ -2049,22 +2095,34 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             return +f.resolve(d);
         }.bind(this));
 
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+        // Apply floor/ceiling
+        if (!isNaN(this.layout[axis].floor)) {
+            extent[0] = this.layout[axis].floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(this.layout[axis].ceiling)) {
+            extent[1] = this.layout[axis].ceiling;
+            extent[0] = d3.min(extent);
         }
 
-        // Generate a new base extent
-        extent = d3.extent(extent);
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
+            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
+        }
+        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
+            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
+        }
 
-        // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+        // Apply minimum extent
+        if (typeof this.layout[axis].min_extent == "object") {
+            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
+                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
+            }
+            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
+                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
+            }
+        }
 
         return extent;
 
@@ -2115,8 +2173,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // If the layout allows tool tips on this data layer to be closable then add the close button
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
-        this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("button")
+        this.tooltips[id].selector.insert("button", ":first-child")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
             .text("×")
@@ -2682,6 +2739,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     this.DefaultLayout = {
         point_size: 40,
         point_shape: "circle",
+        tooltip_positioning: "horizontal",
         color: "#888888",
         fill_opacity: 1,
         y_axis: {
@@ -2708,8 +2766,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         if (!this.tooltips[id]){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
+        var top, left, arrow_type, arrow_top, arrow_left;
         var tooltip = this.tooltips[id];
         var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var offset = Math.sqrt(point_size / Math.PI);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -2718,31 +2778,49 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var y_scale  = "y"+this.layout.y_axis.axis+"_scale";
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        // Position horizontally on the left or the right depending on which side of the plot the point is on
-        var offset = Math.sqrt(point_size / Math.PI);
-        var left, arrow_type, arrow_left;
-        if (x_center <= this.parent.layout.width / 2){
-            left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-            arrow_type = "left";
-            arrow_left = -1 * (arrow_width + stroke_width);
-        } else {
-            left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-            arrow_type = "right";
-            arrow_left = tooltip_box.width - stroke_width;
-        }
-        // Position vertically centered unless we're at the top or bottom of the plot
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var top, arrow_top;
-        if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
-            top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
-            arrow_top = border_radius;
-        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
-            top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-            arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
-        } else { // vertically centered
-            top = page_origin.y + y_center - (tooltip_box.height / 2);
-            arrow_top = (tooltip_box.height / 2) - arrow_width;
-        }        
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        if (this.layout.tooltip_positioning == "vertical"){
+            // Position horizontally centered above the point
+            var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
+            var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
+            var left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+            var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
+            // Position vertically above the point unless there's insufficient space, then go below
+            if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)){
+                top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
+                arrow_type = "down";
+                arrow_top = tooltip_box.height - stroke_width;
+            } else {
+                top = page_origin.y + y_center + offset + stroke_width + arrow_width;
+                arrow_type = "up";
+                arrow_top = 0 - stroke_width - arrow_width;
+            }
+        } else {
+            // Position horizontally on the left or the right depending on which side of the plot the point is on
+            if (x_center <= this.parent.layout.width / 2){
+                left = page_origin.x + x_center + offset + arrow_width + stroke_width;
+                arrow_type = "left";
+                arrow_left = -1 * (arrow_width + stroke_width);
+            } else {
+                left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
+                arrow_type = "right";
+                arrow_left = tooltip_box.width - stroke_width;
+            }
+            // Position vertically centered unless we're at the top or bottom of the plot
+            var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+            var top, arrow_top;
+            if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+                top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
+                arrow_top = border_radius;
+            } else if (y_center + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+                top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
+                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+            } else { // vertically centered
+                top = page_origin.y + y_center - (tooltip_box.height / 2);
+                arrow_top = (tooltip_box.height / 2) - arrow_width;
+            }
+        }
         // Apply positions to the main div
         tooltip.selector.style("left", left + "px").style("top", top + "px");
         // Create / update position on arrow connecting tooltip to data
@@ -2921,24 +2999,25 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                     // Start by assuming a match, run through all filters to test if not a match on any one
                     var match = true;
                     data_layer.layout.label.filters.forEach(function(filter){
-                        if (isNaN(d[filter.field])){
+                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
+                        if (isNaN(field_value)){
                             match = false;
                         } else {
                             switch (filter.operator){
                             case "<":
-                                if (!(d[filter.field] < filter.value)){ match = false; }
+                                if (!(field_value < filter.value)){ match = false; }
                                 break;
                             case "<=":
-                                if (!(d[filter.field] <= filter.value)){ match = false; }
+                                if (!(field_value <= filter.value)){ match = false; }
                                 break;
                             case ">":
-                                if (!(d[filter.field] > filter.value)){ match = false; }
+                                if (!(field_value > filter.value)){ match = false; }
                                 break;
                             case ">=":
-                                if (!(d[filter.field] >= filter.value)){ match = false; }
+                                if (!(field_value >= filter.value)){ match = false; }
                                 break;
                             case "=":
-                                if (!(d[filter.field] == filter.value)){ match = false; }
+                                if (!(field_value == filter.value)){ match = false; }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
@@ -4986,7 +5065,7 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
-// Boolean scale function: bin a dataset numerically by matching against an array of distinct values
+// If scale function: apply a boolean conditional to a single field
 LocusZoom.ScaleFunctions.add("if", function(parameters, input){
     if (typeof input == "undefined" || parameters.field_value != input){
         if (typeof parameters.else != "undefined"){
@@ -6396,15 +6475,13 @@ LocusZoom.Data.Field = function(field){
     // First look for a full match with transformations already applied by the data requester.
     // Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
     this.resolve = function(d){
-        if (typeof d[this.full_name] != "undefined"){
-            return d[this.full_name];
-        } else {
+        if (typeof d[this.full_name] == "undefined"){
             var val = null;
             if (typeof d[this.namespace+":"+this.name] != "undefined"){ val = d[this.namespace+":"+this.name]; }
             else if (typeof d[this.name] != "undefined"){ val = d[this.name]; }
             d[this.full_name] = this.applyTransformations(val);
-            return d[this.full_name];
         }
+        return d[this.full_name];
     };
     
 };
@@ -6827,6 +6904,9 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    if (!resp){
+        return { header: chain.header, body: chain.body };
+    }
     var data = JSON.parse(resp);
     // Loop through the array of genes in the body and match each to a result from the contraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
@@ -6850,7 +6930,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
-    return {header: chain.header, body: chain.body};
+    return { header: chain.header, body: chain.body };
 };
 
 /**
@@ -7069,7 +7149,8 @@ LocusZoom.Plot.DefaultLayout = {
     dashboard: {
         components: []
     },
-    panel_boundaries: true
+    panel_boundaries: true,
+    mouse_guide: true
 };
 
 // Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
@@ -7418,17 +7499,19 @@ LocusZoom.Plot.prototype.initialize = function(){
     }
     
     // Create an element/layer for containing mouse guides
-    var mouse_guide_svg = this.svg.append("g")
-        .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
-    var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
-    var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
-        .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
-    this.mouse_guide = {
-        svg: mouse_guide_svg,
-        vertical: mouse_guide_vertical_svg,
-        horizontal: mouse_guide_horizontal_svg
-    };
+    if (this.layout.mouse_guide) {
+        var mouse_guide_svg = this.svg.append("g")
+            .attr("class", "lz-mouse_guide").attr("id", this.id + ".mouse_guide");
+        var mouse_guide_vertical_svg = mouse_guide_svg.append("rect")
+            .attr("class", "lz-mouse_guide-vertical").attr("x",-1);
+        var mouse_guide_horizontal_svg = mouse_guide_svg.append("rect")
+            .attr("class", "lz-mouse_guide-horizontal").attr("y",-1);
+        this.mouse_guide = {
+            svg: mouse_guide_svg,
+            vertical: mouse_guide_vertical_svg,
+            horizontal: mouse_guide_horizontal_svg
+        };
+    }
 
     // Add curtain and loader prototpyes to the plot
     this.curtain = LocusZoom.generateCurtain.call(this);
@@ -7560,18 +7643,27 @@ LocusZoom.Plot.prototype.initialize = function(){
 
     // Define plot-level mouse events
     var namespace = "." + this.id;
-    var mouseout = function(){
-        this.mouse_guide.vertical.attr("x", -1);
-        this.mouse_guide.horizontal.attr("y", -1);
-    }.bind(this);
+    if (this.layout.mouse_guide) {
+        var mouseout_mouse_guide = function(){
+            this.mouse_guide.vertical.attr("x", -1);
+            this.mouse_guide.horizontal.attr("y", -1);
+        }.bind(this);
+        var mousemove_mouse_guide = function(){
+            var coords = d3.mouse(this.svg.node());
+            this.mouse_guide.vertical.attr("x", coords[0]);
+            this.mouse_guide.horizontal.attr("y", coords[1]);
+        }.bind(this);
+        this.svg
+            .on("mouseout" + namespace + "-mouse_guide", mouseout_mouse_guide)
+            .on("touchleave" + namespace + "-mouse_guide", mouseout_mouse_guide)
+            .on("mousemove" + namespace + "-mouse_guide", mousemove_mouse_guide);
+    }
     var mouseup = function(){
         this.stopDrag();
     }.bind(this);
     var mousemove = function(){
-        var coords = d3.mouse(this.svg.node());
-        this.mouse_guide.vertical.attr("x", coords[0]);
-        this.mouse_guide.horizontal.attr("y", coords[1]);
         if (this.interaction.dragging){
+            var coords = d3.mouse(this.svg.node());
             if (d3.event){ d3.event.preventDefault(); }
             this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;
             this.interaction.dragging.dragged_y = coords[1] - this.interaction.dragging.start_y;
@@ -7582,8 +7674,6 @@ LocusZoom.Plot.prototype.initialize = function(){
         }
     }.bind(this);
     this.svg
-        .on("mouseout" + namespace, mouseout)
-        .on("touchleave" + namespace, mouseout)
         .on("mouseup" + namespace, mouseup)
         .on("touchend" + namespace, mouseup)
         .on("mousemove" + namespace, mousemove)

@@ -157,6 +157,34 @@ describe("LocusZoom.DataLayer", function(){
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: "manatee" }), null);
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), null);
         });
+        it("supports operating on an entire data element in the absence of a specified field", function() {
+            LocusZoom.ScaleFunctions.add("test_effect_direction", function(parameters, input){
+                if (typeof input == "undefined"){
+                    return null;
+                } else if ((input.beta && input.beta > 0) || (input.or && input.or > 0)){
+                    return parameters["+"] || null;
+                } else if ((input.beta && input.beta < 0) || (input.or && input.or < 0)){
+                    return parameters["-"] || null;
+                }
+                return null;
+            });
+            this.datalayer = new LocusZoom.DataLayer({ id: "test" });
+            this.layout = {
+                scale: {
+                    scale_function: "test_effect_direction",
+                    parameters: {
+                        "+": "triangle-up",
+                        "-": "triangle-down"
+                    }
+                }
+            };
+            var variants = [ { beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: "bar" } ];
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[0]), "triangle-up");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[1]), "triangle-down");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[2]), "triangle-down");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[3]), "triangle-up");
+            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[4]), null);
+        });
         it("iterates over an array of options until exhausted or a non-null value is found", function() {
             this.datalayer = new LocusZoom.DataLayer({ id: "test" });
             this.layout = {

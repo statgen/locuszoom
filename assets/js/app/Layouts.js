@@ -319,12 +319,9 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     type: "scatter",
     point_shape: "circle",
     point_size: 70,
+    tooltip_positioning: "vertical",
     id_field: "{{namespace}}id",
     fields: ["{{namespace}}phewas"],
-    /*
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}id", "{{namespace}}x", "{{namespace}}category_name", "{{namespace}}num_cases", "{{namespace}}num_controls", "{{namespace}}phewas_string", "{{namespace}}phewas_code", "{{namespace}}pval|scinotation", "{{namespace}}pval|neglog10"],
-    */
     x_axis: {
         field: "{{namespace}}x"
     },
@@ -1214,7 +1211,8 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
-    ]
+    ],
+    mouse_guide: false
 });
 
 LocusZoom.Layouts.add("plot", "interval_association", {

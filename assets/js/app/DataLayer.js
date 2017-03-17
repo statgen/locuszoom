@@ -207,9 +207,13 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
             ret = layout;
             break;
         case "object":
-            if (layout.scale_function && layout.field) {
-                var f = new LocusZoom.Data.Field(layout.field);
-                ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+            if (layout.scale_function){
+                if(layout.field) {
+                    var f = new LocusZoom.Data.Field(layout.field);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                } else {
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                }
             }
             break;
         }
@@ -239,22 +243,34 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             return +f.resolve(d);
         }.bind(this));
 
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (!isNaN(this.layout[axis].lower_buffer)){ extent.push(extent[0] - (original_extent_span * this.layout[axis].lower_buffer)); }
-        if (!isNaN(this.layout[axis].upper_buffer)){ extent.push(extent[1] + (original_extent_span * this.layout[axis].upper_buffer)); }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object" && !isNaN(this.layout[axis].min_extent[0]) && !isNaN(this.layout[axis].min_extent[1])){
-            extent.push(this.layout[axis].min_extent[0], this.layout[axis].min_extent[1]);
+        // Apply floor/ceiling
+        if (!isNaN(this.layout[axis].floor)) {
+            extent[0] = this.layout[axis].floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(this.layout[axis].ceiling)) {
+            extent[1] = this.layout[axis].ceiling;
+            extent[0] = d3.min(extent);
         }
 
-        // Generate a new base extent
-        extent = d3.extent(extent);
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
+            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
+        }
+        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
+            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
+        }
 
-        // Apply floor/ceiling, if applicable
-        if (!isNaN(this.layout[axis].floor)){ extent[0] = this.layout[axis].floor; }
-        if (!isNaN(this.layout[axis].ceiling)){ extent[1] = this.layout[axis].ceiling; }
+        // Apply minimum extent
+        if (typeof this.layout[axis].min_extent == "object") {
+            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
+                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
+            }
+            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
+                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
+            }
+        }
 
         return extent;
 
@@ -305,8 +321,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
     // If the layout allows tool tips on this data layer to be closable then add the close button
     // and add padding to the tooltip to accomodate it
     if (this.layout.tooltip.closable){
-        this.tooltips[id].selector.style("padding-right", "24px");
-        this.tooltips[id].selector.append("button")
+        this.tooltips[id].selector.insert("button", ":first-child")
             .attr("class", "lz-tooltip-close-button")
             .attr("title", "Close")
             .text("×")

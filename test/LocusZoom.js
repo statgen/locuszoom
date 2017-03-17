@@ -219,6 +219,62 @@ describe("LocusZoom Core", function(){
                 var expected_value = "<strong>123 and foo, fooherpderp; </strong>";
                 assert.equal(LocusZoom.parseFields(data, html), expected_value);
             });
+            it("should hide non-existant fields but show broken ones", function() {
+                var data = {
+                    "foo:field_1": 12345,
+                    "bar:field2": "foo"
+                };
+                var html = "{{bar:field2||nope|}}{{wat}}{{bar:field2|herp||derp}}";
+                var expected_value = "{{bar:field2||nope|}}{{bar:field2|herp||derp}}";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
+            it("should handle conditional blocks", function() {
+                var data = {
+                    "foo:field_1": 1234,
+                    "bar:field2": "foo"
+                };
+                var html = "{{#if foo:field_1}}<strong>{{foo:field_1}}"
+                         + "{{#if bar:field2}} and {{bar:field2}}{{/if}}, "
+                         + "{{#if nope}}wat{{/if}}"
+                         + "{{bar:field2|herp|derp}}; {{field3}}</strong>{{/if}}";
+                var expected_value = "<strong>1234 and foo, fooherpderp; </strong>";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+                var data2 = {
+                    "fieldA": "",
+                    "fieldB": ""
+                };
+                var html2 = "{{#if fieldA}}A1<br>{{/if}}"
+                          + "{{#if fieldA|derp}}A2<br>{{/if}}"
+                          + "{{#if foo:fieldB}}B1<br>{{/if}}"
+                          + "{{#if foo:fieldB|derp}}B2<br>{{/if}}";
+                var expected_value2 = "A2<br>B2<br>";
+                assert.equal(LocusZoom.parseFields(data2, html2), expected_value2);
+            });
+            it("should treat broken/non-existant conditions as false", function() {
+                var data = {
+                    "foo:field_1": 12345,
+                    "bar:field2": "foo"
+                };
+                var html = "a{{#if foo:field_3}}b{{/if}}c";
+                var expected_value = "ac";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+                var html2 = "a{{#if foo:field_1|nope}}b{{/if}}c";
+                assert.equal(LocusZoom.parseFields(data, html2), expected_value);
+            });
+            it("should handle nasty input", function() {
+                var data = {
+                    "foo:field_1": 12345,
+                    "bar:field2": "foo"
+                };
+                var html = "{{#iff foo:field_1}}<strong>{{{{foo:field_1}}}}"
+                         + "{{#if bar:field2}} and {{bar:field2||nope|}}{{/if}}{{/if}}{{/if}}, "
+                         + "{{#if {{wat}}}}"
+                         + "{{#if nope}}.{{#if unclosed}}. {{field3}}";
+                var expected_value = "{{#iff foo:field_1}}<strong>{{12345}}"
+                                   + " and {{bar:field2||nope|}}, "
+                                   + "{{#if }}";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
         });
         
         describe("Validate State", function() {
