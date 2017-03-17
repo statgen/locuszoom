@@ -6904,6 +6904,9 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    if (!resp){
+        return { header: chain.header, body: chain.body };
+    }
     var data = JSON.parse(resp);
     // Loop through the array of genes in the body and match each to a result from the contraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
@@ -6927,7 +6930,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
-    return {header: chain.header, body: chain.body};
+    return { header: chain.header, body: chain.body };
 };
 
 /**
