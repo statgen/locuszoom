@@ -14,7 +14,7 @@ LocusZoom.DataSources = function() {
 };
 
 LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    console.warn("Warning: .addSource() is depricated. Use .add() instead");
+    console.warn("Warning: .addSource() is deprecated. Use .add() instead");
     return this.add(ns, x);
 };
 
@@ -37,7 +37,7 @@ LocusZoom.DataSources.prototype.set = function(ns, x) {
 };
 
 LocusZoom.DataSources.prototype.getSource = function(ns) {
-    console.warn("Warning: .getSource() is depricated. Use .get() instead");
+    console.warn("Warning: .getSource() is deprecated. Use .get() instead");
     return this.get(ns);
 };
 
@@ -46,7 +46,7 @@ LocusZoom.DataSources.prototype.get = function(ns) {
 };
 
 LocusZoom.DataSources.prototype.removeSource = function(ns) {
-    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
+    console.warn("Warning: .removeSource() is deprecated. Use .remove() instead");
     return this.remove(ns);
 };
 
@@ -534,7 +534,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
         return { header: chain.header, body: chain.body };
     }
     var data = JSON.parse(resp);
-    // Loop through the array of genes in the body and match each to a result from the contraints request
+    // Loop through the array of genes in the body and match each to a result from the constraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
     chain.body.forEach(function(gene, i){
         var gene_id = gene.gene_id;

@@ -10,8 +10,8 @@
 
   A dashboard is an HTML-based (read: not SVG-based) collection of components used to
   display information or provide user interface. Dashboards can exist on entire plots,
-  where their visiblity is permanent and vertically adjacent to the plot, or on individual
-  panels, where their visiblity is tied to a behavior (e.g. a mouseover) and is as an overlay.
+  where their visibility is permanent and vertically adjacent to the plot, or on individual
+  panels, where their visibility is tied to a behavior (e.g. a mouseover) and is as an overlay.
 
 */
 
@@ -274,7 +274,7 @@ LocusZoom.Dashboard.Components = (function() {
   LocusZoom.Dashboard.Component.Button Class
 
   Plots and panels may have a "dashboard" element suited for showing HTML components that may be interactive.
-  When components need to incoroprate a generic button, or additionally a button that generates a menu, this
+  When components need to incorporate a generic button, or additionally a button that generates a menu, this
   class provides much of the necessary framework.
 
 */
@@ -336,7 +336,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : "") + group_position;
     };
 
-    // Permanance
+    // Permanence
     this.persist = false;
     this.permanent = false;
     this.setPermanent = function(bool){

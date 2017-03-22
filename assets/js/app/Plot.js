@@ -218,7 +218,7 @@ LocusZoom.Plot.prototype.initializeLayout = function(){
      * Resize panels within the plot proportionally to match the new plot dimensions
   2. If NOT passed discrete width and height:
      * Assume panels within are sized and positioned correctly
-     * Calculate appropriate plot dimesions from panels contained within and update plot
+     * Calculate appropriate plot dimensions from panels contained within and update plot
 */
 LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
@@ -323,7 +323,7 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     // Store the Panel on the Plot
     this.panels[panel.id] = panel;
 
-    // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
+    // If a discrete y_index was set in the layout then adjust other panel y_index values to accommodate this one
     if (panel.layout.y_index != null && !isNaN(panel.layout.y_index)
         && this.panel_ids_by_y_index.length > 0){
         // Negative y_index values should count backwards from the end, so convert negatives to appropriate values here
@@ -419,7 +419,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
  TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
        Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
-       but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
+       but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
 LocusZoom.Plot.prototype.positionPanels = function(){
@@ -431,9 +431,9 @@ LocusZoom.Plot.prototype.positionPanels = function(){
     // NOTE: This assumes panels have consistent widths already. That should probably be enforced too!
     var x_linked_margins = { left: 0, right: 0 };
 
-    // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
+    // Proportional heights for newly added panels default to null unless explicitly set, so determine appropriate
     // proportional heights for all panels with a null value from discretely set dimensions.
-    // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
+    // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
     for (id in this.panels){
         if (this.panels[id].layout.proportional_height == null){
             this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
@@ -478,7 +478,7 @@ LocusZoom.Plot.prototype.positionPanels = function(){
         this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
     }.bind(this));    
 
-    // Update dimensions on the plot to accomodate repositioned panels
+    // Update dimensions on the plot to accommodate repositioned panels
     this.setDimensions();
 
     // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
@@ -722,7 +722,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         new_state[property] = state_changes[property];
     }
 
-    // Validate the new state (may do nothing, may do a lot, depends on how the user has thigns set up)
+    // Validate the new state (may do nothing, may do a lot, depends on how the user has things set up)
     new_state = LocusZoom.validateState(new_state, this.layout);
 
     // Apply new state to the actual state
