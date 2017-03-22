@@ -466,7 +466,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
 
-    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accomodate this one
+    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accommodate this one
     if (data_layer.layout.z_index != null && !isNaN(data_layer.layout.z_index)
         && this.data_layer_ids_by_z_index.length > 0){
         // Negative z_index values should count backwards from the end, so convert negatives to appropriate values here
@@ -990,7 +990,7 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
 });
 
 // Add a "basic" loader to a panel
-// This method is jsut a shortcut for adding the most commonly used type of loader
+// This method is just a shortcut for adding the most commonly used type of loader
 // which appears when data is requested, animates (e.g. shows an infinitely cycling
 // progress bar as opposed to one that loads from 0-100% based on actual load progress),
 // and disappears when new data is loaded and rendered.

@@ -20,7 +20,7 @@ LocusZoom.Layouts = (function() {
         } else if (layouts[type][name]) {
             // Get the base layout
             var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
-            // If "unnamespaced" is true then strike that from the layout and retutn the layout without namespacing
+            // If "unnamespaced" is true then strike that from the layout and return the layout without namespacing
             if (layout.unnamespaced){
                 delete layout.unnamespaced;
                 return JSON.parse(JSON.stringify(layout));

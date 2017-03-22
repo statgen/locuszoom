@@ -45,7 +45,7 @@ LocusZoom.KnownDataSources = (function() {
     };
 
     obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        console.warn("Warning: KnownDataSources.push() is deprecated. Use .add() instead");
         obj.add(source);
     };
 
@@ -84,7 +84,7 @@ LocusZoom.KnownDataSources = (function() {
 /**************************
   Transformation Functions
 
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negative log10 form
   Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
 
   NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.

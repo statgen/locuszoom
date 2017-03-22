@@ -65,7 +65,7 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
 // pos    - Position value (integer, required)
 // exp    - Exponent of the returned string's base. E.g. 6 => Mb, regardless of pos. (integer, optional)
 //          If not provided returned string will select smallest base divisible by 3 for a whole number value
-// suffix - Whether or not to append a sufix (e.g. "Mb") to the end of the returned string (boolean, optional)
+// suffix - Whether or not to append a suffix (e.g. "Mb") to the end of the returned string (boolean, optional)
 LocusZoom.positionIntToString = function(pos, exp, suffix){
     var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
     suffix = suffix || false;
@@ -295,7 +295,7 @@ LocusZoom.validateState = function(new_state, layout){
         validated_region = true;
     }
 
-    // Constrain w/r/t layout-defined mininum region scale
+    // Constrain w/r/t layout-defined minimum region scale
     if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;

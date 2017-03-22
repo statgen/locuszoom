@@ -6,7 +6,7 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 See [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki) for full documentation and API reference.
 
-To see funcitonal examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
+To see functional examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
 
 ![LocusZoom.js Standard Association Plot (v0.5.2)](http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png)
 
@@ -167,7 +167,7 @@ var layout = LocusZoom.Layouts.merge({ state: { chr: 6, start: 20379709, end: 20
 
 #### Predefining State With `data-region`
 
-You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the continaing element before populating it, like so:
+You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the containing element before populating it, like so:
 
 ```html
 <div id="foo" data-region="10:114550452-115067678"></div>

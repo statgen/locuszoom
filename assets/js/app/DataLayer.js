@@ -319,7 +319,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
         this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
     }
     // If the layout allows tool tips on this data layer to be closable then add the close button
-    // and add padding to the tooltip to accomodate it
+    // and add padding to the tooltip to accommodate it
     if (this.layout.tooltip.closable){
         this.tooltips[id].selector.insert("button", ":first-child")
             .attr("class", "lz-tooltip-close-button")
@@ -553,14 +553,14 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         toggle = true;
     }
 
-    // Get an ID for the elment or return having changed nothing
+    // Get an ID for the element or return having changed nothing
     try {
         var element_id = this.getElementId(element);
     } catch (get_element_id_error){
         return this;
     }
 
-    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
@@ -608,7 +608,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)){ filters = []; }
 
-    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
