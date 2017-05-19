@@ -108,7 +108,7 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
 // pos    - Position value (integer, required)
 // exp    - Exponent of the returned string's base. E.g. 6 => Mb, regardless of pos. (integer, optional)
 //          If not provided returned string will select smallest base divisible by 3 for a whole number value
-// suffix - Whether or not to append a sufix (e.g. "Mb") to the end of the returned string (boolean, optional)
+// suffix - Whether or not to append a suffix (e.g. "Mb") to the end of the returned string (boolean, optional)
 LocusZoom.positionIntToString = function(pos, exp, suffix){
     var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
     suffix = suffix || false;
@@ -338,7 +338,7 @@ LocusZoom.validateState = function(new_state, layout){
         validated_region = true;
     }
 
-    // Constrain w/r/t layout-defined mininum region scale
+    // Constrain w/r/t layout-defined minimum region scale
     if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;
@@ -640,7 +640,7 @@ LocusZoom.Layouts = (function() {
         } else if (layouts[type][name]) {
             // Get the base layout
             var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
-            // If "unnamespaced" is true then strike that from the layout and retutn the layout without namespacing
+            // If "unnamespaced" is true then strike that from the layout and return the layout without namespacing
             if (layout.unnamespaced){
                 delete layout.unnamespaced;
                 return JSON.parse(JSON.stringify(layout));
@@ -2171,7 +2171,7 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
         this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
     }
     // If the layout allows tool tips on this data layer to be closable then add the close button
-    // and add padding to the tooltip to accomodate it
+    // and add padding to the tooltip to accommodate it
     if (this.layout.tooltip.closable){
         this.tooltips[id].selector.insert("button", ":first-child")
             .attr("class", "lz-tooltip-close-button")
@@ -2405,14 +2405,14 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         toggle = true;
     }
 
-    // Get an ID for the elment or return having changed nothing
+    // Get an ID for the element or return having changed nothing
     try {
         var element_id = this.getElementId(element);
     } catch (get_element_id_error){
         return this;
     }
 
-    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
@@ -2460,7 +2460,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)){ filters = []; }
 
-    // Enforce exlcusivity (force all elements to have the opposite of toggle first)
+    // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
@@ -4847,7 +4847,7 @@ LocusZoom.KnownDataSources = (function() {
     };
 
     obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is depricated. Use .add() instead");
+        console.warn("Warning: KnownDataSources.push() is deprecated. Use .add() instead");
         obj.add(source);
     };
 
@@ -4886,7 +4886,7 @@ LocusZoom.KnownDataSources = (function() {
 /**************************
   Transformation Functions
 
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negeative log10 form
+  Singleton for formatting or transforming a single input, for instance turning raw p values into negative log10 form
   Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
 
   NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
@@ -5140,8 +5140,8 @@ LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
 
   A dashboard is an HTML-based (read: not SVG-based) collection of components used to
   display information or provide user interface. Dashboards can exist on entire plots,
-  where their visiblity is permanent and vertically adjacent to the plot, or on individual
-  panels, where their visiblity is tied to a behavior (e.g. a mouseover) and is as an overlay.
+  where their visibility is permanent and vertically adjacent to the plot, or on individual
+  panels, where their visibility is tied to a behavior (e.g. a mouseover) and is as an overlay.
 
 */
 
@@ -5404,7 +5404,7 @@ LocusZoom.Dashboard.Components = (function() {
   LocusZoom.Dashboard.Component.Button Class
 
   Plots and panels may have a "dashboard" element suited for showing HTML components that may be interactive.
-  When components need to incoroprate a generic button, or additionally a button that generates a menu, this
+  When components need to incorporate a generic button, or additionally a button that generates a menu, this
   class provides much of the necessary framework.
 
 */
@@ -5466,7 +5466,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return "lz-dashboard-button lz-dashboard-button-" + this.color + (this.status ? "-" + this.status : "") + group_position;
     };
 
-    // Permanance
+    // Permanence
     this.persist = false;
     this.permanent = false;
     this.setPermanent = function(bool){
@@ -6388,7 +6388,7 @@ LocusZoom.DataSources = function() {
 };
 
 LocusZoom.DataSources.prototype.addSource = function(ns, x) {
-    console.warn("Warning: .addSource() is depricated. Use .add() instead");
+    console.warn("Warning: .addSource() is deprecated. Use .add() instead");
     return this.add(ns, x);
 };
 
@@ -6411,7 +6411,7 @@ LocusZoom.DataSources.prototype.set = function(ns, x) {
 };
 
 LocusZoom.DataSources.prototype.getSource = function(ns) {
-    console.warn("Warning: .getSource() is depricated. Use .get() instead");
+    console.warn("Warning: .getSource() is deprecated. Use .get() instead");
     return this.get(ns);
 };
 
@@ -6420,7 +6420,7 @@ LocusZoom.DataSources.prototype.get = function(ns) {
 };
 
 LocusZoom.DataSources.prototype.removeSource = function(ns) {
-    console.warn("Warning: .removeSource() is depricated. Use .remove() instead");
+    console.warn("Warning: .removeSource() is deprecated. Use .remove() instead");
     return this.remove(ns);
 };
 
@@ -6908,7 +6908,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
         return { header: chain.header, body: chain.body };
     }
     var data = JSON.parse(resp);
-    // Loop through the array of genes in the body and match each to a result from the contraints request
+    // Loop through the array of genes in the body and match each to a result from the constraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
     chain.body.forEach(function(gene, i){
         var gene_id = gene.gene_id;
@@ -7217,7 +7217,7 @@ LocusZoom.Plot.prototype.initializeLayout = function(){
      * Resize panels within the plot proportionally to match the new plot dimensions
   2. If NOT passed discrete width and height:
      * Assume panels within are sized and positioned correctly
-     * Calculate appropriate plot dimesions from panels contained within and update plot
+     * Calculate appropriate plot dimensions from panels contained within and update plot
 */
 LocusZoom.Plot.prototype.setDimensions = function(width, height){
     
@@ -7322,7 +7322,7 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     // Store the Panel on the Plot
     this.panels[panel.id] = panel;
 
-    // If a discrete y_index was set in the layout then adjust other panel y_index values to accomodate this one
+    // If a discrete y_index was set in the layout then adjust other panel y_index values to accommodate this one
     if (panel.layout.y_index != null && !isNaN(panel.layout.y_index)
         && this.panel_ids_by_y_index.length > 0){
         // Negative y_index values should count backwards from the end, so convert negatives to appropriate values here
@@ -7418,7 +7418,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
  TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
        Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
-       but the logic for keeping these user-defineable values straight approaches the complexity of a 2D box-packing algorithm.
+       but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
        That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
 */
 LocusZoom.Plot.prototype.positionPanels = function(){
@@ -7430,9 +7430,9 @@ LocusZoom.Plot.prototype.positionPanels = function(){
     // NOTE: This assumes panels have consistent widths already. That should probably be enforced too!
     var x_linked_margins = { left: 0, right: 0 };
 
-    // Proportional heights for newly added panels default to null unless explcitly set, so determine appropriate
+    // Proportional heights for newly added panels default to null unless explicitly set, so determine appropriate
     // proportional heights for all panels with a null value from discretely set dimensions.
-    // Likewise handle defaul nulls for proportional widths, but instead just force a value of 1 (full width)
+    // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
     for (id in this.panels){
         if (this.panels[id].layout.proportional_height == null){
             this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
@@ -7477,7 +7477,7 @@ LocusZoom.Plot.prototype.positionPanels = function(){
         this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
     }.bind(this));    
 
-    // Update dimensions on the plot to accomodate repositioned panels
+    // Update dimensions on the plot to accommodate repositioned panels
     this.setDimensions();
 
     // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
@@ -7721,7 +7721,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         new_state[property] = state_changes[property];
     }
 
-    // Validate the new state (may do nothing, may do a lot, depends on how the user has thigns set up)
+    // Validate the new state (may do nothing, may do a lot, depends on how the user has things set up)
     new_state = LocusZoom.validateState(new_state, this.layout);
 
     // Apply new state to the actual state
@@ -8339,7 +8339,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     // Store the Data Layer on the Panel
     this.data_layers[data_layer.id] = data_layer;
 
-    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accomodate this one
+    // If a discrete z_index was set in the layout then adjust other data layer z_index values to accommodate this one
     if (data_layer.layout.z_index != null && !isNaN(data_layer.layout.z_index)
         && this.data_layer_ids_by_z_index.length > 0){
         // Negative z_index values should count backwards from the end, so convert negatives to appropriate values here
@@ -8863,7 +8863,7 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
 });
 
 // Add a "basic" loader to a panel
-// This method is jsut a shortcut for adding the most commonly used type of loader
+// This method is just a shortcut for adding the most commonly used type of loader
 // which appears when data is requested, animates (e.g. shows an infinitely cycling
 // progress bar as opposed to one that loads from 0-100% based on actual load progress),
 // and disappears when new data is loaded and rendered.
