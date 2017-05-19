@@ -250,6 +250,14 @@ describe("LocusZoom Core", function(){
                 var expected_value2 = "A2<br>B2<br>";
                 assert.equal(LocusZoom.parseFields(data2, html2), expected_value2);
             });
+            it("should treat 0 as truthy in conditions", function() {
+                var data = {
+                    "foo": 0
+                };
+                var html = "a{{#if foo}}{{foo}}{{/if}}";
+                var expected_value = "a0";
+                assert.equal(LocusZoom.parseFields(data, html), expected_value);
+            });
             it("should treat broken/non-existant conditions as false", function() {
                 var data = {
                     "foo:field_1": 12345,

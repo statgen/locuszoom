@@ -377,7 +377,8 @@ LocusZoom.parseFields = function (data, html) {
             return "{{" + node.variable + "}}";
         } else if (node.condition) {
             try {
-                if (resolve(node.condition)) {
+                var condition = resolve(node.condition);
+                if (condition || condition === 0) {
                     return node.then.map(render_node).join("");
                 }
             } catch (error) { console.error("Error while processing condition " + JSON.stringify(node.variable)); }
