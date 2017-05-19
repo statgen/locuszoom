@@ -330,7 +330,12 @@ LocusZoom.parseFields = function (data, html) {
         else if (m[1] == "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
         else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
         else if (m[3] == "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
-        else { console.error("Error tokenizing tooltip when remaining template is: " + html); html=html.slice(m[0].length); }
+        else {
+            console.error("Error tokenizing tooltip when remaining template is " + JSON.stringify(html) +
+                          " and previous tokens are " + JSON.stringify(tokens) +
+                          " and current regex match is " + JSON.stringify([m[1], m[2], m[3]]));
+            html=html.slice(m[0].length);
+        }
     }
     var astify = function() {
         var token = tokens.shift();
@@ -375,7 +380,7 @@ LocusZoom.parseFields = function (data, html) {
                 if (resolve(node.condition)) {
                     return node.then.map(render_node).join("");
                 }
-            } catch (error) { console.error("Error while processign condition " + JSON.stringify(node.variable)); }
+            } catch (error) { console.error("Error while processing condition " + JSON.stringify(node.variable)); }
             return "";
         } else { console.error("Error rendering tooltip due to unknown AST node " + JSON.stringify(node)); }
     };
