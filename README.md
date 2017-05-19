@@ -208,7 +208,7 @@ $ sudo npm install gulp-cli -g    # If you don't already have gulp-cli installed
 $ npm install
 ```
 
-Once complete run or `gulp` from the top of the application directory to run all tests and build the following files:
+Once complete run `gulp` from the top of the application directory to run all tests and build the following files:
 
 * `locuszoom.app.js` - A concatenated app file suitable for use in development
 * `locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
