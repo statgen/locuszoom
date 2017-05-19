@@ -339,7 +339,7 @@ LocusZoom.parseFields = function (data, html) {
     }
     var astify = function() {
         var token = tokens.shift();
-        if (token.text || token.variable) {
+        if (typeof token.text !== "undefined" || token.variable) {
             return token;
         } else if (token.condition) {
             token.then = [];
@@ -366,7 +366,7 @@ LocusZoom.parseFields = function (data, html) {
     };
     resolve.cache = {};
     var render_node = function(node) {
-        if (node.text) {
+        if (typeof node.text !== "undefined") {
             return node.text;
         } else if (node.variable) {
             try {
