@@ -6614,7 +6614,17 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
     fields.forEach(function(f, i) {
         if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
     });
-    var N = x[Object.keys(x)[1]].length;
+    var x_keys = Object.keys(x);
+    var N = x[x_keys[0]].length; // NOTE: this used 1 instead of 0 before, why?
+    x_keys.forEach(function(key) {
+        if (x[key].length !== N) {
+            throw "the response column " + key + " had " + x[key].length.toString() +
+                " elements but " + x_keys[0] + " had " + N.toString();
+        }
+    });
+    var nonfield_keys = x_keys.filter(function(key) {
+        return fields.indexOf(key) === -1;
+    });
     for(var i = 0; i < N; i++) {
         var record = {};
         for(var j=0; j<fields.length; j++) {
@@ -6623,6 +6633,9 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
                 val = trans[j](val);
             }
             record[outnames[j]] = val;
+        }
+        for(var j=0; j<nonfield_keys.length; j++) {
+            record[nonfield_keys[j]] = x[nonfield_keys[j]][i];
         }
         records.push(record);
     }
