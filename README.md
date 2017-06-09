@@ -31,14 +31,21 @@ CDN links are available for these resources (see [statgen.github.io/locuszoom/](
 
 **Data Sources** is an object representing a collection of arbitrarily many sources from which data for the plot can be requested. When adding sources to the collection they must be namespaced so that retrieving specific fields can be done with respect to specific data sources.
 
-Here's an example of defining a data sources object:
+Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/single/" }]);
+data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/" }]);
 ```
 
 The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "trait".
+
+Data sources can also be local files:
+
+```javascript
+data_sources = new LocusZoom.DataSources();
+data_sources.add("trait", ["AssociationLZ", { url: "file:///path/to/data.json" }]);
+```
 
 Refer to the [Data Sources Documentation](https://github.com/statgen/locuszoom/wiki/Data-Sources) for more information on using predefined data sources or extending/creating custom data sources.
 
