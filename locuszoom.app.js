@@ -5283,7 +5283,7 @@ LocusZoom.Dashboard.prototype.destroy = function(force){
   Dashboard Components
 
   A dashboard component is an empty div rendered on a dashboard that can display custom
-  text of user interface elements. LocusZoom.Dashboard.Components is a singleton used to
+  html of user interface elements. LocusZoom.Dashboard.Components is a singleton used to
   define and manage an extendable collection of dashboard components.
   (e.g. by LocusZoom.Dashboard.Components.add())
 
@@ -5435,12 +5435,13 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return this;
     };
 
-    // Text for the button to show
-    this.text = "";
-    this.setText = function(text){
-        if (typeof text != "undefined"){ this.text = text.toString(); }
+    // HTML for the button to show
+    this.html = "";
+    this.setHtml = function(html){
+        if (typeof html != "undefined"){ this.html = html.toString(); }
         return this;
     };
+    this.setText = this.setHTML; // Backward compatibility alias for locuszoom.js <= v0.5.6
 
     // Title for the button to show
     this.title = "";
@@ -5542,7 +5543,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             .on("mouseover", (this.status == "disabled") ? null : this.onmouseover)
             .on("mouseout", (this.status == "disabled") ? null : this.onmouseout)
             .on("click", (this.status == "disabled") ? null : this.onclick)
-            .text(this.text);
+            .html(this.html);
         this.menu.update();
         this.postUpdate();
         return this;
@@ -5688,7 +5689,7 @@ LocusZoom.Dashboard.Components.add("dimensions", function(layout){
     this.update = function(){
         var display_width = this.parent_plot.layout.width.toString().indexOf(".") == -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
         var display_height = this.parent_plot.layout.height.toString().indexOf(".") == -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
-        this.selector.text(display_width + "px × " + display_height + "px");
+        this.selector.html(display_width + "px × " + display_height + "px");
         if (layout.class){ this.selector.attr("class", layout.class); }
         if (layout.style){ this.selector.style(layout.style); }
         return this;
@@ -5702,7 +5703,7 @@ LocusZoom.Dashboard.Components.add("region_scale", function(layout){
         if (!isNaN(this.parent_plot.state.start) && !isNaN(this.parent_plot.state.end)
             && this.parent_plot.state.start != null && this.parent_plot.state.end != null){
             this.selector.style("display", null);
-            this.selector.text(LocusZoom.positionIntToString(this.parent_plot.state.end - this.parent_plot.state.start, null, true));
+            this.selector.html(LocusZoom.positionIntToString(this.parent_plot.state.end - this.parent_plot.state.start, null, true));
         } else {
             this.selector.style("display", "none");
         }
@@ -5718,17 +5719,17 @@ LocusZoom.Dashboard.Components.add("download", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("Download Image").setTitle("Download image of the current plot as locuszoom.svg")
+            .setColor(layout.color).setHtml("Download Image").setTitle("Download image of the current plot as locuszoom.svg")
             .setOnMouseover(function() {
                 this.button.selector
                     .classed("lz-dashboard-button-gray-disabled", true)
-                    .text("Preparing Image");
+                    .html("Preparing Image");
                 this.generateBase64SVG().then(function(base64_string){
                     this.button.selector
                         .attr("href", "data:image/svg+xml;base64,\n" + base64_string)
                         .classed("lz-dashboard-button-gray-disabled", false)
                         .classed("lz-dashboard-button-gray-highlighted", true)
-                        .text("Download Image");
+                        .html("Download Image");
                 }.bind(this));
             }.bind(this))
             .setOnMouseout(function() {
@@ -5787,7 +5788,7 @@ LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("×").setTitle("Remove panel")
+            .setColor(layout.color).setHtml("×").setTitle("Remove panel")
             .setOnclick(function(){
                 if (confirm("Are you sure you want to remove this panel? This cannot be undone!")){
                     var panel = this.parent_panel;
@@ -5813,7 +5814,7 @@ LocusZoom.Dashboard.Components.add("move_panel_up", function(layout){
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("▴").setTitle("Move panel up")
+            .setColor(layout.color).setHtml("▴").setTitle("Move panel up")
             .setOnclick(function(){
                 this.parent_panel.moveUp();
                 this.update();
@@ -5833,7 +5834,7 @@ LocusZoom.Dashboard.Components.add("move_panel_down", function(layout){
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("▾").setTitle("Move panel down")
+            .setColor(layout.color).setHtml("▾").setTitle("Move panel down")
             .setOnclick(function(){
                 this.parent_panel.moveDown();
                 this.update();
@@ -5859,7 +5860,7 @@ LocusZoom.Dashboard.Components.add("shift_region", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
             .setOnclick(function(){
                 this.parent_plot.applyState({
                     start: Math.max(this.parent_plot.state.start + layout.step, 1),
@@ -5898,7 +5899,7 @@ LocusZoom.Dashboard.Components.add("zoom_region", function(layout){
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
             .setOnclick(function(){
                 var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
                 var zoom_factor = 1 + layout.step;
@@ -5926,7 +5927,7 @@ LocusZoom.Dashboard.Components.add("menu", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title);
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title);
         this.button.menu.setPopulate(function(){
             this.button.menu.inner_selector.html(layout.menu_html);
         }.bind(this));
@@ -5990,7 +5991,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         if (this.button){ return this; }
 
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
             .setOnclick(function(){
                 this.button.menu.populate();
             }.bind(this));
@@ -6004,7 +6005,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
             }
             // Model covariates table
             if (!this.parent_plot.state.model.covariates.length){
-                selector.append("i").text("no covariates in model");
+                selector.append("i").html("no covariates in model");
             } else {
                 selector.append("h5").html("Model Covariates (" + this.parent_plot.state.model.covariates.length + ")");
                 var table = selector.append("table");
@@ -6017,7 +6018,7 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
                         .on("click", function(){
                             this.parent_plot.CovariatesModel.removeByIdx(idx);
                         }.bind(this))
-                        .text("×");
+                        .html("×");
                     row.append("td").html(html);
                 }.bind(this));
                 selector.append("button")
@@ -6030,12 +6031,12 @@ LocusZoom.Dashboard.Components.add("covariates_model", function(layout){
         }.bind(this));
 
         this.button.preUpdate = function(){
-            var text = "Model";
+            var html = "Model";
             if (this.parent_plot.state.model.covariates.length){
                 var cov = this.parent_plot.state.model.covariates.length > 1 ? "covariates" : "covariate";
-                text += " (" + this.parent_plot.state.model.covariates.length + " " + cov + ")";
+                html += " (" + this.parent_plot.state.model.covariates.length + " " + cov + ")";
             }
-            this.button.setText(text).disable(false);
+            this.button.setHtml(html).disable(false);
         }.bind(this);
 
         this.button.show();
@@ -6053,15 +6054,15 @@ LocusZoom.Dashboard.Components.add("toggle_split_tracks", function(layout){
     }
     this.update = function(){
         var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
-        var text = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
+        var html = data_layer.layout.split_tracks ? "Merge Tracks" : "Split Tracks";
         if (this.button){
-            this.button.setText(text);
+            this.button.setHtml(html);
             this.button.show();
             this.parent.position();
             return this;
         } else {
             this.button = new LocusZoom.Dashboard.Component.Button(this)
-                .setColor(layout.color).setText(text)
+                .setColor(layout.color).setHtml(html)
                 .setTitle("Toggle whether tracks are split apart or merged together")
                 .setOnclick(function(){
                     data_layer.toggleSplitTracks();
@@ -6084,7 +6085,7 @@ LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
     this.update = function(){
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText("Resize to Data")
+            .setColor(layout.color).setHtml("Resize to Data")
             .setTitle("Automatically resize this panel to fit the data its currently showing")
             .setOnclick(function(){
                 this.parent_panel.scaleHeightToData();
@@ -6099,9 +6100,9 @@ LocusZoom.Dashboard.Components.add("resize_to_data", function(layout){
 LocusZoom.Dashboard.Components.add("toggle_legend", function(layout){
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.update = function(){
-        var text = this.parent_panel.legend.layout.hidden ? "Show Legend" : "Hide Legend";
+        var html = this.parent_panel.legend.layout.hidden ? "Show Legend" : "Hide Legend";
         if (this.button){
-            this.button.setText(text).show();
+            this.button.setHtml(html).show();
             this.parent.position();
             return this;
         }
@@ -6129,7 +6130,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
         if (this.button){ return this; }
 
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setText(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
             .setOnclick(function(){
                 this.button.menu.populate();
             }.bind(this));
@@ -6147,13 +6148,13 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                 layout.statuses.forEach(function(status_adj){
                     var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
                     var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
-                    var text, onclick, highlight;
+                    var html, onclick, highlight;
                     if (data_layer.global_statuses[status_adj]){
-                        text = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
+                        html = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
                         onclick = "un" + status_verb + "AllElements";
                         highlight = "-highlighted";
                     } else {
-                        text = LocusZoom.DataLayer.Statuses.verbs[status_idx];
+                        html = LocusZoom.DataLayer.Statuses.verbs[status_idx];
                         onclick = status_verb + "AllElements";
                         highlight = "";
                     }
@@ -6161,7 +6162,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                         .attr("class", "lz-dashboard-button lz-dashboard-button-" + this.layout.color + highlight)
                         .style({ "margin-left": "0em" })
                         .on("click", function(){ data_layer[onclick](); this.button.menu.populate(); }.bind(this))
-                        .text(text);
+                        .html(html);
                 }.bind(this));
                 // Sort layer buttons
                 var at_top = (idx == 0);
@@ -6171,12 +6172,12 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                     .attr("class", "lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-" + this.layout.color + (at_bottom ? "-disabled" : ""))
                     .style({ "margin-left": "0em" })
                     .on("click", function(){ data_layer.moveDown(); this.button.menu.populate(); }.bind(this))
-                    .text("▾").attr("title", "Move layer down (further back)");
+                    .html("▾").attr("title", "Move layer down (further back)");
                 td.append("a")
                     .attr("class", "lz-dashboard-button lz-dashboard-button-group-middle lz-dashboard-button-" + this.layout.color + (at_top ? "-disabled" : ""))
                     .style({ "margin-left": "0em" })
                     .on("click", function(){ data_layer.moveUp(); this.button.menu.populate(); }.bind(this))
-                    .text("▴").attr("title", "Move layer up (further front)");
+                    .html("▴").attr("title", "Move layer up (further front)");
                 td.append("a")
                     .attr("class", "lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-red")
                     .style({ "margin-left": "0em" })
@@ -6186,7 +6187,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
                         }
                         return this.button.menu.populate();
                     }.bind(this))
-                    .text("×").attr("title", "Remove layer");
+                    .html("×").attr("title", "Remove layer");
             }.bind(this));
             return this;
         }.bind(this));
