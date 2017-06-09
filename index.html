@@ -191,7 +191,7 @@
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
     } else {
-      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "index.html".length) + "staticdata/";
+      apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 3, id_field: "variant"}}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
