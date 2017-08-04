@@ -56,12 +56,13 @@ describe("LocusZoom.Dashboard", function(){
                     ]
                 },
                 panels: [
-                    { id: "test", width: 100, height: 100,
-                      dashboard: {
-                          components: [
-                              { type: "remove_panel" }
-                          ]
-                      }
+                    {
+                        id: "test", width: 100, height: 100,
+                        dashboard: {
+                            components: [
+                                { type: "remove_panel" }
+                            ]
+                        }
                     }
                 ]
             };

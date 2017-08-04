@@ -131,7 +131,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
             // Using display range/domain data generated above cast each gene to tracks such that none overlap
             this.data[g].track = null;
             var potential_track = 1;
-            while (this.data[g].track == null){
+            while (this.data[g].track === null){
                 var collision_on_potential_track = false;
                 this.gene_track_index[potential_track].map(function(placed_gene){
                     if (!collision_on_potential_track){
@@ -277,16 +277,16 @@ LocusZoom.DataLayers.add("genes", function(layout){
                         return d.display_range.text_anchor;
                     })
                     .text(function(d){
-                        return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name;
+                        return (d.strand === "+") ? d.gene_name + "→" : "←" + d.gene_name;
                     })
                     .style("font-size", gene.parent.layout.label_font_size);
 
                 x = function(d){
-                    if (d.display_range.text_anchor == "middle"){
+                    if (d.display_range.text_anchor === "middle"){
                         return d.display_range.start + (d.display_range.width / 2);
-                    } else if (d.display_range.text_anchor == "start"){
+                    } else if (d.display_range.text_anchor === "start"){
                         return d.display_range.start + data_layer.layout.bounding_box_padding;
-                    } else if (d.display_range.text_anchor == "end"){
+                    } else if (d.display_range.text_anchor === "end"){
                         return d.display_range.end - data_layer.layout.bounding_box_padding;
                     }
                 };

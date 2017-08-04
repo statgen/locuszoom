@@ -282,9 +282,11 @@ describe("LocusZoom Data", function(){
         beforeEach(function(){
             this.datasources = new LocusZoom.DataSources();
             this.namespace = "test";
-            this.data = [ { x: 0, y: 3, z: 8 },
-                          { x: 2, y: 7, h: 5 },
-                          { x: 8, y: 1, q: 6 } ];
+            this.data = [
+                { x: 0, y: 3, z: 8 },
+                { x: 2, y: 7, h: 5 },
+                { x: 8, y: 1, q: 6 }
+            ];
             this.datasources.add( this.namespace, [ "StaticJSON", this.data ] );
             this.layout = {
                 panels: [

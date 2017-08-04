@@ -249,7 +249,7 @@ LocusZoom.DataLayers.add("line", function(layout){
     };
     this.setAllElementStatus = function(status, toggle){
         // Sanity check
-        if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) == -1){
+        if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
             throw("Invalid status passed to DataLayer.setAllElementStatus()");
         }
         if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
@@ -306,7 +306,7 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Require that orientation be "horizontal" or "vertical" only
-    if (["horizontal","vertical"].indexOf(layout.orientation) == -1){
+    if (["horizontal","vertical"].indexOf(layout.orientation) === -1){
         layout.orientation = "horizontal";
     }
 
@@ -330,7 +330,7 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
         var y_range = "y" + this.layout.y_axis.axis + "_range";
 
         // Generate data using extents depending on orientation
-        if (this.layout.orientation == "horizontal"){
+        if (this.layout.orientation === "horizontal"){
             this.data = [
                 { x: panel[x_extent][0], y: this.layout.offset },
                 { x: panel[x_extent][1], y: this.layout.offset }

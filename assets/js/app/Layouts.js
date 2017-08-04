@@ -69,10 +69,10 @@ LocusZoom.Layouts = (function() {
                     }
                     var namespaced_element, namespaced_property;
                     for (var property in element) {
-                        if (property == "namespace"){ continue; }
+                        if (property === "namespace"){ continue; }
                         namespaced_element = applyNamespaces(element[property], namespace);
                         namespaced_property = applyNamespaces(property, namespace);
-                        if (property != namespaced_property){
+                        if (property !== namespaced_property){
                             delete element[property];
                         }
                         element[namespaced_property] = namespaced_element;
@@ -124,7 +124,7 @@ LocusZoom.Layouts = (function() {
     // Ensures that all values defined in the second layout are at least present in the first
     // Favors values defined in the first layout if values are defined in both but different
     obj.merge = function (custom_layout, default_layout) {
-        if (typeof custom_layout != "object" || typeof default_layout != "object"){
+        if (typeof custom_layout !== "object" || typeof default_layout !== "object"){
             throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
         }
         for (var property in default_layout) {
@@ -132,21 +132,21 @@ LocusZoom.Layouts = (function() {
             // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
             // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
             // Also separate arrays from objects as a discrete type.
-            var custom_type  = custom_layout[property] == null ? "undefined" : typeof custom_layout[property];
+            var custom_type  = custom_layout[property] === null ? "undefined" : typeof custom_layout[property];
             var default_type = typeof default_layout[property];
-            if (custom_type == "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
-            if (default_type == "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
+            if (custom_type === "object" && Array.isArray(custom_layout[property])){ custom_type = "array"; }
+            if (default_type === "object" && Array.isArray(default_layout[property])){ default_type = "array"; }
             // Unsupported property types: throw an exception
-            if (custom_type == "function" || default_type == "function"){
+            if (custom_type === "function" || default_type === "function"){
                 throw("LocusZoom.Layouts.merge encountered an unsupported property type");
             }
             // Undefined custom value: pull the default value
-            if (custom_type == "undefined"){
+            if (custom_type === "undefined"){
                 custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
                 continue;
             }
             // Both values are objects: merge recursively
-            if (custom_type == "object" && default_type == "object"){
+            if (custom_type === "object" && default_type === "object"){
                 custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
                 continue;
             }

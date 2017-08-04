@@ -260,9 +260,11 @@ describe("LocusZoom.Panel", function(){
                 resizable: false,
                 aspect_ratio: 1,
                 panels: [
-                    { id: "test",
-                      width: 100,
-                      height: 100 }
+                    {
+                        id: "test",
+                        width: 100,
+                        height: 100
+                    }
                 ]
             };
             d3.select("body").append("div").attr("id", "plot");

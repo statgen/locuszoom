@@ -18,7 +18,7 @@
 LocusZoom.Legend = function(parent){
 
     // parent must be a locuszoom panel
-    if (!parent instanceof LocusZoom.Panel){
+    if (!(parent instanceof LocusZoom.Panel)){
         throw "Unable to create legend, parent must be a locuszoom panel";
     }
     this.parent = parent;
@@ -86,7 +86,7 @@ LocusZoom.Legend.prototype.render = function(){
                 var label_y = (label_size/2) + (padding/2);
                 line_height = Math.max(line_height, label_size + padding);
                 // Draw the legend element symbol (line, rect, shape, etc)
-                if (element.shape == "line"){
+                if (element.shape === "line"){
                     // Line symbol
                     var length = +element.length || 16;
                     var path_y = (label_size/4) + (padding/2);
@@ -94,7 +94,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .attr("d", "M0," + path_y + "L" + length + "," + path_y)
                         .style(element.style || {});
                     label_x = length + padding;
-                } else if (element.shape == "rect"){
+                } else if (element.shape === "rect"){
                     // Rect symbol
                     var width = +element.width || 16;
                     var height = +element.height || width;
@@ -104,7 +104,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .style(element.style || {});
                     label_x = width + padding;
                     line_height = Math.max(line_height, height + padding);
-                } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
+                } else if (d3.svg.symbolTypes.indexOf(element.shape) !== -1) {
                     // Shape symbol (circle, diamond, etc.)
                     var size = +element.size || 40;
                     var radius = Math.ceil(Math.sqrt(size/Math.PI));
@@ -122,7 +122,7 @@ LocusZoom.Legend.prototype.render = function(){
                     .attr("x", label_x).attr("y", label_y).style({"font-size": label_size}).text(element.label);
                 // Position the legend element group based on legend layout orientation
                 var bcr = selector.node().getBoundingClientRect();
-                if (this.layout.orientation == "vertical"){
+                if (this.layout.orientation === "vertical"){
                     y += bcr.height + padding;
                     line_height = 0;
                 } else {

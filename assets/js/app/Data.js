@@ -75,7 +75,7 @@ LocusZoom.DataSources.prototype.toJSON = function() {
 
 LocusZoom.Data.Field = function(field){
     
-    var parts = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/.exec(field);
+    var parts = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/.exec(field);
 
     this.full_name = field;
     
@@ -103,7 +103,7 @@ LocusZoom.Data.Field = function(field){
     this.resolve = function(d){
         if (typeof d[this.full_name] == "undefined"){
             var val = null;
-            if (typeof d[this.namespace+":"+this.name] != "undefined"){ val = d[this.namespace+":"+this.name]; }
+            if (typeof (d[this.namespace+":"+this.name]) != "undefined"){ val = d[this.namespace+":"+this.name]; }
             else if (typeof d[this.name] != "undefined"){ val = d[this.name]; }
             d[this.full_name] = this.applyTransformations(val);
         }
@@ -119,7 +119,7 @@ LocusZoom.Data.Requester = function(sources) {
     function split_requests(fields) {
         var requests = {};
         // Regular expression finds namespace:field|trans
-        var re = /^(?:([^:]+):)?([^:\|]*)(\|.+)*$/;
+        var re = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/;
         fields.forEach(function(raw) {
             var parts = re.exec(raw);
             var ns = parts[1] || "base";
@@ -142,7 +142,7 @@ LocusZoom.Data.Requester = function(sources) {
                 throw("Datasource for namespace " + key + " not found");
             }
             return sources.get(key).getData(state, requests[key].fields, 
-                requests[key].outnames, requests[key].trans);
+                                            requests[key].outnames, requests[key].trans);
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
@@ -189,7 +189,7 @@ LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     var req;
     var cacheKey = this.getCacheKey(state, chain, fields);
-    if (this.enableCache && typeof(cacheKey) !== "undefined" && cacheKey == this._cachedKey) {
+    if (this.enableCache && typeof(cacheKey) !== "undefined" && cacheKey === this._cachedKey) {
         req = Q.when(this._cachedResponse);
     } else {
         req = this.fetchRequest(state, chain, fields);
@@ -323,7 +323,7 @@ LocusZoom.Data.AssociationSource = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, outnames, trans) {
     var id_field = this.params.id_field || "id";
     [id_field, "position"].forEach(function(x) {
-        if (fields.indexOf(x)==-1) {
+        if (fields.indexOf(x)===-1) {
             fields.unshift(x);
             outnames.unshift(x);
             trans.unshift(null);
@@ -349,7 +349,7 @@ LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
 
 LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
     if (fields.length>1) {
-        if (fields.length!=2 || fields.indexOf("isrefvar")==-1) {
+        if (fields.length!==2 || fields.indexOf("isrefvar")===-1) {
             throw("LD does not know how to get all fields: " + fields.join(", "));
         }
     }
@@ -370,8 +370,12 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
         }
         return null;
     };};
-    var dataFields = {id: this.params.id_field, position: this.params.position_field, 
-                      pvalue: this.params.pvalue_field, _names_:null};
+    var dataFields = {
+        id: this.params.id_field,
+        position: this.params.position_field,
+        pvalue: this.params.pvalue_field,
+        _names_:null
+    };
     if (chain && chain.body && chain.body.length>0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
@@ -386,7 +390,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
 LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outnames) {
     var obj = {};
     for(var i=0; i<fields.length; i++) {
-        if(fields[i]=="isrefvar") {
+        if(fields[i]==="isrefvar") {
             obj.isrefvarin = fields[i];
             obj.isrefvarout = outnames && outnames[i];
         } else {
@@ -414,10 +418,10 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
     var reqFields = this.findRequestedFields(fields);
     var refVar = reqFields.ldin;
-    if (refVar == "state") {
+    if (refVar === "state") {
         refVar = state.ldrefvar || chain.header.ldrefvar || "best";
     }
-    if (refVar == "best") {
+    if (refVar === "best") {
         if (!chain.body) {
             throw("No association data found to find best pvalue");
         }
@@ -450,7 +454,7 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
     var leftJoin = function(left, right, lfield, rfield) {
         var i=0, j=0;
         while (i < left.length && j < right.position2.length) {
-            if (left[i][keys.position] == right.position2[j]) {
+            if (left[i][keys.position] === right.position2[j]) {
                 left[i][lfield] = right[rfield][j];
                 i++;
                 j++;
@@ -546,7 +550,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             if (typeof chain.body[i][field] != "undefined"){ return; }
             if (data[gene_id]){
                 var val = data[gene_id][field];
-                if (typeof val == "number" && val.toString().indexOf(".") != -1){
+                if (typeof val == "number" && val.toString().indexOf(".") !== -1){
                     val = parseFloat(val.toFixed(2));
                 }
                 chain.body[i][field] = val;

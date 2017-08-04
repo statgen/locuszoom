@@ -56,12 +56,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-        if (this.layout.tooltip_positioning == "vertical"){
+        if (this.layout.tooltip_positioning === "vertical"){
             // Position horizontally centered above the point
             var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
             var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
-            var left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
-            var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
+            left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+            arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
             // Position vertically above the point unless there's insufficient space, then go below
             if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)){
                 top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
@@ -84,8 +84,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 arrow_left = tooltip_box.width - stroke_width;
             }
             // Position vertically centered unless we're at the top or bottom of the plot
-            var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-            var top, arrow_top;
+            data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
             if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
                 top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
                 arrow_top = border_radius;
@@ -126,7 +125,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 var dnlx2 = +dnl.attr("x2");
                 var line_swing = spacing + (2 * Math.sqrt(point_size));
             }
-            if (dn.style("text-anchor") == "start"){
+            if (dn.style("text-anchor") === "start"){
                 dn.style("text-anchor", "end");
                 dn.attr("x", dnx - text_swing);
                 if (handle_lines){ dnl.attr("x2", dnlx2 - line_swing); }
@@ -152,7 +151,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         data_layer.label_texts.each(function (d, i) {
             var a = this;
             var da = d3.select(a);
-            if (da.style("text-anchor") == "end") return;
+            if (da.style("text-anchor") === "end") return;
             var dax = +da.attr("x");
             var abound = da.node().getBoundingClientRect();
             var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
@@ -193,11 +192,11 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             data_layer.label_texts.each(function () {
                 var b = this;
                 // a & b are the same element and don't collide.
-                if (a == b) return;
+                if (a === b) return;
                 var db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
-                if (da.attr("text-anchor") != db.attr("text-anchor")) return;
+                if (da.attr("text-anchor") !== db.attr("text-anchor")) return;
                 // Determine if the  bounding rects for the two text elements collide
                 var abound = da.node().getBoundingClientRect();
                 var bbound = db.node().getBoundingClientRect();
@@ -293,7 +292,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                                 if (!(field_value >= filter.value)){ match = false; }
                                 break;
                             case "=":
-                                if (!(field_value == filter.value)){ match = false; }
+                                if (!(field_value === filter.value)){ match = false; }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail

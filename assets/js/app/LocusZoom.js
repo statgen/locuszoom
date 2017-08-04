@@ -69,7 +69,7 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
 LocusZoom.positionIntToString = function(pos, exp, suffix){
     var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
     suffix = suffix || false;
-    if (isNaN(exp) || exp == null){
+    if (isNaN(exp) || exp === null){
         var log = Math.log(pos) / Math.LN10;
         exp = Math.min(Math.max(log - (log % 3), 0), 9);
     }
@@ -91,9 +91,9 @@ LocusZoom.positionStringToInt = function(p) {
     var suffix = suffixre.exec(val);
     var mult = 1;
     if (suffix) {
-        if (suffix[1]=="M") {
+        if (suffix[1]==="M") {
             mult = 1e6;
-        } else if (suffix[1]=="G") {
+        } else if (suffix[1]==="G") {
             mult = 1e9;
         } else {
             mult = 1e3; //K
@@ -114,7 +114,7 @@ LocusZoom.parsePositionQuery = function(x) {
     var chrpos = /^(\w+):([\d,.]+[kmgbKMGB]*)$/;
     var match = chrposoff.exec(x);
     if (match) {
-        if (match[3] == "+") {
+        if (match[3] === "+") {
             var center = LocusZoom.positionStringToInt(match[2]);
             var offset = LocusZoom.positionStringToInt(match[4]);
             return {
@@ -172,7 +172,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     
     var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
     var base_toFixed = 0;
-    if (base < 1 && base != 0){
+    if (base < 1 && base !== 0){
         base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
     }
     
@@ -198,13 +198,13 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     }
     ticks.push(i);
     
-    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) == -1){
+    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) === -1){
         clip_range = "neither";
     }
-    if (clip_range == "low" || clip_range == "both"){
+    if (clip_range === "low" || clip_range === "both"){
         if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
     }
-    if (clip_range == "high" || clip_range == "both"){
+    if (clip_range === "high" || clip_range === "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
     
@@ -322,14 +322,14 @@ LocusZoom.parseFields = function (data, html) {
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
     var tokens = [];
-    var regex = /\{\{(?:(#if )?([A-Za-z0-9_:\|]+)|(\/if))\}\}/;
+    var regex = /\{\{(?:(#if )?([A-Za-z0-9_:|]+)|(\/if))\}\}/;
     while (html.length > 0){
         var m = regex.exec(html);
         if (!m) { tokens.push({text: html}); html = ""; }
-        else if (m.index != 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
-        else if (m[1] == "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
+        else if (m.index !== 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
+        else if (m[1] === "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
         else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
-        else if (m[3] == "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
+        else if (m[3] === "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
         else {
             console.error("Error tokenizing tooltip when remaining template is " + JSON.stringify(html) +
                           " and previous tokens are " + JSON.stringify(tokens) +
@@ -344,7 +344,7 @@ LocusZoom.parseFields = function (data, html) {
         } else if (token.condition) {
             token.then = [];
             while(tokens.length > 0) {
-                if (tokens[0].close == "if") { tokens.shift(); break; }
+                if (tokens[0].close === "if") { tokens.shift(); break; }
                 token.then.push(astify());
             }
             return token;
@@ -371,8 +371,8 @@ LocusZoom.parseFields = function (data, html) {
         } else if (node.variable) {
             try {
                 var value = resolve(node.variable);
-                if (["string","number","boolean"].indexOf(typeof value) != -1) { return value; }
-                if (value == null) { return ""; }
+                if (["string","number","boolean"].indexOf(typeof value) !== -1) { return value; }
+                if (value === null) { return ""; }
             } catch (error) { console.error("Error while processing variable " + JSON.stringify(node.variable)); }
             return "{{" + node.variable + "}}";
         } else if (node.condition) {
