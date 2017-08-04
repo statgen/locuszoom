@@ -1,14 +1,21 @@
 language: node_js
 node_js:
-- '4.2'
+  - '4.2'
+
+cache:
+  yarn: true
+  directories:
+    - node_modules
 before_script:
-- npm install
-script: gulp test
+  - npm install
+script:
+  - npm test
 branches:
   only:
     - master
 notifications:
   email:
-  - chriclrk@umich.edu
+    - chriclrk@umich.edu
+    - abought@umich.edu
   slack:
     secure: z9tSuzj4LCeJ8SWA0mnOkXPzbufXGlbDOGXSihPAahFVoiTWgL2biA7ZOlZrF3lUBKurJnbP/vOJRAdcA/p+4gymvUXjNJY1uUAxRPo0TVApzhlJAVlYGD/KRoALhbCKMj8Y949esbY1IEKb1/IbfFSCL51wFo2E3G6woSAL3MlH+nDP8WI0LjqjqckrrFgKq8PI5v1b0eSVVK5Guog8+UZYWZhP8A3dvpwBB1cteggby7kmEedQQu4VZ6fh2GbdkZJ4w2IZVFdgTx+nEQuElcnTFvLGiK1U9eR44aLOzJRvnvNxswgiQj2DkEf1Qf2+XvCi9Z4ckozfpqt0fgUIgIOM/7Gi2xmEQVjxTzlQhvhnokX2aT6IRokCS2e0ooHZwtF3bK37OKKrseCxIxYDihJa/Sqh5CkPQAd3J2HnVbGMH/WAaD5zivh213WjhQcZbk6F6UGwAsNO4VP06E1zSzS8E2+hWnKTWbgDHKuFAZvck1P08hQD97gBxA0H2M8PtbSMDuKABemletyvYt/V1yHU1fDSXGQl1gn43OpQPnV4Hc/Potsqc8GKYmqtVJZkmcmjgYHlFzRAhwwS7kjGsWFp8b6ValufvJqmSMVko2aXFiJXw6g+SKqIFUTw5LN8m3vdsofyMLCzXf7HX/sFJbm/IKXS7Kwqc7rPZUN6VR8=

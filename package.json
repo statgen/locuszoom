@@ -18,9 +18,8 @@
     "url": "https://github.com/statgen/locuszoom.git"
   },
   "scripts": {
-    "makejs": "gulp js",
     "gulp": "gulp",
-    "test": "gulp test",
+    "test": "eslint . && gulp test",
     "eslint": "eslint ."
   },
   "dependencies": {
