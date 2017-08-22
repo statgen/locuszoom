@@ -1,0 +1,14 @@
+# Build-related assets
+assets/js/vendor
+assets/js/app/wrapper.js
+# Non-code items
+docs/
+examples/
+node_modules/
+staticdata/
+package.json
+
+# Built files
+locuszoom.app.js
+locuszoom.app.min.js
+locuszoom.vendor.min.js

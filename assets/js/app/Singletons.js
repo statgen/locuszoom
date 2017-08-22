@@ -26,7 +26,7 @@ LocusZoom.KnownDataSources = (function() {
             if (!sources[i].SOURCE_NAME) {
                 throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
             }
-            if (sources[i].SOURCE_NAME == x) {
+            if (sources[i].SOURCE_NAME === x) {
                 return sources[i];
             }
         }
@@ -117,12 +117,12 @@ LocusZoom.TransformationFunctions = (function() {
     //and one or more transformations
     var parseTransString = function(x) {
         var funs = [];
-        var re = /\|([^\|]+)/g;
+        var re = /\|([^|]+)/g;
         var result;
-        while((result = re.exec(x))!=null) {
+        while((result = re.exec(x))!==null) {
             funs.push(result[1]);
         }
-        if (funs.length==1) {
+        if (funs.length===1) {
             return parseTrans(funs[0]);
         } else if (funs.length > 1) {
             return function(x) {
@@ -138,7 +138,7 @@ LocusZoom.TransformationFunctions = (function() {
 
     //accept both "|name" and "name"
     obj.get = function(name) {
-        if (name && name.substring(0,1)=="|") {
+        if (name && name.substring(0,1)==="|") {
             return parseTransString(name);
         } else {
             return parseTrans(name);
@@ -146,7 +146,7 @@ LocusZoom.TransformationFunctions = (function() {
     };
 
     obj.set = function(name, fn) {
-        if (name.substring(0,1)=="|") {
+        if (name.substring(0,1)==="|") {
             throw("transformation name should not start with a pipe");
         } else {
             if (fn) {
@@ -179,13 +179,13 @@ LocusZoom.TransformationFunctions.add("neglog10", function(x) {
 
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
-    if (x == 0){ return "1"; }
+    if (x === 0){ return "1"; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
-    if (exp == 1){
+    if (exp === 1){
         return (base / 10).toFixed(4);
-    } else if (exp == 2){
+    } else if (exp === 2){
         return (base / 100).toFixed(3);
     } else {
         return base.toFixed(2) + " × 10^-" + exp;
@@ -194,7 +194,7 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
 
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
-    if (x == 0){ return "0"; }
+    if (x === 0){ return "0"; }
     var log;
     if (Math.abs(x) > 1){
         log = Math.ceil(Math.log(x) / Math.LN10);
@@ -230,7 +230,7 @@ LocusZoom.ScaleFunctions = (function() {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            if (typeof parameters == "undefined" && typeof value == "undefined"){
+            if (typeof parameters === "undefined" && typeof value === "undefined"){
                 return functions[name];
             } else {
                 return functions[name](parameters, value);
@@ -265,7 +265,7 @@ LocusZoom.ScaleFunctions = (function() {
 
 // If scale function: apply a boolean conditional to a single field
 LocusZoom.ScaleFunctions.add("if", function(parameters, input){
-    if (typeof input == "undefined" || parameters.field_value != input){
+    if (typeof input == "undefined" || parameters.field_value !== input){
         if (typeof parameters.else != "undefined"){
             return parameters.else;
         } else {
@@ -280,7 +280,7 @@ LocusZoom.ScaleFunctions.add("if", function(parameters, input){
 LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
-    if (typeof input == "undefined" || input == null || isNaN(+input)){
+    if (typeof input == "undefined" || input === null || isNaN(+input)){
         return (parameters.null_value ? parameters.null_value : null);
     }
     var threshold = breaks.reduce(function(prev, curr){
@@ -295,7 +295,7 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
 
 // Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
 LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (typeof value == "undefined" || parameters.categories.indexOf(value) == -1){
+    if (typeof value == "undefined" || parameters.categories.indexOf(value) === -1){
         return (parameters.null_value ? parameters.null_value : null); 
     } else {
         return parameters.values[parameters.categories.indexOf(value)];
@@ -307,8 +307,8 @@ LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
     var nullval = (parameters.null_value ? parameters.null_value : null);
-    if (breaks.length < 2 || breaks.length != values.length){ return nullval; }
-    if (typeof input == "undefined" || input == null || isNaN(+input)){ return nullval; }
+    if (breaks.length < 2 || breaks.length !== values.length){ return nullval; }
+    if (typeof input == "undefined" || input === null || isNaN(+input)){ return nullval; }
     if (+input <= parameters.breaks[0]){
         return values[0];
     } else if (+input >= parameters.breaks[parameters.breaks.length-1]){
@@ -319,7 +319,7 @@ LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
             if (!idx){ return; }
             if (breaks[idx-1] <= +input && breaks[idx] >= +input){ upper_idx = idx; }
         });
-        if (upper_idx == null){ return nullval; }
+        if (upper_idx === null){ return nullval; }
         var normalized_input = (+input - breaks[upper_idx-1]) / (breaks[upper_idx] - breaks[upper_idx-1]);
         if (!isFinite(normalized_input)){ return nullval; }
         return d3.interpolate(values[upper_idx-1], values[upper_idx])(normalized_input);

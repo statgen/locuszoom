@@ -2,7 +2,11 @@
     "rules": {
         "indent": [
             2,
-            4
+            4,
+            {
+                "FunctionExpression": { "parameters": "first" },
+                "CallExpression": { "arguments": "first" }
+            }
         ],
         "quotes": [
             2,
@@ -15,6 +19,14 @@
         "semi": [
             2,
             "always"
+        ],
+        "eqeqeq": [
+            2,
+            "smart"
+        ],
+        "no-unused-vars": [
+            1,
+            { "args": "none" }
         ]
     },
     "env": {
