@@ -4,6 +4,14 @@
 
 "use strict";
 
+/**
+ * Manage known layouts for all parts of the LocusZoom plot
+ *
+ * This registry allows for layouts to be reused and customized many times on a page, using a common base pattern.
+ *   It handles the work of ensuring that each new instance of the layout has no shared state with other copies.
+ *
+ * @class
+ */
 LocusZoom.Layouts = (function() {
     var obj = {};
     var layouts = {
@@ -14,6 +22,13 @@ LocusZoom.Layouts = (function() {
         "tooltip": {}
     };
 
+    /**
+     * Generate a layout configuration object
+     * @param {('plot'|'panel'|'data_layer'|'dashboard'|'tooltip')} type The type of layout to retrieve
+     * @param {string} name Identifier of the predefined layout within the specified type
+     * @param {object} modifications Custom properties that override default settings for this layout
+     * @returns {object} A JSON-serializable object representation
+     */
     obj.get = function(type, name, modifications) {
         if (typeof type != "string" || typeof name != "string") {
             throw("invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)");
@@ -88,6 +103,7 @@ LocusZoom.Layouts = (function() {
         }
     };
 
+    /** @private */
     obj.set = function(type, name, layout) {
         if (typeof type != "string" || typeof name != "string" || typeof layout != "object"){
             throw ("unable to set new layout; bad arguments passed to set()");
@@ -103,10 +119,24 @@ LocusZoom.Layouts = (function() {
         }
     };
 
+    /**
+     * Register a new layout definition by name.
+     *
+     * @param {string} type The type of layout to add. Usually, this will be one of the predefined LocusZoom types,
+     *   but if you pass a different name, this method will automatically create the new `type` bucket
+     * @param {string} name The identifier of the newly added layout
+     * @param {object} [layout] A JSON-serializable object containing configuration properties for this layout
+     * @returns The JSON representation of the newly created layout
+     */
     obj.add = function(type, name, layout) {
         return obj.set(type, name, layout);
     };
 
+    /**
+     * List all registered layouts
+     * @param [type] Optionally narrow the list to only layouts of a specific type; else return all known layouts
+     * @returns {*}
+     */
     obj.list = function(type) {
         if (!layouts[type]){
             var list = {};
@@ -119,10 +149,16 @@ LocusZoom.Layouts = (function() {
         }
     };
 
-    // Merge any two layout objects
-    // Primarily used to merge values from the second argument (the "default" layout) into the first (the "custom" layout)
-    // Ensures that all values defined in the second layout are at least present in the first
-    // Favors values defined in the first layout if values are defined in both but different
+    /**
+     * A helper method used for merging two objects. If a key is present in both, takes the value from the first object
+     *   Values from `default_layout` will be cleanly copied over, ensuring no references or shared state.
+     *
+     * Frequently used for preparing custom layouts. Both objects should be JSON-serializable.
+     *
+     * @param {object} custom_layout An object containing configuration parameters that override or add to defaults
+     * @param {object} default_layout An object containing default settings.
+     * @returns The custom layout is modified in place and also returned from this method.
+     */
     obj.merge = function (custom_layout, default_layout) {
         if (typeof custom_layout !== "object" || typeof default_layout !== "object"){
             throw("LocusZoom.Layouts.merge only accepts two layout objects; " + (typeof custom_layout) + ", " + (typeof default_layout) + " given");
@@ -159,9 +195,11 @@ LocusZoom.Layouts = (function() {
 
 
 /**
- Tooltip Layouts
-*/
+ * Tooltip Layouts
+ * @namespace LocusZoom.Layouts.tooltips
+ */
 
+// TODO: Improve documentation of predefined types within layout namespaces
 LocusZoom.Layouts.add("tooltip", "standard_association", {
     namespace: { "assoc": "assoc" },
     closable: true,
@@ -203,7 +241,8 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
 });
 
 /**
- Data Layer Layouts
+ * Data Layer Layouts: represent specific information from a data source
+ * @namespace Layouts.data_layer
 */
 
 LocusZoom.Layouts.add("data_layer", "significance", {
@@ -474,8 +513,9 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
 
 
 /**
- Dashboard Layouts
-*/
+ * Dashboard Layouts: toolbar buttons etc
+  * @namespace Layouts.dashboard
+ */
 
 LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
@@ -575,8 +615,9 @@ region_nav_plot_dashboard.components.push({
 LocusZoom.Layouts.add("dashboard", "region_nav_plot", region_nav_plot_dashboard);
 
 /**
- Panel Layouts
-*/
+ * Panel Layouts
+ * @namespace Layouts.panel
+ */
 
 LocusZoom.Layouts.add("panel", "association", {
     id: "association",
@@ -1169,8 +1210,9 @@ LocusZoom.Layouts.add("panel", "intervals", {
 
 
 /**
- Plot Layouts
-*/
+ * Plot Layouts
+ * @namespace Layouts.plot
+ */
 
 LocusZoom.Layouts.add("plot", "standard_association", {
     state: {},
