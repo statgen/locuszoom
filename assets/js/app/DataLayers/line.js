@@ -5,13 +5,15 @@
 "use strict";
 
 /*********************
-  Line Data Layer
-  Implements a standard line plot
+ * Line Data Layer
+ * Implements a standard line plot
+ * @class
+ * @augments LocusZoom.DataLayer
 */
-
 LocusZoom.DataLayers.add("line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
+    /** @member {Object} */
     this.DefaultLayout = {
         style: {
             fill: "none",
@@ -25,19 +27,31 @@ LocusZoom.DataLayers.add("line", function(layout){
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Var for storing mouse events for use in tool tip positioning
+    /** @member {String} */
     this.mouse_event = null;
 
-    // Var for storing the generated line function itself
+    /**
+     * Var for storing the generated line function itself
+     * @member {d3.svg.line}
+     * */
     this.line = null;
 
+    /**
+     * The timeout identifier returned by setTimeout
+     * @member {Number}
+     */
     this.tooltip_timeout = null;
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Helper function to get display and data objects representing
-    // the x/y coordinates of the current mouse event with respect to the line in terms of the display
-    // and the interpolated values of the x/y fields with respect to the line
+
+    /**
+     * Helper function to get display and data objects representing
+     *   the x/y coordinates of the current mouse event with respect to the line in terms of the display
+     *   and the interpolated values of the x/y fields with respect to the line
+     * @returns {{display: {x: *, y: null}, data: {}, slope: null}}
+     */
     this.getMouseDisplayAndData = function(){
         var ret = {
             display: {
@@ -71,7 +85,10 @@ LocusZoom.DataLayers.add("line", function(layout){
         return ret;
     };
 
-    // Reimplement the positionTooltip() method to be line-specific
+    /**
+     * Reimplement the positionTooltip() method to be line-specific
+     * @param {String} id Identify the tooltip to be positioned
+     */
     this.positionTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");
@@ -154,8 +171,9 @@ LocusZoom.DataLayers.add("line", function(layout){
 
     };
 
-
-    // Implement the main render function
+    /**
+     * Implement the main render function
+     */
     this.render = function(){
 
         // Several vars needed to be in scope
@@ -240,7 +258,13 @@ LocusZoom.DataLayers.add("line", function(layout){
         
     };
 
-    // Redefine setElementStatus family of methods as line data layers will only ever have a single path element
+    /**
+     * Redefine setElementStatus family of methods as line data layers will only ever have a single path element
+     * @param {String} status A member of `LocusZoom.DataLayer.Statuses.adjectives`
+     * @param {String|Object} element
+     * @param {Boolean} toggle
+     * @returns {LocusZoom.DataLayer}
+     */
     this.setElementStatus = function(status, element, toggle){
         return this.setAllElementStatus(status, toggle);
     };
@@ -278,11 +302,12 @@ LocusZoom.DataLayers.add("line", function(layout){
 
 
 /***************************
-  Orthogonal Line Data Layer
-  Implements a horizontal or vertical line given an orientation and an offset in the layout
-  Does not require a data source
+ *  Orthogonal Line Data Layer
+ *  Implements a horizontal or vertical line given an orientation and an offset in the layout
+ *  Does not require a data source
+ * @class
+ * @augments LocusZoom.DataLayer
 */
-
 LocusZoom.DataLayers.add("orthogonal_line", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
@@ -311,13 +336,17 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     }
 
     // Vars for storing the data generated line
+    /** @member {Array} */
     this.data = [];
+    /** @member {d3.svg.line} */
     this.line = null;
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Implement the main render function
+    /**
+     * Implement the main render function
+     */
     this.render = function(){
 
         // Several vars needed to be in scope

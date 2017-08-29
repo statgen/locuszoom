@@ -967,7 +967,7 @@ LocusZoom.DataLayer.prototype.reMap = function(){
 
 /**
  * The central registry of known data layer definitions (which may be stored in separate files due to length)
- * @class
+ * @namespace
  */
 LocusZoom.DataLayers = (function() {
     var obj = {};
