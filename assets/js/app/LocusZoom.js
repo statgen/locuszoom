@@ -428,14 +428,27 @@ LocusZoom.getToolTipPlot = function(node){
 };
 
 // Generate a curtain object for a plot, panel, or any other subdivision of a layout
+/**
+ * The panel curtain, like the plot curtain is an HTML overlay that obscures the entire panel. It can be styled
+ *   arbitrarily and display arbitrary messages. It is useful for reporting error messages visually to an end user
+ *   when the error renders the panel unusable.
+ *   TODO: Improve type doc here
+ * @returns {object}
+ */
 LocusZoom.generateCurtain = function(){
     var curtain = {
         showing: false,
         selector: null,
         content_selector: null,
         hide_delay: null,
+
+        /**
+         * Generate the curtain. Any content (string) argument passed will be displayed in the curtain as raw HTML.
+         *   CSS (object) can be passed which will apply styles to the curtain and its content.
+         * @param {string} content Content to be displayed on the curtain (as raw HTML)
+         * @param {object} css Apply the specified styles to the curtain and its contents
+         */
         show: function(content, css){
-            // Generate curtain
             if (!this.curtain.showing){
                 this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert("div")
                     .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
@@ -448,6 +461,13 @@ LocusZoom.generateCurtain = function(){
             }
             return this.curtain.update(content, css);
         }.bind(this),
+
+        /**
+         * Update the content and css of the curtain that's currently being shown. This method also adjusts the size
+         *   and positioning of the curtain to ensure it still covers the entire panel with no overlap.
+         * @param {string} content Content to be displayed on the curtain (as raw HTML)
+         * @param {object} css Apply the specified styles to the curtain and its contents
+         */
         update: function(content, css){
             if (!this.curtain.showing){ return this.curtain; }
             clearTimeout(this.curtain.hide_delay);
@@ -473,6 +493,11 @@ LocusZoom.generateCurtain = function(){
             }
             return this.curtain;
         }.bind(this),
+
+        /**
+         * Remove the curtain
+         * @param {number} delay Time to wait (in ms)
+         */
         hide: function(delay){
             if (!this.curtain.showing){ return this.curtain; }
             // If a delay was passed then defer to a timeout
@@ -493,6 +518,13 @@ LocusZoom.generateCurtain = function(){
 };
 
 // Generate a loader object for a plot, panel, or any other subdivision of a layout
+/**
+ * The panel loader is a small HTML overlay that appears in the lower left corner of the panel. It cannot be styled
+ *   arbitrarily, but can show a custom message and show a minimalist loading bar that can be updated to specific
+ *   completion percentages or be animated.
+ * TODO Improve type documentation
+ * @returns {object}
+ */
 LocusZoom.generateLoader = function(){
     var loader = {
         showing: false,
@@ -500,6 +532,11 @@ LocusZoom.generateLoader = function(){
         content_selector: null,
         progress_selector: null,
         cancel_selector: null,
+
+        /**
+         * Show a loading indicator
+         * @param {string} [content='Loading...'] Loading message (displayed as raw HTML)
+         */
         show: function(content){
             // Generate loader
             if (!this.loader.showing){
@@ -522,6 +559,13 @@ LocusZoom.generateLoader = function(){
             }
             return this.loader.update(content);
         }.bind(this),
+
+        /**
+         * Update the currently displayed loader and ensure the new content is positioned correctly.
+         * @param {string} content The text to display (as raw HTML). If not a string, will be ignored.
+         * @param {number} [percent] A number from 1-100. If a value is specified, it will stop all animations
+         *   in progress.
+         */
         update: function(content, percent){
             if (!this.loader.showing){ return this.loader; }
             clearTimeout(this.loader.hide_delay);
@@ -551,15 +595,29 @@ LocusZoom.generateLoader = function(){
             }
             return this.loader;
         }.bind(this),
+
+        /**
+         * Adds a class to the loading bar that makes it loop infinitely in a loading animation. Useful when exact
+         *   percent progress is not available.
+         */
         animate: function(){
-            // For when it is impossible to update with percent checkpoints - animate the loader in perpetual motion
             this.loader.progress_selector.classed("lz-loader-progress-animated", true);
             return this.loader;
         }.bind(this),
+
+        /**
+         *  Sets the loading bar in the loader to precentage width equal to the percent (number) value passed. Percents
+         *    will automatically be limited to a range of 1 to 100. Will stop all animations in progress.
+         */
         setPercentCompleted: function(percent){
             this.loader.progress_selector.classed("lz-loader-progress-animated", false);
             return this.loader.update(null, percent);
         }.bind(this),
+
+        /**
+         * Remove the loader
+         * @param {number} delay Time to wait (in ms)
+         */
         hide: function(delay){
             if (!this.loader.showing){ return this.loader; }
             // If a delay was passed then defer to a timeout

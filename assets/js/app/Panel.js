@@ -5,21 +5,21 @@
 "use strict";
 
 /**
-
-  LocusZoom.Panel Class
-
-  A panel is an abstract class representing a subdivision of the LocusZoom stage
-  to display a distinct data representation
-
+ * A panel is an abstract class representing a subdivision of the LocusZoom stage
+ *   to display a distinct data representation
+ * @class
+ * @param {Object} layout
+ * @param {LocusZoom.Plot|null} parent
 */
-
-LocusZoom.Panel = function(layout, parent) { 
+LocusZoom.Panel = function(layout, parent) {
 
     if (typeof layout !== "object"){
         throw "Unable to create panel, invalid layout";
     }
 
+    /** @member {LocusZoom.Plot|null} */
     this.parent = parent || null;
+    /** @member {LocusZoom.Plot|null} */
     this.parent_plot = parent;
 
     // Ensure a valid ID is present. If there is no valid ID then generate one
@@ -41,59 +41,123 @@ LocusZoom.Panel = function(layout, parent) {
             throw "Cannot create panel with id [" + layout.id + "]; panel with that id already exists";
         }
     }
+    /** @member {String} */
     this.id = layout.id;
 
+    /** @member {Boolean} */
     this.initialized = false;
+    /**
+     * The index of this panel in the parent plot's `layout.panels`
+     * @member {number}
+     * */
     this.layout_idx = null;
+    /** @member {Object} */
     this.svg = {};
 
-    // The layout is a serializable object used to describe the composition of the Panel
+    /**
+     * A JSON-serializable object used to describe the composition of the Panel
+     * @member {Object}
+     */
     this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.Panel.DefaultLayout);
 
     // Define state parameters specific to this panel
     if (this.parent){
+        /** @member {Object} */
         this.state = this.parent.state;
+
+        /** @member {String} */
         this.state_id = this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
     } else {
         this.state = null;
         this.state_id = null;
     }
-    
+
+    /** @member {Object} */
     this.data_layers = {};
+    /** @member {Array} */
     this.data_layer_ids_by_z_index = [];
+
+    /** @protected */
     this.applyDataLayerZIndexesToDataLayerLayouts = function(){
         this.data_layer_ids_by_z_index.forEach(function(dlid, idx){
             this.data_layers[dlid].layout.z_index = idx;
         }.bind(this));
     }.bind(this);
+
+    /**
+     * Track data requests in progress
+     * @member {Promise[]}
+     *  @protected
+     */
     this.data_promises = [];
 
+    /** @member {d3.scale} */
     this.x_scale  = null;
+    /** @member {d3.scale} */
     this.y1_scale = null;
+    /** @member {d3.scale} */
     this.y2_scale = null;
 
+    /** @member {d3.extent} */
     this.x_extent  = null;
+    /** @member {d3.extent} */
     this.y1_extent = null;
+    /** @member {d3.extent} */
     this.y2_extent = null;
 
+    /** @member {Number[]} */
     this.x_ticks  = [];
+    /** @member {Number[]} */
     this.y1_ticks = [];
+    /** @member {Number[]} */
     this.y2_ticks = [];
 
+    /**
+     * A timeout ID as returned by setTimeout
+     * @protected
+     * @member {number}
+     */
     this.zoom_timeout = null;
 
+    /** @returns {string} */
     this.getBaseId = function(){
         return this.parent.id + "." + this.id;
     };
 
-    // Event hooks
+    /**
+     * Known event hooks that the panel can respond to
+     * @protected
+     * @member {Object}
+     */
     this.event_hooks = {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
         "element_clicked": []
     };
+    /**
+     * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
+     *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
+     *
+     * The following panel-level events are currently supported:
+     *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
+     *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
+     *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
+     *   - `element_clicked` - context: element - A data element in any of the panel's data layers has been clicked.
+     *
+     * To register a hook for any of these events use `panel.on('event_name', function() {})`.
+     *
+     * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
+     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
+     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
+     *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
+     *   that was clicked.
+     *
+     * @param event
+     * @param hook
+     * @returns {LocusZoom.Panel}
+     */
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("Unable to register event hook, invalid event: " + event.toString());
@@ -104,6 +168,13 @@ LocusZoom.Panel = function(layout, parent) {
         this.event_hooks[event].push(hook);
         return this;
     };
+    /**
+     * Handle running of event hooks when an event is emitted
+     * @protected
+     * @param {string} event A known event name
+     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @returns {LocusZoom.Panel}
+     */
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
@@ -114,24 +185,32 @@ LocusZoom.Panel = function(layout, parent) {
         });
         return this;
     };
-    
-    // Get an object with the x and y coordinates of the panel's origin in terms of the entire page
-    // Necessary for positioning any HTML elements over the panel
+
+    /**
+     * Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+     * Necessary for positioning any HTML elements over the panel
+     * @returns {{x: *, y: *}}
+     */
     this.getPageOrigin = function(){
         var plot_origin = this.parent.getPageOrigin();
         return {
             x: plot_origin.x + this.layout.origin.x,
             y: plot_origin.y + this.layout.origin.y
         };
-    };        
+    };
 
     // Initialize the layout
     this.initializeLayout();
-    
+
     return this;
-    
+
 };
 
+/**
+ * Default panel layout
+ * @static
+ * @type {Object}
+ */
 LocusZoom.Panel.DefaultLayout = {
     title: { text: "", style: {}, x: 10, y: 22 },
     y_index: null,
@@ -153,7 +232,7 @@ LocusZoom.Panel.DefaultLayout = {
         width: 0,
         origin: { x: 0, y: 0 }
     },
-    axes: {
+    axes: {  // These are the only axes supported!!
         x:  {},
         y1: {},
         y2: {}
@@ -172,6 +251,9 @@ LocusZoom.Panel.DefaultLayout = {
     data_layers: []
 };
 
+/**
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.initializeLayout = function(){
 
     // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
@@ -197,6 +279,7 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
     this.setMargin();
 
     // Set ranges
+    // TODO: Define stub values in constructor
     this.x_range = [0, this.layout.cliparea.width];
     this.y1_range = [this.layout.cliparea.height, 0];
     this.y2_range = [this.layout.cliparea.height, 0];
@@ -222,6 +305,16 @@ LocusZoom.Panel.prototype.initializeLayout = function(){
 
 };
 
+/**
+ * Set the dimensions for the panel. If passed with no arguments will calculate optimal size based on layout
+ *   directives and the available area within the plot. If passed discrete width (number) and height (number) will
+ *   attempt to resize the panel to them, but may be limited by minimum dimensions defined on the plot or panel.
+ *
+ * @public
+ * @param {number} [width]
+ * @param {number} [height]
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.setDimensions = function(width, height){
     if (typeof width != "undefined" && typeof height != "undefined"){
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0){
@@ -251,6 +344,14 @@ LocusZoom.Panel.prototype.setDimensions = function(width, height){
     return this;
 };
 
+/**
+ * Set panel origin on the plot, and re-render as appropriate
+ *
+ * @public
+ * @param {number} x
+ * @param {number} y
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.setOrigin = function(x, y){
     if (!isNaN(x) && x >= 0){ this.layout.origin.x = Math.max(Math.round(+x), 0); }
     if (!isNaN(y) && y >= 0){ this.layout.origin.y = Math.max(Math.round(+y), 0); }
@@ -258,6 +359,15 @@ LocusZoom.Panel.prototype.setOrigin = function(x, y){
     return this;
 };
 
+/**
+ * Set margins around this panel
+ * @public
+ * @param {number} top
+ * @param {number} right
+ * @param {number} bottom
+ * @param {number} left
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     var extra;
     if (!isNaN(top)    && top    >= 0){ this.layout.margin.top    = Math.max(Math.round(+top),    0); }
@@ -286,6 +396,19 @@ LocusZoom.Panel.prototype.setMargin = function(top, right, bottom, left){
     return this;
 };
 
+/**
+ * Set the title for the panel. If passed an object, will merge the object with the existing layout configuration, so
+ *   that all or only some of the title layout object's parameters can be customized. If passed null, false, or an empty
+ *   string, the title DOM element will be set to display: none.
+ *
+ * @param {string|object|null} title The title text, or an object with additional configuration
+ * @param {string} title.text Text to display. Since titles are rendered as SVG text, HTML and newlines will not be rendered.
+ * @param {number} title.x X-offset, in pixels, for the title's text anchor (default left) relative to the top-left corner of the panel.
+ * @param {number} title.y Y-offset, in pixels, for the title's text anchor (default left) relative to the top-left corner of the panel.
+    NOTE: SVG y values go from the top down, so the SVG origin of (0,0) is in the top left corner.
+ * @param {object} title.style CSS styles object to be applied to the title's DOM element.
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.setTitle = function(title){
     if (typeof this.layout.title == "string"){
         var text = this.layout.title;
@@ -308,7 +431,12 @@ LocusZoom.Panel.prototype.setTitle = function(title){
     return this;
 };
 
-// Initialize a panel
+
+/**
+ * Initialize the panel
+ * TODO: Clarify uninitialized panel (eg data vs rendering?)
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.initialize = function(){
 
     // Append a container group element to house the main panel group element and the clip path
@@ -322,17 +450,22 @@ LocusZoom.Panel.prototype.initialize = function(){
         .attr("id", this.getBaseId() + ".clip");
     this.svg.clipRect = clipPath.append("rect")
         .attr("width", this.layout.width).attr("height", this.layout.height);
-    
+
     // Append svg group for rendering all panel child elements, clipped by the clip path
     this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".panel")
         .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
 
-    // Add curtain and loader prototpyes to the panel
+    // Add curtain and loader prototypes to the panel
+    /** @member {Object} */
     this.curtain = LocusZoom.generateCurtain.call(this);
+    /** @member {Object} */
     this.loader = LocusZoom.generateLoader.call(this);
 
-    // Create the dashboard object and hang components on it as defined by panel layout
+    /**
+     * Create the dashboard object and hang components on it as defined by panel layout
+     * @member {LocusZoom.Dashboard}
+     */
     this.dashboard = new LocusZoom.Dashboard(this);
 
     // Inner border
@@ -343,6 +476,7 @@ LocusZoom.Panel.prototype.initialize = function(){
         }.bind(this));
 
     // Add the title
+    /** @member {Element} */
     this.title = this.svg.group.append("text").attr("class", "lz-panel-title");
     if (typeof this.layout.title != "undefined"){ this.setTitle(); }
 
@@ -374,7 +508,10 @@ LocusZoom.Panel.prototype.initialize = function(){
         this.data_layers[id].initialize();
     }.bind(this));
 
-    // Create the legend object as defined by panel layout and child data layer layouts
+    /**
+     * Legend object, as defined by panel layout and child data layer layouts
+     * @member {LocusZoom.Legend}
+     * */
     this.legend = null;
     if (this.layout.legend){
         this.legend = new LocusZoom.Legend(this);
@@ -392,10 +529,12 @@ LocusZoom.Panel.prototype.initialize = function(){
     }
 
     return this;
-    
+
 };
 
-// Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+/**
+ * Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+ */
 LocusZoom.Panel.prototype.resortDataLayers = function(){
     var sort = [];
     this.data_layer_ids_by_z_index.forEach(function(id){
@@ -405,7 +544,11 @@ LocusZoom.Panel.prototype.resortDataLayers = function(){
     this.applyDataLayerZIndexesToDataLayerLayouts();
 };
 
-// Get an array of panel IDs that are axis-linked to this panel
+/**
+ * Get an array of panel IDs that are axis-linked to this panel
+ * @param axis
+ * @returns {Array}
+ */
 LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
     axis = axis || null;
     var linked_panel_ids = [];
@@ -419,7 +562,10 @@ LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){
     return linked_panel_ids;
 };
 
-// Move a panel up relative to others by y-index
+/**
+ * Move a panel up relative to others by y-index
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.moveUp = function(){
     if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]){
         this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
@@ -430,7 +576,10 @@ LocusZoom.Panel.prototype.moveUp = function(){
     return this;
 };
 
-// Move a panel down relative to others by y-index
+/**
+ * Move a panel down (y-axis) relative to others in the plot
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.moveDown = function(){
     if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]){
         this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
@@ -441,7 +590,13 @@ LocusZoom.Panel.prototype.moveDown = function(){
     return this;
 };
 
-// Create a new data layer by layout object
+/**
+ * Create a new data layer from a provided layout object. Should have the keys specified in `DefaultLayout`
+ * Will automatically add at the top (depth/z-index) of the panel unless explicitly directed differently
+ *   in the layout provided.
+ * @param {object} layout
+ * @returns {*}
+ */
 LocusZoom.Panel.prototype.addDataLayer = function(layout){
 
     // Sanity checks
@@ -496,7 +651,11 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout){
     return this.data_layers[data_layer.id];
 };
 
-// Remove a data layer by id
+/**
+ * Remove a data layer by id
+ * @param {string} id
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.removeDataLayer = function(id){
     if (!this.data_layers[id]){
         throw ("Unable to remove data layer, ID not found: " + id);
@@ -527,7 +686,10 @@ LocusZoom.Panel.prototype.removeDataLayer = function(id){
     return this;
 };
 
-// Clear all selections on all data layers
+/**
+ * Clear all selections on all data layers
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.clearSelections = function(){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].setAllElementStatus("selected", false);
@@ -535,7 +697,11 @@ LocusZoom.Panel.prototype.clearSelections = function(){
     return this;
 };
 
-// Re-Map a panel to new positions according to the parent plot's state
+/**
+ * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
+ *   from the API as gene position changes
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");
     this.data_promises = [];
@@ -563,7 +729,10 @@ LocusZoom.Panel.prototype.reMap = function(){
         }.bind(this));
 };
 
-// Iterate over data layers to generate panel axis extents
+/**
+ * Iterate over data layers to generate panel axis extents
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.generateExtents = function(){
 
     // Reset extents
@@ -586,7 +755,7 @@ LocusZoom.Panel.prototype.generateExtents = function(){
             var y_axis = "y" + data_layer.layout.y_axis.axis;
             this[y_axis+"_extent"] = d3.extent((this[y_axis+"_extent"] || []).concat(data_layer.getAxisExtent("y")));
         }
-        
+
     }
 
     // Override x_extent from state if explicitly defined to do so
@@ -598,7 +767,10 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
 };
 
-// Render a given panel
+/**
+ * Render this panel in the browser
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.render = function(){
 
     // Position the panel container
@@ -794,11 +966,14 @@ LocusZoom.Panel.prototype.render = function(){
     }.bind(this));
 
     return this;
-    
 };
 
 
-// Render ticks for a particular axis
+/**
+ * Render ticks for a particular axis
+ * @param {('x'|'y1'|'y2')} axis The identifier of the axes
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.renderAxis = function(axis){
 
     if (["x", "y1", "y2"].indexOf(axis) === -1){
@@ -931,10 +1106,12 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
 
 };
 
-// Force the height of this panel to the largest absolute height of the data in
-// all child data layers (if not null for any child data layers)
-// May optionally take an arbitrary target height (useful for when data layers are transitioning
-// and the ending target height can be pre-calculated)
+/**
+ * Force the height of this panel to the largest absolute height of the data in
+ *   all child data layers (if not null for any child data layers)
+ * @param {number} [target_height] A target height, which will be used in situations when the expected height can be
+ *   pre-calculated (eg when the layers are transitioning)
+ */
 LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
     target_height = +target_height || null;
     if (target_height === null){
@@ -957,17 +1134,29 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(target_height){
     }
 };
 
-// Methods to set/unset element statuses across all data layers
+/**
+ * Methods to set/unset element statuses across all data layers
+ * @param {String} status
+ * @param {Boolean} toggle
+ * @param {Array} filters
+ * @param {Boolean} exclusive
+ */
 LocusZoom.Panel.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
     }.bind(this));
 };
+/**
+ * Set/unset element statuses across all data layers
+ * @param {String} status
+ * @param {Boolean} toggle
+ */
 LocusZoom.Panel.prototype.setAllElementStatus = function(status, toggle){
     this.data_layer_ids_by_z_index.forEach(function(id){
         this.data_layers[id].setAllElementStatus(status, toggle);
     }.bind(this));
 };
+// TODO: Capture documentation for dynamically generated methods
 LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
     var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
     var antiverb = "un" + verb;
@@ -991,11 +1180,17 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
     };
 });
 
-// Add a "basic" loader to a panel
-// This method is just a shortcut for adding the most commonly used type of loader
-// which appears when data is requested, animates (e.g. shows an infinitely cycling
-// progress bar as opposed to one that loads from 0-100% based on actual load progress),
-// and disappears when new data is loaded and rendered.
+
+/**
+ * Add a "basic" loader to a panel
+ * This method is just a shortcut for adding the most commonly used type of loading indicator, which appears when
+ *   data is requested, animates (e.g. shows an infinitely cycling progress bar as opposed to one that loads from
+ *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
+ *
+ *
+ * @param {Boolean} show_immediately
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Panel.prototype.addBasicLoader = function(show_immediately){
     if (typeof show_immediately != "undefined"){ show_immediately = true; }
     if (show_immediately){
