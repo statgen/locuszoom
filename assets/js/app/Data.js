@@ -13,12 +13,12 @@
 LocusZoom.Data = LocusZoom.Data ||  {};
 
 /**
- * Create and coordinate an ensemble of data source objects for drawing a particular plot
+ * Create and coordinate an ensemble of (namespaced) data source instances
  * @public
  * @class
  */
 LocusZoom.DataSources = function() {
-    /** @member {Object} */
+    /** @member {Object.<string, LocusZoom.Data.Source>} */
     this.sources = {};
 };
 
@@ -32,7 +32,7 @@ LocusZoom.DataSources.prototype.addSource = function(ns, x) {
  * Add a (namespaced) datasource to the plot
  * @public
  * @param {String} ns A namespace used for fields from this data source
- * @param {Object|Array|null} x An instantiated datasource, or an array of arguments that can be used to
+ * @param {LocusZoom.Data.Source|Array|null} x An instantiated datasource, or an array of arguments that can be used to
  *   create a known datasource type.
  */
 LocusZoom.DataSources.prototype.add = function(ns, x) {
@@ -121,10 +121,17 @@ LocusZoom.DataSources.prototype.toJSON = function() {
 };
 
 /**
- * TODO: Write this docstring; fields seem to be used for plots rather than raw data fetching
- * @param field
+ * Represents an addressable unit of data from a namespaced datasource, subject to specified value transformations.
+ *
+ * When used by a data layer, fields will automatically be re-fetched from the appropriate data source whenever the
+ *   state of a plot fetches, eg pan or zoom operations that would affect what data is displayed.
+ *
  * @public
  * @class
+ * @param {String} field A string representing the namespace of the datasource, the name of the desired field to fetch
+ *   from that datasource, and arbitrarily many transformations to apply to the value. The namespace and
+ *   transformation(s) are optional and information is delimited according to the general syntax
+ *   `[namespace:]name[|transformation][|transformation]`. For example, `association:pvalue|neglog10`
  */
 LocusZoom.Data.Field = function(field){
     

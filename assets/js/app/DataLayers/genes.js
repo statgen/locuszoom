@@ -50,7 +50,8 @@ LocusZoom.DataLayers.add("genes", function(layout){
     this.transcript_idx = 0;
 
     /**
-     * TODO: Description. How does this differ from similarly named properties?
+     * An internal counter for the number of tracks in the data layer. Used as an internal counter for looping
+     *   over positions / assignments
      * @protected
      * @member {number}
      */
@@ -63,8 +64,8 @@ LocusZoom.DataLayers.add("genes", function(layout){
     this.gene_track_index = { 1: [] };
 
     /**
-     * After we've loaded the genes interpret them to assign
-     *   each to a track so that they do not overlap in the view
+     * Ensure that genes in overlapping chromosome regions are positioned so that parts of different genes do not
+     *   overlap in the view. A track is a row used to vertically separate overlapping genes.
      * @returns {LocusZoom.DataLayer}
      */
     this.assignTracks = function(){

@@ -6,7 +6,7 @@
 
 /**
  * A panel is an abstract class representing a subdivision of the LocusZoom stage
- *   to display a distinct data representation
+ *   to display a distinct data representation as a collection of data layers.
  * @class
  * @param {Object} layout
  * @param {LocusZoom.Plot|null} parent
@@ -252,6 +252,8 @@ LocusZoom.Panel.DefaultLayout = {
 };
 
 /**
+ * Prepare the panel for first use by performing parameter validation, creating axes, setting default dimensions,
+ *   and preparing / positioning data layers as appropriate.
  * @returns {LocusZoom.Panel}
  */
 LocusZoom.Panel.prototype.initializeLayout = function(){
@@ -433,8 +435,8 @@ LocusZoom.Panel.prototype.setTitle = function(title){
 
 
 /**
- * Initialize the panel
- * TODO: Clarify uninitialized panel (eg data vs rendering?)
+ * Prepare the first rendering of the panel. This includes drawing the individual data layers, but also creates shared
+ *   elements such as axes,  title, and loader/curtain.
  * @returns {LocusZoom.Panel}
  */
 LocusZoom.Panel.prototype.initialize = function(){
@@ -699,7 +701,7 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 
 /**
  * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
- *   from the API as gene position changes
+ *   from the API as the viewing region changes
  * @returns {LocusZoom.Panel}
  */
 LocusZoom.Panel.prototype.reMap = function(){
@@ -768,7 +770,8 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 };
 
 /**
- * Render this panel in the browser
+ * Update rendering of this panel whenever an event triggers a redraw. Assumes that the panel has already been
+ *   prepared the first time via `initialize`
  * @returns {LocusZoom.Panel}
  */
 LocusZoom.Panel.prototype.render = function(){

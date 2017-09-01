@@ -5,8 +5,7 @@
 "use strict";
 
 /**
- * A data layer is an abstract class representing a data set and its
- * graphical representation within a panel
+ * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
  * @class
  * @param {Object} layout A JSON-serializable object describing the layout for this layer
@@ -20,7 +19,7 @@ LocusZoom.DataLayer = function(layout, parent) {
 
     /** @member {String} */
     this.id     = null;
-    /** @member {LocusZoom.DataLayer|LocusZoom.Panel} */
+    /** @member {LocusZoom.Panel} */
     this.parent = parent || null;
     /**
      * @member {{group: d3.selection, container: d3.selection, clipRect: d3.selection}}
@@ -103,13 +102,19 @@ LocusZoom.DataLayer.Statuses = {
 
 /**
  * Get the fully qualified identifier for the data layer, prefixed by any parent or container elements
- * @returns {string}
+ *
+ * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
  */
 LocusZoom.DataLayer.prototype.getBaseId = function(){
     return this.parent_plot.id + "." + this.parent.id + "." + this.id;
 };
 
 /**
+ * Determine the pixel height of data-bound objects represented inside this data layer. (excluding elements such as axes)
+ *
+ * May be used by operations that resize the data layer to fit available data
+ *
+ * @public
  * @returns {number}
  */
 LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
@@ -127,6 +132,8 @@ LocusZoom.DataLayer.prototype.canTransition = function(){
 };
 
 /**
+ * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
+ *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
  * @param {String|Object} element
  * @returns {String}
  */
@@ -145,8 +152,11 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
 };
 
 /**
- * @param {String} id
- * @returns {null}
+ * Returns a reference to the underlying data associated with a single visual element in the data layer, as
+ *   referenced by the unique identifier for the element
+
+ * @param {String} id The unique identifier for the element, as defined by `getElementId`
+ * @returns {Object|null} The data bound to that element
  */
 LocusZoom.DataLayer.prototype.getElementById = function(id){
     var selector = d3.select("#" + id.replace(/(:|\.|\[|\]|,)/g, "\\$1"));
@@ -944,7 +954,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
 
 
 /**
- * Re-Map a data layer to new positions according to the parent panel's parent plot's state
+ * Re-Map a data layer to reflect changes in the state of a plot (such as viewing region/ chromosome range)
  * @return {Promise}
  */
 LocusZoom.DataLayer.prototype.reMap = function(){
