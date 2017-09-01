@@ -177,9 +177,8 @@ LocusZoom.Data.Field = function(field){
 /**
  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom plots.
  *   It passes state information and ensures that data is formatted in the manner expected by the plot.
- * @param {Object} sources An object of {ns: LocusZoom.Data.Source} instances
+ * @param {LocusZoom.DataSources} sources An object of {ns: LocusZoom.Data.Source} instances
  * @class
- * @protected
  */
 LocusZoom.Data.Requester = function(sources) {
 

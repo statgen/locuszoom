@@ -2,12 +2,22 @@
 /* eslint-env browser */
 /* eslint-disable no-console */
 
+/**
+ * @namespace
+ */
 var LocusZoom = {
     version: "0.5.6"
 };
-    
-// Populate a single element with a LocusZoom plot.
-// selector can be a string for a DOM Query or a d3 selector.
+
+/**
+ * Populate a single element with a LocusZoom plot.
+ * selector can be a string for a DOM Query or a d3 selector.
+ * @param {String} selector CSS selector for the container element where the plot will be mounted. Any pre-existing
+ *   content in the container will be completely replaced.
+ * @param {LocusZoom.DataSources} datasource Ensemble of data providers used by the plot
+ * @param {Object} layout A JSON-serializable object of layout configuration parameters
+ * @returns {LocusZoom.Plot} The newly created plot instance
+ */
 LocusZoom.populate = function(selector, datasource, layout) {
     if (typeof selector == "undefined"){
         throw ("LocusZoom.populate selector not defined");

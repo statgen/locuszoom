@@ -154,8 +154,8 @@ LocusZoom.Panel = function(layout, parent) {
      *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param event
-     * @param hook
+     * @param {String} event
+     * @param {function} hook
      * @returns {LocusZoom.Panel}
      */
     this.on = function(event, hook){
@@ -189,7 +189,7 @@ LocusZoom.Panel = function(layout, parent) {
     /**
      * Get an object with the x and y coordinates of the panel's origin in terms of the entire page
      * Necessary for positioning any HTML elements over the panel
-     * @returns {{x: *, y: *}}
+     * @returns {{x: Number, y: Number}}
      */
     this.getPageOrigin = function(){
         var plot_origin = this.parent.getPageOrigin();
@@ -702,7 +702,7 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 /**
  * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
  *   from the API as the viewing region changes
- * @returns {LocusZoom.Panel}
+ * @returns {Promise}
  */
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");

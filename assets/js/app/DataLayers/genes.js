@@ -59,7 +59,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
     /**
      * Store information about genes in dataset, in a hash indexed by track number: {track_number: [gene_indices]}
-     * @member {Object}
+     * @member {Object.<Number, Array>}
      */
     this.gene_track_index = { 1: [] };
 
