@@ -213,6 +213,11 @@ LocusZoom.Plot = function(id, datasource, layout) {
      */
     this.interaction = {};
 
+    /**
+     * Track whether the target panel can respond to mouse interaction events
+     * @param {String} panel_id
+     * @returns {boolean}
+     */
     this.canInteract = function(panel_id){
         panel_id = panel_id || null;
         if (panel_id){
@@ -229,7 +234,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
 };
 
 /**
- * Default/ expected configuration parameters for basic plotting; generally overridden
+ * Default/ expected configuration parameters for basic plotting; most plots will override
  *
  * @protected
  * @static
@@ -281,6 +286,10 @@ LocusZoom.Plot.prototype.rescaleSVG = function(){
     return this;
 };
 
+/**
+ * Prepare the plot for first use by performing parameter validation, setting up panels, and calculating dimensions
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.initializeLayout = function(){
 
     // Sanity check layout values
@@ -316,15 +325,14 @@ LocusZoom.Plot.prototype.initializeLayout = function(){
 };
 
 /**
-  Set the dimensions for an plot.
-  This function works in two different ways:
-  1. If passed a discrete width and height:
-     * Adjust the plot to match those exact values (lower-bounded by minimum panel dimensions)
-     * Resize panels within the plot proportionally to match the new plot dimensions
-  2. If NOT passed discrete width and height:
-     * Assume panels within are sized and positioned correctly
-     * Calculate appropriate plot dimensions from panels contained within and update plot
-*/
+ * Set the dimensions for a plot, and ensure that panels are sized and positioned correctly.
+ *
+ * If dimensions are provided, resizes each panel proportionally to match the new plot dimensions. Otherwise,
+ *   calculates the appropriate plot dimensions based on all panels.
+ * @param {Number} [width] If provided and larger than minimum size, set plot to this width
+ * @param {Number} [height] If provided and larger than minimum size, set plot to this height
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.setDimensions = function(width, height){
 
     var id;
@@ -414,7 +422,11 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     return this.emit("layout_changed");
 };
 
-// Create a new panel from a layout
+/**
+ * Create a new panel from a layout, and handle the work of initializing and placing the panel on the plot
+ * @param {Object} layout
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Plot.prototype.addPanel = function(layout){
 
     // Sanity checks
@@ -467,7 +479,11 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     return this.panels[panel.id];
 };
 
-// Remove panel by id
+/**
+ * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
+ * @param {String} id
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
@@ -519,14 +535,14 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
 
 /**
- Automatically position panels based on panel positioning rules and values.
- Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
-
- TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
-       Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
-       but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
-       That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
-*/
+ * Automatically position panels based on panel positioning rules and values.
+ * Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
+ *
+ * TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
+ *      Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
+ *      but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
+ *      That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
+ */
 LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
@@ -596,7 +612,12 @@ LocusZoom.Plot.prototype.positionPanels = function(){
 
 };
 
-// Create all plot-level objects, initialize all child panels
+/**
+ * Prepare the first rendering of the plot. This includes initializing the individual panels, but also creates shared
+ *   elements such as mouse events, panel guides/boundaries, and loader/curtain.
+ *
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.initialize = function(){
 
     // Ensure proper responsive class is present on the containing node if called for
@@ -806,12 +827,19 @@ LocusZoom.Plot.prototype.initialize = function(){
 
 };
 
-// Refresh an plot's data from sources without changing position
+/**
+ * Refresh (or fetch) a plot's data from sources, regardless of whether position or state has changed
+ * @returns {Promise}
+ */
 LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
 };
 
-// Update state values and trigger a pull for fresh data on all data sources for all data layers
+/**
+ * Update state values and trigger a pull for fresh data on all data sources for all data layers
+ * @param state_changes
+ * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+ */
 LocusZoom.Plot.prototype.applyState = function(state_changes){
 
     state_changes = state_changes || {};
@@ -886,6 +914,13 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         }.bind(this));
 };
 
+/**
+ * Register interactions along the specified axis, provided that the target panel allows interaction.
+ *
+ * @param {LocusZoom.Panel} panel
+ * @param {('x_tick'|'y1_tick'|'y2_tick')} method The direction (axis) along which dragging is being performed.
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.startDrag = function(panel, method){
 
     panel = panel || null;
@@ -927,6 +962,11 @@ LocusZoom.Plot.prototype.startDrag = function(panel, method){
 
 };
 
+/**
+ * Process drag interactions across the target panel and synchronize plot state across other panels in sync;
+ *   clear the event when complete
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.stopDrag = function(){
 
     if (!this.interaction.dragging){ return this; }
