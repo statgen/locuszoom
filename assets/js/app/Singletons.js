@@ -355,7 +355,7 @@ LocusZoom.ScaleFunctions = (function() {
 
     /**
      * List the names of all registered scale functions
-     * @returns {Array}
+     * @returns {String[]}
      */
     obj.list = function() {
         return Object.keys(functions);
