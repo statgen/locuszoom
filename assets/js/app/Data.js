@@ -846,6 +846,26 @@ LocusZoom.Data.GWASSource.prototype.getURL = function(state, chain, fields) {
 };
 LocusZoom.Data.GWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var data = JSON.parse(resp);
+    // Walk data set to generate extents for neglog10 pvalues
+    // Assumption here is that unbinned variants do NOT have pval in neglog10 form
+    // but bins DO have all pvals already in neglog10 form
+    var neglog10pval_values = [];
+    data.unbinned_variants.forEach(function(variant){
+        var neglog10pval = LocusZoom.TransformationFunctions.get("neglog10")(variant.pval);
+        if (!isNaN(neglog10pval)){ neglog10pval_values.push(neglog10pval); }
+    });
+    data.variant_bins.forEach(function(bin){
+        bin.neglog10_pval_extents.forEach(function(bin_extent){
+            neglog10pval_values.push(bin_extent[0]);
+            neglog10pval_values.push(bin_extent[1]);
+        });
+        bin.neglog10_pvals.forEach(function(bin_variant){
+            neglog10pval_values.push(bin_variant[0]);
+        });
+    });
+    data.extents = {
+        "pval|neglog10": d3.extent(neglog10pval_values)
+    }
     return {header: chain.header, body: data};
 };
 

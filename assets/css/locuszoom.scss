@@ -254,6 +254,18 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 1px;
   }
 
+  g.#{$namespace}-data_layer-manhattan {
+    line {
+      stroke-linecap: round;
+      stroke: rgb(120,120,126);
+    }
+    circle {
+      cursor: pointer;
+      fill: rgb(120,120,126);
+      stroke: none;
+    }
+  }
+
 }
 
 // The following comment is used by the download dashboard component when generating a CSS string.

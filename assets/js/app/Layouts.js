@@ -518,6 +518,7 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
     fields: ["{{namespace[gwas]}}gwas"],
     id_field: "rsids",
     x_axis: {
+        field: "pos",
         floor: 0,
         ceiling: 2881033286
     },
@@ -1251,7 +1252,7 @@ LocusZoom.Layouts.add("panel", "manhattan", {
     min_width:  800,
     min_height: 500,
     proportional_width: 1,
-    margin: { top: 50, right: 20, bottom: 50, left: 50 },
+    margin: { top: 40, right: 20, bottom: 50, left: 50 },
     axes: {
         x: {
             label: "Chromosome",

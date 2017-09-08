@@ -307,6 +307,11 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
 
+    // If the extent was generated and stored by field name in the data set then pass it right through
+    if (this.layout[axis].field && this.data && this.data.extents && Array.isArray(this.data.extents[this.layout[axis].field])){
+        return d3.extent(this.data.extents[this.layout[axis].field]);
+    }
+
     // If a field is defined for the axis and the data layer has data then generate the extent from the data set
     if (this.layout[axis].field && this.data && this.data.length){
 
