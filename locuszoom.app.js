@@ -1098,9 +1098,9 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
-LocusZoom.Layouts.add("data_layer", "gwas_manhattan", {
+LocusZoom.Layouts.add("data_layer", "manhattan", {
     namespace: { "gwas": "gwas" },
-    id: "gwas",
+    id: "manhattan",
     type: "manhattan",
     fields: ["{{namespace[gwas]}}gwas"],
     id_field: "rsids",
@@ -1829,6 +1829,274 @@ LocusZoom.Layouts.add("panel", "intervals", {
     ]
 });
 
+LocusZoom.Layouts.add("panel", "manhattan", {
+    id: "manhattan",
+    width: 800,
+    height: 500,
+    min_width:  800,
+    min_height: 500,
+    proportional_width: 1,
+    margin: { top: 50, right: 20, bottom: 50, left: 50 },
+    axes: {
+        x: {
+            label: "Chromosome",
+            label_offset: 35,
+            ticks: [
+                {
+                    x: 124625310,
+                    text: "1",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 370850307,
+                    text: "2",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 591461209,
+                    text: "3",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 786049562,
+                    text: "4",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 972084330,
+                    text: "5",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1148099493,
+                    text: "6",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1313226358,
+                    text: "7",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1465977701,
+                    text: "8",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1609766427,
+                    text: "9",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1748140516,
+                    text: "10",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 1883411148,
+                    text: "11",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2017840353,
+                    text: "12",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2142351240,
+                    text: "13",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2253610949,
+                    text: "14",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2358551415,
+                    text: "15",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2454994487,
+                    text: "16",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2540769469,
+                    text: "17",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2620405698,
+                    text: "18",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2689008813,
+                    text: "19",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2750086065,
+                    text: "20",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2805663772,
+                    text: "21",
+                    style: {
+                        "fill": "rgb(120, 120, 186)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                },
+                {
+                    x: 2855381003,
+                    text: "22",
+                    style: {
+                        "fill": "rgb(0, 0, 66)",
+                        "text-anchor": "center",
+                        "font-size": "13px",
+                        "font-weight": "bold"
+                    },
+                    transform: "translate(0, 2)"
+                }
+            ]
+        },
+        y1: {
+            label: "-log10 p-value",
+            label_offset: 28
+        }
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "significance", { unnamespaced: true }),
+        LocusZoom.Layouts.get("data_layer", "manhattan", { unnamespaced: true })
+    ]
+});
+
 
 /**
  Plot Layouts
@@ -1873,6 +2141,19 @@ LocusZoom.Layouts.add("plot", "standard_phewas", {
                 }
             }
         })
+    ],
+    mouse_guide: false
+});
+
+LocusZoom.Layouts.add("plot", "standard_manhattan", {
+    width: 800,
+    height: 500,
+    min_width: 800,
+    min_height: 500,
+    responsive_resize: true,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true } ),
+    panels: [
+        LocusZoom.Layouts.get("panel", "manhattan", { unnamespaced: true, proportional_height: 1 })
     ],
     mouse_guide: false
 });
@@ -4837,6 +5118,49 @@ LocusZoom.DataLayers.add("forest", function(layout){
         
     };
  
+    return this;
+
+});
+
+/* global d3,LocusZoom */
+/* eslint-env browser */
+/* eslint-disable no-console */
+
+"use strict";
+
+/*********************
+  Manhattan Data Layer
+  Implements a manhattan plot data
+*/
+
+LocusZoom.DataLayers.add("manhattan", function(layout){
+
+    // Define a default layout for this DataLayer type and merge it with the passed argument
+    this.DefaultLayout = {
+        point_size: 18,
+        point_shape: "circle",
+        tooltip_positioning: "horizontal",
+        color: "#888888",
+        y_axis: {
+            axis: 1
+        },
+        id_field: "id"
+    };
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    // Implement the main render function
+    this.render = function(){
+
+        var data_layer = this;
+        var x_scale = "x_scale";
+        var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+            
+        debugger;
+    };
+
     return this;
 
 });

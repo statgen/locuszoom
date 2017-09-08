@@ -27,4 +27,16 @@ LocusZoom.DataLayers.add("manhattan", function(layout){
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-};
+    // Implement the main render function
+    this.render = function(){
+
+        var data_layer = this;
+        var x_scale = "x_scale";
+        var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+            
+        debugger;
+    };
+
+    return this;
+
+});
