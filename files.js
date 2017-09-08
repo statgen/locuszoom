@@ -38,6 +38,7 @@ var test_include = [
     "./assets/js/app/DataLayers/intervals.js",
     "./assets/js/app/DataLayers/genome_legend.js",
     "./assets/js/app/DataLayers/forest.js",
+    "./assets/js/app/DataLayers/manhattan.js",
     "./assets/js/app/Singletons.js",
     "./assets/js/app/Dashboard.js",
     "./assets/js/app/Legend.js",

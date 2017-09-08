@@ -834,3 +834,18 @@ LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fiel
     });
     return {header: chain.header, body: data};
 };
+
+/**
+  Data source for GWAS (Manhattan plot) data served from JSON files
+*/
+LocusZoom.Data.GWASSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "GWASLZ");
+LocusZoom.Data.GWASSource.prototype.getURL = function(state, chain, fields) {
+    return this.url + state.phenotype + ".json";
+};
+LocusZoom.Data.GWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    var data = JSON.parse(resp);
+    return {header: chain.header, body: data};
+};
+

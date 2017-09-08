@@ -511,6 +511,42 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
+LocusZoom.Layouts.add("data_layer", "gwas_manhattan", {
+    namespace: { "gwas": "gwas" },
+    id: "gwas",
+    type: "manhattan",
+    fields: ["{{namespace[gwas]}}gwas"],
+    id_field: "rsids",
+    x_axis: {
+        floor: 0,
+        ceiling: 2881033286
+    },
+    y_axis: {
+        axis: 1,
+        field: "pval|neglog10",
+        floor: 0,
+        upper_buffer: 0.10,
+        min_extent: [ 0, 10 ]
+    }
+    /*
+    behaviors: {
+        onmouseover: [
+            { action: "set", status: "highlighted" }
+        ],
+        onmouseout: [
+            { action: "unset", status: "highlighted" }
+        ],
+        onclick: [
+            { action: "toggle", status: "selected", exclusive: true }
+        ],
+        onshiftclick: [
+            { action: "toggle", status: "selected" }
+        ]
+    },
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
+    */
+});
+
 
 /**
  * Dashboard Layouts: toolbar buttons etc
