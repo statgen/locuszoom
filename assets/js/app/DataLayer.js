@@ -302,55 +302,60 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
+    // Helper function to apply floor, ceiling, buffers, and minimum extent to a resolved extent
+    var applyLayoutBounds = function(extent, layout){
+        // Apply floor/ceiling
+        if (!isNaN(layout.floor)) {
+            extent[0] = layout.floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(layout.ceiling)) {
+            extent[1] = layout.ceiling;
+            extent[0] = d3.min(extent);
+        }
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (isNaN(layout.floor) && !isNaN(layout.lower_buffer)) {
+            extent[0] -= original_extent_span * layout.lower_buffer;
+        }
+        if (isNaN(layout.ceiling) && !isNaN(layout.upper_buffer)) {
+            extent[1] += original_extent_span * layout.upper_buffer;
+        }
+        // Apply minimum extent
+        if (typeof layout.min_extent == "object") {
+            if (isNaN(layout.floor) && !isNaN(layout.min_extent[0])) {
+                extent[0] = Math.min(extent[0], layout.min_extent[0]);
+            }
+            if (isNaN(layout.ceiling) && !isNaN(layout.min_extent[1])) {
+                extent[1] = Math.max(extent[1], layout.min_extent[1]);
+            }
+        }
+        // Done!
+        return extent;
+    };
+
     // If a floor AND a ceiling are explicitly defined then just return that extent and be done
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
 
-    // If the extent was generated and stored by field name in the data set then pass it right through
-    if (this.layout[axis].field && this.data && this.data.extents && Array.isArray(this.data.extents[this.layout[axis].field])){
-        return d3.extent(this.data.extents[this.layout[axis].field]);
+    // If the extent was generated and stored by field name in the data set then pass it right through.
+    // If the stored value is a function then pass it the current axis layout and pass the result through.
+    if (this.layout[axis].field && this.data && this.data.extents && typeof this.data.extents[this.layout[axis].field] !== "undefined"){
+        var extent = d3.extent(this.data.extents[this.layout[axis].field]);
+        if (typeof this.data.extents[this.layout[axis].field] === "function"){
+            extent = d3.extent(this.data.extents[this.layout[axis].field](this.layout[axis]));
+        }        
+        return applyLayoutBounds(extent, this.layout[axis]);
     }
 
     // If a field is defined for the axis and the data layer has data then generate the extent from the data set
     if (this.layout[axis].field && this.data && this.data.length){
-
         var extent = d3.extent(this.data, function(d) {
             var f = new LocusZoom.Data.Field(this.layout[axis].field);
             return +f.resolve(d);
         }.bind(this));
-
-        // Apply floor/ceiling
-        if (!isNaN(this.layout[axis].floor)) {
-            extent[0] = this.layout[axis].floor;
-            extent[1] = d3.max(extent);
-        }
-        if (!isNaN(this.layout[axis].ceiling)) {
-            extent[1] = this.layout[axis].ceiling;
-            extent[0] = d3.min(extent);
-        }
-
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
-            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
-        }
-        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
-            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
-        }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object") {
-            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
-                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
-            }
-            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
-                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
-            }
-        }
-
-        return extent;
-
+        return applyLayoutBounds(extent, this.layout[axis]);
     }
 
     // If this is for the x axis and no extent could be generated yet but state has a defined start and end

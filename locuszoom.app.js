@@ -1105,16 +1105,10 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
     fields: ["{{namespace[gwas]}}gwas"],
     id_field: "rsids",
     x_axis: {
-        field: "pos",
-        floor: 0,
-        ceiling: 2881033286
+        field: "pos"
     },
     y_axis: {
-        axis: 1,
-        field: "pval|neglog10",
-        floor: 0,
-        upper_buffer: 0.10,
-        min_extent: [ 0, 10 ]
+        field: "pval|neglog10"
     }
     /*
     behaviors: {
@@ -1842,250 +1836,7 @@ LocusZoom.Layouts.add("panel", "manhattan", {
         x: {
             label: "Chromosome",
             label_offset: 35,
-            ticks: [
-                {
-                    x: 124625310,
-                    text: "1",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 370850307,
-                    text: "2",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 591461209,
-                    text: "3",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 786049562,
-                    text: "4",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 972084330,
-                    text: "5",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1148099493,
-                    text: "6",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1313226358,
-                    text: "7",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1465977701,
-                    text: "8",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1609766427,
-                    text: "9",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1748140516,
-                    text: "10",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 1883411148,
-                    text: "11",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2017840353,
-                    text: "12",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2142351240,
-                    text: "13",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2253610949,
-                    text: "14",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2358551415,
-                    text: "15",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2454994487,
-                    text: "16",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2540769469,
-                    text: "17",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2620405698,
-                    text: "18",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2689008813,
-                    text: "19",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2750086065,
-                    text: "20",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2805663772,
-                    text: "21",
-                    style: {
-                        "fill": "rgb(120, 120, 186)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                },
-                {
-                    x: 2855381003,
-                    text: "22",
-                    style: {
-                        "fill": "rgb(0, 0, 66)",
-                        "text-anchor": "center",
-                        "font-size": "13px",
-                        "font-weight": "bold"
-                    },
-                    transform: "translate(0, 2)"
-                }
-            ]
+            chromosome_padding: 3e7
         },
         y1: {
             label: "-log10 p-value",
@@ -2406,55 +2157,60 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     var axis = dimension + "_axis";
 
+    // Helper function to apply floor, ceiling, buffers, and minimum extent to a resolved extent
+    var applyLayoutBounds = function(extent, layout){
+        // Apply floor/ceiling
+        if (!isNaN(layout.floor)) {
+            extent[0] = layout.floor;
+            extent[1] = d3.max(extent);
+        }
+        if (!isNaN(layout.ceiling)) {
+            extent[1] = layout.ceiling;
+            extent[0] = d3.min(extent);
+        }
+        // Apply upper/lower buffers, if applicable
+        var original_extent_span = extent[1] - extent[0];
+        if (isNaN(layout.floor) && !isNaN(layout.lower_buffer)) {
+            extent[0] -= original_extent_span * layout.lower_buffer;
+        }
+        if (isNaN(layout.ceiling) && !isNaN(layout.upper_buffer)) {
+            extent[1] += original_extent_span * layout.upper_buffer;
+        }
+        // Apply minimum extent
+        if (typeof layout.min_extent == "object") {
+            if (isNaN(layout.floor) && !isNaN(layout.min_extent[0])) {
+                extent[0] = Math.min(extent[0], layout.min_extent[0]);
+            }
+            if (isNaN(layout.ceiling) && !isNaN(layout.min_extent[1])) {
+                extent[1] = Math.max(extent[1], layout.min_extent[1]);
+            }
+        }
+        // Done!
+        return extent;
+    };
+
     // If a floor AND a ceiling are explicitly defined then just return that extent and be done
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
 
-    // If the extent was generated and stored by field name in the data set then pass it right through
-    if (this.layout[axis].field && this.data && this.data.extents && Array.isArray(this.data.extents[this.layout[axis].field])){
-        return d3.extent(this.data.extents[this.layout[axis].field]);
+    // If the extent was generated and stored by field name in the data set then pass it right through.
+    // If the stored value is a function then pass it the current axis layout and pass the result through.
+    if (this.layout[axis].field && this.data && this.data.extents && typeof this.data.extents[this.layout[axis].field] !== "undefined"){
+        var extent = d3.extent(this.data.extents[this.layout[axis].field]);
+        if (typeof this.data.extents[this.layout[axis].field] === "function"){
+            extent = d3.extent(this.data.extents[this.layout[axis].field](this.layout[axis]));
+        }        
+        return applyLayoutBounds(extent, this.layout[axis]);
     }
 
     // If a field is defined for the axis and the data layer has data then generate the extent from the data set
     if (this.layout[axis].field && this.data && this.data.length){
-
         var extent = d3.extent(this.data, function(d) {
             var f = new LocusZoom.Data.Field(this.layout[axis].field);
             return +f.resolve(d);
         }.bind(this));
-
-        // Apply floor/ceiling
-        if (!isNaN(this.layout[axis].floor)) {
-            extent[0] = this.layout[axis].floor;
-            extent[1] = d3.max(extent);
-        }
-        if (!isNaN(this.layout[axis].ceiling)) {
-            extent[1] = this.layout[axis].ceiling;
-            extent[0] = d3.min(extent);
-        }
-
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
-            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
-        }
-        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
-            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
-        }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object") {
-            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
-                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
-            }
-            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
-                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
-            }
-        }
-
-        return extent;
-
+        return applyLayoutBounds(extent, this.layout[axis]);
     }
 
     // If this is for the x axis and no extent could be generated yet but state has a defined start and end
@@ -5139,7 +4895,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
   Implements a manhattan plot data
 */
 
-LocusZoom.DataLayers.add("manhattan", function(layout){
+LocusZoom.DataLayers.add("manhattan", function(layout) {
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
@@ -5147,7 +4903,14 @@ LocusZoom.DataLayers.add("manhattan", function(layout){
         tooltip_positioning: "horizontal",
         color: "#888888",
         y_axis: {
-            axis: 1
+            axis: 1,
+            floor: 0,
+            upper_buffer: 0.10,
+            min_extent: [ 0, 10 ]
+        },
+        x_axis: {
+            floor: 0,
+            chromosome_padding: 2e8
         },
         id_field: "id"
     };
@@ -5156,12 +4919,19 @@ LocusZoom.DataLayers.add("manhattan", function(layout){
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
+    // If the parent panel x axis layout defines a chromosome padding then apply it to this layout, overriding any previously defined value
+    if (this.parent && this.parent.layout.axes.x && typeof this.parent.layout.axes.x.chromosome_padding === "number") {
+        this.layout.x_axis.chromosome_padding = this.parent.layout.axes.x.chromosome_padding;
+    }
+
     // Implement the main render function
-    this.render = function(){
+    this.render = function() {
 
         var data_layer = this;
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
+        var chromosomes = this.data.chromosomes || {};
+        var chromosome_padding = this.layout.x_axis.chromosome_padding || 0;
 
         // Binned variants
         var bins_selection = this.svg.group
@@ -5173,13 +4943,14 @@ LocusZoom.DataLayers.add("manhattan", function(layout){
 
         bins_selection.each(function(bin){
             var group = this;
-            var x = data_layer.parent[x_scale](bin.pos);
-            debugger;
-            if (isNaN(x)){ return; }
+            if (!chromosomes[bin.chrom]) { return; }
+            var offset_position = bin.pos + (chromosomes[bin.chrom].index * chromosome_padding) + chromosomes[bin.chrom].start_position;
+            var x = data_layer.parent[x_scale](offset_position);
+            if (isNaN(x)) { return; }
             bin.neglog10_pval_extents.forEach(function(bin_extent){
                 var y1 = data_layer.parent[y_scale](bin_extent[0]);
                 var y2 = data_layer.parent[y_scale](bin_extent[1]);
-                if (isNaN(y1) || isNaN(y2)){ return; }
+                if (isNaN(y1) || isNaN(y2)) { return; }
                 d3.select(group).append("line")
                     .attr("x1", x).attr("x2", x)
                     .attr("y1", y1).attr("y2", y2)
@@ -5187,13 +4958,29 @@ LocusZoom.DataLayers.add("manhattan", function(layout){
             });
             bin.neglog10_pvals.forEach(function(bin_variant){
                 var y = data_layer.parent[y_scale](bin_variant[0]);
-                if (isNaN(y)){ return; }
+                if (isNaN(y)) { return; }
                 d3.select(group).append("circle")
                     .attr("cx", x).attr("cy", y).attr("r", data_layer.layout.point_radius);
             });
         });
-
         bins_selection.exit().remove();
+
+        // Unbinned variants
+        var variants_selection = this.svg.group
+            .selectAll("circle.lz-data_layer-manhattan")
+            .data(this.data.unbinned_variants);
+        variants_selection.enter()
+            .append("circle")
+            .attr("cx", function(d){
+                var offset_position = d.pos + (chromosomes[d.chrom].index * chromosome_padding) + chromosomes[d.chrom].start_position;
+                return data_layer.parent[x_scale](offset_position);
+            })
+            .attr("cy", function(d){
+                return data_layer.parent[y_scale](d["pval|neglog10"]);
+            })
+            .attr("r", data_layer.layout.point_radius)
+            .attr("class", "lz-data_layer-manhattan");
+        variants_selection.exit().remove();
     };
 
     return this;
@@ -7404,6 +7191,32 @@ LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fiel
 
 /**
   Data source for GWAS (Manhattan plot) data served from JSON files
+  Expected request format: `${url}${phenotype}.json`
+  Expected example response schema:
+  {
+    variant_bins: [
+      chrom: ${chromosome_label_string},
+      neglog10_pval_extents: [
+        [${neglog10_pval_extent_start}, ${neglog10_pval_extent_end}],
+        ...
+      ],
+      neglog10_pvals: [
+        ${neglog10_pval},
+        ...
+      ]
+    ],
+    unbinned_variants: [
+      {
+        alt: ${alt_allele_string},
+        chrom: ${chromosome_label_string},
+        maf: ${minor_allele_frequency_float},
+        pos: ${position_integer},
+        pval: ${pval_float},
+        rsids: ${rsid_string}
+      },
+      ...
+    ]
+  }
 */
 LocusZoom.Data.GWASSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -7413,26 +7226,59 @@ LocusZoom.Data.GWASSource.prototype.getURL = function(state, chain, fields) {
 };
 LocusZoom.Data.GWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var data = JSON.parse(resp);
-    // Walk data set to generate extents for neglog10 pvalues
+    // Walk data set to generate extents for all pvalues and each chromosome
     // Assumption here is that unbinned variants do NOT have pval in neglog10 form
     // but bins DO have all pvals already in neglog10 form
-    var neglog10pval_values = [];
-    data.unbinned_variants.forEach(function(variant){
-        var neglog10pval = LocusZoom.TransformationFunctions.get("neglog10")(variant.pval);
-        if (!isNaN(neglog10pval)){ neglog10pval_values.push(neglog10pval); }
+    var global_pval_extent = [];
+    var chromosomes = {};
+    data.variant_bins.forEach(function(bin) {
+        // Reduce all pvals in the bin into one array (order doesn't matter, we just need the extent)
+        // And expand the global pval extent if necessary
+        var extent_bin_pvals = bin.neglog10_pval_extents.length ? bin.neglog10_pval_extents.reduce(function(a,b){ return a.concat(b); }) : [];
+        var all_bin_pvals = bin.neglog10_pvals.concat(extent_bin_pvals);
+        global_pval_extent = d3.extent(global_pval_extent.concat(all_bin_pvals));
+        // Expand the matching chromosome extent if necessary
+        if (!chromosomes[bin.chrom]) { chromosomes[bin.chrom] = { extent: [] }; }
+        chromosomes[bin.chrom].extent = d3.extent(chromosomes[bin.chrom].extent.concat(bin.pos));
     });
-    data.variant_bins.forEach(function(bin){
-        bin.neglog10_pval_extents.forEach(function(bin_extent){
-            neglog10pval_values.push(bin_extent[0]);
-            neglog10pval_values.push(bin_extent[1]);
-        });
-        bin.neglog10_pvals.forEach(function(bin_variant){
-            neglog10pval_values.push(bin_variant[0]);
-        });
+    data.unbinned_variants.forEach(function(variant, i) {
+        // Convert pvals to neglog10 and expand the global pval extent if necessary
+        var pvalneglog10 = LocusZoom.TransformationFunctions.get("neglog10")(variant.pval);
+        if (!isNaN(pvalneglog10)){
+            global_pval_extent = d3.extent(global_pval_extent.concat([pvalneglog10]));
+        }
+        data.unbinned_variants[i]["pval|neglog10"] = pvalneglog10;
+        // Expand the matching chromosome extent if necessary
+        if (!chromosomes[variant.chrom]) { chromosomes[variant.chrom] = { extent: [] }; }
+        chromosomes[variant.chrom].extent = d3.extent(chromosomes[variant.chrom].extent.concat([variant.pos]));
     });
+    // Generate a global position extent from all of the chromosome extents
+    // Assume no padding between chromosomes; that can by specified by the layout and implemented by the data layer
+    var global_position_extent = [0, 0];
+    var previous_chrom = null;
+    Object.keys(chromosomes).forEach(function(chrom, idx) {
+        chromosomes[chrom].index = idx;
+        chromosomes[chrom].extent[0] = 0; // Force the lower bound to zero for all chromosomes
+        chromosomes[chrom].start_position = 0;
+        if (previous_chrom !== null) {
+            chromosomes[chrom].start_position = chromosomes[previous_chrom].start_position + chromosomes[previous_chrom].extent[1];
+        }
+        previous_chrom = chrom;
+    });
+    global_position_extent[1] = chromosomes[previous_chrom].start_position + chromosomes[previous_chrom].extent[1];
+    // Add our generated data to the main data object and return
+    // Pass the position extent back as a function to generate the position extent including any padding from whatever layout is defined for it
+    data.chromosomes = chromosomes;
     data.extents = {
-        "pval|neglog10": d3.extent(neglog10pval_values)
-    }
+        "pval|neglog10": global_pval_extent,
+        "pos": function(layout){
+            var extent = global_position_extent;
+            if (parseInt(layout.chromosome_padding)){
+                extent[1] += parseInt(layout.chromosome_padding) * (Object.keys(data.chromosomes).length - 1);
+            }
+            return global_position_extent;
+        }
+    };
     return {header: chain.header, body: data};
 };
 

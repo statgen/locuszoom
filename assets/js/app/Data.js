@@ -837,6 +837,32 @@ LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fiel
 
 /**
   Data source for GWAS (Manhattan plot) data served from JSON files
+  Expected request format: `${url}${phenotype}.json`
+  Expected example response schema:
+  {
+    variant_bins: [
+      chrom: ${chromosome_label_string},
+      neglog10_pval_extents: [
+        [${neglog10_pval_extent_start}, ${neglog10_pval_extent_end}],
+        ...
+      ],
+      neglog10_pvals: [
+        ${neglog10_pval},
+        ...
+      ]
+    ],
+    unbinned_variants: [
+      {
+        alt: ${alt_allele_string},
+        chrom: ${chromosome_label_string},
+        maf: ${minor_allele_frequency_float},
+        pos: ${position_integer},
+        pval: ${pval_float},
+        rsids: ${rsid_string}
+      },
+      ...
+    ]
+  }
 */
 LocusZoom.Data.GWASSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
@@ -846,26 +872,59 @@ LocusZoom.Data.GWASSource.prototype.getURL = function(state, chain, fields) {
 };
 LocusZoom.Data.GWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var data = JSON.parse(resp);
-    // Walk data set to generate extents for neglog10 pvalues
+    // Walk data set to generate extents for all pvalues and each chromosome
     // Assumption here is that unbinned variants do NOT have pval in neglog10 form
     // but bins DO have all pvals already in neglog10 form
-    var neglog10pval_values = [];
-    data.unbinned_variants.forEach(function(variant){
-        var neglog10pval = LocusZoom.TransformationFunctions.get("neglog10")(variant.pval);
-        if (!isNaN(neglog10pval)){ neglog10pval_values.push(neglog10pval); }
+    var global_pval_extent = [];
+    var chromosomes = {};
+    data.variant_bins.forEach(function(bin) {
+        // Reduce all pvals in the bin into one array (order doesn't matter, we just need the extent)
+        // And expand the global pval extent if necessary
+        var extent_bin_pvals = bin.neglog10_pval_extents.length ? bin.neglog10_pval_extents.reduce(function(a,b){ return a.concat(b); }) : [];
+        var all_bin_pvals = bin.neglog10_pvals.concat(extent_bin_pvals);
+        global_pval_extent = d3.extent(global_pval_extent.concat(all_bin_pvals));
+        // Expand the matching chromosome extent if necessary
+        if (!chromosomes[bin.chrom]) { chromosomes[bin.chrom] = { extent: [] }; }
+        chromosomes[bin.chrom].extent = d3.extent(chromosomes[bin.chrom].extent.concat(bin.pos));
     });
-    data.variant_bins.forEach(function(bin){
-        bin.neglog10_pval_extents.forEach(function(bin_extent){
-            neglog10pval_values.push(bin_extent[0]);
-            neglog10pval_values.push(bin_extent[1]);
-        });
-        bin.neglog10_pvals.forEach(function(bin_variant){
-            neglog10pval_values.push(bin_variant[0]);
-        });
+    data.unbinned_variants.forEach(function(variant, i) {
+        // Convert pvals to neglog10 and expand the global pval extent if necessary
+        var pvalneglog10 = LocusZoom.TransformationFunctions.get("neglog10")(variant.pval);
+        if (!isNaN(pvalneglog10)){
+            global_pval_extent = d3.extent(global_pval_extent.concat([pvalneglog10]));
+        }
+        data.unbinned_variants[i]["pval|neglog10"] = pvalneglog10;
+        // Expand the matching chromosome extent if necessary
+        if (!chromosomes[variant.chrom]) { chromosomes[variant.chrom] = { extent: [] }; }
+        chromosomes[variant.chrom].extent = d3.extent(chromosomes[variant.chrom].extent.concat([variant.pos]));
     });
+    // Generate a global position extent from all of the chromosome extents
+    // Assume no padding between chromosomes; that can by specified by the layout and implemented by the data layer
+    var global_position_extent = [0, 0];
+    var previous_chrom = null;
+    Object.keys(chromosomes).forEach(function(chrom, idx) {
+        chromosomes[chrom].index = idx;
+        chromosomes[chrom].extent[0] = 0; // Force the lower bound to zero for all chromosomes
+        chromosomes[chrom].start_position = 0;
+        if (previous_chrom !== null) {
+            chromosomes[chrom].start_position = chromosomes[previous_chrom].start_position + chromosomes[previous_chrom].extent[1];
+        }
+        previous_chrom = chrom;
+    });
+    global_position_extent[1] = chromosomes[previous_chrom].start_position + chromosomes[previous_chrom].extent[1];
+    // Add our generated data to the main data object and return
+    // Pass the position extent back as a function to generate the position extent including any padding from whatever layout is defined for it
+    data.chromosomes = chromosomes;
     data.extents = {
-        "pval|neglog10": d3.extent(neglog10pval_values)
-    }
+        "pval|neglog10": global_pval_extent,
+        "pos": function(layout){
+            var extent = global_position_extent;
+            if (parseInt(layout.chromosome_padding)){
+                extent[1] += parseInt(layout.chromosome_padding) * (Object.keys(data.chromosomes).length - 1);
+            }
+            return global_position_extent;
+        }
+    };
     return {header: chain.header, body: data};
 };
 
