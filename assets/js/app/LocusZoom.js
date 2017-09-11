@@ -61,8 +61,15 @@ LocusZoom.populate = function(selector, datasource, layout) {
     return plot;
 };
 
-// Populate arbitrarily many elements each with a LocusZoom plot
-// using a common datasource and layout
+/**
+ * Populate arbitrarily many elements each with a LocusZoom plot
+ *   using a common datasource and layout
+ * @param {String} selector CSS selector for the container element where the plot will be mounted. Any pre-existing
+ *   content in the container will be completely replaced.
+ * @param {LocusZoom.DataSources} datasource Ensemble of data providers used by the plot
+ * @param {Object} layout A JSON-serializable object of layout configuration parameters
+ * @returns {LocusZoom.Plot[]}
+ */
 LocusZoom.populateAll = function(selector, datasource, layout) {
     var plots = [];
     d3.selectAll(selector).each(function(d,i) {
@@ -71,11 +78,14 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
     return plots;
 };
 
-// Convert an integer position to a string (e.g. 23423456 => "23.42" (Mb))
-// pos    - Position value (integer, required)
-// exp    - Exponent of the returned string's base. E.g. 6 => Mb, regardless of pos. (integer, optional)
-//          If not provided returned string will select smallest base divisible by 3 for a whole number value
-// suffix - Whether or not to append a suffix (e.g. "Mb") to the end of the returned string (boolean, optional)
+/**
+ * Convert an integer chromosome position to an SI string representation (e.g. 23423456 => "23.42" (Mb))
+ * @param {Number} pos Position
+ * @param {String} [exp] Exponent to use for the returned string, eg 6=> MB. If not specified, will attempt to guess
+ *   the most appropriate SI prefix based on the number provided.
+ * @param {Boolean} [suffix=false] Whether or not to append a suffix (e.g. "Mb") to the end of the returned string
+ * @returns {string}
+ */
 LocusZoom.positionIntToString = function(pos, exp, suffix){
     var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
     suffix = suffix || false;
@@ -93,7 +103,11 @@ LocusZoom.positionIntToString = function(pos, exp, suffix){
     return ret;
 };
 
-// Convert a string position to an integer (e.g. "5.8 Mb" => 58000000)
+/**
+ * Convert an SI string chromosome position to an integer representation (e.g. "5.8 Mb" => 58000000)
+ * @param {String} p The chromosome position
+ * @returns {Number}
+ */
 LocusZoom.positionStringToInt = function(p) {
     var val = p.toUpperCase();
     val = val.replace(/,/g, "");
@@ -114,11 +128,13 @@ LocusZoom.positionStringToInt = function(p) {
     return val;
 };
 
-// Parse region queries that look like
-// chr:start-end
-// chr:center+offset
-// chr:pos
-// TODO: handle genes (or send off to API)
+/**
+ * Parse region queries into their constituent parts
+ * TODO: handle genes (or send off to API)
+ * @param {String} x A chromosome position query. May be any of the forms `chr:start-end`, `chr:center+offset`,
+ *   or `chr:pos`
+ * @returns {{chr:*, start: *, end:*} | {chr:*, position:*}}
+ */
 LocusZoom.parsePositionQuery = function(x) {
     var chrposoff = /^(\w+):([\d,.]+[kmgbKMGB]*)([-+])([\d,.]+[kmgbKMGB]*)$/;
     var chrpos = /^(\w+):([\d,.]+[kmgbKMGB]*)$/;
@@ -150,19 +166,18 @@ LocusZoom.parsePositionQuery = function(x) {
     return null;
 };
 
-// Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
-// Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
-//
-// clip_range - string, optional - default "neither"
-// First and last generated ticks may extend beyond the range. Set this to "low", "high", "both", or
-// "neither" to clip the first (low) or last (high) tick to be inside the range or allow them to extend beyond.
-// e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
-// last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
-//
-// target_tick_count - integer, optional - default 5
-// Specify a "target" number of ticks. Will not necessarily be the number of ticks you get, but should be
-// pretty close. Defaults to 5.
-
+/**
+ * Generate a "pretty" set of ticks (multiples of 1, 2, or 5 on the same order of magnitude for the range)
+ *   Based on R's "pretty" function: https://github.com/wch/r-source/blob/b156e3a711967f58131e23c1b1dc1ea90e2f0c43/src/appl/pretty.c
+ * @param {Number[]} range A two-item array specifying [low, high] values for the axis range
+ * @param {('low'|'high'|'both'|'neither')} [clip_range='neither'] What to do if first and last generated ticks extend
+ *   beyond the range. Set this to "low", "high", "both", or "neither" to clip the first (low) or last (high) tick to
+ *   be inside the range or allow them to extend beyond.
+ *   e.g. "low" will clip the first (low) tick if it extends beyond the low end of the range but allow the
+ *  last (high) tick to extend beyond the range. "both" clips both ends, "neither" allows both to extend beyond.
+ * @param {Number} [target_tick_count=5] The approximate number of ticks you would like to be returned; may not be exact
+ * @returns {Number[]}
+ */
 LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
         target_tick_count = 5;
@@ -221,8 +236,18 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     return ticks;
 };
 
-// From http://www.html5rocks.com/en/tutorials/cors/
-// and with promises from https://gist.github.com/kriskowal/593076
+/**
+ * Make an AJAX request and return a promise.
+ * From http://www.html5rocks.com/en/tutorials/cors/
+ *   and with promises from https://gist.github.com/kriskowal/593076
+ *
+ * @param {String} method The HTTP verb
+ * @param {String} url
+ * @param {String} body The request body to send to the server
+ * @param {Object} headers Object of custom request headers
+ * @param {Number} [timeout] If provided, wait this long (in ms) before timing out
+ * @returns {Promise}
+ */
 LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     var response = Q.defer();
     var xhr = new XMLHttpRequest();
@@ -262,8 +287,15 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     return response.promise;
 };
 
-// Validate a (presumed complete) state object against internal rules for consistency
-// as well as any layout-defined constraints
+/**
+ * Validate a (presumed complete) plot state object against internal rules for consistency, and ensure the plot fits
+ *   within any constraints imposed by the layout.
+ * @param {Object} new_state
+ * @param {Number} new_state.start
+ * @param {Number} new_state.end
+ * @param {Object} layout
+ * @returns {*|{}}
+ */
 LocusZoom.validateState = function(new_state, layout){
 
     new_state = new_state || {};
@@ -320,8 +352,19 @@ LocusZoom.validateState = function(new_state, layout){
     return new_state;
 };
 
-// Replace placeholders in an html string with field values defined in a data object
-// Only works on scalar values! Will ignore non-scalars.
+//
+/**
+ * Replace placeholders in an html string with field values defined in a data object
+ *  Only works on scalar values! Will ignore non-scalars.
+ *
+ *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
+ * @param {Object} data
+ * @param {String} html A placeholder string in which to substitute fields. Supports several template options:
+ *   `{{field_name}}` is a variable placeholder for the value of `field_name` from the provided data
+ *   `{{#if {{field_name}} }} Conditional text {{/if}} will insert the contents of the tag only if the value exists.
+ *     Since this is only an existence check, **variables with a value of 0 will be evaluated as true**.
+ * @returns {string}
+ */
 LocusZoom.parseFields = function (data, html) {
     if (typeof data != "object"){
         throw ("LocusZoom.parseFields invalid arguments: data is not an object");
@@ -398,8 +441,11 @@ LocusZoom.parseFields = function (data, html) {
     return ast.map(render_node).join("");
 };
 
-// Shortcut method for getting the data bound to a tool tip.
-// Accepts the node object for any element contained within the tool tip.
+/**
+ * Shortcut method for getting the data bound to a tool tip.
+ * @param {Element} node
+ * @returns {*} The first element of data bound to the tooltip
+ */
 LocusZoom.getToolTipData = function(node){
     if (typeof node != "object" || typeof node.parentNode == "undefined"){
         throw("Invalid node object");
@@ -413,32 +459,41 @@ LocusZoom.getToolTipData = function(node){
     }
 };
 
-// Shortcut method for getting a reference to the data layer that generated a tool tip.
-// Accepts the node object for any element contained within the tool tip.
+/**
+ * Shortcut method for getting a reference to the data layer that generated a tool tip.
+ * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
+ * @returns {LocusZoom.DataLayer}
+ */
 LocusZoom.getToolTipDataLayer = function(node){
     var data = LocusZoom.getToolTipData(node);
     if (data.getDataLayer){ return data.getDataLayer(); }
     return null;
 };
 
-// Shortcut method for getting a reference to the panel that generated a tool tip.
-// Accepts the node object for any element contained within the tool tip.
+/**
+ * Shortcut method for getting a reference to the panel that generated a tool tip.
+ * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.getToolTipPanel = function(node){
     var data_layer = LocusZoom.getToolTipDataLayer(node);
     if (data_layer){ return data_layer.parent; }
     return null;
 };
 
-// Shortcut method for getting a reference to the plot that generated a tool tip.
-// Accepts the node object for any element contained within the tool tip.
+/**
+ * Shortcut method for getting a reference to the plot that generated a tool tip.
+ * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.getToolTipPlot = function(node){
     var panel = LocusZoom.getToolTipPanel(node);
     if (panel){ return panel.parent; }
     return null;
 };
 
-// Generate a curtain object for a plot, panel, or any other subdivision of a layout
 /**
+ * Generate a curtain object for a plot, panel, or any other subdivision of a layout
  * The panel curtain, like the plot curtain is an HTML overlay that obscures the entire panel. It can be styled
  *   arbitrarily and display arbitrary messages. It is useful for reporting error messages visually to an end user
  *   when the error renders the panel unusable.
@@ -527,8 +582,9 @@ LocusZoom.generateCurtain = function(){
     return curtain;
 };
 
-// Generate a loader object for a plot, panel, or any other subdivision of a layout
 /**
+ * Generate a loader object for a plot, panel, or any other subdivision of a layout
+ *
  * The panel loader is a small HTML overlay that appears in the lower left corner of the panel. It cannot be styled
  *   arbitrarily, but can show a custom message and show a minimalist loading bar that can be updated to specific
  *   completion percentages or be animated.
