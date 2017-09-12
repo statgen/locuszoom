@@ -430,7 +430,8 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
             var columns = "";
             if (!keys.id){ columns += (columns.length ? ", " : "") + "id"; }
             if (!keys.pvalue){ columns += (columns.length ? ", " : "") + "pvalue"; }
-            throw("Unable to find necessary column(s) for merge: " + columns + " (available: " + keys._names_ + ")");
+            console.error("Unable to find necessary column(s) for merge: " + columns + " (available: " + keys._names_ + ")");
+            throw("No variants in range for this data set.  Expand the range, or try a different data set");
         }
         refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
