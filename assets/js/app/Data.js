@@ -175,14 +175,20 @@ LocusZoom.Data.Field = function(field){
 };
 
 /**
- * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom plots.
+ * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
  *   It passes state information and ensures that data is formatted in the manner expected by the plot.
+ *
+ * It is also responsible for constructing a "chain" of dependent requests, by requesting each datasource
+ *   sequentially in the order specified in the datalayer `fields` array. Data sources are only chained within a
+ *   data layer, and only if that layer requests more than one kind of data source.
  * @param {LocusZoom.DataSources} sources An object of {ns: LocusZoom.Data.Source} instances
  * @class
  */
 LocusZoom.Data.Requester = function(sources) {
 
     function split_requests(fields) {
+        // Given a fields array, return an object specifying what datasource names the data layer should make requests
+        //  to, and how to handle the returned data
         var requests = {};
         // Regular expression finds namespace:field|trans
         var re = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/;
@@ -200,9 +206,16 @@ LocusZoom.Data.Requester = function(sources) {
         });
         return requests;
     }
-    
+
+    /**
+     * Fetch data, and create a chain that only connects two data sources if they depend on each other
+     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
+     * @param {String[]} fields The list of data fields specified in the `layout` for a specific data layer
+     * @returns {Promise}
+     */
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
+        // Create an array of functions that, when called, will trigger the request to the specified datasource
         var promises = Object.keys(requests).map(function(key) {
             if (!sources.get(key)) {
                 throw("Datasource for namespace " + key + " not found");
@@ -214,6 +227,7 @@ LocusZoom.Data.Requester = function(sources) {
         //TODO: better manage dependencies
         var ret = Q.when({header:{}, body:{}});
         for(var i=0; i < promises.length; i++) {
+            // If a single datalayer uses multiple sources, perform the next request when the previous one completes
             ret = ret.then(promises[i]);
         }
         return ret;
@@ -349,9 +363,19 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
     var records = this.parseData(json.data || json, fields, outnames, trans);
     return {header: chain.header || {}, body: records};
 };
-
-// TODO: Helper function for parsing; document later
-/** @protected */
+/**
+ * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
+ *   the same length, and a given array index corresponds to a single row.
+ *
+ * This gathers column data into a single object representing al the data for a given record. See `parseData` for usage
+ *
+ * @protected
+ * @param {Object} x A response payload object
+ * @param {Array} fields
+ * @param {Array} outnames
+ * @param {Array} trans
+ * @returns {Object[]}
+ */
 LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
     //intended for an object of arrays
     //{"id":[1,2], "val":[5,10]}
@@ -374,8 +398,17 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
     return records;
 };
 
-// TODO: Helper function for parsing; document later
-/** @protected */
+/**
+ *  Given an array response in which each record is represented as one coherent bundle of data (an object of
+ *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
+ *    by the datalayer. See `parseData` for usage.
+ * @protected
+ * @param {Object} x A response payload object
+ * @param {Array} fields
+ * @param {Array} outnames
+ * @param {Array} trans
+ * @returns {Object[]}
+ */
 LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outnames, trans) {
     //intended for an array of objects
     // [ {"id":1, "val":5}, {"id":2, "val":10}]
