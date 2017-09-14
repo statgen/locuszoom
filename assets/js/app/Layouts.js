@@ -354,26 +354,28 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
 });
 
 LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
+    namespace: {"phewas": "phewas"},
     id: "phewaspvalues",
     type: "scatter",
     point_shape: "circle",
     point_size: 70,
     tooltip_positioning: "vertical",
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}phewas"],
+    id_field: "{{namespace[phewas]}}id",
+    fields: ["{{namespace[phewas]}}id", "{{namespace[phewas]}}x", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}trait_group", "{{namespace[phewas]}}trait_label"],
     x_axis: {
-        field: "{{namespace}}x"
+        field: "{{namespace[phewas]}}x"
     },
     y_axis: {
         axis: 1,
-        field: "{{namespace}}pval|neglog10",
+        field: "{{namespace[phewas]}}log_pvalue",
         floor: 0,
         upper_buffer: 0.1
     },
     color: {
-        field: "{{namespace}}category_name",
+        field: "{{namespace[phewas]}}trait_group",
         scale_function: "categorical_bin",
         parameters: {
+            // TODO: hardcoded categories; will need to adjust this (+colors list) for flexibility
             categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
             values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
             null_value: "#B8B8B8"
@@ -384,7 +386,8 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
+        // TODO: Fix pvalue once api endpoint returns raw untransformed number
+        html: "<div><strong>{{{{namespace[phewas]}}trait_label}}</strong></div><div>P Value: <strong>{{{{namespace[phewas]}}log_pvalue}}</strong></div>"
     },
     behaviors: {
         onmouseover: [
@@ -401,7 +404,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         ]
     },
     label: {
-        text: "{{{{namespace}}phewas_string}}",
+        text: "{{{{namespace[phewas]}}trait_label}}",
         spacing: 6,
         lines: {
             style: {
@@ -412,7 +415,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         },
         filters: [
             {
-                field: "{{namespace}}pval|neglog10",
+                field: "{{namespace[pheweb]}}log_pvalue",
                 operator: ">=",
                 value: 5
             }
@@ -925,6 +928,7 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
             label: "Genomic Position (number denotes chromosome)",
             label_offset: 35,
             ticks: [
+                // TODO: Identify origin and validity of these hard-coded values
                 {
                     x: 124625310,
                     text: "1",
