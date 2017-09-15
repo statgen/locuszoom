@@ -466,3 +466,109 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     return this;
 
 });
+
+/**
+ * A scatter plot in which the x-axis represents categories, rather than individual positions.
+ * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories to be
+ *   determined dynamically when data is first loaded.
+ *
+ * @class LocusZoom.DataLayers.category_scatter
+ * @augments LocusZoom.DataLayers.scatter
+ */
+LocusZoom.DataLayers.extend("scatter", "category_scatter", {
+    /**
+     * This plot layer makes certain assumptions about the data passed in. Transform the raw array of records from
+     *   the datasource to prepare it for plotting, as follows:
+     * 1. The scatter plot assumes that all records are given in sequence (pre-grouped by `category_field`)
+     * 2. It assumes that all records have an x coordinate for individual plotting
+     * @private
+     */
+    _prepareData: function() {
+        // Because of this intended use case, we will also silently drop any records that do not provide a trait group
+        //   that can be used for categorization
+        // TODO: Revisit assumption! This logic may go better in the category scatter plot post-fetch ops
+
+        var xField = this.layout.x_axis.field || "x";
+        var category_field = this.layout.x_axis.category_field;
+        var sourceData = this.data
+            .sort(function(a, b) {
+                var ak = a[category_field];
+                var bk = b[category_field];
+                var av = ak.toString ? ak.toString().toLowerCase() : ak;
+                var bv = bk.toString ? bk.toString().toLowerCase() : bk;
+                return (av === bv) ? 0 : (av < bv ? -1 : 1);});
+        sourceData.forEach(function(d, i){
+            d[xField] = i;
+        });
+        return sourceData;
+    },
+    /**
+     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
+     *
+     * Also identify the min and max x value associated with the category, which will be used to generate ticks
+     * @private
+     * @returns {Object} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
+     */
+    _generateCategoryBounds: function() {
+        // Find all unique category groups represented in the API payload, and update the layout accordingly
+        // TODO: API may return null values; add placeholder category label?
+
+        // TODO: all things that need trait group
+        var category_field = this.layout.x_axis.category_field;
+
+        var xField = this.layout.x_axis.field || "x";
+        var uniqueCategories = {};
+        this.data.forEach(function(item) {
+            var category = item[category_field];
+            var x = item[xField];
+            var bounds = uniqueCategories[category] || [x, x];
+            uniqueCategories[category] = [Math.min(bounds[0], x), Math.max(bounds[1], x)];
+        });
+
+        var categoryNames = Object.keys(uniqueCategories);
+        // Construct a color scale with a bunch of colors, that spreads values out a bit
+        // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
+        var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+        var colors = color_scale().range().splice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
+
+        this.layout.color.parameters.categories = categoryNames;
+        this.layout.color.parameters.values = colors;
+
+        return uniqueCategories;
+    },
+    /**
+     * Generate custom tick mark extents for the provided categories, and apply them to the layout
+     * @param {Object} categoryBounds Tick mark extents in form {category_name: [min_x, max_x]}
+     * @private
+     */
+    _generateXTicks: function(categoryBounds) {
+        var ticks = [];
+        Object.keys(categoryBounds).forEach(function(category) {
+            var bounds = categoryBounds[category];
+            var diff = bounds[1] - bounds[0];
+            var center = bounds[0] + (diff !== 0 ? diff: bounds[0]) / 2;  // Center tick under one or many elements as appropriate
+            // TODO: Add custom orie/styling per tick
+            ticks.push({
+                x: center,
+                text: category,
+                style: {
+                    "fill": "#393b79",  // TODO: fill in colors correctly
+                    "font-weight": "bold",
+                    "font-size": "11px",
+                    "text-anchor": "start"
+                },
+                transform: "rotate(50)"
+            }); // TODO: Is this label specific enough?
+        });
+        this.parent.layout.axes.x.ticks = ticks;
+
+    },
+
+    applyCustomDataMethods: function() {
+        //TODO: Have layout validation check for presence of a `category_field` as additional required property
+        this.data = this._prepareData();
+        var uniqueCategories = this._generateCategoryBounds();
+        this._generateXTicks(uniqueCategories);
+        return this;
+    }
+});
