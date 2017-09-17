@@ -340,6 +340,88 @@ describe("LocusZoom Core", function(){
             });
         });
 
+        describe("Scalable parameter resolution", function() {
+            it("has a method to resolve scalable parameters into discrete values", function() {
+                LocusZoom.resolveScalableParameter.should.be.a.Function;
+            });
+            it("passes numbers and strings directly through regardless of data", function() {
+                var layout = { scale: "foo" };
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), "foo");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { foo: "bar" }), "foo");
+                var layout = { scale: 17 };
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), 17);
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { foo: "bar" }), 17);
+            });
+            it("executes a scale function for the data provided", function() {
+                var layout = {
+                    scale: {
+                        scale_function: "categorical_bin",
+                        field: "test",
+                        parameters: {
+                            categories: ["lion", "tiger", "bear"],
+                            values: ["dorothy", "toto", "scarecrow"]
+                        }
+                    }
+                };
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { test: "lion" }), "dorothy");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { test: "manatee" }), null);
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), null);
+            });
+            it("supports operating on an entire data element in the absence of a specified field", function() {
+                LocusZoom.ScaleFunctions.add("test_effect_direction", function(parameters, input){
+                    if (typeof input == "undefined"){
+                        return null;
+                    } else if ((input.beta && input.beta > 0) || (input.or && input.or > 0)){
+                        return parameters["+"] || null;
+                    } else if ((input.beta && input.beta < 0) || (input.or && input.or < 0)){
+                        return parameters["-"] || null;
+                    }
+                    return null;
+                });
+                var layout = {
+                    scale: {
+                        scale_function: "test_effect_direction",
+                        parameters: {
+                            "+": "triangle-up",
+                            "-": "triangle-down"
+                        }
+                    }
+                };
+                var variants = [ { beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: "bar" } ];
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, variants[0]), "triangle-up");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, variants[1]), "triangle-down");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, variants[2]), "triangle-down");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, variants[3]), "triangle-up");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, variants[4]), null);
+            });
+            it("iterates over an array of options until exhausted or a non-null value is found", function() {
+                var layout = {
+                    scale: [
+                        {
+                            scale_function: "if",
+                            field: "test",
+                            parameters: {
+                                field_value: "wizard",
+                                then: "oz"
+                            }
+                        },
+                        {
+                            scale_function: "categorical_bin",
+                            field: "test",
+                            parameters: {
+                                categories: ["lion", "tiger", "bear"],
+                                values: ["dorothy", "toto", "scarecrow"]
+                            }
+                        },
+                        "munchkin"
+                    ]
+                };
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { test: "wizard" }), "oz");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { test: "tiger" }), "toto");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { test: "witch" }), "munchkin");
+                assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), "munchkin");
+            });
+        });
         
     });
 

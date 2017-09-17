@@ -255,42 +255,6 @@ LocusZoom.DataLayer.prototype.moveDown = function(){
 };
 
 /**
- * Apply scaling functions to an element or parameter as needed, based on its layout and the element's data
- * If the layout parameter is already a primitive type, simply return the value as given
- * @param {Array|Number|String|Object} layout
- * @param {*} data The value to be used with the filter
- * @returns {*} The transformed value
- */
-LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
-    var ret = null;
-    if (Array.isArray(layout)){
-        var idx = 0;
-        while (ret === null && idx < layout.length){
-            ret = this.resolveScalableParameter(layout[idx], data);
-            idx++;
-        }
-    } else {
-        switch (typeof layout){
-        case "number":
-        case "string":
-            ret = layout;
-            break;
-        case "object":
-            if (layout.scale_function){
-                if(layout.field) {
-                    var f = new LocusZoom.Data.Field(layout.field);
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
-                } else {
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
-                }
-            }
-            break;
-        }
-    }
-    return ret;
-};
-
-/**
  * Generate dimension extent function based on layout parameters
  * @param {('x'|'y')} dimension
  */

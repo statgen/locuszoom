@@ -44,7 +44,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         var top, left, arrow_type, arrow_top, arrow_left;
         var tooltip = this.tooltips[id];
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var point_size = LocusZoom.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var offset = Math.sqrt(point_size / Math.PI);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
@@ -113,7 +113,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
     // pass on recursive separation
     this.flip_labels = function(){
         var data_layer = this;
-        var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
+        var point_size = LocusZoom.resolveScalableParameter(data_layer.layout.point_size, {});
         var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
         var min_x = 2 * spacing;
@@ -323,7 +323,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 .attr({
                     "x": function(d){
                         var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                              + Math.sqrt(LocusZoom.resolveScalableParameter(data_layer.layout.point_size, d))
                               + data_layer.layout.label.spacing;
                         if (isNaN(x)){ x = -1000; }
                         return x;
@@ -357,7 +357,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                         },
                         "x2": function(d){
                             var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                  + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                                  + Math.sqrt(LocusZoom.resolveScalableParameter(data_layer.layout.point_size, d))
                                   + (data_layer.layout.label.spacing/2);
                             if (isNaN(x)){ x = -1000; }
                             return x;
@@ -395,12 +395,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             return "translate(" + x + "," + y + ")";
         }.bind(this);
 
-        var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d){ return LocusZoom.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return LocusZoom.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d){ return LocusZoom.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
+            .type(function(d){ return LocusZoom.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
 

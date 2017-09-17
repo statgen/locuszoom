@@ -246,10 +246,10 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         + data_layer.layout.bounding_box_padding;
                 };
                 fill = function(d){
-                    return data_layer.resolveScalableParameter(data_layer.layout.color, d);
+                    return LocusZoom.resolveScalableParameter(data_layer.layout.color, d);
                 };
                 fill_opacity = function(d){
-                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                    return LocusZoom.resolveScalableParameter(data_layer.layout.fill_opacity, d);
                 };
                 
                 

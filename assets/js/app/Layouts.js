@@ -522,7 +522,17 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
     },
     y_axis: {
         field: "pval|neglog10"
-    }
+    },
+    color: [
+        {
+            scale_function: "alternate",
+            field: "chrom",
+            parameters: {
+                values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
+            }
+        },
+        "#B8B8B8"
+    ]
     /*
     behaviors: {
         onmouseover: [
@@ -1251,7 +1261,26 @@ LocusZoom.Layouts.add("panel", "manhattan", {
         x: {
             label: "Chromosome",
             label_offset: 35,
-            chromosome_padding: 3e7
+            group_padding: 3e7,
+            ticks: {
+                data: "chromosomes",
+                style: {
+                    "fill": "#B8B8B8",
+                    "text-anchor": "center",
+                    "font-size": "13px",
+                    "font-weight": "bold"
+                },
+                transform: "translate(0, 2)",
+                color: [
+                    {
+                        scale_function: "alternate",
+                        parameters: {
+                            values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
+                        }
+                    },
+                    "#B8B8B8"
+                ]
+            }
         },
         y1: {
             label: "-log10 p-value",

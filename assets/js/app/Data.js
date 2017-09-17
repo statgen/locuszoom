@@ -919,8 +919,8 @@ LocusZoom.Data.GWASSource.prototype.parseResponse = function(resp, chain, fields
         "pval|neglog10": global_pval_extent,
         "pos": function(layout){
             var extent = global_position_extent;
-            if (parseInt(layout.chromosome_padding)){
-                extent[1] += parseInt(layout.chromosome_padding) * (Object.keys(data.chromosomes).length - 1);
+            if (parseInt(layout.group_padding)){
+                extent[1] += parseInt(layout.group_padding) * (Object.keys(data.chromosomes).length - 1);
             }
             return global_position_extent;
         }

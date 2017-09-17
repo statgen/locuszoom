@@ -41,7 +41,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
             throw ("Unable to position tooltip: id does not point to a valid tooltip");
         }
         var tooltip = this.tooltips[id];
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var point_size = LocusZoom.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var arrow_width = 7; // as defined in the default stylesheet
         var stroke_width = 1; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
@@ -158,12 +158,12 @@ LocusZoom.DataLayers.add("forest", function(layout){
             return "translate(" + x + "," + y + ")";
         }.bind(this);
 
-        var fill = function(d){ return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d){ return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d){ return LocusZoom.resolveScalableParameter(this.layout.color, d); }.bind(this);
+        var fill_opacity = function(d){ return LocusZoom.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d){ return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d){ return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d){ return LocusZoom.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
+            .type(function(d){ return LocusZoom.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
 
         // Apply position and color, using a transition if necessary
         if (this.canTransition()){

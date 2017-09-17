@@ -157,11 +157,9 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom g.lz-data_layer-manhattan line {
-    stroke-linecap: round;
-    stroke: #78787e; }
+    stroke-linecap: round; }
   svg.lz-locuszoom g.lz-data_layer-manhattan circle {
     cursor: pointer;
-    fill: #78787e;
     stroke: none; }
 
 /* ! LocusZoom HTML Styles */

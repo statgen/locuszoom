@@ -478,3 +478,16 @@ LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
         return d3.interpolate(values[upper_idx-1], values[upper_idx])(normalized_input);
     }
 });
+
+// Alternate scale function
+LocusZoom.ScaleFunctions.add("alternate", function(parameters, input){
+    var values = Array.isArray(parameters.values) ? parameters.values : [];
+    var index = 0;
+    if (typeof input === "number"){ index = input; }
+    if (typeof input === "object" && !isNaN(input.index)){ index = input.index; }
+    if (values.length){
+        return values[index % values.length];
+    } else {
+        return null;
+    }
+});

@@ -257,11 +257,9 @@ svg.#{$namespace}-locuszoom {
   g.#{$namespace}-data_layer-manhattan {
     line {
       stroke-linecap: round;
-      stroke: rgb(120,120,126);
     }
     circle {
       cursor: pointer;
-      fill: rgb(120,120,126);
       stroke: none;
     }
   }
