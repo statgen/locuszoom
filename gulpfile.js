@@ -42,7 +42,7 @@ gulp.task("test", function () {
 gulp.task("app_js", ["test"], function() {
     gulp.src(files.app_build)
         .pipe(concat("locuszoom.app.js"))
-        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
@@ -52,7 +52,7 @@ gulp.task("app_js", ["test"], function() {
         });
     gulp.src(files.app_build)
         .pipe(concat("locuszoom.app.min.js"))
-        .pipe(wrap({ src: "./assets/js/app/wrapper.js"}))
+        .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
         .pipe(uglify())
         .pipe(gulp.dest("."))
         .on("end", function() {

@@ -5,64 +5,137 @@
 "use strict";
 
 /**
-
-  LocusZoom.Plot Class
-
-  An Plot is an independent LocusZoom object. Many such LocusZoom objects can exist simultaneously
-  on a single page, each having its own layout.
-
+ * An independent LocusZoom object that renders a unique set of data and subpanels.
+ * Many such LocusZoom objects can exist simultaneously on a single page, each having its own layout.
+ *
+ * This creates a new plot instance, but does not immediately render it. For practical use, it may be more convenient
+ * to use the `LocusZoom.populate` helper method.
+ *
+ * @class
+ * @param {String} id The ID of the plot. Often corresponds to the ID of the container element on the page
+ *   where the plot is rendered..
+ * @param {LocusZoom.DataSources} datasource Ensemble of data providers used by the plot
+ * @param {Object} layout A JSON-serializable object of layout configuration parameters
 */
-
 LocusZoom.Plot = function(id, datasource, layout) {
-
+    /** @member Boolean} */
     this.initialized = false;
+    // TODO: This makes sense for all other locuszoom elements to have; determine whether this is interface boilerplate or something that can be removed
     this.parent_plot = this;
 
+    /** @member {String} */
     this.id = id;
 
+    /** @member {Element} */
     this.container = null;
+    /**
+     * Selector for a node that will contain the plot. (set externally by populate methods)
+     * @member {d3.selection}
+     */
     this.svg = null;
 
+    /** @member {Object.<String, Number>} */
     this.panels = {};
+    /**
+     * TODO: This is currently used by external classes that manipulate the parent and may indicate room for a helper method in the api to coordinate boilerplate
+     * @protected
+     * @member {String[]}
+     */
     this.panel_ids_by_y_index = [];
+
+    /**
+     * Notify each child panel of the plot of changes in panel ordering/ arrangement
+     */
     this.applyPanelYIndexesToPanelLayouts = function(){
         this.panel_ids_by_y_index.forEach(function(pid, idx){
             this.panels[pid].layout.y_index = idx;
         }.bind(this));
     };
 
+    /**
+     * Get the qualified ID pathname for the plot
+     * @returns {String}
+     */
     this.getBaseId = function(){
         return this.id;
     };
 
+    /**
+     * Track update operations (reMap) performed on all child panels, and notify the parent plot when complete
+     * TODO: Reconsider whether we need to be tracking this as global state outside of context of specific operations
+     * @protected
+     * @member {Promise[]}
+     */
     this.remap_promises = [];
 
-    // The layout is a serializable object used to describe the composition of the Plot
-    // If no layout was passed, use the Standard Association Layout
-    // Otherwise merge whatever was passed with the Default Layout
     if (typeof layout == "undefined"){
+        /**
+         * The layout is a serializable object used to describe the composition of the Plot
+         *   If no layout was passed, use the Standard Association Layout
+         *   Otherwise merge whatever was passed with the Default Layout
+         *   TODO: Review description; we *always* merge with default layout?
+         * @member {Object}
+         */
         this.layout = LocusZoom.Layouts.merge({}, LocusZoom.Layouts.get("plot", "standard_association"));
     } else {
         this.layout = layout;
     }
     LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
-    // Create a shortcut to the state in the layout on the Plot
+    /**
+     * Create a shortcut to the state in the layout on the Plot. Tracking in the layout allows the plot to be created
+     *   with initial state/setup.
+     *
+     * Tracks state of the plot, eg start and end position
+     * @member {Object}
+     */
     this.state = this.layout.state;
 
-    // LocusZoom.Data.Requester
+    /** @member {LocusZoom.Data.Requester} */
     this.lzd = new LocusZoom.Data.Requester(datasource);
 
-    // Window.onresize listener (responsive layouts only)
+    /**
+     * Window.onresize listener (responsive layouts only)
+     * TODO: .on appears to return a selection, not a listener? Check logic here
+     * https://github.com/d3/d3-selection/blob/00b904b9bcec4dfaf154ae0bbc777b1fc1d7bc08/test/selection/on-test.js#L11
+     * @deprecated
+     * @member {d3.selection}
+     */
     this.window_onresize = null;
 
-    // Event hooks
+    /**
+     * Known event hooks that the panel can respond to
+     * @protected
+     * @member {Object}
+     */
     this.event_hooks = {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
         "element_clicked": []
     };
+    /**
+     * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
+     *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
+     *
+     * The following plot-level events are currently supported:
+     *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
+     *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
+     *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
+     *   - `element_clicked` - context: element - A data element in any of the plot's data layers has been clicked.
+     *
+     * To register a hook for any of these events use `plot.on('event_name', function() {})`.
+     *
+     * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
+     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
+     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
+     *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
+     *   that was clicked.
+     *
+     * @param {String} event
+     * @param {function} hook
+     * @returns {LocusZoom.Plot}
+     */
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("Unable to register event hook, invalid event: " + event.toString());
@@ -73,6 +146,13 @@ LocusZoom.Plot = function(id, datasource, layout) {
         this.event_hooks[event].push(hook);
         return this;
     };
+    /**
+     * Handle running of event hooks when an event is emitted
+     * @protected
+     * @param {string} event A known event name
+     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @returns {LocusZoom.Plot}
+     */
     this.emit = function(event, context){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
@@ -84,8 +164,11 @@ LocusZoom.Plot = function(id, datasource, layout) {
         return this;
     };
 
-    // Get an object with the x and y coordinates of the Plot's origin in terms of the entire page
-    // Necessary for positioning any HTML elements over the plot
+    /**
+     * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
+     * Necessary for positioning any HTML elements over the plot
+     * @returns {{x: Number, y: Number, width: Number, height: Number}}
+     */
     this.getPageOrigin = function(){
         var bounding_client_rect = this.svg.node().getBoundingClientRect();
         var x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
@@ -107,7 +190,10 @@ LocusZoom.Plot = function(id, datasource, layout) {
         };
     };
 
-    // Get the top and left offset values for the plot's container element (the div that was populated)
+    /**
+     * Get the top and left offset values for the plot's container element (the div that was populated)
+     * @returns {{top: number, left: number}}
+     */
     this.getContainerOffset = function(){
         var offset = { top: 0, left: 0 };
         var container = this.container.offsetParent || null;
@@ -119,8 +205,20 @@ LocusZoom.Plot = function(id, datasource, layout) {
         return offset;
     };
 
-    // Event information describing interaction (e.g. panning and zooming) is stored on the plot
+    //
+    /**
+     * Event information describing interaction (e.g. panning and zooming) is stored on the plot
+     * TODO: Add/ document details of interaction structure as we expand
+     * @member {{panel_id: String, linked_panel_ids: Array, x_linked: *, dragging: *, zooming: *}}
+     * @returns {LocusZoom.Plot}
+     */
     this.interaction = {};
+
+    /**
+     * Track whether the target panel can respond to mouse interaction events
+     * @param {String} panel_id
+     * @returns {boolean}
+     */
     this.canInteract = function(panel_id){
         panel_id = panel_id || null;
         if (panel_id){
@@ -132,12 +230,17 @@ LocusZoom.Plot = function(id, datasource, layout) {
 
     // Initialize the layout
     this.initializeLayout();
-
+    // TODO: Possibly superfluous return from constructor
     return this;
-
 };
 
-// Default Layout
+/**
+ * Default/ expected configuration parameters for basic plotting; most plots will override
+ *
+ * @protected
+ * @static
+ * @type {Object}
+ */
 LocusZoom.Plot.DefaultLayout = {
     state: {},
     width: 1,
@@ -154,7 +257,11 @@ LocusZoom.Plot.DefaultLayout = {
     mouse_guide: true
 };
 
-// Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
+/**
+ * Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
+ * @param {('Height'|'Width')} dimension
+ * @returns {number}
+ */
 LocusZoom.Plot.prototype.sumProportional = function(dimension){
     if (dimension !== "height" && dimension !== "width"){
         throw ("Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional");
@@ -170,12 +277,20 @@ LocusZoom.Plot.prototype.sumProportional = function(dimension){
     return total;
 };
 
+/**
+ * Resize the plot to fit the bounding container
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.rescaleSVG = function(){
     var clientRect = this.svg.node().getBoundingClientRect();
     this.setDimensions(clientRect.width, clientRect.height);
     return this;
 };
 
+/**
+ * Prepare the plot for first use by performing parameter validation, setting up panels, and calculating dimensions
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.initializeLayout = function(){
 
     // Sanity check layout values
@@ -211,15 +326,14 @@ LocusZoom.Plot.prototype.initializeLayout = function(){
 };
 
 /**
-  Set the dimensions for an plot.
-  This function works in two different ways:
-  1. If passed a discrete width and height:
-     * Adjust the plot to match those exact values (lower-bounded by minimum panel dimensions)
-     * Resize panels within the plot proportionally to match the new plot dimensions
-  2. If NOT passed discrete width and height:
-     * Assume panels within are sized and positioned correctly
-     * Calculate appropriate plot dimensions from panels contained within and update plot
-*/
+ * Set the dimensions for a plot, and ensure that panels are sized and positioned correctly.
+ *
+ * If dimensions are provided, resizes each panel proportionally to match the new plot dimensions. Otherwise,
+ *   calculates the appropriate plot dimensions based on all panels.
+ * @param {Number} [width] If provided and larger than minimum size, set plot to this width
+ * @param {Number} [height] If provided and larger than minimum size, set plot to this height
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.setDimensions = function(width, height){
 
     var id;
@@ -309,7 +423,11 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height){
     return this.emit("layout_changed");
 };
 
-// Create a new panel from a layout
+/**
+ * Create a new panel from a layout, and handle the work of initializing and placing the panel on the plot
+ * @param {Object} layout
+ * @returns {LocusZoom.Panel}
+ */
 LocusZoom.Plot.prototype.addPanel = function(layout){
 
     // Sanity checks
@@ -362,7 +480,11 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     return this.panels[panel.id];
 };
 
-// Remove panel by id
+/**
+ * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
+ * @param {String} id
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.removePanel = function(id){
     if (!this.panels[id]){
         throw ("Unable to remove panel, ID not found: " + id);
@@ -414,14 +536,14 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
 
 /**
- Automatically position panels based on panel positioning rules and values.
- Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
-
- TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
-       Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
-       but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
-       That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
-*/
+ * Automatically position panels based on panel positioning rules and values.
+ * Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
+ *
+ * TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
+ *      Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
+ *      but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
+ *      That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
+ */
 LocusZoom.Plot.prototype.positionPanels = function(){
 
     var id;
@@ -491,7 +613,12 @@ LocusZoom.Plot.prototype.positionPanels = function(){
 
 };
 
-// Create all plot-level objects, initialize all child panels
+/**
+ * Prepare the first rendering of the plot. This includes initializing the individual panels, but also creates shared
+ *   elements such as mouse events, panel guides/boundaries, and loader/curtain.
+ *
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.initialize = function(){
 
     // Ensure proper responsive class is present on the containing node if called for
@@ -701,12 +828,19 @@ LocusZoom.Plot.prototype.initialize = function(){
 
 };
 
-// Refresh an plot's data from sources without changing position
+/**
+ * Refresh (or fetch) a plot's data from sources, regardless of whether position or state has changed
+ * @returns {Promise}
+ */
 LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
 };
 
-// Update state values and trigger a pull for fresh data on all data sources for all data layers
+/**
+ * Update state values and trigger a pull for fresh data on all data sources for all data layers
+ * @param state_changes
+ * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+ */
 LocusZoom.Plot.prototype.applyState = function(state_changes){
 
     state_changes = state_changes || {};
@@ -745,7 +879,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             this.loading_data = false;
         }.bind(this))
         .then(function(){
-
+            // TODO: Check logic here; in some promise implementations, this would cause the error to be considered handled, and "then" would always fire. (may or may not be desired behavior)
             // Update dashboard / components
             this.dashboard.update();
 
@@ -781,6 +915,13 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
         }.bind(this));
 };
 
+/**
+ * Register interactions along the specified axis, provided that the target panel allows interaction.
+ *
+ * @param {LocusZoom.Panel} panel
+ * @param {('x_tick'|'y1_tick'|'y2_tick')} method The direction (axis) along which dragging is being performed.
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.startDrag = function(panel, method){
 
     panel = panel || null;
@@ -822,6 +963,11 @@ LocusZoom.Plot.prototype.startDrag = function(panel, method){
 
 };
 
+/**
+ * Process drag interactions across the target panel and synchronize plot state across other panels in sync;
+ *   clear the event when complete
+ * @returns {LocusZoom.Plot}
+ */
 LocusZoom.Plot.prototype.stopDrag = function(){
 
     if (!this.interaction.dragging){ return this; }

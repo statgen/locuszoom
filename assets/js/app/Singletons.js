@@ -5,20 +5,24 @@
 "use strict";
 
 /**
+ *
+ * LocusZoom has various singleton objects that are used for registering functions or classes.
+ * These objects provide safe, standard methods to redefine or delete existing functions/classes
+ * as well as define new custom functions/classes to be used in a plot.
+ *
+ * @namespace Singletons
+ */
 
-  Singletons
 
-  LocusZoom has various singleton objects that are used for registering functions or classes.
-  These objects provide safe, standard methods to redefine or delete existing functions/classes
-  as well as define new custom functions/classes to be used in a plot.
-
-*/
-
-
-/* The Collection of "Known" Data Source Endpoints */
-
+/*
+ * The Collection of "Known" Data Sources. This registry is used internally by the `DataSources` class
+ * @class
+ * @static
+ */
 LocusZoom.KnownDataSources = (function() {
+    /** @lends LocusZoom.KnownDataSources */
     var obj = {};
+    /* @member {function[]} */
     var sources = [];
 
     var findSourceByName = function(x) {
@@ -33,10 +37,20 @@ LocusZoom.KnownDataSources = (function() {
         return null;
     };
 
+    /**
+     * Identify the datasource associated with a given name
+     * @param {String} name
+     * @returns {function} The constructor for the data source; will usually extend `Data.Source`
+     */
     obj.get = function(name) {
         return findSourceByName(name);
     };
 
+    /**
+     * Register a data source constructor so that it may be located by name
+     * @param {function} source A constructor function for a data source; will usually extend `Data.Source`,
+     *   and should have a `SOURCE_NAME` property
+     */
     obj.add = function(source) {
         if (!source.SOURCE_NAME) {
             console.warn("Data source added does not have a SOURCE_NAME");
@@ -44,15 +58,25 @@ LocusZoom.KnownDataSources = (function() {
         sources.push(source);
     };
 
+    /** @deprecated */
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is deprecated. Use .add() instead");
         obj.add(source);
     };
 
+    /**
+     * List the names of all registered datasources
+     * @returns {String[]}
+     */
     obj.list = function() {
         return sources.map(function(x) {return x.SOURCE_NAME;});
     };
 
+    /**
+     * Create a datasource instance
+     * @param {String} name The name of the desired datasource to instantiate (must be defined in the registry)
+     * @returns {LocusZoom.Data.Source}
+     */
     obj.create = function(name) {
         //create new object (pass additional parameters to constructor)
         var newObj = findSourceByName(name);
@@ -65,15 +89,31 @@ LocusZoom.KnownDataSources = (function() {
         }
     };
 
-    //getAll, setAll and clear really should only be used by tests
+    /**
+     * Get the array of all registered contructors
+     *   Generally only used for unit tests internally
+     * @private
+     * @returns {function[]}
+     */
     obj.getAll = function() {
         return sources;
     };
-    
+
+    /**
+     * Register an entire collection of data sources
+     *   Generally only used for unit tests internally
+     * @private
+     * @param {function[]} x An array of datasource constructors
+     */
     obj.setAll = function(x) {
         sources = x;
     };
 
+    /**
+     * Unregister all known data sources
+     *   Generally only used for unit tests internally
+     * @private
+     */
     obj.clear = function() {
         sources = [];
     };
@@ -82,16 +122,18 @@ LocusZoom.KnownDataSources = (function() {
 })();
 
 /**************************
-  Transformation Functions
-
-  Singleton for formatting or transforming a single input, for instance turning raw p values into negative log10 form
-  Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
-
-  NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
-
-  All transformation functions must accept an object of parameters and a value to process.
-*/
+ * Transformation Functions
+ *
+ * Singleton for formatting or transforming a single input, for instance turning raw p values into negative log10 form
+ * Transformation functions are chainable with a pipe on a field name, like so: "pvalue|neglog10"
+ *
+ * NOTE: Because these functions are chainable the FUNCTION is returned by get(), not the result of that function.
+ *
+ * All transformation functions must accept an object of parameters and a value to process.
+ * @class
+ */
 LocusZoom.TransformationFunctions = (function() {
+    /** @lends LocusZoom.TransformationFunctions */
     var obj = {};
     var transformations = {};
 
@@ -136,7 +178,12 @@ LocusZoom.TransformationFunctions = (function() {
         return null;
     };
 
-    //accept both "|name" and "name"
+    /**
+     * Retrieve a transformation function by name
+     * @param {String} name The name of the transformation function to retrieve. May optionally be prefixed with a
+     *   pipe (`|`) when chaining multiple transformation functions.
+     * @returns {function} The constructor for the transformation function
+     */
     obj.get = function(name) {
         if (name && name.substring(0,1)==="|") {
             return parseTransString(name);
@@ -144,7 +191,12 @@ LocusZoom.TransformationFunctions = (function() {
             return parseTrans(name);
         }
     };
-
+    /**
+     * Internal logic that registers a transformation function
+     * @protected
+     * @param {String} name
+     * @param {function} fn
+     */
     obj.set = function(name, fn) {
         if (name.substring(0,1)==="|") {
             throw("transformation name should not start with a pipe");
@@ -157,6 +209,11 @@ LocusZoom.TransformationFunctions = (function() {
         }
     };
 
+    /**
+     * Register a transformation function
+     * @param {String} name
+     * @param {function} fn A transformation function (should accept one argument with the value)
+     */
     obj.add = function(name, fn) {
         if (transformations[name]) {
             throw("transformation already exists with name: " + name);
@@ -164,7 +221,10 @@ LocusZoom.TransformationFunctions = (function() {
             obj.set(name, fn);
         }
     };
-
+    /**
+     * List the names of all registered transformation functions
+     * @returns {String[]}
+     */
     obj.list = function() {
         return Object.keys(transformations);
     };
@@ -172,11 +232,19 @@ LocusZoom.TransformationFunctions = (function() {
     return obj;
 })();
 
+/**
+ * Return the -log (base 10)
+ * @function neglog10
+ */
 LocusZoom.TransformationFunctions.add("neglog10", function(x) {
     if (isNaN(x) || x <= 0){ return null; }
     return -Math.log(x) / Math.LN10;
 });
 
+/**
+ * Convert a number from logarithm to scientific notation. Useful for, eg, a datasource that returns -log(p) by default
+ * @function logtoscinotation
+ */
 LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
     if (x === 0){ return "1"; }
@@ -192,6 +260,12 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
     }
 });
 
+/**
+ * Represent a number in scientific notation
+ * @function scinotation
+ * @param {Number} x
+ * @returns {String}
+ */
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
     if (x === 0){ return "0"; }
@@ -208,24 +282,40 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     }
 });
 
+/**
+ * URL-encode the provided text, eg for constructing hyperlinks
+ * @function urlencode
+ * @param {String} str
+ */
 LocusZoom.TransformationFunctions.add("urlencode", function(str) {
     return encodeURIComponent(str);
 });
 
 
-/****************
-  Scale Functions
-
-  Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
-  Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
-
-  All scale functions must accept an object of parameters and a value to process.
-*/
-
+/**
+ * Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
+ * Useful for anything that needs to scale discretely with data (e.g. color, point size, etc.)
+ *
+ * A Scale Function can be thought of as a modifier to a layout directive that adds extra logic to how a piece of data
+ *   can be resolved to a value.
+ *
+ * All scale functions must accept an object of parameters and a value to process.
+ * @class
+ * @static
+ */
 LocusZoom.ScaleFunctions = (function() {
+    /** @lends LocusZoom.ScaleFunctions */
     var obj = {};
     var functions = {};
 
+    /**
+     * Find a scale function and return it. If parameters and values are passed, calls the function directly; otherwise
+     *   returns a callable.
+     * @param {String} name
+     * @param {Object} [parameters] Configuration parameters specific to the specified scale function
+     * @param {*} [value] The value to operate on
+     * @returns {*}
+     */
     obj.get = function(name, parameters, value) {
         if (!name) {
             return null;
@@ -240,6 +330,11 @@ LocusZoom.ScaleFunctions = (function() {
         }
     };
 
+    /**
+     * @protected
+     * @param {String} name The name of the function to set/unset
+     * @param {Function} [fn] The function to register. If blank, removes this function name from the registry.
+     */
     obj.set = function(name, fn) {
         if (fn) {
             functions[name] = fn;
@@ -248,6 +343,11 @@ LocusZoom.ScaleFunctions = (function() {
         }
     };
 
+    /**
+     * Add a new scale function to the registry
+     * @param {String} name The name of the scale function
+     * @param {function} fn A scale function that accepts two parameters: an object of configuration and a value
+     */
     obj.add = function(name, fn) {
         if (functions[name]) {
             throw("scale function already exists with name: " + name);
@@ -256,6 +356,10 @@ LocusZoom.ScaleFunctions = (function() {
         }
     };
 
+    /**
+     * List the names of all registered scale functions
+     * @returns {String[]}
+     */
     obj.list = function() {
         return Object.keys(functions);
     };
@@ -263,7 +367,16 @@ LocusZoom.ScaleFunctions = (function() {
     return obj;
 })();
 
-// If scale function: apply a boolean conditional to a single field
+/**
+ * Basic conditional function to evaluate the value of the input field and return based on equality.
+ * @param {Object} parameters
+ * @param {*} parameters.field_value The value against which to test the input value.
+ * @param {*} parameters.then The value to return if the input value matches the field value
+ * @param {*} parameters.else  The value to return if the input value does not match the field value. Optional. If not
+ *   defined this scale function will return null (or value of null_value parameter, if defined) when input value fails
+ *   to match field_value.
+ * @param {*} input value
+ */
 LocusZoom.ScaleFunctions.add("if", function(parameters, input){
     if (typeof input == "undefined" || parameters.field_value !== input){
         if (typeof parameters.else != "undefined"){
@@ -276,7 +389,21 @@ LocusZoom.ScaleFunctions.add("if", function(parameters, input){
     }
 });
 
-// Numerical Bin scale function: bin a dataset numerically by an array of breakpoints
+/**
+ * Function to sort numerical values into bins based on numerical break points. Will only operate on numbers and
+ *   return null (or value of null_value parameter, if defined) if provided a non-numeric input value. Parameters:
+ * @function numerical_bin
+ * @param {Object} parameters
+ * @param {Number[]} parameters.breaks  Array of numerical break points against which to evaluate the input value.
+ *   Must be of equal length to values parameter. If the input value is greater than or equal to break n and less than
+ *   or equal to break n+1 (or break n+1 doesn't exist) then returned value is the nth entry in the values parameter.
+ * @param {Array} parameters.values  Array of values to return given evaluations against break points. Must be of
+ *   equal length to breaks parameter. Each entry n represents the value to return if the input value is greater than
+ *   or equal to break n and less than or equal to break n+1 (or break n+1 doesn't exist).
+ * @param {*} null_value
+ * @param {*} input value
+ * @returns
+ */
 LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
@@ -293,7 +420,19 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
     return values[breaks.indexOf(threshold)];
 });
 
-// Categorical Bin scale function: bin a dataset numerically by matching against an array of distinct values
+/**
+ * Function to sort values of any type into bins based on direct equality testing with a list of categories.
+ *   Will return null if provided an input value that does not match to a listed category.
+ * @function categorical_bin
+ * @param {Object} parameters
+ * @param {Array} parameters.categories  Array of values against which to evaluate the input value. Must be of equal
+ *   length to values parameter. If the input value is equal to category n then returned value is the nth entry in the
+ *   values parameter.
+ * @param {Array} parameters.values  Array of values to return given evaluations against categories. Must be of equal
+ *   length to categories parameter. Each entry n represents the value to return if the input value is equal to the nth
+ *   value in the categories parameter.
+ * @param {*} parameters.null_value  Value to return if the input value fails to match to any categories. Optional.
+ */
 LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
     if (typeof value == "undefined" || parameters.categories.indexOf(value) === -1){
         return (parameters.null_value ? parameters.null_value : null); 
@@ -302,7 +441,21 @@ LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
     }
 });
 
-// Interpolate scale function
+/**
+ * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.
+ * @function interpolate
+ * @parameters {Object} parameters
+ * @parameters {Number[]} parameters.breaks  Array of numerical break points against which to evaluate the input value.
+ *   Must be of equal length to values parameter and contain at least two elements. Input value will be evaluated for
+ *   relative position between two break points n and n+1 and the returned value will be interpolated at a relative
+ *   position between values n and n+1.
+ * @parameters {*[]} parameters.values  Array of values to interpolate and return given evaluations against break
+ *   points. Must be of equal length to breaks parameter and contain at least two elements. Each entry n represents
+ *   the value to return if the input value matches the nth entry in breaks exactly. Note that this scale function
+ *   uses d3.interpolate to provide for effective interpolation of many different value types, including numbers,
+ *   colors, shapes, etc.
+ * @parameters {*} parameters.null_value
+ */
 LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
