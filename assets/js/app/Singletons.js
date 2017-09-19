@@ -285,6 +285,7 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
 /**
  * URL-encode the provided text, eg for constructing hyperlinks
  * @function urlencode
+ * @param {String} str
  */
 LocusZoom.TransformationFunctions.add("urlencode", function(str) {
     return encodeURIComponent(str);
@@ -303,14 +304,16 @@ LocusZoom.TransformationFunctions.add("urlencode", function(str) {
  * @static
  */
 LocusZoom.ScaleFunctions = (function() {
+    /** @lends LocusZoom.ScaleFunctions */
     var obj = {};
     var functions = {};
 
     /**
-     *
-     * @param name
-     * @param parameters
-     * @param value
+     * Find a scale function and return it. If parameters and values are passed, calls the function directly; otherwise
+     *   returns a callable.
+     * @param {String} name
+     * @param {Object} [parameters] Configuration parameters specific to the specified scale function
+     * @param {*} [value] The value to operate on
      * @returns {*}
      */
     obj.get = function(name, parameters, value) {
@@ -329,8 +332,8 @@ LocusZoom.ScaleFunctions = (function() {
 
     /**
      * @protected
-     * @param name
-     * @param fn
+     * @param {String} name The name of the function to set/unset
+     * @param {Function} [fn] The function to register. If blank, removes this function name from the registry.
      */
     obj.set = function(name, fn) {
         if (fn) {
@@ -341,7 +344,7 @@ LocusZoom.ScaleFunctions = (function() {
     };
 
     /**
-     *
+     * Add a new scale function to the registry
      * @param {String} name The name of the scale function
      * @param {function} fn A scale function that accepts two parameters: an object of configuration and a value
      */

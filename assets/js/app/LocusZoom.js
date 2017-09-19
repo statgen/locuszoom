@@ -672,7 +672,7 @@ LocusZoom.generateLoader = function(){
         }.bind(this),
 
         /**
-         *  Sets the loading bar in the loader to precentage width equal to the percent (number) value passed. Percents
+         *  Sets the loading bar in the loader to percentage width equal to the percent (number) value passed. Percents
          *    will automatically be limited to a range of 1 to 100. Will stop all animations in progress.
          */
         setPercentCompleted: function(percent){

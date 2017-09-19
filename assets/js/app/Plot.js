@@ -37,7 +37,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
     /** @member {Object.<String, Number>} */
     this.panels = {};
     /**
-     * TODO: This is currently used by external classes that manipulate and parent and may indicate room for a helper method in the api to coordinate boilerplate
+     * TODO: This is currently used by external classes that manipulate the parent and may indicate room for a helper method in the api to coordinate boilerplate
      * @protected
      * @member {String[]}
      */
@@ -83,8 +83,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
     LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
     /**
-     * Create a shortcut to the state in the layout on the Plot
-     * (TODO: Why does this live in the layout?)
+     * Create a shortcut to the state in the layout on the Plot. Tracking in the layout allows the plot to be created
+     *   with initial state/setup.
+     *
      * Tracks state of the plot, eg start and end position
      * @member {Object}
      */

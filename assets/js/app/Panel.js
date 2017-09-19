@@ -548,7 +548,7 @@ LocusZoom.Panel.prototype.resortDataLayers = function(){
 
 /**
  * Get an array of panel IDs that are axis-linked to this panel
- * @param axis
+ * @param {('x'|'y1'|'y2')} axis
  * @returns {Array}
  */
 LocusZoom.Panel.prototype.getLinkedPanelIds = function(axis){

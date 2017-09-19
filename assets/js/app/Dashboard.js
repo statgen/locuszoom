@@ -385,6 +385,7 @@ LocusZoom.Dashboard.Components = (function() {
  * Plots and panels may have a "dashboard" element suited for showing HTML components that may be interactive.
  *   When components need to incorporate a generic button, or additionally a button that generates a menu, this
  *   class provides much of the necessary framework.
+ * @class
  * @param {LocusZoom.Dashboard.Component} parent
  */
 LocusZoom.Dashboard.Component.Button = function(parent) {   
