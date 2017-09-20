@@ -1,0 +1,2954 @@
+{
+  "data": [
+    {
+      "chrom": "10",
+      "end": 114578503,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001449955.2",
+          "start": 114206756,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001882813.1",
+          "start": 114206757,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001821417.1",
+          "start": 114206992,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001616164.1",
+          "start": 114207016,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001943986.1",
+          "start": 114207022,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001887515.1",
+          "start": 114207034,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001941638.1",
+          "start": 114207107,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114207225,
+          "exon_id": "ENSE00001885329.1",
+          "start": 114207117,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114208247,
+          "exon_id": "ENSE00001817770.1",
+          "start": 114208140,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114209417,
+          "exon_id": "ENSE00001820498.1",
+          "start": 114208640,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114210484,
+          "exon_id": "ENSE00001956888.1",
+          "start": 114208640,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114220341,
+          "exon_id": "ENSE00003578306.1",
+          "start": 114220283,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114220341,
+          "exon_id": "ENSE00003610417.1",
+          "start": 114220283,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114224416,
+          "exon_id": "ENSE00003649011.1",
+          "start": 114224306,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114224416,
+          "exon_id": "ENSE00003639068.1",
+          "start": 114224306,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114224517,
+          "exon_id": "ENSE00001819667.1",
+          "start": 114224306,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114245050,
+          "exon_id": "ENSE00001816216.1",
+          "start": 114244728,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114286923,
+          "exon_id": "ENSE00003510762.1",
+          "start": 114286846,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114287164,
+          "exon_id": "ENSE00001938379.1",
+          "start": 114286846,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114286923,
+          "exon_id": "ENSE00003465081.1",
+          "start": 114286846,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114293309,
+          "exon_id": "ENSE00001949792.1",
+          "start": 114293289,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114298089,
+          "exon_id": "ENSE00001685704.1",
+          "start": 114298005,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114298060,
+          "exon_id": "ENSE00001906573.1",
+          "start": 114298005,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114298405,
+          "exon_id": "ENSE00001900667.1",
+          "start": 114298005,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114428047,
+          "exon_id": "ENSE00001694759.1",
+          "start": 114427977,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114428757,
+          "exon_id": "ENSE00001692595.1",
+          "start": 114428696,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114497543,
+          "exon_id": "ENSE00001767168.1",
+          "start": 114496482,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114578503,
+          "exon_id": "ENSE00001514122.2",
+          "start": 114575049,
+          "strand": "+"
+        }
+      ],
+      "gene_id": "ENSG00000151532.9",
+      "gene_name": "VTI1A",
+      "start": 114206756,
+      "strand": "+",
+      "transcripts": [
+        {
+          "end": 114210484,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001449955.2",
+              "start": 114206756,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114208247,
+              "exon_id": "ENSE00001817770.1",
+              "start": 114208140,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114210484,
+              "exon_id": "ENSE00001956888.1",
+              "start": 114208640,
+              "strand": "+"
+            }
+          ],
+          "start": 114206756,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000483122.1",
+          "transcript_name": "VTI1A-002"
+        },
+        {
+          "end": 114209417,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001882813.1",
+              "start": 114206757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114209417,
+              "exon_id": "ENSE00001820498.1",
+              "start": 114208640,
+              "strand": "+"
+            }
+          ],
+          "start": 114206757,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000472892.1",
+          "transcript_name": "VTI1A-003"
+        },
+        {
+          "end": 114245050,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001821417.1",
+              "start": 114206992,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003610417.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003639068.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114245050,
+              "exon_id": "ENSE00001816216.1",
+              "start": 114244728,
+              "strand": "+"
+            }
+          ],
+          "start": 114206992,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000489142.1",
+          "transcript_name": "VTI1A-005"
+        },
+        {
+          "end": 114578503,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001616164.1",
+              "start": 114207016,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003578306.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003649011.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114286923,
+              "exon_id": "ENSE00003510762.1",
+              "start": 114286846,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114298089,
+              "exon_id": "ENSE00001685704.1",
+              "start": 114298005,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114428047,
+              "exon_id": "ENSE00001694759.1",
+              "start": 114427977,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114428757,
+              "exon_id": "ENSE00001692595.1",
+              "start": 114428696,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114578503,
+              "exon_id": "ENSE00001514122.2",
+              "start": 114575049,
+              "strand": "+"
+            }
+          ],
+          "start": 114207016,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000393077.2",
+          "transcript_name": "VTI1A-001"
+        },
+        {
+          "end": 114497543,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001616164.1",
+              "start": 114207016,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003578306.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003649011.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114286923,
+              "exon_id": "ENSE00003510762.1",
+              "start": 114286846,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114298089,
+              "exon_id": "ENSE00001685704.1",
+              "start": 114298005,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114428047,
+              "exon_id": "ENSE00001694759.1",
+              "start": 114427977,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114428757,
+              "exon_id": "ENSE00001692595.1",
+              "start": 114428696,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114497543,
+              "exon_id": "ENSE00001767168.1",
+              "start": 114496482,
+              "strand": "+"
+            }
+          ],
+          "start": 114207016,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000432306.1",
+          "transcript_name": "VTI1A-009"
+        },
+        {
+          "end": 114298405,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001943986.1",
+              "start": 114207022,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003610417.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003639068.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114286923,
+              "exon_id": "ENSE00003465081.1",
+              "start": 114286846,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114298405,
+              "exon_id": "ENSE00001900667.1",
+              "start": 114298005,
+              "strand": "+"
+            }
+          ],
+          "start": 114207022,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000496445.1",
+          "transcript_name": "VTI1A-008"
+        },
+        {
+          "end": 114224517,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001887515.1",
+              "start": 114207034,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003610417.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224517,
+              "exon_id": "ENSE00001819667.1",
+              "start": 114224306,
+              "strand": "+"
+            }
+          ],
+          "start": 114207034,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000494728.1",
+          "transcript_name": "VTI1A-004"
+        },
+        {
+          "end": 114298060,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001941638.1",
+              "start": 114207107,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003610417.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003639068.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114286923,
+              "exon_id": "ENSE00003465081.1",
+              "start": 114286846,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114293309,
+              "exon_id": "ENSE00001949792.1",
+              "start": 114293289,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114298060,
+              "exon_id": "ENSE00001906573.1",
+              "start": 114298005,
+              "strand": "+"
+            }
+          ],
+          "start": 114207107,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000489357.1",
+          "transcript_name": "VTI1A-007"
+        },
+        {
+          "end": 114287164,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114207225,
+              "exon_id": "ENSE00001885329.1",
+              "start": 114207117,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114220341,
+              "exon_id": "ENSE00003610417.1",
+              "start": 114220283,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114224416,
+              "exon_id": "ENSE00003639068.1",
+              "start": 114224306,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114287164,
+              "exon_id": "ENSE00001938379.1",
+              "start": 114286846,
+              "strand": "+"
+            }
+          ],
+          "start": 114207117,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000480057.1",
+          "transcript_name": "VTI1A-006"
+        }
+      ]
+    },
+    {
+      "chrom": "10",
+      "end": 114587485,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114587485,
+          "exon_id": "ENSE00002585546.1",
+          "start": 114583249,
+          "strand": "+"
+        }
+      ],
+      "gene_id": "ENSG00000260917.1",
+      "gene_name": "RP11-57H14.4",
+      "start": 114583249,
+      "strand": "+",
+      "transcripts": [
+        {
+          "end": 114587485,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114587485,
+              "exon_id": "ENSE00002585546.1",
+              "start": 114583249,
+              "strand": "+"
+            }
+          ],
+          "start": 114583249,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000564352.1",
+          "transcript_name": "RP11-57H14.4-001"
+        }
+      ]
+    },
+    {
+      "chrom": "10",
+      "end": 114665870,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114648566,
+          "exon_id": "ENSE00001736417.2",
+          "start": 114648494,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114650831,
+          "exon_id": "ENSE00001665746.1",
+          "start": 114650725,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114665870,
+          "exon_id": "ENSE00001758350.1",
+          "start": 114665736,
+          "strand": "+"
+        }
+      ],
+      "gene_id": "ENSG00000225292.2",
+      "gene_name": "RP11-57H14.3",
+      "start": 114648494,
+      "strand": "+",
+      "transcripts": [
+        {
+          "end": 114665870,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114648566,
+              "exon_id": "ENSE00001736417.2",
+              "start": 114648494,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114650831,
+              "exon_id": "ENSE00001665746.1",
+              "start": 114650725,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114665870,
+              "exon_id": "ENSE00001758350.1",
+              "start": 114665736,
+              "strand": "+"
+            }
+          ],
+          "start": 114648494,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000428766.2",
+          "transcript_name": "RP11-57H14.3-001"
+        }
+      ]
+    },
+    {
+      "chrom": "10",
+      "end": 114927437,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00002258101.1",
+          "start": 114710009,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00001412664.1",
+          "start": 114710211,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00002234658.1",
+          "start": 114710425,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00001399219.1",
+          "start": 114710431,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00002311794.1",
+          "start": 114710516,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114710704,
+          "exon_id": "ENSE00001777760.1",
+          "start": 114710675,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114711032,
+          "exon_id": "ENSE00003644651.1",
+          "start": 114710966,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114711032,
+          "exon_id": "ENSE00003531991.1",
+          "start": 114710966,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114711366,
+          "exon_id": "ENSE00003496147.1",
+          "start": 114711242,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114711366,
+          "exon_id": "ENSE00003604548.1",
+          "start": 114711242,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114724383,
+          "exon_id": "ENSE00000987139.1",
+          "start": 114724315,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114799885,
+          "exon_id": "ENSE00003683398.1",
+          "start": 114799784,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114799885,
+          "exon_id": "ENSE00003523898.1",
+          "start": 114799784,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114849299,
+          "exon_id": "ENSE00001449946.1",
+          "start": 114849156,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114849299,
+          "exon_id": "ENSE00001752649.1",
+          "start": 114849159,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114893949,
+          "exon_id": "ENSE00002228551.1",
+          "start": 114893836,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114901075,
+          "exon_id": "ENSE00003459164.1",
+          "start": 114900943,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114901075,
+          "exon_id": "ENSE00003618124.1",
+          "start": 114900943,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114901075,
+          "exon_id": "ENSE00003518839.1",
+          "start": 114900943,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114903784,
+          "exon_id": "ENSE00001449934.1",
+          "start": 114903679,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114903772,
+          "exon_id": "ENSE00001449949.1",
+          "start": 114903682,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114903784,
+          "exon_id": "ENSE00003644692.1",
+          "start": 114903682,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114903784,
+          "exon_id": "ENSE00003481553.1",
+          "start": 114903682,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114905862,
+          "exon_id": "ENSE00001449948.1",
+          "start": 114905770,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114905856,
+          "exon_id": "ENSE00003527108.1",
+          "start": 114905770,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114905856,
+          "exon_id": "ENSE00003694219.1",
+          "start": 114905770,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114905856,
+          "exon_id": "ENSE00001738678.1",
+          "start": 114905831,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114910882,
+          "exon_id": "ENSE00001682451.1",
+          "start": 114910742,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114910882,
+          "exon_id": "ENSE00001699148.1",
+          "start": 114910757,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114910882,
+          "exon_id": "ENSE00001449932.1",
+          "start": 114910842,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114911643,
+          "exon_id": "ENSE00003517323.1",
+          "start": 114911484,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114911643,
+          "exon_id": "ENSE00003650034.1",
+          "start": 114911484,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114911643,
+          "exon_id": "ENSE00001945091.1",
+          "start": 114911530,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114911643,
+          "exon_id": "ENSE00001893736.1",
+          "start": 114911590,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114912199,
+          "exon_id": "ENSE00003524030.1",
+          "start": 114912092,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114912199,
+          "exon_id": "ENSE00003579024.1",
+          "start": 114912092,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114912199,
+          "exon_id": "ENSE00001956336.1",
+          "start": 114912173,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114917828,
+          "exon_id": "ENSE00001873811.1",
+          "start": 114917532,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114917828,
+          "exon_id": "ENSE00003620069.1",
+          "start": 114917780,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114917828,
+          "exon_id": "ENSE00003610755.1",
+          "start": 114917780,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114917828,
+          "exon_id": "ENSE00001863160.1",
+          "start": 114917796,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114918476,
+          "exon_id": "ENSE00003590241.1",
+          "start": 114918426,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114918476,
+          "exon_id": "ENSE00003504867.1",
+          "start": 114918426,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114919751,
+          "exon_id": "ENSE00003601851.1",
+          "start": 114919679,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114919751,
+          "exon_id": "ENSE00003580535.1",
+          "start": 114919679,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114920450,
+          "exon_id": "ENSE00003557756.1",
+          "start": 114920378,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114920450,
+          "exon_id": "ENSE00003470392.1",
+          "start": 114920378,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114920420,
+          "exon_id": "ENSE00002302213.1",
+          "start": 114920378,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114920450,
+          "exon_id": "ENSE00003487390.1",
+          "start": 114920378,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114921362,
+          "exon_id": "ENSE00001810113.1",
+          "start": 114920990,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114921362,
+          "exon_id": "ENSE00003603894.1",
+          "start": 114921338,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114921362,
+          "exon_id": "ENSE00003483566.1",
+          "start": 114921338,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925391,
+          "exon_id": "ENSE00001631748.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925371,
+          "exon_id": "ENSE00002262302.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114927437,
+          "exon_id": "ENSE00003461640.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114927437,
+          "exon_id": "ENSE00003656283.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114926083,
+          "exon_id": "ENSE00001449928.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925415,
+          "exon_id": "ENSE00001325383.4",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114926068,
+          "exon_id": "ENSE00001685830.2",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925699,
+          "exon_id": "ENSE00001937347.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925346,
+          "exon_id": "ENSE00001948593.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925919,
+          "exon_id": "ENSE00001868602.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925440,
+          "exon_id": "ENSE00001946687.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925731,
+          "exon_id": "ENSE00002253354.1",
+          "start": 114925314,
+          "strand": "+"
+        },
+        {
+          "chrom": "10",
+          "end": 114925720,
+          "exon_id": "ENSE00001938788.1",
+          "start": 114925615,
+          "strand": "+"
+        }
+      ],
+      "gene_id": "ENSG00000148737.11",
+      "gene_name": "TCF7L2",
+      "start": 114710009,
+      "strand": "+",
+      "transcripts": [
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114849299,
+              "exon_id": "ENSE00001752649.1",
+              "start": 114849159,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003461640.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000355717.4",
+          "transcript_name": "TCF7L2-202"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003656283.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000355995.4",
+          "transcript_name": "TCF7L2-203"
+        },
+        {
+          "end": 114920420,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920420,
+              "exon_id": "ENSE00002302213.1",
+              "start": 114920378,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000534894.1",
+          "transcript_name": "TCF7L2-204"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003656283.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000536810.1",
+          "transcript_name": "TCF7L2-205"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003461640.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000538897.1",
+          "transcript_name": "TCF7L2-206"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920450,
+              "exon_id": "ENSE00003487390.1",
+              "start": 114920378,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003656283.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000543371.1",
+          "transcript_name": "TCF7L2-208"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002258101.1",
+              "start": 114710009,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920450,
+              "exon_id": "ENSE00003487390.1",
+              "start": 114920378,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003656283.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710009,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000545257.1",
+          "transcript_name": "TCF7L2-209"
+        },
+        {
+          "end": 114905862,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00001412664.1",
+              "start": 114710211,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903772,
+              "exon_id": "ENSE00001449949.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905862,
+              "exon_id": "ENSE00001449948.1",
+              "start": 114905770,
+              "strand": "+"
+            }
+          ],
+          "start": 114710211,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000349937.2",
+          "transcript_name": "TCF7L2-004"
+        },
+        {
+          "end": 114927437,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00001412664.1",
+              "start": 114710211,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114927437,
+              "exon_id": "ENSE00003656283.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710211,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000369397.4",
+          "transcript_name": "TCF7L2-003"
+        },
+        {
+          "end": 114925371,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002234658.1",
+              "start": 114710425,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003527108.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114921362,
+              "exon_id": "ENSE00003603894.1",
+              "start": 114921338,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925371,
+              "exon_id": "ENSE00002262302.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710425,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000352065.5",
+          "transcript_name": "TCF7L2-201"
+        },
+        {
+          "end": 114905862,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00001399219.1",
+              "start": 114710431,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114849299,
+              "exon_id": "ENSE00001449946.1",
+              "start": 114849156,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003618124.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003644692.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905862,
+              "exon_id": "ENSE00001449948.1",
+              "start": 114905770,
+              "strand": "+"
+            }
+          ],
+          "start": 114710431,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000369395.1",
+          "transcript_name": "TCF7L2-001"
+        },
+        {
+          "end": 114925731,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00002311794.1",
+              "start": 114710516,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003531991.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003604548.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003523898.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114893949,
+              "exon_id": "ENSE00002228551.1",
+              "start": 114893836,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003518839.1",
+              "start": 114900943,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00003481553.1",
+              "start": 114903682,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003694219.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001682451.1",
+              "start": 114910742,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003590241.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925731,
+              "exon_id": "ENSE00002253354.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114710516,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000542695.1",
+          "transcript_name": "TCF7L2-207"
+        },
+        {
+          "end": 114901075,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710704,
+              "exon_id": "ENSE00001777760.1",
+              "start": 114710675,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711032,
+              "exon_id": "ENSE00003644651.1",
+              "start": 114710966,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114711366,
+              "exon_id": "ENSE00003496147.1",
+              "start": 114711242,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114724383,
+              "exon_id": "ENSE00000987139.1",
+              "start": 114724315,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114799885,
+              "exon_id": "ENSE00003683398.1",
+              "start": 114799784,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114849299,
+              "exon_id": "ENSE00001752649.1",
+              "start": 114849159,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114901075,
+              "exon_id": "ENSE00003459164.1",
+              "start": 114900943,
+              "strand": "+"
+            }
+          ],
+          "start": 114710675,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000346198.4",
+          "transcript_name": "TCF7L2-002"
+        },
+        {
+          "end": 114925415,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114903784,
+              "exon_id": "ENSE00001449934.1",
+              "start": 114903679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00003694219.1",
+              "start": 114905770,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925415,
+              "exon_id": "ENSE00001325383.4",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114903679,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000369389.1",
+          "transcript_name": "TCF7L2-007"
+        },
+        {
+          "end": 114925391,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114905856,
+              "exon_id": "ENSE00001738678.1",
+              "start": 114905831,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001699148.1",
+              "start": 114910757,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003517323.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925391,
+              "exon_id": "ENSE00001631748.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114905831,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000277945.7",
+          "transcript_name": "TCF7L2-010"
+        },
+        {
+          "end": 114926083,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114910882,
+              "exon_id": "ENSE00001449932.1",
+              "start": 114910842,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00003650034.1",
+              "start": 114911484,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920450,
+              "exon_id": "ENSE00003557756.1",
+              "start": 114920378,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114926083,
+              "exon_id": "ENSE00001449928.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114910842,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000369386.1",
+          "transcript_name": "TCF7L2-006"
+        },
+        {
+          "end": 114926068,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00001945091.1",
+              "start": 114911530,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003579024.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003610755.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114926068,
+              "exon_id": "ENSE00001685830.2",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114911530,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000466338.1",
+          "transcript_name": "TCF7L2-011"
+        },
+        {
+          "end": 114925699,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114911643,
+              "exon_id": "ENSE00001893736.1",
+              "start": 114911590,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00003524030.1",
+              "start": 114912092,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003620069.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003601851.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920450,
+              "exon_id": "ENSE00003557756.1",
+              "start": 114920378,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114921362,
+              "exon_id": "ENSE00003483566.1",
+              "start": 114921338,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925699,
+              "exon_id": "ENSE00001937347.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114911590,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000470254.1",
+          "transcript_name": "TCF7L2-013"
+        },
+        {
+          "end": 114925720,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114912199,
+              "exon_id": "ENSE00001956336.1",
+              "start": 114912173,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00003610755.1",
+              "start": 114917780,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925720,
+              "exon_id": "ENSE00001938788.1",
+              "start": 114925615,
+              "strand": "+"
+            }
+          ],
+          "start": 114912173,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000480888.1",
+          "transcript_name": "TCF7L2-008"
+        },
+        {
+          "end": 114925346,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00001873811.1",
+              "start": 114917532,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925346,
+              "exon_id": "ENSE00001948593.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114917532,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000471569.1",
+          "transcript_name": "TCF7L2-005"
+        },
+        {
+          "end": 114925919,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114917828,
+              "exon_id": "ENSE00001863160.1",
+              "start": 114917796,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114918476,
+              "exon_id": "ENSE00003504867.1",
+              "start": 114918426,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114919751,
+              "exon_id": "ENSE00003580535.1",
+              "start": 114919679,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114920450,
+              "exon_id": "ENSE00003470392.1",
+              "start": 114920378,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925919,
+              "exon_id": "ENSE00001868602.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114917796,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000476887.1",
+          "transcript_name": "TCF7L2-009"
+        },
+        {
+          "end": 114925440,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114921362,
+              "exon_id": "ENSE00001810113.1",
+              "start": 114920990,
+              "strand": "+"
+            },
+            {
+              "chrom": "10",
+              "end": 114925440,
+              "exon_id": "ENSE00001946687.1",
+              "start": 114925314,
+              "strand": "+"
+            }
+          ],
+          "start": 114920990,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000494353.1",
+          "transcript_name": "TCF7L2-012"
+        }
+      ]
+    },
+    {
+      "chrom": "10",
+      "end": 114711634,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114710766,
+          "exon_id": "ENSE00001709114.1",
+          "start": 114710405,
+          "strand": "-"
+        },
+        {
+          "chrom": "10",
+          "end": 114711634,
+          "exon_id": "ENSE00001806689.1",
+          "start": 114711537,
+          "strand": "-"
+        }
+      ],
+      "gene_id": "ENSG00000233547.1",
+      "gene_name": "RP11-57H14.2",
+      "start": 114710405,
+      "strand": "-",
+      "transcripts": [
+        {
+          "end": 114711634,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114710766,
+              "exon_id": "ENSE00001709114.1",
+              "start": 114710405,
+              "strand": "-"
+            },
+            {
+              "chrom": "10",
+              "end": 114711634,
+              "exon_id": "ENSE00001806689.1",
+              "start": 114711537,
+              "strand": "-"
+            }
+          ],
+          "start": 114710405,
+          "strand": "-",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000369391.3",
+          "transcript_name": "RP11-57H14.2-001"
+        }
+      ]
+    },
+    {
+      "chrom": "10",
+      "end": 114747624,
+      "exons": [
+        {
+          "chrom": "10",
+          "end": 114747624,
+          "exon_id": "ENSE00001607677.1",
+          "start": 114747235,
+          "strand": "+"
+        }
+      ],
+      "gene_id": "ENSG00000227560.1",
+      "gene_name": "RP11-139K1.2",
+      "start": 114747235,
+      "strand": "+",
+      "transcripts": [
+        {
+          "end": 114747624,
+          "exons": [
+            {
+              "chrom": "10",
+              "end": 114747624,
+              "exon_id": "ENSE00001607677.1",
+              "start": 114747235,
+              "strand": "+"
+            }
+          ],
+          "start": 114747235,
+          "strand": "+",
+          "transcript_chrom": "10",
+          "transcript_id": "ENST00000420976.1",
+          "transcript_name": "RP11-139K1.2-001"
+        }
+      ]
+    }
+  ],
+  "lastPage": null
+}

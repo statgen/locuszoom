@@ -60,11 +60,19 @@
 
       <div class="row">
         <footer style="text-align: center;">
-          &copy; Copyright 2016 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+          &copy; Copyright 2017 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
         </footer>
       </div>
 
       <script type="text/javascript">
+
+        // What variant are we using to display a PheWAS?
+
+        var variantChrom = 10;
+        var variantPosition = 114758349;
+        var variantRefAlt = "C/T";
+        // Variants are expressed in format `10:114758349_C/T`;
+        var variant = [variantChrom, ":", variantPosition, "_", variantRefAlt].join("");
 
         // Genome base pairs static data
         var genome_data =  [
@@ -113,23 +121,23 @@
           apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "../staticdata/";
           dataSources
             .add("phewas", ["PheWASLZ", {
-                url: apiBase + "phewas_10_114758349_C-T.json",
+                url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",
                 params: { build: ["GRCh37", "GRCh38"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "genes-for-phewas.json", params: {source: 2} }])
-            .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "genes_10_123602136-123102136.json" }]);
+            .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "genes_" + String(variantChrom - 250000) + "-" + String(variantChrom + 250000) + ".json" }]);
         }
         // Static blobs (independent of host)
         dataSources
-          .add("variant", ["StaticJSON", [{ "x": 123352136, "y": 0 }, { "x": 123352136, "y": 1 }]])
+          .add("variant", ["StaticJSON", [{ "x": variantPosition, "y": 0 }, { "x": variantPosition, "y": 1 }]])
           .add("genome", ["StaticJSON", genome_data]);
 
         // Define the layout
         var mods = {
           state: {
-            variant: "10:114758349_C/T",
-            start: 123102136,
-            end: 123602136,
+            variant: variant,
+            start: variantPosition - 250000,
+            end: variantPosition + 250000,
             chr: 10
           }
         };
@@ -140,7 +148,7 @@
           id: "variant",
           type: "orthogonal_line",
           orientation: "vertical",
-          offset: 123352136,
+          offset: variantPosition,
           style: {
             "stroke": "#FF3333",
             "stroke-width": "2px",
@@ -150,7 +158,7 @@
 
         // Generate the plot
         var plot = LocusZoom.populate("#plot", dataSources, layout);
-        plot.panels.phewas.setTitle("Variant 10:123352136 C/T");
+        plot.panels.phewas.setTitle("Variant" + variantChrom + ":" + String(variantPosition) + " C/T");
 
         // Function to load new PheWAS data into the plot
         function loadPheWAS(variant_tag){
