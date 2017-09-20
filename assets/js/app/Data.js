@@ -1,4 +1,4 @@
-/* global LocusZoom,Q */
+/* global d3,Q,LocusZoom */
 /* eslint-env browser */
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-console */
@@ -836,9 +836,12 @@ LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fiel
 };
 
 /**
-  Data source for GWAS (Manhattan plot) data served from JSON files
-  Expected request format: `${url}${phenotype}.json`
-  Expected example response schema:
+ * Data source for GWAS (Manhattan plot) data served from external JSON files
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * Expected request format: `${url}${phenotype}.json`
+ * Expected example response schema:
   {
     variant_bins: [
       chrom: ${chromosome_label_string},

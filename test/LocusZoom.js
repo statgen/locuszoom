@@ -348,7 +348,7 @@ describe("LocusZoom Core", function(){
                 var layout = { scale: "foo" };
                 assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), "foo");
                 assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { foo: "bar" }), "foo");
-                var layout = { scale: 17 };
+                layout = { scale: 17 };
                 assert.equal(LocusZoom.resolveScalableParameter(layout.scale, {}), 17);
                 assert.equal(LocusZoom.resolveScalableParameter(layout.scale, { foo: "bar" }), 17);
             });

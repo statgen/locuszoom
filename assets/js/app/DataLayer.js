@@ -302,11 +302,13 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
         return [+this.layout[axis].floor, +this.layout[axis].ceiling];
     }
-
+    
+    var extent;
+    
     // If the extent was generated and stored by field name in the data set then pass it right through.
     // If the stored value is a function then pass it the current axis layout and pass the result through.
     if (this.layout[axis].field && this.data && this.data.extents && typeof this.data.extents[this.layout[axis].field] !== "undefined"){
-        var extent = d3.extent(this.data.extents[this.layout[axis].field]);
+        extent = d3.extent(this.data.extents[this.layout[axis].field]);
         if (typeof this.data.extents[this.layout[axis].field] === "function"){
             extent = d3.extent(this.data.extents[this.layout[axis].field](this.layout[axis]));
         }        
@@ -315,7 +317,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     // If a field is defined for the axis and the data layer has data then generate the extent from the data set
     if (this.layout[axis].field && this.data && this.data.length){
-        var extent = d3.extent(this.data, function(d) {
+        extent = d3.extent(this.data, function(d) {
             var f = new LocusZoom.Data.Field(this.layout[axis].field);
             return +f.resolve(d);
         }.bind(this));
