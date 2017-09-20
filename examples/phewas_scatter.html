@@ -112,7 +112,7 @@
             .add("phewas", ["PheWASLZ", {
                 // TODO: This source is currently development-only
                 url: "https://portaldev.sph.umich.edu/" + "api_internal_dev/v1/statistic/phewas/",
-                params: { build: ["GRCh37", "GRCh38"] }
+                params: { build: ["GRCh37"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
             .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
@@ -122,7 +122,7 @@
           dataSources
             .add("phewas", ["PheWASLZ", {
                 url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",
-                params: { build: ["GRCh37", "GRCh38"] }
+                params: { build: ["GRCh37"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "genes-for-phewas.json", params: {source: 2} }])
             .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "genes_" + String(variantChrom - 250000) + "-" + String(variantChrom + 250000) + ".json" }]);
