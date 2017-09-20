@@ -363,7 +363,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     id_field: "{{namespace[phewas]}}id",
     fields: ["{{namespace[phewas]}}id", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}trait_group", "{{namespace[phewas]}}trait_label"],
     x_axis: {
-        field: "{{namespace[phewas]}}x",
+        field: "{{namespace[phewas]}}x",  // Synthetic/derived field added by `category_scatter` layer
         category_field: "{{namespace[phewas]}}trait_group"
     },
     y_axis: {
@@ -386,8 +386,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        // TODO: Fix pvalue once api endpoint returns raw untransformed number
-        html: "<div><strong>{{{{namespace[phewas]}}trait_label}}</strong></div><div>P Value: <strong>{{{{namespace[phewas]}}log_pvalue}}</strong></div>"
+        html: "<div><strong>{{{{namespace[phewas]}}trait_label}}</strong></div><div>P Value: <strong>{{{{namespace[phewas]}}log_pvalue|logtoscinotation}}</strong></div>"
     },
     behaviors: {
         onmouseover: [

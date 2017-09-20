@@ -484,12 +484,13 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
      * @private
      */
     _prepareData: function() {
-        // Because of this intended use case, we will also silently drop any records that do not provide a trait group
-        //   that can be used for categorization
-        // TODO: Revisit assumption! This logic may go better in the category scatter plot post-fetch ops
-
         var xField = this.layout.x_axis.field || "x";
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         var category_field = this.layout.x_axis.category_field;
+        if (!category_field) {
+            throw "Layout for " + this.layout.id + " must specify category_field";
+        }
+        // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
         var sourceData = this.data
             .sort(function(a, b) {
                 var ak = a[category_field];
@@ -498,7 +499,9 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
                 var bv = bk.toString ? bk.toString().toLowerCase() : bk;
                 return (av === bv) ? 0 : (av < bv ? -1 : 1);});
         sourceData.forEach(function(d, i){
-            d[xField] = i;
+            // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
+            //   specify plotting positions. If a point is missing this field, fill in a synthetic value.
+            d[xField] = d[xField] || i;
         });
         return sourceData;
     },
@@ -510,12 +513,9 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
      * @returns {Object} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
     _generateCategoryBounds: function() {
-        // Find all unique category groups represented in the API payload, and update the layout accordingly
-        // TODO: API may return null values; add placeholder category label?
-
-        // TODO: all things that need trait group
+        // TODO: API may return null values in category_field; should we add placeholder category label?
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         var category_field = this.layout.x_axis.category_field;
-
         var xField = this.layout.x_axis.field || "x";
         var uniqueCategories = {};
         this.data.forEach(function(item) {
@@ -529,11 +529,10 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         // Construct a color scale with a bunch of colors, that spreads values out a bit
         // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
         var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
-        var colors = color_scale().range().splice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
+        var colors = color_scale().range().slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
 
         this.layout.color.parameters.categories = categoryNames;
         this.layout.color.parameters.values = colors;
-
         return uniqueCategories;
     },
     /**
@@ -547,25 +546,23 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
             var bounds = categoryBounds[category];
             var diff = bounds[1] - bounds[0];
             var center = bounds[0] + (diff !== 0 ? diff: bounds[0]) / 2;  // Center tick under one or many elements as appropriate
-            // TODO: Add custom orie/styling per tick
+            // TODO: Incorporate the tick mark customization from ChrisC's manhattan plot PR, or some general variation thereof
             ticks.push({
                 x: center,
                 text: category,
                 style: {
-                    "fill": "#393b79",  // TODO: fill in colors correctly
+                    "fill": "#393b79",
                     "font-weight": "bold",
                     "font-size": "11px",
                     "text-anchor": "start"
                 },
                 transform: "rotate(50)"
-            }); // TODO: Is this label specific enough?
+            });
         });
         this.parent.layout.axes.x.ticks = ticks;
-
     },
 
     applyCustomDataMethods: function() {
-        //TODO: Have layout validation check for presence of a `category_field` as additional required property
         this.data = this._prepareData();
         var uniqueCategories = this._generateCategoryBounds();
         this._generateXTicks(uniqueCategories);
