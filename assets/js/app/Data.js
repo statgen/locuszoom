@@ -830,7 +830,7 @@ LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
 }, "PheWASLZ");
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
     var build = this.params.build;
-    if (!build) {
+    if (!build || !Array.isArray(build)) {
         throw ["Data source", this.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
     }
     var url = [
