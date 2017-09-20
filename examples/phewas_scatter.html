@@ -181,9 +181,10 @@
         // Function to load new PheWAS data into the plot
         function loadPheWAS(variant_tag){
           var variant = variant_tag.split("_");
+          var vid = variant[0] + ":" + variant[1] + "_" + variant[2] + "/" + variant[3];
           var locus = +variant[1];
           var state = {
-              variant: variant_tag,
+              variant: vid,
               start: (locus - 250000),
               end: (locus + 250000),
               chr: +variant[0]
