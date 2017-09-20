@@ -156,9 +156,23 @@
           }
         });
 
+        // Modify the tooltips for PheWAS result data layer points to contain more data. The fields in this sample
+        //   tooltip are specific to the LZ-Portal API, and are not guaranteed to be in other PheWAS datasources.
+        var phewas_layer = layout.panels[0].data_layers[1];
+        // Tell the layer to also fetch some special fields; otherwise the datasource will hide this info (TODO)
+        phewas_layer.fields.push("phewas:pmid", "phewas:analysis");
+        phewas_layer.tooltip.html = [
+            "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
+            "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
+            "<strong>P-value:</strong> {{phewas:log_pvalue|logtoscinotation|htmlescape}}<br>",
+            "{{#if phewas:pmid}} {{#if phewas:analysis}}",
+                '<strong>Study:</strong> <a href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid}}">{{phewas:analysis|htmlescape}}</a>',
+            "{{/if}} {{/if}}"
+        ].join("");
+
         // Generate the plot
         var plot = LocusZoom.populate("#plot", dataSources, layout);
-        plot.panels.phewas.setTitle("Variant" + variantChrom + ":" + String(variantPosition) + " C/T");
+        plot.panels.phewas.setTitle("Variant " + variantChrom + ":" + String(variantPosition) + " " + variantRefAlt);
 
         // Function to load new PheWAS data into the plot
         function loadPheWAS(variant_tag){
