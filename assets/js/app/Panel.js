@@ -911,12 +911,6 @@ LocusZoom.Panel.prototype.render = function(){
         // Finalize Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"]).range(ranges[axis]);
-        // Ticks
-        if (this.layout.axes[axis].ticks){
-            this[axis + "_ticks"] = this.generateCustomTicks(this.layout.axes[axis]);
-        } else {
-            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
-        }
 
         // Render
         this.renderAxis(axis);
@@ -971,46 +965,71 @@ LocusZoom.Panel.prototype.render = function(){
     return this;
 };
 
-// Generate a chart-consumable ticks array from an arbitrary custom layout ticks definition.
-// Will pass through arrays but parse objects that invoke scale functions to generate ticks
-// from a data set (e.g. generating chromosome ticks for a GWAS manhattan plot).
-LocusZoom.Panel.prototype.generateCustomTicks = function(axis_layout){
-    var ticks = [];
-    var group_padding = parseInt(axis_layout.group_padding) || 0;
-    if (Array.isArray(axis_layout.ticks)){
-        ticks = axis_layout.ticks;
-    } else if (typeof axis_layout.ticks === "object" && typeof axis_layout.ticks.data === "string"){
-        // Look for data to inform tick generation on child data layers where the key on the
-        // data layer "data" object matches the "data" string defined in the tick layout object
-        var data = {};
-        this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
-            data = this.data_layers[data_layer_id].data[axis_layout.ticks.data] || data;
-        }.bind(this));
-        // Loop through data generating a fully-formed tick for each element in order
-        Object.keys(data).forEach(function(key){
-            var x = (data[key].index * group_padding) + data[key].start_position;
-            if (data[key].extent){
-                x += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
-            }
-            var tick = {
-                x: x,
-                text: key
-            };
-            if (axis_layout.ticks.style){ tick.style = LocusZoom.Layouts.merge({}, axis_layout.ticks.style); }
-            if (axis_layout.ticks.transform){ tick.transform = axis_layout.ticks.transform; }
-            if (axis_layout.ticks.color){
-                tick.style = tick.style || {};
-                tick.style.fill = LocusZoom.resolveScalableParameter(axis_layout.ticks.color, data[key]);
-            }
-            ticks.push(tick);
-        });
+/**
+ * Generate an array of ticks for an axis
+ * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
+ * @returns {(Number[]|Object[]}
+ *   An array of numbers: interpreted as an array of axis value offsets for positioning.
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.Panel.prototype.generateTicks = function(axis){
+
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (this.layout.axes[axis].ticks){
+        var layout = this.layout.axes[axis];
+        var group_padding = parseInt(layout.group_padding) || 0;
+        // Pass arrays right through
+        if (Array.isArray(layout.ticks)){
+            return layout.ticks;
+        }
+        // If the layout defines an object with a 'data' attribute then attempt to
+        // find a matching object on any of the child data layers. Use the first one
+        // found to drive the generation of a ticks array.
+        if (typeof layout.ticks === "object" && typeof layout.ticks.data === "string"){
+            var data = {};
+            this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
+                data = this.data_layers[data_layer_id].data[layout.ticks.data] || data;
+            }.bind(this));
+            // Loop through data generating a fully-formed tick for each element in order
+            var ticks = [];
+            Object.keys(data).forEach(function(key){
+                var x = (data[key].index * group_padding) + data[key].start_position;
+                if (data[key].extent){
+                    x += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
+                }
+                var tick = {
+                    x: x,
+                    text: key
+                };
+                if (layout.ticks.style){ tick.style = LocusZoom.Layouts.merge({}, layout.ticks.style); }
+                if (layout.ticks.transform){ tick.transform = layout.ticks.transform; }
+                if (layout.ticks.color){
+                    tick.style = tick.style || {};
+                    tick.style.fill = LocusZoom.resolveScalableParameter(layout.ticks.color, data[key]);
+                }
+                ticks.push(tick);
+            });
+            return ticks;
+        }
     }
-    return ticks;
+
+    // Attempt to generate ticks from the extent
+    if (this[axis + "_extent"]){
+        return LocusZoom.prettyTicks(this[axis + "_extent"], "both");
+    }
+
+    return [];
+
 };
 
 /**
- * Render ticks for a particular axis
- * @param {('x'|'y1'|'y2')} axis The identifier of the axes
+ * Render a particular axis (draw line / ticks / label, set mouse behaviors)
+ * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
  * @returns {LocusZoom.Panel}
  */
 LocusZoom.Panel.prototype.renderAxis = function(axis){
@@ -1055,6 +1074,9 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
             label_rotate: -90
         }
     };
+
+    // Generate Ticks
+    this[axis + "_ticks"] = this.generateTicks(axis);
 
     // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
     var ticksAreAllNumbers = (function(ticks){
