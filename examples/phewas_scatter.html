@@ -11,7 +11,7 @@
     <script src="../locuszoom.app.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
     
-    <title>LocusZoom.js ~ PheWAS (Scatter) Example</title>
+    <title>LocusZoom.js ~ PheWAS Demo</title>
 
     <style>
       body {
@@ -22,6 +22,12 @@
         max-width: 100%;
         box-sizing: border-box;
       }
+      code {
+        font-size: 1em;
+        padding: 3px;
+        border-radius: 3px;
+        background-color: rgba(0,0,0,0.05);
+      }
     </style>
 
   </head>
@@ -29,32 +35,92 @@
   <body>
     <div class="container">
 
-      <h1 style="margin-top: 1em;"><strong>Locuszoom.js</strong></h1>
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
-      <h3 style="float: left; color: #777">PheWAS (Scatter) Example</h3>
-      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+      <h3 style="color: #777">PheWAS Demonstration</h3>
 
-      <hr style="clear: both;">
+      <p>
+        A PheWAS visualization displays association p-values between a given genetic variant and multiple phenotypes. 
+        In this demonstration, we are showing single variant association statistics from multiple publicly available meta-analyses of genome-wide association studies (GWAS), stored locally in a database at the Center for Statistical Genetics (University of Michigan.)
+        For the purposes of the demonstration, we chose reasonable groupings of traits into categories, but any arbitrary grouping is possible. 
+      </p>
 
-      <p>This example shows a basic approach to visualizing Phenome-Wide Association Study (PheWAS) results with a scatter plot. Data is sampled from the <a href="https://www.michigangenomics.org/genetic_data.html" target="_blank">Michigan Genomics Initiative</a> data set. Phenotypes are generated from EHR data by combining ICD-9 codes and are groups into broad categories to be listed as custom x-axis ticks. Otherwise points are plotted along the y-axis by their p-value, similar to how a "standard" LocusZoom plot would look.<p>
-      <p>This plot also shows the LocusZoom.js label system, which renders label annotations on scatter points with logic to keep labels from running over each other. It also features a "genome legend" panel to provide genome-wide context for the variant cross-section represented by the data currently shown in the plot.</p>
-      <p>Use the links to the left to see a selection of different loci with their corresponding PheWAS results.</p>
+      <p>
+        LocusZoom.js requires a ReST API endpoint to retrieve data for the plot. The format of the response is documented <a target=_blank href='http://portaldev.sph.umich.edu/docs/api/v1/index.html#phewas-all-available-results-for-a-given-variant'>in our API documentation</a>, with a brief synopsis also included below. 
+      </p>
+
+      <p>
+        Example code for creating the plot can be found on the source for this page, and also exists within the <a target=_blank href='https://github.com/statgen/locuszoom/blob/master/examples/phewas_scatter.html'>locuszoom.js repository</a>.
+      </p>
+
+      <h3 style="color: #777">Plot</h3>
 
       <div class="row">
         <div class="two columns">
-          <h4>Genes</h4>
-          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;">
-            <li><a href="javascript:void(0);" onclick="loadPheWAS('10_123352136_C_T')"><strong>FGFR2</strong><br><small>(Breast Cancer)</small></a></li>
-            <li><a href="javascript:void(0);" onclick="loadPheWAS('4_111704536_A_T')"><strong>PITX2</strong><br><small>(Atrial Fibrillation)</small></a></li>
-            <li><a href="javascript:void(0);" onclick="loadPheWAS('10_114758349_C_T')"><strong>TCF7L2</strong><br><small>(Type 2 Diabetes)</small></a></li>
-            <li><a href="javascript:void(0);" onclick="loadPheWAS('1_169519049_T_C')"><strong>Factor 5</strong><br><small>(Thrombosis)</small></a></li>
-            <li><a href="javascript:void(0);" onclick="loadPheWAS('19_45411941_T_C')"><strong>APOE</strong><br><small>(Dementia)</small></a></li>
+          <h5>Examples</h5>
+          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;list-style-type: none">
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('10_114758349_C_T')"><strong>10:114758349_C/T (TCF7L2)</strong></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('11_92690661_T_C')"><strong>11:92690661_T/C (MTNR1B)</strong></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('2_227099180_C_T')"><strong>2:227099180_C/T (IRS1)</strong></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('19_45422846_G_A')"><strong>19:45422846_G/A (APOE)</strong></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('12_112591686_G_A')"><strong>12:112591686_G/A (TRAFD1)</strong></a></li>
+            <li><a href="javascript:void(0);" onclick="loadPheWAS('11_61552680_G_T')"><strong>11:61552680_G/T (FADS3)</strong></a></li>
           </ul>
         </div>
         <div class="ten columns">
           <div id="plot"></div>
         </div>
       </div>
+
+      <h3 style="color: #777">API</h3>
+
+      <p>
+        Full documentation/examples are available <a target=_blank href='http://portaldev.sph.umich.edu/docs/api/v1/index.html#phewas-all-available-results-for-a-given-variant'>on our website</a>. 
+      </p>
+
+      <p>
+        LocusZoom.js will fire off an API request containing 3 parameters: <code>build</code>, <code>filter</code>, and <code>format</code>. 
+      </p>
+
+      <p><code>build</code> specifies the genome build for the given variant. An example would be 'GRCh37' or 'GRCh38'. The trailing version information (e.g. 'GRCh37p13.3') will not be present.</p>
+      <p><code>filter</code> specifies the query which contains the variant of interest. An example filter string would be: <code>variant eq '11:61552680_G/T'</code>. </p>
+      <p><code>format</code> specifies the format of the response. For PheWAS, it is always <code>objects</code>, which is an array of objects, each object containing the result for one association between variant and phenotype.</p>
+
+      <p>The response must be in the following format:</p> 
+      <pre>
+        <code>
+{
+  "data": [
+    {
+      "analysis": "DIAGRAM 1000G T2D meta-analysis",
+      "build": "GRCh37",
+      "chromosome": "10",
+      "id": 45,
+      "log_pvalue": 107.032,
+      "pmid": "28566273",
+      "position": 114758349,
+      "ref_allele": "C",
+      "ref_allele_freq": null,
+      "score_test_stat": null,
+      "study": "DIAGRAM",
+      "tech": null,
+      "trait": "T2D",
+      "trait_group": "Metabolic disease",
+      "trait_label": "Type 2 diabetes",
+      "variant": "10:114758349_C/T"
+    }
+  ],
+  "lastPage": null,
+  "meta": {
+    "build": [
+      "GRCh37"
+    ]
+  }
+} 
+        </code>
+      </pre>
+
+      <span style="color: red">TODO: talk about required fields, optional fields, tooltips just show an example of using extra fields, etc etc</span>
 
       <hr>
 
