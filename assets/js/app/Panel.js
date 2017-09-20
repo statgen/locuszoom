@@ -1003,7 +1003,7 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
                 if (typeof layout.ticks.field === "string"){
                     x = data[key][layout.ticks.field];
                 } else {
-                    var x_attributes = ['x', 'start', 'position', 'start_position'];
+                    var x_attributes = ["x", "start", "position", "start_position"];
                     x_attributes.forEach(function(attribute){
                         if (isNaN(x) && !isNaN(data[key][attribute])){ x = data[key][attribute]; }
                     });

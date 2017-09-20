@@ -274,8 +274,8 @@ describe("LocusZoom.Panel", function(){
             it("Should pass through any 'ticks' array explicitly defined in the layout", function(){
                 var test_ticks = [
                     [1, 2, 3, 4],
-                    ['a', 'b', 'c'],
-                    [{foo:'bar'}, {foo:'baz'}],
+                    ["a", "b", "c"],
+                    [{foo:"bar"}, {foo:"baz"}],
                     [null, null]
                 ];
                 test_ticks.forEach(function(ticks){
@@ -291,7 +291,7 @@ describe("LocusZoom.Panel", function(){
                         tickB: { start: 24 },
                         tickC: { position: 72 }
                     }
-                }
+                };
                 var expected_ticks = [
                     { x: 8, text: "tickA"},
                     { x: 24, text: "tickB"},
@@ -308,7 +308,7 @@ describe("LocusZoom.Panel", function(){
                         tickB: { asdf: 7 },
                         tickC: { asdf: 19 }
                     }
-                }
+                };
                 var expected_ticks = [
                     { x: 3, text: "tickA"},
                     { x: 7, text: "tickB"},
@@ -326,7 +326,7 @@ describe("LocusZoom.Panel", function(){
                         tickB: { x: 4 },
                         tickC: { x: 6 }
                     }
-                }
+                };
                 var expected_ticks = [
                     { x: 2, text: "tickA"},
                     { x: 14, text: "tickB"},
@@ -343,7 +343,7 @@ describe("LocusZoom.Panel", function(){
                         tickB: { x: 20, extent: [0,32] },
                         tickC: { x: 50, extent: [0,91] }
                     }
-                }
+                };
                 var expected_ticks = [
                     { x: 10, text: "tickA"},
                     { x: 36, text: "tickB"},
