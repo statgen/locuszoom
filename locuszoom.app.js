@@ -5380,7 +5380,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         // Binned variants
         var bins_selection = this.svg.group
             .selectAll("g.lz-data_layer-manhattan")
-            .data(this.data.variant_bins);
+            .data(this.data.variant_bins, function(d){ return d.chrom + d.pos.toString(); });
         bins_selection.enter()
             .append("g")
             .attr("class", "lz-data_layer-manhattan");
@@ -5415,7 +5415,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         // Unbinned variants
         var variants_selection = this.svg.group
             .selectAll("circle.lz-data_layer-manhattan")
-            .data(this.data.unbinned_variants);
+            .data(this.data.unbinned_variants, function(d){ return d[this.layout.id_field]; }.bind(this));
         var fill = function(d){
             return LocusZoom.resolveScalableParameter(this.layout.color, d, chromosomes);
         }.bind(this);
@@ -10509,7 +10509,6 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
     // Parse an explicit 'ticks' attribute in the axis layout
     if (this.layout.axes[axis].ticks){
         var layout = this.layout.axes[axis];
-        var group_padding = parseInt(layout.group_padding) || 0;
         // Pass arrays right through
         if (Array.isArray(layout.ticks)){
             return layout.ticks;
@@ -10524,11 +10523,27 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
             }.bind(this));
             // Loop through data generating a fully-formed tick for each element in order
             var ticks = [];
-            Object.keys(data).forEach(function(key){
-                var x = (data[key].index * group_padding) + data[key].start_position;
-                if (data[key].extent){
+            var group_padding = parseInt(layout.group_padding) || 0;
+            Object.keys(data).forEach(function(key, idx){
+                // Start by trying to get the base x value from a layout-defined field or few different common attribute names
+                var x = NaN;
+                if (typeof layout.ticks.field === "string"){
+                    x = data[key][layout.ticks.field];
+                } else {
+                    var x_attributes = ["x", "start", "position", "start_position"];
+                    x_attributes.forEach(function(attribute){
+                        if (isNaN(x) && !isNaN(data[key][attribute])){ x = data[key][attribute]; }
+                    });
+                }
+                if (isNaN(x)){ return; }
+                // Shift to account for group padding
+                var tick_index = typeof data[key].index === "number" ? data[key].index : idx;
+                x += (tick_index * group_padding);
+                // If the tick defines an extent then shift the x to the center of it
+                if (Array.isArray(data[key].extent) && data[key].extent.length === 2){
                     x += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
                 }
+                // Build the tick and add it to the ticks array
                 var tick = {
                     x: x,
                     text: key

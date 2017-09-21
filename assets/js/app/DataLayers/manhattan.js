@@ -50,7 +50,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         // Binned variants
         var bins_selection = this.svg.group
             .selectAll("g.lz-data_layer-manhattan")
-            .data(this.data.variant_bins);
+            .data(this.data.variant_bins, function(d){ return d.chrom + d.pos.toString(); });
         bins_selection.enter()
             .append("g")
             .attr("class", "lz-data_layer-manhattan");
@@ -85,7 +85,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         // Unbinned variants
         var variants_selection = this.svg.group
             .selectAll("circle.lz-data_layer-manhattan")
-            .data(this.data.unbinned_variants);
+            .data(this.data.unbinned_variants, function(d){ return d[this.layout.id_field]; }.bind(this));
         var fill = function(d){
             return LocusZoom.resolveScalableParameter(this.layout.color, d, chromosomes);
         }.bind(this);
