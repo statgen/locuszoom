@@ -479,9 +479,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
     constructorFun.prototype = base;
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
-        /**
-         * @member {String} LocusZoom.Data.Source.SOURCENAME
-         */
+        /** @member {String} LocusZoom.Data.Source.SOURCENAME */
         constructorFun.SOURCE_NAME = uniqueName;
         LocusZoom.KnownDataSources.add(constructorFun);
     }
@@ -822,7 +820,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * @public
  * @class
  * @augments LocusZoom.Data.Source
- * @param {String} init.build This datasource expects to be provided the name of the genome build that will be used to
+ * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
  *   provide pheWAS results for this position. Note positions may not translate between builds.
  */
 LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
@@ -830,7 +828,7 @@ LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
 }, "PheWASLZ");
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
     var build = this.params.build;
-    if (!build || !Array.isArray(build)) {
+    if (!build || !Array.isArray(build) || !build.length) {
         throw ["Data source", this.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
     }
     var url = [
