@@ -480,6 +480,42 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     return this.panels[panel.id];
 };
 
+
+/**
+ * Clear all state, tooltips, and other persisted data associated with one (or all) panel(s) in the plot
+ *
+ * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
+ *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
+ *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+ *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+ *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+ * @returns {LocusZoom.Plot}
+ */
+LocusZoom.Plot.prototype.clearPanelData = function(panelId, mode) {
+    mode = mode || "wipe";
+
+    // TODO: Add unit tests for this method
+    var panelsList;
+    if (panelId) {
+        panelsList = [panelId];
+    } else {
+        panelsList = Object.keys(this.panels);
+    }
+    var self = this;
+    panelsList.forEach(function(pid) {
+        self.panels[pid].data_layer_ids_by_z_index.forEach(function(dlid){
+            var layer = self.panels[pid].data_layers[dlid];
+            layer.destroyAllTooltips();
+
+            delete self.layout.state[pid + "." + dlid];
+            if(mode === "reset") {
+                layer.setDefaultState();
+            }
+        });
+    });
+    return this;
+};
+
 /**
  * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
  * @param {String} id
@@ -494,10 +530,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
     this.panel_boundaries.hide();
 
     // Destroy all tooltips and state vars for all data layers on the panel
-    this.panels[id].data_layer_ids_by_z_index.forEach(function(dlid){
-        this.panels[id].data_layers[dlid].destroyAllTooltips();
-        delete this.layout.state[id + "." + dlid];
-    }.bind(this));
+    this.clearPanelData(id);
 
     // Remove all panel-level HTML overlay elements
     this.panels[id].loader.hide();

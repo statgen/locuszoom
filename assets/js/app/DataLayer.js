@@ -38,20 +38,12 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
     if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
 
-    // Define state parameters specific to this data layer
-    if (this.parent){
-        this.state = this.parent.state;
-        this.state_id = this.parent.id + "." + this.id;
-        this.state[this.state_id] = this.state[this.state_id] || {};
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
-        }.bind(this));
-    } else {
-        /** @member {Object} */
-        this.state = {};
-        /** @member {String} */
-        this.state_id = null;
-    }
+    /** @member {Object} */
+    this.state = {};
+    /** @member {String} */
+    this.state_id = null;
+
+    this.setDefaultState();
 
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
@@ -71,6 +63,25 @@ LocusZoom.DataLayer = function(layout, parent) {
     
     return this;
 
+};
+
+/**
+ * Define default state that should get tracked during the lifetime of this layer.
+ *
+ * In some special custom usages, it may be useful to completely reset a panel (eg "click for
+ *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
+ *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
+ */
+LocusZoom.DataLayer.prototype.setDefaultState = function() {
+    // Define state parameters specific to this data layer
+    if (this.parent){
+        this.state = this.parent.state;
+        this.state_id = this.parent.id + "." + this.id;
+        this.state[this.state_id] = this.state[this.state_id] || {};
+        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
+        }.bind(this));
+    }
 };
 
 /**
