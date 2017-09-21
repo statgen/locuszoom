@@ -22,11 +22,20 @@
         max-width: 100%;
         box-sizing: border-box;
       }
+      pre {
+        overflow: auto;
+        background-color: #f1f1f1;
+        border-radius: 3px;
+        font-size: 1em;
+      }
       code {
         font-size: 1em;
-        padding: 3px;
-        border-radius: 3px;
-        background-color: rgba(0,0,0,0.05);
+      }
+      .spacer {
+        padding: 0px 15px 0px 15px;
+      }
+      .required {
+        color: red;
       }
     </style>
 
@@ -46,7 +55,7 @@
       </p>
 
       <p>
-        LocusZoom.js requires a ReST API endpoint to retrieve data for the plot. The format of the response is documented <a target=_blank href='http://portaldev.sph.umich.edu/docs/api/v1/index.html#phewas-all-available-results-for-a-given-variant'>in our API documentation</a>, with a brief synopsis also included below. 
+        LocusZoom.js requires a REST API endpoint to retrieve data for the plot. The format of the response is documented <a target=_blank href='http://portaldev.sph.umich.edu/docs/api/v1/index.html#phewas-all-available-results-for-a-given-variant'>in our API documentation</a>, with a brief synopsis also included below.
       </p>
 
       <p>
@@ -86,17 +95,22 @@
       <p><code>filter</code> specifies the query which contains the variant of interest. An example filter string would be: <code>variant eq '11:61552680_G/T'</code>. </p>
       <p><code>format</code> specifies the format of the response. For PheWAS, it is always <code>objects</code>, which is an array of objects, each object containing the result for one association between variant and phenotype.</p>
 
+      <p>Here is an example request that LocusZoom.js will generate:</p>
+
+      <pre><div class="spacer">
+http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh37&format=objects&filter=variant eq '10:114758349_C/T'
+      </div></pre>
+
       <p>The response must be in the following format:</p> 
-      <pre>
-        <code>
+      <pre><div class="spacer">
 {
-  "data": [
+  <span class="required">"data"</span>: [
     {
       "analysis": "DIAGRAM 1000G T2D meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
       "id": 45,
-      "log_pvalue": 107.032,
+      <span class="required">"log_pvalue"</span>: 107.032,
       "pmid": "28566273",
       "position": 114758349,
       "ref_allele": "C",
@@ -105,22 +119,25 @@
       "study": "DIAGRAM",
       "tech": null,
       "trait": "T2D",
-      "trait_group": "Metabolic disease",
-      "trait_label": "Type 2 diabetes",
-      "variant": "10:114758349_C/T"
+      <span class="required">"trait_group"</span>: "Metabolic disease",
+      <span class="required">"trait_label"</span>: "Type 2 diabetes",
+      <span class="required">"variant"</span>: "10:114758349_C/T"
     }
   ],
-  "lastPage": null,
-  "meta": {
-    "build": [
+  <span class="required">"lastPage"</span>: null,
+  <span class="required">"meta"</span>: {
+    <span class="required">"build"</span>: [
       "GRCh37"
     ]
   }
 } 
-        </code>
-      </pre>
+      </div></pre>
 
-      <span style="color: red">TODO: talk about required fields, optional fields, tooltips just show an example of using extra fields, etc etc</span>
+      <p>
+        Fields in <span class="required">red</span> above are required fields that must be present in the response.
+        Extra fields can be included if desired (for example, <code>pmid</code> for the pubmed ID of the paper/analysis.)
+        These extra fields can be used in the tooltip or other locations. 
+      </p>
 
       <hr>
 
