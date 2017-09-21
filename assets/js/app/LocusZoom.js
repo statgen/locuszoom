@@ -712,7 +712,7 @@ LocusZoom.generateLoader = function(){
  * @param {Function} parent A parent class constructor that will be extended by the child class
  * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class
  * @param {Function} [new_constructor] An optional constructor function that performs additional setup. If omitted,
- *   just calls the parent constructor by default
+ *   just calls the parent constructor by default. Implementer must manage super calls when overriding the constructor.
  * @returns {Function} The constructor for the new child class
  */
 LocusZoom.subclass = function(parent, extra, new_constructor) {
@@ -729,7 +729,7 @@ LocusZoom.subclass = function(parent, extra, new_constructor) {
     Object.keys(extra).forEach(function(k) {
         Sub.prototype[k] = extra[k];
     });
-    Sub.prototype.constructor = parent;
+    Sub.prototype.constructor = Sub;
 
     return Sub;
 };

@@ -340,7 +340,84 @@ describe("LocusZoom Core", function(){
             });
         });
 
-        
-    });
+        describe("Subclassing", function () {
+            it("performs argument type checking and provides defaults", function() {
+                assert.equal(
+                    typeof LocusZoom.subclass(function() {}),
+                    "function"
+                );
+                assert.throws(
+                    LocusZoom.subclass.bind(null, {}, {}),
+                    /Parent must be a callable constructor/
+                );
+            });
+            it("will use a custom constructor function if provided", function() {
+                var Parent = function() {this.name = "parent";};
+                var Child = LocusZoom.subclass(Parent, {}, function() {this.name = "child";});
+                var instance = new Child();
+                assert.equal(instance.name, "child");
+            });
+            it("will defer to the parent constructor if a custom one is not provided", function() {
+                var Parent = function() {this.name = "parent";};
+                var Child = LocusZoom.subclass(Parent, { isChild: true });
+                var instance = new Child();
+                assert.equal(instance.name, "parent");
+                assert.equal(instance.isChild, true);
+            });
+            it("properly handles a child constructor with different args length from parent", function () {
+                var Parent = function(one, two) {
+                    this.one = one;
+                    this.two = two;
+                    this.name = "parent";
+                };
+                var Child = LocusZoom.subclass(
+                    Parent,
+                    { isChild: true },
+                    function(one, two, three) {
+                        Parent.apply(this, arguments);
+                        this.three = three;
+                    });
+                var instance = new Child("one", "two", "three");
+                assert.equal(instance.name, "parent");
+                assert.equal(instance.isChild, true);
+                assert.equal(instance.one, "one");
+                assert.equal(instance.two, "two");
+                assert.equal(instance.three, "three");
+            });
+            it("adds behaviors from constructors and/or overrides as appropriate", function() {
+                var Parent = function() {
+                    this.classname = "parent1";
+                    this.parentprop = "parent2";
+                };
+                Parent.prototype.someMethod = function() {return "parent3";};
+                Parent.prototype.overrideMe = function() {return "parent4";};
 
+                var Child = LocusZoom.subclass(
+                    Parent,
+                    {
+                        field: "child1",
+                        overrideMe: function() {return "child2";}
+                    },
+                    function() {
+                        // Implementer must manage super calls when overriding the constructor
+                        Parent.apply(this, arguments);
+                        this.classname="special";
+                    });
+                var instance = new Child();
+
+                assert.equal(instance.parentprop, "parent2");
+                assert.equal(instance.field, "child1");
+                assert.equal(instance.classname, "special");
+                assert.equal(instance.someMethod(), "parent3");
+                assert.equal(instance.overrideMe(), "child2");
+
+            });
+            it("will recognize instance fields before prototype ones", function() {
+                var Parent = function() {this.name = "parent";};
+                var Child = LocusZoom.subclass(Parent, {name: "child"});
+                var instance = new Child();
+                assert.equal(instance.name, "parent");
+            });
+        });
+    });
 });
