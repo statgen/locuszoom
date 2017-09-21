@@ -1040,10 +1040,11 @@ LocusZoom.DataLayers = (function() {
      * Register a new datalayer that inherits and extends basic behaviors from a known datalayer
      * @param {String} parent_name The name of the parent data layer whose behavior is to be extended
      * @param {String} name The name of the new datalayer to register
-     * @param {Object} overrides Object of properties and methods to combine with the prototype of the parent datalayer
+     * @param {Object} [overrides] Object of properties and methods to combine with the prototype of the parent datalayer
      * @returns {Function} The constructor for the new child class
      */
     obj.extend = function(parent_name, name, overrides) {
+        // TODO: Consider exposing additional constructor argument, if there is a use case for very granular extension
         overrides = overrides || {};
 
         var parent = datalayers[parent_name];
