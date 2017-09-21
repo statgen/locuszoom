@@ -386,7 +386,11 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "<div><strong>{{{{namespace[phewas]}}trait_label}}</strong></div><div>P Value: <strong>{{{{namespace[phewas]}}log_pvalue|logtoscinotation}}</strong></div>"
+        html: [
+            "<strong>Trait:</strong> {{{{namespace[phewas]}}trait_label|htmlescape}}<br>",
+            "<strong>Trait Category:</strong> {{{{namespace[phewas]}}trait_group|htmlescape}}<br>",
+            "<strong>P-value:</strong> {{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}<br>"
+        ].join("")
     },
     behaviors: {
         onmouseover: [
@@ -413,10 +417,10 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
             }
         },
         filters: [
-            {
-                field: "{{namespace[pheweb]}}log_pvalue",
+            {  // TODO: known issue where only first field gets labeled
+                field: "{{namespace[phewas]}}log_pvalue",
                 operator: ">=",
-                value: 5
+                value: 20
             }
         ],
         style: {
