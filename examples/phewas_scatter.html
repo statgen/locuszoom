@@ -10,7 +10,7 @@
     <script src="../locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="../locuszoom.app.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
-    
+
     <title>LocusZoom.js ~ PheWAS Demo</title>
 
     <style>
@@ -35,6 +35,9 @@
         padding: 0px 15px 0px 15px;
       }
       .required {
+        color: red;
+      }
+      .error {
         color: red;
       }
     </style>
@@ -75,6 +78,11 @@
             <li><a href="javascript:void(0);" onclick="loadPheWAS('12_112591686_G_A')"><strong>12:112591686_G/A (TRAFD1)</strong></a></li>
             <li><a href="javascript:void(0);" onclick="loadPheWAS('11_61552680_G_T')"><strong>11:61552680_G/T (FADS3)</strong></a></li>
           </ul>
+          <p>Or try jumping to a particular variant:</p>
+          <label for="">Variant</label>
+          <p id="error-variant" class="error" style="display: none">Invalid variant. Must be in chrom:pos_ref/alt format.</p>
+          <input id="input-variant" class="u-full-width" type="text" placeholder="12:111884608_T/C">
+          <button id="button-jump" class="button-primary">Jump</button>
         </div>
         <div class="ten columns">
           <div id="plot"></div>
@@ -277,6 +285,50 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
           plot.applyState(state);
           plot.clearPanelData(null, "reset");
         }
+
+        function showInvalidVariant() {
+          document.querySelector("#error-variant").style.display = "";
+        }
+
+        function hideInvalidVariant() {
+          document.querySelector("#error-variant").style.display = "none";
+        }
+
+        function checkVariant(variant) {
+          var [chrom,pos,ref,alt] = variant.split("_");
+          var alleles = ["A","C","G","T"];
+          if (!Number.isInteger(parseInt(pos))) { showInvalidVariant(); return false} 
+          else if (!alleles.includes(ref)) { showInvalidVariant(); return false }
+          else if (!alleles.includes(alt)) { showInvalidVariant(); return false }
+          else { return true; }
+        }
+
+        function jumpToVariant() {
+          var input_variant = document.querySelector("#input-variant");
+          if (input_variant) {
+            var jmp_variant = input_variant.value
+            if (jmp_variant) {
+              jmp_variant = jmp_variant.trim().replace("/","_").replace(":","_");
+            } else {
+              jmp_variant = input_variant.placeholder.trim().replace("/","_").replace(":","_")
+            }
+
+            if (checkVariant(jmp_variant)) {
+              hideInvalidVariant();
+              loadPheWAS(jmp_variant)
+            }
+          }
+        }
+
+        // Control to jump to any variant
+        document.querySelector("#button-jump").addEventListener("click",event => {
+          jumpToVariant()
+        })
+        document.querySelector("#input-variant").addEventListener("keyup",event => {
+          if (event.key == "Enter") {
+            jumpToVariant()
+          }
+        })
 
       </script>
 
