@@ -305,16 +305,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 }
             });
             // Render label groups
+            var self = this;
             this.label_groups = this.svg.group
-                .selectAll("g.lz-data_layer-scatter-label")
-                .data(filtered_data, function(d){ return d.id + "_label"; });
+                .selectAll("g.lz-data_layer-" + this.layout.type + "-label")
+                .data(filtered_data, function(d){ return d[self.layout.id_field]  + "_label"; });
             this.label_groups.enter()
                 .append("g")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-"+ this.layout.type + "-label");
             // Render label texts
             if (this.label_texts){ this.label_texts.remove(); }
             this.label_texts = this.label_groups.append("text")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-" + this.layout.type + "-label");
             this.label_texts
                 .text(function(d){
                     return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
@@ -341,7 +342,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             if (data_layer.layout.label.lines){
                 if (this.label_lines){ this.label_lines.remove(); }
                 this.label_lines = this.label_groups.append("line")
-                    .attr("class", "lz-data_layer-scatter-label");
+                    .attr("class", "lz-data_layer-" + this.layout.type + "-label");
                 this.label_lines
                     .style(data_layer.layout.label.lines.style || {})
                     .attr({
@@ -375,14 +376,14 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             
         // Generate main scatter data elements
         var selection = this.svg.group
-            .selectAll("path.lz-data_layer-scatter")
+            .selectAll("path.lz-data_layer-" + this.layout.type)
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
         // Create elements, apply class, ID, and initial position
         var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append("path")
-            .attr("class", "lz-data_layer-scatter")
+            .attr("class", "lz-data_layer-" + this.layout.type)
             .attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .attr("transform", "translate(0," + initial_y + ")");
 
