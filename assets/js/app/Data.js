@@ -403,7 +403,7 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
  *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
  *    by the datalayer. See `parseData` for usage.
  * @protected
- * @param {Object} x A response payload object
+ * @param {Object[]} x An array of response payload objects, each describing one record
  * @param {Array} fields
  * @param {Array} outnames
  * @param {Array} trans
@@ -416,6 +416,11 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
     var fieldFound = [];
     for (var k=0; k<fields.length; k++) { 
         fieldFound[k] = 0;
+    }
+
+    if (!x.length) {
+        // Do not attempt to parse records if there are no records, and bubble up an informative error message.
+        throw "No data found for specified query";
     }
     for (var i = 0; i < x.length; i++) {
         var record = {};
