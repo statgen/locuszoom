@@ -114,7 +114,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
 {
   <span class="required">"data"</span>: [
     {
-      "analysis": "DIAGRAM 1000G T2D meta-analysis",
+      "description": "DIAGRAM 1000G T2D meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
       "id": 45,
@@ -251,7 +251,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
         //   tooltip are specific to the LZ-Portal API, and are not guaranteed to be in other PheWAS datasources.
         var phewas_layer = layout.panels[0].data_layers[1];
         // Tell the layer to also fetch some special fields; otherwise the datasource will hide this info (TODO)
-        phewas_layer.fields.push("phewas:pmid", "phewas:analysis", "phewas:study");
+        phewas_layer.fields.push("phewas:pmid", "phewas:description", "phewas:study");
         phewas_layer.tooltip.html = [
             "<strong>Trait:</strong> {{phewas:trait_label|htmlescape}}<br>",
             "<strong>Trait Category:</strong> {{phewas:trait_group|htmlescape}}<br>",
@@ -260,8 +260,8 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
             "{{#if phewas:study}}",
               "<br><strong>Study:</strong> {{phewas:study|htmlescape}}<br>",
             "{{/if}}",
-            "{{#if phewas:pmid}} {{#if phewas:analysis}}",
-                '<strong>Analysis:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid}}">{{phewas:analysis|htmlescape}}</a>',
+            "{{#if phewas:pmid}} {{#if phewas:description}}",
+                '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid}}">{{phewas:description|htmlescape}}</a>',
             "{{/if}} {{/if}}"
         ].join("");
 
