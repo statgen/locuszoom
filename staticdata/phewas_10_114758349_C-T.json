@@ -1,9 +1,9 @@
 {
   "data": [
     {
-      "analysis": "DIAGRAM 1000G T2D meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "DIAGRAM 1000G T2D meta-analysis",
       "id": 45,
       "log_pvalue": 107.032,
       "pmid": "28566273",
@@ -19,9 +19,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "DIAGRAM 1000G T2D adjusted for BMI meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "DIAGRAM 1000G T2D adjusted for BMI meta-analysis",
       "id": 46,
       "log_pvalue": 93.4949,
       "pmid": "28566273",
@@ -37,9 +37,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "DIAGRAM v3 T2D meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "DIAGRAM v3 T2D meta-analysis",
       "id": 44,
       "log_pvalue": 64.2596,
       "pmid": "22885922",
@@ -55,9 +55,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Fasting proinsulin meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Fasting proinsulin meta-analysis",
       "id": 35,
       "log_pvalue": 17.4579,
       "pmid": "21873549",
@@ -73,9 +73,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Fasting glucose meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Fasting glucose meta-analysis",
       "id": 31,
       "log_pvalue": 12.0202,
       "pmid": "22581228",
@@ -91,9 +91,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis, all ancestries",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis, all ancestries",
       "id": 52,
       "log_pvalue": 11.9574,
       "pmid": "25673413",
@@ -109,9 +109,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis, European ancestry",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis, European ancestry",
       "id": 51,
       "log_pvalue": 10.9539,
       "pmid": "25673413",
@@ -127,9 +127,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis, men only",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis, men only",
       "id": 49,
       "log_pvalue": 10.4096,
       "pmid": "25673413",
@@ -145,9 +145,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "2-hr glucose (adjusted for BMI) meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "2-hr glucose (adjusted for BMI) meta-analysis",
       "id": 34,
       "log_pvalue": 7.58939,
       "pmid": "20081857",
@@ -163,9 +163,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Fasting insulin meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Fasting insulin meta-analysis",
       "id": 32,
       "log_pvalue": 5.31776,
       "pmid": "22581228",
@@ -181,9 +181,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis, women only",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis, women only",
       "id": 50,
       "log_pvalue": 4.4011,
       "pmid": "25673413",
@@ -199,9 +199,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "HbA1c meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "HbA1c meta-analysis",
       "id": 33,
       "log_pvalue": 3.72331,
       "pmid": "20858683",
@@ -217,9 +217,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis",
       "id": 24,
       "log_pvalue": 3.62342,
       "pmid": "20935630",
@@ -235,9 +235,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "AUC insulin / AUC glucose during OGTT",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "AUC insulin / AUC glucose during OGTT",
       "id": 57,
       "log_pvalue": 3.08938,
       "pmid": "24699409",
@@ -253,9 +253,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Corrected insulin response at 30-min OGTT",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Corrected insulin response at 30-min OGTT",
       "id": 54,
       "log_pvalue": 2.63526,
       "pmid": "24699409",
@@ -271,9 +271,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Insulin adjusted for BMI at 30-min OGTT",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Insulin adjusted for BMI at 30-min OGTT",
       "id": 61,
       "log_pvalue": 2.55972,
       "pmid": "24699409",
@@ -289,9 +289,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Fasting insulin meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Fasting insulin meta-analysis",
       "id": 36,
       "log_pvalue": 2.33395,
       "pmid": "20081858",
@@ -307,9 +307,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Corrected insulin response at 30-min OGTT adjusted for ISI",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Corrected insulin response at 30-min OGTT adjusted for ISI",
       "id": 55,
       "log_pvalue": 2.05764,
       "pmid": "24699409",
@@ -325,9 +325,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Waist-hip ratio adjusted for BMI meta-analysis, all ancestries",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Waist-hip ratio adjusted for BMI meta-analysis, all ancestries",
       "id": 53,
       "log_pvalue": 2.0,
       "pmid": "25673412",
@@ -343,9 +343,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Insulin at 30-min OGTT",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Insulin at 30-min OGTT",
       "id": 60,
       "log_pvalue": 1.71947,
       "pmid": "24699409",
@@ -361,9 +361,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Area under curve of insulin levels during OGTT",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Area under curve of insulin levels during OGTT",
       "id": 56,
       "log_pvalue": 1.70073,
       "pmid": "24699409",
@@ -379,9 +379,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Total cholesterol meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Total cholesterol meta-analysis",
       "id": 30,
       "log_pvalue": 1.64608,
       "pmid": "24097068",
@@ -397,9 +397,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Advanced age-related macular degeneration vs. controls",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Advanced age-related macular degeneration vs. controls",
       "id": 37,
       "log_pvalue": 1.61439,
       "pmid": "26691988",
@@ -415,9 +415,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Incremental insulin at 30-min",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Incremental insulin at 30-min",
       "id": 59,
       "log_pvalue": 1.59511,
       "pmid": "24699409",
@@ -433,9 +433,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "BMI meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "BMI meta-analysis",
       "id": 47,
       "log_pvalue": 1.5376,
       "pmid": "22426310",
@@ -451,9 +451,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Disposition index (CIR * ISI)",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Disposition index (CIR * ISI)",
       "id": 58,
       "log_pvalue": 1.27199,
       "pmid": "24699409",
@@ -469,9 +469,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Systolic blood pressure meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Systolic blood pressure meta-analysis",
       "id": 39,
       "log_pvalue": 1.16622,
       "pmid": "21909115",
@@ -487,9 +487,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Neovascularization disease vs. controls meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Neovascularization disease vs. controls meta-analysis",
       "id": 43,
       "log_pvalue": 0.899561,
       "pmid": "23455636",
@@ -505,9 +505,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Low-density lipoprotein (LDL) meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Low-density lipoprotein (LDL) meta-analysis",
       "id": 28,
       "log_pvalue": 0.784362,
       "pmid": "24097068",
@@ -523,9 +523,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Advanced age-related macular degeneration vs. controls meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Advanced age-related macular degeneration vs. controls meta-analysis",
       "id": 41,
       "log_pvalue": 0.726929,
       "pmid": "23455636",
@@ -541,9 +541,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Insulin sensitivity index",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Insulin sensitivity index",
       "id": 62,
       "log_pvalue": 0.6672,
       "pmid": "24699409",
@@ -559,9 +559,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "High-density lipoprotein (HDL) meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "High-density lipoprotein (HDL) meta-analysis",
       "id": 27,
       "log_pvalue": 0.515415,
       "pmid": "24097068",
@@ -577,9 +577,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Waist-hip ratio adjusted for BMI meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Waist-hip ratio adjusted for BMI meta-analysis",
       "id": 26,
       "log_pvalue": 0.508638,
       "pmid": "20935629",
@@ -595,9 +595,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Diastolic blood pressure meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Diastolic blood pressure meta-analysis",
       "id": 38,
       "log_pvalue": 0.484126,
       "pmid": "21909115",
@@ -613,9 +613,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Schizophrenia meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Schizophrenia meta-analysis",
       "id": 40,
       "log_pvalue": 0.433563,
       "pmid": "25056061",
@@ -631,9 +631,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Height meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Height meta-analysis",
       "id": 48,
       "log_pvalue": 0.236572,
       "pmid": "22426310",
@@ -649,9 +649,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Triglycerides meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Triglycerides meta-analysis",
       "id": 29,
       "log_pvalue": 0.191654,
       "pmid": "24097068",
@@ -667,9 +667,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Height meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Height meta-analysis",
       "id": 25,
       "log_pvalue": 0.137809,
       "pmid": "20881960",
@@ -685,9 +685,9 @@
       "variant": "10:114758349_C/T"
     },
     {
-      "analysis": "Geographic atrophy vs. controls meta-analysis",
       "build": "GRCh37",
       "chromosome": "10",
+      "description": "Geographic atrophy vs. controls meta-analysis",
       "id": 42,
       "log_pvalue": 0.028177,
       "pmid": "23455636",
@@ -706,8 +706,7 @@
   "lastPage": null,
   "meta": {
     "build": [
-      "GRCh37",
-      "GRCh38"
+      "GRCh37"
     ]
   }
 }
