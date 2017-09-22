@@ -62,7 +62,7 @@
       </p>
 
       <p>
-        Example code for creating the plot can be found on the source for this page, and also exists within the <a target=_blank href='https://github.com/statgen/locuszoom/blob/master/examples/phewas_scatter.html'>locuszoom.js repository</a>.
+        Code for creating the plot can be found on the source for this page, and also in the <a target=_blank href='https://github.com/statgen/locuszoom/blob/master/examples/phewas_scatter.html'>locuszoom.js repository</a>.
       </p>
 
       <h3 style="color: #777">Plot</h3>
@@ -89,7 +89,7 @@
         </div>
       </div>
 
-      <h3 style="color: #777">API</h3>
+      <h3 style="color: #777">API (for developers)</h3>
 
       <p>
         Full documentation/examples are available <a target=_blank href='http://portaldev.sph.umich.edu/docs/api/v1/index.html#phewas-all-available-results-for-a-given-variant'>on our website</a>.
@@ -109,13 +109,16 @@
 http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh37&format=objects&filter=variant eq '10:114758349_C/T'
       </div></pre>
 
-      <p>The response must be in the following format:</p>
+      <p>The response (JSON) must be in the following format:</p>
       <pre><div class="spacer">
 {
   <span class="required">"data"</span>: [
     {
-      "id": 45,
-      <span class="required">"variant"</span>: "10:114758349_C/T"
+      <span class="required">"id"</span>: 45,
+      <span class="required">"trait_group"</span>: "Metabolic disease",
+      <span class="required">"trait_label"</span>: "Type 2 diabetes",
+      <span class="required">"log_pvalue"</span>: 107.032,
+      "variant": "10:114758349_C/T"
       "chromosome": "10",
       "position": 114758349,
       "build": "GRCh37",
@@ -126,10 +129,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
       "description": "DIAGRAM 1000G T2D meta-analysis",
       "tech": null,
       "pmid": "28566273",
-      "trait": "T2D",
-      <span class="required">"trait_group"</span>: "Metabolic disease",
-      <span class="required">"trait_label"</span>: "Type 2 diabetes",
-      <span class="required">"log_pvalue"</span>: 107.032,
+      "trait": "T2D"
     }
   ],
   <span class="required">"lastPage"</span>: null,
@@ -142,9 +142,24 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
       </div></pre>
 
       <p>
-        Fields in <span class="required">red</span> above are required fields that must be present in the response.
+        Fields in <span class="required">red</span> above are required fields that must be present in the response. Each record in the <code>data</code> array requires: 
+        <ul>
+          <li><code>id</code>: a unique identifier for each record</li>
+          <li><code>trait_group</code>: any arbitrary grouping/category for the trait, e.g. "Metabolic diseases"</li>
+          <li><code>trait_label</code>: a label for the trait, e.g. "Type 2 diabetes"</li>
+          <li><code>log_pvalue</code>: -log<sub>10</sub> p-value </li>
+        </ul>
         Extra fields can be included if desired (for example, <code>pmid</code> for the pubmed ID of the paper/analysis.)
         These extra fields can be used in the tooltip or other locations.
+      </p>
+
+      <p>
+        The response should also include a <code>meta</code> object, with one field <code>build</code> that maps to an array of genome builds. 
+        Typically this will only be 1 build, but we may in the future allow for converting a variant up to other builds. 
+      </p>
+
+      <p>
+        <code>lastPage</code> is reserved for future use when paging is implemented. 
       </p>
 
       <hr>
