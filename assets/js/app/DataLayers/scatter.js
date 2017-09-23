@@ -506,12 +506,13 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         });
         return sourceData;
     },
+
     /**
      * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
      *
      * Also identify the min and max x value associated with the category, which will be used to generate ticks
      * @private
-     * @returns {Object} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
+     * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
     _generateCategoryBounds: function() {
         // TODO: API may return null values in category_field; should we add placeholder category label?
@@ -527,7 +528,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         });
 
         var categoryNames = Object.keys(uniqueCategories);
-        // Construct a color scale with a bunch of colors, that spreads values out a bit
+        // Construct a color scale with a sufficient number of visually distinct colors
         // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
         var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
         var colors = color_scale().range().slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
@@ -536,37 +537,37 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         this.layout.color.parameters.values = colors;
         return uniqueCategories;
     },
-    /**
-     * Generate custom tick mark extents for the provided categories, and apply them to the layout
-     * @param {Object} categoryBounds Tick mark extents in form {category_name: [min_x, max_x]}
-     * @private
-     */
-    _generateXTicks: function(categoryBounds) {
-        var ticks = [];
-        Object.keys(categoryBounds).forEach(function(category) {
+
+    getTicks: function(dimension) { // Overrides parent method
+        if (["x", "y"].indexOf(dimension) === -1) {
+            throw("Invalid dimension identifier");
+        }
+        var categoryBounds = this.categories;
+        if (!categoryBounds  || !Object.keys(categoryBounds).length) {
+            return [];
+        }
+
+        return Object.keys(categoryBounds).map(function(category) {
             var bounds = categoryBounds[category];
             var diff = bounds[1] - bounds[0];
             var center = bounds[0] + (diff !== 0 ? diff: bounds[0]) / 2;  // Center tick under one or many elements as appropriate
-            // TODO: Incorporate the tick mark customization from ChrisC's manhattan plot PR, or some general variation thereof
-            ticks.push({
+            return {
                 x: center,
                 text: category,
                 style: {
-                    "fill": "#393b79",
-                    "font-weight": "bold",
-                    "font-size": "11px",
-                    "text-anchor": "start"
-                },
-                transform: "rotate(50)"
-            });
+                    "fill": "#393b79"  // TODO: Make colors dynamic and match category labels used for data
+                }
+            };
         });
-        this.parent.layout.axes.x.ticks = ticks;
     },
 
     applyCustomDataMethods: function() {
         this.data = this._prepareData();
-        var uniqueCategories = this._generateCategoryBounds();
-        this._generateXTicks(uniqueCategories);
+        /**
+         * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
+         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         */
+        this.categories = this._generateCategoryBounds();
         return this;
     }
 });

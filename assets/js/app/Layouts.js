@@ -716,7 +716,14 @@ LocusZoom.Layouts.add("panel", "phewas", {
     inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
-            ticks: []
+            ticks: {  // Object based config (shared defaults; allow layers to specify ticks)
+                style: {
+                    "font-weight": "bold",
+                    "font-size": "11px",
+                    "text-anchor": "start"
+                },
+                transform: "rotate(50)"
+            }
         },
         y1: {
             label: "-log10 p-value",
