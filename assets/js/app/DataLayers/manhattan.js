@@ -43,7 +43,6 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         var chromosome_padding = 0;
         if (this.layout.x_axis.ticks){ chromosome_padding = this.layout.x_axis.ticks.group_padding || 0; }
 
-        /*
         // Binned variants
         var bins_selection = this.svg.group
             .selectAll("g.lz-data_layer-manhattan")
@@ -78,7 +77,6 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
             });
         });
         bins_selection.exit().remove();
-        */
 
         // Unbinned variants
         var variants_selection = this.svg.group
