@@ -1031,6 +1031,30 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
     html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
 });
 
+/*
+alt: "G"
+chrom: "5"
+maf: 0.105
+nearest_genes: "PLK2"
+pos: 57620088
+pval: 0.00023
+pval|neglog10: 3.638272163982407
+ref: "A"
+rsids: "rs154675"
+*/
+LocusZoom.Layouts.add("tooltip", "standard_manhattan", {
+    namespace: { "gwas": "gwas" },
+    closable: false,
+    show: "highlighted",
+    hide: "unhighlighted",
+    html: "<strong>{{{{namespace[gwas]}}chrom}}:{{{{namespace[gwas]}}pos}} {{{{namespace[gwas]}}ref}} &gt; {{{{namespace[gwas]}}alt}}</strong><br>"
+        + "P Value: <strong>{{{{namespace[gwas]}}pval|neglog10|logtoscinotation}}</strong><br>"
+        + "MAF: <strong>{{{{namespace[gwas]}}maf}}</strong><br>"
+        + "Nearest gene: <strong><i>{{{{namespace[gwas]}}nearest_genes}}</i></strong><br>"
+        + "rsid: <strong>{{{{namespace[gwas]}}rsids}}</strong><br>"
+
+});
+
 /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
@@ -1309,7 +1333,20 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
     fields: ["{{namespace[gwas]}}gwas"],
     id_field: "rsids",
     x_axis: {
-        field: "pos"
+        field: "pos",
+        ticks: {
+            data: "chromosomes",
+            group_padding: 3e7,
+            color: [
+                {
+                    scale_function: "alternate",
+                    parameters: {
+                        values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
+                    }
+                },
+                "#B8B8B8"
+            ]
+        }
     },
     y_axis: {
         field: "pval|neglog10"
@@ -1323,24 +1360,16 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
             }
         },
         "#B8B8B8"
-    ]
-    /*
+    ],
     behaviors: {
         onmouseover: [
             { action: "set", status: "highlighted" }
         ],
         onmouseout: [
             { action: "unset", status: "highlighted" }
-        ],
-        onclick: [
-            { action: "toggle", status: "selected", exclusive: true }
-        ],
-        onshiftclick: [
-            { action: "toggle", status: "selected" }
         ]
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
-    */
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_manhattan", { unnamespaced: true })
 });
 
 
@@ -2052,25 +2081,14 @@ LocusZoom.Layouts.add("panel", "manhattan", {
         x: {
             label: "Chromosome",
             label_offset: 35,
-            group_padding: 3e7,
             ticks: {
-                data: "chromosomes",
                 style: {
                     "fill": "#B8B8B8",
                     "text-anchor": "center",
                     "font-size": "13px",
                     "font-weight": "bold"
                 },
-                transform: "translate(0, 2)",
-                color: [
-                    {
-                        scale_function: "alternate",
-                        parameters: {
-                            values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
-                        }
-                    },
-                    "#B8B8B8"
-                ]
+                transform: "translate(0, 2)"
             }
         },
         y1: {
@@ -2496,6 +2514,93 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     // No conditions met for generating a valid extent, return an empty array
     return [];
 
+};
+
+/**
+ * Allow this data layer to tell the panel what axis ticks it thinks it will require. The panel may choose whether
+ *   to use some, all, or none of these when rendering, either alone or in conjunction with other data layers.
+ *
+ *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
+ *
+ * @param {('x'|'y')} dimension
+ * @returns {Object[]}
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.DataLayer.prototype.getTicks = function (dimension) {
+    if (["x", "y"].indexOf(dimension) === -1) {
+        throw("Invalid dimension identifier");
+    }
+
+    var layout = this.layout[dimension + "_axis"] || {};
+    
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (layout.ticks){
+        
+        if (Array.isArray(layout.ticks)){
+            // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+            return layout.ticks;
+        }
+
+        if (typeof layout.ticks === "object" && typeof layout.ticks.data === "string"){
+            // Loop through data generating a fully-formed tick for each element in order
+            var ticks = [];
+            var group_padding = parseInt(layout.ticks.group_padding) || 0;
+            var data = this.data[layout.ticks.data] || {};
+            //var new_axis_extent = [];
+            Object.keys(data).forEach(function(key, idx){
+                // Start by trying to get the base axis value from a layout-defined field or few different common attribute names
+                // v is used a placeholder for a value in terms of the dimension name (e.g. x or y value)
+                var v = NaN;
+                if (typeof layout.ticks.field === "string"){
+                    v = data[key][layout.ticks.field];
+                } else {
+                    var v_attributes = ["x", "y", "start", "position", "start_position"];
+                    v_attributes.forEach(function(attribute){
+                        if (isNaN(v) && !isNaN(data[key][attribute])){ v = data[key][attribute]; }
+                    });
+                }
+                console.log("v", v);
+                if (isNaN(v)){ return; }
+                // Shift to account for group padding
+                var tick_index = typeof data[key].index === "number" ? data[key].index : idx;
+                v += (tick_index * group_padding);
+                // Track how this tick affects the axis extent
+                var v_extent = [v, v];
+                // If the tick defines an extent then shift the x to the center of it
+                if (Array.isArray(data[key].extent) && data[key].extent.length === 2){
+                    v += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
+                    v_extent[1] += data[key].extent[1];
+                }
+                // Build the tick and add it to the ticks array.
+                var tick = { text: key };
+                tick[dimension] = v;
+                if (layout.ticks.style){ tick.style = LocusZoom.Layouts.merge({}, layout.ticks.style); }
+                if (layout.ticks.transform){ tick.transform = layout.ticks.transform; }
+                if (layout.ticks.color){
+                    tick.style = tick.style || {};
+                    tick.style.fill = LocusZoom.resolveScalableParameter(layout.ticks.color, data[key]);
+                }
+                ticks.push(tick);
+                // Apply the tick's extent to the new running axis extent
+                //new_axis_extent = d3.extent(new_axis_extent.concat(v_extent));
+            });
+            // Update the axis extent
+            /*
+            if (Array.isArray(this[axis + "_extent"])){
+                this[axis + "_extent"] = d3.extent(this[axis + "_extent"].concat(new_axis_extent));
+            }
+            */
+            return ticks;
+        }
+
+    }
+        
+    return [];
 };
 
 /**
@@ -5354,7 +5459,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         },
         x_axis: {
             floor: 0,
-            group_padding: 2e8
+            group_padding: 0
         },
         id_field: "id"
     };
@@ -5363,11 +5468,6 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // If the parent panel x axis layout defines a chromosome padding then apply it to this layout, overriding any previously defined value
-    if (this.parent && this.parent.layout.axes.x && typeof this.parent.layout.axes.x.group_padding === "number") {
-        this.layout.x_axis.group_padding = this.parent.layout.axes.x.group_padding;
-    }
-
     // Implement the main render function
     this.render = function() {
 
@@ -5375,8 +5475,10 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
         var chromosomes = this.data.chromosomes || {};
-        var chromosome_padding = this.layout.x_axis.group_padding || 0;
+        var chromosome_padding = 0;
+        if (this.layout.x_axis.ticks){ chromosome_padding = this.layout.x_axis.ticks.group_padding || 0; }
 
+        /*
         // Binned variants
         var bins_selection = this.svg.group
             .selectAll("g.lz-data_layer-manhattan")
@@ -5411,6 +5513,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
             });
         });
         bins_selection.exit().remove();
+        */
 
         // Unbinned variants
         var variants_selection = this.svg.group
@@ -5434,6 +5537,9 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
             .attr("fill", fill)
             .attr("class", "lz-data_layer-manhattan");
         variants_selection.exit().remove();
+
+        // Apply mouse behaviors only to unbinned variants
+        this.applyBehaviors(variants_selection);
     };
 
     return this;
@@ -10492,6 +10598,60 @@ LocusZoom.Panel.prototype.render = function(){
     return this;
 };
 
+ /**
+* Generate an array of ticks for an axis. These ticks are generated in one of three ways (highest wins):
+*   1. An array of specific tick marks
+*   2. Query each data layer for what ticks are appropriate, and allow a panel-level tick configuration parameter
+*     object to override the layer's default presentation settings
+*   3. Generate generic tick marks based on the extent of the data
+* @param {('x'|'y1'|'y2')} axis The string identifier of the axis
+* @returns {Number[]|Object[]}  TODO: number format?
+*   An array of numbers: interpreted as an array of axis value offsets for positioning.
+*   An array of objects: each object must have an 'x' attribute to position the tick.
+*   Other supported object keys:
+*     * text: string to render for a given tick
+*     * style: d3-compatible CSS style object
+*     * transform: SVG transform attribute string
+*     * color: string or LocusZoom scalable parameter object
+*/
+LocusZoom.Panel.prototype.generateTicks = function(axis){
+
+    var ticks = [];
+    
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (this.layout.axes[axis].ticks){
+        var layout = this.layout.axes[axis];
+        
+        var baseTickConfig = layout.ticks;
+        if (Array.isArray(baseTickConfig)){
+            // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+            return baseTickConfig;
+        }
+        //  TODO: Didn't have time to incorporate the broader ticks.data mechanism of PR 112 into this release; this method can be expanded in future
+        if (typeof baseTickConfig === "object") {
+            // If the layout specifies base configuration for ticks- but without specific positions- then ask each
+            //   data layer to report the tick marks that it thinks it needs
+            // TODO: Few layers currently specify their own ticks, but if it becomes common, consider adding mechanisms to deduplicate ticks across layers
+            var self = this;
+            var combinedTicks = this.data_layer_ids_by_z_index.reduce(function(acc, data_layer_id) {
+                var nextLayer = self.data_layers[data_layer_id];
+                return acc.concat(nextLayer.getTicks(axis));
+            }, []);
+            
+            // Allow the layer to optionally override configuration parameters for any ticks present
+            return combinedTicks.map(function(item) {
+                return LocusZoom.Layouts.merge(item, baseTickConfig);
+            });
+        }
+    }
+    
+    // If no other configuration is provided, attempt to generate ticks from the extent
+    if (this[axis + "_extent"]) {
+        return LocusZoom.prettyTicks(this[axis + "_extent"], "both");
+    }
+    return [];
+};
+
 /**
  * Generate an array of ticks for an axis
  * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
@@ -10504,6 +10664,7 @@ LocusZoom.Panel.prototype.render = function(){
  *     * transform: SVG transform attribute string
  *     * color: string or LocusZoom scalable parameter object
  */
+/*
 LocusZoom.Panel.prototype.generateTicks = function(axis){
 
     // Parse an explicit 'ticks' attribute in the axis layout
@@ -10516,38 +10677,41 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
         // If the layout defines an object with a 'data' attribute then attempt to
         // find a matching object on any of the child data layers. Use the first one
         // found to drive the generation of a ticks array.
-        if (typeof layout.ticks === "object" && typeof layout.ticks.data === "string"){
+        if (typeof layout.ticks === "object" && typeof layout.data === "string"){
             var data = {};
             this.data_layer_ids_by_z_index.forEach(function(data_layer_id){
-                data = this.data_layers[data_layer_id].data[layout.ticks.data] || data;
+                data = this.data_layers[data_layer_id].data[layout.data] || data;
             }.bind(this));
             // Loop through data generating a fully-formed tick for each element in order
             var ticks = [];
             var group_padding = parseInt(layout.group_padding) || 0;
+            var new_axis_extent = [];
             Object.keys(data).forEach(function(key, idx){
-                // Start by trying to get the base x value from a layout-defined field or few different common attribute names
-                var x = NaN;
-                if (typeof layout.ticks.field === "string"){
-                    x = data[key][layout.ticks.field];
+                // Start by trying to get the base axis value from a layout-defined field or few different common attribute names
+                // v is used a placeholder for a value in terms of the axis name (e.g. x or y value)
+                var v = NaN;
+                if (typeof layout.field === "string"){
+                    v = data[key][layout.field];
                 } else {
-                    var x_attributes = ["x", "start", "position", "start_position"];
-                    x_attributes.forEach(function(attribute){
-                        if (isNaN(x) && !isNaN(data[key][attribute])){ x = data[key][attribute]; }
+                    var v_attributes = ["x", "y", "start", "position", "start_position"];
+                    v_attributes.forEach(function(attribute){
+                        if (isNaN(v) && !isNaN(data[key][attribute])){ v = data[key][attribute]; }
                     });
                 }
-                if (isNaN(x)){ return; }
+                if (isNaN(v)){ return; }
                 // Shift to account for group padding
                 var tick_index = typeof data[key].index === "number" ? data[key].index : idx;
-                x += (tick_index * group_padding);
+                v += (tick_index * group_padding);
+                // Track how this tick affects the axis extent
+                var v_extent = [v, v];
                 // If the tick defines an extent then shift the x to the center of it
                 if (Array.isArray(data[key].extent) && data[key].extent.length === 2){
-                    x += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
+                    v += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
+                    v_extent[1] += data[key].extent[1];
                 }
-                // Build the tick and add it to the ticks array
-                var tick = {
-                    x: x,
-                    text: key
-                };
+                // Build the tick and add it to the ticks array.
+                var tick = { text: key };
+                tick[axis] = v;
                 if (layout.ticks.style){ tick.style = LocusZoom.Layouts.merge({}, layout.ticks.style); }
                 if (layout.ticks.transform){ tick.transform = layout.ticks.transform; }
                 if (layout.ticks.color){
@@ -10555,7 +10719,13 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
                     tick.style.fill = LocusZoom.resolveScalableParameter(layout.ticks.color, data[key]);
                 }
                 ticks.push(tick);
+                // Apply the tick's extent to the new running axis extent
+                new_axis_extent = d3.extent(new_axis_extent.concat(v_extent));
             });
+            // Update the axis extent
+            if (Array.isArray(this[axis + "_extent"])){
+                this[axis + "_extent"] = d3.extent(this[axis + "_extent"].concat(new_axis_extent));
+            }
             return ticks;
         }
     }
@@ -10568,6 +10738,7 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
     return [];
 
 };
+*/
 
 /**
  * Render a particular axis (draw line / ticks / label, set mouse behaviors)

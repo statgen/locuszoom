@@ -336,6 +336,93 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 };
 
 /**
+ * Allow this data layer to tell the panel what axis ticks it thinks it will require. The panel may choose whether
+ *   to use some, all, or none of these when rendering, either alone or in conjunction with other data layers.
+ *
+ *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
+ *
+ * @param {('x'|'y')} dimension
+ * @returns {Object[]}
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.DataLayer.prototype.getTicks = function (dimension) {
+    if (["x", "y"].indexOf(dimension) === -1) {
+        throw("Invalid dimension identifier");
+    }
+
+    var layout = this.layout[dimension + "_axis"] || {};
+    
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (layout.ticks){
+        
+        if (Array.isArray(layout.ticks)){
+            // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+            return layout.ticks;
+        }
+
+        if (typeof layout.ticks === "object" && typeof layout.ticks.data === "string"){
+            // Loop through data generating a fully-formed tick for each element in order
+            var ticks = [];
+            var group_padding = parseInt(layout.ticks.group_padding) || 0;
+            var data = this.data[layout.ticks.data] || {};
+            //var new_axis_extent = [];
+            Object.keys(data).forEach(function(key, idx){
+                // Start by trying to get the base axis value from a layout-defined field or few different common attribute names
+                // v is used a placeholder for a value in terms of the dimension name (e.g. x or y value)
+                var v = NaN;
+                if (typeof layout.ticks.field === "string"){
+                    v = data[key][layout.ticks.field];
+                } else {
+                    var v_attributes = ["x", "y", "start", "position", "start_position"];
+                    v_attributes.forEach(function(attribute){
+                        if (isNaN(v) && !isNaN(data[key][attribute])){ v = data[key][attribute]; }
+                    });
+                }
+                console.log("v", v);
+                if (isNaN(v)){ return; }
+                // Shift to account for group padding
+                var tick_index = typeof data[key].index === "number" ? data[key].index : idx;
+                v += (tick_index * group_padding);
+                // Track how this tick affects the axis extent
+                var v_extent = [v, v];
+                // If the tick defines an extent then shift the x to the center of it
+                if (Array.isArray(data[key].extent) && data[key].extent.length === 2){
+                    v += Math.floor((data[key].extent[1] - data[key].extent[0]) / 2);
+                    v_extent[1] += data[key].extent[1];
+                }
+                // Build the tick and add it to the ticks array.
+                var tick = { text: key };
+                tick[dimension] = v;
+                if (layout.ticks.style){ tick.style = LocusZoom.Layouts.merge({}, layout.ticks.style); }
+                if (layout.ticks.transform){ tick.transform = layout.ticks.transform; }
+                if (layout.ticks.color){
+                    tick.style = tick.style || {};
+                    tick.style.fill = LocusZoom.resolveScalableParameter(layout.ticks.color, data[key]);
+                }
+                ticks.push(tick);
+                // Apply the tick's extent to the new running axis extent
+                //new_axis_extent = d3.extent(new_axis_extent.concat(v_extent));
+            });
+            // Update the axis extent
+            /*
+            if (Array.isArray(this[axis + "_extent"])){
+                this[axis + "_extent"] = d3.extent(this[axis + "_extent"].concat(new_axis_extent));
+            }
+            */
+            return ticks;
+        }
+
+    }
+        
+    return [];
+};
+
+/**
  * Generate a tool tip for a given element
  * @param {String|Object} d The element associated with the tooltip
  * @param {String} [id] An identifier to the tooltip

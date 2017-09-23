@@ -249,7 +249,7 @@ describe("LocusZoom.Panel", function(){
         });
     });
 
-    describe("Axes", function() {
+    describe("Tick Generation", function() {
         var plot, panel;
         beforeEach(function(){
             d3.select("body").append("div").attr("id", "plot_id");
@@ -261,96 +261,25 @@ describe("LocusZoom.Panel", function(){
             plot = null;
             panel = null;
         });
-        describe("generateTicks", function() {
-            it("Should generate a basic array of numerical ticks as long as an extent is defined", function(){
-                panel.x_extent = [0,100];
-                var ticks = panel.generateTicks("x");
-                ticks.should.be.an.Array;
-                assert(ticks.length > 0);
-                ticks.forEach(function(tick){
-                    tick.should.be.a.Number;
-                });
+        it("Should generate a basic array of numerical ticks as long as an extent is defined", function(){
+            panel.x_extent = [0,100];
+            var ticks = panel.generateTicks("x");
+            ticks.should.be.an.Array;
+            assert(ticks.length > 0);
+            ticks.forEach(function(tick){
+                tick.should.be.a.Number;
             });
-            it("Should pass through any 'ticks' array explicitly defined in the layout", function(){
-                var test_ticks = [
-                    [1, 2, 3, 4],
-                    ["a", "b", "c"],
-                    [{foo:"bar"}, {foo:"baz"}],
-                    [null, null]
-                ];
-                test_ticks.forEach(function(ticks){
-                    panel.layout.axes.x.ticks = ticks;
-                    assert.deepEqual(panel.generateTicks("x"), panel.layout.axes.x.ticks);
-                });
-            });
-            it("Should bind to specified data object to generate categorical ticks dynamically", function(){
-                panel.layout.axes.x.ticks = { data: "foo" };
-                panel.data_layers.associationpvalues.data = {
-                    foo: {
-                        tickA: { x: 8 },
-                        tickB: { start: 24 },
-                        tickC: { position: 72 }
-                    }
-                };
-                var expected_ticks = [
-                    { x: 8, text: "tickA"},
-                    { x: 24, text: "tickB"},
-                    { x: 72, text: "tickC"}
-                ];
-                var actual_ticks = panel.generateTicks("x");
-                assert.deepEqual(actual_ticks, expected_ticks);
-            });
-            it("Should allow for specifying x field explicitly in layout for bound data", function(){
-                panel.layout.axes.x.ticks = { data: "foo", field: "asdf" };
-                panel.data_layers.associationpvalues.data = {
-                    foo: {
-                        tickA: { asdf: 3 },
-                        tickB: { asdf: 7 },
-                        tickC: { asdf: 19 }
-                    }
-                };
-                var expected_ticks = [
-                    { x: 3, text: "tickA"},
-                    { x: 7, text: "tickB"},
-                    { x: 19, text: "tickC"}
-                ];
-                var actual_ticks = panel.generateTicks("x");
-                assert.deepEqual(actual_ticks, expected_ticks);
-            });
-            it("Should allow for spreading out ticks as groups with layout-defined padding", function(){
-                panel.layout.axes.x.ticks = { data: "foo" };
-                panel.layout.axes.x.group_padding = 10;
-                panel.data_layers.associationpvalues.data = {
-                    foo: {
-                        tickA: { x: 2 },
-                        tickB: { x: 4 },
-                        tickC: { x: 6 }
-                    }
-                };
-                var expected_ticks = [
-                    { x: 2, text: "tickA"},
-                    { x: 14, text: "tickB"},
-                    { x: 26, text: "tickC"}
-                ];
-                var actual_ticks = panel.generateTicks("x");
-                assert.deepEqual(actual_ticks, expected_ticks);
-            });
-            it("Should allow for centering ticks on an extent if defined", function(){
-                panel.layout.axes.x.ticks = { data: "foo" };
-                panel.data_layers.associationpvalues.data = {
-                    foo: {
-                        tickA: { x: 5, extent: [0,10] },
-                        tickB: { x: 20, extent: [0,32] },
-                        tickC: { x: 50, extent: [0,91] }
-                    }
-                };
-                var expected_ticks = [
-                    { x: 10, text: "tickA"},
-                    { x: 36, text: "tickB"},
-                    { x: 95, text: "tickC"}
-                ];
-                var actual_ticks = panel.generateTicks("x");
-                assert.deepEqual(actual_ticks, expected_ticks);
+        });
+        it("Should pass through any 'ticks' array explicitly defined in the layout", function(){
+            var test_ticks = [
+                [1, 2, 3, 4],
+                ["a", "b", "c"],
+                [{foo:"bar"}, {foo:"baz"}],
+                [null, null]
+            ];
+            test_ticks.forEach(function(ticks){
+                panel.layout.axes.x.ticks = ticks;
+                assert.deepEqual(panel.generateTicks("x"), panel.layout.axes.x.ticks);
             });
         });
     });

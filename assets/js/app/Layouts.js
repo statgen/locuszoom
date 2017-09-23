@@ -240,6 +240,30 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
     html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
 });
 
+/*
+alt: "G"
+chrom: "5"
+maf: 0.105
+nearest_genes: "PLK2"
+pos: 57620088
+pval: 0.00023
+pval|neglog10: 3.638272163982407
+ref: "A"
+rsids: "rs154675"
+*/
+LocusZoom.Layouts.add("tooltip", "standard_manhattan", {
+    namespace: { "gwas": "gwas" },
+    closable: false,
+    show: "highlighted",
+    hide: "unhighlighted",
+    html: "<strong>{{{{namespace[gwas]}}chrom}}:{{{{namespace[gwas]}}pos}} {{{{namespace[gwas]}}ref}} &gt; {{{{namespace[gwas]}}alt}}</strong><br>"
+        + "P Value: <strong>{{{{namespace[gwas]}}pval|neglog10|logtoscinotation}}</strong><br>"
+        + "MAF: <strong>{{{{namespace[gwas]}}maf}}</strong><br>"
+        + "Nearest gene: <strong><i>{{{{namespace[gwas]}}nearest_genes}}</i></strong><br>"
+        + "rsid: <strong>{{{{namespace[gwas]}}rsids}}</strong><br>"
+
+});
+
 /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
@@ -518,7 +542,20 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
     fields: ["{{namespace[gwas]}}gwas"],
     id_field: "rsids",
     x_axis: {
-        field: "pos"
+        field: "pos",
+        ticks: {
+            data: "chromosomes",
+            group_padding: 3e7,
+            color: [
+                {
+                    scale_function: "alternate",
+                    parameters: {
+                        values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
+                    }
+                },
+                "#B8B8B8"
+            ]
+        }
     },
     y_axis: {
         field: "pval|neglog10"
@@ -532,24 +569,16 @@ LocusZoom.Layouts.add("data_layer", "manhattan", {
             }
         },
         "#B8B8B8"
-    ]
-    /*
+    ],
     behaviors: {
         onmouseover: [
             { action: "set", status: "highlighted" }
         ],
         onmouseout: [
             { action: "unset", status: "highlighted" }
-        ],
-        onclick: [
-            { action: "toggle", status: "selected", exclusive: true }
-        ],
-        onshiftclick: [
-            { action: "toggle", status: "selected" }
         ]
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
-    */
+    tooltip: LocusZoom.Layouts.get("tooltip", "standard_manhattan", { unnamespaced: true })
 });
 
 
@@ -1261,25 +1290,14 @@ LocusZoom.Layouts.add("panel", "manhattan", {
         x: {
             label: "Chromosome",
             label_offset: 35,
-            group_padding: 3e7,
             ticks: {
-                data: "chromosomes",
                 style: {
                     "fill": "#B8B8B8",
                     "text-anchor": "center",
                     "font-size": "13px",
                     "font-weight": "bold"
                 },
-                transform: "translate(0, 2)",
-                color: [
-                    {
-                        scale_function: "alternate",
-                        parameters: {
-                            values: ["rgb(120, 120, 186)","rgb(0, 0, 66)"]
-                        }
-                    },
-                    "#B8B8B8"
-                ]
+                transform: "translate(0, 2)"
             }
         },
         y1: {

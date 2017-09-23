@@ -24,7 +24,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         },
         x_axis: {
             floor: 0,
-            group_padding: 2e8
+            group_padding: 0
         },
         id_field: "id"
     };
@@ -33,11 +33,6 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // If the parent panel x axis layout defines a chromosome padding then apply it to this layout, overriding any previously defined value
-    if (this.parent && this.parent.layout.axes.x && typeof this.parent.layout.axes.x.group_padding === "number") {
-        this.layout.x_axis.group_padding = this.parent.layout.axes.x.group_padding;
-    }
-
     // Implement the main render function
     this.render = function() {
 
@@ -45,8 +40,10 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
         var chromosomes = this.data.chromosomes || {};
-        var chromosome_padding = this.layout.x_axis.group_padding || 0;
+        var chromosome_padding = 0;
+        if (this.layout.x_axis.ticks){ chromosome_padding = this.layout.x_axis.ticks.group_padding || 0; }
 
+        /*
         // Binned variants
         var bins_selection = this.svg.group
             .selectAll("g.lz-data_layer-manhattan")
@@ -81,6 +78,7 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
             });
         });
         bins_selection.exit().remove();
+        */
 
         // Unbinned variants
         var variants_selection = this.svg.group
@@ -104,6 +102,9 @@ LocusZoom.DataLayers.add("manhattan", function(layout) {
             .attr("fill", fill)
             .attr("class", "lz-data_layer-manhattan");
         variants_selection.exit().remove();
+
+        // Apply mouse behaviors only to unbinned variants
+        this.applyBehaviors(variants_selection);
     };
 
     return this;
