@@ -171,14 +171,16 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
       </div>
 
       <script type="text/javascript">
+        var variantForPlot = "10:114758349_C/T";
 
-        // What variant are we using to display a PheWAS?
+        // Throughout this demo, we will match variants of the format 10:100_C/T
+        var VARIANT_PATTERN = /(\d+):(\d+)_([ATGC])\/([ATGC])/;
 
-        var variantChrom = 10;
-        var variantPosition = 114758349;
-        var variantRefAlt = "C/T";
-        // Variants are expressed in format `10:114758349_C/T`;
-        var variant = [variantChrom, ":", variantPosition, "_", variantRefAlt].join("");
+        // Break the variant into constituent parts for setting plot state
+        var variantGroups = VARIANT_PATTERN.exec(variantForPlot);
+        var variantChrom = variantGroups[1];
+        var variantPosition = variantGroups[2];
+        var variantRefAlt = variantGroups[3];
 
         // Genome base pairs static data
         var genome_data =  [
@@ -241,10 +243,10 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
         // Define the layout
         var mods = {
           state: {
-            variant: variant,
+            variant: variantForPlot,
             start: variantPosition - 250000,
             end: variantPosition + 250000,
-            chr: 10
+            chr: variantChrom
           }
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
@@ -282,13 +284,9 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
 
         // Generate the plot
         var plot = LocusZoom.populate("#plot", dataSources, layout);
-        plot.panels.phewas.setTitle("Variant " + variantChrom + ":" + String(variantPosition) + " " + variantRefAlt);
+        plot.panels.phewas.setTitle("Variant " + variantForPlot);
 
         // Function to load new PheWAS data into the plot
-
-        // Match variants of the format 10:100_C/T
-        var VARIANT_PATTERN = /(\d+):(\d+)_([ATGC])\/([ATGC])/;
-
         function loadPheWAS(variant_tag){
           var match = VARIANT_PATTERN.exec(variant_tag);
 
@@ -297,7 +295,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
               variant: variant_tag,
               start: (locus - 250000),
               end: (locus + 250000),
-              chr: +variant[0]
+              chr: +match[1]
           };
           plot.panels.genes.data_layers.variant.layout.offset = locus;
           plot.panels.phewas.setTitle("Variant " + variant_tag);
