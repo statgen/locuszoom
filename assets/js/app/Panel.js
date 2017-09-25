@@ -796,20 +796,26 @@ LocusZoom.Panel.prototype.generateTicks = function(axis){
             // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
             return baseTickConfig;
         }
-        //  TODO: Didn't have time to incorporate the broader ticks.data mechanism of PR 112 into this release; this method can be expanded in future
+
         if (typeof baseTickConfig === "object") {
             // If the layout specifies base configuration for ticks- but without specific positions- then ask each
             //   data layer to report the tick marks that it thinks it needs
-            // TODO: Few layers currently specify their own ticks, but if it becomes common, consider adding mechanisms to deduplicate ticks across layers
+            // TODO: Few layers currently need to specify custom ticks (which is ok!). But if it becomes common, consider adding mechanisms to deduplicate ticks across layers
             var self = this;
+
+            // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
+            var config = { position: baseTickConfig.position };
+
             var combinedTicks = this.data_layer_ids_by_z_index.reduce(function(acc, data_layer_id) {
                 var nextLayer = self.data_layers[data_layer_id];
-                return acc.concat(nextLayer.getTicks(axis));
+                return acc.concat(nextLayer.getTicks(axis, config));
             }, []);
 
-            // Allow the layer to optionally override configuration parameters for any ticks present
             return combinedTicks.map(function(item) {
-                return LocusZoom.Layouts.merge(item, baseTickConfig);
+                // The layer makes suggestions, but tick configuration params specified on the panel take precedence
+                var itemConfig = {};
+                itemConfig = LocusZoom.Layouts.merge(itemConfig, baseTickConfig);
+                return LocusZoom.Layouts.merge(itemConfig, item);
             });
         }
     }

@@ -370,7 +370,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         axis: 1,
         field: "{{namespace[phewas]}}log_pvalue",
         floor: 0,
-        upper_buffer: 0.1
+        upper_buffer: 0.15
     },
     color: {
         field: "{{namespace[phewas]}}trait_group",
@@ -417,7 +417,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
             }
         },
         filters: [
-            {  // TODO: known issue where only first field gets labeled
+            {
                 field: "{{namespace[phewas]}}log_pvalue",
                 operator: ">=",
                 value: 20
@@ -722,7 +722,8 @@ LocusZoom.Layouts.add("panel", "phewas", {
                     "font-size": "11px",
                     "text-anchor": "start"
                 },
-                transform: "rotate(50)"
+                transform: "rotate(50)",
+                position: "left"  // Special param recognized by `category_scatter` layers
             }
         },
         y1: {
@@ -750,7 +751,6 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
             label: "Genomic Position (number denotes chromosome)",
             label_offset: 35,
             ticks: [
-                // TODO: Identify origin and validity of these hard-coded values
                 {
                     x: 124625310,
                     text: "1",

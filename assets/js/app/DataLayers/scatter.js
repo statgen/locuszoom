@@ -538,27 +538,61 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         return uniqueCategories;
     },
 
-    getTicks: function(dimension) { // Overrides parent method
+    /**
+     *
+     * @param dimension
+     * @param {Object} [config] Parameters that customize how ticks are calculated (not style)
+     * @param {('left'|'center'|'right')} [config.position='left'] Align ticks with the center or edge of category
+     * @returns {Array}
+     */
+    getTicks: function(dimension, config) { // Overrides parent method
         if (["x", "y"].indexOf(dimension) === -1) {
-            throw("Invalid dimension identifier");
+            throw "Invalid dimension identifier";
         }
-        var categoryBounds = this.categories;
-        if (!categoryBounds  || !Object.keys(categoryBounds).length) {
+        var position = config.position || "left";
+        if (["left", "center", "right"].indexOf(position) === -1) {
+            throw "Invalid tick position";
+        }
+
+        var categoryBounds = this._categories;
+        if (!categoryBounds || !Object.keys(categoryBounds).length) {
             return [];
         }
 
-        return Object.keys(categoryBounds).map(function(category) {
-            var bounds = categoryBounds[category];
-            var diff = bounds[1] - bounds[0];
-            var center = bounds[0] + (diff !== 0 ? diff: bounds[0]) / 2;  // Center tick under one or many elements as appropriate
-            return {
-                x: center,
-                text: category,
-                style: {
-                    "fill": "#393b79"  // TODO: Make colors dynamic and match category labels used for data
+        if (dimension === "y") {
+            return [];
+        }
+
+        if (dimension === "x") {
+            // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
+            var knownColors = this.layout.color.parameters.values || [];
+
+            return Object.keys(categoryBounds).map(function (category, index) {
+                var bounds = categoryBounds[category];
+                var xPos;
+
+                switch(position) {
+                case "left":
+                    xPos = bounds[0];
+                    break;
+                case "center":
+                    // Center tick under one or many elements as appropriate
+                    var diff = bounds[1] - bounds[0];
+                    xPos = bounds[0] + (diff !== 0 ? diff : bounds[0]) / 2;
+                    break;
+                case "right":
+                    xPos = bounds[1];
+                    break;
                 }
-            };
-        });
+                return {
+                    x: xPos,
+                    text: category,
+                    style: {
+                        "fill": knownColors[index] || "#000000"
+                    }
+                };
+            });
+        }
     },
 
     applyCustomDataMethods: function() {
@@ -567,7 +601,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
          * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
          * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
          */
-        this.categories = this._generateCategoryBounds();
+        this._categories = this._generateCategoryBounds();
         return this;
     }
 });

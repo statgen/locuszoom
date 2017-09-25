@@ -377,6 +377,8 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
  *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
  *
  * @param {('x'|'y')} dimension
+ * @param {Object} [config] Additional parameters for the panel to specify how it wants ticks to be drawn. The names
+ *   and meanings of these parameters may vary between different data layers.
  * @returns {Object[]}
  *   An array of objects: each object must have an 'x' attribute to position the tick.
  *   Other supported object keys:
@@ -385,7 +387,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
  *     * transform: SVG transform attribute string
  *     * color: string or LocusZoom scalable parameter object
  */
-LocusZoom.DataLayer.prototype.getTicks = function (dimension) {
+LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
     if (["x", "y"].indexOf(dimension) === -1) {
         throw("Invalid dimension identifier");
     }
