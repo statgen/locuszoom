@@ -5,13 +5,17 @@
 "use strict";
 
 /*********************
-  Genes Data Layer
-  Implements a data layer that will render gene tracks
+ * Genes Data Layer
+ * Implements a data layer that will render gene tracks
+ * @class
+ * @augments LocusZoom.DataLayer
 */
-
 LocusZoom.DataLayers.add("genes", function(layout){
-
-    // Define a default layout for this DataLayer type and merge it with the passed argument
+    /**
+     * Define a default layout for this DataLayer type and merge it with the passed argument
+     * @protected
+     * @member {Object}
+     * */
     this.DefaultLayout = {
         label_font_size: 12,
         label_exon_spacing: 4,
@@ -24,8 +28,11 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
-    
-    // Helper function to sum layout values to derive total height for a single gene track
+
+    /**
+     * Helper function to sum layout values to derive total height for a single gene track
+     * @returns {number}
+     */
     this.getTrackHeight = function(){
         return 2 * this.layout.bounding_box_padding
             + this.layout.label_font_size
@@ -34,18 +41,41 @@ LocusZoom.DataLayers.add("genes", function(layout){
             + this.layout.track_vertical_spacing;
     };
 
-    // A gene may have arbitrarily many transcripts, but this data layer isn't set up to render them yet.
-    // Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
+    /**
+     * A gene may have arbitrarily many transcripts, but this data layer isn't set up to render them yet.
+     * Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
+     * @member {number}
+     * @type {number}
+     */
     this.transcript_idx = 0;
-    
+
+    /**
+     * An internal counter for the number of tracks in the data layer. Used as an internal counter for looping
+     *   over positions / assignments
+     * @protected
+     * @member {number}
+     */
     this.tracks = 1;
-    this.gene_track_index = { 1: [] }; // track-number-indexed object with arrays of gene indexes in the dataset
 
-    // After we've loaded the genes interpret them to assign
-    // each to a track so that they do not overlap in the view
+    /**
+     * Store information about genes in dataset, in a hash indexed by track number: {track_number: [gene_indices]}
+     * @member {Object.<Number, Array>}
+     */
+    this.gene_track_index = { 1: [] };
+
+    /**
+     * Ensure that genes in overlapping chromosome regions are positioned so that parts of different genes do not
+     *   overlap in the view. A track is a row used to vertically separate overlapping genes.
+     * @returns {LocusZoom.DataLayer}
+     */
     this.assignTracks = function(){
-
-        // Function to get the width in pixels of a label given the text and layout attributes
+        /**
+         * Function to get the width in pixels of a label given the text and layout attributes
+         *      TODO: Move to outer scope?
+         * @param {String} gene_name
+         * @param {number|string} font_size
+         * @returns {number}
+         */
         this.getLabelWidth = function(gene_name, font_size){
             try {
                 var temp_text = this.svg.group.append("text")
@@ -131,7 +161,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
             // Using display range/domain data generated above cast each gene to tracks such that none overlap
             this.data[g].track = null;
             var potential_track = 1;
-            while (this.data[g].track == null){
+            while (this.data[g].track === null){
                 var collision_on_potential_track = false;
                 this.gene_track_index[potential_track].map(function(placed_gene){
                     if (!collision_on_potential_track){
@@ -167,7 +197,9 @@ LocusZoom.DataLayers.add("genes", function(layout){
         return this;
     };
 
-    // Implement the main render function
+    /**
+     * Main render function
+     */
     this.render = function(){
 
         this.assignTracks();
@@ -277,16 +309,16 @@ LocusZoom.DataLayers.add("genes", function(layout){
                         return d.display_range.text_anchor;
                     })
                     .text(function(d){
-                        return (d.strand == "+") ? d.gene_name + "→" : "←" + d.gene_name;
+                        return (d.strand === "+") ? d.gene_name + "→" : "←" + d.gene_name;
                     })
                     .style("font-size", gene.parent.layout.label_font_size);
 
                 x = function(d){
-                    if (d.display_range.text_anchor == "middle"){
+                    if (d.display_range.text_anchor === "middle"){
                         return d.display_range.start + (d.display_range.width / 2);
-                    } else if (d.display_range.text_anchor == "start"){
+                    } else if (d.display_range.text_anchor === "start"){
                         return d.display_range.start + data_layer.layout.bounding_box_padding;
-                    } else if (d.display_range.text_anchor == "end"){
+                    } else if (d.display_range.text_anchor === "end"){
                         return d.display_range.end - data_layer.layout.bounding_box_padding;
                     }
                 };
@@ -403,7 +435,10 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
     };
 
-    // Reimplement the positionTooltip() method to be gene-specific
+    /**
+     * Reimplement the positionTooltip() method to be gene-specific
+     * @param {String} id
+     */
     this.positionTooltip = function(id){
         if (typeof id != "string"){
             throw ("Unable to position tooltip: id is not a string");

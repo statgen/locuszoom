@@ -56,12 +56,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-        if (this.layout.tooltip_positioning == "vertical"){
+        if (this.layout.tooltip_positioning === "vertical"){
             // Position horizontally centered above the point
             var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
             var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
-            var left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
-            var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
+            left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+            arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
             // Position vertically above the point unless there's insufficient space, then go below
             if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)){
                 top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
@@ -84,8 +84,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 arrow_left = tooltip_box.width - stroke_width;
             }
             // Position vertically centered unless we're at the top or bottom of the plot
-            var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-            var top, arrow_top;
+            data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
             if (y_center - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
                 top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
                 arrow_top = border_radius;
@@ -126,7 +125,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 var dnlx2 = +dnl.attr("x2");
                 var line_swing = spacing + (2 * Math.sqrt(point_size));
             }
-            if (dn.style("text-anchor") == "start"){
+            if (dn.style("text-anchor") === "start"){
                 dn.style("text-anchor", "end");
                 dn.attr("x", dnx - text_swing);
                 if (handle_lines){ dnl.attr("x2", dnlx2 - line_swing); }
@@ -152,7 +151,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         data_layer.label_texts.each(function (d, i) {
             var a = this;
             var da = d3.select(a);
-            if (da.style("text-anchor") == "end") return;
+            if (da.style("text-anchor") === "end") return;
             var dax = +da.attr("x");
             var abound = da.node().getBoundingClientRect();
             var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
@@ -193,11 +192,11 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             data_layer.label_texts.each(function () {
                 var b = this;
                 // a & b are the same element and don't collide.
-                if (a == b) return;
+                if (a === b) return;
                 var db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
-                if (da.attr("text-anchor") != db.attr("text-anchor")) return;
+                if (da.attr("text-anchor") !== db.attr("text-anchor")) return;
                 // Determine if the  bounding rects for the two text elements collide
                 var abound = da.node().getBoundingClientRect();
                 var bbound = db.node().getBoundingClientRect();
@@ -293,7 +292,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                                 if (!(field_value >= filter.value)){ match = false; }
                                 break;
                             case "=":
-                                if (!(field_value == filter.value)){ match = false; }
+                                if (!(field_value === filter.value)){ match = false; }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
@@ -306,16 +305,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 }
             });
             // Render label groups
+            var self = this;
             this.label_groups = this.svg.group
-                .selectAll("g.lz-data_layer-scatter-label")
-                .data(filtered_data, function(d){ return d.id + "_label"; });
+                .selectAll("g.lz-data_layer-" + this.layout.type + "-label")
+                .data(filtered_data, function(d){ return d[self.layout.id_field]  + "_label"; });
             this.label_groups.enter()
                 .append("g")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-"+ this.layout.type + "-label");
             // Render label texts
             if (this.label_texts){ this.label_texts.remove(); }
             this.label_texts = this.label_groups.append("text")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-" + this.layout.type + "-label");
             this.label_texts
                 .text(function(d){
                     return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
@@ -342,7 +342,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             if (data_layer.layout.label.lines){
                 if (this.label_lines){ this.label_lines.remove(); }
                 this.label_lines = this.label_groups.append("line")
-                    .attr("class", "lz-data_layer-scatter-label");
+                    .attr("class", "lz-data_layer-" + this.layout.type + "-label");
                 this.label_lines
                     .style(data_layer.layout.label.lines.style || {})
                     .attr({
@@ -376,14 +376,14 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             
         // Generate main scatter data elements
         var selection = this.svg.group
-            .selectAll("path.lz-data_layer-scatter")
+            .selectAll("path.lz-data_layer-" + this.layout.type)
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
         // Create elements, apply class, ID, and initial position
         var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append("path")
-            .attr("class", "lz-data_layer-scatter")
+            .attr("class", "lz-data_layer-" + this.layout.type)
             .attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .attr("transform", "translate(0," + initial_y + ")");
 
@@ -466,4 +466,142 @@ LocusZoom.DataLayers.add("scatter", function(layout){
  
     return this;
 
+});
+
+/**
+ * A scatter plot in which the x-axis represents categories, rather than individual positions.
+ * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories to be
+ *   determined dynamically when data is first loaded.
+ *
+ * @class LocusZoom.DataLayers.category_scatter
+ * @augments LocusZoom.DataLayers.scatter
+ */
+LocusZoom.DataLayers.extend("scatter", "category_scatter", {
+    /**
+     * This plot layer makes certain assumptions about the data passed in. Transform the raw array of records from
+     *   the datasource to prepare it for plotting, as follows:
+     * 1. The scatter plot assumes that all records are given in sequence (pre-grouped by `category_field`)
+     * 2. It assumes that all records have an x coordinate for individual plotting
+     * @private
+     */
+    _prepareData: function() {
+        var xField = this.layout.x_axis.field || "x";
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
+        var category_field = this.layout.x_axis.category_field;
+        if (!category_field) {
+            throw "Layout for " + this.layout.id + " must specify category_field";
+        }
+        // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
+        var sourceData = this.data
+            .sort(function(a, b) {
+                var ak = a[category_field];
+                var bk = b[category_field];
+                var av = ak.toString ? ak.toString().toLowerCase() : ak;
+                var bv = bk.toString ? bk.toString().toLowerCase() : bk;
+                return (av === bv) ? 0 : (av < bv ? -1 : 1);});
+        sourceData.forEach(function(d, i){
+            // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
+            //   specify plotting positions. If a point is missing this field, fill in a synthetic value.
+            d[xField] = d[xField] || i;
+        });
+        return sourceData;
+    },
+
+    /**
+     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
+     *
+     * Also identify the min and max x value associated with the category, which will be used to generate ticks
+     * @private
+     * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
+     */
+    _generateCategoryBounds: function() {
+        // TODO: API may return null values in category_field; should we add placeholder category label?
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
+        var category_field = this.layout.x_axis.category_field;
+        var xField = this.layout.x_axis.field || "x";
+        var uniqueCategories = {};
+        this.data.forEach(function(item) {
+            var category = item[category_field];
+            var x = item[xField];
+            var bounds = uniqueCategories[category] || [x, x];
+            uniqueCategories[category] = [Math.min(bounds[0], x), Math.max(bounds[1], x)];
+        });
+
+        var categoryNames = Object.keys(uniqueCategories);
+        // Construct a color scale with a sufficient number of visually distinct colors
+        // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
+        var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+        var colors = color_scale().range().slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
+
+        this.layout.color.parameters.categories = categoryNames;
+        this.layout.color.parameters.values = colors;
+        return uniqueCategories;
+    },
+
+    /**
+     *
+     * @param dimension
+     * @param {Object} [config] Parameters that customize how ticks are calculated (not style)
+     * @param {('left'|'center'|'right')} [config.position='left'] Align ticks with the center or edge of category
+     * @returns {Array}
+     */
+    getTicks: function(dimension, config) { // Overrides parent method
+        if (["x", "y"].indexOf(dimension) === -1) {
+            throw "Invalid dimension identifier";
+        }
+        var position = config.position || "left";
+        if (["left", "center", "right"].indexOf(position) === -1) {
+            throw "Invalid tick position";
+        }
+
+        var categoryBounds = this._categories;
+        if (!categoryBounds || !Object.keys(categoryBounds).length) {
+            return [];
+        }
+
+        if (dimension === "y") {
+            return [];
+        }
+
+        if (dimension === "x") {
+            // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
+            var knownColors = this.layout.color.parameters.values || [];
+
+            return Object.keys(categoryBounds).map(function (category, index) {
+                var bounds = categoryBounds[category];
+                var xPos;
+
+                switch(position) {
+                case "left":
+                    xPos = bounds[0];
+                    break;
+                case "center":
+                    // Center tick under one or many elements as appropriate
+                    var diff = bounds[1] - bounds[0];
+                    xPos = bounds[0] + (diff !== 0 ? diff : bounds[0]) / 2;
+                    break;
+                case "right":
+                    xPos = bounds[1];
+                    break;
+                }
+                return {
+                    x: xPos,
+                    text: category,
+                    style: {
+                        "fill": knownColors[index] || "#000000"
+                    }
+                };
+            });
+        }
+    },
+
+    applyCustomDataMethods: function() {
+        this.data = this._prepareData();
+        /**
+         * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
+         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         */
+        this._categories = this._generateCategoryBounds();
+        return this;
+    }
 });

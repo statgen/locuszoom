@@ -6,7 +6,7 @@ LocusZoom is a Javascript/d3 embeddable plugin for interactively visualizing sta
 
 See [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki) for full documentation and API reference.
 
-To see funcitonal examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
+To see functional examples of plots generated with LocusZoom.js see [statgen.github.io/locuszoom](http://statgen.github.io/locuszoom/) and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#examples).
 
 ![LocusZoom.js Standard Association Plot (v0.5.2)](http://statgen.github.io/locuszoom/wiki_images/locuszoom_standard_association_plot_0.5.2.png)
 
@@ -31,14 +31,21 @@ CDN links are available for these resources (see [statgen.github.io/locuszoom/](
 
 **Data Sources** is an object representing a collection of arbitrarily many sources from which data for the plot can be requested. When adding sources to the collection they must be namespaced so that retrieving specific fields can be done with respect to specific data sources.
 
-Here's an example of defining a data sources object:
+Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/single/" }]);
+data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/" }]);
 ```
 
 The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for association data) with a defined URL. The namespace for this data source is "trait".
+
+Data sources can also be local files:
+
+```javascript
+data_sources = new LocusZoom.DataSources();
+data_sources.add("trait", ["AssociationLZ", { url: "file:///path/to/data.json" }]);
+```
 
 Refer to the [Data Sources Documentation](https://github.com/statgen/locuszoom/wiki/Data-Sources) for more information on using predefined data sources or extending/creating custom data sources.
 
@@ -167,7 +174,7 @@ var layout = LocusZoom.Layouts.merge({ state: { chr: 6, start: 20379709, end: 20
 
 #### Predefining State With `data-region`
 
-You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the continaing element before populating it, like so:
+You can also describe the locus query aspect of the State (chromosome, start, and end position) using a `data-region` attribute of the containing element before populating it, like so:
 
 ```html
 <div id="foo" data-region="10:114550452-115067678"></div>
@@ -208,7 +215,7 @@ $ sudo npm install gulp-cli -g    # If you don't already have gulp-cli installed
 $ npm install
 ```
 
-Once complete run or `gulp` from the top of the application directory to run all tests and build the following files:
+Once complete run `gulp` from the top of the application directory to run all tests and build the following files:
 
 * `locuszoom.app.js` - A concatenated app file suitable for use in development
 * `locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production

@@ -95,8 +95,8 @@ LocusZoom.DataLayers.add("forest", function(layout){
 
         // Generate confidence interval paths if fields are defined
         if (this.layout.confidence_intervals
-            && this.layout.fields.indexOf(this.layout.confidence_intervals.start_field) != -1
-            && this.layout.fields.indexOf(this.layout.confidence_intervals.end_field) != -1){
+            && this.layout.fields.indexOf(this.layout.confidence_intervals.start_field) !== -1
+            && this.layout.fields.indexOf(this.layout.confidence_intervals.end_field) !== -1){
             // Generate a selection for all forest plot confidence intervals
             var ci_selection = this.svg.group
                 .selectAll("rect.lz-data_layer-forest.lz-data_layer-forest-ci")

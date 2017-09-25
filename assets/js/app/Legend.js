@@ -5,37 +5,56 @@
 "use strict";
 
 /**
-
-  Legend
-
-  A legend is an SVG object used to display contextual information about a panel.
-  Panel layouts determine basic features of a legend - its position in the panel,
-  its orientation, title, etc. Layouts of child data layers of the panel determine
-  a legend's actual content.
-
+ * An SVG object used to display contextual information about a panel.
+ * Panel layouts determine basic features of a legend - its position in the panel, orientation, title, etc.
+ * Layouts of child data layers of the panel determine the actual content of the legend.
+ *
+ * @class
+ * @param {LocusZoom.Panel} parent
 */
-
 LocusZoom.Legend = function(parent){
-
-    // parent must be a locuszoom panel
-    if (!parent instanceof LocusZoom.Panel){
+    if (!(parent instanceof LocusZoom.Panel)){
         throw "Unable to create legend, parent must be a locuszoom panel";
     }
+    /** @member {LocusZoom.Panel} */
     this.parent = parent;
+    /** @member {String} */
     this.id = this.parent.getBaseId() + ".legend";
 
     this.parent.layout.legend = LocusZoom.Layouts.merge(this.parent.layout.legend || {}, LocusZoom.Legend.DefaultLayout);
+    /** @member {Object} */
     this.layout = this.parent.layout.legend;
 
+    /** @member {d3.selection} */
     this.selector = null;
+    /** @member {d3.selection} */
     this.background_rect = null;
+    /** @member {d3.selection[]} */
     this.elements = [];
+    /**
+     * SVG selector for the group containing all elements in the legend
+     * @protected
+     * @member {d3.selection|null}
+     */
+    this.elements_group = null;
+
+    /**
+     * TODO: Not sure if this property is used; the external-facing methods are setting `layout.hidden` instead. Tentatively mark deprecated.
+     * @deprecated
+     * @protected
+     * @member {Boolean}
+     */
     this.hidden = false;
 
+    // TODO Revisit constructor return value; see https://stackoverflow.com/a/3350364/1422268
     return this.render();
-
 };
 
+/**
+ * The default layout used by legends (used internally)
+ * @protected
+ * @member {Object}
+ */
 LocusZoom.Legend.DefaultLayout = {
     orientation: "vertical",
     origin: { x: 0, y: 0 },
@@ -46,6 +65,9 @@ LocusZoom.Legend.DefaultLayout = {
     hidden: false
 };
 
+/**
+ * Render the legend in the parent panel
+ */
 LocusZoom.Legend.prototype.render = function(){
 
     // Get a legend group selector if not yet defined
@@ -65,7 +87,7 @@ LocusZoom.Legend.prototype.render = function(){
         this.elements_group = this.selector.append("g");
     }
 
-    // Remove all elements
+    // Remove all elements from the document and re-render from scratch
     this.elements.forEach(function(element){
         element.remove();
     });
@@ -86,7 +108,7 @@ LocusZoom.Legend.prototype.render = function(){
                 var label_y = (label_size/2) + (padding/2);
                 line_height = Math.max(line_height, label_size + padding);
                 // Draw the legend element symbol (line, rect, shape, etc)
-                if (element.shape == "line"){
+                if (element.shape === "line"){
                     // Line symbol
                     var length = +element.length || 16;
                     var path_y = (label_size/4) + (padding/2);
@@ -94,7 +116,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .attr("d", "M0," + path_y + "L" + length + "," + path_y)
                         .style(element.style || {});
                     label_x = length + padding;
-                } else if (element.shape == "rect"){
+                } else if (element.shape === "rect"){
                     // Rect symbol
                     var width = +element.width || 16;
                     var height = +element.height || width;
@@ -104,7 +126,7 @@ LocusZoom.Legend.prototype.render = function(){
                         .style(element.style || {});
                     label_x = width + padding;
                     line_height = Math.max(line_height, height + padding);
-                } else if (d3.svg.symbolTypes.indexOf(element.shape) != -1) {
+                } else if (d3.svg.symbolTypes.indexOf(element.shape) !== -1) {
                     // Shape symbol (circle, diamond, etc.)
                     var size = +element.size || 40;
                     var radius = Math.ceil(Math.sqrt(size/Math.PI));
@@ -122,7 +144,7 @@ LocusZoom.Legend.prototype.render = function(){
                     .attr("x", label_x).attr("y", label_y).style({"font-size": label_size}).text(element.label);
                 // Position the legend element group based on legend layout orientation
                 var bcr = selector.node().getBoundingClientRect();
-                if (this.layout.orientation == "vertical"){
+                if (this.layout.orientation === "vertical"){
                     y += bcr.height + padding;
                     line_height = 0;
                 } else {
@@ -151,12 +173,18 @@ LocusZoom.Legend.prototype.render = function(){
         .attr("height", this.layout.height);
 
     // Set the visibility on the legend from the "hidden" flag
+    // TODO: `show()` and `hide()` call a full rerender; might be able to make this more lightweight?
     this.selector.style({ visibility: this.layout.hidden ? "hidden" : "visible" });
-    
+
+    // TODO: Annotate return type and make consistent
     return this.position();
-    
 };
 
+/**
+ * Place the legend in position relative to the panel, as specified in the layout configuration
+ * @returns {LocusZoom.Legend | null}
+ * TODO: should this always be chainable?
+ */
 LocusZoom.Legend.prototype.position = function(){
     if (!this.selector){ return this; }
     var bcr = this.selector.node().getBoundingClientRect();
@@ -169,11 +197,19 @@ LocusZoom.Legend.prototype.position = function(){
     this.selector.attr("transform", "translate(" + this.layout.origin.x + "," + this.layout.origin.y + ")");
 };
 
+/**
+ * Hide the legend (triggers a re-render)
+ * @public
+ */
 LocusZoom.Legend.prototype.hide = function(){
     this.layout.hidden = true;
     this.render();
 };
 
+/**
+ * Show the legend (triggers a re-render)
+ * @public
+ */
 LocusZoom.Legend.prototype.show = function(){
     this.layout.hidden = false;
     this.render();

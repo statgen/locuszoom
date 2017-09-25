@@ -64,7 +64,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 this.track_split_field_index[d[this.layout.track_split_field]] = null;
             }.bind(this));
             var index = Object.keys(this.track_split_field_index);
-            if (this.layout.track_split_order == "DESC"){ index.reverse(); }
+            if (this.layout.track_split_order === "DESC"){ index.reverse(); }
             index.forEach(function(val){
                 this.track_split_field_index[val] = this.tracks + 1;
                 this.interval_track_index[this.tracks + 1] = [];
@@ -107,7 +107,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                 this.tracks = 1;
                 this.data[i].track = null;
                 var potential_track = 1;
-                while (this.data[i].track == null){
+                while (this.data[i].track === null){
                     var collision_on_potential_track = false;
                     this.interval_track_index[potential_track].map(function(placed_interval){
                         if (!collision_on_potential_track){
@@ -331,7 +331,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         selection.exit().remove();
 
         // Update the legend axis if the number of ticks changed
-        if (this.previous_tracks != this.tracks){
+        if (this.previous_tracks !== this.tracks){
             this.updateSplitTrackAxis();
         }
 
@@ -414,7 +414,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                     var key = element[this.layout.track_split_field];
                     var track = this.track_split_field_index[key];
                     if (track){
-                        if (this.layout.track_split_order == "DESC"){
+                        if (this.layout.track_split_order === "DESC"){
                             track = Math.abs(track - tracks - 1);
                         }
                         this.parent.layout.axes[legend_axis].ticks.push({
