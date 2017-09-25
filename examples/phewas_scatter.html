@@ -299,8 +299,8 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
           };
           plot.panels.genes.data_layers.variant.layout.offset = locus;
           plot.panels.phewas.setTitle("Variant " + variant_tag);
-          plot.applyState(state);
           plot.clearPanelData(null, "reset");
+          plot.applyState(state);
         }
 
         function showInvalidVariant() {

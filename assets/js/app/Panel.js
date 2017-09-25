@@ -707,6 +707,9 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");
     this.data_promises = [];
+
+    // Remove any previous error messages before attempting to load new data
+    this.curtain.hide();
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
         try {
