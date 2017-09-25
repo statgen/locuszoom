@@ -179,7 +179,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
         // Break the variant into constituent parts for setting plot state
         var variantGroups = VARIANT_PATTERN.exec(variantForPlot);
         var variantChrom = variantGroups[1];
-        var variantPosition = variantGroups[2];
+        var variantPosition = +variantGroups[2];
         var variantRefAlt = variantGroups[3];
 
         // Genome base pairs static data
