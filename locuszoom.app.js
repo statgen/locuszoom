@@ -49,7 +49,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.5.6"
+    version: "0.6.0"
 };
 
 /**
@@ -755,7 +755,7 @@ LocusZoom.generateLoader = function(){
  * @param {Function} parent A parent class constructor that will be extended by the child class
  * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class
  * @param {Function} [new_constructor] An optional constructor function that performs additional setup. If omitted,
- *   just calls the parent constructor by default
+ *   just calls the parent constructor by default. Implementer must manage super calls when overriding the constructor.
  * @returns {Function} The constructor for the new child class
  */
 LocusZoom.subclass = function(parent, extra, new_constructor) {
@@ -772,7 +772,7 @@ LocusZoom.subclass = function(parent, extra, new_constructor) {
     Object.keys(extra).forEach(function(k) {
         Sub.prototype[k] = extra[k];
     });
-    Sub.prototype.constructor = parent;
+    Sub.prototype.constructor = Sub;
 
     return Sub;
 };
@@ -1142,14 +1142,14 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     id_field: "{{namespace[phewas]}}id",
     fields: ["{{namespace[phewas]}}id", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}trait_group", "{{namespace[phewas]}}trait_label"],
     x_axis: {
-        field: "{{namespace[phewas]}}x",
+        field: "{{namespace[phewas]}}x",  // Synthetic/derived field added by `category_scatter` layer
         category_field: "{{namespace[phewas]}}trait_group"
     },
     y_axis: {
         axis: 1,
         field: "{{namespace[phewas]}}log_pvalue",
         floor: 0,
-        upper_buffer: 0.1
+        upper_buffer: 0.15
     },
     color: {
         field: "{{namespace[phewas]}}trait_group",
@@ -1165,8 +1165,11 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        // TODO: Fix pvalue once api endpoint returns raw untransformed number
-        html: "<div><strong>{{{{namespace[phewas]}}trait_label}}</strong></div><div>P Value: <strong>{{{{namespace[phewas]}}log_pvalue}}</strong></div>"
+        html: [
+            "<strong>Trait:</strong> {{{{namespace[phewas]}}trait_label|htmlescape}}<br>",
+            "<strong>Trait Category:</strong> {{{{namespace[phewas]}}trait_group|htmlescape}}<br>",
+            "<strong>P-value:</strong> {{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}<br>"
+        ].join("")
     },
     behaviors: {
         onmouseover: [
@@ -1194,9 +1197,9 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         },
         filters: [
             {
-                field: "{{namespace[pheweb]}}log_pvalue",
+                field: "{{namespace[phewas]}}log_pvalue",
                 operator: ">=",
-                value: 5
+                value: 20
             }
         ],
         style: {
@@ -1492,7 +1495,15 @@ LocusZoom.Layouts.add("panel", "phewas", {
     inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
-            ticks: []
+            ticks: {  // Object based config (shared defaults; allow layers to specify ticks)
+                style: {
+                    "font-weight": "bold",
+                    "font-size": "11px",
+                    "text-anchor": "start"
+                },
+                transform: "rotate(50)",
+                position: "left"  // Special param recognized by `category_scatter` layers
+            }
         },
         y1: {
             label: "-log10 p-value",
@@ -1519,7 +1530,6 @@ LocusZoom.Layouts.add("panel", "genome_legend", {
             label: "Genomic Position (number denotes chromosome)",
             label_offset: 35,
             ticks: [
-                // TODO: Identify origin and validity of these hard-coded values
                 {
                     x: 124625310,
                     text: "1",
@@ -1907,20 +1917,12 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
     if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
 
-    // Define state parameters specific to this data layer
-    if (this.parent){
-        this.state = this.parent.state;
-        this.state_id = this.parent.id + "." + this.id;
-        this.state[this.state_id] = this.state[this.state_id] || {};
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
-        }.bind(this));
-    } else {
-        /** @member {Object} */
-        this.state = {};
-        /** @member {String} */
-        this.state_id = null;
-    }
+    /** @member {Object} */
+    this.state = {};
+    /** @member {String} */
+    this.state_id = null;
+
+    this.setDefaultState();
 
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
@@ -1940,6 +1942,25 @@ LocusZoom.DataLayer = function(layout, parent) {
     
     return this;
 
+};
+
+/**
+ * Define default state that should get tracked during the lifetime of this layer.
+ *
+ * In some special custom usages, it may be useful to completely reset a panel (eg "click for
+ *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
+ *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
+ */
+LocusZoom.DataLayer.prototype.setDefaultState = function() {
+    // Define state parameters specific to this data layer
+    if (this.parent){
+        this.state = this.parent.state;
+        this.state_id = this.parent.id + "." + this.id;
+        this.state[this.state_id] = this.state[this.state_id] || {};
+        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
+        }.bind(this));
+    }
 };
 
 /**
@@ -2226,6 +2247,30 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     // No conditions met for generating a valid extent, return an empty array
     return [];
 
+};
+
+/**
+ * Allow this data layer to tell the panel what axis ticks it thinks it will require. The panel may choose whether
+ *   to use some, all, or none of these when rendering, either alone or in conjunction with other data layers.
+ *
+ *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
+ *
+ * @param {('x'|'y')} dimension
+ * @param {Object} [config] Additional parameters for the panel to specify how it wants ticks to be drawn. The names
+ *   and meanings of these parameters may vary between different data layers.
+ * @returns {Object[]}
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
+    if (["x", "y"].indexOf(dimension) === -1) {
+        throw("Invalid dimension identifier");
+    }
+    return [];
 };
 
 /**
@@ -2909,10 +2954,11 @@ LocusZoom.DataLayers = (function() {
      * Register a new datalayer that inherits and extends basic behaviors from a known datalayer
      * @param {String} parent_name The name of the parent data layer whose behavior is to be extended
      * @param {String} name The name of the new datalayer to register
-     * @param {Object} overrides Object of properties and methods to combine with the prototype of the parent datalayer
+     * @param {Object} [overrides] Object of properties and methods to combine with the prototype of the parent datalayer
      * @returns {Function} The constructor for the new child class
      */
     obj.extend = function(parent_name, name, overrides) {
+        // TODO: Consider exposing additional constructor argument, if there is a use case for very granular extension
         overrides = overrides || {};
 
         var parent = datalayers[parent_name];
@@ -3247,16 +3293,17 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                 }
             });
             // Render label groups
+            var self = this;
             this.label_groups = this.svg.group
-                .selectAll("g.lz-data_layer-scatter-label")
-                .data(filtered_data, function(d){ return d.id + "_label"; });
+                .selectAll("g.lz-data_layer-" + this.layout.type + "-label")
+                .data(filtered_data, function(d){ return d[self.layout.id_field]  + "_label"; });
             this.label_groups.enter()
                 .append("g")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-"+ this.layout.type + "-label");
             // Render label texts
             if (this.label_texts){ this.label_texts.remove(); }
             this.label_texts = this.label_groups.append("text")
-                .attr("class", "lz-data_layer-scatter-label");
+                .attr("class", "lz-data_layer-" + this.layout.type + "-label");
             this.label_texts
                 .text(function(d){
                     return LocusZoom.parseFields(d, data_layer.layout.label.text || "");
@@ -3283,7 +3330,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             if (data_layer.layout.label.lines){
                 if (this.label_lines){ this.label_lines.remove(); }
                 this.label_lines = this.label_groups.append("line")
-                    .attr("class", "lz-data_layer-scatter-label");
+                    .attr("class", "lz-data_layer-" + this.layout.type + "-label");
                 this.label_lines
                     .style(data_layer.layout.label.lines.style || {})
                     .attr({
@@ -3317,14 +3364,14 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             
         // Generate main scatter data elements
         var selection = this.svg.group
-            .selectAll("path.lz-data_layer-scatter")
+            .selectAll("path.lz-data_layer-" + this.layout.type)
             .data(this.data, function(d){ return d[this.layout.id_field]; }.bind(this));
 
         // Create elements, apply class, ID, and initial position
         var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append("path")
-            .attr("class", "lz-data_layer-scatter")
+            .attr("class", "lz-data_layer-" + this.layout.type)
             .attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .attr("transform", "translate(0," + initial_y + ")");
 
@@ -3426,12 +3473,13 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
      * @private
      */
     _prepareData: function() {
-        // Because of this intended use case, we will also silently drop any records that do not provide a trait group
-        //   that can be used for categorization
-        // TODO: Revisit assumption! This logic may go better in the category scatter plot post-fetch ops
-
         var xField = this.layout.x_axis.field || "x";
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         var category_field = this.layout.x_axis.category_field;
+        if (!category_field) {
+            throw "Layout for " + this.layout.id + " must specify category_field";
+        }
+        // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
         var sourceData = this.data
             .sort(function(a, b) {
                 var ak = a[category_field];
@@ -3440,24 +3488,24 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
                 var bv = bk.toString ? bk.toString().toLowerCase() : bk;
                 return (av === bv) ? 0 : (av < bv ? -1 : 1);});
         sourceData.forEach(function(d, i){
-            d[xField] = i;
+            // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
+            //   specify plotting positions. If a point is missing this field, fill in a synthetic value.
+            d[xField] = d[xField] || i;
         });
         return sourceData;
     },
+
     /**
      * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
      *
      * Also identify the min and max x value associated with the category, which will be used to generate ticks
      * @private
-     * @returns {Object} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
+     * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
     _generateCategoryBounds: function() {
-        // Find all unique category groups represented in the API payload, and update the layout accordingly
-        // TODO: API may return null values; add placeholder category label?
-
-        // TODO: all things that need trait group
+        // TODO: API may return null values in category_field; should we add placeholder category label?
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         var category_field = this.layout.x_axis.category_field;
-
         var xField = this.layout.x_axis.field || "x";
         var uniqueCategories = {};
         this.data.forEach(function(item) {
@@ -3468,49 +3516,80 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         });
 
         var categoryNames = Object.keys(uniqueCategories);
-        // Construct a color scale with a bunch of colors, that spreads values out a bit
+        // Construct a color scale with a sufficient number of visually distinct colors
         // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
         var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
-        var colors = color_scale().range().splice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
+        var colors = color_scale().range().slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
 
         this.layout.color.parameters.categories = categoryNames;
         this.layout.color.parameters.values = colors;
-
         return uniqueCategories;
     },
-    /**
-     * Generate custom tick mark extents for the provided categories, and apply them to the layout
-     * @param {Object} categoryBounds Tick mark extents in form {category_name: [min_x, max_x]}
-     * @private
-     */
-    _generateXTicks: function(categoryBounds) {
-        var ticks = [];
-        Object.keys(categoryBounds).forEach(function(category) {
-            var bounds = categoryBounds[category];
-            var diff = bounds[1] - bounds[0];
-            var center = bounds[0] + (diff !== 0 ? diff: bounds[0]) / 2;  // Center tick under one or many elements as appropriate
-            // TODO: Add custom orie/styling per tick
-            ticks.push({
-                x: center,
-                text: category,
-                style: {
-                    "fill": "#393b79",  // TODO: fill in colors correctly
-                    "font-weight": "bold",
-                    "font-size": "11px",
-                    "text-anchor": "start"
-                },
-                transform: "rotate(50)"
-            }); // TODO: Is this label specific enough?
-        });
-        this.parent.layout.axes.x.ticks = ticks;
 
+    /**
+     *
+     * @param dimension
+     * @param {Object} [config] Parameters that customize how ticks are calculated (not style)
+     * @param {('left'|'center'|'right')} [config.position='left'] Align ticks with the center or edge of category
+     * @returns {Array}
+     */
+    getTicks: function(dimension, config) { // Overrides parent method
+        if (["x", "y"].indexOf(dimension) === -1) {
+            throw "Invalid dimension identifier";
+        }
+        var position = config.position || "left";
+        if (["left", "center", "right"].indexOf(position) === -1) {
+            throw "Invalid tick position";
+        }
+
+        var categoryBounds = this._categories;
+        if (!categoryBounds || !Object.keys(categoryBounds).length) {
+            return [];
+        }
+
+        if (dimension === "y") {
+            return [];
+        }
+
+        if (dimension === "x") {
+            // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
+            var knownColors = this.layout.color.parameters.values || [];
+
+            return Object.keys(categoryBounds).map(function (category, index) {
+                var bounds = categoryBounds[category];
+                var xPos;
+
+                switch(position) {
+                case "left":
+                    xPos = bounds[0];
+                    break;
+                case "center":
+                    // Center tick under one or many elements as appropriate
+                    var diff = bounds[1] - bounds[0];
+                    xPos = bounds[0] + (diff !== 0 ? diff : bounds[0]) / 2;
+                    break;
+                case "right":
+                    xPos = bounds[1];
+                    break;
+                }
+                return {
+                    x: xPos,
+                    text: category,
+                    style: {
+                        "fill": knownColors[index] || "#000000"
+                    }
+                };
+            });
+        }
     },
 
     applyCustomDataMethods: function() {
-        //TODO: Have layout validation check for presence of a `category_field` as additional required property
         this.data = this._prepareData();
-        var uniqueCategories = this._generateCategoryBounds();
-        this._generateXTicks(uniqueCategories);
+        /**
+         * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
+         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         */
+        this._categories = this._generateCategoryBounds();
         return this;
     }
 });
@@ -5484,6 +5563,36 @@ LocusZoom.TransformationFunctions.add("urlencode", function(str) {
     return encodeURIComponent(str);
 });
 
+/**
+ * HTML-escape user entered values for use in constructed HTML fragments
+ *
+ * For example, this filter can be used on tooltips with custom HTML display
+ * @function htmlescape
+ * @param {String} str HTML-escape the provided value
+ */
+LocusZoom.TransformationFunctions.add("htmlescape", function(str) {
+    if ( !str ) {
+        return "";
+    }
+    str = str + "";
+
+    return str.replace( /['"<>&`]/g, function( s ) {
+        switch ( s ) {
+        case "'":
+            return "&#039;";
+        case "\"":
+            return "&quot;";
+        case "<":
+            return "&lt;";
+        case ">":
+            return "&gt;";
+        case "&":
+            return "&amp;";
+        case "`":
+            return "&#x60;";
+        }
+    });
+});
 
 /**
  * Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale
@@ -7713,7 +7822,7 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
  *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
  *    by the datalayer. See `parseData` for usage.
  * @protected
- * @param {Object} x A response payload object
+ * @param {Object[]} x An array of response payload objects, each describing one record
  * @param {Array} fields
  * @param {Array} outnames
  * @param {Array} trans
@@ -7726,6 +7835,11 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
     var fieldFound = [];
     for (var k=0; k<fields.length; k++) { 
         fieldFound[k] = 0;
+    }
+
+    if (!x.length) {
+        // Do not attempt to parse records if there are no records, and bubble up an informative error message.
+        throw "No data found for specified query";
     }
     for (var i = 0; i < x.length; i++) {
         var record = {};
@@ -7789,9 +7903,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
     constructorFun.prototype = base;
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
-        /**
-         * @member {String} LocusZoom.Data.Source.SOURCENAME
-         */
+        /** @member {String} LocusZoom.Data.Source.SOURCENAME */
         constructorFun.SOURCE_NAME = uniqueName;
         LocusZoom.KnownDataSources.add(constructorFun);
     }
@@ -8132,7 +8244,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * @public
  * @class
  * @augments LocusZoom.Data.Source
- * @param {String} init.build This datasource expects to be provided the name of the genome build that will be used to
+ * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
  *   provide pheWAS results for this position. Note positions may not translate between builds.
  */
 LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
@@ -8140,7 +8252,7 @@ LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
 }, "PheWASLZ");
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
     var build = this.params.build;
-    if (!build) {
+    if (!build || !Array.isArray(build) || !build.length) {
         throw ["Data source", this.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
     }
     var url = [
@@ -8633,6 +8745,42 @@ LocusZoom.Plot.prototype.addPanel = function(layout){
     return this.panels[panel.id];
 };
 
+
+/**
+ * Clear all state, tooltips, and other persisted data associated with one (or all) panel(s) in the plot
+ *
+ * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
+ *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
+ *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+ *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+ *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+ * @returns {LocusZoom.Plot}
+ */
+LocusZoom.Plot.prototype.clearPanelData = function(panelId, mode) {
+    mode = mode || "wipe";
+
+    // TODO: Add unit tests for this method
+    var panelsList;
+    if (panelId) {
+        panelsList = [panelId];
+    } else {
+        panelsList = Object.keys(this.panels);
+    }
+    var self = this;
+    panelsList.forEach(function(pid) {
+        self.panels[pid].data_layer_ids_by_z_index.forEach(function(dlid){
+            var layer = self.panels[pid].data_layers[dlid];
+            layer.destroyAllTooltips();
+
+            delete self.layout.state[pid + "." + dlid];
+            if(mode === "reset") {
+                layer.setDefaultState();
+            }
+        });
+    });
+    return this;
+};
+
 /**
  * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
  * @param {String} id
@@ -8647,10 +8795,7 @@ LocusZoom.Plot.prototype.removePanel = function(id){
     this.panel_boundaries.hide();
 
     // Destroy all tooltips and state vars for all data layers on the panel
-    this.panels[id].data_layer_ids_by_z_index.forEach(function(dlid){
-        this.panels[id].data_layers[dlid].destroyAllTooltips();
-        delete this.layout.state[id + "." + dlid];
-    }.bind(this));
+    this.clearPanelData(id);
 
     // Remove all panel-level HTML overlay elements
     this.panels[id].loader.hide();
@@ -9249,7 +9394,7 @@ LocusZoom.Panel = function(layout, parent) {
 
     /** @member {Object} */
     this.data_layers = {};
-    /** @member {Array} */
+    /** @member {String[]} */
     this.data_layer_ids_by_z_index = [];
 
     /** @protected */
@@ -9881,6 +10026,9 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");
     this.data_promises = [];
+
+    // Remove any previous error messages before attempting to load new data
+    this.curtain.hide();
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
         try {
@@ -9941,6 +10089,64 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
     return this;
 
+};
+
+/**
+ * Generate an array of ticks for an axis. These ticks are generated in one of three ways (highest wins):
+ *   1. An array of specific tick marks
+ *   2. Query each data layer for what ticks are appropriate, and allow a panel-level tick configuration parameter
+ *     object to override the layer's default presentation settings
+ *   3. Generate generic tick marks based on the extent of the data
+ * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
+ * @returns {Number[]|Object[]}  TODO: number format?
+ *   An array of numbers: interpreted as an array of axis value offsets for positioning.
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.Panel.prototype.generateTicks = function(axis){
+
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (this.layout.axes[axis].ticks){
+        var layout = this.layout.axes[axis];
+
+        var baseTickConfig = layout.ticks;
+        if (Array.isArray(baseTickConfig)){
+            // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+            return baseTickConfig;
+        }
+
+        if (typeof baseTickConfig === "object") {
+            // If the layout specifies base configuration for ticks- but without specific positions- then ask each
+            //   data layer to report the tick marks that it thinks it needs
+            // TODO: Few layers currently need to specify custom ticks (which is ok!). But if it becomes common, consider adding mechanisms to deduplicate ticks across layers
+            var self = this;
+
+            // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
+            var config = { position: baseTickConfig.position };
+
+            var combinedTicks = this.data_layer_ids_by_z_index.reduce(function(acc, data_layer_id) {
+                var nextLayer = self.data_layers[data_layer_id];
+                return acc.concat(nextLayer.getTicks(axis, config));
+            }, []);
+
+            return combinedTicks.map(function(item) {
+                // The layer makes suggestions, but tick configuration params specified on the panel take precedence
+                var itemConfig = {};
+                itemConfig = LocusZoom.Layouts.merge(itemConfig, baseTickConfig);
+                return LocusZoom.Layouts.merge(itemConfig, item);
+            });
+        }
+    }
+
+    // If no other configuration is provided, attempt to generate ticks from the extent
+    if (this[axis + "_extent"]) {
+        return LocusZoom.prettyTicks(this[axis + "_extent"], "both");
+    }
+    return [];
 };
 
 /**
@@ -10085,14 +10291,8 @@ LocusZoom.Panel.prototype.render = function(){
         // Finalize Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"]).range(ranges[axis]);
-        // Ticks
-        if (this.layout.axes[axis].ticks){
-            this[axis + "_ticks"] = this.layout.axes[axis].ticks;
-        } else {
-            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
-        }
 
-        // Render
+        // Render axis (and generate ticks as needed)
         this.renderAxis(axis);
     }.bind(this));
 
@@ -10193,6 +10393,9 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
             label_rotate: -90
         }
     };
+
+    // Generate Ticks
+    this[axis + "_ticks"] = this.generateTicks(axis);
 
     // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
     var ticksAreAllNumbers = (function(ticks){
