@@ -799,6 +799,88 @@ describe("LocusZoom.DataLayer", function(){
             assert.deepEqual(returned_value.layout, expected_value.layout);
             assert.equal(returned_value.render(), expected_value.render());
         });
+        describe("Extension/subclassing mechanism", function() {
+            it("exists", function() {
+                LocusZoom.DataLayers.should.have.property("extend").which.is.a.Function;
+            });
+            it("should validate arguments", function() {
+                assert.throws(
+                    LocusZoom.DataLayers.extend.bind(null, "nonexistent-parent", "whatever", {}),
+                    /Attempted to subclass an unknown or unregistered datalayer type/
+                );
+                assert.throws(
+                    LocusZoom.DataLayers.extend.bind(null, "scatter", "newchild", "wrongkindofoverride"),
+                    /Must specify an object of properties and methods/
+                );
+            });
+            it("should extend a known datalayer with custom behavior", function() {
+                LocusZoom.DataLayers.add("testparent", function(layout) {
+                    LocusZoom.DataLayer.apply(this, arguments);
+                    this.DefaultLayout = {};
+                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                    this.render = function(){ return "foo"; };
+                    this.classname = "parent";
+                });
+                var Child = LocusZoom.DataLayers.extend("testparent", "testchild", {
+                    childMethod: function() {return true;},
+                    isChild: true,
+                    applyCustomDataMethods: function() {return 12;}  // this one overrides parent behavior!
+                });
+                var instance = new Child({});
+
+                // Child class is added to the registry
+                LocusZoom.DataLayers.list().should.containEql("testparent");
+                LocusZoom.DataLayers.list().should.containEql("testchild");
+
+                // Sets custom properties and methods correctly
+                assert.equal(instance.classname, "parent");
+                assert.ok(instance.childMethod());
+                assert.ok(instance.isChild);
+
+                // Inherits and overrides where appropriate
+                assert.ok(instance instanceof LocusZoom.DataLayer);
+                assert.equal(instance.applyCustomDataMethods(), 12);
+                instance.should.have.property("moveUp").which.is.a.Function;
+
+                // Clean up when done.
+                LocusZoom.DataLayers.set("testchild");
+                LocusZoom.DataLayers.set("testparent");
+            });
+
+            it("should be able to create subclasses several levels deep", function() {
+                LocusZoom.DataLayers.add("testparent", function(layout) {
+                    LocusZoom.DataLayer.apply(this, arguments);
+                    this.DefaultLayout = {};
+                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+                    this.render = function(){ return "foo"; };
+                    this.classname = "parent";
+                });
+                LocusZoom.DataLayers.extend("testparent", "testchild", {
+                    childMethod: function() {return true;},
+                    isChild: true,
+                    applyCustomDataMethods: function() {return 12;}  // this one overrides parent behavior!
+                });
+                var GrandChild = LocusZoom.DataLayers.extend("testchild", "testgrandchild", {
+                    applyCustomDataMethods: function() {return 14;}  // this one overrides parent behavior!
+                });
+
+                var instance = new GrandChild({});
+
+                // Child class is added to the registry
+                LocusZoom.DataLayers.list().should.containEql("testgrandchild");
+
+                assert.ok(instance.isChild);
+
+                // Inherits and overrides where appropriate
+                assert.ok(instance instanceof LocusZoom.DataLayer);
+                assert.equal(instance.applyCustomDataMethods(), 14);
+
+                // Clean up when done.
+                LocusZoom.DataLayers.set("testgrandchild");
+                LocusZoom.DataLayers.set("testchild");
+                LocusZoom.DataLayers.set("testparent");
+            });
+        });
         it("should have a method to change or delete existing data layers", function(){
             LocusZoom.DataLayers.should.have.property("set").which.is.a.Function;
             var foo_new = function(layout){

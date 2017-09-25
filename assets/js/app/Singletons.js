@@ -291,6 +291,36 @@ LocusZoom.TransformationFunctions.add("urlencode", function(str) {
     return encodeURIComponent(str);
 });
 
+/**
+ * HTML-escape user entered values for use in constructed HTML fragments
+ *
+ * For example, this filter can be used on tooltips with custom HTML display
+ * @function htmlescape
+ * @param {String} str HTML-escape the provided value
+ */
+LocusZoom.TransformationFunctions.add("htmlescape", function(str) {
+    if ( !str ) {
+        return "";
+    }
+    str = str + "";
+
+    return str.replace( /['"<>&`]/g, function( s ) {
+        switch ( s ) {
+        case "'":
+            return "&#039;";
+        case "\"":
+            return "&quot;";
+        case "<":
+            return "&lt;";
+        case ">":
+            return "&gt;";
+        case "&":
+            return "&amp;";
+        case "`":
+            return "&#x60;";
+        }
+    });
+});
 
 /**
  * Singleton for accessing/storing functions that will convert arbitrary data points to values in a given scale

@@ -403,7 +403,7 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
  *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
  *    by the datalayer. See `parseData` for usage.
  * @protected
- * @param {Object} x A response payload object
+ * @param {Object[]} x An array of response payload objects, each describing one record
  * @param {Array} fields
  * @param {Array} outnames
  * @param {Array} trans
@@ -416,6 +416,11 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
     var fieldFound = [];
     for (var k=0; k<fields.length; k++) { 
         fieldFound[k] = 0;
+    }
+
+    if (!x.length) {
+        // Do not attempt to parse records if there are no records, and bubble up an informative error message.
+        throw "No data found for specified query";
     }
     for (var i = 0; i < x.length; i++) {
         var record = {};
@@ -479,6 +484,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
     constructorFun.prototype = base;
     constructorFun.prototype.constructor = constructorFun;
     if (uniqueName) {
+        /** @member {String} LocusZoom.Data.Source.SOURCENAME */
         constructorFun.SOURCE_NAME = uniqueName;
         LocusZoom.KnownDataSources.add(constructorFun);
     }
@@ -819,18 +825,21 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * @public
  * @class
  * @augments LocusZoom.Data.Source
+ * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
+ *   provide pheWAS results for this position. Note positions may not translate between builds.
  */
 LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "PheWASLZ");
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
-    return this.url + state.variant + ".json";
-};
-LocusZoom.Data.PheWASSource.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var data = JSON.parse(resp);
-    data.forEach(function(d, i){
-        data[i].x = i;
-        data[i].id = i.toString();
-    });
-    return {header: chain.header, body: data};
+    var build = this.params.build;
+    if (!build || !Array.isArray(build) || !build.length) {
+        throw ["Data source", this.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
+    }
+    var url = [
+        this.url,
+        "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
+        build.map(function(item) {return "build=" + encodeURIComponent(item);}).join("&")
+    ];
+    return url.join("");
 };

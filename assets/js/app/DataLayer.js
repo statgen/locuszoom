@@ -38,20 +38,12 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
     if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
 
-    // Define state parameters specific to this data layer
-    if (this.parent){
-        this.state = this.parent.state;
-        this.state_id = this.parent.id + "." + this.id;
-        this.state[this.state_id] = this.state[this.state_id] || {};
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
-        }.bind(this));
-    } else {
-        /** @member {Object} */
-        this.state = {};
-        /** @member {String} */
-        this.state_id = null;
-    }
+    /** @member {Object} */
+    this.state = {};
+    /** @member {String} */
+    this.state_id = null;
+
+    this.setDefaultState();
 
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
@@ -71,6 +63,25 @@ LocusZoom.DataLayer = function(layout, parent) {
     
     return this;
 
+};
+
+/**
+ * Define default state that should get tracked during the lifetime of this layer.
+ *
+ * In some special custom usages, it may be useful to completely reset a panel (eg "click for
+ *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
+ *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
+ */
+LocusZoom.DataLayer.prototype.setDefaultState = function() {
+    // Define state parameters specific to this data layer
+    if (this.parent){
+        this.state = this.parent.state;
+        this.state_id = this.parent.id + "." + this.id;
+        this.state[this.state_id] = this.state[this.state_id] || {};
+        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
+        }.bind(this));
+    }
 };
 
 /**
@@ -357,6 +368,30 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
     // No conditions met for generating a valid extent, return an empty array
     return [];
 
+};
+
+/**
+ * Allow this data layer to tell the panel what axis ticks it thinks it will require. The panel may choose whether
+ *   to use some, all, or none of these when rendering, either alone or in conjunction with other data layers.
+ *
+ *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
+ *
+ * @param {('x'|'y')} dimension
+ * @param {Object} [config] Additional parameters for the panel to specify how it wants ticks to be drawn. The names
+ *   and meanings of these parameters may vary between different data layers.
+ * @returns {Object[]}
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
+    if (["x", "y"].indexOf(dimension) === -1) {
+        throw("Invalid dimension identifier");
+    }
+    return [];
 };
 
 /**
@@ -1034,6 +1069,30 @@ LocusZoom.DataLayers = (function() {
         } else {
             obj.set(name, datalayer);
         }
+    };
+
+    /**
+     * Register a new datalayer that inherits and extends basic behaviors from a known datalayer
+     * @param {String} parent_name The name of the parent data layer whose behavior is to be extended
+     * @param {String} name The name of the new datalayer to register
+     * @param {Object} [overrides] Object of properties and methods to combine with the prototype of the parent datalayer
+     * @returns {Function} The constructor for the new child class
+     */
+    obj.extend = function(parent_name, name, overrides) {
+        // TODO: Consider exposing additional constructor argument, if there is a use case for very granular extension
+        overrides = overrides || {};
+
+        var parent = datalayers[parent_name];
+        if (!parent) {
+            throw "Attempted to subclass an unknown or unregistered datalayer type";
+        }
+        if (typeof overrides !== "object") {
+            throw "Must specify an object of properties and methods";
+        }
+        var child = LocusZoom.subclass(parent, overrides);
+        // Bypass .set() because we want a layer of inheritance below `DataLayer`
+        datalayers[name] = child;
+        return child;
     };
 
     /**

@@ -75,7 +75,7 @@ LocusZoom.Panel = function(layout, parent) {
 
     /** @member {Object} */
     this.data_layers = {};
-    /** @member {Array} */
+    /** @member {String[]} */
     this.data_layer_ids_by_z_index = [];
 
     /** @protected */
@@ -707,6 +707,9 @@ LocusZoom.Panel.prototype.clearSelections = function(){
 LocusZoom.Panel.prototype.reMap = function(){
     this.emit("data_requested");
     this.data_promises = [];
+
+    // Remove any previous error messages before attempting to load new data
+    this.curtain.hide();
     // Trigger reMap on each Data Layer
     for (var id in this.data_layers){
         try {
@@ -767,6 +770,64 @@ LocusZoom.Panel.prototype.generateExtents = function(){
 
     return this;
 
+};
+
+/**
+ * Generate an array of ticks for an axis. These ticks are generated in one of three ways (highest wins):
+ *   1. An array of specific tick marks
+ *   2. Query each data layer for what ticks are appropriate, and allow a panel-level tick configuration parameter
+ *     object to override the layer's default presentation settings
+ *   3. Generate generic tick marks based on the extent of the data
+ * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
+ * @returns {Number[]|Object[]}  TODO: number format?
+ *   An array of numbers: interpreted as an array of axis value offsets for positioning.
+ *   An array of objects: each object must have an 'x' attribute to position the tick.
+ *   Other supported object keys:
+ *     * text: string to render for a given tick
+ *     * style: d3-compatible CSS style object
+ *     * transform: SVG transform attribute string
+ *     * color: string or LocusZoom scalable parameter object
+ */
+LocusZoom.Panel.prototype.generateTicks = function(axis){
+
+    // Parse an explicit 'ticks' attribute in the axis layout
+    if (this.layout.axes[axis].ticks){
+        var layout = this.layout.axes[axis];
+
+        var baseTickConfig = layout.ticks;
+        if (Array.isArray(baseTickConfig)){
+            // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+            return baseTickConfig;
+        }
+
+        if (typeof baseTickConfig === "object") {
+            // If the layout specifies base configuration for ticks- but without specific positions- then ask each
+            //   data layer to report the tick marks that it thinks it needs
+            // TODO: Few layers currently need to specify custom ticks (which is ok!). But if it becomes common, consider adding mechanisms to deduplicate ticks across layers
+            var self = this;
+
+            // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
+            var config = { position: baseTickConfig.position };
+
+            var combinedTicks = this.data_layer_ids_by_z_index.reduce(function(acc, data_layer_id) {
+                var nextLayer = self.data_layers[data_layer_id];
+                return acc.concat(nextLayer.getTicks(axis, config));
+            }, []);
+
+            return combinedTicks.map(function(item) {
+                // The layer makes suggestions, but tick configuration params specified on the panel take precedence
+                var itemConfig = {};
+                itemConfig = LocusZoom.Layouts.merge(itemConfig, baseTickConfig);
+                return LocusZoom.Layouts.merge(itemConfig, item);
+            });
+        }
+    }
+
+    // If no other configuration is provided, attempt to generate ticks from the extent
+    if (this[axis + "_extent"]) {
+        return LocusZoom.prettyTicks(this[axis + "_extent"], "both");
+    }
+    return [];
 };
 
 /**
@@ -911,14 +972,8 @@ LocusZoom.Panel.prototype.render = function(){
         // Finalize Scale
         this[axis + "_scale"] = d3.scale.linear()
             .domain(this[axis + "_extent"]).range(ranges[axis]);
-        // Ticks
-        if (this.layout.axes[axis].ticks){
-            this[axis + "_ticks"] = this.layout.axes[axis].ticks;
-        } else {
-            this[axis + "_ticks"] = LocusZoom.prettyTicks(this[axis + "_extent"], "both");
-        }
 
-        // Render
+        // Render axis (and generate ticks as needed)
         this.renderAxis(axis);
     }.bind(this));
 
@@ -1019,6 +1074,9 @@ LocusZoom.Panel.prototype.renderAxis = function(axis){
             label_rotate: -90
         }
     };
+
+    // Generate Ticks
+    this[axis + "_ticks"] = this.generateTicks(axis);
 
     // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
     var ticksAreAllNumbers = (function(ticks){

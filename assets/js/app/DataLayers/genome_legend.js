@@ -63,9 +63,14 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
         chromosomes.exit().remove();
 
         // Parse current state variant into a position
-        var split = this.state.variant.split("_");
-        var chr = split[0];
-        var offset = split[1];
+        // Assumes that variant string is of the format 10:123352136_C/T or 10:123352136
+        var variant_parts = /([^:]+):(\d+)(?:_.*)?/.exec(this.state.variant);
+        if (!variant_parts) {
+            throw("Genome legend cannot understand the specified variant position");
+        }
+        var chr = variant_parts[1];
+        var offset = variant_parts[2];
+        // TODO: How does this handle representation of X or Y chromosomes?
         position = +this.data[chr-1].genome_start + +offset;
 
         // Render the position

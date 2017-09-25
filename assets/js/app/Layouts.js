@@ -354,28 +354,30 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
 });
 
 LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
+    namespace: {"phewas": "phewas"},
     id: "phewaspvalues",
-    type: "scatter",
+    type: "category_scatter",
     point_shape: "circle",
     point_size: 70,
     tooltip_positioning: "vertical",
-    id_field: "{{namespace}}id",
-    fields: ["{{namespace}}phewas"],
+    id_field: "{{namespace[phewas]}}id",
+    fields: ["{{namespace[phewas]}}id", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}trait_group", "{{namespace[phewas]}}trait_label"],
     x_axis: {
-        field: "{{namespace}}x"
+        field: "{{namespace[phewas]}}x",  // Synthetic/derived field added by `category_scatter` layer
+        category_field: "{{namespace[phewas]}}trait_group"
     },
     y_axis: {
         axis: 1,
-        field: "{{namespace}}pval|neglog10",
+        field: "{{namespace[phewas]}}log_pvalue",
         floor: 0,
-        upper_buffer: 0.1
+        upper_buffer: 0.15
     },
     color: {
-        field: "{{namespace}}category_name",
+        field: "{{namespace[phewas]}}trait_group",
         scale_function: "categorical_bin",
         parameters: {
-            categories: ["infectious diseases", "neoplasms", "endocrine/metabolic", "hematopoietic", "mental disorders", "neurological", "sense organs", "circulatory system", "respiratory", "digestive", "genitourinary", "pregnancy complications", "dermatologic", "musculoskeletal", "congenital anomalies", "symptoms", "injuries & poisonings"],
-            values: ["rgb(57,59,121)", "rgb(82,84,163)", "rgb(107,110,207)", "rgb(156,158,222)", "rgb(99,121,57)", "rgb(140,162,82)", "rgb(181,207,107)", "rgb(140,109,49)", "rgb(189,158,57)", "rgb(231,186,82)", "rgb(132,60,57)", "rgb(173,73,74)", "rgb(214,97,107)", "rgb(231,150,156)", "rgb(123,65,115)", "rgb(165,81,148)", "rgb(206,109,189)", "rgb(222,158,214)"],
+            categories: [],
+            values: [],
             null_value: "#B8B8B8"
         }
     },
@@ -384,7 +386,11 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         closable: true,
         show: { or: ["highlighted", "selected"] },
         hide: { and: ["unhighlighted", "unselected"] },
-        html: "<div><strong>{{{{namespace}}phewas_string}}</strong></div><div>P Value: <strong>{{{{namespace}}pval|scinotation}}</strong></div>"
+        html: [
+            "<strong>Trait:</strong> {{{{namespace[phewas]}}trait_label|htmlescape}}<br>",
+            "<strong>Trait Category:</strong> {{{{namespace[phewas]}}trait_group|htmlescape}}<br>",
+            "<strong>P-value:</strong> {{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}<br>"
+        ].join("")
     },
     behaviors: {
         onmouseover: [
@@ -401,7 +407,7 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         ]
     },
     label: {
-        text: "{{{{namespace}}phewas_string}}",
+        text: "{{{{namespace[phewas]}}trait_label}}",
         spacing: 6,
         lines: {
             style: {
@@ -412,9 +418,9 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
         },
         filters: [
             {
-                field: "{{namespace}}pval|neglog10",
+                field: "{{namespace[phewas]}}log_pvalue",
                 operator: ">=",
-                value: 5
+                value: 20
             }
         ],
         style: {
@@ -710,195 +716,15 @@ LocusZoom.Layouts.add("panel", "phewas", {
     inner_border: "rgb(210, 210, 210)",
     axes: {
         x: {
-            ticks: [
-                {
-                    x: 0,
-                    text: "Infectious Disease",
-                    style: {
-                        "fill": "#393b79",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
+            ticks: {  // Object based config (shared defaults; allow layers to specify ticks)
+                style: {
+                    "font-weight": "bold",
+                    "font-size": "11px",
+                    "text-anchor": "start"
                 },
-                {
-                    x: 44,
-                    text: "Neoplasms",
-                    style: {
-                        "fill": "#5254a3",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 174,
-                    text: "Endocrine/Metabolic",
-                    style: {
-                        "fill": "#6b6ecf",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 288,
-                    text: "Hematopoietic",
-                    style: {
-                        "fill": "#9c9ede",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 325,
-                    text: "Mental Disorders",
-                    style: {
-                        "fill": "#637939",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 384,
-                    text: "Neurological",
-                    style: {
-                        "fill": "#8ca252",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 451,
-                    text: "Sense Organs",
-                    style: {
-                        "fill": "#b5cf6b",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 558,
-                    text: "Circulatory System",
-                    style: {
-                        "fill": "#8c6d31",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 705,
-                    text: "Respiratory",
-                    style: {
-                        "fill": "#bd9e39",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 778,
-                    text: "Digestive",
-                    style: {
-                        "fill": "#e7ba52",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 922,
-                    text: "Genitourinary",
-                    style: {
-                        "fill": "#843c39",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1073,
-                    text: "Pregnancy Complications",
-                    style: {
-                        "fill": "#ad494a",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1097,
-                    text: "Dermatologic",
-                    style: {
-                        "fill": "#d6616b",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1170,
-                    text: "Musculoskeletal",
-                    style: {
-                        "fill": "#e7969c",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1282,
-                    text: "Congenital Anomalies",
-                    style: {
-                        "fill": "#7b4173",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1323,
-                    text: "Symptoms",
-                    style: {
-                        "fill": "#a55194",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                },
-                {
-                    x: 1361,
-                    text: "Injuries & Poisonings",
-                    style: {
-                        "fill": "#ce6dbd",
-                        "font-weight": "bold",
-                        "font-size": "11px",
-                        "text-anchor": "start"
-                    },
-                    transform: "translate(15, 0) rotate(50)"
-                }
-            ]
+                transform: "rotate(50)",
+                position: "left"  // Special param recognized by `category_scatter` layers
+            }
         },
         y1: {
             label: "-log10 p-value",
