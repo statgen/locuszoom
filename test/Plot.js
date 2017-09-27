@@ -231,7 +231,7 @@ describe("LocusZoom.Plot", function(){
             d3.select("body").append("div").attr("id", "plot");
             this.plot = LocusZoom.populate("#plot", datasources, layout);
         });
-        it("Should adjust the size of the plot if a single panel is added that does not completely fill it", function(){
+        it("Should adjust the size of the panel if a single panel is added that does not completely fill min_height", function(){
             var panelA = { id: "panelA", width: 100, height: 50 };
             this.plot.addPanel(panelA);
             var svg = d3.select("#plot svg");
@@ -285,6 +285,78 @@ describe("LocusZoom.Plot", function(){
             this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(0);
             this.plot.panels.panelB.layout.origin.y.should.be.exactly(0);
             this.plot.sumProportional("height").should.be.exactly(1);
+        });
+        it("Should resize the plot as panels are removed, when panels specify min_height", function() {
+            // Regression test for a reported edge case where `min_height` caused resizing logic to work differently
+
+            // Small hack; resize the plot after it was created
+            this.plot.layout.min_height = this.plot._base_layout.min_height = 600;
+            this.plot.layout.height = this.plot._base_layout.height = 600;
+            this.plot.layout.width = this.plot._base_layout.width = 800;
+            this.plot.layout.min_width = this.plot._base_layout.min_width = 800;
+            this.plot.layout.responsive_resize = this.plot._base_layout.responsive_resize = true;
+
+            // These numbers are based on a real plot. Expected behavior is chosen to match behavior of a layout where
+            //   panels had no min_height specified.
+            var panelA = { id: "panelA", width: 800, height: 300, min_height: 300 };
+            var panelB = { id: "panelB", width: 800, height: 50, min_height: 50 };
+            var panelC = { id: "panelC", width: 800, height: 225, min_height: 112.5 };
+
+            // Set up the scenario
+            this.plot.addPanel(panelA);
+            this.plot.addPanel(panelB);
+            this.plot.addPanel(panelC);
+
+            this.plot.removePanel("panelC");
+            // Check dimensions. Some checks are approximate due to floating point rounding issues.
+            this.plot.layout.width.should.be.exactly(800, "Plot width is incorrect");
+            this.plot.layout.height.should.be.approximately(650, 0.000001, "Plot height is incorrect");
+
+            this.plot.panels.panelB.layout.width.should.be.exactly(800, "Panel B width is incorrect");
+            this.plot.panels.panelB.layout.height.should.be.exactly(50, "Panel B height is incorrect");
+            // When the overall plot specifies a min_height larger than any panel, the final resizing of the panels
+            //   must respect that setting. Thus, panels A and B will not have the same relative proportions
+            //   after panel C is removed.
+            this.plot.panels.panelA.layout.proportional_height.should.be.approximately(600/650, 0.000001, "Panel A proportional height is incorrect");
+            this.plot.panels.panelB.layout.proportional_height.should.be.approximately(50/650, 0.000001, "Panel B proportional height is incorrect");
+            this.plot.panels.panelB.layout.proportional_origin.y.should.be.exactly(1 - 50/650, "Panel B proportional_origin.y is incorrect");
+            this.plot.panels.panelB.layout.origin.y.should.be.exactly(600, "Panel B origin.y is incorrect");
+            this.plot.sumProportional("height").should.be.approximately(1, 0.000001, "Total height should be 1");
+        });
+        it("Should resize the plot while retaining panel proportions when panel is removed, if plot min_height does not take precedence", function() {
+            // When we remove a panel, we often want the plot to shrink by exactly that size. (so that the bottom
+            //   section simply disappears without changing the appearance of the panels that remain) But if plot
+            //   min_height is larger than any one panel, the space actually gets reallocated, and the remaining
+            //   panels stretch or shrink.
+            // This test ensures that we will see the desired behavior when plot min_height isn't dominant.
+            var panelA = { id: "panelA", width: 800, height: 300, min_height: 300 };
+            var panelB = { id: "panelB", width: 800, height: 50, min_height: 50 };
+            var panelC = { id: "panelC", width: 800, height: 225, min_height: 112.5 };
+
+            // Set up the scenario
+            this.plot.addPanel(panelA);
+            this.plot.addPanel(panelB);
+            this.plot.addPanel(panelC);
+
+            // Verify that panel A and B adopt a specific proportion (when 3 panels are present)
+            this.plot.panels.panelA.layout.height.should.be.exactly(300, "Panel A height is incorrect (before)");
+            this.plot.panels.panelB.layout.height.should.be.exactly(50, "Panel B height is incorrect (before)");
+
+            this.plot.removePanel("panelC");
+            // Check dimensions. Some checks are approximate due to floating point rounding issues.
+            this.plot.layout.width.should.be.exactly(800, "Plot width is incorrect");
+            this.plot.layout.height.should.be.exactly(350, "Plot height is incorrect");
+
+            // Panels A and B will have the same size and relative proportions after resize as before
+            this.plot.panels.panelA.layout.height.should.be.exactly(300, "Panel A height is incorrect (after)");
+            this.plot.panels.panelB.layout.height.should.be.exactly(50, "Panel B height is incorrect (after)");
+            this.plot.panels.panelB.layout.width.should.be.exactly(800, "Panel B width is incorrect");
+
+            this.plot.panels.panelA.layout.proportional_height.should.be.approximately(300/350, 0.000001, "Panel A proportional height is incorrect");
+            this.plot.panels.panelB.layout.proportional_height.should.be.approximately(50/350, 0.000001, "Panel B proportional height is incorrect");
+            this.plot.panels.panelB.layout.proportional_origin.y.should.be.approximately(1 - 50/350, 0.000001, "Panel B proportional_origin.y is incorrect");
+            this.plot.panels.panelB.layout.origin.y.should.be.exactly(300, "Panel B origin.y is incorrect");
+            this.plot.sumProportional("height").should.be.approximately(1, 0.000001, "Total proportional height should be 1");
         });
         it("Should allow for inserting panels at discrete y indexes", function(){
             var panelA = { id: "panelA", width: 100, height: 60 };
