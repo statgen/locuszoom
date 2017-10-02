@@ -4536,6 +4536,11 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
+
+    // Set layout.group_hover_elements_on_field if starting in split mode
+    if (this.layout.split_tracks && this.layout.track_split_field){
+        this.layout.group_hover_elements_on_field = this.layout.track_split_field;
+    }
     
     // Helper function to sum layout values to derive total height for a single interval track
     this.getTrackHeight = function(){
@@ -4690,8 +4695,8 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                     .data([interval], function(d){ return d[data_layer.layout.id_field] + "_bbox"; });
                 if (data_layer.layout.split_tracks){
                     bboxes.remove();
-                } else {                    
-                    bboxes.enter().append("rect")
+                } else {
+                    bboxes.enter().insert("rect", ":first-child")
                         .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
                     
                     bboxes
