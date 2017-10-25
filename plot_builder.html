@@ -93,7 +93,7 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("base", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 3, id_field: "variant" }}])
+      .add("assoc", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 45, id_field: "variant" }}])
       .add("ld", ["LDLZ", apiBase + "pair/LD/"])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
@@ -102,7 +102,7 @@
 
     function addAnalysis(){
       var ns = "a" + Math.floor(Math.random()*Math.pow(10,8));
-      var analysis = [23, 24, 25][Math.floor(Math.random()*3)];
+      var analysis = [31,36,35,33][Math.floor(Math.random()*3)];
       var assoc_source = [ "AssociationLZ",
                            { url: apiBase + "statistic/single/",
                              params: {
