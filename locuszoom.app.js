@@ -49,7 +49,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.6.0"
+    version: "0.6.1"
 };
 
 /**
@@ -8348,6 +8348,13 @@ LocusZoom.Plot = function(id, datasource, layout) {
     LocusZoom.Layouts.merge(this.layout, LocusZoom.Plot.DefaultLayout);
 
     /**
+     * Values in the layout object may change during rendering etc. Retain a copy of the original plot state
+     * @member {Object}
+     */
+    this._base_layout = JSON.parse(JSON.stringify(this.layout));
+
+
+    /**
      * Create a shortcut to the state in the layout on the Plot. Tracking in the layout allows the plot to be created
      *   with initial state/setup.
      *
@@ -8823,6 +8830,10 @@ LocusZoom.Plot.prototype.removePanel = function(id){
 
     // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
     if (this.initialized){
+        // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
+        this.layout.min_height = this._base_layout.min_height;
+        this.layout.min_width = this._base_layout.min_width;
+
         this.positionPanels();
         // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
         // positioning. TODO: make this additional call unnecessary.
