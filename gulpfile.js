@@ -30,6 +30,7 @@ gulp.task("test", function () {
         .on("error", function (err) {
             console.error(err);
             if (argv.force){
+                // Note: If running gulp via npm script, npm will intercept "--force" and not pass it to gulp
                 this.failed = true;
                 this.emit("end");
             } else {

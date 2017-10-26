@@ -13,6 +13,7 @@ script:
 branches:
   only:
     - master
+    - develop
 notifications:
   email:
     - chriclrk@umich.edu

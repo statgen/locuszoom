@@ -96,10 +96,10 @@
 
     // Define a set of studies/phenotypes and loop through them to add a data source and data layer for each one
     var phenos = [
-        { namespace: "fasting_glucose", title: "Fasting glucose meta-analysis", color: "rgb(212, 63, 58)", study_id: 23 },
-        { namespace: "fasting_insulin", title: "Fasting insulin meta-analysis", color: "rgb(238, 162, 54)", study_id: 24 },
-        { namespace: "triglycerides", title: "Triglycerides meta-analysis", color: "rgb(92, 184, 92)", study_id: 47 },
-        { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 48 }
+        { namespace: "fasting_glucose", title: "Fasting glucose meta-analysis", color: "rgb(212, 63, 58)", study_id: 31 },
+        { namespace: "fasting_insulin", title: "Fasting insulin meta-analysis", color: "rgb(238, 162, 54)", study_id: 32 },
+        { namespace: "triglycerides", title: "Triglycerides meta-analysis", color: "rgb(92, 184, 92)", study_id: 29 },
+        { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 30 }
     ];
     phenos.forEach(function(pheno){
         data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: pheno.study_id, id_field: "variant"}}]);
