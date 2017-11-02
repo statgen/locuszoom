@@ -4560,7 +4560,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
      */
     this.getElementStatusNodeId = function(element){
         if (this.layout.split_tracks){
-            return (this.getBaseId() + "-statusnode-" + element[this.layout.track_split_field]).replace(/(:|\.|\[|\]|,)/g, "_");
+            return (this.getBaseId() + "-statusnode-" + element[this.layout.track_split_field]).replace(/[:.\[\],]/g, "_");
         }
         return this.getElementId(element) + "-statusnode";
     }.bind(this);
@@ -4723,7 +4723,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
                         return data_layer.layout.bounding_box_padding;
                     })
                     .attr("ry", function(){
-                            return data_layer.layout.bounding_box_padding;
+                        return data_layer.layout.bounding_box_padding;
                     })
                     .style(statusnode_style);
                 width = function(d){
