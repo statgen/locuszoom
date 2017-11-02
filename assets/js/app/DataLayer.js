@@ -163,6 +163,19 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
 };
 
 /**
+ * Fetch an ID that may bind a data element to a separate visual node for displaying status
+ * Examples of this might be seperate visual nodes to show select/highlight statuses, or
+ * even a common/shared node to show status across many elements in a set.
+ * Abstract method. It should be overridden by data layers that implement seperate status
+ * nodes specifically to the use case of the data layer type.
+ * @param {String|Object} element
+ * @returns {String|null}
+ */
+LocusZoom.DataLayer.prototype.getElementStatusNodeId = function(element){
+    return null;
+};
+
+/**
  * Returns a reference to the underlying data associated with a single visual element in the data layer, as
  *   referenced by the unique identifier for the element
 
@@ -724,13 +737,9 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     
     // Set/unset the proper status class on the appropriate DOM element(s)
     d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
-    if (this.layout.hover_element){
-        var hover_element_class = "lz-data_layer-" + this.layout.type + "-" + this.layout.hover_element + "-" + status;
-        var selector = d3.select("#" + element_id + "_" + this.layout.hover_element);
-        if (this.layout.group_hover_elements_on_field){
-            selector = this.group_hover_elements[element[this.layout.group_hover_elements_on_field]];
-        }
-        selector.classed(hover_element_class, toggle);
+    var element_status_node_id = this.getElementStatusNodeId(element);
+    if (element_status_node_id !== null){
+        d3.select("#" + element_status_node_id).classed("lz-data_layer-" + this.layout.type + "-statusnode-" + status, toggle);
     }
     
     // Track element ID in the proper status state array

@@ -90,15 +90,15 @@ svg.lz-locuszoom {
     display: none; }
   svg.lz-locuszoom text.lz-data_layer-genes.lz-label {
     font-style: italic; }
-  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-statusnode {
     fill: #363696;
     fill-opacity: 0;
     stroke-width: 0px; }
-  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-highlighted {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-statusnode-highlighted {
     fill: #363696;
     fill-opacity: 0.1;
     stroke-width: 0px; }
-  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box-selected {
+  svg.lz-locuszoom rect.lz-data_layer-genes.lz-data_layer-genes-statusnode-selected {
     fill: #363696;
     fill-opacity: 0.15;
     stroke: rgb(24, 24, 24);
@@ -118,15 +118,15 @@ svg.lz-locuszoom {
     opacity: 0.1; }
   svg.lz-locuszoom g.lz-data_layer-intervals-hidden {
     display: none; }
-  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box {
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode {
     fill: #363696;
     fill-opacity: 0;
     stroke-width: 0px; }
-  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-highlighted {
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode-highlighted {
     fill: #363696;
     fill-opacity: 0.2;
     stroke-width: 0px; }
-  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box-selected {
+  svg.lz-locuszoom rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode-selected {
     fill: #363696;
     fill-opacity: 0.35;
     stroke: rgb(24, 24, 24);
