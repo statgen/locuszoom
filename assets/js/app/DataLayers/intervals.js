@@ -39,7 +39,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
      */
     this.getElementStatusNodeId = function(element){
         if (this.layout.split_tracks){
-            return (this.getBaseId() + "-statusnode-" + element[this.layout.track_split_field]).replace(/[:.\[\],]/g, "_");
+            return (this.getBaseId() + "-statusnode-" + element[this.layout.track_split_field]).replace(/[:.[\],]/g, "_");
         }
         return this.getElementId(element) + "-statusnode";
     }.bind(this);
