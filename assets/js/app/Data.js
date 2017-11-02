@@ -367,7 +367,8 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
  * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
  *   the same length, and a given array index corresponds to a single row.
  *
- * This gathers column data into a single object representing al the data for a given record. See `parseData` for usage
+ * This gathers column data into an array of objects, each one representing the combined data for a given record.
+ *   See `parseData` for usage
  *
  * @protected
  * @param {Object} x A response payload object
@@ -383,7 +384,17 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
     fields.forEach(function(f, i) {
         if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
     });
-    var N = x[Object.keys(x)[1]].length;
+    // Safeguard: check that arrays are of same length
+    var keys = Object.keys(x);
+    var N = x[keys[0]].length;
+    var sameLength = keys.every(function(key) {
+        var item = x[key];
+        return item.length === N;
+    });
+    if (!sameLength) {
+        throw this.constructor.SOURCE_NAME + " expects a response in which all arrays of data are the same length";
+    }
+
     for(var i = 0; i < N; i++) {
         var record = {};
         for(var j=0; j<fields.length; j++) {
@@ -834,7 +845,7 @@ LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
     var build = this.params.build;
     if (!build || !Array.isArray(build) || !build.length) {
-        throw ["Data source", this.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
+        throw ["Data source", this.constructor.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
     }
     var url = [
         this.url,
