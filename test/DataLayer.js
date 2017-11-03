@@ -375,7 +375,7 @@ describe("LocusZoom.DataLayer", function(){
 
     });
 
-    describe("Layout Paramters", function() {
+    describe("Layout Parameters", function() {
         beforeEach(function(){
             this.plot = null;
             this.layout = {
@@ -415,6 +415,72 @@ describe("LocusZoom.DataLayer", function(){
             this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(1);
             this.plot.panels.p1.data_layers.d3.layout.z_index.should.be.exactly(3);
             this.plot.panels.p1.data_layers.d4.layout.z_index.should.be.exactly(2);
+        });
+    });
+
+    describe("Layout mutation helpers (public interface)", function() {
+        describe("addField", function () {
+            beforeEach(function() {
+                this.layer = new LocusZoom.DataLayer();
+            });
+            afterEach(function() {
+                this.layer = null;
+            });
+
+            it("should require field and namespace to be specified", function() {
+                // TODO: Should there be validation to ensure this is a known namespace?
+                var self = this;
+                assert.throws(function() {
+                    self.layer.addField();
+                }, /Must specify field name and namespace to use when adding field/);
+
+                assert.throws(function() {
+                    self.layer.addField("afield");
+                }, /Must specify field name and namespace to use when adding field/);
+            });
+
+            it("should check type of the transformations argument", function() {
+                var self = this;
+                assert.ok(
+                    this.layer.addField("aman", "aplan"),
+                    "Transformations are optional"
+                );
+                assert.ok(
+                    this.layer.addField("aman", "aplan", "acanal"),
+                    "Transformation can be a string"
+                );
+                assert.ok(
+                    this.layer.addField("aman", "aplan", ["acanal", "panama"]),
+                    "Transformation can be an array"
+                );
+                assert.throws(function() {
+                    self.layer.addField("aman", "aplan", 42);
+                }, /Must provide transformations as either a string or array of strings/);
+            });
+            it("should construct an appropriate field name and add it to the internal fields array", function() {
+                var e1 = "namespace:field";
+                assert.equal(
+                    this.layer.addField("field", "namespace"),
+                    e1
+                );
+
+                var e2 = "namespace:field|transformation";
+                assert.equal(
+                    this.layer.addField("field", "namespace", "transformation"),
+                    e2
+                );
+
+                var e3 = "namespace:field|t1|t2";
+                assert.equal(
+                    this.layer.addField("field", "namespace", ["t1", "t2"]),
+                    e3
+                );
+
+                var fields = this.layer.layout.fields;
+                assert.ok(fields.indexOf(e1) !== -1);
+                assert.ok(fields.indexOf(e2) !== -1);
+                assert.ok(fields.indexOf(e3) !== -1);
+            });
         });
     });
 

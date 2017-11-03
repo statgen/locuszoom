@@ -66,6 +66,39 @@ LocusZoom.DataLayer = function(layout, parent) {
 };
 
 /**
+ * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
+ *
+ * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn
+ *
+ *  (since removing core fields may break layer functionality, there is presently no hook for the inverse behavior)
+ * @param fieldName
+ * @param namespace
+ * @param {String|String[]} transformations The name (or array of names) of transformations to apply to this field
+ * @returns {String} The raw string added to the fields array
+ */
+LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transformations) {
+    if (!fieldName || !namespace) {
+        throw "Must specify field name and namespace to use when adding field";
+    }
+    var fieldString = namespace + ":" + fieldName;
+    if (transformations) {
+        fieldString += "|";
+        if (typeof transformations === "string") {
+            fieldString += transformations;
+        } else if (Array.isArray(transformations)) {
+            fieldString += transformations.join("|");
+        } else {
+            throw "Must provide transformations as either a string or array of strings";
+        }
+    }
+    var fields = this.layout.fields;
+    if (fields.indexOf(fieldString) === -1) {
+        fields.push(fieldString);
+    }
+    return fieldString;
+};
+
+/**
  * Define default state that should get tracked during the lifetime of this layer.
  *
  * In some special custom usages, it may be useful to completely reset a panel (eg "click for
