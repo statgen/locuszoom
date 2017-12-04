@@ -464,15 +464,28 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
  *     This must be an array with the same length as `fields`
  */
 LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans) {
+    var records;
     if (Array.isArray(x)) { 
-        return this.parseObjectsToObjects(x, fields, outnames, trans);
+        records = this.parseObjectsToObjects(x, fields, outnames, trans);
     } else {
-        return this.parseArraysToObjects(x, fields, outnames, trans);
+        records = this.parseArraysToObjects(x, fields, outnames, trans);
     }
+    // Perform any custom transformations on the resulting data
+    return this.prepareData(records);
 };
 
 /**
- * Method to define new custom datasources
+ * Post-process the server response. This is a hook that allows custom sources to specify any optional transformations
+ *   that should be performed on the data that is returned from the server.
+ * @param {Object[]} records
+ * @returns Object[]
+ */
+LocusZoom.Data.Source.prototype.prepareData = function(records) {
+    return records;
+};
+
+/**
+ * Method to define new custom datasources based on a provided constructor. (does not allow registering any additional methods)
  * @public
  * @param {Function} constructorFun Constructor function that is used to create the specified class
  * @param {String} [uniqueName] The name by which the class should be listed in `KnownDataSources`
