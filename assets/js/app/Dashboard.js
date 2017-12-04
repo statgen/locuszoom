@@ -262,7 +262,8 @@ LocusZoom.Dashboard.Component.prototype.show = function(){
     return this.position();
 };
 /**
- * Update the dashboard component with any new data or plot state as appropriate
+ * Update the dashboard component with any new data or plot state as appropriate. This method performs all
+ *  necessary rendering steps.
  */
 LocusZoom.Dashboard.Component.prototype.update = function(){ /* stub */ };
 /**
@@ -1410,6 +1411,85 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
             }.bind(this));
             return this;
         }.bind(this));
+
+        this.button.show();
+
+        return this;
+    };
+});
+
+/**
+ * Dropdown menu allowing the user to choose between different coloring options for a specific data layer.
+ *
+ * Specifically, this menu allows the user to set appropriate color options for the field
+ *
+ * @class LocusZoom.Dashboard.Components.color_picker
+ * @augments LocusZoom.Dashboard.Component
+ * @param {object} layout
+ * @param {'Color by...'} [layout.button_html] Text to display on the toolbar button
+ * @param {'Color options'} [layout.button_title] Hover text for the toolbar button
+ * @param {string} layout.layer_name Specify the datalayer that this button should affect
+ *
+ * @param {string} [layout.default_color_display_name] If provided, store the data layer's pre-existing color
+ *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
+ *
+ * @typedef {{source_field: string, display_name: string, require_field:boolean, color: Object}} ColorPickerConfigField
+ * @param {ColorPickerConfigField[]} layout.options Specify the datalayer that this button should affect
+ */
+LocusZoom.Dashboard.Components.add("color_picker", function(layout) {
+    // Call parent constructor
+    //TODO: Improve layout argument / setting of defaults
+
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    this.update = function() {
+        var self = this;
+
+        // Confirm that the layer to be colored exists, and that fields to be colored are expected to be present.
+        var dataLayer = self.parent_panel.data_layers[layout.layer_name];
+
+        // TODO: optionally require field in fields array (to ensure that it is present if not a synthetic field)
+
+        // Define the button + menu at thwe heart of this dashboard component
+        if (self.button){ return self; }
+
+        // TODO: Why is this inside update? Can't it be defined separately in constructor>?
+        self.button = new LocusZoom.Dashboard.Component.Button(self)
+            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+            .setOnclick(function (){
+                self.button.menu.populate();
+            });
+
+        self.button.menu.setPopulate(function() {
+            // TODO: deal with data refresh and making sure buttons are reset / hidden when plot state changes
+
+            // Multiple copies of this button might be used on a single LZ page; append unique IDs to all selectors
+            var uniqueID = Math.floor(Math.random() * 1e4).toString();
+
+            self.button.menu.inner_selector.html("");
+            var table = self.button.menu.inner_selector.append("table");
+
+            var menuLayout = self.layout;
+
+            if (menuLayout.default_color_display_name) {
+                // TODO: Construct a layout method to handle this . New options list should be concat of default config + special options
+                // TODO: Capture and store default datalayer config/ layout
+            }
+            // TODO: Rewrite to be more d3-esque (data binding etc so there's only one loop?)
+            menuLayout.options.forEach(function (item, index) {
+                var row = table.append("tr");
+                row.append("td")
+                    .append("input")
+                    .attr({type:"radio", name:"color-picker-" + uniqueID, value: index})
+                    .on("click", function() {
+                        dataLayer.layout.color = menuLayout.options[index].color;
+                        // TODO: Is this the correct rerender method? (consider using reMap if the coloring depends on presence of a new field)
+                        self.parent_panel.render();
+                    });
+                row.append("td").text(item.display_name);
+            });
+            return self;
+        });
 
         this.button.show();
 
