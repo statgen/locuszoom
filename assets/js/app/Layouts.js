@@ -26,7 +26,7 @@ LocusZoom.Layouts = (function() {
      * Generate a layout configuration object
      * @param {('plot'|'panel'|'data_layer'|'dashboard'|'tooltip')} type The type of layout to retrieve
      * @param {string} name Identifier of the predefined layout within the specified type
-     * @param {object} modifications Custom properties that override default settings for this layout
+     * @param {object} [modifications] Custom properties that override default settings for this layout
      * @returns {object} A JSON-serializable object representation
      */
     obj.get = function(type, name, modifications) {
