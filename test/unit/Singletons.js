@@ -1,29 +1,10 @@
-/* global require, describe, d3, LocusZoom, afterEach, it */
-
 "use strict";
 
 /**
   Singletons.js Tests
   Test composition of various LocusZoom singleton objects
 */
-
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var files = require("../files.js");
-
 describe("LocusZoom Singletons", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
     describe("Transformation Functions", function() {
         it("LocusZoom should have a TransformationFunctions singleton", function(){
             LocusZoom.should.have.property("TransformationFunctions").which.is.an.Object;

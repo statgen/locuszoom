@@ -1,7 +1,3 @@
-/* global d3,Q */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 /**
  * @namespace
  */

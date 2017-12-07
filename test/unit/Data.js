@@ -1,31 +1,10 @@
-/* global LocusZoom,d3 */
-/* global it,require,describe,beforeEach,afterEach */
-
 "use strict";
 
 /**
   LocusZoom.js Data Test Suite
   Test LocusZoom Data access objects
 */
-
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var should = require("should");
-var files = require("../files.js");
-
 describe("LocusZoom Data", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM and LocusZoom singleton after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
     // Tests
     describe("LocusZoom.Data.Field", function() {
         beforeEach(function() {

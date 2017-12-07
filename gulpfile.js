@@ -1,23 +1,33 @@
 /* global require */
-/* eslint-disable no-console */
-
 var gulp = require("gulp");
-var gutil = require("gulp-util");
-var uglify = require("gulp-uglify");
-var sass = require("gulp-sass");
 var concat = require("gulp-concat");
-var wrap = require("gulp-wrap");
+var eslint = require("gulp-eslint");
 var mocha = require("gulp-mocha");
+var sass = require("gulp-sass");
+var sourcemaps = require("gulp-sourcemaps");
+var uglify = require("gulp-uglify");
+var gutil = require("gulp-util");
+var wrap = require("gulp-wrap");
 var argv = require("yargs").argv;
+
 var files = require("./files.js");
+
+
+// Perform syntax checking on all files
+gulp.task("lint", function() {
+    return gulp.src(["**/*.js", "!node_modules/**"])
+        .pipe(eslint())
+        .pipe(eslint.format())
+        .pipe(eslint.failAfterError());
+});
 
 // Test app files, then build both app and vendor javascript files if all tests pass
 gulp.task("js", function() {
     return gulp.start("app_js", "vendor_js");
 });
 
-// Run Mocha unit tests
-gulp.task("test", function () {
+// Run Mocha unit tests (iff linting passes first)
+gulp.task("test", ["lint"], function () {
     return gulp.src(files.test_suite)
         .pipe(mocha())
         .on("end", function() {
@@ -42,7 +52,7 @@ gulp.task("test", function () {
 // Concatenate all app-specific JS libraries into unminified and minified single app files
 gulp.task("app_js", ["test"], function() {
     gulp.src(files.app_build)
-        .pipe(concat("locuszoom.app.js"))
+        .pipe(concat("dist/locuszoom.app.js"))
         .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
         .pipe(gulp.dest("."))
         .on("end", function() {
@@ -52,9 +62,13 @@ gulp.task("app_js", ["test"], function() {
             gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.js "));
         });
     gulp.src(files.app_build)
-        .pipe(concat("locuszoom.app.min.js"))
+        // FIXME: Source maps on the app bundle are temporarily disabled because gulp-wrap is not sourcemap compatible;
+        //    hence line numbers will be slightly off. Will revisit in future.
+        // .pipe(sourcemaps.init())
+        .pipe(concat("dist/locuszoom.app.min.js"))
         .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
         .pipe(uglify())
+        // .pipe(sourcemaps.write("."))
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
@@ -67,7 +81,10 @@ gulp.task("app_js", ["test"], function() {
 // Concatenate vendor js files into a single vendor file
 gulp.task("vendor_js", function() {
     return gulp.src(files.vendor_build)
-        .pipe(concat("locuszoom.vendor.min.js"))
+        .pipe(sourcemaps.init())
+        .pipe(concat("dist/locuszoom.vendor.min.js"))
+        .pipe(uglify())
+        .pipe(sourcemaps.write("."))
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.vendor.min.js"));
@@ -81,7 +98,7 @@ gulp.task("vendor_js", function() {
 gulp.task("css", function() {
     return gulp.src("./assets/css/*.scss")
         .pipe(sass())
-        .pipe(gulp.dest("."))
+        .pipe(gulp.dest("dist/"))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue("Generated locuszoom.css"));
         })

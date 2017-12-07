@@ -1,8 +1,4 @@
-/* global LocusZoom,Q */
-/* eslint-env browser */
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-console */
-
+/* global LocusZoom */
 "use strict";
 
 /**
@@ -755,7 +751,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
     var headers = {
         "Content-Type": "application/x-www-form-urlencoded"
     };
-    return LocusZoom.createCORSPromise("POST", this.url, body, headers);
+    return LocusZoom.createCORSPromise("POST", url, body, headers);
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {

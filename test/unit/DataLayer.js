@@ -1,30 +1,10 @@
-/* global require, describe, d3, LocusZoom, beforeEach, afterEach, it */
-
 "use strict";
 
 /**
   DataLayer.js Tests
   Test composition of the LocusZoom.Panel object and its base classes
 */
-
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var should = require("should");
-var files = require("../files.js");
-
 describe("LocusZoom.DataLayer", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
     // Tests
     it("creates an object for its name space", function() {
         should.exist(LocusZoom.DataLayer);
@@ -185,6 +165,9 @@ describe("LocusZoom.DataLayer", function(){
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[2]), "triangle-down");
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[3]), "triangle-up");
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[4]), null);
+
+            // Clean up/ deregister scale function when done
+            LocusZoom.ScaleFunctions.set("test_effect_direction");
         });
         it("iterates over an array of options until exhausted or a non-null value is found", function() {
             this.datalayer = new LocusZoom.DataLayer({ id: "test" });

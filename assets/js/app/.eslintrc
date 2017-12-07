@@ -1,0 +1,9 @@
+{
+  "globals": {
+    "d3": false,
+    "Q": false
+  },
+  "env": {
+    "browser": true
+  }
+}
