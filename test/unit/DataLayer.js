@@ -1003,7 +1003,7 @@ describe("LocusZoom.DataLayer", function(){
                     assert.equal(foo.id, "foo");
                 });
             });
-            it("should each take its layout from the arguments provided and mergit with a built-in DefaultLayout", function(){
+            it("should each take its layout from the arguments provided and merge it with a built-in DefaultLayout", function(){
                 this.list.forEach(function(name){
                     var layout = { id: "foo", test: 123 };
                     var foo = new LocusZoom.DataLayers.get(name, layout);

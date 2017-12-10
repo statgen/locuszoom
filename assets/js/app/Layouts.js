@@ -514,12 +514,10 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
-
 /**
  * Dashboard Layouts: toolbar buttons etc
   * @namespace Layouts.dashboard
  */
-
 LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
         {

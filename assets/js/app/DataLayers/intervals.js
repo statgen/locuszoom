@@ -1,10 +1,11 @@
 "use strict";
 
-/*********************
-  Intervals Data Layer
-  Implements a data layer that will render interval annotation tracks
-*/
-
+/**
+ * Intervals Data Layer
+ * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
+ * @class LocusZoom.DataLayers.intervals
+ * @augments LocusZoom.DataLayer
+ */
 LocusZoom.DataLayers.add("intervals", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument

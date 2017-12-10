@@ -1,212 +1,175 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
-    <!-- Necessary includes for LocusZoom.js -->
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
+  <!-- Necessary includes for LocusZoom.js -->
+  <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+  <script src="../dist/locuszoom.app.js" type="text/javascript"></script>
+  <!--script src="../dist/locuszoom.app.min.js" type="text/javascript"></script -->
+  <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
 
-    <!-- Additional standalone library required for credible set calculations -->
-    <script src="https://rawgit.com/abought/credible-sets/9d82c096a653ad3fbc4d4492fe1f2b512e0f7068/dist/credible-sets.min.js"  type="application/javascript"></script>
+  <!-- Additional standalone code required for credible set calculations; not part of base LZjs -->
+  <!-- TODO: Point to non-development CDN link with version tag -->
+  <script
+      src="https://rawgit.com/statgen/gwas-credible-sets/88cf48f381ab1824de9e6912fc195afe94258ff5/dist/gwas-credible-sets.min.js"
+      type="application/javascript"></script>
+    <script src="js/credible-sets-example.js" type="application/javascript"></script>
 
-    <title>LocusZoom.js ~ Credible Sets</title>
+  <title>LocusZoom.js ~ Credible Sets</title>
 
-    <style>
-      body {
-        background-color: #FAFAFA;
-        margin: 0 20px;
-      }
-      img {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-      ul.top_hits li {
-        margin-bottom: 0;
-      }
-    </style>
+  <style>
+    body {
+      background-color: #FAFAFA;
+      margin: 0 20px;
+    }
 
-  </head>
+    img {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
 
-  <body>
-    <div class="container">
+    ul.top_hits li {
+      margin-bottom: 0;
+    }
+  </style>
 
-      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+</head>
 
-      <h3 style="float: left; color: #777">Credible Sets Display</h3>
-      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+<body>
+<div class="container">
 
-      <hr style="clear: both;">
+  <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
-      <p>Credible Sets</p>
-      <div class="row">
-        <div class="two columns">
-          <h4>Top Hits</h4>
-          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
-        </div>
-        <div class="ten columns">
-          <div id="plot" data-region="10:114550452-115067678" class="lz-container-responsive"></div>
-        </div>
-      </div>
-      <hr>
+  <h3 style="float: left; color: #777">Credible Sets Demonstration</h3>
+  <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
 
-      <div class="row">
-        <footer style="text-align: center;">
-          &copy; Copyright 2017 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
-        </footer>
-      </div>
+  <hr style="clear: both;">
 
-      <script type="application/javascript">
-          /*
-            Specify a custom datasource that adds a "credible sets" field to the prepared API response
-          */
-          LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
-              prepareData: function(records) {
-                  // TODO: Fields are already namespaced at this point in the response;
-                  //  improve abstraction to decouple from source name "assoc"
+  <p>
+    With the help of a standalone JavaScript library, LocusZoom can identify and plot the members of a credible set
+    based on the displayed plot region. This example shows how to integrate that library into a custom datasource, and
+    how to take advantage of several visualization options for displaying the credible set members. See the library
+    <a href="https://github.com/statgen/gwas-credible-sets/">source code</a> and
+    <a href="https://statgen.github.io/gwas-credible-sets/">documentation</a> for information about the method.
+  </p>
+  <p>
+    To begin, move your mouse over the plot below and select "Display Options". This demonstration allows credible
+    sets to be displayed as a primary coloring overlay, a separate annotation track, or both. Note that credible sets
+    are calculated client-side by the web browser, which means that this feature can be used without requiring backend
+    changes to an existing API server.
+  </p>
 
-                  // Extract pvalues
-                  var nlogpvals = records.map(function(item) {
-                      return item['assoc:log_pvalue']
-                  });
-
-                  // Score points and identify which ones are members of the credible set
-                  var scores = credibleSets.scoring.minKodos(nlogpvals);
-                  var markers = credibleSets.marking.markCredibleSet(scores);
-
-                  // Annotate each response record based on credible set membership
-                  records.forEach(function (item, index) {
-                      item['assoc:isCredible'] = markers[index];
-                  });
-                  return records;
-              }
-          });
-
-          /*
-            Specify the data sources to use
-           */
-          // Determine if we're online, based on browser state or presence of an optional query parameter
-          var online = !(typeof navigator !== "undefined" && !navigator.onLine);
-          if (window.location.search.indexOf("offline") !== -1) { online = false; }
-
-          var apiBase;
-          var data_sources = new LocusZoom.DataSources();
-          if (online){
-            apiBase = "//portaldev.sph.umich.edu/api/v1/";
-            data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["CredibleAssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
-              .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
-              .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
-              .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
-              .add("constraint", ["GeneConstraintLZ", { url: "//exac.broadinstitute.org/api/constraint" }]);
-          } else {
-            apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
-            data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 45, id_field: "variant"}}])
-              .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
-              .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
-              .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
-              .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?" }]);
-          }
-
-          /*
-            Define and render the plot
-           */
-          // Get the standard association plot layout from LocusZoom's built-in layouts
-          layout = LocusZoom.Layouts.get("plot", "standard_association");
-          layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
-
-          // Customize the layout to color by credible set membership
-          var assocPanelLayout = layout.panels[0];
-
-          // Config object for dashboard layer coloring widget
-          assocPanelLayout.dashboard.components.push(
-              {
-                  type: "color_picker",
-                  position: "right",
-                  color: "blue",
-                  // Special config specific to this widget
-                  button_html: "Color by...",
-                  button_title: "Color options",
-
-                  layer_name: "associationpvalues",
-                  default_color_display_name: "LD", // display name for the default plot color option (allow user to revert to plot defaults)
-                  options: [  // Layout directive specifying color options based on this field
-                      {
-                          source_field: "assoc:isCredible",  // datasource field name
-                          display_name: "95% credible set (gradient)", // Human readable representation of field name
-                          require_field: false, // We are coloring on a "synthetic" field- something that gets added later and is not part of the raw API payload
-                          color: [{
-                              field: "assoc:isCredible",
-                              scale_function: "if",
-                              parameters: {
-                                  field_value: true,
-                                  then: "#00CC00",
-                                  else: "#CCCCCC"
-                              }
-                          }]
-                      },
-                      {
-                          // The same field can be colored in more than one way!
-                          source_field: "assoc:isCredible",
-                          display_name: "95% credible set (boolean)",
-                          require_field: true,
-                          color: "#FF00FF"
-                      }
-                  ]
-              }
-          );
-
-          // Generate the LocusZoom plot
-          window.plot = LocusZoom.populate("#plot", data_sources, layout);
-
-
-          /*
-            Add a sidebar to the page with "top hits" items
-
-            RBMS1, for example, has a region of high LD and therefore includes many points in the credible set
-           */
-          // Load a region of the plot based on a specified region string
-          function jumpTo(region) {
-              var target = region.split(":");
-              var chr = target[0];
-              var pos = target[1];
-              var start = 0;
-              var end = 0;
-              if (!pos.match(/[-+]/)) {
-                start = +pos - 300000;
-                end = +pos + 300000
-              }
-              plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
-              return false;
-          }
-
-          // Populate a list of top hits links for the plot
-          var top_hits = [
-            ["16:53819169", "FTO"],
-            ["9:22051670", "CDKN2A/B"],
-            ["7:28196413", "JAZF1"],
-            ["12:71433293", "TSPAN8"],
-            ["10:114758349", "TCF7L2"],
-            ["8:95937502", "TP53INP1"],
-            ["6:20679709", "CDKAL1"],
-            ["2:161346447", "RBMS1"],
-            ["16:75247245", "BCAR1"],
-            ["15:77832762", "HMG20A"],
-            ["7:15052860", "DGKB"],
-            ["5:76427311", "ZBED3"]
-          ];
-          top_hits.forEach(function(hit){
-            d3.select("ul.top_hits").append("li")
-              .html("<a href=\"javascript:void(0);\" onclick=\"javascript:jumpTo('" + hit[0] + "');\">" + hit[1] + "</a>");
-          });
-      </script>
-
+  <h3>Interactive Plot</h3>
+  <div class="row">
+    <div class="two columns">
+      <h4>Top Hits</h4>
+      <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
     </div>
+    <div class="ten columns">
+      <div id="plot" data-region="16:74947245-75547245" class="lz-container-responsive"></div>
+    </div>
+  </div>
+  <hr>
 
-  </body>
+  <div class="row">
+    <footer style="text-align: center;">
+      &copy; Copyright 2017 <a href="https://github.com/statgen">The University of Michigan Center for Statistical
+      Genetics</a><br>
+    </footer>
+  </div>
+
+  <script type="application/javascript">
+      /*
+        Specify the data sources to use
+       */
+      // Determine if we're online, based on browser state or presence of an optional query parameter
+      var online = !(typeof navigator !== "undefined" && !navigator.onLine);
+      if (window.location.search.indexOf("offline") !== -1) {
+          online = false;
+      }
+
+      var apiBase;
+      var data_sources = new LocusZoom.DataSources();
+      if (online) {
+          apiBase = "//portaldev.sph.umich.edu/api/v1/";
+          data_sources = new LocusZoom.DataSources()
+              .add("assoc", ["CredibleAssociationLZ", {
+                  url: apiBase + "statistic/single/",
+                  params: {analysis: 45, id_field: "variant"}
+              }])
+              .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+              .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+              .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+              .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
+      } else {
+          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
+          data_sources = new LocusZoom.DataSources()
+              .add("assoc", ["AssociationLZ", {
+                  url: apiBase + "assoc_10_114550452-115067678.json?",
+                  params: {analysis: 45, id_field: "variant"}
+              }])
+              .add("ld", ["LDLZ", {url: apiBase + "ld_10_114550452-115067678.json?"}])
+              .add("gene", ["GeneLZ", {url: apiBase + "genes_10_114550452-115067678.json?"}])
+              .add("recomb", ["RecombLZ", {url: apiBase + "recomb_10_114550452-115067678.json?"}])
+              .add("constraint", ["GeneConstraintLZ", {url: apiBase + "constraint_10_114550452-115067678.json?"}]);
+      }
+
+      /*
+        Define and render the plot
+       */
+      // Fetch custom layout defined for usage with credible sets
+      layout = LocusZoom.Layouts.get("plot", "association_credible_sets");
+      layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
+
+      // Generate the LocusZoom plot
+      window.plot = LocusZoom.populate("#plot", data_sources, layout);
+
+
+      /*
+        Add a sidebar to the page with "top hits" items
+
+        RBMS1, for example, has a region of high LD and therefore includes many points in the credible set
+       */
+      // Load a region of the plot based on a specified region string
+      function jumpTo(region) {
+          var target = region.split(":");
+          var chr = target[0];
+          var pos = target[1];
+          var start = 0;
+          var end = 0;
+          if (!pos.match(/[-+]/)) {
+              start = +pos - 300000;
+              end = +pos + 300000;
+          }
+          plot.applyState({chr: chr, start: start, end: end, ldrefvar: ""});
+          return false;
+      }
+
+      // Populate a list of top hits links for the plot
+      var top_hits = [
+          ["16:75247245", "BCAR1 (default)"],
+          ["10:114758349", "TCF7L2"],
+          ["16:53819169", "FTO"],
+          ["9:22051670", "CDKN2A/B"],
+          ["7:28196413", "JAZF1"],
+          ["12:71433293", "TSPAN8"],
+          ["8:95937502", "TP53INP1"],
+          ["6:20679709", "CDKAL1"],
+          ["2:161346447", "RBMS1"],
+          ["15:77832762", "HMG20A"],
+          ["7:15052860", "DGKB"]
+      ];
+      top_hits.forEach(function (hit) {
+          d3.select("ul.top_hits").append("li")
+              .html("<a href=\"javascript:void(0);\" onclick=\"javascript:jumpTo('" + hit[0] + "');\">" + hit[1] + "</a>");
+      });
+  </script>
+
+</div>
+
+</body>
 </html>

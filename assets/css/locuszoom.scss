@@ -117,6 +117,14 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 1px;
   }
 
+  rect.#{$namespace}-data_layer-annotation_track {
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-annotation_track-highlighted, path.#{$namespace}-data_layer-annotation_track-selected {
+    stroke-opacity: #{$default_black_opacity};
+  }
+
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
     stroke-opacity: #{$default_black_opacity};

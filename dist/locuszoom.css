@@ -69,6 +69,10 @@ svg.lz-locuszoom {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
     stroke-width: 1px; }
+  svg.lz-locuszoom rect.lz-data_layer-annotation_track {
+    cursor: pointer; }
+  svg.lz-locuszoom path.lz-data_layer-annotation_track-highlighted, svg.lz-locuszoom path.lz-data_layer-annotation_track-selected {
+    stroke-opacity: 1; }
   svg.lz-locuszoom path.lz-data_layer-line {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
