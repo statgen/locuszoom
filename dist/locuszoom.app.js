@@ -1289,12 +1289,10 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
-
 /**
  * Dashboard Layouts: toolbar buttons etc
   * @namespace Layouts.dashboard
  */
-
 LocusZoom.Layouts.add("dashboard", "standard_panel", {
     components: [
         {
@@ -2747,11 +2745,16 @@ LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
 };
 
 /**
- * Generate a function that executes the an arbitrary list of behaviors on an element during an event
- * TODO: Improve documentation of params
- * @param directive
- * @param behaviors
- * @returns {function(this:LocusZoom.DataLayer)}
+ * Generate a function that executes an arbitrary list of behaviors on an element during an event
+ * @param {String} directive The name of the event, as described in layout.behaviors for this datalayer
+ * @param {Object} behaviors An object describing the behavior to attach to this single element
+ * @param {string} behaviors.action The name of the action that would trigger this behavior (eg click, mouseover, etc)
+ * @param {string} behaviors.status What status to apply to the element when this behavior is triggered (highlighted,
+ *  selected, etc)
+ * @param {string} [behaviors.exclusive] Whether triggering the event for this element should unset the relevant status
+ *   for all other elements. Useful for, eg, click events that exclusively highlight one thing.
+ * @returns {function(this:LocusZoom.DataLayer)} Return a function that handles the event in context with the behavior
+ *   and the element- can be attached as an event listener
  */
 LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) {
 
@@ -2761,7 +2764,6 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
         "shift": (directive.indexOf("shift") !== -1)
     };
 
-    // Return a function that handles the event in context with the behavior and the element
     return function(element){
 
         // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
@@ -3018,9 +3020,113 @@ LocusZoom.DataLayers = (function() {
     return obj;
 })();
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
+"use strict";
+
+/**
+ * Create a single continuous 2D track that provides information about each datapoint
+ *
+ * For example, this can be used to color by membership in a group, alongside information in other panels
+ *
+ * @class LocusZoom.DataLayers.annotation_track
+ * @augments LocusZoom.DataLayer
+ * @param {Object} layout
+ * @param {Object|String} [layout.color]
+ * @param {Array[]} An array of filter entries specifying which points to draw annotations for.
+ *  See `LocusZoom.DataLayer.filter` for details
+ */
+LocusZoom.DataLayers.add("annotation_track", function(layout) {
+    // In the future we may add additional options for controlling marker size/ shape, based on user feedback
+    this.DefaultLayout = {
+        color: "#000000",
+        filters: []
+    };
+
+    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+
+    if (!Array.isArray(layout.filters)) {
+        throw "Annotation track must specify array of filters for selecting points to annotate";
+    }
+
+    // Apply the arguments to set LocusZoom.DataLayer as the prototype
+    LocusZoom.DataLayer.apply(this, arguments);
+
+    this.render = function() {
+        var self = this;
+        // Only render points that currently satisfy all provided filter conditions.
+        var trackData = this.filter(this.layout.filters, "elements");
+
+        var selection = this.svg.group
+            .selectAll("rect.lz-data_layer-" + self.layout.type)
+            .data(trackData, function(d) { return d[self.layout.id_field]; });
+
+        // Add new elements as needed
+        selection.enter()
+            .append("rect")
+            .attr("class", "lz-data_layer-" + this.layout.type)
+            .attr("id", function (d){ return self.getElementId(d); });
+        // Update the set of elements to reflect new data
+        selection
+            .attr("x", function (d) { return self.parent["x_scale"](d[self.layout.x_axis.field]); })
+            .attr("width", 1)  // TODO autocalc width of track? Based on datarange / pixel width presumably
+            .attr("height", self.parent.layout.height)
+            .attr("fill", function(d){ return self.resolveScalableParameter(self.layout.color, d); });
+        // Remove unused elements
+        selection.exit().remove();
+
+        // Set up tooltips and mouse interaction
+        this.applyBehaviors(selection);
+    };
+
+    // Reimplement the positionTooltip() method to be annotation-specific
+    this.positionTooltip = function(id) {
+        if (typeof id != "string") {
+            throw ("Unable to position tooltip: id is not a string");
+        }
+        if (!this.tooltips[id]) {
+            throw ("Unable to position tooltip: id does not point to a valid tooltip");
+        }
+        var top, left, arrow_type, arrow_top, arrow_left;
+        var tooltip = this.tooltips[id];
+        var arrow_width = 7; // as defined in the default stylesheet
+        var stroke_width = 1; // as defined in the default stylesheet
+        var offset = stroke_width / 2;
+        var page_origin = this.getPageOrigin();
+
+        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
+        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+
+        var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
+        var y_center = data_layer_height / 2;
+
+        // Tooltip should be horizontally centered above the point to be annotated. (or below if space is limited)
+        var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
+        left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+        arrow_left = (tooltip_box.width / 2) - (arrow_width) + offset_left - offset_right - offset;
+        if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - y_center) {
+            top = page_origin.y + y_center - (tooltip_box.height + stroke_width + arrow_width);
+            arrow_type = "down";
+            arrow_top = tooltip_box.height - stroke_width;
+        } else {
+            top = page_origin.y + y_center + stroke_width + arrow_width;
+            arrow_type = "up";
+            arrow_top = 0 - stroke_width - arrow_width;
+        }
+        // Apply positions to the main div
+        tooltip.selector.style("left", left + "px").style("top", top + "px");
+        // Create / update position on arrow connecting tooltip to data
+        if (!tooltip.arrow) {
+            tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
+        }
+        tooltip.arrow
+            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
+            .style("left", arrow_left + "px")
+            .style("top", arrow_top + "px");
+    };
+
+    return this;
+});
 
 "use strict";
 
@@ -3220,10 +3326,6 @@ LocusZoom.DataLayers.add("forest", function(layout){
     return this;
 
 });
-
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
 
 "use strict";
 
@@ -3720,10 +3822,6 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
 });
 
-/* global LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
 /*********************
@@ -3825,17 +3923,14 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
 
 });
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
-/*********************
-  Intervals Data Layer
-  Implements a data layer that will render interval annotation tracks
-*/
-
+/**
+ * Intervals Data Layer
+ * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
+ * @class LocusZoom.DataLayers.intervals
+ * @augments LocusZoom.DataLayer
+ */
 LocusZoom.DataLayers.add("intervals", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
@@ -4281,10 +4376,6 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
 });
 
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
 /*********************
@@ -4698,10 +4789,6 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     return this;
 
 });
-
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
 
 "use strict";
 
@@ -7255,83 +7342,112 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
 });
 
 /**
- * Dropdown menu allowing the user to choose between different coloring options for a specific data layer.
+ * Dropdown menu allowing the user to choose between different display options for a single specific data layer
+ *  within a panel.
  *
- * Specifically, this menu allows the user to set appropriate color options for the field
+ * This allows controlling how points on a datalayer can be displayed- any display options supported via the layout for the target datalayer. This includes point
+ *  size/shape, coloring, etc.
  *
- * @class LocusZoom.Dashboard.Components.color_picker
+ * This button intentionally limits display options it can control to those available on common plot types.
+ *   Although the list of options it sets can be overridden (to control very special custom plot types), this
+ *   capability should be used sparingly if at all.
+ *
+ * @class LocusZoom.Dashboard.Components.display_options
  * @augments LocusZoom.Dashboard.Component
  * @param {object} layout
- * @param {'Color by...'} [layout.button_html] Text to display on the toolbar button
- * @param {'Color options'} [layout.button_title] Hover text for the toolbar button
+ * @param {String} [layout.button_html="Display options"] Text to display on the toolbar button
+ * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
  * @param {string} layout.layer_name Specify the datalayer that this button should affect
- *
- * @param {string} [layout.default_color_display_name] If provided, store the data layer's pre-existing color
+ * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
  *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
- *
- * @typedef {{source_field: string, display_name: string, require_field:boolean, color: Object}} ColorPickerConfigField
- * @param {ColorPickerConfigField[]} layout.options Specify the datalayer that this button should affect
+ * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
+ *  This can be overridden if this button needs to be used on a custom layer type with special options.
+ * @typedef {{display_name: string, display: Object}} DisplayOptionsButtonConfigField
+ * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
+ *  with this `display` option. Display field should include all changes to datalayer presentation options.
  */
-LocusZoom.Dashboard.Components.add("color_picker", function(layout) {
-    // Call parent constructor
-    //TODO: Improve layout argument / setting of defaults
+LocusZoom.Dashboard.Components.add("display_options", function (layout) {
+    if (typeof layout.button_html != "string"){ layout.button_html = "Display options"; }
+    if (typeof layout.button_title != "string"){ layout.button_title = "Control how plot items are displayed"; }
 
+    // Call parent constructor
     LocusZoom.Dashboard.Component.apply(this, arguments);
 
-    this.update = function() {
-        var self = this;
+    // List of layout fields that this button is allowed to control. This ensures that we don't override any other
+    //  information (like plot height etc) while changing point rendering
+    var allowed_fields = layout.fields_whitelist || ["color", "fill_opacity", "label", "legend",
+        "point_shape", "point_size", "tooltip", "tooltip_positioning"];
 
-        // Confirm that the layer to be colored exists, and that fields to be colored are expected to be present.
-        var dataLayer = self.parent_panel.data_layers[layout.layer_name];
+    var dataLayer = this.parent_panel.data_layers[layout.layer_name];
+    var dataLayerLayout = dataLayer.layout;
 
-        // TODO: optionally require field in fields array (to ensure that it is present if not a synthetic field)
+    // Store default configuration for the layer as a clean deep copy, so we may revert later
+    var defaultConfig = {};
+    allowed_fields.forEach(function(name) {
+        var configSlot = dataLayerLayout[name];
+        if (configSlot) {
+            defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
+        }
+    });
 
-        // Define the button + menu at thwe heart of this dashboard component
-        if (self.button){ return self; }
+    /**
+     * Which item in the menu is currently selected. (track for rerendering menu)
+     * @member {String}
+     * @private
+     */
+    this._selected_item = "default";
 
-        // TODO: Why is this inside update? Can't it be defined separately in constructor>?
-        self.button = new LocusZoom.Dashboard.Component.Button(self)
-            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
-            .setOnclick(function (){
-                self.button.menu.populate();
-            });
-
-        self.button.menu.setPopulate(function() {
-            // TODO: deal with data refresh and making sure buttons are reset / hidden when plot state changes
-
-            // Multiple copies of this button might be used on a single LZ page; append unique IDs to all selectors
-            var uniqueID = Math.floor(Math.random() * 1e4).toString();
-
-            self.button.menu.inner_selector.html("");
-            var table = self.button.menu.inner_selector.append("table");
-
-            var menuLayout = self.layout;
-
-            if (menuLayout.default_color_display_name) {
-                // TODO: Construct a layout method to handle this . New options list should be concat of default config + special options
-                // TODO: Capture and store default datalayer config/ layout
-            }
-            // TODO: Rewrite to be more d3-esque (data binding etc so there's only one loop?)
-            menuLayout.options.forEach(function (item, index) {
-                var row = table.append("tr");
-                row.append("td")
-                    .append("input")
-                    .attr({type:"radio", name:"color-picker-" + uniqueID, value: index})
-                    .on("click", function() {
-                        dataLayer.layout.color = menuLayout.options[index].color;
-                        // TODO: Is this the correct rerender method? (consider using reMap if the coloring depends on presence of a new field)
-                        self.parent_panel.render();
-                    });
-                row.append("td").text(item.display_name);
-            });
-            return self;
+    // Define the button + menu that provides the real functionality for this dashboard component
+    var self = this;
+    this.button = new LocusZoom.Dashboard.Component.Button(self)
+        .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+        .setOnclick(function () {
+            self.button.menu.populate();
         });
+    this.button.menu.setPopulate(function () {
+        // Multiple copies of this button might be used on a single LZ page; append unique IDs where needed
+        var uniqueID = Math.floor(Math.random() * 1e4).toString();
 
+        self.button.menu.inner_selector.html("");
+        var table = self.button.menu.inner_selector.append("table");
+
+        var menuLayout = self.layout;
+
+        var renderRow = function(display_name, display_options, row_id) { // Helper method
+            var row = table.append("tr");
+            row.append("td")
+                .append("input")
+                .attr({type: "radio", name: "color-picker-" + uniqueID, value: row_id})
+                .property("checked", (row_id === self._selected_item))
+                .on("click", function () {
+                    Object.keys(display_options).forEach(function(field_name) {
+                        dataLayer.layout[field_name] = display_options[field_name];
+                    });
+                    self._selected_item = row_id;
+                    self.parent_panel.render();
+                    var legend = self.parent_panel.legend;
+                    if (legend && display_options.legend) {
+                        // Update the legend only if necessary
+                        legend.render();
+                    }
+                });
+            row.append("td").text(display_name);
+        };
+        // Render the "display options" menu: default and special custom options
+        var defaultName = menuLayout.default_config_display_name || "Default style";
+        renderRow(defaultName, defaultConfig, "default");
+        menuLayout.options.forEach(function (item, index) {
+            renderRow(item.display_name, item.display, index);
+        });
+        return self;
+    });
+
+    this.update = function () {
         this.button.show();
-
         return this;
     };
 });
+
 /* global LocusZoom */
 "use strict";
 
