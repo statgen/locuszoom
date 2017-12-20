@@ -5,7 +5,6 @@
   Test LocusZoom Data access objects
 */
 describe("LocusZoom Data", function(){
-    // Tests
     describe("LocusZoom.Data.Field", function() {
         beforeEach(function() {
             LocusZoom.TransformationFunctions.add("herp", function(x) { return x.toString() + "herp"; });
@@ -270,6 +269,31 @@ describe("LocusZoom Data", function(){
                 );
             });
         });
+
+        describe("Source.prepareData", function() {
+            it("should annotate returned records with an additional custom field", function () {
+                var custom_source_class = LocusZoom.KnownDataSources.extend(
+                    "StaticJSON",
+                    "AnnotatedJSON",
+                    {
+                        prepareData: function(records) {
+                            // Custom hook that adds a field to every parsed record
+                            return records.map(function(item) {
+                                item.force = true;
+                                return item;
+                            });
+                        }
+                    }
+                );
+                var source = new custom_source_class([{r:2, d:2}, {c:3, p: "o"}]);
+                // Async test depends on promise
+                return source.getData({}, [], [])({header: []}).then(function(records) {
+                    records.body.forEach(function(item) {
+                        assert.ok(item.force, "Record should have an additional key not in raw server payload");
+                    });
+                });
+            });
+        });
     });
 
     describe("Static JSON Data Source", function() {
@@ -330,5 +354,3 @@ describe("LocusZoom Data", function(){
     });
 
 });
-
-

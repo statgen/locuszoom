@@ -9,7 +9,6 @@ var glob = require("glob");
 
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
 // Any vendor libraries needed solely for testing should not appear in this list.
-// TODO: Source these from node modules as well (after verifying pinned versions)
 var vendor_build = [
     "./node_modules/d3/d3.js",
     "./node_modules/q/q.js"
