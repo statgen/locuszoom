@@ -1,12 +1,8 @@
-/* global d3,Q */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 /**
  * @namespace
  */
 var LocusZoom = {
-    version: "0.6.1"
+    version: "0.7.0"
 };
 
 /**

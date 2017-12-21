@@ -1,6 +1,6 @@
 # Build-related assets
-assets/js/vendor
-assets/js/app/wrapper.js
+dist/
+
 # Non-code items
 docs/
 examples/
@@ -8,7 +8,5 @@ node_modules/
 staticdata/
 package.json
 
-# Built files
-locuszoom.app.js
-locuszoom.app.min.js
-locuszoom.vendor.min.js
+# ESLint seems to ignore env overrides on single files (for the es6 parser) in same directory
+files.js

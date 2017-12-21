@@ -1,30 +1,10 @@
-/* global require, describe, d3, LocusZoom, beforeEach, afterEach, it */
-
 "use strict";
 
 /**
   LocusZoom.js Core Test Suite
   Test composition of the LocusZoom object and its base classes
 */
-
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var should = require("should");
-var files = require("../files.js");
-
 describe("LocusZoom Core", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
     // Tests
     it("creates an object for its name space", function() {
         should.exist(LocusZoom);

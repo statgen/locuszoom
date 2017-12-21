@@ -14,7 +14,7 @@ To see functional examples of plots generated with LocusZoom.js see [statgen.git
 
 ### 1. Include Necessary JavaScript and CSS
 
-The page you build that embeds the LocusZoom plugin must include the following resources:
+The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory:
 
 * `locuszoom.vendor.min.js`  
   This file contains the concatenated vendor libraries. You can alternatively include [d3](http://d3js.org/) and [Q](https://github.com/kriskowal/q) from other sources, so long as they are included **before including LocusZoom files**.  
@@ -204,8 +204,6 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 * [d3](http://d3js.org/) for a data visualization framework
 * [Q](https://github.com/kriskowal/q) for a promises framework
 
-**NOTE:** `should.min.js` appears in the vendor source directory along with source files for `d3` and `Q`, but `should` is only required in this way for the automated testing suite. It is not included in the final build.
-
 ### Build System and Automated Testing
 
 The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary dev dependencies can be installed for this project from the top-level directory using the following commands:
@@ -215,12 +213,14 @@ $ sudo npm install gulp-cli -g    # If you don't already have gulp-cli installed
 $ npm install
 ```
 
-Once complete run `gulp` from the top of the application directory to run all tests and build the following files:
+Once complete run `gulp` from the top of the application directory to run all tests and build the following files (in the `dist` folder):
 
 * `locuszoom.app.js` - A concatenated app file suitable for use in development
 * `locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
 * `locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either development or production (contains d3 and Q)
 * `locuszoom.css` - A generated CSS file for all LocusZoom styles
+
+This build process will also write sourcemaps, to help with debugging code even in production environments.
 
 #### Other supported gulp commands:
 

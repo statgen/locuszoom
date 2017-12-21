@@ -1,7 +1,3 @@
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
 /*********************
@@ -22,12 +18,20 @@ LocusZoom.DataLayers.add("genes", function(layout){
         exon_height: 16,
         bounding_box_padding: 6,
         track_vertical_spacing: 10,
-        hover_element: "bounding_box"
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
+
+    /**
+     * Generate a statusnode ID for a given element
+     * @override
+     * @returns {String}
+     */
+    this.getElementStatusNodeId = function(element){
+        return this.getElementId(element) + "-statusnode";
+    };
 
     /**
      * Helper function to sum layout values to derive total height for a single gene track
@@ -218,16 +222,16 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 var data_layer = gene.parent;
 
-                // Render gene bounding box
-                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-data_layer-genes-bounding_box")
-                    .data([gene], function(d){ return d.gene_name + "_bbox"; });
+                // Render gene bounding boxes (status nodes to show selected/highlighted)
+                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-data_layer-genes-statusnode")
+                    .data([gene], function(d){ return data_layer.getElementStatusNodeId(d); });
 
                 bboxes.enter().append("rect")
-                    .attr("class", "lz-data_layer-genes lz-data_layer-genes-bounding_box");
+                    .attr("class", "lz-data_layer-genes lz-data_layer-genes-statusnode");
                 
                 bboxes
                     .attr("id", function(d){
-                        return data_layer.getElementId(d) + "_bounding_box";
+                        return data_layer.getElementStatusNodeId(d);
                     })
                     .attr("rx", function(){
                         return data_layer.layout.bounding_box_padding;
@@ -451,7 +455,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var gene_bbox_id = this.getElementId(tooltip.data) + "_bounding_box";
+        var gene_bbox_id = this.getElementStatusNodeId(tooltip.data);
         var gene_bbox = d3.select("#" + gene_bbox_id).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);

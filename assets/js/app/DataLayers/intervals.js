@@ -1,14 +1,11 @@
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
-/*********************
-  Intervals Data Layer
-  Implements a data layer that will render interval annotation tracks
-*/
-
+/**
+ * Intervals Data Layer
+ * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
+ * @class LocusZoom.DataLayers.intervals
+ * @augments LocusZoom.DataLayer
+ */
 LocusZoom.DataLayers.add("intervals", function(layout){
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
@@ -22,8 +19,6 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         track_height: 15,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
-        hover_element: "bounding_box",
-        group_hover_elements_on_field: null,
         always_hide_legend: false,
         color: "#B8B8B8",
         fill_opacity: 1
@@ -32,6 +27,19 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
+    
+    /**
+     * To define shared highlighting on the track split field define the status node id override
+     * to generate an ID common to the track when we're actively splitting data out to separate tracks
+     * @override
+     * @returns {String}
+     */
+    this.getElementStatusNodeId = function(element){
+        if (this.layout.split_tracks){
+            return (this.getBaseId() + "-statusnode-" + element[this.layout.track_split_field]).replace(/[:.[\],]/g, "_");
+        }
+        return this.getElementId(element) + "-statusnode";
+    }.bind(this);
     
     // Helper function to sum layout values to derive total height for a single interval track
     this.getTrackHeight = function(){
@@ -42,7 +50,6 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
     this.tracks = 1;
     this.previous_tracks = 1;
-    this.group_hover_elements = {};
     
     // track-number-indexed object with arrays of interval indexes in the dataset
     this.interval_track_index = { 1: [] };
@@ -142,29 +149,26 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
         this.assignTracks();
 
-        // First: render or remove group bounding boxes based on whether we're track split
-        if (this.layout.split_tracks){
-            Object.keys(this.group_hover_elements).forEach(function(key){
-                if (!this.track_split_field_index[key]){ this.group_hover_elements[key].remove(); }
-            }.bind(this));
-            Object.keys(this.track_split_field_index).forEach(function(key){
-                if (!this.group_hover_elements[key]){
-                    this.group_hover_elements[key] = this.svg.group.insert("rect", ":first-child")
-                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
-                }
-                this.group_hover_elements[key]
-                    .attr("rx", this.layout.bounding_box_padding).attr("ry", this.layout.bounding_box_padding)
-                    .attr("width", this.parent.layout.cliparea.width)
-                    .attr("height", this.getTrackHeight() - this.layout.track_vertical_spacing)
-                    .attr("x", 0)
-                    .attr("y", (this.track_split_field_index[key]-1) * this.getTrackHeight());
-            }.bind(this));
-        } else {
-            Object.keys(this.group_hover_elements).forEach(function(key){
-                this.group_hover_elements[key].remove();
-            }.bind(this));
-            this.group_hover_elements = {};
-        }
+        // Remove any shared highlight nodes and re-render them if we're splitting on tracks
+        // At most there will only be dozen or so nodes here (one per track) and each time
+        // we render data we may have new tracks, so wiping/redrawing all is reasonable.
+        this.svg.group.selectAll(".lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared").remove();
+        Object.keys(this.track_split_field_index).forEach(function(key){
+            // Make a psuedo-element so that we can generate an id for the shared node
+            var psuedoElement = {};
+            psuedoElement[this.layout.track_split_field] = key;
+            // Insert the shared node
+            var sharedstatusnode_style = {display: (this.layout.split_tracks ? null : "none")};
+            this.svg.group.insert("rect", ":first-child")
+                .attr("id", this.getElementStatusNodeId(psuedoElement))
+                .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared")
+                .attr("rx", this.layout.bounding_box_padding).attr("ry", this.layout.bounding_box_padding)
+                .attr("width", this.parent.layout.cliparea.width)
+                .attr("height", this.getTrackHeight() - this.layout.track_vertical_spacing)
+                .attr("x", 0)
+                .attr("y", (this.track_split_field_index[key]-1) * this.getTrackHeight())
+                .style(sharedstatusnode_style);
+        }.bind(this));
 
         var width, height, x, y, fill, fill_opacity;
             
@@ -180,52 +184,47 @@ LocusZoom.DataLayers.add("intervals", function(layout){
 
                 var data_layer = interval.parent;
 
-                // Render interval bounding box (displayed behind intervals to show highlight
-                // without needing to modify interval display element(s)) if not in split view
-                var bboxes = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-data_layer-intervals-bounding_box")
-                    .data([interval], function(d){ return d[data_layer.layout.id_field] + "_bbox"; });
-                if (data_layer.layout.split_tracks){
-                    bboxes.remove();
-                } else {                    
-                    bboxes.enter().append("rect")
-                        .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-bounding_box");
-                    
-                    bboxes
-                        .attr("id", function(d){
-                            return data_layer.getElementId(d) + "_bounding_box";
-                        })
-                        .attr("rx", function(){
-                            return data_layer.layout.bounding_box_padding;
-                        })
-                        .attr("ry", function(){
-                            return data_layer.layout.bounding_box_padding;
-                        });
-                    
-                    width = function(d){
-                        return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
-                    };
-                    height = function(){
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    };
-                    x = function(d){
-                        return d.display_range.start - data_layer.layout.bounding_box_padding;
-                    };
-                    y = function(d){
-                        return ((d.track-1) * data_layer.getTrackHeight());
-                    };
-                    if (data_layer.canTransition()){
-                        bboxes
-                            .transition()
-                            .duration(data_layer.layout.transition.duration || 0)
-                            .ease(data_layer.layout.transition.ease || "cubic-in-out")
-                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
-                    } else {
-                        bboxes
-                            .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
-                    }
-                    
-                    bboxes.exit().remove();
+                // Render interval status nodes (displayed behind intervals to show highlight
+                // without needing to modify interval display element(s))
+                var statusnode_style = {display: (data_layer.layout.split_tracks ? "none" : null)};
+                var statusnodes = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete")
+                    .data([interval], function(d){ return data_layer.getElementId(d) + "-statusnode"; });
+                statusnodes.enter().insert("rect", ":first-child")
+                    .attr("class", "lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete");
+                statusnodes
+                    .attr("id", function(d){
+                        return data_layer.getElementId(d) + "-statusnode";
+                    })
+                    .attr("rx", function(){
+                        return data_layer.layout.bounding_box_padding;
+                    })
+                    .attr("ry", function(){
+                        return data_layer.layout.bounding_box_padding;
+                    })
+                    .style(statusnode_style);
+                width = function(d){
+                    return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
+                };
+                height = function(){
+                    return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
+                };
+                x = function(d){
+                    return d.display_range.start - data_layer.layout.bounding_box_padding;
+                };
+                y = function(d){
+                    return ((d.track-1) * data_layer.getTrackHeight());
+                };
+                if (data_layer.canTransition()){
+                    statusnodes
+                        .transition()
+                        .duration(data_layer.layout.transition.duration || 0)
+                        .ease(data_layer.layout.transition.ease || "cubic-in-out")
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
+                } else {
+                    statusnodes
+                        .attr("width", width).attr("height", height).attr("x", x).attr("y", y);
                 }
+                statusnodes.exit().remove();
 
                 // Render primary interval rects
                 var rects = d3.select(this).selectAll("rect.lz-data_layer-intervals.lz-interval_rect")
@@ -352,12 +351,7 @@ LocusZoom.DataLayers.add("intervals", function(layout){
         var stroke_width = 1; // as defined in the default stylesheet
         var page_origin = this.getPageOrigin();
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var interval_bbox;
-        if (this.layout.split_tracks){
-            interval_bbox = d3.select("#" + this.getElementId(tooltip.data)).node().getBBox();
-        } else {
-            interval_bbox = d3.select("#" + this.getElementId(tooltip.data) + "_bounding_box").node().getBBox();
-        }
+        var interval_bbox = d3.select("#" + this.getElementStatusNodeId(tooltip.data)).node().getBBox();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
         // Position horizontally: attempt to center on the portion of the interval that's visible,
@@ -445,7 +439,6 @@ LocusZoom.DataLayers.add("intervals", function(layout){
     // necessary display values to animate a complete merge/split
     this.toggleSplitTracks = function(){
         this.layout.split_tracks = !this.layout.split_tracks;
-        this.layout.group_hover_elements_on_field = this.layout.split_tracks ? this.layout.track_split_field : null;
         if (this.parent.legend && !this.layout.always_hide_legend){
             this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
         }

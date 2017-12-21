@@ -1,7 +1,4 @@
-/* global d3,Q,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
+/* global LocusZoom */
 "use strict";
 
 /**
@@ -262,7 +259,8 @@ LocusZoom.Dashboard.Component.prototype.show = function(){
     return this.position();
 };
 /**
- * Update the dashboard component with any new data or plot state as appropriate
+ * Update the dashboard component with any new data or plot state as appropriate. This method performs all
+ *  necessary rendering steps.
  */
 LocusZoom.Dashboard.Component.prototype.update = function(){ /* stub */ };
 /**
@@ -1413,6 +1411,113 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
 
         this.button.show();
 
+        return this;
+    };
+});
+
+/**
+ * Dropdown menu allowing the user to choose between different display options for a single specific data layer
+ *  within a panel.
+ *
+ * This allows controlling how points on a datalayer can be displayed- any display options supported via the layout for the target datalayer. This includes point
+ *  size/shape, coloring, etc.
+ *
+ * This button intentionally limits display options it can control to those available on common plot types.
+ *   Although the list of options it sets can be overridden (to control very special custom plot types), this
+ *   capability should be used sparingly if at all.
+ *
+ * @class LocusZoom.Dashboard.Components.display_options
+ * @augments LocusZoom.Dashboard.Component
+ * @param {object} layout
+ * @param {String} [layout.button_html="Display options"] Text to display on the toolbar button
+ * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
+ * @param {string} layout.layer_name Specify the datalayer that this button should affect
+ * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
+ *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
+ * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
+ *  This can be overridden if this button needs to be used on a custom layer type with special options.
+ * @typedef {{display_name: string, display: Object}} DisplayOptionsButtonConfigField
+ * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
+ *  with this `display` option. Display field should include all changes to datalayer presentation options.
+ */
+LocusZoom.Dashboard.Components.add("display_options", function (layout) {
+    if (typeof layout.button_html != "string"){ layout.button_html = "Display options"; }
+    if (typeof layout.button_title != "string"){ layout.button_title = "Control how plot items are displayed"; }
+
+    // Call parent constructor
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    // List of layout fields that this button is allowed to control. This ensures that we don't override any other
+    //  information (like plot height etc) while changing point rendering
+    var allowed_fields = layout.fields_whitelist || ["color", "fill_opacity", "label", "legend",
+        "point_shape", "point_size", "tooltip", "tooltip_positioning"];
+
+    var dataLayer = this.parent_panel.data_layers[layout.layer_name];
+    var dataLayerLayout = dataLayer.layout;
+
+    // Store default configuration for the layer as a clean deep copy, so we may revert later
+    var defaultConfig = {};
+    allowed_fields.forEach(function(name) {
+        var configSlot = dataLayerLayout[name];
+        if (configSlot) {
+            defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
+        }
+    });
+
+    /**
+     * Which item in the menu is currently selected. (track for rerendering menu)
+     * @member {String}
+     * @private
+     */
+    this._selected_item = "default";
+
+    // Define the button + menu that provides the real functionality for this dashboard component
+    var self = this;
+    this.button = new LocusZoom.Dashboard.Component.Button(self)
+        .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+        .setOnclick(function () {
+            self.button.menu.populate();
+        });
+    this.button.menu.setPopulate(function () {
+        // Multiple copies of this button might be used on a single LZ page; append unique IDs where needed
+        var uniqueID = Math.floor(Math.random() * 1e4).toString();
+
+        self.button.menu.inner_selector.html("");
+        var table = self.button.menu.inner_selector.append("table");
+
+        var menuLayout = self.layout;
+
+        var renderRow = function(display_name, display_options, row_id) { // Helper method
+            var row = table.append("tr");
+            row.append("td")
+                .append("input")
+                .attr({type: "radio", name: "color-picker-" + uniqueID, value: row_id})
+                .property("checked", (row_id === self._selected_item))
+                .on("click", function () {
+                    Object.keys(display_options).forEach(function(field_name) {
+                        dataLayer.layout[field_name] = display_options[field_name];
+                    });
+                    self._selected_item = row_id;
+                    self.parent_panel.render();
+                    var legend = self.parent_panel.legend;
+                    if (legend && display_options.legend) {
+                        // Update the legend only if necessary
+                        legend.render();
+                    }
+                });
+            row.append("td").text(display_name);
+        };
+        // Render the "display options" menu: default and special custom options
+        var defaultName = menuLayout.default_config_display_name || "Default style";
+        renderRow(defaultName, defaultConfig, "default");
+        menuLayout.options.forEach(function (item, index) {
+            renderRow(item.display_name, item.display, index);
+        });
+        return self;
+    });
+
+    this.update = function () {
+        this.button.show();
         return this;
     };
 });
