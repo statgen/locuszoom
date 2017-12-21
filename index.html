@@ -7,9 +7,9 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
     
     <!-- Necessary includes for LocusZoom.js -->
-    <script src="locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="locuszoom.app.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="locuszoom.css" type="text/css"/>
+    <script src="dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="dist/locuszoom.css" type="text/css"/>
     
     <title>LocusZoom.js</title>
 
@@ -61,7 +61,7 @@
       <a name="get_it"></a>
       <h3>Get LocusZoom.js</h3>
       
-      <h5><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.6.1">v0.6.1</a></strong></h5>
+      <h5><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.7.0">v0.7.0</a></strong></h5>
       <p>To use LocusZoom.js in your application you will need <i>both</i> LocusZoom's compiled Javascript and CSS <i>and</i> two third-party Javascript libraries (available here in a single vendor bundle).</p>
       
       <div class="row">
@@ -69,9 +69,9 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://statgen.github.io/locuszoom/versions/0.6.1/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.6.1/locuszoom.app.js</a></tt>
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.7.0/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.7.0/locuszoom.app.js</a></tt>
           <br>
-          <small><i>minified:</i> <tt><a href="https://statgen.github.io/locuszoom/versions/0.6.1/locuszoom.app.min.js">locuszoom.app.min.js</a></tt></small>
+          <small><i>minified:</i> <tt><a href="https://statgen.github.io/locuszoom/versions/0.7.0/locuszoom.app.min.js">locuszoom.app.min.js</a></tt></small>
         </div>
       </div>
       
@@ -82,7 +82,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://statgen.github.io/locuszoom/versions/0.6.1/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.6.1/locuszoom.css</a></tt>
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.7.0/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.7.0/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -162,6 +162,12 @@
             <img src="examples/covariates_model.png" alt="Covariates Model">
           </a>
         </div>
+        <div class="four columns example">
+          <a href="examples/credible_sets.html">
+            <h6><strong>Credible Sets</strong></h6>
+            <img src="examples/credible_sets.png" alt="Credible Sets">
+          </a>
+        </div>
       </div>
 
       <hr>
@@ -176,7 +182,7 @@
 
     <script type="text/javascript">
 
-    // Determine if we're online
+    // Determine if we're online, based on browser state or presence of an optional query parameter
     var online = !(typeof navigator != "undefined" && !navigator.onLine);
     if (window.location.search.indexOf("offline") != -1){ online = false; }
       
@@ -186,7 +192,7 @@
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
-        .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
+        .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
@@ -230,7 +236,7 @@
       var start = 0;
       var end = 0;
       if (!pos.match(/[-+]/)) {
-        start = +pos - 300000
+        start = +pos - 300000;
         end = +pos + 300000
       }
       plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
@@ -249,8 +255,7 @@
       ["2:161346447", "RBMS1"],
       ["16:75247245", "BCAR1"],
       ["15:77832762", "HMG20A"],
-      ["7:15052860", "DGKB"],
-      ["5:76427311", "ZBED3"]
+      ["7:15052860", "DGKB"]
     ];
     top_hits.forEach(function(hit){
       d3.select("ul.top_hits").append("li")

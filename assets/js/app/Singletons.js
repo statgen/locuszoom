@@ -1,7 +1,4 @@
-/* global LocusZoom,d3 */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
+/* global LocusZoom */
 "use strict";
 
 /**
@@ -58,6 +55,31 @@ LocusZoom.KnownDataSources = (function() {
         sources.push(source);
     };
 
+    /**
+     * Create a custom source type that extends the behavior of an existing source, and registers that
+     *  source by the provided name
+     * @param {String} parent_name The name of a previously registered data source type to use as a template
+     * @param {String} source_name The new name to use when registering this data source
+     * @param {Object} overrides An object of additional properties and methods to add/override behavior
+     * @returns {LocusZoom.Data.Source} The newly defined class for this source
+     */
+    obj.extend = function(parent_name, source_name, overrides) {
+        var parent = findSourceByName(parent_name);
+        if (!parent) {
+            throw "Attempted to subclass an unknown or unregistered data source";
+        }
+        if (!source_name) {
+            throw "Must provide a name for the new data source";
+        }
+        if (typeof overrides !== "object") {
+            throw "Must specify an object of properties and methods";
+        }
+        var child = LocusZoom.subclass(parent, overrides);
+        child.SOURCE_NAME = source_name;
+        sources.push(child);
+        return child;
+    };
+
     /** @deprecated */
     obj.push = function(source) {
         console.warn("Warning: KnownDataSources.push() is deprecated. Use .add() instead");
@@ -90,7 +112,7 @@ LocusZoom.KnownDataSources = (function() {
     };
 
     /**
-     * Get the array of all registered contructors
+     * Get the array of all registered constructors
      *   Generally only used for unit tests internally
      * @private
      * @returns {function[]}

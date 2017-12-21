@@ -1,7 +1,3 @@
-/* global LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
 "use strict";
 
 /*********************

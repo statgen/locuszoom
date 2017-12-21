@@ -1,32 +1,10 @@
-/* global LocusZoom,d3 */
-/* global it,require,describe,beforeEach,afterEach */
-
 "use strict";
 
 /**
   LocusZoom.js Data Test Suite
   Test LocusZoom Data access objects
 */
-
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var should = require("should");
-var files = require("../files.js");
-
 describe("LocusZoom Data", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM and LocusZoom singleton after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
-    // Tests
     describe("LocusZoom.Data.Field", function() {
         beforeEach(function() {
             LocusZoom.TransformationFunctions.add("herp", function(x) { return x.toString() + "herp"; });
@@ -99,7 +77,7 @@ describe("LocusZoom Data", function(){
             d.should.have.property("foo:bar|herp|derp|herp").which.is.exactly("123herpderpherp");
         });
     });
-    
+
     describe("LocusZoom.DataSources", function() {
 
         var TestSource1, TestSource2;
@@ -180,101 +158,141 @@ describe("LocusZoom Data", function(){
         });
     });
 
+    describe("LocusZoom Data.Source", function() {
+        describe("Source.extend()", function() {
 
-    describe("LocusZoom.Data.Source.extend()", function() {
-
-        //reset known data sources
-        var originalKDS;
-        beforeEach(function() {
-            originalKDS = LocusZoom.KnownDataSources.getAll().slice(0);
-        });
-        afterEach(function() {
-            LocusZoom.KnownDataSources.setAll(originalKDS);
-        });
-
-        it("should work with no parameters", function() {
-            var source = LocusZoom.Data.Source.extend();
-            //no changes to KDS
-            LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length);
-            //has inherited the get data method from base Data.Source
-            var obj = new source();
-            should.exist(obj.getData);
-        });
-
-        it("should respect a custom constructor", function() {
-            var source = LocusZoom.Data.Source.extend(function() {
-                this.test = 5;
+            //reset known data sources
+            var originalKDS;
+            beforeEach(function() {
+                originalKDS = LocusZoom.KnownDataSources.getAll().slice(0);
             });
-            var obj = new source();
-            should.exist(obj.test);
-            obj.test.should.equal(5);
+            afterEach(function() {
+                LocusZoom.KnownDataSources.setAll(originalKDS);
+            });
+
+            it("should work with no parameters", function() {
+                var source = LocusZoom.Data.Source.extend();
+                //no changes to KDS
+                LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length);
+                //has inherited the get data method from base Data.Source
+                var obj = new source();
+                should.exist(obj.getData);
+            });
+
+            it("should respect a custom constructor", function() {
+                var source = LocusZoom.Data.Source.extend(function() {
+                    this.test = 5;
+                });
+                var obj = new source();
+                should.exist(obj.test);
+                obj.test.should.equal(5);
+            });
+
+            it("should register with KnownDataSources", function() {
+                LocusZoom.Data.Source.extend(function() {
+                    this.test = 11;
+                }, "Happy");
+                LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length+1);
+                LocusZoom.KnownDataSources.list().should.containEql("Happy");
+                var obj = LocusZoom.KnownDataSources.create("Happy");
+                should.exist(obj.test);
+                obj.test.should.equal(11);
+            });
+
+            it("should allow specific prototype", function() {
+                var source = LocusZoom.Data.Source.extend(function() {
+                    this.fromCon = 3;
+                }, null, {fromProto:7});
+                var obj = new source();
+                should.exist(obj.fromCon);
+                obj.fromCon.should.equal(3);
+                should.exist(obj.fromProto);
+                obj.fromProto.should.equal(7);
+            });
+
+            it("should easily inherit from known types (string)", function() {
+                var source1 = LocusZoom.Data.Source.extend(function() {
+                    this.name = "Bob";
+                    this.initOnly = "Boo";
+                }, "BaseOne");
+                source1.prototype.greet = function() {return "hello " + this.name;};
+                var source2 = LocusZoom.Data.Source.extend(function() {
+                    this.name = "Brenda";
+                }, "BaseTwo", "BaseOne");
+                var obj = new source2();
+                should.exist(obj.name);
+                should.exist(obj.greet);
+                obj.name.should.equal("Brenda");
+                obj.greet().should.equal("hello Brenda");
+                should.not.exist(obj.initOnly);
+            });
+
+            it("should easily inherit from known types (function)", function() {
+                var source1 = LocusZoom.Data.Source.extend(function() {
+                    this.name = "Bob";
+                }, "BaseOne");
+                source1.prototype.greet = function() {return "hello " + this.name;};
+                var source2 = LocusZoom.Data.Source.extend(function() {
+                    this.name = "Brenda";
+                }, "BaseTwo", source1);
+                var obj = new source2();
+                should.exist(obj.name);
+                should.exist(obj.greet);
+                obj.name.should.equal("Brenda");
+                obj.greet().should.equal("hello Brenda");
+            });
+
+            it("should easily inherit from known types (array)", function() {
+                var source1 = LocusZoom.Data.Source.extend(function() {
+                    this.name = "Bob";
+                }, "BaseOne");
+                source1.prototype.greet = function() {return "hello " + this.name;};
+                var source = LocusZoom.Data.Source.extend(null, "BaseTwo", ["BaseOne"]);
+                var obj = new source();
+                should.exist(obj.name);
+                should.exist(obj.greet);
+                obj.name.should.equal("Bob");
+                obj.greet().should.equal("hello Bob");
+            });
         });
 
-        it("should register with KnownDataSources", function() {
-            LocusZoom.Data.Source.extend(function() {
-                this.test = 11;
-            }, "Happy");
-            LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length+1);
-            LocusZoom.KnownDataSources.list().should.containEql("Happy");
-            var obj = LocusZoom.KnownDataSources.create("Happy");
-            should.exist(obj.test);
-            obj.test.should.equal(11);
+        describe("Source.parseArraysToObjects", function() {
+            it("should require all columns of data to be of same length", function() {
+                var source = new LocusZoom.Data.Source();
+                assert.throws(
+                    function() {
+                        source.parseArraysToObjects(
+                            {a: [1], b: [1,2], c: [1,2,3]},
+                            [], [], []);
+                    },
+                    /expects a response in which all arrays of data are the same length/
+                );
+            });
         });
 
-        it("should allow specific prototype", function() {
-            var source = LocusZoom.Data.Source.extend(function() {
-                this.fromCon = 3;
-            }, null, {fromProto:7});
-            var obj = new source();
-            should.exist(obj.fromCon);
-            obj.fromCon.should.equal(3);
-            should.exist(obj.fromProto);
-            obj.fromProto.should.equal(7);
-        });
-
-        it("should easily inherit from known types (string)", function() {
-            var source1 = LocusZoom.Data.Source.extend(function() {
-                this.name = "Bob";
-                this.initOnly = "Boo";
-            }, "BaseOne");
-            source1.prototype.greet = function() {return "hello " + this.name;};
-            var source2 = LocusZoom.Data.Source.extend(function() {
-                this.name = "Brenda";
-            }, "BaseTwo", "BaseOne");
-            var obj = new source2();
-            should.exist(obj.name);
-            should.exist(obj.greet);
-            obj.name.should.equal("Brenda");
-            obj.greet().should.equal("hello Brenda");
-            should.not.exist(obj.initOnly);
-        });
-
-        it("should easily inherit from known types (function)", function() {
-            var source1 = LocusZoom.Data.Source.extend(function() {
-                this.name = "Bob";
-            }, "BaseOne");
-            source1.prototype.greet = function() {return "hello " + this.name;};
-            var source2 = LocusZoom.Data.Source.extend(function() {
-                this.name = "Brenda";
-            }, "BaseTwo", source1);
-            var obj = new source2();
-            should.exist(obj.name);
-            should.exist(obj.greet);
-            obj.name.should.equal("Brenda");
-            obj.greet().should.equal("hello Brenda");
-        });
-
-        it("should easily inherit from known types (array)", function() {
-            var source1 = LocusZoom.Data.Source.extend(function() {
-                this.name = "Bob";
-            }, "BaseOne");
-            source1.prototype.greet = function() {return "hello " + this.name;};
-            var source = LocusZoom.Data.Source.extend(null, "BaseTwo", ["BaseOne"]);
-            var obj = new source();
-            should.exist(obj.name);
-            should.exist(obj.greet);
-            obj.name.should.equal("Bob");
-            obj.greet().should.equal("hello Bob");
+        describe("Source.prepareData", function() {
+            it("should annotate returned records with an additional custom field", function () {
+                var custom_source_class = LocusZoom.KnownDataSources.extend(
+                    "StaticJSON",
+                    "AnnotatedJSON",
+                    {
+                        prepareData: function(records) {
+                            // Custom hook that adds a field to every parsed record
+                            return records.map(function(item) {
+                                item.force = true;
+                                return item;
+                            });
+                        }
+                    }
+                );
+                var source = new custom_source_class([{r:2, d:2}, {c:3, p: "o"}]);
+                // Async test depends on promise
+                return source.getData({}, [], [])({header: []}).then(function(records) {
+                    records.body.forEach(function(item) {
+                        assert.ok(item.force, "Record should have an additional key not in raw server payload");
+                    });
+                });
+            });
         });
     });
 
@@ -309,7 +327,7 @@ describe("LocusZoom Data", function(){
             d3.select("#plot").remove();
             delete this.plot;
         });
-        it("should pass arbitrary static JSON through a get() request on the data sources object", function() {           
+        it("should pass arbitrary static JSON through a get() request on the data sources object", function() {
             var get = this.datasources.get(this.namespace);
             assert.deepEqual(get._data, this.data);
         });
@@ -336,5 +354,3 @@ describe("LocusZoom Data", function(){
     });
 
 });
-
-

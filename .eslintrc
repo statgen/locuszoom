@@ -1,5 +1,7 @@
 {
+    "extends": "eslint:recommended",
     "rules": {
+        "no-console": "off",
         "indent": [
             2,
             4,
@@ -25,12 +27,11 @@
             "smart"
         ],
         "no-unused-vars": [
-            1,
+            "error",
             { "args": "none" }
         ]
     },
     "env": {
         "browser": true
-    },
-    "extends": "eslint:recommended"
+    }
 }

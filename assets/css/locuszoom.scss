@@ -117,6 +117,14 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 1px;
   }
 
+  rect.#{$namespace}-data_layer-annotation_track {
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-annotation_track-highlighted, path.#{$namespace}-data_layer-annotation_track-selected {
+    stroke-opacity: #{$default_black_opacity};
+  }
+
   path.#{$namespace}-data_layer-line {
     stroke: #{$default_black};
     stroke-opacity: #{$default_black_opacity};
@@ -154,19 +162,19 @@ svg.#{$namespace}-locuszoom {
     font-style: italic;
   }
 
-  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode {
     fill: rgb(54, 54, 150);
     fill-opacity: 0;
     stroke-width: 0px;
   }
 
-  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-highlighted {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode-highlighted {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.1;
     stroke-width: 0px;
   }
 
-  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-bounding_box-selected {
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode-selected {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.15;
     stroke: #{$default_black};
@@ -196,19 +204,19 @@ svg.#{$namespace}-locuszoom {
     display: none;
   }
 
-  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box {
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode {
     fill: rgb(54, 54, 150);
     fill-opacity: 0;
     stroke-width: 0px;
   }
 
-  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-highlighted {
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode-highlighted {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.2;
     stroke-width: 0px;
   }
 
-  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-bounding_box-selected {
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode-selected {
     fill: rgb(54, 54, 150);
     fill-opacity: 0.35;
     stroke: #{$default_black};
