@@ -1,5 +1,3 @@
-/* global require, describe, d3, LocusZoom, beforeEach, afterEach, it */
-
 "use strict";
 
 /**
@@ -7,24 +5,7 @@
   Test composition and function of dashboard framework and compontents
 */
 
-var jsdom = require("mocha-jsdom");
-var fs = require("fs");
-var assert = require("assert");
-var should = require("should");
-var files = require("../files.js");
-
 describe("LocusZoom.Dashboard", function(){
-
-    // Load all javascript files
-    var src = [];
-    files.test_include.forEach(function(file){ src.push(fs.readFileSync(file)); });
-    jsdom({ src: src });
-
-    // Reset DOM after each test
-    afterEach(function(){
-        d3.select("body").selectAll("*").remove();
-    });
-
     // Tests
     it("defines an abstract dashboard class", function() {
         should.exist(LocusZoom.Dashboard);

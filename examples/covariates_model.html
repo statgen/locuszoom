@@ -7,9 +7,9 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
     
     <!-- Necessary includes for LocusZoom.js -->
-    <script src="../locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="../locuszoom.app.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="../locuszoom.css" type="text/css"/>
+    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
     
     <title>LocusZoom.js ~ Covariates Model Example</title>
 
@@ -130,8 +130,7 @@
       ["2:161346447", "RBMS1"],
       ["16:75247245", "BCAR1"],
       ["15:77832762", "HMG20A"],
-      ["7:15052860", "DGKB"],
-      ["5:76427311", "ZBED3"]
+      ["7:15052860", "DGKB"]
     ];
     top_hits.forEach(function(hit){
       d3.select("ul.top_hits").append("li")

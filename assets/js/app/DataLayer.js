@@ -1,7 +1,4 @@
-/* global d3,LocusZoom */
-/* eslint-env browser */
-/* eslint-disable no-console */
-
+/* global LocusZoom */
 "use strict";
 
 /**
@@ -63,6 +60,39 @@ LocusZoom.DataLayer = function(layout, parent) {
     
     return this;
 
+};
+
+/**
+ * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
+ *
+ * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn
+ *
+ *  (since removing core fields may break layer functionality, there is presently no hook for the inverse behavior)
+ * @param fieldName
+ * @param namespace
+ * @param {String|String[]} transformations The name (or array of names) of transformations to apply to this field
+ * @returns {String} The raw string added to the fields array
+ */
+LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transformations) {
+    if (!fieldName || !namespace) {
+        throw "Must specify field name and namespace to use when adding field";
+    }
+    var fieldString = namespace + ":" + fieldName;
+    if (transformations) {
+        fieldString += "|";
+        if (typeof transformations === "string") {
+            fieldString += transformations;
+        } else if (Array.isArray(transformations)) {
+            fieldString += transformations.join("|");
+        } else {
+            throw "Must provide transformations as either a string or array of strings";
+        }
+    }
+    var fields = this.layout.fields;
+    if (fields.indexOf(fieldString) === -1) {
+        fields.push(fieldString);
+    }
+    return fieldString;
 };
 
 /**
@@ -845,11 +875,16 @@ LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
 };
 
 /**
- * Generate a function that executes the an arbitrary list of behaviors on an element during an event
- * TODO: Improve documentation of params
- * @param directive
- * @param behaviors
- * @returns {function(this:LocusZoom.DataLayer)}
+ * Generate a function that executes an arbitrary list of behaviors on an element during an event
+ * @param {String} directive The name of the event, as described in layout.behaviors for this datalayer
+ * @param {Object} behaviors An object describing the behavior to attach to this single element
+ * @param {string} behaviors.action The name of the action that would trigger this behavior (eg click, mouseover, etc)
+ * @param {string} behaviors.status What status to apply to the element when this behavior is triggered (highlighted,
+ *  selected, etc)
+ * @param {string} [behaviors.exclusive] Whether triggering the event for this element should unset the relevant status
+ *   for all other elements. Useful for, eg, click events that exclusively highlight one thing.
+ * @returns {function(this:LocusZoom.DataLayer)} Return a function that handles the event in context with the behavior
+ *   and the element- can be attached as an event listener
  */
 LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) {
 
@@ -859,7 +894,6 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
         "shift": (directive.indexOf("shift") !== -1)
     };
 
-    // Return a function that handles the event in context with the behavior and the element
     return function(element){
 
         // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event

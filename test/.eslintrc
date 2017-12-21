@@ -1,0 +1,14 @@
+{
+  "env": {
+    "es6": true,
+    "node": true,
+    "mocha": true
+  },
+  "globals": {
+    "assert": false,
+    "d3": false,
+    "LocusZoom": false,
+    "Q": false,
+    "should": false
+  }
+}
