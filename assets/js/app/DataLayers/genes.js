@@ -206,6 +206,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
      */
     this.render = function(){
 
+        var self = this;
         this.assignTracks();
 
         var width, height, x, y;
@@ -265,12 +266,21 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 bboxes.exit().remove();
 
+
+                // For the exon part, use d.parent.parent to get color correct (different __data__ is bound here)
+                var boundary_color = function(d){ return self.resolveScalableParameter(self.layout.color, d); };
+                var exon_color = function(d){ return self.resolveScalableParameter(self.layout.color, d.parent.parent); };
+
                 // Render gene boundaries
                 var boundaries = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-boundary")
                     .data([gene], function(d){ return d.gene_name + "_boundary"; });
 
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-boundary");
+
+                boundaries
+                    .attr("fill", boundary_color)
+                    .attr("stroke", boundary_color);
 
                 width = function(d){
                     return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
@@ -349,7 +359,9 @@ LocusZoom.DataLayers.add("genes", function(layout){
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d){ return d.exon_id; });
                         
                 exons.enter().append("rect")
-                    .attr("class", "lz-data_layer-genes lz-exon");
+                    .attr("class", "lz-data_layer-genes lz-exon")
+                    .attr("fill", exon_color)
+                    .attr("stroke", exon_color);
                         
                 width = function(d){
                     return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);

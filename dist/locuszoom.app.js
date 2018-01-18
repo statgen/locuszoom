@@ -1321,6 +1321,39 @@
                 '{{namespace[constraint]}}constraint'
             ],
             id_field: 'gene_id',
+            // Temporary hack for demo purposes
+            color: [
+                // {
+                //     scale_function: "if",
+                //     field: "effect_pvalue",
+                //     parameters: {
+                //         field_value: undefined,
+                //         then: "#000099"
+                //     }
+                // },
+                {
+                    scale_function: 'numerical_bin',
+                    field: 'effect_pvalue',
+                    parameters: {
+                        breaks: [
+                            -0.8,
+                            -0.4,
+                            0,
+                            0.4,
+                            0.8
+                        ],
+                        values: [
+                            '#9c0000',
+                            '#DA8997',
+                            '#BBBBBB',
+                            '#74EBEE',
+                            '#011ad4'
+                        ]    // breaks: [-1],
+                             // values: ["#000099"]
+                    }
+                },
+                '#B8B8B8'
+            ],
             behaviors: {
                 onmouseover: [{
                         action: 'set',
@@ -3722,6 +3755,7 @@
      * Main render function
      */
             this.render = function () {
+                var self = this;
                 this.assignTracks();
                 var width, height, x, y;
                 // Render gene groups
@@ -3763,11 +3797,19 @@
                         bboxes.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     }
                     bboxes.exit().remove();
+                    // For the exon part, use d.parent.parent to get color correct (different __data__ is bound here)
+                    var boundary_color = function (d) {
+                        return self.resolveScalableParameter(self.layout.color, d);
+                    };
+                    var exon_color = function (d) {
+                        return self.resolveScalableParameter(self.layout.color, d.parent.parent);
+                    };
                     // Render gene boundaries
                     var boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary').data([gene], function (d) {
                         return d.gene_name + '_boundary';
                     });
                     boundaries.enter().append('rect').attr('class', 'lz-data_layer-genes lz-boundary');
+                    boundaries.attr('fill', boundary_color).attr('stroke', boundary_color);
                     width = function (d) {
                         return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                     };
@@ -3818,7 +3860,7 @@
                     var exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon').data(gene.transcripts[gene.parent.transcript_idx].exons, function (d) {
                         return d.exon_id;
                     });
-                    exons.enter().append('rect').attr('class', 'lz-data_layer-genes lz-exon');
+                    exons.enter().append('rect').attr('class', 'lz-data_layer-genes lz-exon').attr('fill', exon_color).attr('stroke', exon_color);
                     width = function (d) {
                         return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                     };
