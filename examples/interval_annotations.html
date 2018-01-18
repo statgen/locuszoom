@@ -68,7 +68,7 @@
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
-      .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 16} }]);
+      .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 19} }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
     var mods = {
@@ -107,8 +107,8 @@
       var start = 0;
       var end = 0;
       if (!pos.match(/[-+]/)) {
-        start = +pos - 300000
-        end = +pos + 300000
+        start = +pos - 300000;
+        end = +pos + 300000;
       }
       plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
       return false;
