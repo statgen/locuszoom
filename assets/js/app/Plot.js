@@ -877,6 +877,49 @@ LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
 };
 
+
+/**
+ * A user-defined callback function that can receive (and potentially act on) new plot data.
+ * @callback externalDataCallback
+ * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
+ *  a data layer making an equivalent request.
+ */
+
+/**
+ * A user-defined callback function that can respond to errors received during a previous operation
+ * @callback externalErrorCallback
+ * @param err A representation of the error that occurred
+ */
+
+/**
+ * Allow newly fetched data to be made available outside the LocusZoom plot. For example, a callback could be
+ *  registered to draw an HTML table of top GWAS hits, and update that table whenever the plot region changes.
+ *
+ * This is a convenience method for external hooks. It registers an event listener and returns parsed data,
+ *  using the same fields syntax and underlying methods as data layers.
+ *
+ * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
+ *  Different data sources should be prefixed by the source name.
+ * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
+ *  new data is received by the plot.
+ * @param {externalErrorCallback} [error_callback] User defined function that is automatically called if a problem
+ *  occurs during the data request or subsequent callback operations
+ */
+LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback) {
+    // Register an event listener that is notified whenever new data has been rendered
+    error_callback = error_callback || function(err) {
+        console.log("An error occurred while acting on an external callback", err);
+    };
+    var self = this;
+    this.on("data_rendered", function() {
+        self.lzd.getData(self.state, fields)
+            .then(function(new_data) {
+                success_callback(new_data.body);
+            })
+            .catch(error_callback);
+    });
+};
+
 /**
  * Update state values and trigger a pull for fresh data on all data sources for all data layers
  * @param state_changes
