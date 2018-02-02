@@ -9,7 +9,7 @@
 function createAssociationTable(selector) {
     var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator({
-        height: 250,
+        height: 440,
         layout: "fitColumns",
         columns: [
             { title: "Variant", field: "assoc:variant" },
