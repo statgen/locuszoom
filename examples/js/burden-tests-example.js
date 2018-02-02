@@ -3,14 +3,11 @@
  */
 'use strict';
 
-// Hardcoded reference to the page element where the table will be rendered
-var TABLE_SELECTOR = "#results-table";
-
 /**
  * Call once when page is first loaded
  */
-function createAssociationTable() {
-    var tableSelectorTarget = $(TABLE_SELECTOR);
+function createAssociationTable(selector) {
+    var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator({
         height: 250,
         layout: "fitColumns",
@@ -24,9 +21,10 @@ function createAssociationTable() {
 
 /**
  * Callback that takes in data and renders an HTML table to a hardcoded document location
- * @param data
+ * @param {string} selector A selector string for the table container
+ * @param {object} data
  */
-function renderAssociationTable(data) {
-    var tableSelectorTarget = $(TABLE_SELECTOR);
+function renderAssociationTable(selector, data) {
+    var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator("setData", data);
 }

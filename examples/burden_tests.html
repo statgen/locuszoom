@@ -112,15 +112,20 @@
               .add("constraint", ["GeneConstraintLZ", {url: apiBase + "constraint_10_114550452-115067678.json?"}]);
       }
 
-      // Generate the LocusZoom plot and companion table
+      // Generate the LocusZoom plot
       var layout = LocusZoom.Layouts.get("plot", "standard_association");
       window.plot = LocusZoom.populate("#plot", data_sources, layout);
 
-      createAssociationTable();
+      // Ensure that the companion table renders and is updated when the plot changes
+
+      var TABLE_SELECTOR = "#results-table";  // ID for where plots will be rendered
+      createAssociationTable(TABLE_SELECTOR);
+      var renderCallback = renderAssociationTable.bind(null, TABLE_SELECTOR); // curry first argument
+
       var subscriber_fields = ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"];
       plot.subscribeToData(
           subscriber_fields,
-          renderAssociationTable
+          renderCallback
           );
       </script>
   </body>
