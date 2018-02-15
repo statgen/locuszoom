@@ -126,8 +126,15 @@
 
       // Ensure that the companion table renders and is updated when the plot changes
 
+      // Two way communication: define a callback that will be used to notify the plot when a row is clicked in the table
+
+      // TODO: With two-way communication, make sure no infinite loops are created of plot triggering table etc
+      var tableRowClick = function(_, row) {
+          plot.emit("element_clicked", row.row.data);
+      };
+
       var TABLE_SELECTOR = "#results-table";  // ID for where plots will be rendered
-      createAssociationTable(TABLE_SELECTOR);
+      createAssociationTable(TABLE_SELECTOR, tableRowClick);
       var renderCallback = updateTableData.bind(null, TABLE_SELECTOR); // curry first argument
 
       var subscriber_fields = ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"];

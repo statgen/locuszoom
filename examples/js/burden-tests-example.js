@@ -6,12 +6,13 @@
 /**
  * Call once when page is first loaded
  */
-function createAssociationTable(selector) {
+function createAssociationTable(selector, row_click_callback) {
     var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator({
         height: 440,
         layout: "fitColumns",
         index: "assoc:variant",
+        rowClick: row_click_callback,
         columns: [
             { title: "Variant", field: "assoc:variant" },
             { title: "-log10(pvalue)", field: "assoc:log_pvalue", bottomCalc: "max" }
