@@ -109,7 +109,8 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
 LocusZoom.DataLayer.prototype.setDefaultState = function() {
-    // Define state parameters specific to this data layer
+    // Define state parameters specific to this data layer. Within plot state, this will live under a key
+    //  `panel_name.layer_name`.
     if (this.parent){
         this.state = this.parent.state;
         this.state_id = this.parent.id + "." + this.id;
@@ -870,7 +871,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
 };
 
 /**
- * Apply all layout-defined behaviors to a selection of elements with event handlers
+ * Apply all layout-defined behaviors (DOM event handlers) to a selection of elements
  * @param {d3.selection} selection
  */
 LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
