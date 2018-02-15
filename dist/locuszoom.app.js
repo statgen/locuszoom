@@ -45,7 +45,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.7.0"
+    version: "0.7.1"
 };
 
 /**
@@ -6113,6 +6113,10 @@ LocusZoom.Dashboard.prototype.destroy = function(force){
  * @class
  * @param {Object} layout A JSON-serializable object of layout configuration parameters
  * @param {('left'|'right')} [layout.position='left']  Whether to float the component left or right.
+ * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
+ *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
+ *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
+ *  For example, the region_nav_plot dashboard is a defined as a group.
  * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple'} [layout.color='gray']  Color scheme for the
  *   component. Applies to buttons and menus.
  * @param {LocusZoom.Dashboard} parent The dashboard that contains this component
@@ -6843,22 +6847,23 @@ LocusZoom.Dashboard.Components.add("download", function(layout){
  *   NOTE: Will only work on panel dashboards.
  * @class LocusZoom.Dashboard.Components.remove_panel
  * @augments LocusZoom.Dashboard.Component
+ * @param {Boolean} [layout.suppress_confirm=false] If true, removes the panel without prompting user for confirmation
  */
-LocusZoom.Dashboard.Components.add("remove_panel", function(layout){
+LocusZoom.Dashboard.Components.add("remove_panel", function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
-    this.update = function(){
+    this.update = function() {
         if (this.button){ return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
             .setColor(layout.color).setHtml("×").setTitle("Remove panel")
             .setOnclick(function(){
-                if (confirm("Are you sure you want to remove this panel? This cannot be undone!")){
-                    var panel = this.parent_panel;
-                    panel.dashboard.hide(true);
-                    d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
-                    d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
-                    return panel.parent.removePanel(panel.id);
+                if (!layout.suppress_confirm && !confirm("Are you sure you want to remove this panel? This cannot be undone!")){
+                    return false;
                 }
-                return false;
+                var panel = this.parent_panel;
+                panel.dashboard.hide(true);
+                d3.select(panel.parent.svg.node().parentNode).on("mouseover." + panel.getBaseId() + ".dashboard", null);
+                d3.select(panel.parent.svg.node().parentNode).on("mouseout." + panel.getBaseId() + ".dashboard", null);
+                return panel.parent.removePanel(panel.id);
             }.bind(this));
         this.button.show();
         return this;
