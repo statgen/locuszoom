@@ -143,10 +143,10 @@
           renderCallback
           );
 
-      plot.on("element_clicked", function() { // TODO: we may want to monitor select and deselect?
+      plot.on("element_clicked", function(eventData) { // TODO: we may want to monitor select and deselect?
          // Context of an element event listener is the data associated with that element.
          // This listener will fire on any clickable element in any data layer
-         var selectedItem = this["assoc:variant"];
+         var selectedItem = eventData["data"]["assoc:variant"];
          if (selectedItem) {
              $("#clicked-element-label").text(selectedItem).css("color", "blue");
               scrollTableToData(TABLE_SELECTOR, selectedItem);
