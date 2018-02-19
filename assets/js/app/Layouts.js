@@ -347,6 +347,13 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
             { action: "toggle", status: "selected" }
         ]
     },
+    listen: [ // TODO: Harden up nomenclature and syntax
+        {
+            field: "{{namespace[assoc]}}variant",
+            event: "element_clicked",
+            behavior: { action: "set", status: "selected", exclusive: true }
+        }
+    ],
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
 
