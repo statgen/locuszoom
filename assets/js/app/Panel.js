@@ -151,11 +151,12 @@ LocusZoom.Panel = function(layout, parent) {
      *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
+     * @param {String} event The name of the event (as defined in `event_hooks`)
      * @param {function} hook
      * @returns {LocusZoom.Panel}
      */
     this.on = function(event, hook){
+        // TODO: Dry plot and panel event code into a shared mixin
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("Unable to register event hook, invalid event: " + event.toString());
         }
@@ -166,20 +167,51 @@ LocusZoom.Panel = function(layout, parent) {
         return this;
     };
     /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {LocusZoom.Panel}
+     */
+    this.off = function(event, hook) {
+        var theseHooks = this.event_hooks[event];
+        if (typeof "event" != "string" || !Array.isArray(theseHooks)){
+            throw("Unable to remove event hook, invalid event: " + event.toString());
+        }
+        if (hook === undefined) {
+            // Deregistering all hooks for this event may break basic functionality, and should only be used during
+            //  cleanup operations (eg to prevent memory leaks)
+            this.event_hooks[event] = [];
+        } else {
+            var hookMatch = theseHooks.indexOf(hook);
+            if (hookMatch !== -1) {
+                theseHooks.splice(hookMatch, 1);
+            } else {
+                throw("The specified event listener is not registered and therefore cannot be removed");
+            }
+        }
+        return this;
+    };
+    /**
      * Handle running of event hooks when an event is emitted
      * @protected
      * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @param {*} eventData Data or event description that will be passed to the event listener
+     * @param {boolean} bubble Whether to bubble the event to the parent
      * @returns {LocusZoom.Panel}
      */
-    this.emit = function(event, context){
+    this.emit = function(event, eventData, bubble) {
+        // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
-        context = context || this;
+        var sourceID = this.getBaseId();
+        var context = {"sourceID": sourceID, data: eventData};
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun.call(context);
+            hookToRun(context);
         });
+        if (bubble && this.parent) {
+            this.parent.emit(event, context);
+        }
         return this;
     };
 

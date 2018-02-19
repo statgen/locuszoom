@@ -118,6 +118,16 @@ LocusZoom.Plot = function(id, datasource, layout) {
         "data_rendered": [],
         "element_clicked": []
     };
+
+    /**
+     * @callback eventCallback
+     * @param {object} eventData A description of the event
+     * @param {String|null} eventData.sourceID The unique identifier (eg plot or parent name) of the element that
+     *  triggered the event. Will be automatically filled in if not explicitly provided.
+     * @param {Object|null} eventData.context Any additional information to be passed to the callback, eg the data
+     *   associated with a clicked plot element
+     */
+
     /**
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
@@ -136,8 +146,8 @@ LocusZoom.Plot = function(id, datasource, layout) {
      *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
-     * @param {function} hook
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} hook
      * @returns {LocusZoom.Plot}
      */
     this.on = function(event, hook){
@@ -151,19 +161,57 @@ LocusZoom.Plot = function(id, datasource, layout) {
         return this;
     };
     /**
-     * Handle running of event hooks when an event is emitted
-     * @protected
-     * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
      * @returns {LocusZoom.Plot}
      */
-    this.emit = function(event, context){
+    this.off = function(event, hook) {
+        var theseHooks = this.event_hooks[event];
+        if (typeof "event" != "string" || !Array.isArray(theseHooks)){
+            throw("Unable to remove event hook, invalid event: " + event.toString());
+        }
+        if (hook === undefined) {
+            // Deregistering all hooks for this event may break basic functionality, and should only be used during
+            //  cleanup operations (eg to prevent memory leaks)
+            this.event_hooks[event] = [];
+        } else {
+            var hookMatch = theseHooks.indexOf(hook);
+            if (hookMatch !== -1) {
+                theseHooks.splice(hookMatch, 1);
+            } else {
+                throw("The specified event listener is not registered and therefore cannot be removed");
+            }
+        }
+        return this;
+    };
+    /**
+     * Handle running of event hooks when an event is emitted
+     * @param {string} event A known event name
+     * @param {*} eventData Data or event description that will be passed to the event listener
+     * @returns {LocusZoom.Plot}
+     */
+    this.emit = function(event, eventData) {
+        // TODO: there are small differences between the emit implementation between plots and panels. In the future,
+        //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
-        context = context || this;
+        var sourceID = this.getBaseId();
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun.call(context);
+            var context;
+            if (eventData && eventData.sourceID) {
+                // In some cases, an event may be of interest to more than one level of the hierarchy, and therefore
+                //  can be "bubbled" from panel to plot. For example, "element_clicked" notifications could be used to
+                //  coordinate between layers (within a panel), or between other page elements (at the plot level).
+                //
+                // If we detect that an event originated elsewhere and is being bubbled up, preserve the context
+                //  when re-emitting the event to plot-level listeners
+                context = eventData;
+            } else {
+                context = {"sourceID": sourceID, data: eventData};
+            }
+            hookToRun(context);
         });
         return this;
     };
