@@ -184,8 +184,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
 
         // Apply default event emitters to selection
         points_selection.on("click.event_emitter", function(element){
-            this.parent.emit("element_clicked", element);
-            this.parent_plot.emit("element_clicked", element);
+            this.parent.emit("element_clicked", element, true);
         }.bind(this));
        
         // Apply behaviors to points

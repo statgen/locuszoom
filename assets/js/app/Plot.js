@@ -209,7 +209,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
                 //  when re-emitting the event to plot-level listeners
                 context = eventData;
             } else {
-                context = {"sourceID": sourceID, data: eventData};
+                context = {"sourceID": sourceID, data: eventData || null};
             }
             hookToRun(context);
         });

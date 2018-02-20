@@ -193,19 +193,30 @@ LocusZoom.Panel = function(layout, parent) {
     };
     /**
      * Handle running of event hooks when an event is emitted
-     * @protected
+     *
+     * There is a shorter overloaded form of this method: if the event does not have any data, the second
+     *   argument can be a boolean to control bubbling
+     *
      * @param {string} event A known event name
-     * @param {*} eventData Data or event description that will be passed to the event listener
-     * @param {boolean} bubble Whether to bubble the event to the parent
+     * @param {*} [eventData] Data or event description that will be passed to the event listener
+     * @param {boolean} [bubble=false] Whether to bubble the event to the parent
      * @returns {LocusZoom.Panel}
      */
-    this.emit = function(event, eventData, bubble) {
+    this.emit = function(event, eventData, bubble)  {
+        bubble = bubble || false;
+
         // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
+        // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
+        if (typeof eventData === "boolean" && arguments.length === 2) {
+            // Overloaded method signature: emit(event, bubble)
+            bubble = eventData;
+            eventData = null;
+        }
         var sourceID = this.getBaseId();
-        var context = {"sourceID": sourceID, data: eventData};
+        var context = {"sourceID": sourceID, data: eventData || null};
         this.event_hooks[event].forEach(function(hookToRun) {
             hookToRun(context);
         });
@@ -753,8 +764,7 @@ LocusZoom.Panel.prototype.reMap = function(){
         .then(function(){
             this.initialized = true;
             this.render();
-            this.emit("layout_changed");
-            this.parent.emit("layout_changed");
+            this.emit("layout_changed", true);
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){
