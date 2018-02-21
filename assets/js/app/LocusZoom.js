@@ -729,3 +729,11 @@ LocusZoom.subclass = function(parent, extra, new_constructor) {
 
     return Sub;
 };
+
+
+/**
+ * LocusZoom optional extensions will live under this namespace
+ * @namespace
+ * @public
+ */
+LocusZoom.ext = {};
