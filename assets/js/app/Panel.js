@@ -216,12 +216,15 @@ LocusZoom.Panel = function(layout, parent) {
             eventData = null;
         }
         var sourceID = this.getBaseId();
-        var context = {"sourceID": sourceID, data: eventData || null};
+        var self = this;
+        var eventContext = {sourceID: sourceID, data: eventData || null};
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun(context);
+            // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+            // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+            hookToRun.call(self, eventContext);
         });
         if (bubble && this.parent) {
-            this.parent.emit(event, context);
+            this.parent.emit(event, eventContext);
         }
         return this;
     };

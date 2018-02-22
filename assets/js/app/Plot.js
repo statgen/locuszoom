@@ -116,7 +116,8 @@ LocusZoom.Plot = function(id, datasource, layout) {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
-        "element_clicked": []
+        "element_clicked": [],
+        "state_changed": []  // Only triggered when a state change causes rerender
     };
 
     /**
@@ -198,20 +199,20 @@ LocusZoom.Plot = function(id, datasource, layout) {
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
         var sourceID = this.getBaseId();
+        var self = this;
         this.event_hooks[event].forEach(function(hookToRun) {
-            var context;
+            var eventContext;
             if (eventData && eventData.sourceID) {
-                // In some cases, an event may be of interest to more than one level of the hierarchy, and therefore
-                //  can be "bubbled" from panel to plot. For example, "element_clicked" notifications could be used to
-                //  coordinate between layers (within a panel), or between other page elements (at the plot level).
-                //
-                // If we detect that an event originated elsewhere and is being bubbled up, preserve the context
+                // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
                 //  when re-emitting the event to plot-level listeners
-                context = eventData;
+                eventContext = eventData;
             } else {
-                context = {"sourceID": sourceID, data: eventData || null};
+                eventContext = {sourceID: sourceID, data: eventData || null};
             }
-            hookToRun(context);
+            // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+            //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+            //  override anything provided to `call` below.
+            hookToRun.call(self, eventContext);
         });
         return this;
     };
@@ -1041,6 +1042,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+            this.emit("state_changed", state_changes);
 
             this.loading_data = false;
 
