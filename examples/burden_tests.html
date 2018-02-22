@@ -18,6 +18,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.3.3/css/tabulator.min.css" rel="stylesheet">
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.3.3/js/tabulator.min.js"></script>
 
+    <script src="../ext/lz-dynamic-urls.js" type="application/javascript"></script>
     <script src="js/burden-tests-example.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Burden Tests</title>
@@ -64,8 +65,7 @@
       <div class="row">
         <div class="eight columns">
           <h3>Interactive Plot</h3>
-          <div id="plot" class="lz-container-responsive"
-               data-region="10:114550452-115067678"></div>
+          <div id="plot" class="lz-container-responsive"></div>
         </div>
 
         <div class="four columns">
@@ -78,10 +78,6 @@
           &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
         </footer>
       </div>
-
-      <script type="text/javascript">
-      </script>
-
     </div>
 
     <script type="application/javascript">
@@ -94,35 +90,29 @@
           online = false;
       }
 
-      var apiBase;
-      var data_sources = new LocusZoom.DataSources();
-      if (online) {
-          apiBase = "//portaldev.sph.umich.edu/api/v1/";
-          data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["AssociationLZ", {
-                  url: apiBase + "statistic/single/",
-                  params: {analysis: 45, id_field: "variant"}
-              }])
-              .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
-              .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-              .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
-              .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
-      } else {
-          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "../staticdata/";
-          data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["AssociationLZ", {
-                  url: apiBase + "assoc_10_114550452-115067678.json?",
-                  params: {analysis: 45, id_field: "variant"}
-              }])
-              .add("ld", ["LDLZ", {url: apiBase + "ld_10_114550452-115067678.json?"}])
-              .add("gene", ["GeneLZ", {url: apiBase + "genes_10_114550452-115067678.json?"}])
-              .add("recomb", ["RecombLZ", {url: apiBase + "recomb_10_114550452-115067678.json?"}])
-              .add("constraint", ["GeneConstraintLZ", {url: apiBase + "constraint_10_114550452-115067678.json?"}]);
-      }
+      var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+      var data_sources = new LocusZoom.DataSources()
+          .add("assoc", ["AssociationLZ", {
+              url: apiBase + "statistic/single/",
+              params: {analysis: 45, id_field: "variant"}
+          }])
+          .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+          .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+          .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
-      // Generate the LocusZoom plot
-      var layout = LocusZoom.Layouts.get("plot", "standard_association");
+      // Generate the LocusZoom plot, and reflect the initial plot state in url
+      var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
+      // Fetch initial position from the URL, or use some defaults
+      var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+      if(!Object.keys(initialState).length) { initialState = {chr: 2, start: 21200000, end: 21500000}; }
+      var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
       window.plot = LocusZoom.populate("#plot", data_sources, layout);
+
+      // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+      //   a previously viewed region)
+      LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+      LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
       // Ensure that the companion table renders and is updated when the plot changes
 
