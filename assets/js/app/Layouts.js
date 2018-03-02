@@ -347,13 +347,6 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
             { action: "toggle", status: "selected" }
         ]
     },
-    listen: [ // TODO: Harden up nomenclature and syntax
-        {
-            field: "{{namespace[assoc]}}variant",
-            event: "element_clicked",
-            behavior: { action: "set", status: "selected", exclusive: true }
-        }
-    ],
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true })
 });
 
@@ -443,30 +436,6 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     type: "genes",
     fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
     id_field: "gene_id",
-
-    // Temporary hack for demo purposes
-    color: [
-        // {
-        //     scale_function: "if",
-        //     field: "effect_pvalue",
-        //     parameters: {
-        //         field_value: undefined,
-        //         then: "#000099"
-        //     }
-        // },
-        {
-            scale_function: "numerical_bin",
-            field: "effect_pvalue",
-            parameters: {
-                breaks: [-0.8, -0.4, 0.0, 0.4, 0.8],
-                values: ["#9c0000","#DA8997","#BBBBBB","#74EBEE","#011ad4"]
-                // breaks: [-1],
-                // values: ["#000099"]
-            }
-        },
-        "#B8B8B8"
-    ],
-
     behaviors: {
         onmouseover: [
             { action: "set", status: "highlighted" }

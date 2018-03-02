@@ -1,8 +1,10 @@
 /**
- Custom code used for burden test visualization examples
+ Custom code used to demonstrate interactive page widget features in the burden test visualization example
  */
 'use strict';
 
+
+// TODO Convert from association to burden and
 /**
  * Call once when page is first loaded
  */

@@ -95,7 +95,7 @@
       var data_sources = new LocusZoom.DataSources()
           .add("assoc", ["AssociationLZ", {
               url: apiBase + "statistic/single/",
-              params: {analysis: 45, id_field: "variant"}
+              params: {analysis: 45, id_field: "variant"}  // TODO: Find out what correct analysis ID is for this demo to match burden results
           }])
           .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
@@ -109,6 +109,26 @@
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if(!Object.keys(initialState).length) { initialState = {chr: 2, start: 21200000, end: 21500000}; }
       var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+
+      // Customize layout: genes layer must pull from the burden source if we want to color the gene track
+      var genesLayout = layout.panels[1].data_layers[0];
+      genesLayout.namespace["burden_genes"] = "burden_genes";
+      genesLayout.fields.push("burden_genes:dummy");
+      var colorConfig = [
+          { // TODO: Convert this to a gradient
+              scale_function: "if",
+              field: "burden_best_pvalue",
+              parameters: {
+                  field_value: null,
+                  then: "#B8B8B8",
+                  else: "#FF0000"
+              }
+          },
+        "#B8B8B8"
+      ];
+      genesLayout.color = colorConfig;
+      genesLayout.stroke = colorConfig;
+
       window.plot = LocusZoom.populate("#plot", data_sources, layout);
 
       // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
@@ -143,8 +163,7 @@
           }
       );
 
-
-      plot.on("element_clicked", function(eventData) { // TODO: we may want to monitor select and deselect?
+      plot.on("element_clicked", function(eventData) {
          // Context of an element event listener is the data associated with that element.
          // This listener will fire on any clickable element in any data layer
          var selectedItem = eventData["data"]["assoc:variant"];
