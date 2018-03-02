@@ -19,7 +19,8 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.3.3/js/tabulator.min.js"></script>
 
     <script src="../ext/lz-dynamic-urls.js" type="application/javascript"></script>
-    <script src="js/burden-tests-example.js" type="application/javascript"></script>
+    <script src="js/burden-test-helpers.js" type="application/javascript"></script>
+    <script src="js/burden-tests-example-page.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Burden Tests</title>
 
@@ -98,6 +99,7 @@
           }])
           .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+          .add("burden_genes", ["GeneBurdenConnectorLZ", {url: "../staticdata/genetests_finmetseq_PTV_LDL.json"}])  // TODO: finalize urls
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
           .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
@@ -132,6 +134,15 @@
           subscriber_fields,
           renderCallback
           );
+
+      // Debugging feature!
+      plot.subscribeToData(
+        ["gene:dummy", "burden_genes:dummy"],
+          function(data) {
+            console.log('fetched data!', data);
+          }
+      );
+
 
       plot.on("element_clicked", function(eventData) { // TODO: we may want to monitor select and deselect?
          // Context of an element event listener is the data associated with that element.

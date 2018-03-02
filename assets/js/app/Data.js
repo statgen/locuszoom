@@ -373,6 +373,9 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var json = typeof resp == "string" ? JSON.parse(resp) : resp;
     var records = this.parseData(json.data || json, fields, outnames, trans);
+    // Perform any custom transformations on the resulting data, including annotating records based on responses from
+    //  previous data sources in the chain
+    records = this.prepareData(records, chain);
     return {header: chain.header || {}, body: records};
 };
 /**
@@ -443,6 +446,7 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
 
     if (!x.length) {
         // Do not attempt to parse records if there are no records, and bubble up an informative error message.
+        console.log(this.constructor.SOURCE_NAME);
         throw "No data found for specified query";
     }
     for (var i = 0; i < x.length; i++) {
@@ -482,17 +486,18 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
     } else {
         records = this.parseArraysToObjects(x, fields, outnames, trans);
     }
-    // Perform any custom transformations on the resulting data
-    return this.prepareData(records);
+    return records;
 };
 
 /**
- * Post-process the server response. This is a hook that allows custom sources to specify any optional transformations
- *   that should be performed on the data that is returned from the server.
- * @param {Object[]} records
- * @returns Object[]
+ * Hook to post-process the data returned by this source. This is a hook that allows custom sources to specify any
+ *   optional transformations that should be performed on the data that is returned from the server for this endpoint.
+ * This also allows annotating records (from this source) based on responses from previous data sources in the chain
+ * @param {Object[]} records The parsed response data as it would be returned from this source
+ * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
+ * @returns Object[] Annotated records from this response
  */
-LocusZoom.Data.Source.prototype.prepareData = function(records) {
+LocusZoom.Data.Source.prototype.prepareData = function(records, chain) {
     return records;
 };
 
@@ -734,8 +739,10 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
 };
 
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
+    // Bypass any record parsing, and provide the data layer with the exact information returned by the API
     var json = JSON.parse(resp);
-    return {header: chain.header, body: json.data};
+    var records = this.prepareData(json.data, chain);
+    return {header: chain.header, body: records};
 };
 
 /**
@@ -800,6 +807,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
+
     return { header: chain.header, body: chain.body };
 };
 
@@ -816,7 +824,7 @@ LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(i
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
     var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
     return this.url + "?filter=id in " + source +
-        " and chromosome eq '" + state.chr + "'" + 
+        " and chromosome eq '" + state.chr + "'" +
         " and position le " + state.end +
         " and position ge " + state.start;
 };

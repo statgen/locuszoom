@@ -1,0 +1,78 @@
+{
+  "data": {
+    "id": 164,
+    "description": "FinMetSeq gene-based tests",
+    "masks": [
+      {
+        "id": "PTV",
+        "label": "Includes only protein truncating variants",
+        "groups": {
+          "APOB": {
+            "variants": [
+              "2:21228642_G/A",
+              "2:21230094_AT/A",
+              "2:21230336_AT/A",
+              "2:21230583_C/A",
+              "2:21231852_GA/G",
+              "2:21233909_TGA/T",
+              "2:21234140_C/CG",
+              "2:21234858_C/CG",
+              "2:21251412_T/C"
+            ]
+          },
+          "FAM151A": {
+            "variants": [
+              "1:55075441_CTGCGGGCTCCGCTATT/C",
+              "1:55076137_CCACTCCACATTCAGACCGTCATCCCCAGG/C",
+              "1:55077278_C/T",
+              "1:55081756_T/TG"
+            ]
+          },
+          "LDLR": {
+            "variants": [
+              "19:11216264_G/T",
+              "19:11218173_AACCCATC/A",
+              "19:11221327_G/A",
+              "19:11230797_C/T"
+            ]
+          }
+        }
+      }
+    ],
+    "results": [
+      {
+        "type": "gene",
+        "id": "APOB",
+        "tests": [
+          {
+            "mask": "PTV",
+            "test": "SKAT-O",
+            "pvalue": "1.8069e-09"
+          }
+        ]
+      },
+      {
+        "type": "gene",
+        "id": "FAM151A",
+        "tests": [
+          {
+            "mask": "PTV",
+            "test": "SKAT-O",
+            "pvalue": "1.4109e-12"
+          }
+        ]
+      },
+      {
+        "type": "gene",
+        "id": "LDLR",
+        "tests": [
+          {
+            "mask": "PTV",
+            "test": "SKAT-O",
+            "pvalue": "1.7807e-09"
+          }
+        ]
+      }
+    ]
+  }
+}
