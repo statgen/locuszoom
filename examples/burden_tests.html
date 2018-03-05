@@ -95,11 +95,12 @@
       var data_sources = new LocusZoom.DataSources()
           .add("assoc", ["AssociationLZ", {
               url: apiBase + "statistic/single/",
-              params: {analysis: 45, id_field: "variant"}  // TODO: Find out what correct analysis ID is for this demo to match burden results
+              params: {analysis: 45, id_field: "variant"}  // TODO: Find out what correct analysis ID is for this demo to correspond to the burden test results
           }])
           .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-          .add("burden_genes", ["GeneBurdenConnectorLZ", {url: "../staticdata/genetests_finmetseq_PTV_LDL.json"}])  // TODO: finalize urls
+          .add("burdentest", ["GeneTestSourceLZ", {url: "../staticdata/genetests_finmetseq_PTV_LDL.json"}])
+          .add("burden_genes", ["GeneBurdenConnectorLZ", {from: {burden_ns: "burdentest", gene_ns: "gene"}}])
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
           .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
@@ -112,8 +113,9 @@
 
       // Customize layout: genes layer must pull from the burden source if we want to color the gene track
       var genesLayout = layout.panels[1].data_layers[0];
+      genesLayout.namespace["burdentest"] = "burdentest";
       genesLayout.namespace["burden_genes"] = "burden_genes";
-      genesLayout.fields.push("burden_genes:dummy");
+      genesLayout.fields.push("burdentest:all", "burden_genes:all");
       var colorConfig = [
           { // TODO: Convert this to a gradient
               scale_function: "if",
@@ -157,9 +159,9 @@
 
       // Debugging feature!
       plot.subscribeToData(
-        ["gene:dummy", "burden_genes:dummy"],
+        ["gene:all", "burdentest:all", "burden_genes:all"],
           function(data) {
-            console.log('fetched data!', data);
+            console.log('Fetched subscribed data', data);
           }
       );
 

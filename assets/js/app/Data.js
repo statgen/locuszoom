@@ -507,7 +507,7 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
  * This also allows annotating records (from this source) based on responses from previous data sources in the chain
  * @param {Object[]} records The parsed response data as it would be returned from this source
  * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
- * @returns Object[] Annotated records from this response
+ * @returns Object[] The annotated set of records to be used in chain.body
  */
 LocusZoom.Data.Source.prototype.prepareData = function(records, chain) {
     return records;
@@ -900,6 +900,66 @@ LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
+};
+
+
+/**
+ * Base class for "connectors"- this is meant to be subclassed, rather than used directly.
+ *
+ * A connector is a source that makes no server requests and caches no data of its own. Instead, it decides how to
+ *  combine data from other sources in the chain.
+ *
+ * Typically, a subclass will implement the field merging logic in `prepareData`.
+ *
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {Object} init Configuration for this source
+ * @param {Object} init.from Specify how the hard-coded logic should find the data it relies on in the chain,
+ *  as {internal_name: chain_source_id} pairs
+ * @type {*|Function}
+ */
+LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
+    if (!init || !init.from) {
+        throw "Connectors must specify the data they require as init.from = {internal_name: chain_source_id}} pairs";
+    }
+
+    /**
+     * Tells the connector how to find the data it relies on
+     *
+     * For example, a connector that applies burden test information to the genes layer might specify:
+     *  {gene_ns: "gene", burden_ns: "burdentest"}
+     *
+     * @member {Object}
+     */
+    this._source_name_mapping = init.from;
+
+    this.parseInit(init);
+}, "ConnectorSource");
+
+LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fields) {
+    // Connectors do not have their own data by definition, but they *do* depend on other sources having been loaded
+    //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
+    var self = this;
+    Object.keys(this._source_name_mapping).forEach(function(ns) {
+        var chain_source_id = self._source_name_mapping[ns];
+        if (chain.raw && !chain.raw[chain_source_id]) {
+            throw this.constructor.SOURCE_NAME + " cannot be used before loading required data for: " + chain_source_id;
+        }
+    });
+    return Q.fcall(function() {return chain.body || [];});
+};
+
+LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(response, chain, fields, outnames) {
+    // A connector source does not update chain.raw, but it may use it while annotating records
+    // Since a connector has no data of its own, deliberately bypass `parseData`
+    var records = this.prepareData(response, chain);
+    return {header: chain.header || {}, raw: chain.raw || {}, body: records};
+};
+
+LocusZoom.Data.ConnectorSource.prototype.prepareData = function(records, chain) {
+    // Stub method: specifies how to combine the data
+    throw "This method must be implemented in a subclass";
 };
 
 /**
