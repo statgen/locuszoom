@@ -1048,16 +1048,15 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
     // and then recreated if returning to visibility
 
-    // Fetch new data
-    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
-    promise.then(function(new_data){
+    // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
+    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields);
+    promise.then(function(new_data) {
         this.data = new_data.body;
         this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
 
     return promise;
-
 };
 
 

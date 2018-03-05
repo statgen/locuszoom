@@ -39,6 +39,8 @@ LocusZoom.DataSources.prototype.add = function(ns, x) {
 LocusZoom.DataSources.prototype.set = function(ns, x) {
     if (Array.isArray(x)) {
         var dsobj = LocusZoom.KnownDataSources.create.apply(null, x);
+        // Each datasource in the chain should be aware of its assigned namespace  TODO: Standardize how this is set across all instantiation mechanisms
+        dsobj.source_id = ns;
         this.sources[ns] = dsobj;
     } else {
         if (x !== null) {
@@ -368,15 +370,25 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
- * @returns {{header: ({}|*), body: {}}}
+ * @returns {{header: ({}|*), raw: {}, body: []}} An object containing request metadata (headers), the consolidated
+ *   data for plotting (body), and the total set of all raw data from each source queried during this chain (raw)
+ *   (each datalayer calls only the sources it needs)
  */
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var json = typeof resp == "string" ? JSON.parse(resp) : resp;
     var records = this.parseData(json.data || json, fields, outnames, trans);
+
+    var source_id = this.source_id || this.constructor.SOURCE_NAME;
+    // Store a copy of the parsed API data from this source, with no further post-processing
+    if (!chain.raw) {
+        chain.raw = {};
+    }
+    chain.raw[source_id] = records;
+
     // Perform any custom transformations on the resulting data, including annotating records based on responses from
-    //  previous data sources in the chain
+    //  previous data sources in the chain. This final combination of data gets passed as the body.
     records = this.prepareData(records, chain);
-    return {header: chain.header || {}, body: records};
+    return {header: chain.header || {}, raw: chain.raw || {}, body: records};
 };
 /**
  * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
@@ -685,6 +697,14 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
 
 LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     var json = JSON.parse(resp);
+
+    var source_id = this.source_id || this.constructor.SOURCE_NAME;
+    // Store a copy of the parsed API data from this source, with no further post-processing
+    if (!chain.raw) {
+        chain.raw = {};
+    }
+    chain.raw[source_id] = json;
+
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
@@ -742,7 +762,15 @@ LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields
     // Bypass any record parsing, and provide the data layer with the exact information returned by the API
     var json = JSON.parse(resp);
     var records = this.prepareData(json.data, chain);
-    return {header: chain.header, body: records};
+
+    var source_id = this.source_id || this.constructor.SOURCE_NAME;
+    // Store a copy of the parsed API data from this source, with no further post-processing
+    if (!chain.raw) {
+        chain.raw = {};
+    }
+    chain.raw[source_id] = records;
+
+    return {header: chain.header, raw: chain.raw, body: records};
 };
 
 /**
@@ -782,9 +810,17 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     if (!resp){
-        return { header: chain.header, body: chain.body };
+        return { header: chain.header, raw: chain.raw, body: chain.body };
     }
     var data = JSON.parse(resp);
+
+    var source_id = this.source_id || this.constructor.SOURCE_NAME;
+    // Store a copy of the parsed API data from this source, with no further post-processing
+    if (!chain.raw) {
+        chain.raw = {};
+    }
+    chain.raw[source_id] = data;
+
     // Loop through the array of genes in the body and match each to a result from the constraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
     chain.body.forEach(function(gene, i){
@@ -807,8 +843,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
-
-    return { header: chain.header, body: chain.body };
+    return { header: chain.header, raw: chain.raw, body: chain.body };
 };
 
 /**
