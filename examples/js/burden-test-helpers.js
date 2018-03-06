@@ -5,7 +5,7 @@
  * 2. A connector that annotates gene data with burden test results
  */
 
-// TODO: Move burden tests into core code once implementation finalized
+// TODO: Move burden tests into core code once implementation finalized?
 
 /**
  * Data Source that calculates gene or region-based tests based on provided data
@@ -73,7 +73,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
         var genesData = records;  // chain.raw[this_required_sources["gene_ns]]
         var consolidatedBurden = {};  // Boil down all possible test results to "best pvalue per gene"
         burdenData.results.forEach(function(burdenResult) {
-            if (burdenResult.type !== 'gene') {
+            if (burdenResult.type !== "gene") {
                 return;
             }
             consolidatedBurden[burdenResult.id] = Math.min.apply(null, burdenResult.tests.map(function(item) {return item.pvalue;}));
@@ -85,5 +85,62 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
             }
         });
         return genesData;
+    }
+});
+
+
+/**
+ * A sample connector that is useful when all you want are burden test results
+ * This can be used to parse burden test data from multiple sources (eg fetched from a server or calculated
+ *  live client-side)
+ */
+LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", {
+    parseInit: function (init) {
+        // TODO: DRY parseInit into base class
+        // Validate that this source has been told how to find the required information
+        var specified_ids = Object.keys(init.from);
+        var required_sources = ["burden_ns"];
+        required_sources.forEach(function(k) {
+            if (specified_ids.indexOf(k) === -1) {
+                throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
+            }
+        });
+    },
+    prepareData: function (records, chain) {
+        // TODO: In the future we may want to move more of this parsing logic into the Burden test calculation source, or change the canonical record format to better align
+        // TODO: NAMESPACING would be nice for consistrency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
+        var rows = [];
+
+        var burden_source_id = this._source_name_mapping["burden_ns"];
+        var burden_data = chain.raw[burden_source_id];
+
+        var bt_results = burden_data.results;
+        var bt_masks = burden_data.masks;
+
+        // Convert masks to a hash to facilitate quickly aligning result + mask data
+        var mask_lookup = {};
+        bt_masks.forEach(function(mask) {
+            mask_lookup[mask.id] = mask;
+        });
+        bt_results.forEach(function(group_data) {
+            var group_id = group_data.id;
+            group_data.tests.forEach(function(one_test) {
+                var mask_id = one_test.mask;
+                var mask = mask_lookup[mask_id];
+                var mask_group = mask["groups"][group_id];
+
+                rows.push({
+                    id: group_id + "." + mask_id,
+                    group: group_data.id,
+                    mask: mask_id,
+                    mask_desc: mask.label,
+                    variants: mask_group.variants,
+                    variant_count: mask_group.variants.length,
+                    calc_type: one_test.test,
+                    pvalue: one_test.pvalue
+                })
+            });
+        });
+        return rows;
     }
 });

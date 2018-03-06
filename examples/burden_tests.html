@@ -74,6 +74,13 @@
         <div id="results-table"></div>
         </div>
       </div>
+
+      <div class="row">
+        <div class="twelve columns">
+          <h3>Table of burden test results</h3>
+          <div id="burden-results-table"></div>
+        </div>
+      </div>
       <div class="row">
         <footer style="text-align: center;">
           &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
@@ -101,6 +108,7 @@
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
           .add("burdentest", ["GeneTestSourceLZ", {url: "../staticdata/genetests_finmetseq_PTV_LDL.json"}])
           .add("burden_genes", ["GeneBurdenConnectorLZ", {from: {burden_ns: "burdentest", gene_ns: "gene"}}])
+          .add("burden_rows", ["BurdenParserConnectorLZ", {from: {burden_ns: "burdentest"}}])
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
           .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
@@ -110,26 +118,7 @@
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if(!Object.keys(initialState).length) { initialState = {chr: 2, start: 21200000, end: 21500000}; }
       var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
-
-      // Customize layout: genes layer must pull from the burden source if we want to color the gene track
-      var genesLayout = layout.panels[1].data_layers[0];
-      genesLayout.namespace["burdentest"] = "burdentest";
-      genesLayout.namespace["burden_genes"] = "burden_genes";
-      genesLayout.fields.push("burdentest:all", "burden_genes:all");
-      var colorConfig = [
-          { // TODO: Convert this to a gradient
-              scale_function: "if",
-              field: "burden_best_pvalue",
-              parameters: {
-                  field_value: null,
-                  then: "#B8B8B8",
-                  else: "#FF0000"
-              }
-          },
-        "#B8B8B8"
-      ];
-      genesLayout.color = colorConfig;
-      genesLayout.stroke = colorConfig;
+      layout = customizePlotLayout(layout);
 
       window.plot = LocusZoom.populate("#plot", data_sources, layout);
 
@@ -138,42 +127,42 @@
       LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
       LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
-      // Ensure that the companion table renders and is updated when the plot changes
-
-      // Two way communication: define a callback that will be used to notify the plot when a row is clicked in the table
-
-      // TODO: With two-way communication, make sure no infinite loops are created of plot triggering table etc
+      ////////
+      // Define listeners required to draw and update the companion table of results
       var tableRowClick = function(_, row) {
+          // Notify all plot listeners when an element with matching data is clicked
+          // TODO: Customize as required
           plot.emit("element_clicked", row.row.data);
       };
-
-      var TABLE_SELECTOR = "#results-table";  // ID for where plots will be rendered
-      createAssociationTable(TABLE_SELECTOR, tableRowClick);
-      var renderCallback = updateTableData.bind(null, TABLE_SELECTOR); // curry first argument
+      var TABLE_SELECTOR_ASSOC = "#results-table";  // ID for where plots will be rendered
+      createAssociationTable(TABLE_SELECTOR_ASSOC, tableRowClick);
+      var renderAssocCallback = updateTableData.bind(null, TABLE_SELECTOR_ASSOC); // curry first argument
 
       var subscriber_fields = ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"];
       plot.subscribeToData(
           subscriber_fields,
-          renderCallback
+          renderAssocCallback
           );
 
-      // Debugging feature!
+
+      var TABLE_SELECTOR_BURDEN = "#burden-results-table";  // ID for where plots will be rendered
+      createBurdenTestTable(TABLE_SELECTOR_BURDEN, tableRowClick);
+      var renderBurdenCallback = updateTableData.bind(null, TABLE_SELECTOR_BURDEN); // curry first argument
+
       plot.subscribeToData(
-        ["gene:all", "burdentest:all", "burden_genes:all"],
-          function(data) {
-            console.log('Fetched subscribed data', data);
-          },
-          null,
-          {raw:true}
+          ["burdentest:all", "burden_rows:all"],
+          renderBurdenCallback
       );
 
       plot.on("element_clicked", function(eventData) {
          // Context of an element event listener is the data associated with that element.
          // This listener will fire on any clickable element in any data layer
+         console.log("element was clicked:", eventData);
+
          var selectedItem = eventData["data"]["assoc:variant"];
          if (selectedItem) {
              $("#clicked-element-label").text(selectedItem).css("color", "blue");
-              scrollTableToData(TABLE_SELECTOR, selectedItem);
+              scrollTableToData(TABLE_SELECTOR_ASSOC, selectedItem);
          }
      });
     </script>

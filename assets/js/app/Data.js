@@ -907,7 +907,8 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * Base class for "connectors"- this is meant to be subclassed, rather than used directly.
  *
  * A connector is a source that makes no server requests and caches no data of its own. Instead, it decides how to
- *  combine data from other sources in the chain.
+ *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
+ *  useful piece of information once, but apply it to many different kinds of record types.
  *
  * Typically, a subclass will implement the field merging logic in `prepareData`.
  *
