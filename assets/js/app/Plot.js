@@ -953,8 +953,14 @@ LocusZoom.Plot.prototype.refresh = function(){
  *  new data is received by the plot.
  * @param {externalErrorCallback} [error_callback] User defined function that is automatically called if a problem
  *  occurs during the data request or subsequent callback operations
+ * @param {Object} [opts] Configure special options that control how data is returned
+ * @param {boolean} [opts.raw=false] Normally, the data chain attempts to collapse different sources into a single
+ *   cohesive form- such as the data for a series of points on a plot. Alternately, you can subscribe to the raw data:
+ *   get all fields related to the parsed data from each individual source, without any automatic connections.
  */
-LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback) {
+LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback, opts) {
+    opts = opts || {raw: false};
+
     // Register an event listener that is notified whenever new data has been rendered
     error_callback = error_callback || function(err) {
         console.log("An error occurred while acting on an external callback", err);
@@ -963,7 +969,8 @@ LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, er
     this.on("data_rendered", function() {
         self.lzd.getData(self.state, fields)
             .then(function(new_data) {
-                success_callback(new_data.body);
+                var result = opts.raw ? new_data.raw : new_data.body;
+                success_callback(result);
             })
             .catch(error_callback);
     });

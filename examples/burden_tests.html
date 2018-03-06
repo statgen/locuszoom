@@ -162,7 +162,9 @@
         ["gene:all", "burdentest:all", "burden_genes:all"],
           function(data) {
             console.log('Fetched subscribed data', data);
-          }
+          },
+          null,
+          {raw:true}
       );
 
       plot.on("element_clicked", function(eventData) {
