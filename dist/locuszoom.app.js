@@ -7908,8 +7908,17 @@ LocusZoom.Data.Requester = function(sources) {
  * @public
  */
 LocusZoom.Data.Source = function() {
-    /** @member {Boolean} */
+    /**
+     * Whether this source should enable caching
+     * @member {Boolean}
+     */
     this.enableCache = true;
+    /**
+     * Whether this data source type is dependent on previous requests- for example, the LD source cannot annotate
+     *  association data if no data was found for that region.
+     * @member {boolean}
+     */
+    this.dependentSource = false;
 };
 
 /**
@@ -8004,11 +8013,18 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
         }
     }
 
+    var self = this;
     return function (chain) {
-        return this.getRequest(state, chain, fields).then(function(resp) {
-            return this.parseResponse(resp, chain, fields, outnames, trans);
-        }.bind(this));
-    }.bind(this);
+        if (self.dependentSource && chain && chain.body && !chain.body.length) {
+            // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
+            // Therefore, it should simply return the previous data chain.
+            return Q.when(chain);
+        }
+
+        return self.getRequest(state, chain, fields).then(function(resp) {
+            return self.parseResponse(resp, chain, fields, outnames, trans);
+        });
+    };
 };
 
 /**
@@ -8225,12 +8241,15 @@ LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, field
 
 /**
  * Data Source for LD Data, as fetched from the LocusZoom API server (or compatible)
+ * This source is designed to connect its results to association data, and therefore depends on association data having
+ *  been loaded by a previous request in the data chain.
  * @class
  * @public
  * @augments LocusZoom.Data.Source
  */
 LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
+    this.dependentSource = true;
 }, "LDLZ");
 
 LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
