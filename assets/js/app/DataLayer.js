@@ -35,6 +35,12 @@ LocusZoom.DataLayer = function(layout, parent) {
     if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
     if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
 
+    /**
+     * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+     * @member {Object}
+     */
+    this._base_layout = JSON.parse(JSON.stringify(this.layout));
+
     /** @member {Object} */
     this.state = {};
     /** @member {String} */

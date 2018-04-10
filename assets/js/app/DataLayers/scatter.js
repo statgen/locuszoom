@@ -530,12 +530,27 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
 
         var categoryNames = Object.keys(uniqueCategories);
         // Construct a color scale with a sufficient number of visually distinct colors
-        // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
-        var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
-        var colors = color_scale().range().slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
 
+        if (this.layout.color.parameters.categories.length && this.layout.color.parameters.values.length) {
+            var parameters_categories_hash = {};
+            this.layout.color.parameters.categories.forEach(function(category) { parameters_categories_hash[category] = 1; });
+            if (categoryNames.every(function(name) { return parameters_categories_hash.hasOwnProperty(name); })) {
+                return uniqueCategories;
+            }
+        }
+
+        var colors;
+        if (this._base_layout.color.parameters.values.length) {
+            colors = this._base_layout.color.parameters.values;
+        } else {
+            var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+            colors = color_scale().range();
+        }
+        while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
+        colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
         this.layout.color.parameters.categories = categoryNames;
         this.layout.color.parameters.values = colors;
+
         return uniqueCategories;
     },
 
