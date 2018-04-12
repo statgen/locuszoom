@@ -41,7 +41,8 @@
             throw("Q dependency not met. Library missing.");
         }
 
-        <%= contents %>
+        // ESTemplate: module content goes here
+        ;%= body %;
 
     } catch (plugin_loading_error){
         console.error("LocusZoom Plugin error: " + plugin_loading_error);
