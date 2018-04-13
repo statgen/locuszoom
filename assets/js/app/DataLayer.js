@@ -354,52 +354,54 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
         throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
     }
 
-    var axis = dimension + "_axis";
+    var axis_name = dimension + "_axis";
+    var axis_layout = this.layout[axis_name];
 
     // If a floor AND a ceiling are explicitly defined then just return that extent and be done
-    if (!isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].ceiling)){
-        return [+this.layout[axis].floor, +this.layout[axis].ceiling];
+    if (!isNaN(axis_layout.floor) && !isNaN(axis_layout.ceiling)){
+        return [+axis_layout.floor, +axis_layout.ceiling];
     }
 
     // If a field is defined for the axis and the data layer has data then generate the extent from the data set
-    if (this.layout[axis].field && this.data && this.data.length){
+    var data_extent = [];
+    if (axis_layout.field && this.data) {
+        if (!this.data.length) {
+            // If data has been fetched (but no points in region), enforce the min_extent (with no buffers,
+            //  because we don't need padding around an empty screen)
+            data_extent = axis_layout.min_extent || [];
+            return data_extent;
+        } else {
+            data_extent = d3.extent(this.data, function (d) {
+                var f = new LocusZoom.Data.Field(axis_layout.field);
+                return +f.resolve(d);
+            });
 
-        var extent = d3.extent(this.data, function(d) {
-            var f = new LocusZoom.Data.Field(this.layout[axis].field);
-            return +f.resolve(d);
-        }.bind(this));
-
-        // Apply floor/ceiling
-        if (!isNaN(this.layout[axis].floor)) {
-            extent[0] = this.layout[axis].floor;
-            extent[1] = d3.max(extent);
-        }
-        if (!isNaN(this.layout[axis].ceiling)) {
-            extent[1] = this.layout[axis].ceiling;
-            extent[0] = d3.min(extent);
-        }
-
-        // Apply upper/lower buffers, if applicable
-        var original_extent_span = extent[1] - extent[0];
-        if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].lower_buffer)) {
-            extent[0] -= original_extent_span * this.layout[axis].lower_buffer;
-        }
-        if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].upper_buffer)) {
-            extent[1] += original_extent_span * this.layout[axis].upper_buffer;
-        }
-
-        // Apply minimum extent
-        if (typeof this.layout[axis].min_extent == "object") {
-            if (isNaN(this.layout[axis].floor) && !isNaN(this.layout[axis].min_extent[0])) {
-                extent[0] = Math.min(extent[0], this.layout[axis].min_extent[0]);
+            // Apply upper/lower buffers, if applicable
+            var original_extent_span = data_extent[1] - data_extent[0];
+            if (!isNaN(axis_layout.lower_buffer)) {
+                data_extent[0] -= original_extent_span * axis_layout.lower_buffer;
             }
-            if (isNaN(this.layout[axis].ceiling) && !isNaN(this.layout[axis].min_extent[1])) {
-                extent[1] = Math.max(extent[1], this.layout[axis].min_extent[1]);
+            if (!isNaN(axis_layout.upper_buffer)) {
+                data_extent[1] += original_extent_span * axis_layout.upper_buffer;
             }
+
+            if (typeof axis_layout.min_extent == "object") {
+                // The data should span at least the range specified by min_extent, an array with [low, high]
+                var range_min = axis_layout.min_extent[0];
+                var range_max = axis_layout.min_extent[1];
+                if (!isNaN(range_min) && !isNaN(range_max)) {
+                    data_extent[0] = Math.min(data_extent[0], range_min);
+                }
+                if (!isNaN(range_max)) {
+                    data_extent[1] = Math.max(data_extent[1], range_max);
+                }
+            }
+            // If specified, floor and ceiling will override the actual data range
+            return [
+                isNaN(axis_layout.floor) ? data_extent[0] : axis_layout.floor,
+                isNaN(axis_layout.ceiling) ? data_extent[1] : axis_layout.ceiling
+            ];
         }
-
-        return extent;
-
     }
 
     // If this is for the x axis and no extent could be generated yet but state has a defined start and end
