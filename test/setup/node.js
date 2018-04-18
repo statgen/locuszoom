@@ -8,10 +8,11 @@ var files = require("../../files.js");
 
 global.assert = require("assert");
 global.should = require("should");
+global.sinon = require("sinon");
 
 before(function() {
     var src = files.test_include.map(function(file){ return fs.readFileSync(file); });
-    jsdom({ src: src });
+    jsdom({ src: src, url: "https://locuszoom.org" });
 });
 
 // Reset DOM after each test (but keep the JS we loaded in)

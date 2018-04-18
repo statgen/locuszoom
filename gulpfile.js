@@ -110,7 +110,7 @@ gulp.task("css", function() {
 // Watch for changes in app source files to trigger fresh builds
 gulp.task("watch", function() {
     gutil.log(gutil.colors.bold.black.bgYellow("Watching for changes in app and test files..."));
-    gulp.watch(files.app_build.concat(files.test_suite), ["app_js"]);
+    gulp.watch(files.app_build.concat(files.extensions, files.test_suite), ["app_js"]);
     gulp.watch(["./assets/css/*.scss"], ["css"]);
 });
 

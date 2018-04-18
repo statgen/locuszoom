@@ -23,7 +23,8 @@
     }
 
     function _parseQueryParams(queryString) {
-        // Parse a query string into an object of parameter values
+        // Parse a query string into an object of parameter values.
+        //   Does not attempt any type coercion; all values are, therefore, strings.
         // TODO future: Support arrays / params that specify more than one value
         var query = {};
         if (queryString) {
@@ -66,11 +67,14 @@
     }
 
     function _setUrlFromStateHandler(plot, mapping) {
-        // Serialize and return basic query params based solely on information from the plot state
+        // Serialize and return basic query params based solely on information from plot.state
+        // More complex handlers are possible- the serializer can extract any information desired because it is given
+        //  a direct reference to the plot object
         return _extractValues(plot.state, mapping);
     }
 
     function paramsFromUrl(mapping, queryString) {
+        // Internal helper function: second argument only used for unit testing
         queryString = queryString || window.location.search;
         var queryParams = _parseQueryParams(queryString);
         return _extractValues(queryParams, mapping, true);
@@ -89,6 +93,9 @@
 
         /**
          * Allows the plot to monitor changes in the URL and take action when the URL changes.
+         *
+         * For example, this enables using the browser back button to jump to a previous plot after user interaction.
+         *
          * @param {LocusZoom.Plot} plot A reference to the LZ plot
          * @param {object} mapping How to map elements of plot state to URL param fields. Hash of
          *      {plotFieldName: urlParamName} entries (both values should be unique)
@@ -102,7 +109,7 @@
 
             var listener = function(event) {
                 var stateData = paramsFromUrl(mapping);
-                // Use the plot to
+                // Tell the plot what to do with the params extracted from the URL
                 callback(plot, stateData);
             };
             window.addEventListener("popstate", listener);
@@ -125,13 +132,12 @@
             var listener = function(eventContext) {
                 var oldParams = _parseQueryParams(window.location.search);
                 // Apply custom serialization to convert plot data to URL params
-                var plotToQuery = callback(plot, mapping, eventContext);
-                var newParams = Object.assign({}, oldParams, plotToQuery);
+                var serializedPlotData = callback(plot, mapping, eventContext);
+                var newParams = Object.assign({}, oldParams, serializedPlotData);
 
-                var update = false;
                 // Not every state change would affect the URL. Allow type coercion since query is a string.
                 // eslint-disable-next-line eqeqeq
-                Object.keys(newParams).forEach(function(k) { if (oldParams[k] != newParams[k]) { update = true; } });
+                var update = Object.keys(newParams).some(function(k) { return (oldParams[k] != newParams[k]); });
                 if (update) {
                     var queryString = _serializeQueryParams(newParams);
                     history.pushState({}, document.title, queryString);

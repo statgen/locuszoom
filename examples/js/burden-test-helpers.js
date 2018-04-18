@@ -5,8 +5,6 @@
  * 2. A connector that annotates gene data with burden test results
  */
 
-// TODO: Move burden tests into core code once implementation finalized?
-
 /**
  * Data Source that calculates gene or region-based tests based on provided data
  *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
