@@ -1658,6 +1658,7 @@
                     label: 'Recombination Rate (cM/Mb)',
                     label_offset: 40
                 }
+<<<<<<< HEAD
             },
             legend: {
                 orientation: 'vertical',
@@ -2139,12 +2140,40 @@
         /* global LocusZoom */
         'use strict';
         /**
+=======
+            }
+        })
+    ],
+    mouse_guide: false
+});
+
+LocusZoom.Layouts.add("plot", "interval_association", {
+    state: {},
+    width: 800,
+    height: 550,
+    responsive_resize: true,
+    min_region_scale: 20000,
+    max_region_scale: 1000000,
+    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
+    panels: [
+        LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
+        LocusZoom.Layouts.get("panel", "intervals", { unnamespaced: true, proportional_height: (120/570) }),
+        LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, width: 800, proportional_height: (225/570) })
+    ]
+});
+
+/* global LocusZoom */
+"use strict";
+
+/**
+>>>>>>> build assets
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
  * @class
  * @param {Object} layout A JSON-serializable object describing the layout for this layer
  * @param {LocusZoom.DataLayer|LocusZoom.Panel} parent Where this layout is used
 */
+<<<<<<< HEAD
         LocusZoom.DataLayer = function (layout, parent) {
             /** @member {Boolean} */
             this.initialized = false;
@@ -2197,6 +2226,69 @@
             return this;
         };
         /**
+=======
+LocusZoom.DataLayer = function(layout, parent) {
+    /** @member {Boolean} */
+    this.initialized = false;
+    /** @member {Number} */
+    this.layout_idx = null;
+
+    /** @member {String} */
+    this.id     = null;
+    /** @member {LocusZoom.Panel} */
+    this.parent = parent || null;
+    /**
+     * @member {{group: d3.selection, container: d3.selection, clipRect: d3.selection}}
+     */
+    this.svg    = {};
+
+    /** @member {LocusZoom.Plot} */
+    this.parent_plot = null;
+    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
+
+    /** @member {Object} */
+    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
+    if (this.layout.id){ this.id = this.layout.id; }
+
+    // Ensure any axes defined in the layout have an explicit axis number (default: 1)
+    if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
+    if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
+
+    /**
+     * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+     * @member {Object}
+     */
+    this._base_layout = JSON.parse(JSON.stringify(this.layout));
+
+    /** @member {Object} */
+    this.state = {};
+    /** @member {String} */
+    this.state_id = null;
+
+    this.setDefaultState();
+
+    // Initialize parameters for storing data and tool tips
+    /** @member {Array} */
+    this.data = [];
+    if (this.layout.tooltip){
+        /** @member {Object} */
+        this.tooltips = {};
+    }
+
+    // Initialize flags for tracking global statuses
+    this.global_statuses = {
+        "highlighted": false,
+        "selected": false,
+        "faded": false,
+        "hidden": false
+    };
+    
+    return this;
+
+};
+
+/**
+>>>>>>> build assets
  * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
  *
  * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn
@@ -5227,6 +5319,7 @@
      * @private
      * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
+<<<<<<< HEAD
             _generateCategoryBounds: function () {
                 // TODO: API may return null values in category_field; should we add placeholder category label?
                 // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
@@ -5256,6 +5349,48 @@
                 return uniqueCategories;
             },
             /**
+=======
+    _generateCategoryBounds: function() {
+        // TODO: API may return null values in category_field; should we add placeholder category label?
+        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
+        var category_field = this.layout.x_axis.category_field;
+        var xField = this.layout.x_axis.field || "x";
+        var uniqueCategories = {};
+        this.data.forEach(function(item) {
+            var category = item[category_field];
+            var x = item[xField];
+            var bounds = uniqueCategories[category] || [x, x];
+            uniqueCategories[category] = [Math.min(bounds[0], x), Math.max(bounds[1], x)];
+        });
+
+        var categoryNames = Object.keys(uniqueCategories);
+        // Construct a color scale with a sufficient number of visually distinct colors
+
+        if (this.layout.color.parameters.categories.length && this.layout.color.parameters.values.length) {
+            var parameters_categories_hash = {};
+            this.layout.color.parameters.categories.forEach(function(category) { parameters_categories_hash[category] = 1; });
+            if (categoryNames.every(function(name) { return parameters_categories_hash.hasOwnProperty(name); })) {
+                return uniqueCategories;
+            }
+        }
+
+        var colors;
+        if (this._base_layout.color.parameters.values.length) {
+            colors = this._base_layout.color.parameters.values;
+        } else {
+            var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+            colors = color_scale().range();
+        }
+        while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
+        colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
+        this.layout.color.parameters.categories = categoryNames;
+        this.layout.color.parameters.values = colors;
+
+        return uniqueCategories;
+    },
+
+    /**
+>>>>>>> build assets
      *
      * @param dimension
      * @param {Object} [config] Parameters that customize how ticks are calculated (not style)
