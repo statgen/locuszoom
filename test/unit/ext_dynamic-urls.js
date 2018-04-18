@@ -37,7 +37,11 @@ describe("LocusZoom.ext.DynamicUrls", function() {
             assert.deepEqual(plotData, {param: "soda bunny"});
         });
         it("ignores parameters not specified in the mapping", function() {
+            var func = this.extension.paramsFromUrl;
+            var query = "?first=value&second=ignored";
+            var plotData = func({one: "first"}, query);
 
+            assert.deepEqual(plotData, {one: "value"});
         });
 
         it("does not perform type coercion when deserializing", function() {
@@ -71,7 +75,6 @@ describe("LocusZoom.ext.DynamicUrls", function() {
     describe("plotUpdateUrl", function() {
         beforeEach(function() {
             this.plot = new LocusZoom.Plot("plot", null, {state: { chr: 1, start: 1000, end: 5000 }});
-            window.location.search = "";
 
             // jsdom doesn't fully implement navigation, so we will check the act of changing URL instead of the result
             this.sandbox = sinon.sandbox.create();
@@ -120,6 +123,58 @@ describe("LocusZoom.ext.DynamicUrls", function() {
         it.skip("does not update the URL if the parameters that change are not in the mapping", function() {
             // In the absence of a good way to set window.location.search initially, this is difficult to test
             // TODO: Revisit if jsdom navigation support improves in the future
+        });
+
+        afterEach(function() {
+            d3.select("#plot").remove();
+            delete this.plot;
+
+            // Remove all sinon stubs used for this test
+            this.sandbox.restore();
+        });
+    });
+
+    describe("plotWatchesUrl", function() {
+        // Because jsdom has trouble setting url before tests, coverage in this section will be low
+        beforeEach(function() {
+            this.plot = new LocusZoom.Plot("plot", null, {state: { chr: 1, start: 1000, end: 5000 }});
+
+            // jsdom doesn't fully implement navigation, so we will check the act of changing URL instead of the result
+            this.sandbox = sinon.sandbox.create();
+        });
+
+        it("calls a custom deserialization callback when appropriate", function() {
+            var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
+            var plot = this.plot;
+            var spy = this.sandbox.spy(function(plot, data) {
+                // jsdom has trouble mutating window.location, so data will be blank. The callback can perform
+                //   arbitrary operations on the plot as evidence the watcher has worked.
+                plot.state.newField = 1;
+            });
+
+            this.extension.plotWatchesUrl(this.plot, stateUrlMapping, spy);
+
+            // Inform jsdom of a navigation event that should trigger the callback
+            var anEvent = document.createEvent("Event");
+            anEvent.initEvent("popstate", true, true);
+            window.dispatchEvent(anEvent);
+
+            assert.ok(spy.called, "Custom callback was called");
+            assert.equal(plot.state.newField, 1, "Callback successfully mutated the plot");
+        });
+
+        it("uses new information from the url to alter the plot state", function() {
+            var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
+            var spy = this.sandbox.spy();
+
+            this.extension.plotWatchesUrl(this.plot, stateUrlMapping, spy);
+
+            // Inform jsdom of a navigation event that should trigger the callback
+            var anEvent = document.createEvent("Event");
+            anEvent.initEvent("popstate", true, true);
+            window.dispatchEvent(anEvent);
+
+            assert.ok(spy.called);
         });
 
         afterEach(function() {
