@@ -509,8 +509,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
     },
 
     /**
-     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
-     *
+     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme.
      * Also identify the min and max x value associated with the category, which will be used to generate ticks
      * @private
      * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
@@ -529,29 +528,65 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
         });
 
         var categoryNames = Object.keys(uniqueCategories);
-        // Construct a color scale with a sufficient number of visually distinct colors
+        this._setDynamicColorScheme(categoryNames);
 
-        if (this.layout.color.parameters.categories.length && this.layout.color.parameters.values.length) {
-            var parameters_categories_hash = {};
-            this.layout.color.parameters.categories.forEach(function(category) { parameters_categories_hash[category] = 1; });
-            if (categoryNames.every(function(name) { return parameters_categories_hash.hasOwnProperty(name); })) {
-                return uniqueCategories;
-            }
+        return uniqueCategories;
+    },
+
+    /**
+     * Automatically define a color scheme for the layer based on data returned from the server.
+     *   If part of the color scheme has been specified, it will fill in remaining missing information.
+     *
+     * There are three scenarios:
+     * 1. The layout does not specify either category names or (color) values. Dynamically build both based on
+     *    the data and update the layout.
+     * 2. The layout specifies colors, but not categories. Use that exact color information provided, and dynamically
+     *     determine what categories are present in the data. (cycle through the available colors, reusing if there
+     *     are a lot of categories)
+     * 3. The layout specifies exactly what colors and categories to use (and they match the data!). This is useful to
+     *    specify an explicit mapping between color scheme and category names, when you want to be sure that the
+     *    plot matches a standard color scheme.
+     *    (If the layout specifies categories that do not match the data, the user specified categories will be ignored)
+     *
+     * This method will only act if the layout defines a `categorical_bin` scale function for coloring. It may be
+     *   overridden in a subclass to suit other types of coloring methods.
+     *
+     * @param {String[]} categoryNames
+     * @private
+     */
+    _setDynamicColorScheme: function(categoryNames) {
+        var colorParams = this.layout.color.parameters;
+        var baseParams = this._base_layout.color.parameters;
+
+        // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
+        if (this.layout.color.scale_function !== "categorical_bin") {
+            throw "This layer requires that coloring be specified as a `categorical_bin`";
         }
 
+        if (baseParams.categories.length && baseParams.values.length) {
+            // If there are preset category/color combos, make sure that they apply to the actual dataset
+            var parameters_categories_hash = {};
+            baseParams.categories.forEach(function (category) { parameters_categories_hash[category] = 1; });
+            if (categoryNames.every(function (name) { return parameters_categories_hash.hasOwnProperty(name); })) {
+                // The layout doesn't have to specify categories in order, but make sure they are all there
+                colorParams.categories = baseParams.categories;
+            } else {
+                colorParams.categories = categoryNames;
+            }
+        } else {
+            colorParams.categories = categoryNames;
+        }
+        // Prefer user-specified colors if provided. Make sure that there are enough colors for all the categories.
         var colors;
-        if (this._base_layout.color.parameters.values.length) {
-            colors = this._base_layout.color.parameters.values;
+        if (baseParams.values.length) {
+            colors = baseParams.values;
         } else {
             var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
             colors = color_scale().range();
         }
         while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
         colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
-        this.layout.color.parameters.categories = categoryNames;
-        this.layout.color.parameters.values = colors;
-
-        return uniqueCategories;
+        colorParams.values = colors;
     },
 
     /**
@@ -581,6 +616,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
 
         if (dimension === "x") {
             // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
+            var knownCategories = this.layout.color.parameters.categories || [];
             var knownColors = this.layout.color.parameters.values || [];
 
             return Object.keys(categoryBounds).map(function (category, index) {
@@ -604,7 +640,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
                     x: xPos,
                     text: category,
                     style: {
-                        "fill": knownColors[index] || "#000000"
+                        "fill": knownColors[knownCategories.indexOf(category)] || "#000000"
                     }
                 };
             });
