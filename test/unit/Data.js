@@ -294,6 +294,44 @@ describe("LocusZoom Data", function(){
                 });
             });
         });
+
+        describe("Source.getData", function() {
+            beforeEach(function() {
+                this.sandbox = sinon.sandbox.create();
+            });
+
+            it("dependentSource skips making a request if previous sources did not add data to chain.body", function() {
+                var source = new LocusZoom.Data.Source();
+                source.dependentSource = true;
+                var requestStub = this.sandbox.stub(source, "getRequest");
+
+                var callable = source.getData();
+                var noRecordsChain = { body: [] };
+                callable(noRecordsChain);
+
+                assert.ok(!requestStub.called, "Request should be skipped");
+            });
+
+            it("dependentSource makes a request if chain.body has data from previous sources", function(done) {
+                var source = new LocusZoom.Data.Source();
+                source.dependentSource = false;
+                var requestStub = this.sandbox.stub(source, "getRequest").callsFake(function() { return Q.when(); });
+                this.sandbox.stub(source, "parseResponse").callsFake(function() {
+                    // Because this is an async test, `done` will serve as proof that parseResponse was called
+                    done();
+                });
+
+                var callable = source.getData();
+                var hasRecordsChain = { body: [{ some: "data" }] };
+                callable(hasRecordsChain);
+
+                assert.ok(requestStub.called, "Request was made");
+            });
+
+            afterEach(function() {
+                this.sandbox.restore();
+            });
+        });
     });
 
     describe("Static JSON Data Source", function() {
