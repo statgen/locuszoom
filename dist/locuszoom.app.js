@@ -1228,7 +1228,9 @@
             x_axis: {
                 field: '{{namespace[phewas]}}x',
                 // Synthetic/derived field added by `category_scatter` layer
-                category_field: '{{namespace[phewas]}}trait_group'
+                category_field: '{{namespace[phewas]}}trait_group',
+                lower_buffer: 0.025,
+                upper_buffer: 0.025
             },
             y_axis: {
                 axis: 1,
@@ -1658,7 +1660,6 @@
                     label: 'Recombination Rate (cM/Mb)',
                     label_offset: 40
                 }
-<<<<<<< HEAD
             },
             legend: {
                 orientation: 'vertical',
@@ -2140,40 +2141,12 @@
         /* global LocusZoom */
         'use strict';
         /**
-=======
-            }
-        })
-    ],
-    mouse_guide: false
-});
-
-LocusZoom.Layouts.add("plot", "interval_association", {
-    state: {},
-    width: 800,
-    height: 550,
-    responsive_resize: true,
-    min_region_scale: 20000,
-    max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
-    panels: [
-        LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225/570) }),
-        LocusZoom.Layouts.get("panel", "intervals", { unnamespaced: true, proportional_height: (120/570) }),
-        LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, width: 800, proportional_height: (225/570) })
-    ]
-});
-
-/* global LocusZoom */
-"use strict";
-
-/**
->>>>>>> build assets
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
  * @class
  * @param {Object} layout A JSON-serializable object describing the layout for this layer
  * @param {LocusZoom.DataLayer|LocusZoom.Panel} parent Where this layout is used
 */
-<<<<<<< HEAD
         LocusZoom.DataLayer = function (layout, parent) {
             /** @member {Boolean} */
             this.initialized = false;
@@ -2204,6 +2177,11 @@ LocusZoom.Layouts.add("plot", "interval_association", {
             if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') {
                 this.layout.y_axis.axis = 1;
             }
+            /**
+     * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+     * @member {Object}
+     */
+            this._base_layout = JSON.parse(JSON.stringify(this.layout));
             /** @member {Object} */
             this.state = {};
             /** @member {String} */
@@ -2226,69 +2204,6 @@ LocusZoom.Layouts.add("plot", "interval_association", {
             return this;
         };
         /**
-=======
-LocusZoom.DataLayer = function(layout, parent) {
-    /** @member {Boolean} */
-    this.initialized = false;
-    /** @member {Number} */
-    this.layout_idx = null;
-
-    /** @member {String} */
-    this.id     = null;
-    /** @member {LocusZoom.Panel} */
-    this.parent = parent || null;
-    /**
-     * @member {{group: d3.selection, container: d3.selection, clipRect: d3.selection}}
-     */
-    this.svg    = {};
-
-    /** @member {LocusZoom.Plot} */
-    this.parent_plot = null;
-    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
-
-    /** @member {Object} */
-    this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
-    if (this.layout.id){ this.id = this.layout.id; }
-
-    // Ensure any axes defined in the layout have an explicit axis number (default: 1)
-    if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
-    if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
-
-    /**
-     * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
-     * @member {Object}
-     */
-    this._base_layout = JSON.parse(JSON.stringify(this.layout));
-
-    /** @member {Object} */
-    this.state = {};
-    /** @member {String} */
-    this.state_id = null;
-
-    this.setDefaultState();
-
-    // Initialize parameters for storing data and tool tips
-    /** @member {Array} */
-    this.data = [];
-    if (this.layout.tooltip){
-        /** @member {Object} */
-        this.tooltips = {};
-    }
-
-    // Initialize flags for tracking global statuses
-    this.global_statuses = {
-        "highlighted": false,
-        "selected": false,
-        "faded": false,
-        "hidden": false
-    };
-    
-    return this;
-
-};
-
-/**
->>>>>>> build assets
  * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
  *
  * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn
@@ -5250,6 +5165,11 @@ LocusZoom.DataLayer = function(layout, parent) {
                     this.flip_labels();
                     this.seperate_iterations = 0;
                     this.separate_labels();
+                    // Apply default event emitters to selection
+                    this.label_texts.on('click.event_emitter', function (element) {
+                        this.parent.emit('element_clicked', element);
+                        this.parent_plot.emit('element_clicked', element);
+                    }.bind(this));
                     // Extend mouse behaviors to labels
                     this.applyBehaviors(this.label_texts);
                 }
@@ -5313,13 +5233,11 @@ LocusZoom.DataLayer = function(layout, parent) {
                 return sourceData;
             },
             /**
-     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme
-     *
+     * Identify the unique categories on the plot, and update the layout with an appropriate color scheme.
      * Also identify the min and max x value associated with the category, which will be used to generate ticks
      * @private
      * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
-<<<<<<< HEAD
             _generateCategoryBounds: function () {
                 // TODO: API may return null values in category_field; should we add placeholder category label?
                 // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
@@ -5339,58 +5257,70 @@ LocusZoom.DataLayer = function(layout, parent) {
                     ];
                 });
                 var categoryNames = Object.keys(uniqueCategories);
-                // Construct a color scale with a sufficient number of visually distinct colors
-                // TODO: This will break for more than 20 categories in a single API response payload for a single PheWAS plot
-                var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
-                var colors = color_scale().range().slice(0, categoryNames.length);
-                // List of hex values, should be of same length as categories array
-                this.layout.color.parameters.categories = categoryNames;
-                this.layout.color.parameters.values = colors;
+                this._setDynamicColorScheme(categoryNames);
                 return uniqueCategories;
             },
             /**
-=======
-    _generateCategoryBounds: function() {
-        // TODO: API may return null values in category_field; should we add placeholder category label?
-        // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
-        var category_field = this.layout.x_axis.category_field;
-        var xField = this.layout.x_axis.field || "x";
-        var uniqueCategories = {};
-        this.data.forEach(function(item) {
-            var category = item[category_field];
-            var x = item[xField];
-            var bounds = uniqueCategories[category] || [x, x];
-            uniqueCategories[category] = [Math.min(bounds[0], x), Math.max(bounds[1], x)];
-        });
-
-        var categoryNames = Object.keys(uniqueCategories);
-        // Construct a color scale with a sufficient number of visually distinct colors
-
-        if (this.layout.color.parameters.categories.length && this.layout.color.parameters.values.length) {
-            var parameters_categories_hash = {};
-            this.layout.color.parameters.categories.forEach(function(category) { parameters_categories_hash[category] = 1; });
-            if (categoryNames.every(function(name) { return parameters_categories_hash.hasOwnProperty(name); })) {
-                return uniqueCategories;
-            }
-        }
-
-        var colors;
-        if (this._base_layout.color.parameters.values.length) {
-            colors = this._base_layout.color.parameters.values;
-        } else {
-            var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
-            colors = color_scale().range();
-        }
-        while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
-        colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
-        this.layout.color.parameters.categories = categoryNames;
-        this.layout.color.parameters.values = colors;
-
-        return uniqueCategories;
-    },
-
-    /**
->>>>>>> build assets
+     * Automatically define a color scheme for the layer based on data returned from the server.
+     *   If part of the color scheme has been specified, it will fill in remaining missing information.
+     *
+     * There are three scenarios:
+     * 1. The layout does not specify either category names or (color) values. Dynamically build both based on
+     *    the data and update the layout.
+     * 2. The layout specifies colors, but not categories. Use that exact color information provided, and dynamically
+     *     determine what categories are present in the data. (cycle through the available colors, reusing if there
+     *     are a lot of categories)
+     * 3. The layout specifies exactly what colors and categories to use (and they match the data!). This is useful to
+     *    specify an explicit mapping between color scheme and category names, when you want to be sure that the
+     *    plot matches a standard color scheme.
+     *    (If the layout specifies categories that do not match the data, the user specified categories will be ignored)
+     *
+     * This method will only act if the layout defines a `categorical_bin` scale function for coloring. It may be
+     *   overridden in a subclass to suit other types of coloring methods.
+     *
+     * @param {String[]} categoryNames
+     * @private
+     */
+            _setDynamicColorScheme: function (categoryNames) {
+                var colorParams = this.layout.color.parameters;
+                var baseParams = this._base_layout.color.parameters;
+                // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
+                if (this.layout.color.scale_function !== 'categorical_bin') {
+                    throw 'This layer requires that coloring be specified as a `categorical_bin`';
+                }
+                if (baseParams.categories.length && baseParams.values.length) {
+                    // If there are preset category/color combos, make sure that they apply to the actual dataset
+                    var parameters_categories_hash = {};
+                    baseParams.categories.forEach(function (category) {
+                        parameters_categories_hash[category] = 1;
+                    });
+                    if (categoryNames.every(function (name) {
+                            return parameters_categories_hash.hasOwnProperty(name);
+                        })) {
+                        // The layout doesn't have to specify categories in order, but make sure they are all there
+                        colorParams.categories = baseParams.categories;
+                    } else {
+                        colorParams.categories = categoryNames;
+                    }
+                } else {
+                    colorParams.categories = categoryNames;
+                }
+                // Prefer user-specified colors if provided. Make sure that there are enough colors for all the categories.
+                var colors;
+                if (baseParams.values.length) {
+                    colors = baseParams.values;
+                } else {
+                    var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+                    colors = color_scale().range();
+                }
+                while (colors.length < categoryNames.length) {
+                    colors = colors.concat(colors);
+                }
+                colors = colors.slice(0, categoryNames.length);
+                // List of hex values, should be of same length as categories array
+                colorParams.values = colors;
+            },
+            /**
      *
      * @param dimension
      * @param {Object} [config] Parameters that customize how ticks are calculated (not style)
@@ -5422,6 +5352,7 @@ LocusZoom.DataLayer = function(layout, parent) {
                 }
                 if (dimension === 'x') {
                     // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
+                    var knownCategories = this.layout.color.parameters.categories || [];
                     var knownColors = this.layout.color.parameters.values || [];
                     return Object.keys(categoryBounds).map(function (category, index) {
                         var bounds = categoryBounds[category];
@@ -5442,7 +5373,7 @@ LocusZoom.DataLayer = function(layout, parent) {
                         return {
                             x: xPos,
                             text: category,
-                            style: { 'fill': knownColors[index] || '#000000' }
+                            style: { 'fill': knownColors[knownCategories.indexOf(category)] || '#000000' }
                         };
                     });
                 }
