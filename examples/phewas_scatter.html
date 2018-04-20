@@ -232,8 +232,8 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
                 url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",
                 params: { build: ["GRCh37"] }
             }])
-            .add("gene", ["GeneLZ", { url: apiBase + "genes-for-phewas.json", params: {source: 2} }])
-            .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "genes_" + String(variantChrom - 250000) + "-" + String(variantChrom + 250000) + ".json" }]);
+            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", params: {source: 2} }])
+            .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "gene_constraints_10_114508349-115008349.json" }]);
         }
         // Static blobs (independent of host)
         dataSources
