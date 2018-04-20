@@ -361,7 +361,9 @@ LocusZoom.Layouts.add("data_layer", "phewas_pvalues", {
     fields: ["{{namespace[phewas]}}id", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}trait_group", "{{namespace[phewas]}}trait_label"],
     x_axis: {
         field: "{{namespace[phewas]}}x",  // Synthetic/derived field added by `category_scatter` layer
-        category_field: "{{namespace[phewas]}}trait_group"
+        category_field: "{{namespace[phewas]}}trait_group",
+        lower_buffer: 0.025,
+        upper_buffer: 0.025
     },
     y_axis: {
         axis: 1,
