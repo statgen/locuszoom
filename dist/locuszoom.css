@@ -43,29 +43,29 @@ svg.lz-locuszoom {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
     stroke-width: 1px; }
-  svg.lz-locuszoom path.lz-data_layer-scatter {
+  svg.lz-locuszoom path.lz-data_layer-scatter, svg.lz-locuszoom path.lz-data_layer-category_scatter {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 0.4;
     stroke-width: 1px;
     cursor: pointer; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-highlighted {
+  svg.lz-locuszoom path.lz-data_layer-scatter-highlighted, svg.lz-locuszoom path.lz-data_layer-category_scatter-highlighted {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 0.4;
     stroke-width: 4px; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-selected {
+  svg.lz-locuszoom path.lz-data_layer-scatter-selected, svg.lz-locuszoom path.lz-data_layer-category_scatter-selected {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
     stroke-width: 4px; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-faded {
+  svg.lz-locuszoom path.lz-data_layer-scatter-faded, svg.lz-locuszoom path.lz-data_layer-category_scatter-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1; }
-  svg.lz-locuszoom path.lz-data_layer-scatter-hidden {
+  svg.lz-locuszoom path.lz-data_layer-scatter-hidden, svg.lz-locuszoom path.lz-data_layer-category_scatter-hidden {
     display: none; }
-  svg.lz-locuszoom text.lz-data_layer-scatter-label {
+  svg.lz-locuszoom text.lz-data_layer-scatter-label, svg.lz-locuszoom text.lz-data_layer-category_scatter-label {
     fill: rgb(24, 24, 24);
     fill-opacity: 1;
     alignment-baseline: middle; }
-  svg.lz-locuszoom line.lz-data_layer-scatter-label {
+  svg.lz-locuszoom line.lz-data_layer-scatter-label, svg.lz-locuszoom line.lz-data_layer-category_scatter-label {
     stroke: rgb(24, 24, 24);
     stroke-opacity: 1;
     stroke-width: 1px; }

@@ -1,4 +1,5 @@
 /* global require */
+var fs = require("fs");
 var gulp = require("gulp");
 var concat = require("gulp-concat");
 var eslint = require("gulp-eslint");
@@ -7,7 +8,7 @@ var sass = require("gulp-sass");
 var sourcemaps = require("gulp-sourcemaps");
 var uglify = require("gulp-uglify");
 var gutil = require("gulp-util");
-var wrap = require("gulp-wrap");
+var wrapJS = require("gulp-wrap-js");
 var argv = require("yargs").argv;
 
 var files = require("./files.js");
@@ -51,9 +52,10 @@ gulp.task("test", ["lint"], function () {
 
 // Concatenate all app-specific JS libraries into unminified and minified single app files
 gulp.task("app_js", ["test"], function() {
+    var moduleTemplate = fs.readFileSync("./assets/js/app/wrapper.txt", "utf8");
     gulp.src(files.app_build)
         .pipe(concat("dist/locuszoom.app.js"))
-        .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
+        .pipe(wrapJS(moduleTemplate))
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.js "));
@@ -62,13 +64,11 @@ gulp.task("app_js", ["test"], function() {
             gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.js "));
         });
     gulp.src(files.app_build)
-        // FIXME: Source maps on the app bundle are temporarily disabled because gulp-wrap is not sourcemap compatible;
-        //    hence line numbers will be slightly off. Will revisit in future.
-        // .pipe(sourcemaps.init())
+        .pipe(sourcemaps.init())
         .pipe(concat("dist/locuszoom.app.min.js"))
-        .pipe(wrap({ src: "./assets/js/app/wrapper.txt"}))
+        .pipe(wrapJS(moduleTemplate))
         .pipe(uglify())
-        // .pipe(sourcemaps.write("."))
+        .pipe(sourcemaps.write("."))
         .pipe(gulp.dest("."))
         .on("end", function() {
             gutil.log(gutil.colors.bold.white.bgBlue(" Generated locuszoom.app.min.js "));
