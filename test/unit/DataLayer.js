@@ -217,18 +217,25 @@ describe("LocusZoom.DataLayer", function(){
                 x_axis: { field: "x" }
             };
             this.datalayer = new LocusZoom.DataLayer(this.layout);
+
+            this.datalayer.data = [];
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [], "No extent is returned if basic criteria cannot be met");
+
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [1, 4]);
+
             this.datalayer.data = [
                 { x: 200 }, { x: -73 }, { x: 0 }, { x: 38 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [-73, 200]);
+
             this.datalayer.data = [
                 { x: 6 }
             ];
             assert.deepEqual(this.datalayer.getAxisExtent("x"), [6, 6]);
+
             this.datalayer.data = [
                 { x: "apple" }, { x: "pear" }, { x: "orange" }
             ];
@@ -285,7 +292,11 @@ describe("LocusZoom.DataLayer", function(){
             this.datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 4]);
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 4], "Increase extent exactly to the boundaries when no padding is specified");
+
+            this.datalayer.data = [];
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 3], "If there is no data, use the specified min_extent as given");
+
             this.layout = {
                 id: "test",
                 x_axis: {
@@ -299,15 +310,18 @@ describe("LocusZoom.DataLayer", function(){
             this.datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 10]);
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [0, 10], "Extent is enforced but no padding applied when data is far from boundary");
+
             this.datalayer.data = [
                 { x: 0.6 }, { x: 4 }, { x: 5 }, { x: 9 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent("x"), [-1.08, 10]);
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [-1.08, 10], "Extent is is enforced and padding is applied when data is close to the lower boundary");
+
             this.datalayer.data = [
                 { x: 0.4 }, { x: 4 }, { x: 5 }, { x: 9.8 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent("x"), [-1.48, 10.74]);
+            assert.deepEqual(this.datalayer.getAxisExtent("x"), [-1.48, 10.74], "Padding is enforced on both sides when data is close to both boundaries");
+
         });
         it("applies hard floor and ceiling as defined in the layout", function() {
             this.layout = {

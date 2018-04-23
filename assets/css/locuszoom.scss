@@ -77,41 +77,41 @@ svg.#{$namespace}-locuszoom {
     stroke-width: 1px;
   }
 
-  path.#{$namespace}-data_layer-scatter {
+  path.#{$namespace}-data_layer-scatter, path.#{$namespace}-data_layer-category_scatter {
     stroke: #{$default_black_shadow};
     stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 1px;
     cursor: pointer;
   }
 
-  path.#{$namespace}-data_layer-scatter-highlighted {
+  path.#{$namespace}-data_layer-scatter-highlighted, path.#{$namespace}-data_layer-category_scatter-highlighted  {
     stroke: #{$default_black_shadow};
     stroke-opacity: #{$default_black_shadow_opacity};
     stroke-width: 4px;
   }
 
-  path.#{$namespace}-data_layer-scatter-selected {
+  path.#{$namespace}-data_layer-scatter-selected, path.#{$namespace}-data_layer-category_scatter-selected {
     stroke: #{$default_black};
     stroke-opacity: #{$default_black_opacity};
     stroke-width: 4px;
   }
 
-  path.#{$namespace}-data_layer-scatter-faded {
+  path.#{$namespace}-data_layer-scatter-faded, path.#{$namespace}-data_layer-category_scatter-faded {
     fill-opacity: 0.1;
     stroke-opacity: 0.1;
   }
 
-  path.#{$namespace}-data_layer-scatter-hidden {
+  path.#{$namespace}-data_layer-scatter-hidden, path.#{$namespace}-data_layer-category_scatter-hidden {
     display: none;
   }
 
-  text.#{$namespace}-data_layer-scatter-label {
+  text.#{$namespace}-data_layer-scatter-label, text.#{$namespace}-data_layer-category_scatter-label  {
     fill: #{$default_black};
     fill-opacity: #{$default_black_opacity};
     alignment-baseline: middle;
   }
 
-  line.#{$namespace}-data_layer-scatter-label {
+  line.#{$namespace}-data_layer-scatter-label, line.#{$namespace}-data_layer-category_scatter-label {
     stroke: #{$default_black};
     stroke-opacity: #{$default_black_opacity};
     stroke-width: 1px;
