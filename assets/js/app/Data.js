@@ -370,25 +370,33 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
- * @returns {{header: ({}|*), raw: {}, body: []}} An object containing request metadata (headers), the consolidated
- *   data for plotting (body), and the total set of all raw data from each source queried during this chain (raw)
- *   (each datalayer calls only the sources it needs)
+ * @returns {Promise|{header: ({}|*), raw: {}, body: []}} A promise that resolves to an object containing
+ *   request metadata (headers), the consolidated data for plotting (body), and the total set of all raw data from each
+ *   source queried during this chain (raw) (each datalayer calls only the sources it needs)
  */
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var json = typeof resp == "string" ? JSON.parse(resp) : resp;
-    var records = this.parseData(json.data || json, fields, outnames, trans);
-
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
     // Store a copy of the parsed API data from this source, with no further post-processing
     if (!chain.raw) {
         chain.raw = {};
     }
-    chain.raw[source_id] = records;
+    var json = typeof resp == "string" ? JSON.parse(resp) : resp;
 
     // Perform any custom transformations on the resulting data, including annotating records based on responses from
     //  previous data sources in the chain. This final combination of data gets passed as the body.
-    records = this.prepareData(records, chain);
-    return {header: chain.header || {}, raw: chain.raw || {}, body: records};
+
+    // The initial response will have been resolved when this function was called. All further transformations
+    //   should support promise semantics
+    var self = this;
+    var recordPromise = Q.when(self.parseData(json.data || json, fields, outnames, trans));
+    return recordPromise
+        .then(function(records) {
+            chain.raw[source_id] = records;
+            // Some users may want to return static data from the custom hook, without worrying about Promise semantics.
+            return Q.when(self.prepareData(records, chain));
+        }).then(function(annotated_body) {
+            return {header: chain.header || {}, raw: chain.raw || {}, body: annotated_body};
+        });
 };
 /**
  * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
@@ -458,7 +466,6 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
 
     if (!x.length) {
         // Do not attempt to parse records if there are no records, and bubble up an informative error message.
-        console.log(this.constructor.SOURCE_NAME);
         throw "No data found for specified query";
     }
     for (var i = 0; i < x.length; i++) {
@@ -490,6 +497,7 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
+ * @return {Promise|Object[]}
  */
 LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans) {
     var records;
@@ -504,12 +512,16 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
 /**
  * Hook to post-process the data returned by this source. This is a hook that allows custom sources to specify any
  *   optional transformations that should be performed on the data that is returned from the server for this endpoint.
- * This also allows annotating records (from this source) based on responses from previous data sources in the chain
- * @param {Object[]} records The parsed response data as it would be returned from this source
+ *   (eg, performing calculations or filtering on the server response)
+ * This also allows annotating records (from this source) based on responses from previous data sources in the chain-
+ *  see "ConnectorSource" for an example
+ *  @param {Object[]} records The parsed response body as it would be returned from this source
  * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
- * @returns Object[] The annotated set of records to be used in chain.body
+ * @returns {Object[]|Promise} The annotated set of records to be used in chain.body . More complex transformations
+ *  can return a promise
  */
 LocusZoom.Data.Source.prototype.prepareData = function(records, chain) {
+    // Default behavior: do not transform the parsed data
     return records;
 };
 
