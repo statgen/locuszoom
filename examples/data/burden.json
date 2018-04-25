@@ -1,0 +1,52 @@
+{
+  "id": 42,
+  "description": "52K Exomes",
+  "data": {
+    "masks": [
+      {
+        "id": "PTV",
+        "label": "Includes only protein truncating variants",
+        "groups": {
+          "ENSG000001": {
+            "variants": [
+              "2:21228642_G/A",
+              "2:21230094_AT/A",
+              "2:21230336_AT/A"
+            ],
+            "altFreq": [
+              0.033,
+              0.001,
+              0.00045
+            ]
+          },
+          "ENSG000002": {
+            "variants": [
+              "19:11216264_G/T",
+              "19:11218173_AACCCATC/A"
+            ],
+            "altFreq": [
+              0.0025,
+              0.03
+            ]
+          }
+        }
+      }
+    ],
+    "results": [
+      {
+        "group": "ENSG000001",
+        "type": "gene",
+        "mask": "PTV",
+        "test": "SKAT-O",
+        "pvalue": 1.8e-09
+      },
+      {
+        "group": "ENSG000002",
+        "type": "gene",
+        "mask": "PTV",
+        "test": "SKAT-O",
+        "pvalue": 1.7883e-09
+      }
+    ]
+  }
+}

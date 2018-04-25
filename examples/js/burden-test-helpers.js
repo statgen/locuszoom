@@ -14,24 +14,23 @@
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.Data.GeneTestSource = LocusZoom.Data.Source.extend(function(init) {
+LocusZoom.Data.GeneTestSource = LocusZoom.Data.Source.extend(function (init) {
     //TODO: Use the URL to fetch a covariance matrix that will power the live calculation data
     this.parseInit(init);
 }, "GeneTestSourceLZ");
 
-LocusZoom.Data.GeneTestSource.prototype.getURL = function() {
+LocusZoom.Data.GeneTestSource.prototype.getURL = function () {
     // TODO: customize calculation once covar matrices exist
     return this.url;
 };
 
-LocusZoom.Data.GeneTestSource.prototype.parseData = function(response, fields, outnames, trans) {
-    // The server request returns a covariance matrix that will be used to power the calculation
-    // TODO: Calculation goes here
-    // For now, return a raw burden test payload (since we have premade JSON in a file). It will automatically be added to chain.raw
-    return response;
+LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
+    return raremetal._example('/examples/data/burdentest_raw_hail_22_21576208-22089932.json').then(function(data) {
+        return data["data"];
+    });
 };
 
-LocusZoom.Data.GeneTestSource.prototype.prepareData = function(records, chain) {
+LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) {
     // Burden tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
     //  other layers in different ways. The calculated result will be added to `chain.raw`, but will not be returned
     //  as part of the response body built up by the chain
@@ -54,7 +53,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
         // Validate that this source has been told how to find the required information
         var specified_ids = Object.keys(init.from);
         var required_sources = ["gene_ns", "burden_ns"];
-        required_sources.forEach(function(k) {
+        required_sources.forEach(function (k) {
             if (specified_ids.indexOf(k) === -1) {
                 throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
             }
@@ -77,7 +76,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
             consolidatedBurden[burdenResult.id] = Math.min.apply(null, burdenResult.tests.map(function(item) {return item.pvalue;}));
         });
         // Annotate any genes that have test results
-        genesData.forEach(function(gene) {
+        genesData.forEach(function (gene) {
             if (consolidatedBurden[gene.gene_name]) {
                 gene.burden_best_pvalue = consolidatedBurden[gene.gene_name];
             }
@@ -88,7 +87,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
 
 
 /**
- * A sample connector that is useful when all you want are burden test results
+ * A sample connector that is useful when all you want are burden test results, eg as rows of a standalone table
  * This can be used to parse burden test data from multiple sources (eg fetched from a server or calculated
  *  live client-side)
  */
@@ -98,7 +97,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
         // Validate that this source has been told how to find the required information
         var specified_ids = Object.keys(init.from);
         var required_sources = ["burden_ns"];
-        required_sources.forEach(function(k) {
+        required_sources.forEach(function (k) {
             if (specified_ids.indexOf(k) === -1) {
                 throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
             }
@@ -106,7 +105,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
     },
     prepareData: function (records, chain) {
         // TODO: In the future we may want to move more of this parsing logic into the Burden test calculation source, or change the canonical record format to better align
-        // TODO: NAMESPACING would be nice for consistrency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
+        // TODO: NAMESPACING would be nice for consistency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
         var rows = [];
 
         var burden_source_id = this._source_name_mapping["burden_ns"];
@@ -117,12 +116,12 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
 
         // Convert masks to a hash to facilitate quickly aligning result + mask data
         var mask_lookup = {};
-        bt_masks.forEach(function(mask) {
+        bt_masks.forEach(function (mask) {
             mask_lookup[mask.id] = mask;
         });
-        bt_results.forEach(function(group_data) {
+        bt_results.forEach(function (group_data) {
             var group_id = group_data.id;
-            group_data.tests.forEach(function(one_test) {
+            group_data.tests.forEach(function (one_test) {
                 var mask_id = one_test.mask;
                 var mask = mask_lookup[mask_id];
                 var mask_group = mask["groups"][group_id];
