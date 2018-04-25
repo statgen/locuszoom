@@ -1,9 +1,13 @@
+"use strict";
 /*
  * LocusZoom extensions used to calculate and render burden test results
  *
  * 1. A Burden test data source based on an external library (eventually accommodate multiple calculation types)
  * 2. A connector that annotates gene data with burden test results
  */
+
+
+var getMaskKey = function(group_id, mask_id) { return group_id + "_" + mask_id; };
 
 /**
  * Data Source that calculates gene or region-based tests based on provided data
@@ -25,14 +29,24 @@ LocusZoom.Data.GeneTestSource.prototype.getURL = function () {
 };
 
 LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
-    return raremetal._example('/examples/data/burdentest_raw_hail_22_21576208-22089932.json').then(function(data) {
-        return data["data"];
+    return raremetal.helpers._example("data/burdentest_raw_hail_22_21576208-22089932.json").then(function(data) {
+        // For the purpose of initial integration, the rm.js output is missing certain data for which a source is not obvious
+        // TODO: Remove this "fake data" generation for production and just `return data['data']`!!
+        data = data["data"];
+
+        // Mocking and fake data added below
+        data.results = data.results.map(function(res) {
+            // TODO: The spec calls for multiple kinds of interval, but here, assume every group is a gene
+            res.type = res.type || "gene";
+            return res;
+        });
+        return data;
     });
 };
 
 LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) {
     // Burden tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
-    //  other layers in different ways. The calculated result will be added to `chain.raw`, but will not be returned
+    //  other layers in different ways. The calculated result has been added to `chain.raw`, but will not be returned
     //  as part of the response body built up by the chain
     return chain.body;
 };
@@ -67,18 +81,23 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
         //   a standalone source that has not acted on genes data yet
         var burdenData = chain.raw[burden_source_id];
 
-        var genesData = records;  // chain.raw[this_required_sources["gene_ns]]
-        var consolidatedBurden = {};  // Boil down all possible test results to "best pvalue per gene"
-        burdenData.results.forEach(function(burdenResult) {
-            if (burdenResult.type !== "gene") {
-                return;
+        var genesData = records; // chain.raw[this_required_sources["gene_ns"];  TODO: Why broken?
+        var groupedBurden = {};  // Group together all tests done on that gene- any mask, any test
+        burdenData.results.forEach(function(res) {
+            if (!groupedBurden.hasOwnProperty(res.group)) {
+                groupedBurden[res.group] = [];
             }
-            consolidatedBurden[burdenResult.id] = Math.min.apply(null, burdenResult.tests.map(function(item) {return item.pvalue;}));
+            if (res.type === "gene") {
+                // Don't look at interval groups- this is a genes layer connector
+                groupedBurden[res.group].push(res);
+            }
         });
+
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            if (consolidatedBurden[gene.gene_name]) {
-                gene.burden_best_pvalue = consolidatedBurden[gene.gene_name];
+            var tests = groupedBurden[gene.gene_name];
+            if (tests) {
+                gene.burden_best_pvalue = Math.min.apply(null, tests.map(function(item) {return item.pvalue;}));
             }
         });
         return genesData;
@@ -93,9 +112,9 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
  */
 LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", {
     parseInit: function (init) {
-        // TODO: DRY parseInit into base class
+        // TODO: DRY parseInit into base connector class
         // Validate that this source has been told how to find the required information
-        var specified_ids = Object.keys(init.from);
+        var specified_ids = Object.keys(init.from); // TODO: rename from to sources for clarity?
         var required_sources = ["burden_ns"];
         required_sources.forEach(function (k) {
             if (specified_ids.indexOf(k) === -1) {
@@ -104,7 +123,6 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
         });
     },
     prepareData: function (records, chain) {
-        // TODO: In the future we may want to move more of this parsing logic into the Burden test calculation source, or change the canonical record format to better align
         // TODO: NAMESPACING would be nice for consistency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
         var rows = [];
 
@@ -114,29 +132,33 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
         var bt_results = burden_data.results;
         var bt_masks = burden_data.masks;
 
-        // Convert masks to a hash to facilitate quickly aligning result + mask data
+        // Convert masks to a hash to facilitate quickly aligning result with the data for one specific group+mask
         var mask_lookup = {};
-        bt_masks.forEach(function (mask) {
-            mask_lookup[mask.id] = mask;
-        });
-        bt_results.forEach(function (group_data) {
-            var group_id = group_data.id;
-            group_data.tests.forEach(function (one_test) {
-                var mask_id = one_test.mask;
-                var mask = mask_lookup[mask_id];
-                var mask_group = mask["groups"][group_id];
 
-                rows.push({
-                    id: group_id + "." + mask_id,
-                    group: group_data.id,
-                    mask: mask_id,
+        bt_masks.forEach(function (mask) {
+            mask.groups.forEach(function (group_variants, group_id) { // mask.groups is an es6 hash
+                // Combine the group and mask data into a single concise representation of the mask with a unique key
+                var unique = getMaskKey(group_id, mask.id);
+                mask_lookup[unique] = {
+                    id: unique,
+                    mask: mask.id,
+                    group: group_id,
                     mask_desc: mask.label,
-                    variants: mask_group.variants,
-                    variant_count: mask_group.variants.length,
-                    calc_type: one_test.test,
-                    pvalue: one_test.pvalue
-                })
+                    variants: group_variants,
+                    variant_count: group_variants.length
+                };
             });
+        });
+
+        bt_results.forEach(function (one_result) {
+            var group_key = getMaskKey(one_result.group, one_result.mask);
+            var row_data = JSON.parse(JSON.stringify(mask_lookup[group_key]));
+
+            row_data.calc_type = one_result.test;
+            row_data.pvalue = one_result.pvalue;
+
+            rows.push(row_data);
+
         });
         return rows;
     }

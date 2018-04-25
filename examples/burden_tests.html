@@ -8,7 +8,7 @@
 
     <!-- Necessary includes for LocusZoom.js -->
     <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <script src="../dist/locuszoom.app.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
 
     <!-- Interactive table widget and page-specific code-->
@@ -123,6 +123,8 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) { initialState = {chr: 22, start: 21600000, end: 22000000}; }
+
+      <!-- TODO: Lock x scrolling because we won't have a mock covariance endpoint -->
       var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
       layout = customizePlotLayout(layout);
 
