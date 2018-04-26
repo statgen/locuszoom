@@ -1,7 +1,10 @@
 /**
  Custom code used to demonstrate interactive page widget features in the burden test visualization example
  */
-'use strict';
+"use strict";
+
+/* global $ */
+/* eslint-disable no-unused-vars */
 
 
 /**
@@ -16,16 +19,16 @@ function customizePlotLayout(layout) {
     genesLayout.namespace["burden_genes"] = "burden_genes";
     genesLayout.fields.push("burdentest:all", "burden_genes:all");
     var colorConfig = [
-      { // TODO: Convert this to a gradient
-          scale_function: "if",
-          field: "burden_best_pvalue",
-          parameters: {
-              field_value: null,
-              then: "#B8B8B8",
-              else: "#FF0000"
-          }
-      },
-    "#B8B8B8"
+        { // TODO: Convert this to a gradient
+            scale_function: "if",
+            field: "burden_best_pvalue",
+            parameters: {
+                field_value: null,
+                then: "#B8B8B8",
+                else: "#FF0000"
+            }
+        },
+        "#B8B8B8"
     ];
     genesLayout.color = colorConfig;
     genesLayout.stroke = colorConfig;
@@ -43,10 +46,10 @@ function createAssociationTable(selector, row_click_callback) {
         index: "assoc:variant",
         rowClick: row_click_callback,
         columns: [
-            { title: "Variant", field: "assoc:variant" },
-            { title: "-log10(pvalue)", field: "assoc:log_pvalue", bottomCalc: "max" }
+            {title: "Variant", field: "assoc:variant"},
+            {title: "-log10(pvalue)", field: "assoc:log_pvalue", bottomCalc: "max"}
         ],
-        placeholder:"No Data Available"
+        placeholder: "No Data Available"
     });
 }
 
@@ -60,13 +63,13 @@ function createBurdenTestTable(selector) {
         index: "id",
         layout: "fitColumns",
         columns: [
-            { title: "Gene", field: "group" },
-            { title: "Mask", field: "mask" },
-            { title: "# Variants", field: "variant_count" },
-            { title: "Test type", field: "calc_type" },
-            { title: "P-value", field: "pvalue" }
+            {title: "Gene", field: "group"},
+            {title: "Mask", field: "mask"},
+            {title: "# Variants", field: "variant_count"},
+            {title: "Test type", field: "calc_type"},
+            {title: "P-value", field: "pvalue"}
         ],
-        placeholder:"No Data Available"
+        placeholder: "No Data Available"
     });
 }
 

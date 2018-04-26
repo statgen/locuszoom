@@ -1,6 +1,5 @@
 {
   "globals": {
-    "LocusZoom": false,
-    "raremetal": false
+    "LocusZoom": false
   }
 }

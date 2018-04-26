@@ -1,4 +1,6 @@
 "use strict";
+/* global raremetal */
+
 /*
  * LocusZoom extensions used to calculate and render burden test results
  *
