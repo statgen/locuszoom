@@ -743,14 +743,13 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
 
 /**
  * Toggle a status (e.g. highlighted, selected, identified) on an element
- * @param {String} status
- * @param {String|Object} element
- * @param {Boolean} toggle
- * @param {Boolean} exclusive
+ * @param {String} status The name of a recognized status to be added/removed on an appropriate element
+ * @param {String|Object} element The data bound to the element of interest
+ * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive){
-    
     // Sanity checks
     if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
         throw("Invalid status passed to DataLayer.setElementStatus()");
@@ -795,7 +794,12 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Trigger layout changed event hook
     this.parent.emit("layout_changed", true);
-
+    if (status === "selected") {
+        // Notify parents that a given element has been interacted with. For now, we will only notify on
+        //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
+        //   events will be sent in short order as the previously selected element has to be de-selected first
+        this.parent.emit("element_selection", { element: element, active: toggle }, true);
+    }
     return this;
     
 };

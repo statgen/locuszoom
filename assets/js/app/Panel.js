@@ -131,7 +131,8 @@ LocusZoom.Panel = function(layout, parent) {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
-        "element_clicked": []
+        "element_clicked": [],
+        "element_selection": []
     };
     /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
@@ -141,7 +142,9 @@ LocusZoom.Panel = function(layout, parent) {
      *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
      *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
-     *   - `element_clicked` - context: element - A data element in any of the panel's data layers has been clicked.
+     *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
+     *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *

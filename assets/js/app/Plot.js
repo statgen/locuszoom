@@ -117,6 +117,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
         "data_requested": [],
         "data_rendered": [],
         "element_clicked": [],
+        "element_selection": [],
         "state_changed": []  // Only triggered when a state change causes rerender
     };
 
@@ -137,7 +138,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
      *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
      *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-     *   - `element_clicked` - context: element - A data element in any of the plot's data layers has been clicked.
+     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
+     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
