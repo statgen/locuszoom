@@ -1,178 +1,213 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
-    <!-- Necessary includes for LocusZoom.js -->
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="../dist/locuszoom.app.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+  <!-- Necessary includes for LocusZoom.js -->
+  <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+  <script src="../dist/locuszoom.app.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
 
-    <!-- Interactive table widget and page-specific code-->
-    <script type="application/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-    <script type="application/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <!-- Interactive table widget and page-specific code-->
+  <script type="application/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script type="application/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
 
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.3.3/css/tabulator.min.css" rel="stylesheet">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.3.3/js/tabulator.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.1/css/tabulator.min.css">
+  <script type="text/javascript"
+          src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.1/js/tabulator.min.js"></script>
 
-    <script src="js/raremetal.min.js" type="application/javascript"></script>
+  <script src="js/raremetal.min.js" type="application/javascript"></script>
 
-    <script src="../ext/lz-dynamic-urls.js" type="application/javascript"></script>
-    <script src="js/burden-test-helpers.js" type="application/javascript"></script>
-    <script src="js/burden-tests-example-page.js" type="application/javascript"></script>
-
-
-    <title>LocusZoom.js ~ Burden Tests</title>
-
-    <style>
-      body {
-        background-color: #FAFAFA;
-        margin: 0px 20px;
-      }
-      img {
-        max-width: 100%;
-        box-sizing: border-box;
-      }
-      .tabulator {
-        font-family: sans-serif;
-      }
-    </style>
-
-  </head>
-
-  <body>
-    <div class="container">
-
-      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
-
-      <h3 style="float: left; color: #777">Burden Tests Demonstration</h3>
-      <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
-
-      <hr style="clear: both;">
-
-      <p>
-        There are many types of burden tests, each with their own unique characteristics. Since it is not always
-        possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
-        share plot data with any arbitrary HTML element on the page.
-      </p>
-      <p>
-        The example below demonstrates a table that can automatically update as the plot is redrawn.
-      </p>
+  <script type="application/javascript" src="../ext/lz-dynamic-urls.js"></script>
+  <script src="js/burden-test-helpers.js" type="application/javascript"></script>
+  <script src="js/burden-tests-example-page.js" type="application/javascript"></script>
 
 
-      <p>
-        It can also respond to an element on the page being clicked! The last element clicked was: <span id="clicked-element-label" style="color:red">(no element selected)</span>
-      </p>
+  <title>LocusZoom.js ~ Burden Tests</title>
 
-      <hr>
+  <style>
+    body {
+      background-color: #FAFAFA;
+      margin: 0px 20px;
+    }
 
-      <div class="row">
-        <div class="eight columns">
-          <h3>Interactive Plot</h3>
-          <div id="plot" class="lz-container-responsive"></div>
-        </div>
+    img {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
 
-        <div class="four columns">
-        <h3>A table of results</h3>
-        <div id="results-table"></div>
-        </div>
-      </div>
+    .tabulator {
+      font-family: sans-serif;
+    }
+  </style>
 
-      <div class="row">
-        <div class="twelve columns">
-          <h3>Table of burden test results</h3>
-          <div id="burden-results-table"></div>
-        </div>
-      </div>
-      <div class="row">
-        <footer style="text-align: center;">
-          &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
-        </footer>
-      </div>
+</head>
+
+<body>
+<div class="container">
+
+  <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+  <h3 style="float: left; color: #777">Burden Tests Demonstration</h3>
+  <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+  <hr style="clear: both;">
+
+  <p>
+    There are many types of burden tests, each with their own unique characteristics. Since it is not always
+    possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
+    share plot data with any arbitrary HTML element on the page.
+  </p>
+  <p>
+    The example below demonstrates a table that can automatically update as the plot is redrawn.
+  </p>
+
+  <hr>
+
+  <div class="row">
+    <div class="twelve columns">
+      <h3>Interactive Plot</h3>
+      <div id="plot" class="lz-container-responsive"></div>
     </div>
 
-    <script type="application/javascript">
-      /*
-        Specify the data sources to use
-       */
-      // Determine if we're online, based on browser state or presence of an optional query parameter
-      var online = !(typeof navigator !== "undefined" && !navigator.onLine);
-      if (window.location.search.indexOf("offline") !== -1) {
-          online = false;
-      }
+  <div class="row">
+    <div class="twelve columns">
+      <h3>Table of burden test results</h3>
+      Currently reviewing results for:
+      <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
+      <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
+      <div id="burden-results-table"></div>
+    </div>
+  </div>
 
-      var apiBase = "//portaldev.sph.umich.edu/api/v1/";
-      var data_sources = new LocusZoom.DataSources()
-          .add("assoc", ["AssociationLZ", {
-              url: apiBase + "statistic/single/",
-              params: {analysis: 45, id_field: "variant"}  // TODO: Find out what correct analysis ID is for this demo to correspond to the burden test results
-          }])
-          .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
-          .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-          .add("burdentest", ["GeneTestSourceLZ", {url: "data/burdentest_raw_hail_22_21576208-22089932.json"}])
-          .add("burden_genes", ["GeneBurdenConnectorLZ", {from: {burden_ns: "burdentest", gene_ns: "gene"}}])
-          .add("burden_rows", ["BurdenParserConnectorLZ", {from: {burden_ns: "burdentest"}}])
-          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
-          .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
+    <div class="row">
+      <div class="twelve columns">
+        <h3>Variants in group</h3>
+        <div id="results-table"></div>
+      </div>
+  </div>
 
-      // Generate the LocusZoom plot, and reflect the initial plot state in url
-      var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
-      // Fetch initial position from the URL, or use some defaults
-      var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
-      if (!Object.keys(initialState).length) { initialState = {chr: 22, start: 21600000, end: 22000000}; }
+  <div class="row">
+    <footer style="text-align: center;">
+      &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical
+      Genetics</a><br>
+    </footer>
+  </div>
+</div>
 
-      <!-- TODO: Lock x scrolling because we won't have a mock covariance endpoint -->
-      var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
-      layout = customizePlotLayout(layout);
+<script type="application/javascript">
+    /*
+      Specify the data sources to use
+     */
+    // Determine if we're online, based on browser state or presence of an optional query parameter
+    var online = !(typeof navigator !== "undefined" && !navigator.onLine);
+    if (window.location.search.indexOf("offline") !== -1) {
+        online = false;
+    }
 
-      window.plot = LocusZoom.populate("#plot", data_sources, layout);
+    var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+    var data_sources = new LocusZoom.DataSources()
+        .add("assoc", ["AssociationLZ", {
+            url: apiBase + "statistic/single/",
+            params: {analysis: 30, id_field: "variant"}  // TODO: Important: use an analysis ID that matches the data for the portal covariance results
+        }])
+        .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+        .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+        .add("burdentest", ["GeneTestSourceLZ", {url: "data/burdentest_raw_hail_22_21576208-22089932.json"}])
+        .add("burden_genes", ["GeneBurdenConnectorLZ", {from: {burden_ns: "burdentest", gene_ns: "gene"}}])
+        .add("burden_rows", ["BurdenParserConnectorLZ", {from: {burden_ns: "burdentest"}}])
+        .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+        .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
-      // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
-      //   a previously viewed region)
-      LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-      LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    // Generate the LocusZoom plot, and reflect the initial plot state in url
+    var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+    // Fetch initial position from the URL, or use some defaults
+    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    if (!Object.keys(initialState).length) {
+        initialState = {chr: 22, start: 21600000, end: 22000000};
+    }
 
-      ////////
-      // Define listeners required to draw and update the companion table of results
-      var tableRowClick = function(_, row) {
-          // Notify all plot listeners when an element with matching data is clicked
-          // TODO: Customize as required
-          plot.emit("element_clicked", row.row.data);
-      };
-      var TABLE_SELECTOR_ASSOC = "#results-table";  // ID for where plots will be rendered
-      createAssociationTable(TABLE_SELECTOR_ASSOC, tableRowClick);
-      var renderAssocCallback = updateTableData.bind(null, TABLE_SELECTOR_ASSOC); // curry first argument
+    <!-- TODO: Lock x scrolling because we won't have a mock covariance endpoint -->
+    var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+    layout = customizePlotLayout(layout);
 
-      var subscriber_fields = ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"];
-      plot.subscribeToData(
-          subscriber_fields,
-          renderAssocCallback
-          );
+    window.plot = LocusZoom.populate("#plot", data_sources, layout);
+
+    // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+    //   a previously viewed region)
+    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+
+    ////////
+    // Define listeners required to draw and update the companion table of results
+    var burdenRowClick = function (_, row) {
+        // Notify all plot listeners when an element with matching data is clicked
+
+        // TODO: Change this behavior: one table should trigger iltering on another
+        // FIXME: BWAHAHAHAHAHAHAHAHAHAHAHAHAHA
+        plot.emit("element_clicked", row.row.data);
+    };
 
 
-      var TABLE_SELECTOR_BURDEN = "#burden-results-table";  // ID for where plots will be rendered
-      createBurdenTestTable(TABLE_SELECTOR_BURDEN, tableRowClick);
-      var renderBurdenCallback = updateTableData.bind(null, TABLE_SELECTOR_BURDEN); // curry first argument
+    // Draw assoc/ variants table
+    var TABLE_SELECTOR_ASSOC = "#results-table";  // ID for where plots will be rendered
+    createAssociationTable(TABLE_SELECTOR_ASSOC);
+    var renderAssocCallback = updateTableData.bind(null, TABLE_SELECTOR_ASSOC); // curry first argument
+    plot.subscribeToData(
+        ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "assoc:ref_allele_freq", "ld:state", "ld:isrefvar"],
+        renderAssocCallback
+    );
 
-      plot.subscribeToData(
-          ["burdentest:all", "burden_rows:all"],
-          renderBurdenCallback
-      );
+    // Draw burden test results table
+    var TABLE_SELECTOR_BURDEN = "#burden-results-table";
+    createBurdenTestTable(TABLE_SELECTOR_BURDEN, burdenRowClick);
+    var renderBurdenCallback = updateTableData.bind(null, TABLE_SELECTOR_BURDEN);
+    plot.subscribeToData(
+        ["burdentest:all", "burden_rows:all"],
+        renderBurdenCallback
+    );
 
-      plot.on("element_clicked", function(eventData) {
-         // Context of an element event listener is the data associated with that element.
-         // This listener will fire on any clickable element in any data layer
-         console.log("element was clicked:", eventData);
 
-         var selectedItem = eventData["data"]["assoc:variant"];
-         if (selectedItem) {
-             $("#clicked-element-label").text(selectedItem).css("color", "blue");
-              scrollTableToData(TABLE_SELECTOR_ASSOC, selectedItem);
-         }
-     });
-    </script>
-  </body>
+    // Set up event listeners so that tables can react to various plot and user events
+    plot.on("element_clicked", function (eventData) {
+        // This listener will fire on any clickable element in any data layer, and we can filter the events
+        // by source ID
+        if (eventData["sourceID"] !== "plot.association") {
+            return;
+        }
+        var selectedItem = eventData["data"]["assoc:variant"];
+        if (selectedItem) {
+            // TODO: rework this so it is driven by burden test table/masks, instead of the plot
+            // (or else handle variantas in the plot, but not in the mask)
+            scrollTableToData(TABLE_SELECTOR_ASSOC, selectedItem);
+        }
+    });
+
+    plot.on("element_selection", function(eventData) {
+        // Trigger the burden test table to filter (or unfilter) on a particular value
+        if (eventData["sourceID"] !== "plot.genes") {
+            return;
+        }
+
+        // Programmatic filters are set separately from column filters
+        // TODO: Can we disable column filtering for this column when the programmatic filters are active?
+        //      see setColumns function and DRY / make nice
+        var gene_column_name = "group";
+        var selected_gene = eventData["data"]["element"]["gene_name"];
+
+        if (eventData["data"]["active"]) {
+            setTableFilter(TABLE_SELECTOR_BURDEN, gene_column_name, selected_gene);
+            $("#label-no-group-selected").hide();
+            $("#label-current-group-selected").show().text(selected_gene);
+        } else {
+            $("#label-no-group-selected").show();
+            $("#label-current-group-selected").hide();
+            clearTableFilter(TABLE_SELECTOR_BURDEN, gene_column_name, selected_gene);
+        }
+    })
+</script>
+</body>
 </html>

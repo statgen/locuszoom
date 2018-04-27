@@ -19,7 +19,7 @@ function customizePlotLayout(layout) {
     genesLayout.namespace["burden_genes"] = "burden_genes";
     genesLayout.fields.push("burdentest:all", "burden_genes:all");
     var colorConfig = [
-        { // TODO: Convert this to a gradient
+        { // TODO: Convert this to a gradient. Is there a standard cutoff?
             scale_function: "if",
             field: "burden_best_pvalue",
             parameters: {
@@ -32,6 +32,19 @@ function customizePlotLayout(layout) {
     ];
     genesLayout.color = colorConfig;
     genesLayout.stroke = colorConfig;
+
+    // The demo does not have real covariance data, and therefore only works on a narrow plot region. Lock all panels
+    //   to prevent scrolling
+    layout.panels.forEach(function(panel_layout) {
+        panel_layout.interaction = {
+            drag_background_to_pan: false,
+            drag_x_ticks_to_scale: false,
+            drag_y1_ticks_to_scale: false,
+            drag_y2_ticks_to_scale: false,
+            scroll_to_zoom: false,
+            x_linked: false
+        };
+    });
     return layout;
 }
 
@@ -39,6 +52,7 @@ function customizePlotLayout(layout) {
  * Create a table of GWAS results
  */
 function createAssociationTable(selector, row_click_callback) {
+    // TODO: Rewrite ideas to use rm.js burden table output as a data source
     var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator({
         height: 440,
@@ -46,8 +60,12 @@ function createAssociationTable(selector, row_click_callback) {
         index: "assoc:variant",
         rowClick: row_click_callback,
         columns: [
-            {title: "Variant", field: "assoc:variant"},
-            {title: "-log10(pvalue)", field: "assoc:log_pvalue", bottomCalc: "max"}
+            { title: "Variant", field: "assoc:variant" },
+            { title: "-log10(pvalue)", field: "assoc:log_pvalue" },
+            // TODO: This will not necessarily be the disease causing allele, or even the rare one
+            // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
+            { title: "Ref allele", field: "assoc:ref_allele" },
+            { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
         ],
         placeholder: "No Data Available"
     });
@@ -57,17 +75,18 @@ function createAssociationTable(selector, row_click_callback) {
  * Create a table showing only data from the Burden Test datasource
  *
  */
-function createBurdenTestTable(selector) {
+function createBurdenTestTable(selector, row_click_callback) {
     var tableSelectorTarget = $(selector);
     tableSelectorTarget.tabulator({
         index: "id",
         layout: "fitColumns",
+        rowClick: row_click_callback,
         columns: [
-            {title: "Gene", field: "group"},
-            {title: "Mask", field: "mask"},
-            {title: "# Variants", field: "variant_count"},
-            {title: "Test type", field: "calc_type"},
-            {title: "P-value", field: "pvalue"}
+            { title: "Gene", field: "group" },
+            { title: "Mask", field: "mask", headerFilter: true },
+            { title: "# Variants", field: "variant_count" },
+            { title: "Test type", field: "calc_type", headerFilter: true },
+            { title: "p-value", field: "pvalue" }  // TODO: Decide on appropriate display precision for pvalues
         ],
         placeholder: "No Data Available"
     });
@@ -97,4 +116,14 @@ function scrollTableToData(selector, index) {
     tableSelectorTarget.tabulator("scrollToRow", index);
     tableSelectorTarget.tabulator("deselectRow");
     tableSelectorTarget.tabulator("selectRow", index);
+}
+
+function setTableFilter(selector, column, value) {
+    var tableSelectorTarget = $(selector);
+    tableSelectorTarget.tabulator("setFilter", column, "=", value);
+}
+
+function clearTableFilter(selector, column, value) {
+    var tableSelectorTarget = $(selector);
+    tableSelectorTarget.tabulator("removeFilter", column, "=", value);
 }
