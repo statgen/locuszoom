@@ -79,6 +79,10 @@
       Currently reviewing results for:
       <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
       <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
+      <br>
+
+      <button id="download-burden" class="button-primary">Download</button><br>
+
       <div id="burden-results-table"></div>
     </div>
   </div>
@@ -88,6 +92,7 @@
         <h3>Variants in group</h3>
         <div id="results-table"></div>
       </div>
+    </div>
   </div>
 
   <div class="row">
@@ -130,7 +135,6 @@
         initialState = {chr: 22, start: 21600000, end: 22000000};
     }
 
-    <!-- TODO: Lock x scrolling because we won't have a mock covariance endpoint -->
     var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
     layout = customizePlotLayout(layout);
 
@@ -146,8 +150,7 @@
     var burdenRowClick = function (_, row) {
         // Notify all plot listeners when an element with matching data is clicked
 
-        // TODO: Change this behavior: one table should trigger iltering on another
-        // FIXME: BWAHAHAHAHAHAHAHAHAHAHAHAHAHA
+        // TODO: Change this behavior: one table should trigger filtering on another
         plot.emit("element_clicked", row.row.data);
     };
 
@@ -207,7 +210,12 @@
             $("#label-current-group-selected").hide();
             clearTableFilter(TABLE_SELECTOR_BURDEN, gene_column_name, selected_gene);
         }
-    })
+    });
+
+    $("#download-burden").on("click", function() {
+        $(TABLE_SELECTOR_BURDEN).tabulator("download", "csv", "burden-data.csv");
+    });
+
 </script>
 </body>
 </html>

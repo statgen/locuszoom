@@ -7,6 +7,12 @@
 /* eslint-disable no-unused-vars */
 
 
+function _formatSciNotation(cell, params) {
+    // Tabulator cell formatter using sci notation
+    var value = cell.getValue();
+    return LocusZoom.TransformationFunctions.get("scinotation")(value);
+}
+
 /**
  * Modify the plot layout to show information about burden tests
  */
@@ -61,7 +67,7 @@ function createAssociationTable(selector, row_click_callback) {
         rowClick: row_click_callback,
         columns: [
             { title: "Variant", field: "assoc:variant" },
-            { title: "-log10(pvalue)", field: "assoc:log_pvalue" },
+            { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
             // TODO: This will not necessarily be the disease causing allele, or even the rare one
             // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
             { title: "Ref allele", field: "assoc:ref_allele" },
@@ -86,9 +92,12 @@ function createBurdenTestTable(selector, row_click_callback) {
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
             { title: "Test type", field: "calc_type", headerFilter: true },
-            { title: "p-value", field: "pvalue" }  // TODO: Decide on appropriate display precision for pvalues
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
         ],
-        placeholder: "No Data Available"
+        placeholder: "No Data Available",
+        initialSort: [
+            { column: "pvalue", dir: "asc" }
+        ]
     });
 }
 
