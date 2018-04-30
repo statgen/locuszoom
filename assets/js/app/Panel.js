@@ -156,7 +156,7 @@ LocusZoom.Panel = function(layout, parent) {
      *
      * @param {String} event The name of the event (as defined in `event_hooks`)
      * @param {function} hook
-     * @returns {LocusZoom.Panel}
+     * @returns {function} The registered event listener
      */
     this.on = function(event, hook){
         // TODO: Dry plot and panel event code into a shared mixin
@@ -167,7 +167,7 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
-        return this;
+        return hook;
     };
     /**
      * Remove one or more previously defined event listeners

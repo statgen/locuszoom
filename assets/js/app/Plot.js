@@ -152,7 +152,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
      *
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} hook
-     * @returns {LocusZoom.Plot}
+     * @returns {function} The registered event listener
      */
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -162,7 +162,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
-        return this;
+        return hook;
     };
     /**
      * Remove one or more previously defined event listeners
