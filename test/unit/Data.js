@@ -156,6 +156,14 @@ describe("LocusZoom Data", function(){
             should.not.exist(ds.get("t1"));
             should.exist(ds.get("t2"));
         });
+        it("should provide a source_id for all sources defined as part of a chain", function() {
+            var ds = new LocusZoom.DataSources();
+            ds.add("t1", new TestSource1());
+            ds.add("t2", ["test2", {}]);
+
+            assert.equal(ds.sources.t1.source_id, "t1", "Directly added source is aware of chain namespace");
+            assert.equal(ds.sources.t2.source_id, "t2", "Source created via options is aware of chain namespace");
+        });
     });
 
     describe("LocusZoom Data.Source", function() {
@@ -293,6 +301,17 @@ describe("LocusZoom Data", function(){
                     });
                 });
             });
+
+            it("should be able to annotate using both body and chain", function() {
+                var source = LocusZoom.subclass(LocusZoom.Data.Source, {
+                    prepareData: function (records, chain) { return records + chain.raw.another_response; }
+                });
+                var result = new source().prepareData(
+                    "some data",
+                    { raw: { another_response: " up the chain" } }
+                );
+                assert.equal(result, "some data up the chain");
+            });
         });
 
         describe("Source.getData", function() {
@@ -309,7 +328,7 @@ describe("LocusZoom Data", function(){
                 var noRecordsChain = { body: [] };
                 callable(noRecordsChain);
 
-                assert.ok(!requestStub.called, "Request should be skipped");
+                assert.ok(requestStub.notCalled, "Request should be skipped");
             });
 
             it("dependentSource makes a request if chain.body has data from previous sources", function(done) {
@@ -330,6 +349,46 @@ describe("LocusZoom Data", function(){
 
             afterEach(function() {
                 this.sandbox.restore();
+            });
+        });
+
+        describe("Source.parseResponse", function() {
+            it("should allow parseData to return a promise", function(done) {
+                var source = LocusZoom.subclass(LocusZoom.Data.Source, {
+                    parseData: function (data) { return Q.when(data); }
+                });
+                var result = new source().parseResponse({data: "a response"}, {});
+                result.then(function(chain) {
+                    assert.deepEqual(chain.body, "a response");
+                    done();
+                }).catch(done);
+            });
+
+            it("should allow prepareData to return a promise and modify the raw response data", function(done) {
+                var source = LocusZoom.subclass(LocusZoom.Data.Source, {
+                    prepareData: function (data) { return Q.when(data + " with annotation"); },
+                    parseData: function(data) { return data; }
+                });
+                var result = new source().parseResponse({data: "a response"}, {});
+                result.then(function(chain) {
+                    assert.deepEqual(chain.body, "a response with annotation");
+                    done();
+                }).catch(done);
+            });
+
+            it("should return both raw and parsed data where appropriate", function(done) {
+                var source = LocusZoom.subclass(LocusZoom.Data.Source, {
+                    prepareData: function (data) { return data + " with annotation"; },
+                    parseData: function(data) { return data; }
+                });
+                source.prototype.constructor.SOURCE_NAME = "fake_source";
+
+                var result = new source().parseResponse({data: "a response"}, {});
+                result.then(function(chain) {
+                    assert.deepEqual(chain.raw, {fake_source: "a response"}, "Raw response is correct");
+                    assert.deepEqual(chain.body, "a response with annotation", "Annotated response is correct");
+                    done();
+                }).catch(done);
             });
         });
     });
@@ -388,6 +447,98 @@ describe("LocusZoom Data", function(){
                     assert.deepEqual(data.body, expected_data);
                     done();
                 }).fail(done);
+        });
+    });
+
+    describe("LocusZoom Data.ConnectorSource", function() {
+        beforeEach(function () {
+            this.sandbox = sinon.sandbox.create();
+
+            // Create a source that internally looks for data as "first" from the specified
+            this.basic_config = { from: { first: "a_source", second: "b_source" } };
+            this.basic_source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource, {
+                prepareData: function(records, chain) {
+                    // A sample method that uses 2 chain sources + an existing body to build an combined response
+
+                    // Tell the internal method how to find the actual data it relies on internally, regardless of how
+                    //   it is called in the namespaced data chain
+                    var nameFirst = this._source_name_mapping["first"];
+                    var nameSecond = this._source_name_mapping["second"];
+
+                    records.forEach(function(item) {
+                        item.a = chain.raw[nameFirst].a_field;
+                        item.b = chain.raw[nameSecond].b_field;
+                    });
+                    return records;
+                }
+            });
+            this.basic_source.prototype.constructor.SOURCE_NAME = "test_connector";
+        });
+
+        afterEach(function() {
+            this.sandbox.restore();
+        });
+
+        it("must specify the data it requires from other sources", function() {
+            var source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource);
+            assert.throws(
+                function() { new source(); },
+                /Connectors must specify the data they require as init.from = {internal_name: chain_source_id}} pairs/
+            );
+            assert.ok(
+                new source(this.basic_config),
+                "Correctly specifies the namespaces containing data that this connector relies on"
+            );
+        });
+        it("must implement a prepareData method", function() {
+            var self = this;
+            assert.throws(
+                function() { new LocusZoom.Data.ConnectorSource(self.basic_config).prepareData(); },
+                /This method must be implemented in a subclass/
+            );
+        });
+        it("should fail if the namespaces it relies on are not present in the chain", function() {
+            var instance = new this.basic_source(this.basic_config);
+            assert.throws(
+                function() {  instance.getRequest({}, { raw: { } }); },
+                /test_connector cannot be used before loading required data for: a_source/
+            );
+        });
+        it("should not make any network requests", function(done) {
+            var instance = new this.basic_source(this.basic_config);
+            var fetchSpy = this.sandbox.stub(instance, "fetchRequest");
+
+            instance.getRequest({}, { raw: { a_source: 1, b_source: 2 } })
+                .then(function() {
+                    assert.ok(fetchSpy.notCalled, "No network request was fired");
+                    done();
+                }).catch(done);
+        });
+        it("should not return any new data from getRequest", function(done) {
+            var instance = new this.basic_source(this.basic_config);
+            var expectedBody = { sample: "response data" };
+            instance.getRequest({}, { raw: { a_source: 1, b_source: 2 }, body: expectedBody })
+                .then(function(records) {
+                    assert.deepEqual(records, expectedBody, "Should return the previous body");
+                    done();
+                }).catch(done);
+        });
+        it("should use, but not update, chain.raw as it produces annotated records", function(done) {
+            var expectedBody = [{who: 1, a: "aaa", b: "bbb"}, {what: 2, a: "aaa", b: "bbb"}];
+            var rawChain = { a_source: { a_field: "aaa" }, b_source: { b_field: "bbb" } };
+
+
+            var instance = new this.basic_source(this.basic_config);
+            instance.getData()(
+                {
+                    raw: rawChain,
+                    body: [{ who: 1 }, { what: 2 }]
+                }
+            ).then(function(response) {
+                assert.deepEqual(response.body, expectedBody, "Response body was correctly annotated");
+                assert.deepEqual(response.raw, rawChain, "The raw chain was not changed");
+                done();
+            }).catch(done);
         });
     });
 

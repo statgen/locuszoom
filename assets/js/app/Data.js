@@ -38,12 +38,15 @@ LocusZoom.DataSources.prototype.add = function(ns, x) {
 /** @protected */
 LocusZoom.DataSources.prototype.set = function(ns, x) {
     if (Array.isArray(x)) {
+        // If passed array of source name and options, make the source
         var dsobj = LocusZoom.KnownDataSources.create.apply(null, x);
-        // Each datasource in the chain should be aware of its assigned namespace  TODO: Standardize how this is set across all instantiation mechanisms
+        // Each datasource in the chain should be aware of its assigned namespace
         dsobj.source_id = ns;
         this.sources[ns] = dsobj;
     } else {
+        // If passed the already-created source object
         if (x !== null) {
+            x.source_id = ns;
             this.sources[ns] = x;
         } else {
             delete this.sources[ns];
@@ -302,7 +305,7 @@ LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
 
 
 /**
- * TODO Rename to handleRequest (to disambiguate from, say HTTP get requests) and update wiki docs and other references
+ * Gets the data for just this source, typically via a network request (caching where possible)
  * @protected
  */
 LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
@@ -929,7 +932,8 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * @augments LocusZoom.Data.Source
  * @param {Object} init Configuration for this source
  * @param {Object} init.from Specify how the hard-coded logic should find the data it relies on in the chain,
- *  as {internal_name: chain_source_id} pairs
+ *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
+ *  assumptions about what namespaces a source is using.
  * @type {*|Function}
  */
 LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
@@ -950,6 +954,11 @@ LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, "ConnectorSource");
 
+LocusZoom.Data.ConnectorSource.prototype.parseInit = function(init) {
+    // The exact requirements for `init` are up to each individual connector source
+    // TODO: Add common validation based on usage experience
+};
+
 LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fields) {
     // Connectors do not have their own data by definition, but they *do* depend on other sources having been loaded
     //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
@@ -957,15 +966,17 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
     Object.keys(this._source_name_mapping).forEach(function(ns) {
         var chain_source_id = self._source_name_mapping[ns];
         if (chain.raw && !chain.raw[chain_source_id]) {
-            throw this.constructor.SOURCE_NAME + " cannot be used before loading required data for: " + chain_source_id;
+            throw self.constructor.SOURCE_NAME + " cannot be used before loading required data for: " + chain_source_id;
         }
     });
-    return Q.fcall(function() {return chain.body || [];});
+    return Q.when(chain.body || []);
 };
 
 LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(response, chain, fields, outnames) {
     // A connector source does not update chain.raw, but it may use it while annotating records
     // Since a connector has no data of its own, deliberately bypass `parseData`
+    // This implies that connectors will not allow requesting of specific fields from the response; they are
+    //   "all or nothing" requests and should be treated as such in the fields array. (fields: ["connector_name:all"])
     var records = this.prepareData(response, chain);
     return {header: chain.header || {}, raw: chain.raw || {}, body: records};
 };
