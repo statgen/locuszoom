@@ -70,6 +70,9 @@
         // Serialize and return basic query params based solely on information from plot.state
         // More complex handlers are possible- the serializer can extract any information desired because it is given
         //  a direct reference to the plot object
+
+        // This default method does not use the eventContext data, because so many things change plot.state without
+        //  officially triggering an event.
         return _extractValues(plot.state, mapping);
     }
 
