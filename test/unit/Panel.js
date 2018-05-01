@@ -707,6 +707,29 @@ describe("LocusZoom.Panel", function(){
             assert.equal(this.panel.event_hooks["element_clicked"].length, 0, "De-registered event listener");
         });
 
+        it("should scope the value of this to wherever the listener was attached, unless overridden", function() {
+            var call_count = 0;
+            this.plot.on("element_clicked", function() {
+                assert.ok(this instanceof LocusZoom.Plot, "Plot listener is bound to plot");
+                call_count +=1;
+            });
+            this.panel.on("element_clicked", function(event) {
+                assert.ok(this instanceof LocusZoom.Panel, "Panel listener is bound to panel");
+                call_count +=1;
+            });
+
+            // Any manually provided binding context will override the one used by default. For example, an event
+            //  listener could be used to trigger changes to a viewmodel for a different widget
+            var bind_context = { someInstanceMethod: function() {} };
+            this.panel.on("element_clicked", function () {
+                assert.deepEqual(this, bind_context, "Manually bound context overrides defaults");
+                call_count +=1;
+            }.bind(bind_context));
+
+            this.panel.emit("element_clicked", true);
+            assert.equal(call_count, 3, "All listener handlers were called as expected");
+        });
+
         afterEach(function(){
             d3.select("#plot").remove();
             this.plot = null;
