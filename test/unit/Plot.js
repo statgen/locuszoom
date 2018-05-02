@@ -497,4 +497,89 @@ describe("LocusZoom.Plot", function(){
         });
     });
 
+    describe("subscribeToData", function() {
+        beforeEach(function() {
+            this.sandbox = sinon.sandbox.create();
+            var layout = {
+                panels: [ { id: "panel0" } ]
+            };
+
+            this.first_source_data = [ { x: 0, y: false  }, { x: 1, y: true } ];
+            this.data_sources = new LocusZoom.DataSources()
+                .add("first", ["StaticJSON", this.first_source_data ]);
+
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", this.data_sources, layout);
+        });
+
+        afterEach(function() {
+            d3.select("#plot").remove();
+            this.sandbox.restore();
+        });
+
+        it("allows subscribing to data using a standard limited fields array", function (done) {
+            var expectedData = [ {"first:x": 0}, {"first:x": 1} ];
+
+            var dataCallback = this.sandbox.spy();
+
+            this.plot.subscribeToData(
+                [ "first:x" ],
+                dataCallback,
+                done
+            );
+
+            this.plot.applyState().catch(done);
+
+            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
+            //  more than once during rerender
+            window.setTimeout(function() {
+                try {
+                    assert.ok(dataCallback.called, "Data handler was called");
+                    assert.ok(dataCallback.calledWith(expectedData), "Data handler received the expected data");
+                    done();
+                } catch(error) {
+                    done(error);
+                }
+            }, 0);
+        });
+
+        it("calls an error callback if a problem occurs while fetching data", function(done) {
+            var dataCallback = this.sandbox.spy();
+            var errorCallback = this.sandbox.spy();
+
+            this.plot.subscribeToData(
+                [ "nosource:x" ],
+                dataCallback,
+                errorCallback
+            );
+
+            this.plot.applyState()
+                .then(function() {
+                    assert.ok(dataCallback.notCalled, "Data callback was not called");
+                    assert.ok(errorCallback.called, "Error callback was called");
+                }).finally(done);
+        });
+
+        it("allows event listeners to be removed / cleaned up individually", function() {
+            var dataCallback = sinon.spy();
+            var errorCallback= sinon.spy();
+
+            var listener = this.plot.subscribeToData(
+                [ "nosource:x" ],
+                dataCallback,
+                errorCallback
+            );
+
+            this.plot.off("data_rendered", listener);
+            this.plot.emit("data_rendered");
+            assert.equal(
+                this.plot.event_hooks["data_rendered"].indexOf(listener),
+                -1,
+                "Listener should not be registered"
+            );
+            assert.ok(dataCallback.notCalled, "listener success callback was not fired");
+            assert.ok(errorCallback.notCalled, "listener error callback was not fired");
+        });
+    });
+
 });

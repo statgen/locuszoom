@@ -251,6 +251,11 @@ describe("LocusZoom.Panel", function(){
             this.plot = LocusZoom.populate("#plot", datasources, this.layout);
             this.panel = this.plot.panels.test;
         });
+
+        afterEach(function() {
+            d3.select("#plot").remove();
+        });
+
         it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
             this.panel.should.have.property("curtain").which.is.an.Object;
             this.panel.curtain.should.have.property("showing").which.is.exactly(false);
@@ -614,6 +619,11 @@ describe("LocusZoom.Panel", function(){
             this.panel = this.plot.panels.panel0;
         });
 
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+
         it("should send events packaged with source and data", function() {
             var spy = sinon.spy();
             this.panel.on("element_clicked", spy);
@@ -624,7 +634,6 @@ describe("LocusZoom.Panel", function(){
                 data: {something:1}
             }));
         });
-
         it("should bubble events to plot and preserve event source + data when expected", function() {
             var panel_spy = sinon.spy();
             var plot_spy = sinon.spy();
@@ -641,7 +650,6 @@ describe("LocusZoom.Panel", function(){
             assert.ok(panel_spy.calledOnce, "Panel event was fired");
             assert.ok(panel_spy.calledWith(expectedEvent), "Panel called with expected event");
         });
-
         it("should bubble events to plot (overloaded no-data call signature)", function() {
             var panel_spy = sinon.spy();
             var plot_spy = sinon.spy();
@@ -659,7 +667,6 @@ describe("LocusZoom.Panel", function(){
             assert.ok(panel_spy.calledOnce, "Panel event was fired");
             assert.ok(panel_spy.calledWith(expectedEvent), "Panel called with expected event");
         });
-
         it("should not bubble events to plot when not expected", function() {
             // "No data" call signature
             var panel_nodata_spy = sinon.spy();
@@ -688,7 +695,6 @@ describe("LocusZoom.Panel", function(){
             assert.ok(panel_withdata_spy.calledOnce, "Panel event (with data) was fired");
             assert.ok(panel_withdata_spy.calledWith(expectedDataEvent), "Panel event (with data) called with expected event");
         });
-
         it("allows event listeners to be removed / cleaned up individually", function() {
             var listener_handle = this.panel.on("element_clicked", function() {});
             assert.equal(this.panel.event_hooks["element_clicked"].length, 1, "Registered event listener");
@@ -696,7 +702,6 @@ describe("LocusZoom.Panel", function(){
             this.panel.off("element_clicked", listener_handle);
             assert.equal(this.panel.event_hooks["element_clicked"].length, 0, "De-registered event listener");
         });
-
         it("allows event listeners to be removed / cleaned up all at once", function() {
             // Register two events!
             this.panel.on("element_clicked", function() {});
@@ -706,7 +711,6 @@ describe("LocusZoom.Panel", function(){
             this.panel.off("element_clicked");
             assert.equal(this.panel.event_hooks["element_clicked"].length, 0, "De-registered event listener");
         });
-
         it("should scope the value of this to wherever the listener was attached, unless overridden", function() {
             var call_count = 0;
             this.plot.on("element_clicked", function() {
@@ -728,11 +732,6 @@ describe("LocusZoom.Panel", function(){
 
             this.panel.emit("element_clicked", true);
             assert.equal(call_count, 3, "All listener handlers were called as expected");
-        });
-
-        afterEach(function(){
-            d3.select("#plot").remove();
-            this.plot = null;
         });
     });
 });

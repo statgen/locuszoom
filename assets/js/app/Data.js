@@ -226,7 +226,7 @@ LocusZoom.Data.Requester = function(sources) {
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
-        var ret = Q.when({header:{}, body:{}});
+        var ret = Q.when({header:{}, body:{}, raw: {}});
         for(var i=0; i < promises.length; i++) {
             // If a single datalayer uses multiple sources, perform the next request when the previous one completes
             ret = ret.then(promises[i]);

@@ -956,27 +956,28 @@ LocusZoom.Plot.prototype.refresh = function(){
  *  new data is received by the plot.
  * @param {externalErrorCallback} [error_callback] User defined function that is automatically called if a problem
  *  occurs during the data request or subsequent callback operations
- * @param {Object} [opts] Configure special options that control how data is returned
- * @param {boolean} [opts.raw=false] Normally, the data chain attempts to collapse different sources into a single
- *   cohesive form- such as the data for a series of points on a plot. Alternately, you can subscribe to the raw data:
- *   get all fields related to the parsed data from each individual source, without any automatic connections.
+ *  @return {function} The newly created event listener, to allow for later cleanup/removal
  */
-LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback, opts) {
-    opts = opts || {raw: false};
-
+LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback) {
     // Register an event listener that is notified whenever new data has been rendered
     error_callback = error_callback || function(err) {
         console.log("An error occurred while acting on an external callback", err);
     };
     var self = this;
-    this.on("data_rendered", function() {
-        self.lzd.getData(self.state, fields)
-            .then(function(new_data) {
-                var result = opts.raw ? new_data.raw : new_data.body;
-                success_callback(result);
-            })
-            .catch(error_callback);
-    });
+
+    var listener = function() {
+        try {
+            self.lzd.getData(self.state, fields)
+                .then(function (new_data) {
+                    success_callback(new_data.body);
+                }).catch(error_callback);
+        } catch (error) {
+            // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
+            error_callback(error);
+        }
+    };
+    this.on("data_rendered", listener);
+    return listener;
 };
 
 /**
@@ -985,7 +986,6 @@ LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, er
  * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
  */
 LocusZoom.Plot.prototype.applyState = function(state_changes){
-
     state_changes = state_changes || {};
     if (typeof state_changes != "object"){
         throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
