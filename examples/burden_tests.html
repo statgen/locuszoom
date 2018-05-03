@@ -147,74 +147,44 @@
 
     ////////
     // Define listeners required to draw and update the companion table of results
-    var burdenRowClick = function (_, row) {
-        // Notify all plot listeners when an element with matching data is clicked
-
-        // TODO: Change this behavior: one table should trigger filtering on another
-        plot.emit("element_clicked", row.row.data);
-    };
-
-
-    // Draw assoc/ variants table
-    var TABLE_SELECTOR_ASSOC = "#results-table";  // ID for where plots will be rendered
-    createAssociationTable(TABLE_SELECTOR_ASSOC);
-    var renderAssocCallback = updateTableData.bind(null, TABLE_SELECTOR_ASSOC); // curry first argument
-    plot.subscribeToData(
-        ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "assoc:ref_allele_freq", "ld:state", "ld:isrefvar"],
-        renderAssocCallback
-    );
-
-    // Draw burden test results table
     var TABLE_SELECTOR_BURDEN = "#burden-results-table";
-    createBurdenTestTable(TABLE_SELECTOR_BURDEN, burdenRowClick);
-    var renderBurdenCallback = updateTableData.bind(null, TABLE_SELECTOR_BURDEN);
-    plot.subscribeToData(
-        ["burdentest:all", "burden_rows:all"],
-        renderBurdenCallback
-    );
+    var TABLE_SELECTOR_VARIANTS = "#results-table";
 
-    // Set up event listeners so that tables can react to various plot and user events
-    plot.on("element_clicked", function (eventData) {
-        // This listener will fire on any clickable element in any data layer, and we can filter the events
-        // by source ID
-        if (eventData["sourceID"] !== "plot.association") {
-            return;
-        }
-        var selectedItem = eventData["data"]["assoc:variant"];
-        if (selectedItem) {
-            // TODO: rework this so it is driven by burden test table/masks, instead of the plot
-            // (or else handle variantas in the plot, but not in the mask)
-            scrollTableToData(TABLE_SELECTOR_ASSOC, selectedItem);
-        }
-    });
-
-    plot.on("element_selection", function(eventData) {
-        // Trigger the burden test table to filter (or unfilter) on a particular value
-        if (eventData["sourceID"] !== "plot.genes") {
-            return;
-        }
-
-        // Programmatic filters are set separately from column filters
-        // TODO: Can we disable column filtering for this column when the programmatic filters are active?
-        //      see setColumns function and DRY / make nice
-        var gene_column_name = "group";
-        var selected_gene = eventData["data"]["element"]["gene_name"];
-
-        if (eventData["data"]["active"]) {
-            setTableFilter(TABLE_SELECTOR_BURDEN, gene_column_name, selected_gene);
-            $("#label-no-group-selected").hide();
-            $("#label-current-group-selected").show().text(selected_gene);
-        } else {
-            $("#label-no-group-selected").show();
-            $("#label-current-group-selected").hide();
-            clearTableFilter(TABLE_SELECTOR_BURDEN, gene_column_name, selected_gene);
-        }
-    });
+    window.burdenTable = new BurdenTable(TABLE_SELECTOR_BURDEN, {
+    index: "id",
+    layout: "fitColumns",
+    rowClick: null,  // TODO: Add row click functionality
+    columns: [
+        { title: "Gene", field: "group" },
+        { title: "Mask", field: "mask", headerFilter: true },
+        { title: "# Variants", field: "variant_count" },
+        { title: "Test type", field: "calc_type", headerFilter: true },
+        { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
+    ],
+    placeholder: "No Data Available",
+    initialSort: [
+        { column: "pvalue", dir: "asc" }
+    ]
+}, plot);
+    window.variantsTable = new VariantsTable(TABLE_SELECTOR_VARIANTS, {
+    height: 440,
+    layout: "fitColumns",
+    index: "assoc:variant",
+    rowClick: null,  // TODO: restore appropriate row click functionality
+    columns: [
+        { title: "Variant", field: "assoc:variant" },
+        { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
+        // TODO: This will not necessarily be the disease causing allele, or even the rare one
+        // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
+        { title: "Ref allele", field: "assoc:ref_allele" },
+        { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
+    ],
+    placeholder: "No Data Available"
+}, plot);
 
     $("#download-burden").on("click", function() {
-        $(TABLE_SELECTOR_BURDEN).tabulator("download", "csv", "burden-data.csv");
+        burdenTable.tableDownloadData("burden-data.csv", "csv");
     });
-
 </script>
 </body>
 </html>

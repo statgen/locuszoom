@@ -7,16 +7,9 @@
 /* eslint-disable no-unused-vars */
 
 
-function _formatSciNotation(cell, params) {
-    // Tabulator cell formatter using sci notation
-    var value = cell.getValue();
-    return LocusZoom.TransformationFunctions.get("scinotation")(value);
-}
 
-/**
- * Modify the plot layout to show information about burden tests
- */
-function customizePlotLayout(layout) {
+// Make a custom layout object
+function customizePlotLayout (layout) {
     // Customize an existing plot layout with the data for burden tests
     // Customize layout: genes layer must pull from the burden source + the burden_genes connector if we want to color
     //  the gene track by burden test results
@@ -54,85 +47,123 @@ function customizePlotLayout(layout) {
     return layout;
 }
 
-/**
- * Create a table of GWAS results
- */
-function createAssociationTable(selector, row_click_callback) {
-    // TODO: Rewrite ideas to use rm.js burden table output as a data source
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator({
-        height: 440,
-        layout: "fitColumns",
-        index: "assoc:variant",
-        rowClick: row_click_callback,
-        columns: [
-            { title: "Variant", field: "assoc:variant" },
-            { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
-            // TODO: This will not necessarily be the disease causing allele, or even the rare one
-            // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
-            { title: "Ref allele", field: "assoc:ref_allele" },
-            { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
-        ],
-        placeholder: "No Data Available"
-    });
+function _formatSciNotation (cell, params) {
+    // Tabulator cell formatter using sci notation
+    var value = cell.getValue();
+    return LocusZoom.TransformationFunctions.get("scinotation")(value);
 }
 
-/**
- * Create a table showing only data from the Burden Test datasource
- *
- */
-function createBurdenTestTable(selector, row_click_callback) {
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator({
-        index: "id",
-        layout: "fitColumns",
-        rowClick: row_click_callback,
-        columns: [
-            { title: "Gene", field: "group" },
-            { title: "Mask", field: "mask", headerFilter: true },
-            { title: "# Variants", field: "variant_count" },
-            { title: "Test type", field: "calc_type", headerFilter: true },
-            { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
-        ],
-        placeholder: "No Data Available",
-        initialSort: [
-            { column: "pvalue", dir: "asc" }
-        ]
-    });
-}
+// Controllers for page results tables
+var GenericTabulatorTable = LocusZoom.subclass(function() {}, {
+    /**
+     *
+     * @param {string} selector A selector string for the table container
+     * @param {object} table_config An object specifying the tabulator layout for this table
+     * @param {LocusZoom.Plot} plot A reference to the LZ plot object. Required for two way communication
+     */
+    constructor: function(selector, table_config, plot) {
+        if (typeof selector === "string") {
+            selector = $(selector);
+        }
+        this.selector = selector;
+        this._table_config = table_config;
+        this.plot = plot;
 
-//////////
-// Methods for generic table behavior
+        this.selector.tabulator(this._table_config);
+        this.addPlotListeners(plot);
+    },
 
-/**
- * Callback that takes in data and renders an HTML table to a hardcoded document location
- * @param {string} selector A selector string for the table container
- * @param {object} data
- */
-function updateTableData(selector, data) {
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator("setData", data);
-}
+    /**
+     * Define basic event listeners required for the table to synchronize with the plot
+     * @param plot
+     */
+    addPlotListeners: function (plot) {},
 
-/**
- * Scroll the table to a particular row, and highlight the value. The index must be a row number, or a field
- *  value that matches the table's predefined index field.
- * @param {String} selector
- * @param {String|Number} index A unique identifier that tabulator uses to locate a matching row
- */
-function scrollTableToData(selector, index) {
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator("scrollToRow", index);
-    tableSelectorTarget.tabulator("deselectRow");
-    tableSelectorTarget.tabulator("selectRow", index);
-}
+    /**
+     * Callback that takes in data and renders an HTML table to a hardcoded document location
+     * @param {object} data
+     */
+    tableUpdateData: function (data) {
+        this.selector.tabulator("setData", data);
+    },
 
-function setTableFilter(selector, column, value) {
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator("setFilter", column, "=", value);
-}
+    /**
+     * Scroll the table to a particular row, and highlight the value. The index must be a row number, or a field
+     *  value that matches the table's predefined index field.
+     * @param {String|Number} index A unique identifier that tabulator uses to locate a matching row
+     */
+    tableScrollToData: function (index) {
+        this.selector.tabulator("scrollToRow", index);
+        this.selector.tabulator("deselectRow");
+        this.selector.tabulator("selectRow", index);
+    },
 
-function clearTableFilter(selector, column, value) {
-    var tableSelectorTarget = $(selector);
-    tableSelectorTarget.tabulator("removeFilter", column, "=", value);
-}
+    tableSetFilter: function (column, value) {
+        this.selector.tabulator("setFilter", column, "=", value);
+    },
+
+    tableClearFilter: function (column, value) {
+        this.selector.tabulator("removeFilter", column, "=", value);
+    },
+
+    tableDownloadData: function(filename, format) {
+        format = format || "csv";
+        this.selector.tabulator("download", format, filename);
+    }
+});
+
+var BurdenTable = LocusZoom.subclass(GenericTabulatorTable, {
+    addPlotListeners: function(plot) {
+        plot.subscribeToData(
+            // FIXME: These fields are hard-coded references to specific namespaced sources
+            ["burdentest:all", "burden_rows:all"],
+            this.tableUpdateData.bind(this)
+        );
+
+        plot.on("element_selection", function(eventData) {
+            // Trigger the burden test table to filter (or unfilter) on a particular value
+            if (eventData["sourceID"] !== "plot.genes") {
+                return;
+            }
+
+            // Programmatic filters are set separately from column filters
+            var gene_column_name = "group";
+            var selected_gene = eventData["data"]["element"]["gene_name"];
+
+            // FIXME: Hard-coded selectors
+            if (eventData["data"]["active"]) {
+                this.tableSetFilter(gene_column_name, selected_gene);
+                $("#label-no-group-selected").hide();
+                $("#label-current-group-selected").show().text(selected_gene);
+            } else {
+                $("#label-no-group-selected").show();
+                $("#label-current-group-selected").hide();
+                this.tableClearFilter(gene_column_name, selected_gene);
+            }
+        }.bind(this));
+    }
+});
+
+var VariantsTable = LocusZoom.subclass(GenericTabulatorTable, {
+    addPlotListeners: function (plot) {
+        plot.subscribeToData(
+            // FIXME: These fields are hard-coded references to specific namespaced sources
+            ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "assoc:ref_allele_freq", "ld:state", "ld:isrefvar"],
+            this.tableUpdateData.bind(this)
+        );
+
+        plot.on("element_clicked", function (eventData) {
+            // This listener will fire on any clickable element in any data layer, and we can filter the events
+            // by source ID
+            if (eventData["sourceID"] !== "plot.association") {
+                return;
+            }
+            var selectedItem = eventData["data"]["assoc:variant"];
+            if (selectedItem) {
+                // TODO: rework this so it is driven by burden test table/masks, instead of the plot
+                // (or else handle variants that are not in both plot AND mask)
+                this.tableScrollToData(selectedItem);
+            }
+        }.bind(this));
+    }
+});
