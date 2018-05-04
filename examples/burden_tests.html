@@ -49,32 +49,27 @@
 <body>
 <div class="container">
 
-  <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
-
-  <h3 style="float: left; color: #777">Burden Tests Demonstration</h3>
-  <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
-
-  <hr style="clear: both;">
-
-  <p>
-    There are many types of burden tests, each with their own unique characteristics. Since it is not always
-    possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
-    share plot data with any arbitrary HTML element on the page.
-  </p>
-  <p>
-    The example below demonstrates a table that can automatically update as the plot is redrawn.
-  </p>
-
-  <hr>
-
   <div class="row">
+    <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+    <h3 style="float: left; color: #777">Burden Tests Demonstration</h3>
+    <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+    <hr style="clear: both;">
+
+    <p>
+      There are many types of burden tests, each with their own unique characteristics. Since it is not always
+      possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
+      share plot data with any arbitrary HTML element on the page.
+    </p>
+
+
+    <hr>
+
     <div class="twelve columns">
       <h3>Interactive Plot</h3>
       <div id="plot" class="lz-container-responsive"></div>
-    </div>
 
-  <div class="row">
-    <div class="twelve columns">
       <h3>Table of burden test results</h3>
       Currently reviewing results for:
       <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
@@ -83,15 +78,10 @@
 
       <button id="download-burden" class="button-primary">Download</button><br>
 
-      <div id="burden-results-table"></div>
-    </div>
-  </div>
+      <div id="results-table-burden"></div>
 
-    <div class="row">
-      <div class="twelve columns">
-        <h3>Variants in group</h3>
-        <div id="results-table"></div>
-      </div>
+      <h3>Variants in group</h3>
+      <div id="results-table-variants"></div>
     </div>
   </div>
 
@@ -147,10 +137,10 @@
 
     ////////
     // Define listeners required to draw and update the companion table of results
-    var TABLE_SELECTOR_BURDEN = "#burden-results-table";
-    var TABLE_SELECTOR_VARIANTS = "#results-table";
+    var TABLE_SELECTOR_BURDEN = "#results-table-burden";
+    var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
-    window.burdenTable = new BurdenTable(TABLE_SELECTOR_BURDEN, {
+    window.burdenTable = new BurdenTableController(TABLE_SELECTOR_BURDEN, {
     index: "id",
     layout: "fitColumns",
     rowClick: null,  // TODO: Add row click functionality
@@ -166,7 +156,7 @@
         { column: "pvalue", dir: "asc" }
     ]
 }, plot);
-    window.variantsTable = new VariantsTable(TABLE_SELECTOR_VARIANTS, {
+    window.variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
     height: 440,
     layout: "fitColumns",
     index: "assoc:variant",

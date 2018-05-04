@@ -53,11 +53,11 @@ function _formatSciNotation (cell, params) {
     return LocusZoom.TransformationFunctions.get("scinotation")(value);
 }
 
-// Controllers for page results tables
-var GenericTabulatorTable = LocusZoom.subclass(function() {}, {
+// Controllers for page widgets
+var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
     /**
      *
-     * @param {string} selector A selector string for the table container
+     * @param {string|Object} selector A selector string for the table container
      * @param {object} table_config An object specifying the tabulator layout for this table
      * @param {LocusZoom.Plot} plot A reference to the LZ plot object. Required for two way communication
      */
@@ -112,7 +112,7 @@ var GenericTabulatorTable = LocusZoom.subclass(function() {}, {
     }
 });
 
-var BurdenTable = LocusZoom.subclass(GenericTabulatorTable, {
+var BurdenTableController = LocusZoom.subclass(GenericTabulatorTableController, {
     addPlotListeners: function(plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
@@ -144,7 +144,7 @@ var BurdenTable = LocusZoom.subclass(GenericTabulatorTable, {
     }
 });
 
-var VariantsTable = LocusZoom.subclass(GenericTabulatorTable, {
+var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {
     addPlotListeners: function (plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
