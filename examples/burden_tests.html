@@ -67,6 +67,11 @@
     <hr>
 
     <div class="twelve columns">
+
+      <h3>Build your analysis</h3>
+      <div id="widget-burden-builder"></div>
+      <button id="button-burden-run" class="button-primary">Run tests</button>
+
       <h3>Interactive Plot</h3>
       <div id="plot" class="lz-container-responsive"></div>
 
@@ -94,6 +99,14 @@
 </div>
 
 <script type="application/javascript">
+    // Before the plot can render, the user must specify a set of burden tests they would like to run
+    window.burdenBuilder = new BurdenTestBuilder(
+        "#widget-burden-builder",
+        [["zegginiBurden", "Zeggini Burden test"], ["skatDavies", "SKAT (Davies method)"]],
+        ["whole", "2%", "1%", "skim", "water"]
+    );
+
+
     /*
       Specify the data sources to use
      */
@@ -141,40 +154,46 @@
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
     window.burdenTable = new BurdenTableController(TABLE_SELECTOR_BURDEN, {
-    index: "id",
-    layout: "fitColumns",
-    rowClick: null,  // TODO: Add row click functionality
-    columns: [
-        { title: "Gene", field: "group" },
-        { title: "Mask", field: "mask", headerFilter: true },
-        { title: "# Variants", field: "variant_count" },
-        { title: "Test type", field: "calc_type", headerFilter: true },
-        { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
-    ],
-    placeholder: "No Data Available",
-    initialSort: [
-        { column: "pvalue", dir: "asc" }
-    ]
-}, plot);
+        index: "id",
+        layout: "fitColumns",
+        rowClick: null,  // TODO: Add row click functionality
+        columns: [
+            { title: "Gene", field: "group" },
+            { title: "Mask", field: "mask", headerFilter: true },
+            { title: "# Variants", field: "variant_count" },
+            { title: "Test type", field: "calc_type", headerFilter: true },
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
+        ],
+        placeholder: "No Data Available",
+        initialSort: [
+            { column: "pvalue", dir: "asc" }
+        ]
+    }, plot);
     window.variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
-    height: 440,
-    layout: "fitColumns",
-    index: "assoc:variant",
-    rowClick: null,  // TODO: restore appropriate row click functionality
-    columns: [
-        { title: "Variant", field: "assoc:variant" },
-        { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
-        // TODO: This will not necessarily be the disease causing allele, or even the rare one
-        // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
-        { title: "Ref allele", field: "assoc:ref_allele" },
-        { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
-    ],
-    placeholder: "No Data Available"
-}, plot);
+        height: 440,
+        layout: "fitColumns",
+        index: "assoc:variant",
+        rowClick: null,  // TODO: restore appropriate row click functionality
+        columns: [
+            { title: "Variant", field: "assoc:variant" },
+            { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
+            // TODO: This will not necessarily be the disease causing allele, or even the rare one
+            // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
+            { title: "Ref allele", field: "assoc:ref_allele" },
+            { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
+        ],
+        placeholder: "No Data Available"
+    }, plot);
 
     $("#download-burden").on("click", function() {
         burdenTable.tableDownloadData("burden-data.csv", "csv");
     });
+
+    $("#button-burden-run").on("click", function() {
+        // TODO: Add validation
+        plot.applyState({ burden_tests: builder.getTests() });
+    })
+
 </script>
 </body>
 </html>

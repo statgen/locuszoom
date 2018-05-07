@@ -3,10 +3,8 @@
  */
 "use strict";
 
-/* global $ */
+/* global $, raremetal */
 /* eslint-disable no-unused-vars */
-
-
 
 // Make a custom layout object
 function customizePlotLayout (layout) {
@@ -167,3 +165,184 @@ var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController
         }.bind(this));
     }
 });
+
+/**
+ * A minimal method of defining burden tests in the absence of a UI framework. Proof of concept, ONLY- not intended
+ *   for production use. (generating HTML via jquery is rather ugly, but it keeps the examples highly framework-neutral)
+ * @class
+ * @param {string|object} selector A jquery selector or element name specifying where to draw the widget
+ * @param {String[]} test_names What tests are recognized  TODO: will serialization need to hardcode this?
+ * @param {String[]} mask_names What masks are allowed TODO: When and where will this be loaded from?
+ */
+var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
+    constructor: function(selector, burden_names, mask_names) {
+        // Store the options used to populate the dropdown
+        this._burden_types = burden_names;
+        this._mask_names = mask_names;
+
+        if (typeof selector === "string") {
+            selector = $(selector);
+        }
+        this._container = selector;
+        this._burden_spec_list_container = $("<div></div>").appendTo(selector);
+
+        this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
+
+        // Build these fragments once and reuse
+        this._mask_dropdown = this.__render_dropdown("mask_choice", mask_names);  // Assume this comes from an API / remote source
+        this._burden_dropdown = this.__render_dropdown("burden_choice", burden_names);  // TODO: This may need to be hardcoded in order to serialize correctly for RMjs
+
+        // Make sure that at least one set of test-description input elements appears on first render
+        this.addTest();
+        this._addControls();
+    },
+
+    _addControls: function() {
+        // Render helper: add controls to widget
+        var addButton = $("<button></button>").text("Add another")
+            .addClass("button-primary")
+            .on("click", this.addTest.bind(this));
+
+        this._container.append(addButton);
+    },
+
+    /** @return {Number} */
+    getTestCount: function () {
+        return this._burden_spec_list_container.children().length;
+    },
+
+    addTest: function() {
+        var element = $("<div></div>", { id: "test-" + (this.getTestCount() + 1) })
+            .addClass("row")
+            .appendTo(this._burden_spec_list_container);
+
+        var test_label = $("<input>", { name: "label", type: "text", placeholder: "Label" });
+
+        var removeButton = $("<button></button>").text("x")
+            .on("click", this.removeTest.bind(this, element));
+
+        element.append(test_label);
+        element.append(this._mask_dropdown.clone());
+        element.append(this._burden_dropdown.clone());
+        element.append(removeButton);
+    },
+
+    removeTest: function(test_id) {
+        // Remove the DOM element (and data) associated with a given test, make sure one element is always present
+        if (this.getTestCount() <= 1 || !test_id) {
+            return;
+        }
+        this._burden_spec_list_container.find(test_id).remove();
+
+    },
+
+    setStatus: function (message) {
+        // set error text or status
+        this._status_div.text(message);
+
+    },
+
+    /**
+     *
+     * @param {String} name The name of the select menu
+     * @param {String|String[]} options An array where each element specifies [value, displayName]
+     * @param {string} empty An option specification corresponding to "none selected"
+     * @private
+     */
+    __render_dropdown: function (name, options, empty) {
+        empty = empty || ["", "Select an option"];
+        var htmlescape = LocusZoom.TransformationFunctions.get("htmlescape");
+        var element = $("<select></select>", { name: name });
+
+        options = options.slice();
+        options.unshift(empty);
+
+        options.forEach(function(option) {
+            var value;
+            var displayName;
+            if (Array.isArray(option)) {  // Optionally specify both a code and human readable value
+                value = option[0];
+                displayName = option[1];
+            } else {
+                value = displayName = option;
+            }
+            var choice = $("<option></option>"  , { value: htmlescape(value) }).text(displayName);
+            element.append(choice);
+        });
+        return element;
+    },
+
+    /**
+     * Identify whether a given element specifies a valid test
+     * @param {object} data
+     * @returns {boolean}
+     */
+    _validateOneTest: function(data) {
+        // Simplest: make sure every key has a non-empty value
+        return Object.keys(data).map(function(k) { return data[k]; }).every(function(v) { return !!v; });
+    },
+
+    /**
+     * @param {Object[]} test_json Array with the JSON representation of each individual test
+     * @returns {boolean}
+     * @private
+     */
+    _validateTests: function(test_json) {
+        // all test names unique across tests + all fields filled in. If any fail, update UI with messages
+        // TODO: Show validation state / errors
+        return test_json.every(this._validateOneTest.bind(this));
+    },
+
+    /** Serialize a single test to a format that rm.js can understand */
+    _getTestJson: function(element) {
+        // Assume that all form elements have a name attribute, and serialize accordingly
+        // TODO: clarify code here. Spec: label, mask_choice, burden_choice
+        var res = {};
+        $(element).children("[name]").each(function() {
+            var label = this.attributes.name.value;
+            var value = this.value;
+
+            // FIXME: Hardcoded serialization mechanism; make maintainable
+            if(label === "burden_choice") {
+                switch(value) {
+                case "zegginiBurden":
+                    value = raremetal.stats.testBurden;
+                    break;
+                case "skatLiu":
+                    value = {
+                        test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "liu"); },
+                        weights: raremetal.stats.calcSkatWeights
+                    };
+                    break;
+                case "skatDavies":
+                    value = {
+                        test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "davies"); },
+                        weights: raremetal.stats.calcSkatWeights
+                    };
+                    break;
+                default:
+                    value = null;
+                }
+            }
+            res[label] = value;
+        });
+        return res;
+    },
+
+    /**
+     * Get a description of tests to run, in a format suitable for use with Raremetal.js
+    */
+    getTests: function() {
+        var self = this;
+        // TODO: At this step, it should filter the array of masks down to those that a user is actually interested in using
+        // TODO: perform validation and warn user of test errors
+        var allTests = this._burden_spec_list_container.children().map(function(i, el) { return self._getTestJson(el); }).get();
+
+        var res = {};
+        allTests.forEach(function(test) {
+            res[test.label] = test.burden_choice;
+        });
+        return res;
+    }
+});
+
