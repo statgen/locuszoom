@@ -14,7 +14,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
      * */
     this.DefaultLayout = {
         // Optionally specify different fill and stroke properties
-        stroke: "rgb(54, 54, 150);",
+        stroke: "rgb(54, 54, 150)",
         color: "#363696",
         label_font_size: 12,
         label_exon_spacing: 4,
@@ -273,14 +273,11 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 var boundary_fill = function(d){ return self.resolveScalableParameter(self.layout.color, d); };
                 var boundary_stroke = function(d){ return self.resolveScalableParameter(self.layout.stroke, d); };
                 var boundaries = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-boundary")
-                    .data([gene], function(d){ return d.gene_name + "_boundary"; });
+                    .data([gene], function(d){ return d.gene_name + "_boundary"; })
+                    .style({ fill: boundary_fill, stroke: boundary_stroke });
 
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-boundary");
-
-                boundaries
-                    .attr("fill", boundary_fill)
-                    .attr("stroke", boundary_stroke);
 
                 width = function(d){
                     return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
@@ -361,12 +358,13 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 var exons = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-exon")
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d){ return d.exon_id; });
-                        
+
                 exons.enter().append("rect")
-                    .attr("class", "lz-data_layer-genes lz-exon")
-                    .attr("fill", exon_fill)
-                    .attr("stroke", exon_stroke);
-                        
+                    .attr("class", "lz-data_layer-genes lz-exon");
+
+                exons
+                    .style({ fill: exon_fill, stroke: exon_stroke });
+
                 width = function(d){
                     return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 };
