@@ -212,19 +212,24 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     addTest: function() {
-        var element = $("<div></div>", { id: "test-" + (this.getTestCount() + 1) })
+        var rowNumber= this.getTestCount();
+        var element = $("<div></div>", { id: "test-" + rowNumber })
             .addClass("row")
             .appendTo(this._burden_spec_list_container);
 
-        var test_label = $("<input>", { name: "label", type: "text", placeholder: "Label" });
+        var test_label = $("<input>", { name: "label", type: "text", placeholder: "Label (required)" });
 
         var removeButton = $("<button></button>").text("x")
+            .css({ color: "white", "background-color": "#d9534f" })
             .on("click", this.removeTest.bind(this, element));
 
         element.append(test_label);
         element.append(this._mask_dropdown.clone());
         element.append(this._burden_dropdown.clone());
-        element.append(removeButton);
+
+        if (rowNumber > 0) {  // Do not allow the user to remove the first row
+            element.append(removeButton);
+        }
     },
 
     removeTest: function(test_id) {

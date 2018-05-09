@@ -379,7 +379,8 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  */
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
-    // Store a copy of the parsed API data from this source, with no further post-processing
+    // Store a copy of the parsed API data from just this source, with no further post-processing.  This does not
+    //  reflect any operations performed in `prepareData`, which could contain data from other sources.
     if (!chain.raw) {
         chain.raw = {};
     }
@@ -492,7 +493,7 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
 };
 
 /**
- * Parse the response data  TODO Hide private entries from user-facing api docs
+ * Parse the response data: convert a raw API payload into a form usable by LocusZoom  TODO Hide private entries from user-facing api docs
  * @protected
  * @param {Object} x The raw response data to be parsed
  * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
@@ -515,7 +516,8 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
 /**
  * Hook to post-process the data returned by this source. This is a hook that allows custom sources to specify any
  *   optional transformations that should be performed on the data that is returned from the server for this endpoint.
- *   (eg, performing calculations or filtering on the server response)
+ *   (eg, combining with the records from another data source, performing calculations, or filtering)
+ *
  * This also allows annotating records (from this source) based on responses from previous data sources in the chain-
  *  see "ConnectorSource" for an example
  *  @param {Object[]} records The parsed response body as it would be returned from this source

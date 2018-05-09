@@ -21,29 +21,53 @@ var getMaskKey = function(group_id, mask_id) { return group_id + "_" + mask_id; 
  * @augments LocusZoom.Data.Source
  */
 LocusZoom.Data.GeneTestSource = LocusZoom.Data.Source.extend(function (init) {
-    //TODO: Use the URL to fetch a covariance matrix that will power the live calculation data
     this.parseInit(init);
 }, "GeneTestSourceLZ");
 
-LocusZoom.Data.GeneTestSource.prototype.getURL = function () {
-    // TODO: customize calculation once covar matrices exist
+LocusZoom.Data.GeneTestSource.prototype.getURL = function (state, chain, fields) {
+    // Unlike most sources, calculations may require access to plot state data even after the initial request
+    // This example source ASSUMES that the external UI widget would store the needed test definitions in a plot state
+    //  field called `burden_calcs`
+    // TODO: In the future, getURL will need to account for the specific masks selected by an external widget
+    this._burden_calcs = state.burden_calcs;
     return this.url;
 };
 
-LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
-    return raremetal.helpers._example("data/burdentest_raw_hail_22_21576208-22089932.json").then(function(data) {
-        // For the purpose of initial integration, the rm.js output is missing certain data for which a source is not obvious
-        // TODO: Remove this "fake data" generation for production and just `return data['data']`!!
-        data = data["data"];
+LocusZoom.Data.GeneTestSource.prototype.getData = function (state, fields, outnames, trans) {
+    var self = this;
+    return function(chain) {
 
-        // Mocking and fake data added below
-        data.results = data.results.map(function(res) {
-            // TODO: The spec calls for multiple kinds of interval, but here, assume every group is a gene
-            res.type = res.type || "gene";
-            return res;
-        });
-        return data;
+        return self.getRequest(state, chain, fields)
+            .then(function (resp) { return self.parseResponse(resp, chain, fields, outnames, trans); });
+    };
+};
+
+LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
+    // Whatever comes out of `parseData` gets added to `chain.raw`; this is the method we override when we want to remix the calculated results
+
+    // TODO: ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
+    var scoreCov = raremetal.helpers.parsePortalJson({data: response});
+    var calcs = this._burden_calcs;
+
+    if (!calcs || Object.keys(calcs).length === 0) {
+        // If no calcs have been defined, then don't run any calcs
+        return { masks: [], results: [] };
+    }
+
+    // TODO: This field is in the rmjs output/result spec, but may be omitted
+    var metadata = { id: 100, description: "Multiple tests and masks run at once" };
+
+    var res = raremetal.helpers.runAggregationTests(calcs, scoreCov, metadata);
+    var data = res["data"];
+
+    // Mocking and fake data added below
+    data.results = data.results.map(function(res) {
+        // TODO: The spec calls for multiple kinds of interval, but rm.js does not output this in the synthetic data.
+        // For here, assume every group is a gene
+        res.type = res.type || "gene";
+        return res;
     });
+    return data;
 };
 
 LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) {
