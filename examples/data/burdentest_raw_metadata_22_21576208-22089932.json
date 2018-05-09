@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "dataset": 42,
+      "analysis": "Demonstration data",
+      "masks": [
+        {
+          "id": "MDUP",
+          "description": "Entirely fictional mask",
+          "grouping": "gene",
+          "identifier": "ENSEMBL"
+        },
+        {
+          "id": "FCTUS",
+          "description": "A fictitious interval",
+          "grouping": "interval",
+          "identifier": "ENSEMBL"
+        }
+      ]
+    }
+  ]
+}

@@ -193,6 +193,7 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         if (typeof selector === "string") {
             selector = $(selector);
         }
+        selector.html("");
         this._container = selector;
         this._burden_spec_list_container = $("<div></div>").appendTo(selector);
 
@@ -353,6 +354,10 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         return this._burden_spec_list_container.children()
             .map(function(i, el) { return self._getOneTestJson(el); })
             .get();
+    },
+
+    getMasks: function() {
+        return this._getAllTestJson().map(function (item) { return item["mask_choice"]; });
     },
 
     /**

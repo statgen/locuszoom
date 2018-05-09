@@ -26,10 +26,13 @@ LocusZoom.Data.GeneTestSource = LocusZoom.Data.Source.extend(function (init) {
 
 LocusZoom.Data.GeneTestSource.prototype.getURL = function (state, chain, fields) {
     // Unlike most sources, calculations may require access to plot state data even after the initial request
-    // This example source ASSUMES that the external UI widget would store the needed test definitions in a plot state
-    //  field called `burden_calcs`
+    // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
+    //  field called `aggregation_tests` (an object {masks: [], calcs: {})
     // TODO: In the future, getURL will need to account for the specific masks selected by an external widget
-    this._burden_calcs = state.burden_calcs;
+    var required_info = state.aggregation_tests || {};
+
+    this._aggregation_calcs = required_info.calcs;
+    this._aggregation_masks = required_info.masks;
     return this.url;
 };
 
@@ -45,26 +48,25 @@ LocusZoom.Data.GeneTestSource.prototype.getData = function (state, fields, outna
 LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
     // Whatever comes out of `parseData` gets added to `chain.raw`; this is the method we override when we want to remix the calculated results
 
-    // TODO: ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
+    // Ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
     var scoreCov = raremetal.helpers.parsePortalJson({data: response});
-    var calcs = this._burden_calcs;
+    var calcs = this._aggregation_calcs;
 
     if (!calcs || Object.keys(calcs).length === 0) {
         // If no calcs have been defined, then don't run any calcs
         return { masks: [], results: [] };
     }
 
-    // TODO: This field is in the rmjs output/result spec, but may be omitted
-    var metadata = { id: 100, description: "Multiple tests and masks run at once" };
+    // // TODO: This field is in the rmjs output/result spec; revisit.
+    var metadata = { id: 100, description: "LocusZoom aggregation tests" };
 
     var res = raremetal.helpers.runAggregationTests(calcs, scoreCov, metadata);
     var data = res["data"];
 
     // Mocking and fake data added below
     data.results = data.results.map(function(res) {
-        // TODO: The spec calls for multiple kinds of interval, but rm.js does not output this in the synthetic data.
-        // For here, assume every group is a gene
-        res.type = res.type || "gene";
+        // TODO: The second API response does not identify the grouping type of the mask. For now, assume that the UI took responsibility for filtering the masks to be genes (only)
+        res.grouping = res.grouping || "gene";
         return res;
     });
     return data;
@@ -103,17 +105,18 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
     prepareData: function (records, chain) {
         // Tie the calculated group-test results to genes with a matching name
         var burden_source_id = this._source_name_mapping["burden_ns"];
+        var gene_source_id = this._source_name_mapping["gene_ns"];
         // This connector assumes that genes are the main body of records from the chain, and that burden tests are
         //   a standalone source that has not acted on genes data yet
         var burdenData = chain.raw[burden_source_id];
+        var genesData = chain.raw[gene_source_id];
 
-        var genesData = records; // chain.raw[this_required_sources["gene_ns"];  TODO: Why broken?
         var groupedBurden = {};  // Group together all tests done on that gene- any mask, any test
         burdenData.results.forEach(function(res) {
             if (!groupedBurden.hasOwnProperty(res.group)) {
                 groupedBurden[res.group] = [];
             }
-            if (res.type === "gene") {
+            if (res.grouping === "gene") {
                 // Don't look at interval groups- this is a genes layer connector
                 groupedBurden[res.group].push(res);
             }

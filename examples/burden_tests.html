@@ -69,8 +69,10 @@
     <div class="twelve columns">
 
       <h3>Build your analysis</h3>
-      <div id="widget-burden-builder"></div>
-      <button id="button-burden-run" class="button-primary">Run tests</button>
+      <div id="widget-burden-container">
+        <div id="widget-burden-builder">Loading...</div>
+        <button id="button-burden-run" class="button-primary">Run tests</button>
+      </div>
 
       <h3>Interactive Plot</h3>
       <div id="plot" class="lz-container-responsive"></div>
@@ -99,17 +101,30 @@
 </div>
 
 <script type="application/javascript">
-    // Before the plot can render, the user must specify a set of burden tests they would like to run
-    window.burdenBuilder = new BurdenTestBuilder(
-        "#widget-burden-builder",
-        ["whole", "2%", "1%", "skim", "water"] // TODO: Identify a datasource to load the list of available masks
-    );
+    ///////////////////////////////////
+    // Before the plot can render, the user must specify a set of burden tests they would like to run. The list of
+    //  masks is fetched from a server endpoint that returns simple metadata for this region
+    var WIDGET_SELECTOR_BURDEN = "#widget-burden-builder";
+    $.ajax("data/burdentest_raw_metadata_22_21576208-22089932.json")  // `/api/aggregation/metadata` in production
+        .done(function(resp) {
+            // Flatten out the masks from all datasets into a single array
+            var masks = [];
+            resp.data.forEach(function(dataset) {
+                var set_masks = dataset.masks.filter(function(item) { return item.grouping === "gene"; })
+                  .map(function (item) { return item.id; });
+                Array.prototype.push.apply(masks, set_masks);
+            });
+            window.burdenBuilder = new BurdenTestBuilder(
+                WIDGET_SELECTOR_BURDEN,
+                masks
+            );
+        }).fail(function() {
+            $("#widget-burden-container").text("An error occurred while fetching available masks. Please reload the page.");
+        });
 
-
-    /*
-      Specify the data sources to use
-     */
-    // Determine if we're online, based on browser state or presence of an optional query parameter
+    ///////////////////////////////////
+    // Specify the data sources to use and build the plot
+    //   Determine if we're online, based on browser state or presence of an optional query parameter
     var online = !(typeof navigator !== "undefined" && !navigator.onLine);
     if (window.location.search.indexOf("offline") !== -1) {
         online = false;
@@ -147,8 +162,8 @@
     LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
     LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
-    ////////
-    // Define listeners required to draw and update the companion table of results
+    ///////////////////////////////////
+    // Alongside the plot, draw a companion table of burden test results
     var TABLE_SELECTOR_BURDEN = "#results-table-burden";
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
@@ -189,17 +204,15 @@
     });
 
     $("#button-burden-run").on("click", function() {
-        // TODO: Add validation
         // The "define calculations" widget should put the test definitions in a place that the data source
         //  will expect to find them. The widget should define TESTS and MASKS.
-        // TODO: Add masks and update the source to use them
-
         var valid = burdenBuilder.validateTests();
         if (valid) {
             burdenBuilder.setStatus();
-            plot.applyState({ burden_calcs: burdenBuilder.getTests() }).then(function() {
-                burdenBuilder.setStatus("Burden calculations complete", { color: "green" });
-            });
+            plot.applyState({ aggregation_tests: {
+                masks: burdenBuilder.getMasks(),
+                    calcs: burdenBuilder.getTests()
+            } }).then(function() { burdenBuilder.setStatus("Burden calculations complete", { color: "green" }); });
         } else {
             burdenBuilder.setStatus("One or more tests is invalid. Please make sure all options are filled in, and all labels are unique.")
         }
