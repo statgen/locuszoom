@@ -102,8 +102,7 @@
     // Before the plot can render, the user must specify a set of burden tests they would like to run
     window.burdenBuilder = new BurdenTestBuilder(
         "#widget-burden-builder",
-        [["zegginiBurden", "Zeggini Burden test"], ["skatDavies", "SKAT (Davies method)"], ["skatLiu", "SKAT (Liu method)"]],
-        ["whole", "2%", "1%", "skim", "water"]
+        ["whole", "2%", "1%", "skim", "water"] // TODO: Identify a datasource to load the list of available masks
     );
 
 
@@ -120,7 +119,7 @@
     var data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {
             url: apiBase + "statistic/single/",
-            params: {analysis: 30, id_field: "variant"}  // TODO: Important: use an analysis ID that matches the data for the portal covariance results
+            params: {analysis: 42, id_field: "variant"}  // TODO: Important: use an analysis ID that matches the data for the portal covariance results
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
@@ -191,8 +190,20 @@
 
     $("#button-burden-run").on("click", function() {
         // TODO: Add validation
-        plot.applyState({ burden_tests: builder.getTests() });
-    })
+        // The "define calculations" widget should put the test definitions in a place that the data source
+        //  will expect to find them. The widget should define TESTS and MASKS.
+        // TODO: Add masks and update the source to use them
+
+        var valid = burdenBuilder.validateTests();
+        if (valid) {
+            burdenBuilder.setStatus();
+            plot.applyState({ burden_calcs: burdenBuilder.getTests() }).then(function() {
+                burdenBuilder.setStatus("Burden calculations complete", { color: "green" });
+            });
+        } else {
+            burdenBuilder.setStatus("One or more tests is invalid. Please make sure all options are filled in, and all labels are unique.")
+        }
+    });
 
 </script>
 </body>

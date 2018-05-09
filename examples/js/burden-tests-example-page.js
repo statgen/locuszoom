@@ -16,16 +16,22 @@ function customizePlotLayout (layout) {
     genesLayout.namespace["burden_genes"] = "burden_genes";
     genesLayout.fields.push("burdentest:all", "burden_genes:all");
     var colorConfig = [
-        { // TODO: Convert this to a gradient. Is there a standard cutoff?
+        {
             scale_function: "if",
             field: "burden_best_pvalue",
             parameters: {
                 field_value: null,
-                then: "#B8B8B8",
-                else: "#FF0000"
+                then: "#B8B8B8"
             }
         },
-        "#B8B8B8"
+        {
+            scale_function: "numerical_bin",
+            field: "burden_best_pvalue",
+            parameters: { // Default significance threshold is based on 20k human protein coding genes
+                breaks: [0, 0.05 / 20000],
+                values: ["#d43f3a", "#357ebd"]
+            }
+        }
     ];
     genesLayout.color = colorConfig;
     genesLayout.stroke = colorConfig;
@@ -91,8 +97,8 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
      * @param {String|Number} index A unique identifier that tabulator uses to locate a matching row
      */
     tableScrollToData: function (index) {
-        this.selector.tabulator("scrollToRow", index);
         this.selector.tabulator("deselectRow");
+        this.selector.tabulator("scrollToRow", index);
         this.selector.tabulator("selectRow", index);
     },
 
@@ -171,14 +177,18 @@ var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController
  *   for production use. (generating HTML via jquery is rather ugly, but it keeps the examples highly framework-neutral)
  * @class
  * @param {string|object} selector A jquery selector or element name specifying where to draw the widget
- * @param {String[]} test_names What tests are recognized  TODO: will serialization need to hardcode this?
- * @param {String[]} mask_names What masks are allowed TODO: When and where will this be loaded from?
+ * @param {String[]} mask_names What masks are allowed
+ * @param {String[]} [burden_names] What tests are recognized.
  */
 var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
-    constructor: function(selector, burden_names, mask_names) {
+    constructor: function(selector, mask_names, burden_names) {
         // Store the options used to populate the dropdown
-        this._burden_types = burden_names;
         this._mask_names = mask_names;
+        this._burden_types = burden_names  || [  // Defaults (correspond to hard-coded serialization logic)
+            ["zegginiBurden", "Zeggini Burden test"],
+            ["skatDavies", "SKAT (Davies method)"],
+            ["skatLiu", "SKAT (Liu method)"]
+        ];
 
         if (typeof selector === "string") {
             selector = $(selector);
@@ -189,8 +199,8 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
 
         // Build these fragments once and reuse
-        this._mask_dropdown = this.__render_dropdown("mask_choice", mask_names);  // Assume this comes from an API / remote source
-        this._burden_dropdown = this.__render_dropdown("burden_choice", burden_names);  // TODO: This may need to be hardcoded in order to serialize correctly for RMjs
+        this._mask_dropdown = this.__render_dropdown("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
+        this._burden_dropdown = this.__render_dropdown("burden_choice", this._burden_types);
 
         // Make sure that at least one set of test-description input elements appears on first render
         this.addTest();
@@ -233,18 +243,19 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     removeTest: function(test_id) {
-        // Remove the DOM element (and data) associated with a given test, make sure one element is always present
+        // Remove the DOM element (and data) associated with a given test, so long as one row remains
         if (this.getTestCount() <= 1 || !test_id) {
             return;
         }
         this._burden_spec_list_container.find(test_id).remove();
-
     },
 
-    setStatus: function (message) {
-        // set error text or status
-        this._status_div.text(message);
-
+    // Display a (styled) status message to the user. Default styling is an error message.
+    setStatus: function (message, css) {
+        css = css || { color: "red" };
+        this._status_div
+            .text(message || "")
+            .css(css);
     },
 
     /**
@@ -283,23 +294,26 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
      * @returns {boolean}
      */
     _validateOneTest: function(data) {
-        // Simplest: make sure every key has a non-empty value
+        // Make sure every key has a non-empty value
         return Object.keys(data).map(function(k) { return data[k]; }).every(function(v) { return !!v; });
     },
 
     /**
      * @param {Object[]} test_json Array with the JSON representation of each individual test
      * @returns {boolean}
-     * @private
      */
-    _validateTests: function(test_json) {
-        // all test names unique across tests + all fields filled in. If any fail, update UI with messages
-        // TODO: Show validation state / errors
-        return test_json.every(this._validateOneTest.bind(this));
+    validateTests: function(test_json) {
+        // all test names unique across tests + all fields filled in
+        test_json = test_json || this._getAllTestJson();
+        var names = test_json.reduce(function(hash, item) { hash[item.label] = 1; return hash; }, {});
+
+        var allUnique = Object.keys(names).length === test_json.length;
+        var allComplete = test_json.every(this._validateOneTest.bind(this));
+        return allUnique && allComplete;
     },
 
     /** Serialize a single test to a format that rm.js can understand */
-    _getTestJson: function(element) {
+    _getOneTestJson: function(element) {
         // Assume that all form elements have a name attribute, and serialize accordingly
         // TODO: clarify code here. Spec: label, mask_choice, burden_choice
         var res = {};
@@ -307,7 +321,7 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
             var label = this.attributes.name.value;
             var value = this.value;
 
-            // FIXME: Hardcoded serialization mechanism; make maintainable
+            // FIXME: Hardcoded serialization mechanism- this is very dependent on rm.js internals. Improve.
             if(label === "burden_choice") {
                 switch(value) {
                 case "zegginiBurden":
@@ -334,15 +348,19 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         return res;
     },
 
+    _getAllTestJson: function() {
+        var self = this;
+        return this._burden_spec_list_container.children()
+            .map(function(i, el) { return self._getOneTestJson(el); })
+            .get();
+    },
+
     /**
      * Get a description of tests to run, in a format suitable for use with Raremetal.js
     */
     getTests: function() {
-        var self = this;
         // TODO: At this step, it should filter the array of masks down to those that a user is actually interested in using
-        // TODO: perform validation and warn user of test errors
-        var allTests = this._burden_spec_list_container.children().map(function(i, el) { return self._getTestJson(el); }).get();
-
+        var allTests = this._getAllTestJson();
         var res = {};
         allTests.forEach(function(test) {
             res[test.label] = test.burden_choice;
