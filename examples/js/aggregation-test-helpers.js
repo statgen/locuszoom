@@ -2,14 +2,14 @@
 /* global raremetal */
 
 /*
- * LocusZoom extensions used to calculate and render burden test results
+ * LocusZoom extensions used to calculate and render aggregation test results
  *
- * 1. A Burden test data source based on an external library (eventually accommodate multiple calculation types)
- * 2. A connector that annotates gene data with burden test results
+ * 1. An aggregation test data source based on an external library (eventually accommodate multiple calculation types)
+ * 2. A connector that annotates gene data with aggregation test results
  */
 
 
-var getMaskKey = function(group_id, mask_id) { return group_id + "_" + mask_id; };
+var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; };
 
 /**
  * Data Source that calculates gene or region-based tests based on provided data
@@ -53,27 +53,29 @@ LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, 
     var calcs = this._aggregation_calcs;
 
     if (!calcs || Object.keys(calcs).length === 0) {
-        // If no calcs have been defined, then don't run any calcs
-        return { masks: [], results: [] };
+        // If no calcs have been requested, then return a dummy placeholder immediately
+        return { masks: [], results: [], scorecov: {} };
     }
 
-    // // TODO: This field is in the rmjs output/result spec; revisit.
-    var metadata = { id: 100, description: "LocusZoom aggregation tests" };
-
-    var res = raremetal.helpers.runAggregationTests(calcs, scoreCov, metadata);
+    var res = raremetal.helpers.runAggregationTests(calcs, scoreCov );
     var data = res["data"];
 
     // Mocking and fake data added below
     data.results = data.results.map(function(res) {
         // TODO: The second API response does not identify the grouping type of the mask. For now, assume that the UI took responsibility for filtering the masks to be genes (only)
+        // TODO: should the final rmjs payload likewise carry forward the mask groupin types?
         res.grouping = res.grouping || "gene";
         return res;
     });
+
+    // Combine the calculation results with the "mask descriptions" from the API response
+    // TODO: This implies that a single "precalculated results" emdpoint would not contain all the information required to draw the page- it would never get the first"scorecov" dataset at all
+    data.scorecov = scoreCov.scorecov;
     return data;
 };
 
 LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) {
-    // Burden tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
+    // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
     //  other layers in different ways. The calculated result has been added to `chain.raw`, but will not be returned
     //  as part of the response body built up by the chain
     return chain.body;
@@ -81,7 +83,7 @@ LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) 
 
 
 /**
- * A sample connector that aligns calculated burden test data with corresponding gene information. Returns a body
+ * A sample connector that aligns calculated aggregation test data with corresponding gene information. Returns a body
  *   suitable for use with the genes datalayer.
  *
  *  To use this source, one must specify a fields array that calls first the genes source, then a dummy field from
@@ -90,11 +92,11 @@ LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) 
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
+LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ", {
     parseInit: function (init) {
         // Validate that this source has been told how to find the required information
         var specified_ids = Object.keys(init.from);
-        var required_sources = ["gene_ns", "burden_ns"];
+        var required_sources = ["gene_ns", "aggregation_ns"];
         required_sources.forEach(function (k) {
             if (specified_ids.indexOf(k) === -1) {
                 throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
@@ -104,29 +106,29 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
 
     prepareData: function (records, chain) {
         // Tie the calculated group-test results to genes with a matching name
-        var burden_source_id = this._source_name_mapping["burden_ns"];
+        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
         var gene_source_id = this._source_name_mapping["gene_ns"];
-        // This connector assumes that genes are the main body of records from the chain, and that burden tests are
+        // This connector assumes that genes are the main body of records from the chain, and that aggregation tests are
         //   a standalone source that has not acted on genes data yet
-        var burdenData = chain.raw[burden_source_id];
+        var aggregationData = chain.raw[aggregation_source_id];
         var genesData = chain.raw[gene_source_id];
 
-        var groupedBurden = {};  // Group together all tests done on that gene- any mask, any test
-        burdenData.results.forEach(function(res) {
-            if (!groupedBurden.hasOwnProperty(res.group)) {
-                groupedBurden[res.group] = [];
+        var groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
+        aggregationData.results.forEach(function(res) {
+            if (!groupedAggregation.hasOwnProperty(res.group)) {
+                groupedAggregation[res.group] = [];
             }
             if (res.grouping === "gene") {
                 // Don't look at interval groups- this is a genes layer connector
-                groupedBurden[res.group].push(res);
+                groupedAggregation[res.group].push(res);
             }
         });
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            var tests = groupedBurden[gene.gene_name];
+            var tests = groupedAggregation[gene.gene_name];
             if (tests) {
-                gene.burden_best_pvalue = Math.min.apply(null, tests.map(function(item) {return item.pvalue;}));
+                gene.aggregation_best_pvalue = Math.min.apply(null, tests.map(function(item) {return item.pvalue;}));
             }
         });
         return genesData;
@@ -135,16 +137,16 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneBurdenConnectorLZ", {
 
 
 /**
- * A sample connector that is useful when all you want are burden test results, eg as rows of a standalone table
- * This can be used to parse burden test data from multiple sources (eg fetched from a server or calculated
+ * A sample connector that is useful when all you want are aggregation test results, eg as rows of a standalone table
+ * This can be used to parse aggregation test data from multiple sources (eg fetched from a server or calculated
  *  live client-side)
  */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", {
+LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnectorLZ", {
     parseInit: function (init) {
         // TODO: DRY parseInit into base connector class
         // Validate that this source has been told how to find the required information
         var specified_ids = Object.keys(init.from); // TODO: rename from to sources for clarity?
-        var required_sources = ["burden_ns"];
+        var required_sources = ["aggregation_ns"];
         required_sources.forEach(function (k) {
             if (specified_ids.indexOf(k) === -1) {
                 throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
@@ -155,11 +157,11 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
         // TODO: NAMESPACING would be nice for consistency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
         var rows = [];
 
-        var burden_source_id = this._source_name_mapping["burden_ns"];
-        var burden_data = chain.raw[burden_source_id];
+        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
+        var aggregation_data = chain.raw[aggregation_source_id];
 
-        var bt_results = burden_data.results;
-        var bt_masks = burden_data.masks;
+        var bt_results = aggregation_data.results;
+        var bt_masks = aggregation_data.masks;
 
         // Convert masks to a hash to facilitate quickly aligning result with the data for one specific group+mask
         var mask_lookup = {};
@@ -188,6 +190,45 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "BurdenParserConnectorLZ", 
 
             rows.push(row_data);
 
+        });
+        return rows;
+    }
+});
+
+/**
+ * A sample connector that extracts variant data for all mask/group combinations in the dataset
+ */
+LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationVariantsConnectorLZ", {
+    parseInit: function (init) {
+        // TODO: DRY parseInit into base connector class
+        // Validate that this source has been told how to find the required information
+        var specified_ids = Object.keys(init.from); // TODO: rename from to sources for clarity?
+        var required_sources = ["aggregation_ns"];
+        required_sources.forEach(function (k) {
+            if (specified_ids.indexOf(k) === -1) {
+                throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
+            }
+        });
+    },
+
+    prepareData: function (records, chain) {
+        var rows = [];
+
+        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
+        var aggregation_data = chain.raw[aggregation_source_id];
+
+        var mask_map = aggregation_data.scorecov;
+
+        Object.keys(mask_map).forEach(function (key) {
+            var data = mask_map[key];
+            for (var i=0; i < data.scores.variants.length; i++) {
+                rows.push({
+                    id: key,
+                    variant: data.scores.variants[i],
+                    score: data.scores.u[i],
+                    alt_allele_freq: data.scores.altFreq[i]
+                });
+            }
         });
         return rows;
     }

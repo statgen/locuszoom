@@ -1,5 +1,5 @@
 /**
- Custom code used to demonstrate interactive page widget features in the burden test visualization example
+ Custom code used to demonstrate interactive page widget features in the aggregation test visualization example
  */
 "use strict";
 
@@ -8,17 +8,17 @@
 
 // Make a custom layout object
 function customizePlotLayout (layout) {
-    // Customize an existing plot layout with the data for burden tests
-    // Customize layout: genes layer must pull from the burden source + the burden_genes connector if we want to color
-    //  the gene track by burden test results
+    // Customize an existing plot layout with the data for aggregation tests
+    // Customize layout: genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
+    //  the gene track by aggregation test results
     var genesLayout = layout.panels[1].data_layers[0];
-    genesLayout.namespace["burdentest"] = "burdentest";
-    genesLayout.namespace["burden_genes"] = "burden_genes";
-    genesLayout.fields.push("burdentest:all", "burden_genes:all");
+    genesLayout.namespace["aggregationtest"] = "aggregationtest";
+    genesLayout.namespace["aggregation_genes"] = "aggregation_genes";
+    genesLayout.fields.push("aggregationtest:all", "aggregation_genes:all");
     var colorConfig = [
         {
             scale_function: "if",
-            field: "burden_best_pvalue",
+            field: "aggregation_best_pvalue",
             parameters: {
                 field_value: null,
                 then: "#B8B8B8"
@@ -26,7 +26,7 @@ function customizePlotLayout (layout) {
         },
         {
             scale_function: "numerical_bin",
-            field: "burden_best_pvalue",
+            field: "aggregation_best_pvalue",
             parameters: { // Default significance threshold is based on 20k human protein coding genes
                 breaks: [0, 0.05 / 20000],
                 values: ["#d43f3a", "#357ebd"]
@@ -107,7 +107,12 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
     },
 
     tableClearFilter: function (column, value) {
-        this.selector.tabulator("removeFilter", column, "=", value);
+        if (typeof value !== "undefined") {
+            this.selector.tabulator("removeFilter", column, "=", value);
+        } else {
+            this.selector.tabulator("clearFilter");
+        }
+
     },
 
     tableDownloadData: function(filename, format) {
@@ -116,16 +121,16 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
     }
 });
 
-var BurdenTableController = LocusZoom.subclass(GenericTabulatorTableController, {
+var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
     addPlotListeners: function(plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
-            ["burdentest:all", "burden_rows:all"],
+            ["aggregationtest:all", "aggregation_table_rows:all"],
             this.tableUpdateData.bind(this)
         );
 
         plot.on("element_selection", function(eventData) {
-            // Trigger the burden test table to filter (or unfilter) on a particular value
+            // Trigger the aggregation test table to filter (or unfilter) on a particular value
             if (eventData["sourceID"] !== "plot.genes") {
                 return;
             }
@@ -152,40 +157,26 @@ var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController
     addPlotListeners: function (plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
-            ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "assoc:ref_allele_freq", "ld:state", "ld:isrefvar"],
+            ["aggregationtest:all", "variants_table_rows:all"],
             this.tableUpdateData.bind(this)
         );
-
-        plot.on("element_clicked", function (eventData) {
-            // This listener will fire on any clickable element in any data layer, and we can filter the events
-            // by source ID
-            if (eventData["sourceID"] !== "plot.association") {
-                return;
-            }
-            var selectedItem = eventData["data"]["assoc:variant"];
-            if (selectedItem) {
-                // TODO: rework this so it is driven by burden test table/masks, instead of the plot
-                // (or else handle variants that are not in both plot AND mask)
-                this.tableScrollToData(selectedItem);
-            }
-        }.bind(this));
     }
 });
 
 /**
- * A minimal method of defining burden tests in the absence of a UI framework. Proof of concept, ONLY- not intended
+ * A minimal method of defining aggregation tests in the absence of a UI framework. Proof of concept, ONLY- not intended
  *   for production use. (generating HTML via jquery is rather ugly, but it keeps the examples highly framework-neutral)
  * @class
  * @param {string|object} selector A jquery selector or element name specifying where to draw the widget
  * @param {String[]} mask_names What masks are allowed
- * @param {String[]} [burden_names] What tests are recognized.
+ * @param {String[]} [aggregation_names] What tests are recognized.
  */
-var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
-    constructor: function(selector, mask_names, burden_names) {
+var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
+    constructor: function(selector, mask_names, aggregation_names) {
         // Store the options used to populate the dropdown
         this._mask_names = mask_names;
-        this._burden_types = burden_names  || [  // Defaults (correspond to hard-coded serialization logic)
-            ["zegginiBurden", "Zeggini Burden test"],
+        this._aggregation_types = aggregation_names  || [  // Defaults (correspond to hard-coded serialization logic)
+            ["zegginiBurden", "Zeggini Burden"],
             ["skatDavies", "SKAT (Davies method)"],
             ["skatLiu", "SKAT (Liu method)"]
         ];
@@ -195,13 +186,13 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         }
         selector.html("");
         this._container = selector;
-        this._burden_spec_list_container = $("<div></div>").appendTo(selector);
+        this._aggregation_spec_list_container = $("<div></div>").appendTo(selector);
 
         this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
 
         // Build these fragments once and reuse
         this._mask_dropdown = this.__render_dropdown("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
-        this._burden_dropdown = this.__render_dropdown("burden_choice", this._burden_types);
+        this._aggregation_dropdown = this.__render_dropdown("calc_choice", this._aggregation_types);
 
         // Make sure that at least one set of test-description input elements appears on first render
         this.addTest();
@@ -219,24 +210,21 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
 
     /** @return {Number} */
     getTestCount: function () {
-        return this._burden_spec_list_container.children().length;
+        return this._aggregation_spec_list_container.children().length;
     },
 
     addTest: function() {
         var rowNumber= this.getTestCount();
         var element = $("<div></div>", { id: "test-" + rowNumber })
             .addClass("row")
-            .appendTo(this._burden_spec_list_container);
-
-        var test_label = $("<input>", { name: "label", type: "text", placeholder: "Label (required)" });
+            .appendTo(this._aggregation_spec_list_container);
 
         var removeButton = $("<button></button>").text("x")
             .css({ color: "white", "background-color": "#d9534f" })
             .on("click", this.removeTest.bind(this, element));
 
-        element.append(test_label);
         element.append(this._mask_dropdown.clone());
-        element.append(this._burden_dropdown.clone());
+        element.append(this._aggregation_dropdown.clone());
 
         if (rowNumber > 0) {  // Do not allow the user to remove the first row
             element.append(removeButton);
@@ -248,7 +236,7 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
         if (this.getTestCount() <= 1 || !test_id) {
             return;
         }
-        this._burden_spec_list_container.find(test_id).remove();
+        this._aggregation_spec_list_container.find(test_id).remove();
     },
 
     // Display a (styled) status message to the user. Default styling is an error message.
@@ -300,58 +288,56 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     /**
-     * @param {Object[]} test_json Array with the JSON representation of each individual test
+     * @param {Object[]} [test_json] Array with the JSON representation of each individual test
      * @returns {boolean}
      */
     validateTests: function(test_json) {
         // all test names unique across tests + all fields filled in
         test_json = test_json || this._getAllTestJson();
-        var names = test_json.reduce(function(hash, item) { hash[item.label] = 1; return hash; }, {});
-
-        var allUnique = Object.keys(names).length === test_json.length;
-        var allComplete = test_json.every(this._validateOneTest.bind(this));
-        return allUnique && allComplete;
+        return test_json.every(this._validateOneTest.bind(this));
     },
 
     /** Serialize a single test to a format that rm.js can understand */
     _getOneTestJson: function(element) {
         // Assume that all form elements have a name attribute, and serialize accordingly
-        // TODO: clarify code here. Spec: label, mask_choice, burden_choice
-        var res = {};
-        $(element).children("[name]").each(function() {
-            var label = this.attributes.name.value;
-            var value = this.value;
+        var calc_select = $(element).children("[name='calc_choice']");
+        var calc_choice = calc_select.val();
 
-            // FIXME: Hardcoded serialization mechanism- this is very dependent on rm.js internals. Improve.
-            if(label === "burden_choice") {
-                switch(value) {
-                case "zegginiBurden":
-                    value = raremetal.stats.testBurden;
-                    break;
-                case "skatLiu":
-                    value = {
-                        test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "liu"); },
-                        weights: raremetal.stats.calcSkatWeights
-                    };
-                    break;
-                case "skatDavies":
-                    value = {
-                        test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "davies"); },
-                        weights: raremetal.stats.calcSkatWeights
-                    };
-                    break;
-                default:
-                    value = null;
-                }
-            }
-            res[label] = value;
-        });
-        return res;
+        var calc_choice_label = calc_select.find(":selected").text();
+        var mask_choice = $(element).children("[name='mask_choice']").val();
+
+        var calc_spec = {};
+
+        switch(calc_choice) {
+        case "zegginiBurden":
+            calc_spec = raremetal.stats.testBurden;
+            break;
+        case "skatLiu":
+            calc_spec = {
+                test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "liu"); },
+                weights: raremetal.stats.calcSkatWeights
+            };
+            break;
+        case "skatDavies":
+            calc_spec = {
+                test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "davies"); },
+                weights: raremetal.stats.calcSkatWeights
+            };
+            break;
+        default:
+            calc_spec = null;
+        }
+
+        return {
+            label: calc_choice_label + "," + mask_choice,  // Uniquely identify this test combination
+            calc_spec: calc_spec,
+            mask_choice: mask_choice
+        };
     },
 
     _getAllTestJson: function() {
         var self = this;
-        return this._burden_spec_list_container.children()
+        return this._aggregation_spec_list_container.children()
             .map(function(i, el) { return self._getOneTestJson(el); })
             .get();
     },
@@ -364,11 +350,10 @@ var BurdenTestBuilder = LocusZoom.subclass(function() {}, {
      * Get a description of tests to run, in a format suitable for use with Raremetal.js
     */
     getTests: function() {
-        // TODO: At this step, it should filter the array of masks down to those that a user is actually interested in using
         var allTests = this._getAllTestJson();
         var res = {};
         allTests.forEach(function(test) {
-            res[test.label] = test.burden_choice;
+            res[test.label] = test.calc_spec;
         });
         return res;
     }

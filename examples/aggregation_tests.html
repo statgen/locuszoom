@@ -22,11 +22,11 @@
   <script src="js/raremetal.min.js" type="application/javascript"></script>
 
   <script type="application/javascript" src="../ext/lz-dynamic-urls.js"></script>
-  <script src="js/burden-test-helpers.js" type="application/javascript"></script>
-  <script src="js/burden-tests-example-page.js" type="application/javascript"></script>
+  <script src="js/aggregation-test-helpers.js" type="application/javascript"></script>
+  <script src="js/aggregation-tests-example-page.js" type="application/javascript"></script>
 
 
-  <title>LocusZoom.js ~ Burden Tests</title>
+  <title>LocusZoom.js ~ Aggregation Tests</title>
 
   <style>
     body {
@@ -52,13 +52,13 @@
   <div class="row">
     <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
-    <h3 style="float: left; color: #777">Burden Tests Demonstration</h3>
+    <h3 style="float: left; color: #777">Aggregation Tests Demonstration</h3>
     <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
 
     <hr style="clear: both;">
 
     <p>
-      There are many types of burden tests, each with their own unique characteristics. Since it is not always
+      There are many types of aggregation tests, each with their own unique characteristics. Since it is not always
       possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
       share plot data with any arbitrary HTML element on the page.
     </p>
@@ -69,25 +69,37 @@
     <div class="twelve columns">
 
       <h3>Build your analysis</h3>
-      <div id="widget-burden-container">
-        <div id="widget-burden-builder">Loading...</div>
-        <button id="button-burden-run" class="button-primary">Run tests</button>
+      <p>
+        Specify the mask and type of aggregation test to run, for all genes in the visible plot area.
+      </p>
+      <div id="widget-aggregation-container">
+        <div id="widget-aggregation-builder">Loading...</div>
+        <button id="button-aggregation-run" class="button-primary">Run tests</button>
       </div>
 
       <h3>Interactive Plot</h3>
+      <p>
+        After running aggregation tests, click on any gene below to see a table of aggregation test results, filtered for that gene.
+        Click the gene again to unselect and show all results in the table.
+      </p>
       <div id="plot" class="lz-container-responsive"></div>
 
-      <h3>Table of burden test results</h3>
-      Currently reviewing results for:
-      <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
-      <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
+      <h3>Table of aggregation test results</h3>
+      <div>
+        Currently reviewing results for group:
+        <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
+        <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
+      </div>
       <br>
 
-      <button id="download-burden" class="button-primary">Download</button><br>
+      <button id="download-aggregation" class="button-primary">Download</button><br>
 
-      <div id="results-table-burden"></div>
+      <div id="results-table-aggregation"></div>
 
-      <h3>Variants in group</h3>
+      <h3>Variants in mask <span id="label-mask-selected"></span> </h3>
+      <p>
+        Click on a row in the table above to see the variants associated with a specific group + mask.
+      </p>
       <div id="results-table-variants"></div>
     </div>
   </div>
@@ -102,24 +114,21 @@
 
 <script type="application/javascript">
     ///////////////////////////////////
-    // Before the plot can render, the user must specify a set of burden tests they would like to run. The list of
+    // Before the plot can render, the user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
-    var WIDGET_SELECTOR_BURDEN = "#widget-burden-builder";
-    $.ajax("data/burdentest_raw_metadata_22_21576208-22089932.json")  // `/api/aggregation/metadata` in production
+    var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
+    $.ajax("data/aggregationtest_raw_metadata_22_21576208-22089932.json")  // `/api/aggregation/metadata` in production
         .done(function(resp) {
-            // Flatten out the masks from all datasets into a single array
+            // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
             var masks = [];
             resp.data.forEach(function(dataset) {
                 var set_masks = dataset.masks.filter(function(item) { return item.grouping === "gene"; })
                   .map(function (item) { return item.id; });
                 Array.prototype.push.apply(masks, set_masks);
             });
-            window.burdenBuilder = new BurdenTestBuilder(
-                WIDGET_SELECTOR_BURDEN,
-                masks
-            );
+            window.aggregationBuilder = new AggregationTestBuilder(WIDGET_SELECTOR_AGGREGATION, masks);
         }).fail(function() {
-            $("#widget-burden-container").text("An error occurred while fetching available masks. Please reload the page.");
+            $("#widget-aggregation-container").text("An error occurred while fetching available masks. Please reload the page.");
         });
 
     ///////////////////////////////////
@@ -138,9 +147,12 @@
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("burdentest", ["GeneTestSourceLZ", {url: "data/burdentest_raw_hail_22_21576208-22089932.json"}])
-        .add("burden_genes", ["GeneBurdenConnectorLZ", {from: {burden_ns: "burdentest", gene_ns: "gene"}}])
-        .add("burden_rows", ["BurdenParserConnectorLZ", {from: {burden_ns: "burdentest"}}])
+        .add("aggregationtest", ["GeneTestSourceLZ", {url: "data/aggregationtest_raw_hail_22_21576208-22089932.json"}])
+        .add("aggregation_genes", ["GeneAggregationConnectorLZ", {from: {aggregation_ns: "aggregationtest", gene_ns: "gene"}}])
+
+        // TODO: rethink how much of the table rows logic really needs to be a data source (genes connector needs to exist- but the others??)
+        .add("aggregation_table_rows", ["AggregationParserConnectorLZ", {from: {aggregation_ns: "aggregationtest"}}])
+        .add("variants_table_rows", ["AggregationVariantsConnectorLZ", {from: {aggregation_ns: "aggregationtest"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
@@ -163,58 +175,74 @@
     LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     ///////////////////////////////////
-    // Alongside the plot, draw a companion table of burden test results
-    var TABLE_SELECTOR_BURDEN = "#results-table-burden";
+    // Alongside the plot, draw a companion table of aggregation test results
+    var TABLE_SELECTOR_AGGREGATION = "#results-table-aggregation";
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
-    window.burdenTable = new BurdenTableController(TABLE_SELECTOR_BURDEN, {
+    window.variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
+        height: 440,
+        layout: "fitColumns",
+        index: "id",
+        rowClick: null,
+        columns: [
+            { title: "Mask", field: "id", visible: false }, // Hidden column used for filtering
+            { title: "Variant", field: "variant" },
+            { title: "Score", field: "score" },
+            { title: "Alt allele frequency", field: "alt_allele_freq", formatter: _formatSciNotation }
+        ],
+        placeholder: "No Data Available",
+        initialSort: [
+            { column: "variant", dir: "asc" }
+        ]
+    }, plot);
+
+    window.aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: "id",
         layout: "fitColumns",
-        rowClick: null,  // TODO: Add row click functionality
+        rowSelected: function(row) {
+            var selected = row.row.data.id;
+            variantsTable.tableSetFilter("id", selected);
+            $("#label-mask-selected").text(selected);
+        },
+        rowDeselected: function (row) {
+            // TODO: improve variants table- clear rendering when gene track is clicked
+            variantsTable.tableClearFilter("id");
+            $("#label-mask-selected").text("");
+        },
         columns: [
             { title: "Gene", field: "group" },
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
-            { title: "Test type", field: "calc_type", headerFilter: true },
+            { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },
             { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
         ],
         placeholder: "No Data Available",
         initialSort: [
             { column: "pvalue", dir: "asc" }
-        ]
-    }, plot);
-    window.variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
-        height: 440,
-        layout: "fitColumns",
-        index: "assoc:variant",
-        rowClick: null,  // TODO: restore appropriate row click functionality
-        columns: [
-            { title: "Variant", field: "assoc:variant" },
-            { title: "-log10(pvalue)", field: "assoc:log_pvalue", formatter: _formatSciNotation },
-            // TODO: This will not necessarily be the disease causing allele, or even the rare one
-            // TODO: Find a better source for allele freq- the association study may not include the rare variants at all, and those are the ones where we really want freq info to appear
-            { title: "Ref allele", field: "assoc:ref_allele" },
-            { title: "Ref allele freq", field: "assoc:ref_allele_freq" }
         ],
-        placeholder: "No Data Available"
+        selectable: 1,
+        selectablePersistence: false
     }, plot);
 
-    $("#download-burden").on("click", function() {
-        burdenTable.tableDownloadData("burden-data.csv", "csv");
+    $("#download-aggregation").on("click", function() {
+        aggregationTable.tableDownloadData("aggregation-data.csv", "csv");
     });
 
-    $("#button-burden-run").on("click", function() {
+    $("#button-aggregation-run").on("click", function() {
         // The "define calculations" widget should put the test definitions in a place that the data source
         //  will expect to find them. The widget should define TESTS and MASKS.
-        var valid = burdenBuilder.validateTests();
+        var valid = aggregationBuilder.validateTests();
         if (valid) {
-            burdenBuilder.setStatus();
-            plot.applyState({ aggregation_tests: {
-                masks: burdenBuilder.getMasks(),
-                    calcs: burdenBuilder.getTests()
-            } }).then(function() { burdenBuilder.setStatus("Burden calculations complete", { color: "green" }); });
+            aggregationBuilder.setStatus();
+            plot.applyState({
+                aggregation_tests: {
+                    masks: aggregationBuilder.getMasks(),
+                    calcs: aggregationBuilder.getTests()
+                }
+            }).then(function() { aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
+            }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
         } else {
-            burdenBuilder.setStatus("One or more tests is invalid. Please make sure all options are filled in, and all labels are unique.")
+            aggregationBuilder.setStatus("One or more tests is invalid. Please make sure all options are filled in, and all labels are unique.")
         }
     });
 
