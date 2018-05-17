@@ -265,18 +265,74 @@ describe("LocusZoom Data", function(){
         });
 
         describe("Source.parseArraysToObjects", function() {
+            it("should apply transformations to correct fields, if provided", function() {
+                var source = new LocusZoom.Data.Source();
+                var res = source.parseArraysToObjects(
+                    {a: [1], b: [1]},
+                    ["a", "b"], ["namespace:a|add1", "bork:bork"], [function(v) { return v + 1; }, null]
+                );
+                assert.deepEqual(res, [{"namespace:a|add1": 2, "bork:bork": 1}], "Transformations were applied");
+            });
+            it("should create one object per piece of data, with namespaced keys", function() {
+                var source = new LocusZoom.Data.Source();
+                var res = source.parseArraysToObjects(
+                    { a: [1, 2], b: [3, 4] },
+                    ["a", "b"], ["namespace:a", "namespace:b"], [null, null]
+                );
+                assert.deepEqual(
+                    res,
+                    [{"namespace:a": 1, "namespace:b": 3}, {"namespace:a": 2, "namespace:b": 4}],
+                    "Correct number and union of elements"
+                );
+            });
             it("should require all columns of data to be of same length", function() {
                 var source = new LocusZoom.Data.Source();
                 assert.throws(
                     function() {
                         source.parseArraysToObjects(
-                            {a: [1], b: [1,2], c: [1,2,3]},
+                            { a: [1], b: [1,2], c: [1,2,3] },
                             [], [], []);
                     },
                     /expects a response in which all arrays of data are the same length/
                 );
             });
+            it("should throw an error when requesting a field not in the response", function() {
+                var source = new LocusZoom.Data.Source();
+                assert.throws(
+                    function() {
+                        source.parseArraysToObjects(
+                            {a: [1], b: [1,2], c: [1,2,3]},
+                            ["a", "c", "d"],
+                            ["namespace:a", "namespace:c", "namespace:d"],
+                            [null, null, null]
+                        );
+                    },
+                    /field d not found in response for namespace:d/
+                );
+            });
         });
+
+        describe("Source.parseObjectsToObjects", function () {
+            it("extracts the specified fields from each record", function () {
+                var source = new LocusZoom.Data.Source();
+                var res = source.parseObjectsToObjects(
+                    [ {"id":1, "val":5}, {"id":2, "val":10}],
+                    ["id"], ["namespace:id"], [null]
+                );
+                assert.deepEqual(res, [{"namespace:id": 1}, {"namespace:id": 2}]);
+            });
+            it("applies value transformations where appropriate", function () {
+                var source = new LocusZoom.Data.Source();
+                var res = source.parseObjectsToObjects(
+                    [ {"id":1, "val":5}, {"id":2, "val":10}],
+                    ["id", "val"], ["namespace:id|add1", "bork:bork"], [function (val) { return val + 1; }, null]
+                );
+                // Output fields can be mapped to any arbitrary based on the field->outnames provided
+                assert.deepEqual(res, [{"namespace:id|add1": 2, "bork:bork": 5}, {"namespace:id|add1": 3, "bork:bork": 10}]);
+            });
+        });
+
+        describe.skip("Source.parseObjectsToObjects", function () {});
 
         describe("Source.annotateData", function() {
             it("should annotate returned records with an additional custom field", function () {

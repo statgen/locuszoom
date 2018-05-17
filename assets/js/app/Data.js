@@ -409,24 +409,24 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
  *   See `parseData` for usage
  *
  * @protected
- * @param {Object} x A response payload object
+ * @param {Object} data Parsed data from the response payload
  * @param {Array} fields
  * @param {Array} outnames
  * @param {Array} trans
  * @returns {Object[]}
  */
-LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outnames, trans) {
+LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, outnames, trans) {
     //intended for an object of arrays
     //{"id":[1,2], "val":[5,10]}
     var records = [];
     fields.forEach(function(f, i) {
-        if (!(f in x)) {throw "field " + f + " not found in response for " + outnames[i];}
+        if (!(f in data)) {throw "field " + f + " not found in response for " + outnames[i];}
     });
     // Safeguard: check that arrays are of same length
-    var keys = Object.keys(x);
-    var N = x[keys[0]].length;
+    var keys = Object.keys(data);
+    var N = data[keys[0]].length;
     var sameLength = keys.every(function(key) {
-        var item = x[key];
+        var item = data[key];
         return item.length === N;
     });
     if (!sameLength) {
@@ -436,7 +436,7 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
     for(var i = 0; i < N; i++) {
         var record = {};
         for(var j=0; j<fields.length; j++) {
-            var val = x[fields[j]][i];
+            var val = data[fields[j]][i];
             if (trans && trans[j]) {
                 val = trans[j](val);
             }
@@ -452,13 +452,13 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(x, fields, outna
  *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
  *    by the datalayer. See `parseData` for usage.
  * @protected
- * @param {Object[]} x An array of response payload objects, each describing one record
+ * @param {Object[]} data An array of response payload objects, each describing one record
  * @param {Array} fields
  * @param {Array} outnames
  * @param {Array} trans
  * @returns {Object[]}
  */
-LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outnames, trans) {
+LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, outnames, trans) {
     //intended for an array of objects
     // [ {"id":1, "val":5}, {"id":2, "val":10}]
     var records = [];
@@ -467,14 +467,14 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(x, fields, outn
         fieldFound[k] = 0;
     }
 
-    if (!x.length) {
+    if (!data.length) {
         // Do not attempt to parse records if there are no records, and bubble up an informative error message.
         throw "No data found for specified query";
     }
-    for (var i = 0; i < x.length; i++) {
+    for (var i = 0; i < data.length; i++) {
         var record = {};
         for (var j=0; j<fields.length; j++) {
-            var val = x[i][fields[j]];
+            var val = data[i][fields[j]];
             if (typeof val != "undefined") {
                 fieldFound[j] = 1;
             }
