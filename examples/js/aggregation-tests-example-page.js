@@ -137,7 +137,8 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
 
             // Programmatic filters are set separately from column filters
             var gene_column_name = "group";
-            var selected_gene = eventData["data"]["element"]["gene_name"];
+            var selected_gene = eventData["data"]["element"]["gene_id"];
+            selected_gene = selected_gene.split(".")[0]; // FIXME: genes api includes version, masks api does not; allow matching
 
             // FIXME: Hard-coded selectors
             if (eventData["data"]["active"]) {

@@ -126,7 +126,8 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            var tests = groupedAggregation[gene.gene_name];
+            var gene_id = gene.gene_id.split(".")[0];
+            var tests = groupedAggregation[gene_id];
             if (tests) {
                 gene.aggregation_best_pvalue = Math.min.apply(null, tests.map(function(item) {return item.pvalue;}));
             }

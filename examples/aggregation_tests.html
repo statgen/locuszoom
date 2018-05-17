@@ -214,7 +214,7 @@
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
             { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },
-            { title: "p-value", field: "pvalue", formatter: _formatSciNotation }
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" }
         ],
         placeholder: "No Data Available",
         initialSort: [
