@@ -14,7 +14,7 @@
 
 // Specify a custom datasource that adds a "credible sets" field to the prepared API response
 LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
-    prepareData: function (records) {
+    annotateData: function (records) {
         // This is a somewhat crude method for adding fields in the front end, after the API response has been returned.
         //  In the future, features for lazy evaluation and dynamic namespacing of calculated fields may be added.
 

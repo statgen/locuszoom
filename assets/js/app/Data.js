@@ -226,7 +226,7 @@ LocusZoom.Data.Requester = function(sources) {
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
-        var ret = Q.when({header:{}, body:{}, raw: {}});
+        var ret = Q.when({header:{}, body:{}, discrete: {}});
         for(var i=0; i < promises.length; i++) {
             // If a single datalayer uses multiple sources, perform the next request when the previous one completes
             ret = ret.then(promises[i]);
@@ -373,16 +373,16 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
- * @returns {Promise|{header: ({}|*), raw: {}, body: []}} A promise that resolves to an object containing
- *   request metadata (headers), the consolidated data for plotting (body), and the total set of all raw data from each
- *   source queried during this chain (raw) (each datalayer calls only the sources it needs)
+ * @returns {Promise|{header: ({}|*), discrete: {}, body: []}} A promise that resolves to an object containing
+ *   request metadata (headers), the consolidated data for plotting (body), and the individual responses that would be
+ *   returned by each source in the chain (discrete)
  */
 LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
     // Store a copy of the parsed API data from just this source, with no further post-processing.  This does not
-    //  reflect any operations performed in `prepareData`, which could contain data from other sources.
-    if (!chain.raw) {
-        chain.raw = {};
+    //  reflect any operations performed in `annotateData`, which could contain data from other sources.
+    if (!chain.discrete) {
+        chain.discrete = {};
     }
     var json = typeof resp == "string" ? JSON.parse(resp) : resp;
 
@@ -393,14 +393,13 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
     //   should support promise semantics
     var self = this;
     var recordPromise = Q.when(self.parseData(json.data || json, fields, outnames, trans));
-    return recordPromise
-        .then(function(records) {
-            chain.raw[source_id] = records;
-            // Some users may want to return static data from the custom hook, without worrying about Promise semantics.
-            return Q.when(self.prepareData(records, chain));
-        }).then(function(annotated_body) {
-            return {header: chain.header || {}, raw: chain.raw || {}, body: annotated_body};
-        });
+    return recordPromise.then(function(records) {
+        // Some users may want to return static data from the custom hook, without worrying about Promise semantics.
+        return Q.when(self.annotateData(records, chain));
+    }).then(function(annotated_body) {
+        chain.discrete[source_id] = annotated_body;
+        return {header: chain.header || {}, discrete: chain.discrete || {}, body: annotated_body};
+    });
 };
 /**
  * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
@@ -513,10 +512,14 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
     return records;
 };
 
+LocusZoom.Data.Source.prototype.prepareData = function (records) {
+    console.warn("Warning: .prepareData() is deprecated. Use .annotateData() instead");
+    return records;
+};
+
 /**
- * Hook to post-process the data returned by this source. This is a hook that allows custom sources to specify any
- *   optional transformations that should be performed on the data that is returned from the server for this endpoint.
- *   (eg, combining with the records from another data source, performing calculations, or filtering)
+ * Hook to post-process the data returned by this source with new, user-specified behavior.
+ *   (eg, combining with the records from another data source, performing client-side calculations, or filtering)
  *
  * This also allows annotating records (from this source) based on responses from previous data sources in the chain-
  *  see "ConnectorSource" for an example
@@ -525,7 +528,7 @@ LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans)
  * @returns {Object[]|Promise} The annotated set of records to be used in chain.body . More complex transformations
  *  can return a promise
  */
-LocusZoom.Data.Source.prototype.prepareData = function(records, chain) {
+LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
     // Default behavior: do not transform the parsed data
     return records;
 };
@@ -717,10 +720,10 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
 
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
     // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.raw) {
-        chain.raw = {};
+    if (!chain.discrete) {
+        chain.discrete = {};
     }
-    chain.raw[source_id] = json;
+    chain.discrete[source_id] = json;  // The data that would be returned from just this source alone
 
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
@@ -778,16 +781,16 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
 LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     // Bypass any record parsing, and provide the data layer with the exact information returned by the API
     var json = JSON.parse(resp);
-    var records = this.prepareData(json.data, chain);
+    var records = this.annotateData(json.data, chain);
 
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
     // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.raw) {
-        chain.raw = {};
+    if (!chain.discrete) {
+        chain.discrete = {};
     }
-    chain.raw[source_id] = records;
+    chain.discrete[source_id] = records;
 
-    return {header: chain.header, raw: chain.raw, body: records};
+    return {header: chain.header, discrete: chain.discrete, body: records};
 };
 
 /**
@@ -827,16 +830,16 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
 
 LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
     if (!resp){
-        return { header: chain.header, raw: chain.raw, body: chain.body };
+        return { header: chain.header, discrete: chain.discrete, body: chain.body };
     }
     var data = JSON.parse(resp);
 
     var source_id = this.source_id || this.constructor.SOURCE_NAME;
     // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.raw) {
-        chain.raw = {};
+    if (!chain.discrete) {
+        chain.discrete = {};
     }
-    chain.raw[source_id] = data;
+    chain.discrete[source_id] = data;
 
     // Loop through the array of genes in the body and match each to a result from the constraints request
     var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
@@ -860,7 +863,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
-    return { header: chain.header, raw: chain.raw, body: chain.body };
+    return { header: chain.header, discrete: chain.discrete, body: chain.body };
 };
 
 /**
@@ -927,7 +930,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
  *  useful piece of information once, but apply it to many different kinds of record types.
  *
- * Typically, a subclass will implement the field merging logic in `prepareData`.
+ * Typically, a subclass will implement the field merging logic in `annotateData`.
  *
  * @public
  * @class
@@ -967,7 +970,7 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
     var self = this;
     Object.keys(this._source_name_mapping).forEach(function(ns) {
         var chain_source_id = self._source_name_mapping[ns];
-        if (chain.raw && !chain.raw[chain_source_id]) {
+        if (chain.discrete && !chain.discrete[chain_source_id]) {
             throw self.constructor.SOURCE_NAME + " cannot be used before loading required data for: " + chain_source_id;
         }
     });
@@ -975,15 +978,15 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
 };
 
 LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(response, chain, fields, outnames) {
-    // A connector source does not update chain.raw, but it may use it while annotating records
+    // A connector source does not update chain.discrete, but it may use it while annotating records
     // Since a connector has no data of its own, deliberately bypass `parseData`
     // This implies that connectors will not allow requesting of specific fields from the response; they are
     //   "all or nothing" requests and should be treated as such in the fields array. (fields: ["connector_name:all"])
-    var records = this.prepareData(response, chain);
-    return {header: chain.header || {}, raw: chain.raw || {}, body: records};
+    var records = this.annotateData(response, chain);  // TODO: Promise semantics? (eg for long running calcs, webworkers)
+    return {header: chain.header || {}, discrete: chain.discrete || {}, body: records};
 };
 
-LocusZoom.Data.ConnectorSource.prototype.prepareData = function(records, chain) {
+LocusZoom.Data.ConnectorSource.prototype.annotateData = function(records, chain) {
     // Stub method: specifies how to combine the data
     throw "This method must be implemented in a subclass";
 };

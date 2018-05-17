@@ -147,7 +147,7 @@
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("aggregationtest", ["GeneTestSourceLZ", {url: "data/aggregationtest_raw_hail_22_21576208-22089932.json"}])
+        .add("aggregationtest", ["AggregationTestSourceLZ", {url: "data/aggregationtest_raw_hail_22_21576208-22089932.json"}])
         .add("aggregation_genes", ["GeneAggregationConnectorLZ", {from: {aggregation_ns: "aggregationtest", gene_ns: "gene"}}])
 
         // TODO: rethink how much of the table rows logic really needs to be a data source (genes connector needs to exist- but the others??)

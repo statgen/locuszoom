@@ -20,11 +20,11 @@ var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; 
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.Data.GeneTestSource = LocusZoom.Data.Source.extend(function (init) {
+LocusZoom.Data.AggregationTestSource = LocusZoom.Data.Source.extend(function (init) {
     this.parseInit(init);
-}, "GeneTestSourceLZ");
+}, "AggregationTestSourceLZ");
 
-LocusZoom.Data.GeneTestSource.prototype.getURL = function (state, chain, fields) {
+LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, fields) {
     // Unlike most sources, calculations may require access to plot state data even after the initial request
     // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
     //  field called `aggregation_tests` (an object {masks: [], calcs: {})
@@ -36,7 +36,7 @@ LocusZoom.Data.GeneTestSource.prototype.getURL = function (state, chain, fields)
     return this.url;
 };
 
-LocusZoom.Data.GeneTestSource.prototype.getData = function (state, fields, outnames, trans) {
+LocusZoom.Data.AggregationTestSource.prototype.getData = function (state, fields, outnames, trans) {
     var self = this;
     return function(chain) {
 
@@ -45,8 +45,8 @@ LocusZoom.Data.GeneTestSource.prototype.getData = function (state, fields, outna
     };
 };
 
-LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, outnames, trans) {
-    // Whatever comes out of `parseData` gets added to `chain.raw`; this is the method we override when we want to remix the calculated results
+LocusZoom.Data.AggregationTestSource.prototype.parseData = function (response, fields, outnames, trans) {
+    // Whatever comes out of `parseData` gets added to `chain.discrete`; this is the method we override when we want to remix the calculated results
 
     // Ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
     var scoreCov = raremetal.helpers.parsePortalJson({data: response});
@@ -74,9 +74,9 @@ LocusZoom.Data.GeneTestSource.prototype.parseData = function (response, fields, 
     return data;
 };
 
-LocusZoom.Data.GeneTestSource.prototype.prepareData = function (records, chain) {
+LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
     // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
-    //  other layers in different ways. The calculated result has been added to `chain.raw`, but will not be returned
+    //  other layers in different ways. The calculated result has been added to `chain.discrete`, but will not be returned
     //  as part of the response body built up by the chain
     return chain.body;
 };
@@ -104,14 +104,14 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
         });
     },
 
-    prepareData: function (records, chain) {
+    annotateData: function (records, chain) {
         // Tie the calculated group-test results to genes with a matching name
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
         var gene_source_id = this._source_name_mapping["gene_ns"];
         // This connector assumes that genes are the main body of records from the chain, and that aggregation tests are
         //   a standalone source that has not acted on genes data yet
-        var aggregationData = chain.raw[aggregation_source_id];
-        var genesData = chain.raw[gene_source_id];
+        var aggregationData = chain.discrete[aggregation_source_id];
+        var genesData = chain.discrete[gene_source_id];
 
         var groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
         aggregationData.results.forEach(function(res) {
@@ -141,6 +141,9 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
  * A sample connector that is useful when all you want are aggregation test results, eg as rows of a standalone table
  * This can be used to parse aggregation test data from multiple sources (eg fetched from a server or calculated
  *  live client-side)
+ *
+ * This is necessary because the Gente annotation data source does not return a body at all. If we want to get data out
+ *  of the chain, we need to manipulate it as part of the chain.
  */
 LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnectorLZ", {
     parseInit: function (init) {
@@ -154,12 +157,11 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnector
             }
         });
     },
-    prepareData: function (records, chain) {
-        // TODO: NAMESPACING would be nice for consistency with other sources. Currently this is one of our slowly growing set of "all or nothing" sources which ignore specific field requests
+    annotateData: function (records, chain) {
         var rows = [];
 
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var aggregation_data = chain.raw[aggregation_source_id];
+        var aggregation_data = chain.discrete[aggregation_source_id];
 
         var bt_results = aggregation_data.results;
         var bt_masks = aggregation_data.masks;
@@ -212,11 +214,11 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationVariantsConnect
         });
     },
 
-    prepareData: function (records, chain) {
+    annotateData: function (records, chain) {
         var rows = [];
 
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var aggregation_data = chain.raw[aggregation_source_id];
+        var aggregation_data = chain.discrete[aggregation_source_id];
 
         var mask_map = aggregation_data.scorecov;
 
