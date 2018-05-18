@@ -954,13 +954,19 @@ LocusZoom.Plot.prototype.refresh = function(){
  *  Different data sources should be prefixed by the source name.
  * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
  *  new data is received by the plot.
- * @param {externalErrorCallback} [error_callback] User defined function that is automatically called if a problem
+ * @param {Object} [opts] Options
+ * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
  *  occurs during the data request or subsequent callback operations
+ * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
+ *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
+ *  uncombined record info
  *  @return {function} The newly created event listener, to allow for later cleanup/removal
  */
-LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, error_callback) {
+LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, opts) {
+    opts = opts || {};
+
     // Register an event listener that is notified whenever new data has been rendered
-    error_callback = error_callback || function(err) {
+    var error_callback = opts.onerror || function(err) {
         console.log("An error occurred while acting on an external callback", err);
     };
     var self = this;
@@ -969,7 +975,7 @@ LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, er
         try {
             self.lzd.getData(self.state, fields)
                 .then(function (new_data) {
-                    success_callback(new_data.body);
+                    success_callback(opts.discrete ? new_data.discrete : new_data.body);
                 }).catch(error_callback);
         } catch (error) {
             // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up

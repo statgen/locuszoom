@@ -525,7 +525,7 @@ describe("LocusZoom.Plot", function(){
             this.plot.subscribeToData(
                 [ "first:x" ],
                 dataCallback,
-                done
+                { onerror: done }
             );
 
             this.plot.applyState().catch(done);
@@ -543,21 +543,43 @@ describe("LocusZoom.Plot", function(){
             }, 0);
         });
 
-        it("calls an error callback if a problem occurs while fetching data", function(done) {
+        it("allows subscribing to individual (not combined) sources", function (done) {
+            var expectedData = { first: [ {"first:x": 0}, {"first:x": 1} ] };
+            var dataCallback = this.sandbox.spy();
+
+            this.plot.subscribeToData(
+                [ "first:x" ],
+                dataCallback,
+                { onerror: done , discrete: true }
+            );
+            // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
+            //  more than once during rerender
+            window.setTimeout(function() {
+                try {
+                    assert.ok(dataCallback.called, "Data handler was called");
+                    assert.ok(dataCallback.calledWith(expectedData), "Data handler received the expected data");
+                    done();
+                } catch(error) {
+                    done(error);
+                }
+            }, 0);
+        });
+
+        it("calls an error callback if a problem occurs while fetching data", function() {
             var dataCallback = this.sandbox.spy();
             var errorCallback = this.sandbox.spy();
 
             this.plot.subscribeToData(
                 [ "nosource:x" ],
                 dataCallback,
-                errorCallback
+                { onerror: errorCallback }
             );
 
-            this.plot.applyState()
+            return this.plot.applyState()
                 .then(function() {
                     assert.ok(dataCallback.notCalled, "Data callback was not called");
                     assert.ok(errorCallback.called, "Error callback was called");
-                }).finally(done);
+                });
         });
 
         it("allows event listeners to be removed / cleaned up individually", function() {
@@ -567,7 +589,7 @@ describe("LocusZoom.Plot", function(){
             var listener = this.plot.subscribeToData(
                 [ "nosource:x" ],
                 dataCallback,
-                errorCallback
+                { onerror: errorCallback }
             );
 
             this.plot.off("data_rendered", listener);
