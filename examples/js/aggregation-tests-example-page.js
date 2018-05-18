@@ -6,15 +6,17 @@
 /* global $, raremetal */
 /* eslint-disable no-unused-vars */
 
+var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; };
+
 // Make a custom layout object
 function customizePlotLayout (layout) {
     // Customize an existing plot layout with the data for aggregation tests
     // Customize layout: genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
     //  the gene track by aggregation test results
     var genesLayout = layout.panels[1].data_layers[0];
-    genesLayout.namespace["aggregationtest"] = "aggregationtest";
+    genesLayout.namespace["aggregation"] = "aggregation";
     genesLayout.namespace["aggregation_genes"] = "aggregation_genes";
-    genesLayout.fields.push("aggregationtest:all", "aggregation_genes:all");
+    genesLayout.fields.push("aggregation:all", "aggregation_genes:all");
     var colorConfig = [
         {
             scale_function: "if",
@@ -91,6 +93,13 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
         this.selector.tabulator("setData", data);
     },
 
+    prepareData: function (data) { return data; },  // Stub
+
+    renderData: function(data) {
+        data = this.prepareData(data);
+        this.tableUpdateData(data);
+    },
+
     /**
      * Scroll the table to a particular row, and highlight the value. The index must be a row number, or a field
      *  value that matches the table's predefined index field.
@@ -122,11 +131,50 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
 });
 
 var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
+    prepareData: function (data) {
+        var rows = [];
+
+        var aggregation_data = data.aggregation;
+
+        var bt_results = aggregation_data.results;
+        var bt_masks = aggregation_data.masks;
+
+        // Convert masks to a hash to facilitate quickly aligning result with the data for one specific group+mask
+        var mask_lookup = {};
+
+        bt_masks.forEach(function (mask) {
+            mask.groups.forEach(function (group_variants, group_id) { // mask.groups is an es6 hash
+                // Combine the group and mask data into a single concise representation of the mask with a unique key
+                var unique = getMaskKey(group_id, mask.id);
+                mask_lookup[unique] = {
+                    id: unique,
+                    mask: mask.id,
+                    group: group_id,
+                    mask_desc: mask.label,
+                    variants: group_variants,
+                    variant_count: group_variants.length
+                };
+            });
+        });
+
+        bt_results.forEach(function (one_result) {
+            var group_key = getMaskKey(one_result.group, one_result.mask);
+            var row_data = JSON.parse(JSON.stringify(mask_lookup[group_key]));
+
+            row_data.calc_type = one_result.test;
+            row_data.pvalue = one_result.pvalue;
+
+            rows.push(row_data);
+
+        });
+        return rows;
+    },
     addPlotListeners: function(plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
-            ["aggregationtest:all", "aggregation_table_rows:all"],
-            this.tableUpdateData.bind(this)
+            ["aggregation:all"],
+            this.renderData.bind(this),
+            { discrete: true }
         );
 
         plot.on("element_selection", function(eventData) {
@@ -155,11 +203,32 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
 });
 
 var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {
+    prepareData: function (data) {
+        var rows = [];
+        var aggregation_data = data.aggregation;
+
+        var mask_map = aggregation_data.scorecov;
+
+        Object.keys(mask_map).forEach(function (key) {
+            var data = mask_map[key];
+            for (var i=0; i < data.scores.variants.length; i++) {
+                rows.push({
+                    id: key,
+                    variant: data.scores.variants[i],
+                    score: data.scores.u[i],
+                    alt_allele_freq: data.scores.altFreq[i]
+                });
+            }
+        });
+        return rows;
+    },
+
     addPlotListeners: function (plot) {
         plot.subscribeToData(
             // FIXME: These fields are hard-coded references to specific namespaced sources
-            ["aggregationtest:all", "variants_table_rows:all"],
-            this.tableUpdateData.bind(this)
+            ["aggregation:all"],
+            this.renderData.bind(this),
+            { discrete: true }
         );
     }
 });

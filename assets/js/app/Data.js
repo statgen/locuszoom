@@ -963,7 +963,7 @@ LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
      * Tells the connector how to find the data it relies on
      *
      * For example, a connector that applies burden test information to the genes layer might specify:
-     *  {gene_ns: "gene", burden_ns: "burdentest"}
+     *  {gene_ns: "gene", aggregation_ns: "aggregation"}
      *
      * @member {Object}
      */

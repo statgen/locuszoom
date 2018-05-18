@@ -8,9 +8,6 @@
  * 2. A connector that annotates gene data with aggregation test results
  */
 
-
-var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; };
-
 /**
  * Data Source that calculates gene or region-based tests based on provided data
  *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
@@ -66,7 +63,7 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     return data;
 };
 
-LocusZoom.Data.AggregationTestSource.prototype.formatRawResponse = function(data) { return data; };
+LocusZoom.Data.AggregationTestSource.prototype.normalizeResponse = function(data) { return data; };
 
 LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (records, chain) {
     // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
@@ -120,82 +117,3 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
     }
 });
 
-
-/**
- * A sample connector that is useful when all you want are aggregation test results, eg as rows of a standalone table
- * This can be used to parse aggregation test data from multiple sources (eg fetched from a server or calculated
- *  live client-side)
- *
- * This is necessary because the Gente annotation data source does not return a body at all. If we want to get data out
- *  of the chain, we need to manipulate it as part of the chain.
- */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnectorLZ", {
-    REQUIRED_SOURCES: ["aggregation_ns"],
-    combineChainBody: function (records, chain) {
-        var rows = [];
-
-        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var aggregation_data = chain.discrete[aggregation_source_id];
-
-        var bt_results = aggregation_data.results;
-        var bt_masks = aggregation_data.masks;
-
-        // Convert masks to a hash to facilitate quickly aligning result with the data for one specific group+mask
-        var mask_lookup = {};
-
-        bt_masks.forEach(function (mask) {
-            mask.groups.forEach(function (group_variants, group_id) { // mask.groups is an es6 hash
-                // Combine the group and mask data into a single concise representation of the mask with a unique key
-                var unique = getMaskKey(group_id, mask.id);
-                mask_lookup[unique] = {
-                    id: unique,
-                    mask: mask.id,
-                    group: group_id,
-                    mask_desc: mask.label,
-                    variants: group_variants,
-                    variant_count: group_variants.length
-                };
-            });
-        });
-
-        bt_results.forEach(function (one_result) {
-            var group_key = getMaskKey(one_result.group, one_result.mask);
-            var row_data = JSON.parse(JSON.stringify(mask_lookup[group_key]));
-
-            row_data.calc_type = one_result.test;
-            row_data.pvalue = one_result.pvalue;
-
-            rows.push(row_data);
-
-        });
-        return rows;
-    }
-});
-
-/**
- * A sample connector that extracts variant data for all mask/group combinations in the dataset
- */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationVariantsConnectorLZ", {
-    REQUIRED_SOURCES: ["aggregation_ns"],
-    combineChainBody: function (records, chain) {
-        var rows = [];
-
-        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var aggregation_data = chain.discrete[aggregation_source_id];
-
-        var mask_map = aggregation_data.scorecov;
-
-        Object.keys(mask_map).forEach(function (key) {
-            var data = mask_map[key];
-            for (var i=0; i < data.scores.variants.length; i++) {
-                rows.push({
-                    id: key,
-                    variant: data.scores.variants[i],
-                    score: data.scores.u[i],
-                    alt_allele_freq: data.scores.altFreq[i]
-                });
-            }
-        });
-        return rows;
-    }
-});
