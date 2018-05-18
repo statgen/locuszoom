@@ -20,7 +20,7 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
 
         // Calculate raw bayes factors and posterior probabilities based on information returned from the API
         var nlogpvals = records.map(function (item) {
-            return item["assoc:log_pvalue"];
+            return item["log_pvalue"];
         });
         var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
         var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
@@ -33,9 +33,9 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
 
         // Annotate each response record based on credible set membership
         records.forEach(function (item, index) {
-            item["assoc:credibleSetPosteriorProb"] = posteriorProbabilities[index];
-            item["assoc:credibleSetContribution"] = credSetScaled[index]; // Visualization helper: normalized to contribution within the set
-            item["assoc:isCredible"] = credSetBool[index];
+            item["credibleSetPosteriorProb"] = posteriorProbabilities[index];
+            item["credibleSetContribution"] = credSetScaled[index]; // Visualization helper: normalized to contribution within the set
+            item["isCredible"] = credSetBool[index];
         });
         return records;
     }
@@ -45,7 +45,7 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
 LocusZoom.Layouts.add("tooltip", "credible_set_association", function () {
     // Extend a known tooltip with an extra row of info showing posterior probabilities
     var l = LocusZoom.Layouts.get("tooltip", "standard_association", {unnamespaced: true});
-    l.html += "<br>Posterior probability: <strong>{{assoc:credibleSetPosteriorProb|scinotation}}</strong>";
+    l.html += "<br>Posterior probability: <strong>{{{{namespace[assoc]}}credibleSetPosteriorProb|scinotation}}</strong>";
     return l;
 }());
 
@@ -56,7 +56,7 @@ LocusZoom.Layouts.add("tooltip", "credible_set_annotation", {
     hide: {and: ["unhighlighted", "unselected"]},
     html: "<strong>{{{{namespace[assoc]}}variant}}</strong><br>"
     + "P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>" +
-    "<br>Posterior probability: <strong>{{assoc:credibleSetPosteriorProb|scinotation}}</strong>"
+    "<br>Posterior probability: <strong>{{{{namespace[assoc]}}credibleSetPosteriorProb|scinotation}}</strong>"
 });
 
 // Define layouts that incorporate credible set annotations into the plot
@@ -71,10 +71,10 @@ LocusZoom.Layouts.add("data_layer", "credible_set_annotation", {
     color: "#00CC00",
     // Credible set markings are derived fields. Although they don't need to be specified in the fields array,
     //  we DO need to specify the fields used to do the calculation (eg pvalue)
-    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue"],
+    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}credibleSetPosteriorProb", "{{namespace[assoc]}}credibleSetContribution", "{{namespace[assoc]}}isCredible"],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
-        ["assoc:isCredible", true]
+        ["{{namespace[assoc]}}isCredible", true]
     ],
     behaviors: {
         onmouseover: [
@@ -123,10 +123,10 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
     panels: [
         function () {
             // Use a slightly modified association panel: custom tooltip
-            var l = LocusZoom.Layouts.get("panel", "association", {unnamespaced: true});
+            var assoc_panel = LocusZoom.Layouts.get("panel", "association", {unnamespaced: true});
 
             // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
-            l.dashboard.components.push(
+            assoc_panel.dashboard.components.push(
                 {
                     type: "display_options",
                     position: "right",
@@ -179,7 +179,7 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
                                 point_shape: "circle",
                                 point_size: 40,
                                 color: [
-                                    {
+                                    { // FIXME: Display options dropdown should support namespacing (namespaces have already been resolved by the time this works, so "assoc" is hardcoded)
                                         field: "assoc:credibleSetContribution",
                                         scale_function: "if",
                                         parameters: {
@@ -224,8 +224,17 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
                     ]
                 }
             );
-            l.data_layers[2].tooltip = LocusZoom.Layouts.get("tooltip", "credible_set_association");
-            return l;
+            var assoc_layer = assoc_panel.data_layers[2];
+            assoc_layer.tooltip = LocusZoom.Layouts.get("tooltip", "credible_set_association");
+
+            //["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}credibleSetPosteriorProb", "{{namespace[assoc]}}credibleSetContribution", "{{namespace[assoc]}}isCredible"]
+
+            // assoc_layer.fields.push("{{namespace[assoc]}}credibleSetPosteriorProb", "{{namespace[assoc]}}credibleSetContribution", "{{namespace[assoc]}}isCredible");
+            assoc_layer.fields = [
+                "{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}log_pvalue|logtoscinotation", "{{namespace[assoc]}}ref_allele", "{{namespace[assoc]}}credibleSetPosteriorProb", "{{namespace[assoc]}}credibleSetContribution", "{{namespace[assoc]}}isCredible",
+                "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"];
+
+            return assoc_panel;
         }(),
         LocusZoom.Layouts.get("panel", "credible_set_panel", {unnamespaced: true})
     ]

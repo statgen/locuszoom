@@ -217,7 +217,7 @@ LocusZoom.Data.Requester = function(sources) {
     this.getData = function(state, fields) {
         var requests = split_requests(fields);
         // Create an array of functions that, when called, will trigger the request to the specified datasource
-        var promises = Object.keys(requests).map(function(key) {
+        var request_handles = Object.keys(requests).map(function(key) {
             if (!sources.get(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
@@ -227,9 +227,9 @@ LocusZoom.Data.Requester = function(sources) {
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
         var ret = Q.when({header:{}, body:{}, discrete: {}});
-        for(var i=0; i < promises.length; i++) {
+        for(var i=0; i < request_handles.length; i++) {
             // If a single datalayer uses multiple sources, perform the next request when the previous one completes
-            ret = ret.then(promises[i]);
+            ret = ret.then(request_handles[i]);
         }
         return ret;
     };
@@ -278,7 +278,7 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
 };
 
 /**
- * Fetch the internal string used to represent this data when cache is used
+ * A unique identifier that indicates whether cached data is valid for this request
  * @protected
  * @param state
  * @param chain
@@ -286,12 +286,16 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
  * @returns {String|undefined}
  */
 LocusZoom.Data.Source.prototype.getCacheKey = function(state, chain, fields) {
-    var url = this.getURL && this.getURL(state, chain, fields);
-    return url;
+    return this.getURL && this.getURL(state, chain, fields);
 };
 
 /**
- * Fetch data from a remote location
+ * Stub: build the URL for any requests made by this source.
+ */
+LocusZoom.Data.Source.prototype.getURL = function(state, chain, fields) { return this.url; };
+
+/**
+ * Perform a network request to fetch data for this source
  * @protected
  * @param {Object} state The state of the parent plot
  * @param chain
@@ -301,8 +305,6 @@ LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
     var url = this.getURL(state, chain, fields);
     return LocusZoom.createCORSPromise("GET", url); 
 };
-// TODO: move this.getURL stub into parent class and add documentation; parent should not check for methods known only to children
-
 
 /**
  * Gets the data for just this source, typically via a network request (caching where possible)
@@ -327,14 +329,15 @@ LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
 
 /**
  * Fetch the data from the specified data source, and format it in a way that can be used by the consuming plot
- * @protected
+ *  This is the external-facing methgod that should be called in most scenarios
+ *
  * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
+ * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
  * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
- * @returns {function(this:LocusZoom.Data.Source)} A callable operation that can be used as part of the data chain
+ * @returns {function} A callable operation that can be used as part of the data chain
  */
 LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, trans) {
     if (this.preGetData) {
@@ -362,66 +365,21 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
 };
 
 /**
- * Parse response data. Return an object containing "header" (metadata or request parameters) and "body"
- *   (data to be used for plotting). The response from this request is combined with responses from all other requests
- *   in the chain.
- * @public
- * @param {String|Object} resp The raw data associated with the response
- * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
- * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
- *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
- * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
- *     This must be an array with the same length as `fields`
- * @returns {Promise|{header: ({}|*), discrete: {}, body: []}} A promise that resolves to an object containing
- *   request metadata (headers), the consolidated data for plotting (body), and the individual responses that would be
- *   returned by each source in the chain (discrete)
- */
-LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
-    var source_id = this.source_id || this.constructor.SOURCE_NAME;
-    // Store a copy of the parsed API data from just this source, with no further post-processing.  This does not
-    //  reflect any operations performed in `annotateData`, which could contain data from other sources.
-    if (!chain.discrete) {
-        chain.discrete = {};
-    }
-    var json = typeof resp == "string" ? JSON.parse(resp) : resp;
-
-    // Perform any custom transformations on the resulting data, including annotating records based on responses from
-    //  previous data sources in the chain. This final combination of data gets passed as the body.
-
-    // The initial response will have been resolved when this function was called. All further transformations
-    //   should support promise semantics
-    var self = this;
-    var recordPromise = Q.when(self.parseData(json.data || json, fields, outnames, trans));
-    return recordPromise.then(function(records) {
-        // Some users may want to return static data from the custom hook, without worrying about Promise semantics.
-        return Q.when(self.annotateData(records, chain));
-    }).then(function(annotated_body) {
-        chain.discrete[source_id] = annotated_body;
-        return {header: chain.header || {}, discrete: chain.discrete || {}, body: annotated_body};
-    });
-};
-/**
- * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
- *   the same length, and a given array index corresponds to a single row.
+ * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
+ * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
  *
- * This gathers column data into an array of objects, each one representing the combined data for a given record.
- *   See `parseData` for usage
- *
+ * Does not apply namespacing or transformations.
+ * @param {Object[]|Object} data The data in one of two forms: [ {field:val} ]
  * @protected
- * @param {Object} data Parsed data from the response payload
- * @param {Array} fields
- * @param {Array} outnames
- * @param {Array} trans
- * @returns {Object[]}
  */
-LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, outnames, trans) {
-    //intended for an object of arrays
-    //{"id":[1,2], "val":[5,10]}
-    var records = [];
-    fields.forEach(function(f, i) {
-        if (!(f in data)) {throw "field " + f + " not found in response for " + outnames[i];}
-    });
+LocusZoom.Data.Source.prototype.formatRawResponse = function (data) {
+    if (Array.isArray(data)) {
+        // Already in the desired form
+        return data;
+    }
+
+    // Otherwise, assume the server response is an object representing columns of data.
+    // Each array should have the same length, and a given array index corresponds to a single row.
     // Safeguard: check that arrays are of same length
     var keys = Object.keys(data);
     var N = data[keys[0]].length;
@@ -433,58 +391,78 @@ LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, ou
         throw this.constructor.SOURCE_NAME + " expects a response in which all arrays of data are the same length";
     }
 
+    // Go down the rows, and create an object for each record
+    var records = [];
+    var fields = Object.keys(data);
     for(var i = 0; i < N; i++) {
         var record = {};
-        for(var j=0; j<fields.length; j++) {
-            var val = data[fields[j]][i];
-            if (trans && trans[j]) {
-                val = trans[j](val);
-            }
-            record[outnames[j]] = val;
+        for(var j = 0; j < fields.length; j++) {
+            record[fields[j]] = data[fields[j]][i];
         }
         records.push(record);
     }
     return records;
 };
 
+/** @deprecated */
+LocusZoom.Data.Source.prototype.prepareData = function (records) {
+    console.warn("Warning: .prepareData() is deprecated. Use .annotateData() instead");
+    return this.annotateData(records);
+};
 /**
- *  Given an array response in which each record is represented as one coherent bundle of data (an object of
- *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
- *    by the datalayer. See `parseData` for usage.
- * @protected
- * @param {Object[]} data An array of response payload objects, each describing one record
- * @param {Array} fields
- * @param {Array} outnames
- * @param {Array} trans
- * @returns {Object[]}
+ * Hook to post-process the data returned by this source with new, user-specified behavior.
+ *   (eg cleaning up API values or adding complex new calculated fields)
+ *
+ * @param {Object[]} records The parsed data from the source (eg standardized api response)
+ * @returns {Object[]|Promise} The modified set of records
  */
-LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, outnames, trans) {
+LocusZoom.Data.Source.prototype.annotateData = function(records) {
+    // Default behavior: no transformations
+    return records;
+};
+
+/**
+ * Clean up the server records for use by datalayers: extract only certain fields, with the specified names.
+ *   Apply transformations as appropriate.
+ *
+ * This hook can be overridden, eg to create a source that always returns all records and ignores the "fields" array.
+ *  This is particularly common for sources at the end of a chain- many "dependent" sources do not allow
+ *  cherry-picking individual fields, and by convention the fields array simply asks for "last_source_name:all"
+ *
+ * @param {Object[]} data One record object per element
+ * @param {String[]} fields The names of fields to extract (as named in the source data). Eg "afield"
+ * @param {String[]} outnames How to represent the source fields in the output. Eg "namespace:afield|atransform"
+ * @param {function[]} trans An array of transformation functions (if any). One function per data element, or null.
+ * @protected
+ */
+LocusZoom.Data.Source.prototype.selectFields = function (data, fields, outnames, trans) {
     //intended for an array of objects
     // [ {"id":1, "val":5}, {"id":2, "val":10}]
-    var records = [];
+
+    // Since a number of sources exist that do not obey this format, we will provide a convenient pass-through
+    if (!Array.isArray(data)) {
+        return data;
+    }
+
     var fieldFound = [];
-    for (var k=0; k<fields.length; k++) { 
+    for (var k=0; k<fields.length; k++) {
         fieldFound[k] = 0;
     }
 
-    if (!data.length) {
-        // Do not attempt to parse records if there are no records, and bubble up an informative error message.
-        throw "No data found for specified query";
-    }
-    for (var i = 0; i < data.length; i++) {
-        var record = {};
-        for (var j=0; j<fields.length; j++) {
-            var val = data[i][fields[j]];
+    var records = data.map(function (item) {
+        var output_record = {};
+        for (var j=0; j < fields.length; j++) {
+            var val = item[fields[j]];
             if (typeof val != "undefined") {
                 fieldFound[j] = 1;
             }
             if (trans && trans[j]) {
                 val = trans[j](val);
             }
-            record[outnames[j]] = val;
+            output_record[outnames[j]] = val;
         }
-        records.push(record);
-    }
+        return output_record;
+    });
     fieldFound.forEach(function(v, i) {
         if (!v) {throw "field " + fields[i] + " not found in response for " + outnames[i];}
     });
@@ -492,45 +470,80 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, o
 };
 
 /**
- * Parse the response data: convert a raw API payload into a form usable by LocusZoom  TODO Hide private entries from user-facing api docs
+ * Combine records from this source with others in the chain to yield final chain body.
+ *   Handles merging this data with other sources (if applicable)
+ *
+ * @param {Object[]} data The data That would be returned from this source alone
+ * @param {Object} chain The data chain built up during previous requests
+ * @param {String[]} fields
+ * @param {String[]} outnames
+ * @return {Promise|Object[]} The new chain body
  * @protected
- * @param {Object} x The raw response data to be parsed
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
- * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
- *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
- * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
- *     This must be an array with the same length as `fields`
- * @return {Promise|Object[]}
  */
-LocusZoom.Data.Source.prototype.parseData = function(x, fields, outnames, trans) {
-    var records;
-    if (Array.isArray(x)) { 
-        records = this.parseObjectsToObjects(x, fields, outnames, trans);
-    } else {
-        records = this.parseArraysToObjects(x, fields, outnames, trans);
-    }
-    return records;
-};
-
-LocusZoom.Data.Source.prototype.prepareData = function (records) {
-    console.warn("Warning: .prepareData() is deprecated. Use .annotateData() instead");
-    return records;
+LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames) {
+    return data;
 };
 
 /**
- * Hook to post-process the data returned by this source with new, user-specified behavior.
- *   (eg, combining with the records from another data source, performing client-side calculations, or filtering)
+ * Coordinates the work of parsing a response and returning records. This is broken into 4 steps, which may be
+ *  overridden separately for fine-grained control. Each step can return either raw data or a promise.
  *
- * This also allows annotating records (from this source) based on responses from previous data sources in the chain-
- *  see "ConnectorSource" for an example
- *  @param {Object[]} records The parsed response body as it would be returned from this source
+ * @public
+ * @param {String|Object} resp The raw data associated with the response
  * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
- * @returns {Object[]|Promise} The annotated set of records to be used in chain.body . More complex transformations
- *  can return a promise
+ * @param {String[]} fields Array of requested field names (as they would appear in the response payload)
+ * @param {String[]} outnames  Array of field names as they will be represented in the data returned by this source,
+ *  including the namespace. This must be an array with the same length as `fields`
+ * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
+ *     This must be an array with the same length as `fields`
+ * @returns {Promise|{header: ({}|*), discrete: {}, body: []}} A promise that resolves to an object containing
+ *   request metadata (headers), the consolidated data for plotting (body), and the individual responses that would be
+ *   returned by each source in the chain in isolation (discrete)
  */
-LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
-    // Default behavior: do not transform the parsed data
-    return records;
+LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, outnames, trans) {
+    var source_id = this.source_id || this.constructor.SOURCE_NAME;
+    if (!chain.discrete) {
+        chain.discrete = {};
+    }
+
+    var json = typeof resp == "string" ? JSON.parse(resp) : resp;
+
+    var self = this;
+    // Perform the 4 steps of parsing the payload and return a combined chain object
+    return Q.when(self.formatRawResponse(json.data || json))
+        .then(function(standardized) {
+            // Perform calculations on the data from just this source
+            return Q.when(self.annotateData(standardized));
+        }).then(function (data) {
+            return Q.when(self.selectFields(data, fields, outnames, trans));
+        }).then(function (one_source_body) {
+            // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
+            //   fields array into account). This is useful when we want to re-use the source output in many ways.
+            chain.discrete[source_id] = one_source_body;
+            return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames));
+        }).then(function (new_body) {
+            return { header: chain.header || {}, discrete: chain.discrete, body: new_body };
+        });
+};
+
+/** @deprecated */
+LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, outnames, trans) {
+    console.warn("Warning: .parseArraysToObjects() is no longer used. A stub is provided for legacy use");
+    var standard = this.formatRawResponse(data);
+    return this.selectFields(standard, fields, outnames, trans);
+};
+
+/** @deprecated */
+LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, outnames, trans) {
+    console.warn("Warning: .parseObjectsToObjects() is deprecated. Use .selectFields() instead");
+    return this.selectFields(data, fields, outnames, trans);
+};
+
+/** @deprecated */
+LocusZoom.Data.Source.prototype.parseData = function(data, fields, outnames, trans) {
+    console.warn("Warning: .parseData() is no longer used. A stub is provided for legacy use");
+    var standard = this.formatRawResponse(data);
+    return this.selectFields(standard, fields, outnames, trans);
 };
 
 /**
@@ -672,6 +685,8 @@ LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outname
     return obj;
 };
 
+LocusZoom.Data.LDSource.prototype.formatRawResponse = function (data) { return data; };
+
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var findExtremeValue = function(x, pval, sign) {
         pval = pval || "pvalue";
@@ -715,16 +730,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         "&fields=chr,pos,rsquare";
 };
 
-LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    var json = JSON.parse(resp);
-
-    var source_id = this.source_id || this.constructor.SOURCE_NAME;
-    // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.discrete) {
-        chain.discrete = {};
-    }
-    chain.discrete[source_id] = json;  // The data that would be returned from just this source alone
-
+LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
@@ -753,12 +759,13 @@ LocusZoom.Data.LDSource.prototype.parseResponse = function(resp, chain, fields, 
             }
         }
     };
-    leftJoin(chain.body, json.data, reqFields.ldout, "rsquare");
+    leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
     }
-    return chain;   
+    return chain.body;
 };
+
 
 /**
  * Data Source for Gene Data, as fetched from the LocusZoom API server (or compatible)
@@ -778,20 +785,10 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
         " and end ge " + state.start;
 };
 
-LocusZoom.Data.GeneSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    // Bypass any record parsing, and provide the data layer with the exact information returned by the API
-    var json = JSON.parse(resp);
-    var records = this.annotateData(json.data, chain);
-
-    var source_id = this.source_id || this.constructor.SOURCE_NAME;
-    // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.discrete) {
-        chain.discrete = {};
-    }
-    chain.discrete[source_id] = records;
-
-    return {header: chain.header, discrete: chain.discrete, body: records};
-};
+// Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with the
+// exact information returned by the API. (ignoring the fields array in the layout)
+LocusZoom.Data.GeneSource.prototype.formatRawResponse = function (data) { return data; };
+LocusZoom.Data.GeneSource.prototype.selectFields = function (data, fields, outnames, trans) { return data; };
 
 /**
  * Data Source for Gene Constraint Data, as fetched from the LocusZoom API server (or compatible)
@@ -806,6 +803,8 @@ LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function(init
 LocusZoom.Data.GeneConstraintSource.prototype.getURL = function() {
     return this.url;
 };
+
+LocusZoom.Data.GeneConstraintSource.prototype.formatRawResponse = function (data) { return data; };
 
 LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function(state, chain, fields) {
     return this.url + JSON.stringify(state);
@@ -828,21 +827,11 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
     return LocusZoom.createCORSPromise("POST", url, body, headers);
 };
 
-LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, chain, fields, outnames) {
-    if (!resp){
-        return { header: chain.header, discrete: chain.discrete, body: chain.body };
+LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+    if (!data) {
+        return chain;
     }
-    var data = JSON.parse(resp);
-
-    var source_id = this.source_id || this.constructor.SOURCE_NAME;
-    // Store a copy of the parsed API data from this source, with no further post-processing
-    if (!chain.discrete) {
-        chain.discrete = {};
-    }
-    chain.discrete[source_id] = data;
-
-    // Loop through the array of genes in the body and match each to a result from the constraints request
-    var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"]; 
+    var constraint_fields = ["bp", "exp_lof", "exp_mis", "exp_syn", "lof_z", "mis_z", "mu_lof", "mu_mis","mu_syn", "n_exons", "n_lof", "n_mis", "n_syn", "pLI", "syn_z"];
     chain.body.forEach(function(gene, i){
         var gene_id = gene.gene_id;
         if (gene_id.indexOf(".")){
@@ -863,7 +852,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function(resp, cha
             }
         });
     });
-    return { header: chain.header, discrete: chain.discrete, body: chain.body };
+    return chain.body;
 };
 
 /**
@@ -922,6 +911,29 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
     return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, this._data];
 };
 
+/**
+ * Data source for PheWAS data served from external JSON files
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
+ *   provide pheWAS results for this position. Note positions may not translate between builds.
+ */
+LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+}, "PheWASLZ");
+LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
+    var build = this.params.build;
+    if (!build || !Array.isArray(build) || !build.length) {
+        throw ["Data source", this.constructor.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
+    }
+    var url = [
+        this.url,
+        "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
+        build.map(function(item) {return "build=" + encodeURIComponent(item);}).join("&")
+    ];
+    return url.join("");
+};
 
 /**
  * Base class for "connectors"- this is meant to be subclassed, rather than used directly.
@@ -930,7 +942,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
  *  useful piece of information once, but apply it to many different kinds of record types.
  *
- * Typically, a subclass will implement the field merging logic in `annotateData`.
+ * Typically, a subclass will implement the field merging logic in `combineChainBody`.
  *
  * @public
  * @class
@@ -977,40 +989,18 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
     return Q.when(chain.body || []);
 };
 
-LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(response, chain, fields, outnames) {
-    // A connector source does not update chain.discrete, but it may use it while annotating records
-    // Since a connector has no data of its own, deliberately bypass `parseData`
-    // This implies that connectors will not allow requesting of specific fields from the response; they are
-    //   "all or nothing" requests and should be treated as such in the fields array. (fields: ["connector_name:all"])
-    var records = this.annotateData(response, chain);  // TODO: Promise semantics? (eg for long running calcs, webworkers)
-    return {header: chain.header || {}, discrete: chain.discrete || {}, body: records};
+LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, fields, outnames) {
+    // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
+    //  and field selection (because it has no data of its own)
+    // Typically connectors are called with `connector_name:all` in the fields array. Since they are only responsible
+    //  for joining two sources, the final fields array is already limited by whatever came in.
+    return Q.when(this.combineChainBody(data, chain, fields, outnames))
+        .then(function(new_body) {
+            return {header: chain.header || {}, discrete: chain.discrete || {}, body: new_body};
+        });
 };
 
-LocusZoom.Data.ConnectorSource.prototype.annotateData = function(records, chain) {
+LocusZoom.Data.ConnectorSource.prototype.combineChainBody = function(records, chain) {
     // Stub method: specifies how to combine the data
     throw "This method must be implemented in a subclass";
-};
-
-/**
- * Data source for PheWAS data served from external JSON files
- * @public
- * @class
- * @augments LocusZoom.Data.Source
- * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
- *   provide pheWAS results for this position. Note positions may not translate between builds.
- */
-LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
-    this.parseInit(init);
-}, "PheWASLZ");
-LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
-    var build = this.params.build;
-    if (!build || !Array.isArray(build) || !build.length) {
-        throw ["Data source", this.constructor.SOURCE_NAME, "requires that you specify array of one or more desired genome build names"].join(" ");
-    }
-    var url = [
-        this.url,
-        "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
-        build.map(function(item) {return "build=" + encodeURIComponent(item);}).join("&")
-    ];
-    return url.join("");
 };

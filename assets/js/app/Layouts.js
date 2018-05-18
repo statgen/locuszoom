@@ -434,7 +434,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     namespace: { "gene": "gene", "constraint": "constraint" },
     id: "genes",
     type: "genes",
-    fields: ["{{namespace[gene]}}all", "{{namespace[constraint]}}constraint"],
+    fields: ["{{namespace[gene]}}all", "{{namespace[constraint]}}all"],
     id_field: "gene_id",
     behaviors: {
         onmouseover: [

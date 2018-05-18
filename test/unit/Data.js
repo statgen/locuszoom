@@ -265,23 +265,23 @@ describe("LocusZoom Data", function(){
         });
 
         describe("Source.parseArraysToObjects", function() {
-            it("should apply transformations to correct fields, if provided", function() {
+            // TODO: Test warning message?
+            it("should provide a legacy wrapper for deprecated method", function() {
                 var source = new LocusZoom.Data.Source();
                 var res = source.parseArraysToObjects(
                     {a: [1], b: [1]},
                     ["a", "b"], ["namespace:a|add1", "bork:bork"], [function(v) { return v + 1; }, null]
                 );
                 assert.deepEqual(res, [{"namespace:a|add1": 2, "bork:bork": 1}], "Transformations were applied");
-            });
-            it("should create one object per piece of data, with namespaced keys", function() {
+            });        });
+        describe("Source.formatRawResponse", function () {
+            it("should create one object per piece of data", function() {
                 var source = new LocusZoom.Data.Source();
-                var res = source.parseArraysToObjects(
-                    { a: [1, 2], b: [3, 4] },
-                    ["a", "b"], ["namespace:a", "namespace:b"], [null, null]
-                );
+                var res = source.formatRawResponse(
+                    { a: [1, 2], b: [3, 4] } );
                 assert.deepEqual(
                     res,
-                    [{"namespace:a": 1, "namespace:b": 3}, {"namespace:a": 2, "namespace:b": 4}],
+                    [ {a: 1, b: 3}, {a: 2, b: 4} ],
                     "Correct number and union of elements"
                 );
             });
@@ -289,33 +289,30 @@ describe("LocusZoom Data", function(){
                 var source = new LocusZoom.Data.Source();
                 assert.throws(
                     function() {
-                        source.parseArraysToObjects(
-                            { a: [1], b: [1,2], c: [1,2,3] },
-                            [], [], []);
+                        source.formatRawResponse( { a: [1], b: [1,2], c: [1,2,3] } );
                     },
                     /expects a response in which all arrays of data are the same length/
                 );
             });
-            it("should throw an error when requesting a field not in the response", function() {
+            it("should return the data unchanged if it is already in the desired shape", function () {
                 var source = new LocusZoom.Data.Source();
-                assert.throws(
-                    function() {
-                        source.parseArraysToObjects(
-                            {a: [1], b: [1,2], c: [1,2,3]},
-                            ["a", "c", "d"],
-                            ["namespace:a", "namespace:c", "namespace:d"],
-                            [null, null, null]
-                        );
-                    },
-                    /field d not found in response for namespace:d/
-                );
+                var data = [ {a: 1, b: 3}, {a: 2, b: 4} ];
+                var res = source.formatRawResponse( data );
+                assert.deepEqual(res, data);
             });
         });
-
-        describe("Source.parseObjectsToObjects", function () {
+        describe("Source.selectFields", function () {
+            it("allows a legacy alias via parseArraysToObjects", function () {
+                var source = new LocusZoom.Data.Source();
+                var res = source.parseArraysToObjects(
+                    [ {"id":1, "val":5}, {"id":2, "val":10}],
+                    ["id"], ["namespace:id"], [null]
+                );
+                assert.deepEqual(res, [{"namespace:id": 1}, {"namespace:id": 2}]);
+            });
             it("extracts the specified fields from each record", function () {
                 var source = new LocusZoom.Data.Source();
-                var res = source.parseObjectsToObjects(
+                var res = source.selectFields(
                     [ {"id":1, "val":5}, {"id":2, "val":10}],
                     ["id"], ["namespace:id"], [null]
                 );
@@ -323,7 +320,7 @@ describe("LocusZoom Data", function(){
             });
             it("applies value transformations where appropriate", function () {
                 var source = new LocusZoom.Data.Source();
-                var res = source.parseObjectsToObjects(
+                var res = source.selectFields(
                     [ {"id":1, "val":5}, {"id":2, "val":10}],
                     ["id", "val"], ["namespace:id|add1", "bork:bork"], [function (val) { return val + 1; }, null]
                 );
@@ -336,31 +333,28 @@ describe("LocusZoom Data", function(){
 
         describe("Source.annotateData", function() {
             it("should annotate returned records with an additional custom field", function () {
-                var custom_source_class = LocusZoom.KnownDataSources.extend(
-                    "StaticJSON",
-                    "AnnotatedJSON",
-                    {
-                        annotateData: function(records) {
-                            // Custom hook that adds a field to every parsed record
-                            return records.map(function(item) {
-                                item.force = true;
-                                return item;
-                            });
-                        }
+                var source = LocusZoom.subclass(LocusZoom.Data.Source, {
+                    annotateData: function(records) {
+                        // Custom hook that adds a field to every parsed record
+                        return records.map(function(item) {
+                            item.force = true;
+                            return item;
+                        });
                     }
-                );
-                var source = new custom_source_class([{r:2, d:2}, {c:3, p: "o"}]);
+                });
+
                 // Async test depends on promise
-                return source.getData({}, [], [])({header: []}).then(function(records) {
+                return new source().parseResponse([{a:1, b:1}, {a:2, b: 2}], {}, ["a", "b", "force"], ["a", "b", "force"], []).then(function(records) {
                     records.body.forEach(function(item) {
                         assert.ok(item.force, "Record should have an additional key not in raw server payload");
                     });
                 });
             });
 
-            it("should be able to annotate using both body and chain", function() {
+            it.skip("should be able to annotate using both body and chain", function() {
+                // TODO: Move this one to combineBody
                 var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                    annotateData: function (records, chain) { return records + chain.discrete.another_response; }
+                    //annotateData: function (records) { return records + chain.discrete.another_response; }
                 });
                 var result = new source().annotateData(
                     "some data",
@@ -409,7 +403,8 @@ describe("LocusZoom Data", function(){
         });
 
         describe("Source.parseResponse", function() {
-            it("should allow parseData to return a promise", function(done) {
+            // TODO: add tests for new chain process
+            it.skip("should allow parseData to return a promise", function(done) {
                 var source = LocusZoom.subclass(LocusZoom.Data.Source, {
                     parseData: function (data) { return Q.when(data); }
                 });
@@ -420,31 +415,32 @@ describe("LocusZoom Data", function(){
                 }).catch(done);
             });
 
-            it("should allow annotateData to return a promise and modify the raw response data", function(done) {
+            it("should allow annotateData to return a promise and modify the raw response data", function() {
                 var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                    annotateData: function (data) { return Q.when(data + " with annotation"); },
-                    parseData: function(data) { return data; }
+                    annotateData(data) { return Q.when(data + " with annotation"); },
+                    formatRawResponse(data) { return data; },
+                    selectFields(data) { return data; }
                 });
                 var result = new source().parseResponse({data: "a response"}, {});
-                result.then(function(chain) {
+                return result.then(function(chain) {
                     assert.deepEqual(chain.body, "a response with annotation");
-                    done();
-                }).catch(done);
+
+                });
             });
 
-            it("should store annotations in body and chain.discrete where appropriate", function(done) {
+            it("should store annotations in body and chain.discrete where appropriate", function() {
                 var source = LocusZoom.subclass(LocusZoom.Data.Source, {
                     annotateData: function (data) { return data + " with annotation"; },
-                    parseData: function(data) { return data; }
+                    formatRawResponse(data) { return data; },
+                    selectFields(data) { return data; }
                 });
                 source.prototype.constructor.SOURCE_NAME = "fake_source";
 
                 var result = new source().parseResponse({data: "a response"}, {});
-                result.then(function(chain) {
+                return result.then(function(chain) {
                     assert.deepEqual(chain.discrete, {fake_source: "a response with annotation"}, "Discrete response uses annotations");
                     assert.deepEqual(chain.body, "a response with annotation", "Combined body uses annotations");
-                    done();
-                }).catch(done);
+                });
             });
         });
     });
@@ -513,7 +509,7 @@ describe("LocusZoom Data", function(){
             // Create a source that internally looks for data as "first" from the specified
             this.basic_config = { from: { first: "a_source", second: "b_source" } };
             this.basic_source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource, {
-                annotateData: function(records, chain) {
+                combineChainBody: function(records, chain) {
                     // A sample method that uses 2 chain sources + an existing body to build an combined response
 
                     // Tell the internal method how to find the actual data it relies on internally, regardless of how
@@ -546,10 +542,11 @@ describe("LocusZoom Data", function(){
                 "Correctly specifies the namespaces containing data that this connector relies on"
             );
         });
-        it("must implement a annotateData method", function() {
+        it("must implement a combineChainBody method", function() {
             var self = this;
+            var source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource);
             assert.throws(
-                function() { new LocusZoom.Data.ConnectorSource(self.basic_config).annotateData(); },
+                function() { new source(self.basic_config).combineChainBody(); },
                 /This method must be implemented in a subclass/
             );
         });
@@ -560,32 +557,25 @@ describe("LocusZoom Data", function(){
                 /test_connector cannot be used before loading required data for: a_source/
             );
         });
-        it("should not make any network requests", function(done) {
+        it("should not make any network requests", function() {
             var instance = new this.basic_source(this.basic_config);
             var fetchSpy = this.sandbox.stub(instance, "fetchRequest");
 
-            instance.getRequest({}, { discrete: { a_source: 1, b_source: 2 } })
-                .then(function() {
-                    assert.ok(fetchSpy.notCalled, "No network request was fired");
-                    done();
-                }).catch(done);
+            return instance.getRequest({}, { discrete: { a_source: 1, b_source: 2 } })
+                .then(function() { assert.ok(fetchSpy.notCalled, "No network request was fired"); });
         });
-        it("should not return any new data from getRequest", function(done) {
+        it("should not return any new data from getRequest", function() {
             var instance = new this.basic_source(this.basic_config);
             var expectedBody = { sample: "response data" };
-            instance.getRequest({}, { discrete: { a_source: 1, b_source: 2 }, body: expectedBody })
-                .then(function(records) {
-                    assert.deepEqual(records, expectedBody, "Should return the previous body");
-                    done();
-                }).catch(done);
+            return instance.getRequest({}, { discrete: { a_source: 1, b_source: 2 }, body: expectedBody })
+                .then(function(records) { assert.deepEqual(records, expectedBody, "Should return the previous body"); });
         });
-        it("should use, but not update, chain.discrete as it produces annotated records", function(done) {
+        it("should use, but not update, chain.discrete as it produces annotated records", function() {
             var expectedBody = [{who: 1, a: "aaa", b: "bbb"}, {what: 2, a: "aaa", b: "bbb"}];
             var rawChain = { a_source: { a_field: "aaa" }, b_source: { b_field: "bbb" } };
 
-
             var instance = new this.basic_source(this.basic_config);
-            instance.getData()(
+            return instance.getData()(
                 {
                     discrete: rawChain,
                     body: [{ who: 1 }, { what: 2 }]
@@ -593,8 +583,7 @@ describe("LocusZoom Data", function(){
             ).then(function(response) {
                 assert.deepEqual(response.body, expectedBody, "Response body was correctly annotated");
                 assert.deepEqual(response.discrete, rawChain, "The chain of individual sources was not changed");
-                done();
-            }).catch(done);
+            });
         });
     });
 });
