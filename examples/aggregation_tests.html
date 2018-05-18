@@ -148,11 +148,11 @@
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
         .add("aggregationtest", ["AggregationTestSourceLZ", {url: "data/aggregationtest_raw_hail_22_21576208-22089932.json"}])
-        .add("aggregation_genes", ["GeneAggregationConnectorLZ", {from: {aggregation_ns: "aggregationtest", gene_ns: "gene"}}])
+        .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregationtest", gene_ns: "gene"}}])
 
         // TODO: rethink how much of the table rows logic really needs to be a data source (genes connector needs to exist- but the others??)
-        .add("aggregation_table_rows", ["AggregationParserConnectorLZ", {from: {aggregation_ns: "aggregationtest"}}])
-        .add("variants_table_rows", ["AggregationVariantsConnectorLZ", {from: {aggregation_ns: "aggregationtest"}}])
+        .add("aggregation_table_rows", ["AggregationParserConnectorLZ", {sources: {aggregation_ns: "aggregationtest"}}])
+        .add("variants_table_rows", ["AggregationVariantsConnectorLZ", {sources: {aggregation_ns: "aggregationtest"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 

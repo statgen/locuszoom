@@ -507,7 +507,7 @@ describe("LocusZoom Data", function(){
             this.sandbox = sinon.sandbox.create();
 
             // Create a source that internally looks for data as "first" from the specified
-            this.basic_config = { from: { first: "a_source", second: "b_source" } };
+            this.basic_config = { sources: { first: "a_source", second: "b_source" } };
             this.basic_source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource, {
                 combineChainBody: function(records, chain) {
                     // A sample method that uses 2 chain sources + an existing body to build an combined response
@@ -535,7 +535,7 @@ describe("LocusZoom Data", function(){
             var source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource);
             assert.throws(
                 function() { new source(); },
-                /Connectors must specify the data they require as init.from = {internal_name: chain_source_id}} pairs/
+                /Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs/
             );
             assert.ok(
                 new source(this.basic_config),

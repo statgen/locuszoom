@@ -414,9 +414,10 @@ LocusZoom.Data.Source.prototype.prepareData = function (records) {
  *   (eg cleaning up API values or adding complex new calculated fields)
  *
  * @param {Object[]} records The parsed data from the source (eg standardized api response)
+ * @param {Object} chain The data chain object. For example, chain.headers may provide useful annotation metadata
  * @returns {Object[]|Promise} The modified set of records
  */
-LocusZoom.Data.Source.prototype.annotateData = function(records) {
+LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
     // Default behavior: no transformations
     return records;
 };
@@ -513,7 +514,7 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
     return Q.when(self.formatRawResponse(json.data || json))
         .then(function(standardized) {
             // Perform calculations on the data from just this source
-            return Q.when(self.annotateData(standardized));
+            return Q.when(self.annotateData(standardized, chain));
         }).then(function (data) {
             return Q.when(self.selectFields(data, fields, outnames, trans));
         }).then(function (one_source_body) {
@@ -948,14 +949,14 @@ LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
  * @class
  * @augments LocusZoom.Data.Source
  * @param {Object} init Configuration for this source
- * @param {Object} init.from Specify how the hard-coded logic should find the data it relies on in the chain,
+ * @param {Object} init.sources Specify how the hard-coded logic should find the data it relies on in the chain,
  *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
  *  assumptions about what namespaces a source is using.
  * @type {*|Function}
  */
 LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
-    if (!init || !init.from) {
-        throw "Connectors must specify the data they require as init.from = {internal_name: chain_source_id}} pairs";
+    if (!init || !init.sources) {
+        throw "Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs";
     }
 
     /**
@@ -966,15 +967,23 @@ LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
      *
      * @member {Object}
      */
-    this._source_name_mapping = init.from;
+    this._source_name_mapping = init.sources;
 
+    // Validate that this source has been told how to find the required information
+    var specified_ids = Object.keys(init.sources);
+    var self = this;
+    this.REQUIRED_SOURCES.forEach(function (k) {
+        if (specified_ids.indexOf(k) === -1) {
+            throw "Configuration for " + self.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
+        }
+    });
     this.parseInit(init);
 }, "ConnectorSource");
 
-LocusZoom.Data.ConnectorSource.prototype.parseInit = function(init) {
-    // The exact requirements for `init` are up to each individual connector source
-    // TODO: Add common validation based on usage experience
-};
+/** @property {String[]} Specifies the sources that must be provided in the original config object */
+LocusZoom.Data.ConnectorSource.prototype.REQUIRED_SOURCES = [];
+
+LocusZoom.Data.ConnectorSource.prototype.parseInit = function(init) {};  // Stub
 
 LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fields) {
     // Connectors do not have their own data by definition, but they *do* depend on other sources having been loaded

@@ -28,29 +28,21 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
     // Unlike most sources, calculations may require access to plot state data even after the initial request
     // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
     //  field called `aggregation_tests` (an object {masks: [], calcs: {})
-    // TODO: In the future, getURL will need to account for the specific masks selected by an external widget
+    // TODO: In the future, getURL will need to account for the specific masks selected by an external widget (when requesting covar data)
     var required_info = state.aggregation_tests || {};
 
-    this._aggregation_calcs = required_info.calcs;
-    this._aggregation_masks = required_info.masks;
+    if (!chain.header) {chain.header = {};}
+    chain.header.aggregation_calcs = required_info.calcs;
+    chain.header.aggregation_masks = required_info.masks;
     return this.url;
 };
 
-LocusZoom.Data.AggregationTestSource.prototype.getData = function (state, fields, outnames, trans) {
-    var self = this;
-    return function(chain) {
-
-        return self.getRequest(state, chain, fields)
-            .then(function (resp) { return self.parseResponse(resp, chain, fields, outnames, trans); });
-    };
-};
-
-LocusZoom.Data.AggregationTestSource.prototype.parseData = function (response, fields, outnames, trans) {
+LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
     // Whatever comes out of `parseData` gets added to `chain.discrete`; this is the method we override when we want to remix the calculated results
 
     // Ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
-    var scoreCov = raremetal.helpers.parsePortalJson({data: response});
-    var calcs = this._aggregation_calcs;
+    var scoreCov = raremetal.helpers.parsePortalJson({data: records});
+    var calcs = chain.header.aggregation_calcs;
 
     if (!calcs || Object.keys(calcs).length === 0) {
         // If no calcs have been requested, then return a dummy placeholder immediately
@@ -74,7 +66,9 @@ LocusZoom.Data.AggregationTestSource.prototype.parseData = function (response, f
     return data;
 };
 
-LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
+LocusZoom.Data.AggregationTestSource.prototype.formatRawResponse = function(data) { return data; };
+
+LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (records, chain) {
     // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
     //  other layers in different ways. The calculated result has been added to `chain.discrete`, but will not be returned
     //  as part of the response body built up by the chain
@@ -93,18 +87,8 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
  * @augments LocusZoom.Data.Source
  */
 LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ", {
-    parseInit: function (init) {
-        // Validate that this source has been told how to find the required information
-        var specified_ids = Object.keys(init.from);
-        var required_sources = ["gene_ns", "aggregation_ns"];
-        required_sources.forEach(function (k) {
-            if (specified_ids.indexOf(k) === -1) {
-                throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
-            }
-        });
-    },
-
-    annotateData: function (records, chain) {
+    REQUIRED_SOURCES: ["gene_ns", "aggregation_ns"],
+    combineChainBody: function (data, chain) {
         // Tie the calculated group-test results to genes with a matching name
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
         var gene_source_id = this._source_name_mapping["gene_ns"];
@@ -146,18 +130,8 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
  *  of the chain, we need to manipulate it as part of the chain.
  */
 LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnectorLZ", {
-    parseInit: function (init) {
-        // TODO: DRY parseInit into base connector class
-        // Validate that this source has been told how to find the required information
-        var specified_ids = Object.keys(init.from); // TODO: rename from to sources for clarity?
-        var required_sources = ["aggregation_ns"];
-        required_sources.forEach(function (k) {
-            if (specified_ids.indexOf(k) === -1) {
-                throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
-            }
-        });
-    },
-    annotateData: function (records, chain) {
+    REQUIRED_SOURCES: ["aggregation_ns"],
+    combineChainBody: function (records, chain) {
         var rows = [];
 
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
@@ -202,19 +176,8 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationParserConnector
  * A sample connector that extracts variant data for all mask/group combinations in the dataset
  */
 LocusZoom.KnownDataSources.extend("ConnectorSource", "AggregationVariantsConnectorLZ", {
-    parseInit: function (init) {
-        // TODO: DRY parseInit into base connector class
-        // Validate that this source has been told how to find the required information
-        var specified_ids = Object.keys(init.from); // TODO: rename from to sources for clarity?
-        var required_sources = ["aggregation_ns"];
-        required_sources.forEach(function (k) {
-            if (specified_ids.indexOf(k) === -1) {
-                throw "Configuration for " + this.constructor.SOURCE_NAME + " must specify a source ID corresponding to " + k;
-            }
-        });
-    },
-
-    annotateData: function (records, chain) {
+    REQUIRED_SOURCES: ["aggregation_ns"],
+    combineChainBody: function (records, chain) {
         var rows = [];
 
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
