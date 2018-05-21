@@ -107,6 +107,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
+            // FIXME: Compensate for different variant ID format in genes vs agg output
             var gene_id = gene.gene_id.split(".")[0];
             var tests = groupedAggregation[gene_id];
             if (tests) {

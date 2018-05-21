@@ -171,7 +171,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
     },
     addPlotListeners: function(plot) {
         plot.subscribeToData(
-            // FIXME: These fields are hard-coded references to specific namespaced sources
+            // TODO: These fields are hard-coded references to specific namespaced sources
             ["aggregation:all"],
             this.renderData.bind(this),
             { discrete: true }
@@ -188,7 +188,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
             var selected_gene = eventData["data"]["element"]["gene_id"];
             selected_gene = selected_gene.split(".")[0]; // FIXME: genes api includes version, masks api does not; allow matching
 
-            // FIXME: Hard-coded selectors
+            // TODO: Hard-coded selectors
             if (eventData["data"]["active"]) {
                 this.tableSetFilter(gene_column_name, selected_gene);
                 $("#label-no-group-selected").hide();
