@@ -328,9 +328,10 @@ LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
 };
 
 /**
- * Fetch the data from the specified data source, and format it in a way that can be used by the consuming plot
- *  This is the external-facing methgod that should be called in most scenarios
+ * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
+ * This is the public-facing datasource method that will most commonly be called by external code.
  *
+ * @public
  * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
  * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
  * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
@@ -369,18 +370,21 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
  *
  * Does not apply namespacing or transformations.
- * @param {Object[]|Object} data The data in one of two forms: [ {field:val} ]
+ *
+ * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
+ *  sources.
+ *
+ * @param {Object[]|Object} data The original parsed server response
  * @protected
  */
-LocusZoom.Data.Source.prototype.formatRawResponse = function (data) {
+LocusZoom.Data.Source.prototype.normalizeResponse = function (data) {
     if (Array.isArray(data)) {
         // Already in the desired form
         return data;
     }
 
     // Otherwise, assume the server response is an object representing columns of data.
-    // Each array should have the same length, and a given array index corresponds to a single row.
-    // Safeguard: check that arrays are of same length
+    // Each array should have the same length (verify), and a given array index corresponds to a single row.
     var keys = Object.keys(data);
     var N = data[keys[0]].length;
     var sameLength = keys.every(function(key) {
@@ -409,9 +413,10 @@ LocusZoom.Data.Source.prototype.prepareData = function (records) {
     console.warn("Warning: .prepareData() is deprecated. Use .annotateData() instead");
     return this.annotateData(records);
 };
+
 /**
- * Hook to post-process the data returned by this source with new, user-specified behavior.
- *   (eg cleaning up API values or adding complex new calculated fields)
+ * Hook to post-process the data returned by this source with new, additional behavior.
+ *   (eg cleaning up API values or performing complex calculations on the returned data)
  *
  * @param {Object[]} records The parsed data from the source (eg standardized api response)
  * @param {Object} chain The data chain object. For example, chain.headers may provide useful annotation metadata
@@ -424,11 +429,11 @@ LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
 
 /**
  * Clean up the server records for use by datalayers: extract only certain fields, with the specified names.
- *   Apply transformations as appropriate.
+ *   Apply per-field transformations as appropriate.
  *
  * This hook can be overridden, eg to create a source that always returns all records and ignores the "fields" array.
  *  This is particularly common for sources at the end of a chain- many "dependent" sources do not allow
- *  cherry-picking individual fields, and by convention the fields array simply asks for "last_source_name:all"
+ *  cherry-picking individual fields, in which case by **convention** the fields array specifies "last_source_name:all"
  *
  * @param {Object[]} data One record object per element
  * @param {String[]} fields The names of fields to extract (as named in the source data). Eg "afield"
@@ -438,8 +443,7 @@ LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
  */
 LocusZoom.Data.Source.prototype.selectFields = function (data, fields, outnames, trans) {
     //intended for an array of objects
-    // [ {"id":1, "val":5}, {"id":2, "val":10}]
-
+    //  [ {"id":1, "val":5}, {"id":2, "val":10}]
     // Since a number of sources exist that do not obey this format, we will provide a convenient pass-through
     if (!Array.isArray(data)) {
         return data;
@@ -472,7 +476,7 @@ LocusZoom.Data.Source.prototype.selectFields = function (data, fields, outnames,
 
 /**
  * Combine records from this source with others in the chain to yield final chain body.
- *   Handles merging this data with other sources (if applicable)
+ *   Handles merging this data with other sources (if applicable).
  *
  * @param {Object[]} data The data That would be returned from this source alone
  * @param {Object} chain The data chain built up during previous requests
@@ -511,7 +515,7 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
 
     var self = this;
     // Perform the 4 steps of parsing the payload and return a combined chain object
-    return Q.when(self.formatRawResponse(json.data || json))
+    return Q.when(self.normalizeResponse(json.data || json))
         .then(function(standardized) {
             // Perform calculations on the data from just this source
             return Q.when(self.annotateData(standardized, chain));
@@ -530,7 +534,7 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
 /** @deprecated */
 LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, outnames, trans) {
     console.warn("Warning: .parseArraysToObjects() is no longer used. A stub is provided for legacy use");
-    var standard = this.formatRawResponse(data);
+    var standard = this.normalizeResponse(data);
     return this.selectFields(standard, fields, outnames, trans);
 };
 
@@ -543,7 +547,7 @@ LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, o
 /** @deprecated */
 LocusZoom.Data.Source.prototype.parseData = function(data, fields, outnames, trans) {
     console.warn("Warning: .parseData() is no longer used. A stub is provided for legacy use");
-    var standard = this.formatRawResponse(data);
+    var standard = this.normalizeResponse(data);
     return this.selectFields(standard, fields, outnames, trans);
 };
 
@@ -581,6 +585,9 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
 /**
  * Datasources can be instantiated from a JSON object instead of code. This represents an existing source in that data format.
  *   For example, this can be helpful when sharing plots, or to share settings with others when debugging
+ *
+ * Custom sources with their own parameters may need to re-implement this method
+ *
  * @public
  * @returns {Object}
  */
@@ -686,7 +693,7 @@ LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outname
     return obj;
 };
 
-LocusZoom.Data.LDSource.prototype.formatRawResponse = function (data) { return data; };
+LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) { return data; };
 
 LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     var findExtremeValue = function(x, pval, sign) {
@@ -788,7 +795,7 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
 
 // Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with the
 // exact information returned by the API. (ignoring the fields array in the layout)
-LocusZoom.Data.GeneSource.prototype.formatRawResponse = function (data) { return data; };
+LocusZoom.Data.GeneSource.prototype.normalizeResponse = function (data) { return data; };
 LocusZoom.Data.GeneSource.prototype.selectFields = function (data, fields, outnames, trans) { return data; };
 
 /**
@@ -805,7 +812,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.getURL = function() {
     return this.url;
 };
 
-LocusZoom.Data.GeneConstraintSource.prototype.formatRawResponse = function (data) { return data; };
+LocusZoom.Data.GeneConstraintSource.prototype.normalizeResponse = function (data) { return data; };
 
 LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function(state, chain, fields) {
     return this.url + JSON.stringify(state);
