@@ -729,3 +729,13 @@ LocusZoom.subclass = function(parent, extra, new_constructor) {
 
     return Sub;
 };
+
+
+/**
+ * LocusZoom optional extensions will live under this namespace.
+ *
+ * Extension code is not part of the core LocusZoom app.js bundle.
+ * @namespace
+ * @public
+ */
+LocusZoom.ext = {};
