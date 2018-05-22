@@ -88,6 +88,21 @@ gulp.task("app_js", ["test"], function() {
         }).on("error", function() {
             gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate locuszoom.app.js bundles "));
         });
+
+    // Provide minified versions of each optional extension, separate from the main bundle
+    gulp.src(files.extensions)
+        .pipe(rename(function (fn) {
+            fn.extname = ".min.js";
+        }))
+        .pipe(sourcemaps.init())
+        .pipe(uglify())
+        .pipe(sourcemaps.write("."))
+        .pipe(gulp.dest(path.join(destinationFolder, "ext")))
+        .on("end", function() {
+            gutil.log(gutil.colors.bold.white.bgBlue(" Generated minified extensions "));
+        }).on("error", function() {
+            gutil.log(gutil.colors.bold.white.bgRed(" FAILED to generate minified extensions "));
+        });
 });
 
 // Concatenate vendor js files into a single vendor file
