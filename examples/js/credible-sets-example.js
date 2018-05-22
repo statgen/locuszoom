@@ -155,20 +155,8 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
                                     }
                                 },
                                 legend: [ // Tells the legend how to represent this display option
-                                    {
-                                        shape: "circle",
-                                        color: "#00CC00",
-                                        size: 40,
-                                        label: "In credible set",
-                                        class: "lz-data_layer-scatter"
-                                    },
-                                    {
-                                        shape: "circle",
-                                        color: "#CCCCCC",
-                                        size: 40,
-                                        label: "Not in credible set",
-                                        class: "lz-data_layer-scatter"
-                                    }
+                                    { shape: "circle", color: "#00CC00", size: 40, label: "In credible set", class: "lz-data_layer-scatter" },
+                                    { shape: "circle", color: "#CCCCCC", size: 40, label: "Not in credible set", class: "lz-data_layer-scatter" }
                                 ]
                             }
                         },
@@ -197,27 +185,9 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
                                     }
                                 ],
                                 legend: [
-                                    {
-                                        shape: "circle",
-                                        color: "#777777",
-                                        size: 40,
-                                        label: "No contribution",
-                                        class: "lz-data_layer-scatter"
-                                    },
-                                    {
-                                        shape: "circle",
-                                        color: "#fafe87",
-                                        size: 40,
-                                        label: "Some contribution",
-                                        class: "lz-data_layer-scatter"
-                                    },
-                                    {
-                                        shape: "circle",
-                                        color: "#9c0000",
-                                        size: 40,
-                                        label: "Most contribution",
-                                        class: "lz-data_layer-scatter"
-                                    }
+                                    { shape: "circle", color: "#777777", size: 40, label: "No contribution", class: "lz-data_layer-scatter" },
+                                    { shape: "circle", color: "#fafe87", size: 40, label: "Some contribution", class: "lz-data_layer-scatter" },
+                                    { shape: "circle", color: "#9c0000", size: 40, label: "Most contribution", class: "lz-data_layer-scatter" }
                                 ]
                             }
                         }
