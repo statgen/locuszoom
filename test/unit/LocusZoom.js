@@ -333,7 +333,9 @@ describe("LocusZoom Core", function(){
             });
             it("will use a custom constructor function if provided", function() {
                 var Parent = function() {this.name = "parent";};
-                var Child = LocusZoom.subclass(Parent, {}, function() {this.name = "child";});
+                var Child = LocusZoom.subclass(Parent, {
+                    constructor: function() {this.name = "child";}
+                });
                 var instance = new Child();
                 assert.equal(instance.name, "child");
             });
@@ -352,10 +354,12 @@ describe("LocusZoom Core", function(){
                 };
                 var Child = LocusZoom.subclass(
                     Parent,
-                    { isChild: true },
-                    function(one, two, three) {
-                        Parent.apply(this, arguments);
-                        this.three = three;
+                    {
+                        constructor: function(one, two, three) {
+                            Parent.apply(this, arguments);
+                            this.three = three;
+                        },
+                        isChild: true
                     });
                 var instance = new Child("one", "two", "three");
                 assert.equal(instance.name, "parent");
@@ -375,13 +379,13 @@ describe("LocusZoom Core", function(){
                 var Child = LocusZoom.subclass(
                     Parent,
                     {
+                        constructor: function() {
+                            // Implementer must manage super calls when overriding the constructor
+                            Parent.apply(this, arguments);
+                            this.classname = "special";
+                        },
                         field: "child1",
                         overrideMe: function() {return "child2";}
-                    },
-                    function() {
-                        // Implementer must manage super calls when overriding the constructor
-                        Parent.apply(this, arguments);
-                        this.classname="special";
                     });
                 var instance = new Child();
 
