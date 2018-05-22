@@ -83,7 +83,11 @@
         Click the gene again to unselect and show all results in the table.
       </p>
       <div id="plot" class="lz-container-responsive"></div>
+    </div>
+  </div>
 
+  <div class="row">
+    <div class="twelve columns">
       <h3>Table of aggregation test results</h3>
       <div>
         Currently reviewing results for group:
@@ -91,10 +95,9 @@
         <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
       </div>
       <br>
-
       <button id="download-aggregation" class="button-primary">Download</button><br>
-
       <div id="results-table-aggregation"></div>
+
 
       <h3>Variants in mask <span id="label-mask-selected"></span> </h3>
       <p>
@@ -197,6 +200,7 @@
     window.aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: "id",
         layout: "fitColumns",
+        layoutColumnsOnNewData: true,
         rowSelected: function(row) {
             var selected = row.row.data.id;
             variantsTable.tableSetFilter("id", selected);
