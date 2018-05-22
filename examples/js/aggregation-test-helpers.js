@@ -29,16 +29,21 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
     var required_info = state.aggregation_tests || {};
 
     if (!chain.header) {chain.header = {};}
-    chain.header.aggregation_calcs = required_info.calcs;
-    chain.header.aggregation_masks = required_info.masks;
+    chain.header.aggregation_calcs = required_info.calcs || {};
+    chain.header.aggregation_masks = required_info.masks || [];
     return this.url;
 };
 
 LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
     // Whatever comes out of `parseData` gets added to `chain.discrete`; this is the method we override when we want to remix the calculated results
 
+    // In a page using live API data, the UI would only request the masks it needs from the API.
+    // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run.
+    records.masks = records.masks.filter(function (mask) { return chain.header.aggregation_masks.indexOf(mask.id) !== -1; });
+    records.scorecov = records.scorecov.filter(function (item) { return chain.header.aggregation_masks.indexOf(item.mask) !== -1; });
+
     // Ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
-    var scoreCov = raremetal.helpers.parsePortalJson({data: records});
+
     var calcs = chain.header.aggregation_calcs;
 
     if (!calcs || Object.keys(calcs).length === 0) {
@@ -46,6 +51,7 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
         return { masks: [], results: [], scorecov: {} };
     }
 
+    var scoreCov = raremetal.helpers.parsePortalJson({data: records});
     var res = raremetal.helpers.runAggregationTests(calcs, scoreCov );
     var data = res["data"];
 
