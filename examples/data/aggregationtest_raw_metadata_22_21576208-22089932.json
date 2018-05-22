@@ -5,8 +5,14 @@
       "analysis": "Demonstration data",
       "masks": [
         {
-          "id": "MDUP",
-          "description": "Entirely fictional mask",
+          "id": "AF01",
+          "description": "Only variants < 1% MAF",
+          "grouping": "gene",
+          "identifier": "ENSEMBL"
+        },
+        {
+          "id": "AF05",
+          "description": "Only variants < 5% MAF",
           "grouping": "gene",
           "identifier": "ENSEMBL"
         },

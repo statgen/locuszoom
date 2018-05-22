@@ -21,7 +21,7 @@
 
   <script src="js/raremetal.min.js" type="application/javascript"></script>
 
-  <script type="application/javascript" src="../ext/lz-dynamic-urls.js"></script>
+  <script type="application/javascript" src="../dist/ext/lz-dynamic-urls.min.js"></script>
   <script src="js/aggregation-test-helpers.js" type="application/javascript"></script>
   <script src="js/aggregation-tests-example-page.js" type="application/javascript"></script>
 
@@ -151,7 +151,7 @@
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/aggregationtest_raw_hail_22_21576208-22089932.json"}])
+        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/example_portal_22-21552103-22052103.v3.json"}])
         .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
@@ -180,7 +180,7 @@
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
     window.variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
-        height: 440,
+        height: 300,
         layout: "fitColumns",
         layoutColumnsOnNewData: true,
         index: "id",
@@ -199,6 +199,7 @@
 
     window.aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: "id",
+        height: 300,
         layout: "fitColumns",
         layoutColumnsOnNewData: true,
         rowSelected: function(row) {
@@ -212,7 +213,7 @@
             $("#label-mask-selected").text("");
         },
         columns: [
-            { title: "Gene", field: "group" },
+            { title: "Gene", field: "group", formatter: "link", formatterParams: { urlPrefix: "http://exac.broadinstitute.org/gene/" } },  // TODO: readable gene label with exac id for links?
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
             { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },

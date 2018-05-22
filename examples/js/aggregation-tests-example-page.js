@@ -150,6 +150,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
                     id: unique,
                     mask: mask.id,
                     group: group_id,
+                    // group_label: 1,  // TODO: see if data source provides a human-friendly gene label for this gene?
                     mask_desc: mask.label,
                     variants: group_variants,
                     variant_count: group_variants.length
