@@ -183,17 +183,13 @@ svg.#{$namespace}-locuszoom {
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-boundary {
-    stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
     stroke-width: 1px;
-    fill: #000099;
   }
 
   rect.#{$namespace}-data_layer-genes.#{$namespace}-exon {
-    stroke: rgb(54, 54, 150);
     stroke-opacity: 1;
     stroke-width: 1px;
-    fill: #000099;
   }
 
   g.#{$namespace}-data_layer-intervals-faded {

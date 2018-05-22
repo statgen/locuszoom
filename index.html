@@ -9,6 +9,8 @@
     <!-- Necessary includes for LocusZoom.js -->
     <script src="dist/locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="dist/locuszoom.app.min.js" type="text/javascript"></script>
+    <script type="application/javascript" src="dist/ext/lz-dynamic-urls.min.js"></script>
+
     <link rel="stylesheet" href="dist/locuszoom.css" type="text/css"/>
     
     <title>LocusZoom.js</title>
@@ -51,7 +53,7 @@
           <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
         </div>
         <div class="ten columns">
-          <div id="plot" data-region="10:114550452-115067678"></div>
+          <div id="plot"></div>
         </div>
       </div>
       <p>To see other forms of LocusZoom.js in action take a look at <a href="http://locuszoom.org/locuszoomjs.php">locuszoom.org</a> or the <a href="#examples">examples</a> on this page.</p>
@@ -207,7 +209,13 @@
     }
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
-    layout = LocusZoom.Layouts.get("plot", "standard_association");
+    var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+    // Fetch initial position from the URL, or use some defaults
+    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    if (!Object.keys(initialState).length) {
+        initialState = {chr: 10, start: 114550452, end: 115067678};
+    }
+    layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
     // Add a button to show the study abstract the layout
@@ -220,8 +228,13 @@
         menu_html: abstract
     });
 
-    // Generate the LocusZoom plot
-    var plot = LocusZoom.populate("#plot", data_sources, layout);
+    // Generate the LocusZoom plot, and reflect the initial plot state in url
+    window.plot = LocusZoom.populate("#plot", data_sources, layout);
+
+    // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+    //   a previously viewed region)
+    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function(panel){
