@@ -543,7 +543,7 @@ describe("LocusZoom.Plot", function(){
             }, 0);
         });
 
-        it("allows subscribing to individual (not combined) sources", function (done) {
+        it.skip("allows subscribing to individual (not combined) sources", function (done) {
             var expectedData = { first: [ {"first:x": 0}, {"first:x": 1} ] };
             var dataCallback = this.sandbox.spy();
 

@@ -36,7 +36,7 @@ var app_build = [
 ];
 
 // LocusZoom extensions: not part of the default build, but we may want to bundle separately in the future
-var extensions = ["ext/**/*.js"];
+var extensions = ["assets/js/ext/**/*.js"];
 
 // App, vendor, and helper files to be included at the top of each test suite
 // NOTE: Order of inclusion is important!
