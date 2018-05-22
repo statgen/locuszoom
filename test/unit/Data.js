@@ -319,9 +319,9 @@ describe("LocusZoom Data", function() {
             describe("Source.parseObjectsToObjects", function () {
                 it("should provide a legacy wrapper for completely deprecated method", function() {
                     var source = new LocusZoom.Data.Source();
-                    var stub = sinon.stub(source, "selectFields");
+                    var stub = sinon.stub(source, "extractFields");
                     source.parseObjectsToObjects([], [], [], []);
-                    assert.ok(stub.called, "selectFields was called");
+                    assert.ok(stub.called, "extractFields was called");
                 });
             });
 
@@ -387,7 +387,7 @@ describe("LocusZoom Data", function() {
                 });
             });
 
-            describe("Source.selectFields", function () {
+            describe("Source.extractFields", function () {
                 it("allows a legacy alias via parseArraysToObjects", function () {
                     var source = new LocusZoom.Data.Source();
                     var res = source.parseArraysToObjects(
@@ -400,7 +400,7 @@ describe("LocusZoom Data", function() {
 
                 it("extracts the specified fields from each record", function () {
                     var source = new LocusZoom.Data.Source();
-                    var res = source.selectFields(
+                    var res = source.extractFields(
                         [ {"id":1, "val":5}, {"id":2, "val":10}],
                         ["id"], ["namespace:id"], [null]
                     );
@@ -409,7 +409,7 @@ describe("LocusZoom Data", function() {
 
                 it("applies value transformations where appropriate", function () {
                     var source = new LocusZoom.Data.Source();
-                    var res = source.selectFields(
+                    var res = source.extractFields(
                         [ {"id":1, "val":5}, {"id":2, "val":10}],
                         ["id", "val"], ["namespace:id|add1", "bork:bork"], [function (val) { return val + 1; }, null]
                     );
@@ -422,7 +422,7 @@ describe("LocusZoom Data", function() {
 
 
                     assert.throws(function() {
-                        source.selectFields(
+                        source.extractFields(
                             [ {"a":1}, {"a":2}],
                             ["b"], ["namespace:b"], [null]
                         );
@@ -471,7 +471,7 @@ describe("LocusZoom Data", function() {
                     var source = LocusZoom.subclass(LocusZoom.Data.Source, {
                         annotateData: function (data) { return data + " with annotation"; },
                         normalizeResponse(data) { return data; },
-                        selectFields(data) { return data; }
+                        extractFields(data) { return data; }
                     });
                     source.prototype.constructor.SOURCE_NAME = "fake_source";
 
@@ -492,7 +492,7 @@ describe("LocusZoom Data", function() {
                                 return item;
                             }));
                         },
-                        selectFields(data, fields, outnames, trans) {
+                        extractFields(data, fields, outnames, trans) {
                             var rec = data.map(function(item) { return {"bfield": item.b}; });
                             return Q.when(rec); },
                         combineChainBody(records) { return Q.when(records); }

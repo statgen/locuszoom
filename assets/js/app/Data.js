@@ -441,7 +441,7 @@ LocusZoom.Data.Source.prototype.annotateData = function(records, chain) {
  * @param {function[]} trans An array of transformation functions (if any). One function per data element, or null.
  * @protected
  */
-LocusZoom.Data.Source.prototype.selectFields = function (data, fields, outnames, trans) {
+LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames, trans) {
     //intended for an array of objects
     //  [ {"id":1, "val":5}, {"id":2, "val":10}]
     // Since a number of sources exist that do not obey this format, we will provide a convenient pass-through
@@ -520,7 +520,7 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
             // Perform calculations on the data from just this source
             return Q.when(self.annotateData(standardized, chain));
         }).then(function (data) {
-            return Q.when(self.selectFields(data, fields, outnames, trans));
+            return Q.when(self.extractFields(data, fields, outnames, trans));
         }).then(function (one_source_body) {
             // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
             //   fields array into account). This is useful when we want to re-use the source output in many ways.
@@ -535,20 +535,20 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
 LocusZoom.Data.Source.prototype.parseArraysToObjects = function(data, fields, outnames, trans) {
     console.warn("Warning: .parseArraysToObjects() is no longer used. A stub is provided for legacy use");
     var standard = this.normalizeResponse(data);
-    return this.selectFields(standard, fields, outnames, trans);
+    return this.extractFields(standard, fields, outnames, trans);
 };
 
 /** @deprecated */
 LocusZoom.Data.Source.prototype.parseObjectsToObjects = function(data, fields, outnames, trans) {
-    console.warn("Warning: .parseObjectsToObjects() is deprecated. Use .selectFields() instead");
-    return this.selectFields(data, fields, outnames, trans);
+    console.warn("Warning: .parseObjectsToObjects() is deprecated. Use .extractFields() instead");
+    return this.extractFields(data, fields, outnames, trans);
 };
 
 /** @deprecated */
 LocusZoom.Data.Source.prototype.parseData = function(data, fields, outnames, trans) {
     console.warn("Warning: .parseData() is no longer used. A stub is provided for legacy use");
     var standard = this.normalizeResponse(data);
-    return this.selectFields(standard, fields, outnames, trans);
+    return this.extractFields(standard, fields, outnames, trans);
 };
 
 /**
@@ -796,7 +796,7 @@ LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
 // Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with the
 // exact information returned by the API. (ignoring the fields array in the layout)
 LocusZoom.Data.GeneSource.prototype.normalizeResponse = function (data) { return data; };
-LocusZoom.Data.GeneSource.prototype.selectFields = function (data, fields, outnames, trans) { return data; };
+LocusZoom.Data.GeneSource.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
 
 /**
  * Data Source for Gene Constraint Data, as fetched from the LocusZoom API server (or compatible)
