@@ -436,8 +436,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             this.separate_labels();
             // Apply default event emitters to selection
             this.label_texts.on("click.event_emitter", function(element){
-                this.parent.emit("element_clicked", element);
-                this.parent_plot.emit("element_clicked", element);
+                this.parent.emit("element_clicked", element, true);
             }.bind(this));
             // Extend mouse behaviors to labels
             this.applyBehaviors(this.label_texts);
