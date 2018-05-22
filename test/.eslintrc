@@ -9,6 +9,7 @@
     "d3": false,
     "LocusZoom": false,
     "Q": false,
-    "should": false
+    "should": false,
+    "sinon": false
   }
 }

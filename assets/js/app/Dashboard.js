@@ -875,6 +875,7 @@ LocusZoom.Dashboard.Components.add("download", function(layout){
     for (var stylesheet in Object.keys(document.styleSheets)){
         if ( document.styleSheets[stylesheet].href !== null
              && document.styleSheets[stylesheet].href.indexOf("locuszoom.css") !== -1){
+            // TODO: "Download image" button will render the image incorrectly if the stylesheet has been renamed or concatenated
             LocusZoom.createCORSPromise("GET", document.styleSheets[stylesheet].href)
                 .then(function(response){
                     this.css_string = response.replace(/[\r\n]/g," ").replace(/\s+/g," ");
