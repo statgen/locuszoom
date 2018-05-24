@@ -90,21 +90,6 @@
           {"phenotype":"Atrial flutter","log_pvalue":0.884,"beta":-0.02725,"ci_start":-0.057,"ci_end":0.003}
         ];
 
-        var y2_ticks = [];
-        var y_offset = 1;
-        phewas.forEach(function(p){
-            p.y_offset = y_offset;
-            y2_ticks.push({
-                y: y_offset,
-                text: p.phenotype,
-                style: {
-                    "font-weight": "bold",
-                    "text-anchor": "start"
-                }
-            });
-            y_offset += 1;
-        });
-
         var data_sources = new LocusZoom.DataSources()
           .add("base", ["StaticJSON", phewas]);
 
@@ -126,7 +111,12 @@
                             label_offset: 33
                         },
                         y2: {
-                            ticks: y2_ticks
+                            ticks: {  // Dynamically generated ticks, but specify custom options/styles to be used in every tick
+                                style: {
+                                    "font-weight": "bold",
+                                    "text-anchor": "start"
+                                }
+                            }
                         }
                     },
                     legend: {
@@ -135,8 +125,8 @@
                     },
                     data_layers: [
                         {
-                            id: "phewaspvalues",
-                            type: "forest",
+                            id: "phewas_forest",
+                            type: "category_forest",
                             z_index: 1,
                             point_shape: "square",
                             point_size: {
@@ -167,7 +157,7 @@
                                 { shape: "square", class: "lz-data_layer-forest", color: "#b30000", size: 160, label: "10+" }
                             ],
                             id_field: "phenotype",
-                            fields: ["phenotype", "log_pvalue", "log_pvalue|logtoscinotation", "beta", "ci_start", "ci_end", "y_offset"],
+                            fields: ["phenotype", "log_pvalue", "log_pvalue|logtoscinotation", "beta", "ci_start", "ci_end"],
                             x_axis: {
                                 field: "beta",
                                 floor: -0.2,
@@ -175,9 +165,10 @@
                             },
                             y_axis: {
                                 axis: 2,
+                                category_field: "phenotype",
                                 field: "y_offset",
                                 floor: 0,
-                                ceiling: y_offset
+                                ceiling: 0
                             },
                             confidence_intervals: {
                                 start_field: "ci_start",
