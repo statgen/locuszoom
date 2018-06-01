@@ -35,38 +35,24 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
 };
 
 LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
-    // Whatever comes out of `parseData` gets added to `chain.discrete`; this is the method we override when we want to remix the calculated results
+    // Operate on the calculated results. The result of this method will be added to chain.discrete
+    var parsed = raremetal.helpers.parsePortalJSON(records);
+    var groups = parsed[0];
+    var variants = parsed[1];
 
     // In a page using live API data, the UI would only request the masks it needs from the API.
     // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run.
-    records.masks = records.masks.filter(function (mask) { return chain.header.aggregation_masks.indexOf(mask.id) !== -1; });
-    records.scorecov = records.scorecov.filter(function (item) { return chain.header.aggregation_masks.indexOf(item.mask) !== -1; });
-
-    // Ugly hack because chain source gives us `response.data`, and rmjs assumes it's given `response`
+    groups = groups.byMask(chain.header.aggregation_masks);
 
     var calcs = chain.header.aggregation_calcs;
 
     if (!calcs || Object.keys(calcs).length === 0) {
         // If no calcs have been requested, then return a dummy placeholder immediately
-        return { masks: [], results: [], scorecov: {} };
+        return { variants: [], groups: [], results: [] };
     }
-
-    var scoreCov = raremetal.helpers.parsePortalJson({data: records});
-    var res = raremetal.helpers.runAggregationTests(calcs, scoreCov );
-    var data = res["data"];
-
-    // Mocking and fake data added below
-    data.results = data.results.map(function(res) {
-        // TODO: The second API response does not identify the grouping type of the mask. For now, assume that the UI took responsibility for filtering the masks to be genes (only)
-        // TODO: should the final rmjs payload likewise carry forward the mask groupin types?
-        res.grouping = res.grouping || "gene";
-        return res;
-    });
-
-    // Combine the calculation results with the "mask descriptions" from the API response
-    // TODO: This implies that a single "precalculated results" emdpoint would not contain all the information required to draw the page- it would never get the first"scorecov" dataset at all
-    data.scorecov = scoreCov.scorecov;
-    return data;
+    var runner = new raremetal.helpers.TestRunner(groups, variants, calcs);
+    var res = runner.toJSON();
+    return res.data;
 };
 
 LocusZoom.Data.AggregationTestSource.prototype.normalizeResponse = function(data) { return data; };
@@ -92,6 +78,8 @@ LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (reco
 LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ", {
     REQUIRED_SOURCES: ["gene_ns", "aggregation_ns"],
     combineChainBody: function (data, chain) {
+        // The genes layer receives all results, and displays only the best pvalue for each gene
+
         // Tie the calculated group-test results to genes with a matching name
         var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
         var gene_source_id = this._source_name_mapping["gene_ns"];
@@ -101,23 +89,23 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
         var genesData = chain.discrete[gene_source_id];
 
         var groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
+
         aggregationData.results.forEach(function(res) {
             if (!groupedAggregation.hasOwnProperty(res.group)) {
                 groupedAggregation[res.group] = [];
             }
             if (res.grouping === "gene") {
                 // Don't look at interval groups- this is a genes layer connector
-                groupedAggregation[res.group].push(res);
+                groupedAggregation[res.group].push(res.pvalue);
             }
         });
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            // FIXME: Compensate for different variant ID format in genes vs agg output
             var gene_id = gene.gene_id.split(".")[0];
             var tests = groupedAggregation[gene_id];
             if (tests) {
-                gene.aggregation_best_pvalue = Math.min.apply(null, tests.map(function(item) {return item.pvalue;}));
+                gene.aggregation_best_pvalue = Math.min.apply(null, tests);
             }
         });
         return genesData;

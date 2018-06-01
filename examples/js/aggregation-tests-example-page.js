@@ -8,6 +8,28 @@
 
 var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; };
 
+
+// Quick hack observable: a() to get value, a(val) to set, a.subscribe() to add handlers
+var Observable = function () {
+    var _subscribers = [];
+    var current_value;
+    var handle_value = function (value) {
+        if (value === undefined) { return current_value; }
+        if(current_value !== value) {
+            current_value = value;
+            _subscribers.forEach(function(handler) {
+                try {
+                    handler(value);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+        }
+    };
+    handle_value.subscribe = function (handler) { _subscribers.push(handler); };
+    return handle_value;
+};
+
 // Make a custom layout object
 function customizePlotLayout (layout) {
     // Customize an existing plot layout with the data for aggregation tests
@@ -131,53 +153,23 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
 });
 
 var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
-    prepareData: function (data) {
-        var rows = [];
+    prepareData: function (data) { // TODO: should we wipe out filters when new data arrives?
+        var results = data.results;
+        var groups = data.groups;
 
-        var aggregation_data = data.aggregation;
-
-        var bt_results = aggregation_data.results;
-        var bt_masks = aggregation_data.masks;
-
-        // Convert masks to a hash to facilitate quickly aligning result with the data for one specific group+mask
-        var mask_lookup = {};
-
-        bt_masks.forEach(function (mask) {
-            mask.groups.forEach(function (group_variants, group_id) { // mask.groups is an es6 hash
-                // Combine the group and mask data into a single concise representation of the mask with a unique key
-                var unique = getMaskKey(group_id, mask.id);
-                mask_lookup[unique] = {
-                    id: unique,
-                    mask: mask.id,
-                    group: group_id,
-                    // group_label: 1,  // TODO: This source provides ensembl ids only, not gene names. Combine with genes source to show human-readable gene names
-                    mask_desc: mask.label,
-                    variants: group_variants,
-                    variant_count: group_variants.length
-                };
-            });
+        return results.map(function(one_result) {
+            var this_group = groups.getOne(one_result.mask, one_result.group);
+            return {
+                mask: one_result.mask,
+                group: one_result.group,
+                variant_count: this_group.variants.length,
+                calc_type: one_result.test,
+                pvalue: one_result.pvalue,
+                stat: one_result.stat
+            };
         });
-
-        bt_results.forEach(function (one_result) {
-            var group_key = getMaskKey(one_result.group, one_result.mask);
-            var row_data = JSON.parse(JSON.stringify(mask_lookup[group_key]));
-
-            row_data.calc_type = one_result.test;
-            row_data.pvalue = one_result.pvalue;
-
-            rows.push(row_data);
-
-        });
-        return rows;
     },
     addPlotListeners: function(plot) {
-        plot.subscribeToData(
-            // TODO: These fields are hard-coded references to specific namespaced sources
-            ["aggregation:all"],
-            this.renderData.bind(this),
-            { discrete: true }
-        );
-
         plot.on("element_selection", function(eventData) {
             // Trigger the aggregation test table to filter (or unfilter) on a particular value
             if (eventData["sourceID"] !== "plot.genes") {
@@ -187,7 +179,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
             // Programmatic filters are set separately from column filters
             var gene_column_name = "group";
             var selected_gene = eventData["data"]["element"]["gene_id"];
-            selected_gene = selected_gene.split(".")[0]; // FIXME: genes api includes version, masks api does not; allow matching
+            selected_gene = selected_gene.split(".")[0]; // Ignore ensemble version on gene ids
 
             // TODO: Hard-coded selectors
             if (eventData["data"]["active"]) {
@@ -203,36 +195,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
     }
 });
 
-var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {
-    prepareData: function (data) {
-        var rows = [];
-        var aggregation_data = data.aggregation;
-
-        var mask_map = aggregation_data.scorecov;
-
-        Object.keys(mask_map).forEach(function (key) {
-            var data = mask_map[key];
-            for (var i=0; i < data.scores.variants.length; i++) {
-                rows.push({
-                    id: key,
-                    variant: data.scores.variants[i],
-                    score: data.scores.u[i],
-                    alt_allele_freq: data.scores.altFreq[i]
-                });
-            }
-        });
-        return rows;
-    },
-
-    addPlotListeners: function (plot) {
-        plot.subscribeToData(
-            // FIXME: These fields are hard-coded references to specific namespaced sources
-            ["aggregation:all"],
-            this.renderData.bind(this),
-            { discrete: true }
-        );
-    }
-});
+var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {});
 
 /**
  * A minimal method of defining aggregation tests in the absence of a UI framework. Proof of concept, ONLY- not intended

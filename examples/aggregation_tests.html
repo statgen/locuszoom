@@ -101,7 +101,7 @@
 
       <h3>Variants in mask <span id="label-mask-selected"></span> </h3>
       <p>
-        Click on a row in the table above to see the variants associated with a specific group + mask.
+        Click on a row in the table above to see the variants associated with a specific mask + gene.
       </p>
       <div id="results-table-variants"></div>
     </div>
@@ -117,7 +117,7 @@
 
 <script type="application/javascript">
     ///////////////////////////////////
-    // Before the plot can render, the user must specify a set of aggregation tests they would like to run. The list of
+    // The user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
     var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
     $.ajax("data/aggregationtest_raw_metadata_22_21576208-22089932.json")  // `/api/aggregation/metadata` in production
@@ -135,8 +135,8 @@
             $("#widget-aggregation-container").text("An error occurred while fetching available masks. Please reload the page.");
         });
 
-    ///////////////////////////////////
-    // Specify the data sources to use and build the plot
+    /////////////////////////////////////////////////////////
+    // Specify the data sources to use, then build the plot
     //   Determine if we're online, based on browser state or presence of an optional query parameter
     var online = !(typeof navigator !== "undefined" && !navigator.onLine);
     if (window.location.search.indexOf("offline") !== -1) {
@@ -147,11 +147,11 @@
     var data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {
             url: apiBase + "statistic/single/",
-            params: {analysis: 42, id_field: "variant"}  // TODO: Important: use an analysis ID that matches the data for the portal covariance results
+            params: { analysis: 42, id_field: "variant" }  // TODO: Important: use an analysis ID that aligns with the data for the portal covariance results
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/example_portal_22-21552103-22052103.v3.json"}])
+        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
         .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
@@ -169,13 +169,41 @@
 
     window.plot = LocusZoom.populate("#plot", data_sources, layout);
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)
     LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
     LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
-    ///////////////////////////////////
-    // Alongside the plot, draw a companion table of aggregation test results
+    //////////////////////////////////////////////////////////////////////
+    // Draw companion tables to show specific calculation results.
+    //
+    // Because many things are clickable, this looks like more code than it is. The key concepts are:
+    //  1. Allow the plot to tell us when aggregation test results are available.
+    //  2. Take that data and update a table
+    //  3. If something important gets clicked
+
+    // A bunch of stuff is clickable. Use observables to coordinate all the work of updating the UI
+    var agg_calc_data = Observable(); // aggregation test results
+    var selected_group = Observable(); // { group: string, mask: string}, or null
+    plot.subscribeToData(
+        ["aggregation:all"],
+        function (data) {
+            data = data.aggregation;  // namespaced source in chain.discrete
+            // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
+            var results = data.results;
+            var parsed = raremetal.helpers.parsePortalJSON(data);
+            var groups = parsed[0];
+            var variants = parsed[1];
+            agg_calc_data({
+                results: results,
+                groups: groups,
+                variants: variants
+            });
+        },
+        { discrete: true }
+    );
+
     var TABLE_SELECTOR_AGGREGATION = "#results-table-aggregation";
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
 
@@ -186,10 +214,9 @@
         index: "id",
         rowClick: null,
         columns: [
-            { title: "Mask", field: "id", visible: false }, // Hidden column used for filtering
             { title: "Variant", field: "variant" },
-            { title: "Score", field: "score" },
-            { title: "Alt allele frequency", field: "alt_allele_freq", formatter: _formatSciNotation }
+            { title: "p-value", field: "pvalue" },
+            { title: "Alt allele frequency", field: "altFreq", formatter: _formatSciNotation }
         ],
         placeholder: "No Data Available",
         initialSort: [
@@ -203,21 +230,18 @@
         layout: "fitColumns",
         layoutColumnsOnNewData: true,
         rowSelected: function(row) {
-            var selected = row.row.data.id;
-            variantsTable.tableSetFilter("id", selected);
-            $("#label-mask-selected").text(selected);
+            selected_group(row.row.data); // notify all observers that value has changed
         },
         rowDeselected: function (row) {
-            // TODO: improve variants table- clear rendering when gene track is clicked
-            variantsTable.tableClearFilter("id");
-            $("#label-mask-selected").text("");
+            selected_group(null);
         },
         columns: [
-            { title: "Gene", field: "group", formatter: "link", formatterParams: { urlPrefix: "http://exac.broadinstitute.org/gene/" } },  // TODO: readable gene label with exac id for links?
+            { title: "Gene", field: "group", formatter: "link", formatterParams: { urlPrefix: "https://exac.broadinstitute.org/gene/" } },  // TODO: readable gene label with exac id for links?
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
             { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },
-            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" }
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
+            { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number" }
         ],
         placeholder: "No Data Available",
         initialSort: [
@@ -227,6 +251,34 @@
         selectablePersistence: false
     }, plot);
 
+    // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
+    agg_calc_data.subscribe(aggregationTable.renderData.bind(aggregationTable));
+    agg_calc_data.subscribe(selected_group.bind(null, null));
+
+    // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
+    selected_group.subscribe(function (data) {  // User-friendly label
+        var text = '';
+        if (data) {
+            text = data.mask + " / " + data.group
+        }
+        $("#label-mask-selected").text(text);
+    });
+    selected_group.subscribe(function (data) { // "Show me what variants are in a selected group" table
+        var calcs = agg_calc_data();
+
+        if (!data || !calcs) { // If no analysis is selected, no analysis should be shown
+            variantsTable.renderData([]);
+            return;
+        }
+        // When a group is selected, draw a variants table with information about that group
+        var one_group = calcs.groups.getOne(data.mask, data.group);
+        var variant_data = calcs.variants.getGroupVariants(one_group.variants);
+        variantsTable.renderData(variant_data);
+    });
+
+
+    //////////////////////////////////////////////////////////////
+    // Generic UI controls: what to do when buttons are clicked
     $("#download-aggregation").on("click", function() {
         aggregationTable.tableDownloadData("aggregation-data.csv", "csv");
     });
@@ -239,8 +291,8 @@
             aggregationBuilder.setStatus();
             plot.applyState({
                 aggregation_tests: {
-                    masks: aggregationBuilder.getMasks(),
-                    calcs: aggregationBuilder.getTests()
+                    masks: ["GENCODE-AF01", "GENCODE-AF05"],  // aggregationBuilder.getMasks(),
+                    calcs: ["skat"] // aggregationBuilder.getTests()
                 }
             }).then(function() { aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });

@@ -5,13 +5,25 @@
       "analysis": "Demonstration data",
       "masks": [
         {
-          "id": "AF01",
+          "id": "GENCODE-AF01",
           "description": "Only variants < 1% MAF",
           "grouping": "gene",
           "identifier": "ENSEMBL"
         },
         {
-          "id": "AF05",
+          "id": "GENCODE-AF05",
+          "description": "Only variants < 5% MAF",
+          "grouping": "gene",
+          "identifier": "ENSEMBL"
+        },
+        {
+          "id": "ISLET-STRETCH-AF01",
+          "description": "Only variants < 1% MAF",
+          "grouping": "gene",
+          "identifier": "ENSEMBL"
+        },
+        {
+          "id": "ISLET-STRETCH-AF05",
           "description": "Only variants < 5% MAF",
           "grouping": "gene",
           "identifier": "ENSEMBL"
