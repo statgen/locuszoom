@@ -7,31 +7,31 @@
         {
           "id": "GENCODE-AF01",
           "description": "Only variants < 1% MAF",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "GENCODE-AF05",
           "description": "Only variants < 5% MAF",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "ISLET-STRETCH-AF01",
           "description": "Only variants < 1% MAF",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "ISLET-STRETCH-AF05",
           "description": "Only variants < 5% MAF",
-          "grouping": "gene",
+          "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
           "id": "FCTUS",
           "description": "A fictitious interval",
-          "grouping": "interval",
+          "groupType": "interval",
           "identifier": "ENSEMBL"
         }
       ]

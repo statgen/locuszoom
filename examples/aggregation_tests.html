@@ -120,12 +120,12 @@
     // The user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
     var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
-    $.ajax("data/aggregationtest_raw_metadata_22_21576208-22089932.json")  // `/api/aggregation/metadata` in production
+    $.ajax("data/aggregation_masks.json")  // `/api/aggregation/metadata` in production
         .done(function(resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
             var masks = [];
             resp.data.forEach(function(dataset) {
-                var set_masks = dataset.masks.filter(function(item) { return item.grouping === "gene"; })
+                var set_masks = dataset.masks.filter(function(item) { return item.groupType === "gene"; })
                   .map(function (item) { return item.id; });
                 Array.prototype.push.apply(masks, set_masks);
             });
@@ -286,13 +286,13 @@
     $("#button-aggregation-run").on("click", function() {
         // The "define calculations" widget should put the test definitions in a place that the data source
         //  will expect to find them. The widget should define TESTS and MASKS.
-        var valid = aggregationBuilder.validateTests();
+        var valid = aggregationBuilder.validate();
         if (valid) {
             aggregationBuilder.setStatus();
             plot.applyState({
                 aggregation_tests: {
-                    masks: ["GENCODE-AF01", "GENCODE-AF05"],  // aggregationBuilder.getMasks(),
-                    calcs: ["skat"] // aggregationBuilder.getTests()
+                    masks: aggregationBuilder.getMasks(),
+                    calcs: aggregationBuilder.getCalcs()
                 }
             }).then(function() { aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });

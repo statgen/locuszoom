@@ -3,14 +3,11 @@
  */
 "use strict";
 
-/* global $, raremetal */
+/* global $ */
 /* eslint-disable no-unused-vars */
 
-var getMaskKey = function(group_id, mask_id) { return mask_id + "," + group_id; };
-
-
 // Quick hack observable: a() to get value, a(val) to set, a.subscribe() to add handlers
-var Observable = function () {
+var Observable = function () { // Allow UI elements to monitor changes in a variable
     var _subscribers = [];
     var current_value;
     var handle_value = function (value) {
@@ -157,6 +154,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
         var results = data.results;
         var groups = data.groups;
 
+        // This could ALMOST be drawn by the results array- it just needs to add the # of variants in the mask
         return results.map(function(one_result) {
             var this_group = groups.getOne(one_result.mask, one_result.group);
             return {
@@ -169,7 +167,7 @@ var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableControl
             };
         });
     },
-    addPlotListeners: function(plot) {
+    addPlotListeners: function(plot) { // TODO consider moving this into the main page, "click events" section
         plot.on("element_selection", function(eventData) {
             // Trigger the aggregation test table to filter (or unfilter) on a particular value
             if (eventData["sourceID"] !== "plot.genes") {
@@ -211,66 +209,28 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
         this._mask_names = mask_names;
         this._aggregation_types = aggregation_names  || [  // Defaults (correspond to hard-coded serialization logic)
             ["zegginiBurden", "Zeggini Burden"],
-            ["skatDavies", "SKAT (Davies method)"],
-            ["skatLiu", "SKAT (Liu method)"]
+            ["skat", "SKAT"]
         ];
 
         if (typeof selector === "string") {
             selector = $(selector);
         }
+
         selector.html("");
         this._container = selector;
         this._aggregation_spec_list_container = $("<div></div>").appendTo(selector);
 
-        this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
-
-        // Build these fragments once and reuse
-        this._mask_dropdown = this.__render_dropdown("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
-        this._aggregation_dropdown = this.__render_dropdown("calc_choice", this._aggregation_types);
-
         // Make sure that at least one set of test-description input elements appears on first render
-        this.addTest();
-        this._addControls();
+        this.addControls();
+        this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
     },
 
-    _addControls: function() {
-        // Render helper: add controls to widget
-        var addButton = $("<button></button>").text("Add another")
-            .addClass("button-primary")
-            .on("click", this.addTest.bind(this));
-
-        this._container.append(addButton);
-    },
-
-    /** @return {Number} */
-    getTestCount: function () {
-        return this._aggregation_spec_list_container.children().length;
-    },
-
-    addTest: function() {
-        var rowNumber= this.getTestCount();
-        var element = $("<div></div>", { id: "test-" + rowNumber })
-            .addClass("row")
-            .appendTo(this._aggregation_spec_list_container);
-
-        var removeButton = $("<button></button>").text("x")
-            .css({ color: "white", "background-color": "#d9534f" })
-            .on("click", this.removeTest.bind(this, element));
-
-        element.append(this._mask_dropdown.clone());
-        element.append(this._aggregation_dropdown.clone());
-
-        if (rowNumber > 0) {  // Do not allow the user to remove the first row
-            element.append(removeButton);
-        }
-    },
-
-    removeTest: function(test_id) {
-        // Remove the DOM element (and data) associated with a given test, so long as one row remains
-        if (this.getTestCount() <= 1 || !test_id) {
-            return;
-        }
-        this._aggregation_spec_list_container.find(test_id).remove();
+    addControls: function() {
+        // Build these fragments once and reuse
+        var _mask_dropdown = this.__render_selection("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
+        var _aggregation_dropdown = this.__render_selection("calc_choice", this._aggregation_types);
+        this._aggregation_spec_list_container.append(_mask_dropdown);
+        this._aggregation_spec_list_container.append(_aggregation_dropdown);
     },
 
     // Display a (styled) status message to the user. Default styling is an error message.
@@ -285,21 +245,18 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
      *
      * @param {String} name The name of the select menu
      * @param {String|String[]} options An array where each element specifies [value, displayName]
-     * @param {string} empty An option specification corresponding to "none selected"
      * @private
      */
-    __render_dropdown: function (name, options, empty) {
-        empty = empty || ["", "Select an option"];
+    __render_selection: function (name, options) {
         var htmlescape = LocusZoom.TransformationFunctions.get("htmlescape");
-        var element = $("<select></select>", { name: name });
+        var element = $("<select></select>", { name: name, size: 5 }).prop("multiple", true).css("height", "auto");
 
         options = options.slice();
-        options.unshift(empty);
 
         options.forEach(function(option) {
             var value;
             var displayName;
-            if (Array.isArray(option)) {  // Optionally specify both a code and human readable value
+            if (Array.isArray(option)) {  // Optionally specify a second, human readable name
                 value = option[0];
                 displayName = option[1];
             } else {
@@ -312,84 +269,24 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     /**
-     * Identify whether a given element specifies a valid test
-     * @param {object} data
+     * Must select at least one item from each box
      * @returns {boolean}
      */
-    _validateOneTest: function(data) {
-        // Make sure every key has a non-empty value
-        return Object.keys(data).map(function(k) { return data[k]; }).every(function(v) { return !!v; });
-    },
-
-    /**
-     * @param {Object[]} [test_json] Array with the JSON representation of each individual test
-     * @returns {boolean}
-     */
-    validateTests: function(test_json) {
+    validate: function(calcs, masks) {
         // all test names unique across tests + all fields filled in
-        test_json = test_json || this._getAllTestJson();
-        return test_json.every(this._validateOneTest.bind(this));
-    },
-
-    /** Serialize a single test to a format that rm.js can understand */
-    _getOneTestJson: function(element) {
-        // Assume that all form elements have a name attribute, and serialize accordingly
-        var calc_select = $(element).children("[name='calc_choice']");
-        var calc_choice = calc_select.val();
-
-        var calc_choice_label = calc_select.find(":selected").text();
-        var mask_choice = $(element).children("[name='mask_choice']").val();
-
-        var calc_spec = {};
-
-        switch(calc_choice) {
-        case "zegginiBurden":
-            calc_spec = raremetal.stats.testBurden;
-            break;
-        case "skatLiu":
-            calc_spec = {
-                test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "liu"); },
-                weights: raremetal.stats.calcSkatWeights
-            };
-            break;
-        case "skatDavies":
-            calc_spec = {
-                test: function (u, v, w) { return raremetal.stats.testSkat(u, v, w, "davies"); },
-                weights: raremetal.stats.calcSkatWeights
-            };
-            break;
-        default:
-            calc_spec = null;
-        }
-
-        return {
-            label: calc_choice_label + "," + mask_choice,  // Uniquely identify this test combination
-            calc_spec: calc_spec,
-            mask_choice: mask_choice
-        };
-    },
-
-    _getAllTestJson: function() {
-        var self = this;
-        return this._aggregation_spec_list_container.children()
-            .map(function(i, el) { return self._getOneTestJson(el); })
-            .get();
+        calcs = calcs || this.getCalcs();
+        masks = masks || this.getMasks();
+        return calcs.length && masks.length;
     },
 
     getMasks: function() {
-        return this._getAllTestJson().map(function (item) { return item["mask_choice"]; });
+        var masks = this._aggregation_spec_list_container.children("[name='mask_choice']").find(":selected");
+        return masks.map(function() { return this.value; }).get();
     },
 
-    /**
-     * Get a description of tests to run, in a format suitable for use with Raremetal.js
-    */
-    getTests: function() {
-        var allTests = this._getAllTestJson();
-        var res = {};
-        allTests.forEach(function(test) {
-            res[test.label] = test.calc_spec;
-        });
-        return res;
+    getCalcs: function() {
+        var masks = this._aggregation_spec_list_container.children("[name='calc_choice']").find(":selected");
+        return masks.map(function() { return this.value; }).get();
     }
 });
 

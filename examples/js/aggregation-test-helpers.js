@@ -36,12 +36,17 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
 
 LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
     // Operate on the calculated results. The result of this method will be added to chain.discrete
+
+    // In a page using live API data, the UI would only request the masks it needs from the API.
+    // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
+    //  type, and to the set of groups requested by the user)
+    records.groups = records.groups.filter(function(item) {return item.groupType === "gene"; });
+
     var parsed = raremetal.helpers.parsePortalJSON(records);
     var groups = parsed[0];
     var variants = parsed[1];
 
-    // In a page using live API data, the UI would only request the masks it needs from the API.
-    // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run.
+
     groups = groups.byMask(chain.header.aggregation_masks);
 
     var calcs = chain.header.aggregation_calcs;
@@ -94,10 +99,6 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
             if (!groupedAggregation.hasOwnProperty(res.group)) {
                 groupedAggregation[res.group] = [];
             }
-            if (res.grouping === "gene") {
-                // Don't look at interval groups- this is a genes layer connector
-                groupedAggregation[res.group].push(res.pvalue);
-            }
         });
 
         // Annotate any genes that have test results
@@ -111,4 +112,3 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
         return genesData;
     }
 });
-
