@@ -55,7 +55,7 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
         // If no calcs have been requested, then return a dummy placeholder immediately
         return { variants: [], groups: [], results: [] };
     }
-    var runner = new raremetal.helpers.TestRunner(groups, variants, calcs);
+    var runner = new raremetal.helpers.PortalTestRunner(groups, variants, calcs);
     var res = runner.toJSON();
     return res.data;
 };
@@ -99,6 +99,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
             if (!groupedAggregation.hasOwnProperty(res.group)) {
                 groupedAggregation[res.group] = [];
             }
+            groupedAggregation[res.group].push(res.pvalue);
         });
 
         // Annotate any genes that have test results

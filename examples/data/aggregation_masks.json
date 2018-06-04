@@ -19,13 +19,13 @@
         {
           "id": "ISLET-STRETCH-AF01",
           "description": "Only variants < 1% MAF",
-          "groupType": "gene",
+          "groupType": "interval",
           "identifier": "ENSEMBL"
         },
         {
           "id": "ISLET-STRETCH-AF05",
           "description": "Only variants < 5% MAF",
-          "groupType": "gene",
+          "groupType": "interval",
           "identifier": "ENSEMBL"
         },
         {

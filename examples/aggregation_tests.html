@@ -254,6 +254,7 @@
     // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
     agg_calc_data.subscribe(aggregationTable.renderData.bind(aggregationTable));
     agg_calc_data.subscribe(selected_group.bind(null, null));
+    plot.on("element_selection", selected_group.bind(null, null));
 
     // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
     selected_group.subscribe(function (data) {  // User-friendly label
