@@ -70,7 +70,7 @@
 
       <h3>Build your analysis</h3>
       <p>
-        Specify the mask and type of aggregation test to run, for all genes in the visible plot area.
+        Specify the mask(s) and type(s) of aggregation test to run, for all genes in the visible plot area. Use CTRL-click to select more than one mask or test.
       </p>
       <div id="widget-aggregation-container">
         <div id="widget-aggregation-builder">Loading...</div>
@@ -126,7 +126,7 @@
             var masks = [];
             resp.data.forEach(function(dataset) {
                 var set_masks = dataset.masks.filter(function(item) { return item.groupType === "gene"; })
-                  .map(function (item) { return item.id; });
+                  .map(function (item) { return [item.id, item.description]; });
                 Array.prototype.push.apply(masks, set_masks);
             });
             // Populate the aggregation test builder UI
@@ -298,7 +298,7 @@
             }).then(function() { aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
         } else {
-            aggregationBuilder.setStatus("One or more tests is invalid. Please make sure all options are filled in, and all labels are unique.")
+            aggregationBuilder.setStatus("One or more tests is invalid. Please select at least one mask and at least one test.")
         }
     });
 

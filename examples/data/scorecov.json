@@ -15995,7 +15995,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21923600-21929800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -17331,7 +17331,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21931800-21934800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -17776,7 +17776,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21943800-21946800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -18039,7 +18039,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21923600-21929800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
@@ -19645,7 +19645,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21931800-21934800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
@@ -20120,7 +20120,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "gene",
+        "groupType": "interval",
         "group": "chr22:21943800-21946800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
