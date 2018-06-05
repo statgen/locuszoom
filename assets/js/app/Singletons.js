@@ -291,11 +291,13 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
 LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     if (isNaN(x)){ return "NaN"; }
     if (x === 0){ return "0"; }
+
+    var abs = Math.abs(x);
     var log;
-    if (Math.abs(x) > 1){
-        log = Math.ceil(Math.log(x) / Math.LN10);
-    } else {
-        log = Math.floor(Math.log(x) / Math.LN10);
+    if (abs > 1) {
+        log = Math.ceil(Math.log(abs) / Math.LN10);
+    } else {  // 0...1
+        log = Math.floor(Math.log(abs) / Math.LN10);
     }
     if (Math.abs(log) <= 3){
         return x.toFixed(3);
