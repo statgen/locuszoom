@@ -116,6 +116,8 @@
 </div>
 
 <script type="application/javascript">
+    "use strict";
+
     ///////////////////////////////////
     // The user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
@@ -187,14 +189,37 @@
     var agg_calc_data = Observable(); // aggregation test results
     var selected_group = Observable(); // { group: string, mask: string}, or null
     plot.subscribeToData(
-        ["aggregation:all"],
+        ["aggregation:all", "gene:all"],
         function (data) {
-            data = data.aggregation;  // namespaced source in chain.discrete
+            // chain.discrete provides distinct data from each source
+            var gene_data = data.gene;
+            var agg_data = data.aggregation;
+
+            var results = agg_data.results;
+
             // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
-            var results = data.results;
-            var parsed = raremetal.helpers.parsePortalJSON(data);
+            var parsed = raremetal.helpers.parsePortalJSON(agg_data);
             var groups = parsed[0];
             var variants = parsed[1];
+
+            /////////
+            // Post-process this data with any annotations required by data tables on this page
+
+            // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
+            //  that to a human-friendly gene name (as displayed in the LZ plot)
+            var _genes_lookup = {};
+            gene_data.forEach(function(gene) {
+                var gene_id = gene.gene_id.split(".")[0]; // Ignore ensembl version on gene ids
+                _genes_lookup[gene_id] = gene.gene_name;
+            });
+            results.forEach(function(one_result) {
+                var this_group = groups.getOne(one_result.mask, one_result.group);
+                // Add synthetic fields that are not part of the raw calculation results
+                one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
+                one_result.variant_count = this_group.variants.length;
+            });
+
+            // When new data has been received (and post-processed), pass it on to any UI elements that use that data
             agg_calc_data({
                 results: results,
                 groups: groups,
@@ -232,14 +257,17 @@
         rowSelected: function(row) {
             selected_group(row.row.data); // notify all observers that value has changed
         },
-        rowDeselected: function (row) {
+        rowDeselected: function () {
             selected_group(null);
         },
         columns: [
-            { title: "Gene", field: "group", formatter: "link", formatterParams: { urlPrefix: "https://exac.broadinstitute.org/gene/" } },  // TODO: readable gene label with exac id for links?
+            {
+                title: "Gene", field: "group", formatter: "link",
+                formatterParams: { urlPrefix: "https://exac.broadinstitute.org/gene/", labelField: "group_display_name" }
+             },
             { title: "Mask", field: "mask", headerFilter: true },
             { title: "# Variants", field: "variant_count" },
-            { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },
+            { title: "Test type", field: "test", headerFilter: true },
             { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
             { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number", visible: false }
         ],
@@ -298,7 +326,7 @@
             }).then(function() { aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
         } else {
-            aggregationBuilder.setStatus("One or more tests is invalid. Please select at least one mask and at least one test.")
+            aggregationBuilder.setStatus("One or more tests is invalid. Please select at least one mask and at least one test.");
         }
     });
 

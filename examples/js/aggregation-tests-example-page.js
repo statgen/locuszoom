@@ -150,22 +150,8 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
 });
 
 var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
-    prepareData: function (data) { // TODO: should we wipe out filters when new data arrives?
-        var results = data.results;
-        var groups = data.groups;
-
-        // This could ALMOST be drawn by the results array- it just needs to add the # of variants in the mask
-        return results.map(function(one_result) {
-            var this_group = groups.getOne(one_result.mask, one_result.group);
-            return {
-                mask: one_result.mask,
-                group: one_result.group,
-                variant_count: this_group.variants.length,
-                calc_type: one_result.test,
-                pvalue: one_result.pvalue,
-                stat: one_result.stat
-            };
-        });
+    prepareData: function (data) {
+        return data.results; // Render function only needs a part of the "computed results" JSON it is given
     },
     addPlotListeners: function(plot) { // TODO consider moving this into the main page, "click events" section
         plot.on("element_selection", function(eventData) {
