@@ -215,8 +215,8 @@
         rowClick: null,
         columns: [
             { title: "Variant", field: "variant" },
-            { title: "p-value", field: "pvalue" },
-            { title: "Alt allele frequency", field: "altFreq", formatter: _formatSciNotation }
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
+            { title: "Alt allele frequency", field: "altFreq", formatter: _formatSciNotation, sorter: "number" }
         ],
         placeholder: "No Data Available",
         initialSort: [
@@ -241,7 +241,7 @@
             { title: "# Variants", field: "variant_count" },
             { title: "Test type", field: "calc_type", headerFilter: true, mutator: function (value) { return value.split(",")[0]; } },
             { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
-            { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number" }
+            { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number", visible: false }
         ],
         placeholder: "No Data Available",
         initialSort: [
