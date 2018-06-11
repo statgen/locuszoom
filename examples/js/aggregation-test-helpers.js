@@ -95,11 +95,11 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
 
         var groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
 
-        aggregationData.results.forEach(function(res) {
-            if (!groupedAggregation.hasOwnProperty(res.group)) {
-                groupedAggregation[res.group] = [];
+        aggregationData.groups.forEach(function(result) {
+            if (!groupedAggregation.hasOwnProperty(result.group)) {
+                groupedAggregation[result.group] = [];
             }
-            groupedAggregation[res.group].push(res.pvalue);
+            groupedAggregation[result.group].push(result.pvalue);
         });
 
         // Annotate any genes that have test results

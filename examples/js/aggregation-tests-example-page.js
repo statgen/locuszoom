@@ -151,7 +151,7 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
 
 var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
     prepareData: function (data) {
-        return data.results; // Render function only needs a part of the "computed results" JSON it is given
+        return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given. It does not need the helper object- it can render entirely from the list of json objects
     },
     addPlotListeners: function(plot) { // TODO consider moving this into the main page, "click events" section
         plot.on("element_selection", function(eventData) {
@@ -194,7 +194,7 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
         // Store the options used to populate the dropdown
         this._mask_names = mask_names;
         this._aggregation_types = aggregation_names  || [  // Defaults (correspond to hard-coded serialization logic)
-            ["zegginiBurden", "Zeggini Burden"],
+            ["burden", "Burden"],
             ["skat", "SKAT"]
         ];
 

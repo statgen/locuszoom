@@ -212,7 +212,7 @@
                 var gene_id = gene.gene_id.split(".")[0]; // Ignore ensembl version on gene ids
                 _genes_lookup[gene_id] = gene.gene_name;
             });
-            results.forEach(function(one_result) {
+            groups.data.forEach(function(one_result) {
                 var this_group = groups.getOne(one_result.mask, one_result.group);
                 // Add synthetic fields that are not part of the raw calculation results
                 one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
@@ -221,7 +221,6 @@
 
             // When new data has been received (and post-processed), pass it on to any UI elements that use that data
             agg_calc_data({
-                results: results,
                 groups: groups,
                 variants: variants
             });
