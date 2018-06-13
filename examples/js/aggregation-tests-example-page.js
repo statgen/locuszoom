@@ -3,7 +3,7 @@
  */
 "use strict";
 
-/* global $ */
+/* global $, raremetal */
 /* eslint-disable no-unused-vars */
 
 // Quick hack observable: a() to get value, a(val) to set, a.subscribe() to add handlers
@@ -79,111 +79,10 @@ function _formatSciNotation (cell, params) {
 }
 
 // Controllers for page widgets
-var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
-    /**
-     *
-     * @param {string|Object} selector A selector string for the table container
-     * @param {object} table_config An object specifying the tabulator layout for this table
-     * @param {LocusZoom.Plot} plot A reference to the LZ plot object. Required for two way communication
-     */
-    constructor: function(selector, table_config, plot) {
-        if (typeof selector === "string") {
-            selector = $(selector);
-        }
-        this.selector = selector;
-        this._table_config = table_config;
-        this.plot = plot;
-
-        this.selector.tabulator(this._table_config);
-        this.addPlotListeners(plot);
-    },
-
-    /**
-     * Define basic event listeners required for the table to synchronize with the plot
-     * @param plot
-     */
-    addPlotListeners: function (plot) {},
-
-    /**
-     * Callback that takes in data and renders an HTML table to a hardcoded document location
-     * @param {object} data
-     */
-    tableUpdateData: function (data) {
-        this.selector.tabulator("setData", data);
-    },
-
-    prepareData: function (data) { return data; },  // Stub
-
-    renderData: function(data) {
-        data = this.prepareData(data);
-        this.tableUpdateData(data);
-    },
-
-    /**
-     * Scroll the table to a particular row, and highlight the value. The index must be a row number, or a field
-     *  value that matches the table's predefined index field.
-     * @param {String|Number} index A unique identifier that tabulator uses to locate a matching row
-     */
-    tableScrollToData: function (index) {
-        this.selector.tabulator("deselectRow");
-        this.selector.tabulator("scrollToRow", index);
-        this.selector.tabulator("selectRow", index);
-    },
-
-    tableSetFilter: function (column, value) {
-        this.selector.tabulator("setFilter", column, "=", value);
-    },
-
-    tableClearFilter: function (column, value) {
-        if (typeof value !== "undefined") {
-            this.selector.tabulator("removeFilter", column, "=", value);
-        } else {
-            this.selector.tabulator("clearFilter");
-        }
-
-    },
-
-    tableDownloadData: function(filename, format) {
-        format = format || "csv";
-        this.selector.tabulator("download", format, filename);
-    }
-});
-
-var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
-    prepareData: function (data) {
-        return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given. It does not need the helper object- it can render entirely from the list of json objects
-    },
-    addPlotListeners: function(plot) { // TODO consider moving this into the main page, "click events" section
-        plot.on("element_selection", function(eventData) {
-            // Trigger the aggregation test table to filter (or unfilter) on a particular value
-            if (eventData["sourceID"] !== "plot.genes") {
-                return;
-            }
-
-            // Programmatic filters are set separately from column filters
-            var gene_column_name = "group";
-            var selected_gene = eventData["data"]["element"]["gene_id"];
-            selected_gene = selected_gene.split(".")[0]; // Ignore ensemble version on gene ids
-
-            // TODO: Hard-coded selectors
-            if (eventData["data"]["active"]) {
-                this.tableSetFilter(gene_column_name, selected_gene);
-                $("#label-no-group-selected").hide();
-                $("#label-current-group-selected").show().text(selected_gene);
-            } else {
-                $("#label-no-group-selected").show();
-                $("#label-current-group-selected").hide();
-                this.tableClearFilter(gene_column_name, selected_gene);
-            }
-        }.bind(this));
-    }
-});
-
-var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {});
 
 /**
  * A minimal method of defining aggregation tests in the absence of a UI framework. Proof of concept, ONLY- not intended
- *   for production use. (generating HTML via jquery is rather ugly, but it keeps the examples highly framework-neutral)
+ *   for production use. (generating HTML via jquery is rather ugly, but it keeps the examples relatively portable)
  * @class
  * @param {string|object} selector A jquery selector or element name specifying where to draw the widget
  * @param {String[]} mask_names What masks are allowed
@@ -276,3 +175,287 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
     }
 });
 
+/**
+ * Define shared functionality for all tables, providing helper methods to control the tabulator
+ *  table library
+ * @class
+ */
+var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
+    /**
+     *
+     * @param {string|Object} selector A selector string for the table container
+     * @param {object} table_config An object specifying the tabulator layout for this table
+     */
+    constructor: function(selector, table_config) {
+        if (typeof selector === "string") {
+            selector = $(selector);
+        }
+        this.selector = selector;
+        this._table_config = table_config;
+
+        this.selector.tabulator(this._table_config);
+    },
+
+    /**
+     * Callback that takes in data and renders an HTML table to a hardcoded document location
+     * @param {object} data
+     */
+    _tableUpdateData: function (data) {
+        this.selector.tabulator("setData", data);
+    },
+
+    /**
+     * Stub. Override this method to transform the data in ways specific to this table.
+     * @param data
+     * @returns {*}
+     */
+    prepareData: function (data) { return data; },
+
+    renderData: function(data) {
+        data = this.prepareData(data);
+        this._tableUpdateData(data);
+    },
+
+    tableSetFilter: function (column, value) {
+        this.selector.tabulator("setFilter", column, "=", value);
+    },
+
+    tableClearFilter: function (column, value) {
+        if (typeof value !== "undefined") {
+            this.selector.tabulator("removeFilter", column, "=", value);
+        } else {
+            this.selector.tabulator("clearFilter");
+        }
+
+    },
+
+    tableDownloadData: function(filename, format) {
+        format = format || "csv";
+        this.selector.tabulator("download", format, filename);
+    }
+});
+
+var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
+    prepareData: function (data) {
+        return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given. It does not need the helper object- it can render entirely from the list of json objects
+    }
+});
+
+var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {});
+
+/**
+ * Creates the plot and tables
+ * @param {Observable|function} label_store Observer to label the selected group
+ * @param {Object} [context=window] A reference to the widgets will be added here, allowing them to be accessed
+ *  outside the function later (eg for debugging purposes)
+ */
+function createDisplayWidgets(label_store, context) {
+    context = context || window;
+
+    //   Determine if we're online, based on browser state or presence of an optional query parameter
+    var online = !(typeof navigator !== "undefined" && !navigator.onLine);
+    if (window.location.search.indexOf("offline") !== -1) {
+        online = false;
+    }
+
+    // Specify the data sources to use, then build the plot
+    var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+    var data_sources =  new LocusZoom.DataSources()
+        .add("assoc", ["AssociationLZ", {  // TODO: Can we 100% drive this with aggregation source?
+            url: apiBase + "statistic/single/",
+            params: { analysis: 42, id_field: "variant" }
+        }])
+        .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+        .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
+        .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
+        .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+        .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
+
+    // Generate the LocusZoom plot, and reflect the initial plot state in url
+    var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+    // Fetch initial position from the URL, or use some defaults particular to this demo
+    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    if (!Object.keys(initialState).length) {
+        initialState = {chr: 22, start: 21552103, end: 22052103};
+    }
+
+    var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+    layout = customizePlotLayout(layout);
+
+    var plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+    //   a previously viewed region)
+    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+
+    var TABLE_SELECTOR_AGGREGATION = "#results-table-aggregation";
+    var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
+
+    var aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
+        index: "id",
+        height: 300,
+        layout: "fitColumns",
+        layoutColumnsOnNewData: true,
+        rowSelected: function(row) {
+            label_store(row.row.data); // FIXME: Tabulator doesn't allow changing options after creation, so one variable from the outer scope has to be baked into the layout. (awkwardly less-reusable)
+        },
+        rowDeselected: function () {
+            label_store(null);
+        },
+        columns: [
+            {
+                title: "Gene", field: "group", formatter: "link",
+                // TODO: exac times out with https
+                formatterParams: { urlPrefix: "http://exac.broadinstitute.org/gene/", labelField: "group_display_name" }
+            },
+            { title: "Mask", field: "mask", headerFilter: true },
+            { title: "# Variants", field: "variant_count" },
+            { title: "Test type", field: "test", headerFilter: true },
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
+            { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number", visible: false }
+        ],
+        placeholder: "No Data Available",
+        initialSort: [
+            { column: "pvalue", dir: "asc" }
+        ],
+        selectable: 1,
+        selectablePersistence: false
+    });
+
+    var variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
+        height: 300,
+        layout: "fitColumns",
+        layoutColumnsOnNewData: true,
+        index: "id",
+        columns: [
+            { title: "Variant", field: "variant" },
+            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
+            { title: "Alt allele frequency", field: "altFreq", formatter: _formatSciNotation, sorter: "number" }
+        ],
+        placeholder: "No Data Available",
+        initialSort: [
+            { column: "variant", dir: "asc" }
+        ]
+    });
+
+    ////////////////////////////////
+    // Make certain symbols available later, eg for debugging
+    context.data_sources = data_sources;
+    context.plot = plot;
+
+    context.aggregationTable = aggregationTable;
+    context.variantsTable = variantsTable;
+
+    return context;
+}
+
+/**
+ * Connect a very specific set of widgets together to drive the user experience for this page.
+ *
+ * Because many things are clickable, this looks like more code than it is. The key concepts are:
+ * 1. Allow the plot to tell us when aggregation test results are available.
+ * 2. Take that data and update a table
+ * 3. If something important gets clicked, update parts of the view that depend on it
+ * 4. Have a well-defined way to coordinate many widgets that depend on a common value
+ * @param plot
+ * @param aggregation_table
+ * @param variants_table
+ * @param {Observable} result_store Observer for calculation results
+ * @param {Observable} label_store Observer to label the selected group
+ */
+function setupWidgetListeners(plot, aggregation_table, variants_table, result_store, label_store) {
+    plot.on("element_selection", function(eventData) {
+        // Trigger the aggregation test table to filter (or unfilter) on a particular value
+        if (eventData["sourceID"] !== "lz-plot.genes") {
+            return;
+        }
+
+        var gene_column_name = "group";
+        var selected_gene = eventData["data"]["element"]["gene_id"];
+        selected_gene = selected_gene.split(".")[0]; // Ignore ensemble version on gene ids
+
+        if (eventData["data"]["active"]) {
+            aggregation_table.tableSetFilter(gene_column_name, selected_gene);
+            $("#label-no-group-selected").hide();
+            $("#label-current-group-selected").show().text(selected_gene);
+        } else {
+            $("#label-no-group-selected").show();
+            $("#label-current-group-selected").hide();
+            aggregation_table.tableClearFilter(gene_column_name, selected_gene);
+        }
+    }.bind(this));
+
+    plot.subscribeToData(
+        ["aggregation:all", "gene:all"],
+        function (data) {
+            // chain.discrete provides distinct data from each source
+            var gene_data = data.gene;
+            var agg_data = data.aggregation;
+
+            var results = agg_data.results;
+
+            // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
+            var parsed = raremetal.helpers.parsePortalJSON(agg_data);
+            var groups = parsed[0];
+            var variants = parsed[1];
+
+            /////////
+            // Post-process this data with any annotations required by data tables on this page
+
+            // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
+            //  that to a human-friendly gene name (as displayed in the LZ plot)
+            var _genes_lookup = {};
+            gene_data.forEach(function(gene) {
+                var gene_id = gene.gene_id.split(".")[0]; // Ignore ensembl version on gene ids
+                _genes_lookup[gene_id] = gene.gene_name;
+            });
+            groups.data.forEach(function(one_result) {
+                var this_group = groups.getOne(one_result.mask, one_result.group);
+                // Add synthetic fields that are not part of the raw calculation results
+                one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
+                one_result.variant_count = this_group.variants.length;
+            });
+
+            // When new data has been received (and post-processed), pass it on to any UI elements that use that data
+            result_store({
+                groups: groups,
+                variants: variants
+            });
+        },
+        { discrete: true }
+    );
+
+    // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
+    result_store.subscribe(aggregation_table.renderData.bind(aggregation_table));
+    result_store.subscribe(label_store.bind(null, null)); // just wipe the labels
+    plot.on("element_selection", label_store.bind(null, null));
+
+    // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
+    label_store.subscribe(function (data) {  // User-friendly label
+        var text = "";
+        if (data) {
+            text = data.mask + " / " + data.group;
+        }
+        $("#label-mask-selected").text(text);
+    });
+    label_store.subscribe(function (data) { // "Show me what variants are in a selected group" table
+        var calcs = result_store();
+        if (!data || !calcs) { // If no analysis is selected, no analysis should be shown
+            variants_table.renderData([]);
+            return;
+        }
+        // When a group is selected, draw a variants table with information about that group
+        var one_group = calcs.groups.getOne(data.mask, data.group);
+        var variant_data = calcs.variants.getGroupVariants(one_group.variants);
+        variants_table.renderData(variant_data);
+    });
+
+    //////////////////////////////////////////////////////////////
+    // Generic UI controls: what to do when buttons are clicked
+    $("#download-aggregation").on("click", function() {
+        aggregation_table.tableDownloadData("aggregation-data.csv", "csv");
+    });
+}
