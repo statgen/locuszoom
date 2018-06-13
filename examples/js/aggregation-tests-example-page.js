@@ -30,8 +30,14 @@ var Observable = function () { // Allow UI elements to monitor changes in a vari
 // Make a custom layout object
 function customizePlotLayout (layout) {
     // Customize an existing plot layout with the data for aggregation tests
-    // Customize layout: genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
+    // Customize layout:
+    // 1. The association panel must pull from aggregation tests in order to draw on that data
+    // 2. Genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
     //  the gene track by aggregation test results
+
+    var assocLayout = layout.panels[0].data_layers[2];
+    assocLayout.fields.unshift("aggregation: all");
+
     var genesLayout = layout.panels[1].data_layers[0];
     genesLayout.namespace["aggregation"] = "aggregation";
     genesLayout.namespace["aggregation_genes"] = "aggregation_genes";
@@ -261,13 +267,13 @@ function createDisplayWidgets(label_store, context) {
     // Specify the data sources to use, then build the plot
     var apiBase = "//portaldev.sph.umich.edu/api/v1/";
     var data_sources =  new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {  // TODO: Can we 100% drive this with aggregation source?
-            url: apiBase + "statistic/single/",
-            params: { analysis: 42, id_field: "variant" }
+        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
+        .add("assoc", ["AssocAggregationConnectorLZ", {
+            sources: {aggregation_ns: "aggregation"}
+            // params: { analysis: 42, id_field: "variant" }
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
         .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
@@ -348,8 +354,6 @@ function createDisplayWidgets(label_store, context) {
 
     context.aggregationTable = aggregationTable;
     context.variantsTable = variantsTable;
-
-    return context;
 }
 
 /**

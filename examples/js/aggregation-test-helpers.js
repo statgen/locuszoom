@@ -71,6 +71,54 @@ LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (reco
 
 
 /**
+ * A sample connector that allows the data from aggregation tests to power an association plot.
+ *
+ * In this case, the data has already been requested and is in the chain; it just needs to be reformatted to match
+ *   expectations. TODO: How does this mesh with extractFields? (heavily refactor connector internals for secondary revealed use case)
+ *
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ */
+LocusZoom.KnownDataSources.extend("ConnectorSource", "AssocAggregationConnectorLZ", {
+    REQUIRED_SOURCES: ["aggregation_ns"],
+    combineChainBody: function (data, chain) {
+        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
+        var aggregationData = chain.discrete[aggregation_source_id];
+
+        // TODO return a payload of parsed assoc data
+        var REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+
+        // TODO: Horrible hack POC!
+        return aggregationData.variants.map(function(one_variant) {
+            // assoc source should return variant, log_pvalue, ref_allele, position
+            // LD source expects keys named variant || id, position || pos, pvalue || log_pvalue
+
+            var match = one_variant.variant.match(REGEX_EPACTS);
+            return {
+                "assoc:variant": one_variant.variant,
+                "assoc:position": +match[2],
+                "assoc:log_pvalue": -Math.log10(one_variant.pvalue)
+
+            };
+        }).sort(function (a, b) {
+            var nameA = a["assoc:variant"];
+            var nameB = b["assoc:variant"];
+            if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            // names must be equal
+            return 0;
+        });
+    }
+});
+
+
+
+/**
  * A sample connector that aligns calculated aggregation test data with corresponding gene information. Returns a body
  *   suitable for use with the genes datalayer.
  *

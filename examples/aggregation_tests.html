@@ -142,15 +142,9 @@
     window.selected_group = Observable(); // { group: string, mask: string}, or null
 
     $("#button-aggregation-run").on("click", function() {
-        // The "define calculations" widget should put the test definitions in a place that the data source
-        //  will expect to find them. The widget should define TESTS and MASKS.
         var valid = aggregationBuilder.validate();
         if (valid) {
             aggregationBuilder.setStatus("");
-
-            var calc_config = {
-                aggregation_tests: { masks: aggregationBuilder.getMasks(),  calcs: aggregationBuilder.getCalcs() }
-            };
 
             // Create the plot and widgets if they don't already exist
             if (!window.plot || !(window.plot instanceof LocusZoom.Plot)) {
@@ -158,7 +152,11 @@
                 setupWidgetListeners(window.plot, window.aggregationTable, window.variantsTable, window.agg_calc_data, window.selected_group);
             }
 
-            window.plot.applyState(calc_config).then(function() {
+            // The "define calculations" widget should put the test definitions in a place that the data source
+            //  will expect to find them. The widget should define CALCS and MASKS.
+            window.plot.applyState({
+                aggregation_tests: { masks: aggregationBuilder.getMasks(),  calcs: aggregationBuilder.getCalcs() }
+            }).then(function() {
                 aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
         } else {
