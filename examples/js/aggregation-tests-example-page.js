@@ -441,7 +441,7 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
     label_store.subscribe(function (data) {  // User-friendly label
         var text = "";
         if (data) {
-            text = data.mask + " / " + data.group;
+            text = data.mask + " / " + data.group_display_name;
         }
         $("#label-mask-selected").text(text);
     });
@@ -461,5 +461,9 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
     // Generic UI controls: what to do when buttons are clicked
     $("#download-aggregation").on("click", function() {
         aggregation_table.tableDownloadData("aggregation-data.csv", "csv");
+    });
+
+    $("#download-variants").on("click", function() {
+        variants_table.tableDownloadData("variants-data.csv", "csv");
     });
 }

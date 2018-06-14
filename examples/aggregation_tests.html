@@ -58,36 +58,41 @@
     <hr style="clear: both;">
 
     <p>
-      There are many types of aggregation tests, each with their own unique characteristics. Since it is not always
-      possible to provide a single off-the-shelf visualization for every situation, LocusZoom provides a means to
-      share plot data with any arbitrary HTML element on the page.
+      This page demonstrates a mechanism for performing custom aggregation tests on the fly, in the browser. The user
+      can compare several different hypotheses, with contextual information to help compare and interpret the results.
     </p>
 
-
+    <p>
+      Calculation functionality is provided by <a href="https://github.com/statgen/raremetal.js">raremetal.js</a>.
+    </p>
     <hr>
-
-    <div class="twelve columns">
-
-      <h3>Build your analysis</h3>
-      <p>
-        Specify the mask(s) and type(s) of aggregation test to run, for all genes in the visible plot area. Use CTRL-click to select more than one mask or test.
-      </p>
-      <div id="widget-aggregation-container">
-        <div id="widget-aggregation-builder">Loading...</div>
-        <button id="button-aggregation-run" class="button-primary">Run tests</button>
-      </div>
-
-      <h3>Interactive Plot</h3>
-      <p>
-        After running aggregation tests, click on any gene below to see a table of aggregation test results, filtered for that gene.
-        Click the gene again to unselect and show all results in the table.
-      </p>
-      <div id="lz-plot" class="lz-container-responsive"></div>
-    </div>
   </div>
 
   <div class="row">
+    <h3>Build your analysis</h3>
+    <p>
+      Specify the mask(s) and type(s) of aggregation test to run, for all genes in a specified plot region. Use
+      CTRL-click to select more than one mask or test.
+    </p>
+    <div id="widget-aggregation-container">
+      <div id="widget-aggregation-builder">Loading...</div>
+      <button id="button-aggregation-run" class="button-primary">Run tests</button>
+    </div>
+  </div>
+
+  <div class="row" id="section-results" style="display:none;">
     <div class="twelve columns">
+      <h3>Interactive Plot</h3>
+      <p>
+        Click on any gene to filter the table of aggregation test results to only those for that gene.
+        Click the gene again to unselect and show all aggregation tests across the entire region.
+
+        Each gene/interval can have more than one mask. The entire set of possible results in a given gene/interval is
+        summarized by color:
+        <span style="color:red">significant</span> /  <span style="color:blue">not significant</span> / <span style="color:grey">no data available</span>.
+      </p>
+      <div id="lz-plot" class="lz-container-responsive"></div>
+
       <h3>Table of aggregation test results</h3>
       <div>
         Currently reviewing results for group:
@@ -98,11 +103,11 @@
       <button id="download-aggregation" class="button-primary">Download</button><br>
       <div id="results-table-aggregation"></div>
 
-
       <h3>Variants in mask <span id="label-mask-selected"></span> </h3>
       <p>
         Click on a row in the table above to see the variants associated with a specific mask + gene.
       </p>
+      <button id="download-variants" class="button-primary">Download</button><br>
       <div id="results-table-variants"></div>
     </div>
   </div>
@@ -139,7 +144,7 @@
 
     // A bunch of stuff is clickable. Use observables to coordinate all the work of updating the UI
     window.agg_calc_data = Observable(); // aggregation test results
-    window.selected_group = Observable(); // { group: string, mask: string}, or null
+    window.selected_group = Observable(); // { group: string, mask: string, group_display_name: string }, or null
 
     $("#button-aggregation-run").on("click", function() {
         var valid = aggregationBuilder.validate();
@@ -148,6 +153,7 @@
 
             // Create the plot and widgets if they don't already exist
             if (!window.plot || !(window.plot instanceof LocusZoom.Plot)) {
+                $("#section-results").css("display", "inherit"); // Hide results section until first use
                 createDisplayWidgets(window.selected_group);
                 setupWidgetListeners(window.plot, window.aggregationTable, window.variantsTable, window.agg_calc_data, window.selected_group);
             }
