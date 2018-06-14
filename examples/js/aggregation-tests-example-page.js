@@ -268,9 +268,9 @@ function createDisplayWidgets(label_store, context) {
     var apiBase = "//portaldev.sph.umich.edu/api/v1/";
     var data_sources =  new LocusZoom.DataSources()
         .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
-        .add("assoc", ["AssocAggregationConnectorLZ", {
-            sources: {aggregation_ns: "aggregation"}
-            // params: { analysis: 42, id_field: "variant" }
+        .add("assoc", ["AssocFromAggregationLZ", {
+            from: "aggregation",
+            params: { id_field: "variant" }
         }])
         .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])

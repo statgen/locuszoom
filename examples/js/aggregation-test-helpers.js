@@ -1,5 +1,5 @@
 "use strict";
-/* global raremetal */
+/* global raremetal, Q */
 
 /*
  * LocusZoom extensions used to calculate and render aggregation test results
@@ -71,47 +71,57 @@ LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (reco
 
 
 /**
- * A sample connector that allows the data from aggregation tests to power an association plot.
- *
- * In this case, the data has already been requested and is in the chain; it just needs to be reformatted to match
- *   expectations. TODO: How does this mesh with extractFields? (heavily refactor connector internals for secondary revealed use case)
+ * A custom data source that reformats existing association data, rather than requesting new data from the server.
+ *  In this case, aggregation test calculations have already made data about variants available, and that data only
+ *  needs to be reformatted to work with the association data layer.
  *
  * @public
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "AssocAggregationConnectorLZ", {
-    REQUIRED_SOURCES: ["aggregation_ns"],
-    combineChainBody: function (data, chain) {
-        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var aggregationData = chain.discrete[aggregation_source_id];
+LocusZoom.KnownDataSources.extend("AssociationLZ", "AssocFromAggregationLZ", {
+    parseInit: function (init) {
+        if (!init || !init.from) {
+            throw "Must specify the name of the source that contains association data";
+        }
+        this.params = init.params || {};
+        this._from = init.from;
+    },
 
-        // TODO return a payload of parsed assoc data
-        var REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");
+    getRequest: function (state, chain, fields) {
+        // Does not actually make a request. Just pick off the specific bundle of data from a known payload structure.
+        if (chain.discrete && !chain.discrete[this._from]) {
+            throw self.constructor.SOURCE_NAME  + " cannot be used before loading required data for: " + this._from;
+        }
+        // Copy the data so that mutations (like sorting) don't affect the original
+        return Q.when(JSON.parse(JSON.stringify(chain.discrete[this._from]["variants"])));
+    },
 
-        // TODO: Horrible hack POC!
-        return aggregationData.variants.map(function(one_variant) {
-            // assoc source should return variant, log_pvalue, ref_allele, position
-            // LD source expects keys named variant || id, position || pos, pvalue || log_pvalue
-
+    normalizeResponse: function (data) {
+        // The payload structure of the association source is slightly different than the one required by association
+        //   plots. For example, we need to parse variant names and convert to log_pvalue
+        var REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");  // match API variant strings
+        return data.map(function(one_variant) {
             var match = one_variant.variant.match(REGEX_EPACTS);
             return {
-                "assoc:variant": one_variant.variant,
-                "assoc:position": +match[2],
-                "assoc:log_pvalue": -Math.log10(one_variant.pvalue)
-
+                variant: one_variant.variant,
+                chromosome: match[1],
+                position: +match[2],
+                ref_allele: match[3],
+                ref_allele_freq: 1 - one_variant.altFreq,
+                log_pvalue: -Math.log10(one_variant.pvalue)
             };
         }).sort(function (a, b) {
-            var nameA = a["assoc:variant"];
-            var nameB = b["assoc:variant"];
-            if (nameA < nameB) {
+            a = a.variant;
+            b = b.variant;
+            if (a < b) {
                 return -1;
-            }
-            if (nameA > nameB) {
+            } else if (a > b) {
                 return 1;
+            } else {
+                // names must be equal
+                return 0;
             }
-            // names must be equal
-            return 0;
         });
     }
 });
