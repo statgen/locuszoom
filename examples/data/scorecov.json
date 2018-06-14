@@ -6,1922 +6,2306 @@
       {
         "variant": "22:21576208_G/A",
         "altFreq": 0.000286558,
-        "pvalue": 0.279888
+        "pvalue": 0.279888,
+        "score": -5.28331
       },
       {
         "variant": "22:21581760_G/A",
         "altFreq": 0.000293026,
-        "pvalue": 0.477434
+        "pvalue": 0.477434,
+        "score": -3.47789
       },
       {
         "variant": "22:21581838_G/A",
         "altFreq": 0.000326772,
-        "pvalue": 0.0751408
+        "pvalue": 0.0751408,
+        "score": -8.70912
       },
       {
         "variant": "22:21660829_G/A",
         "altFreq": 0.000345754,
-        "pvalue": 0.125673
+        "pvalue": 0.125673,
+        "score": -7.7025
       },
       {
         "variant": "22:21664347_C/T",
         "altFreq": 0.000440945,
-        "pvalue": 0.948965
+        "pvalue": 0.948965,
+        "score": 0.383201
       },
       {
         "variant": "22:21665238_A/C",
         "altFreq": 0.000321288,
-        "pvalue": 0.72421
+        "pvalue": 0.72421,
+        "score": -1.73498
       },
       {
         "variant": "22:21695956_C/A",
         "altFreq": 0.0021108,
-        "pvalue": 0.520127
+        "pvalue": 0.520127,
+        "score": -7.71978
       },
       {
         "variant": "22:21697745_C/T",
         "altFreq": 0.000917604,
-        "pvalue": 0.0873597
+        "pvalue": 0.0873597,
+        "score": -12.661
       },
       {
         "variant": "22:21797094_C/G",
         "altFreq": 0.993756,
-        "pvalue": 0.516877
+        "pvalue": 0.516877,
+        "score": 14.6965
       },
       {
         "variant": "22:21797099_CCCG/C",
         "altFreq": 0.000979753,
-        "pvalue": 0.307011
+        "pvalue": 0.307011,
+        "score": 8.40129
       },
       {
         "variant": "22:21799247_C/T",
         "altFreq": 0.000449381,
-        "pvalue": 0.870131
+        "pvalue": 0.870131,
+        "score": -0.980463
       },
       {
         "variant": "22:21799325_C/T",
         "altFreq": 0.000285855,
-        "pvalue": 0.454904
+        "pvalue": 0.454904,
+        "score": 3.65542
       },
       {
         "variant": "22:21799691_T/C",
         "altFreq": 0.000287261,
-        "pvalue": 0.747311
+        "pvalue": 0.747311,
+        "score": -1.57546
       },
       {
         "variant": "22:21799704_C/T",
         "altFreq": 0.000845332,
-        "pvalue": 0.859314
+        "pvalue": 0.859314,
+        "score": -1.49786
       },
       {
         "variant": "22:21799719_G/A",
         "altFreq": 0.000703459,
-        "pvalue": 0.86467
+        "pvalue": 0.86467,
+        "score": -1.31693
       },
       {
         "variant": "22:21799831_G/A",
         "altFreq": 0.000305259,
-        "pvalue": 0.673883
+        "pvalue": 0.673883,
+        "score": 2.0623
       },
       {
         "variant": "22:21799872_TGCA/T",
         "altFreq": 0.000595051,
-        "pvalue": 0.934988
+        "pvalue": 0.934988,
+        "score": 0.563823
       },
       {
         "variant": "22:21799889_C/T",
         "altFreq": 0.000456834,
-        "pvalue": 0.69046
+        "pvalue": 0.69046,
+        "score": 2.39123
       },
       {
         "variant": "22:21800042_T/C",
         "altFreq": 0.993813,
-        "pvalue": 0.606836
+        "pvalue": 0.606836,
+        "score": 11.7305
       },
       {
         "variant": "22:21800049_G/A",
         "altFreq": 0.00499719,
-        "pvalue": 0.634239
+        "pvalue": 0.634239,
+        "score": 9.27821
       },
       {
         "variant": "22:21800129_C/T",
         "altFreq": 0.000142154,
-        "pvalue": 0.112024
+        "pvalue": 0.112024,
+        "score": 5.49462
       },
       {
         "variant": "22:21800269_C/T",
         "altFreq": 0.0410186,
-        "pvalue": 0.776964
+        "pvalue": 0.776964,
+        "score": -16.3756
       },
       {
         "variant": "22:21800277_G/A",
         "altFreq": 0.000572272,
-        "pvalue": 0.0549532
+        "pvalue": 0.0549532,
+        "score": 13.2684
       },
       {
         "variant": "22:21800444_T/C",
         "altFreq": 0.993812,
-        "pvalue": 0.606222
+        "pvalue": 0.606222,
+        "score": 11.7505
       },
       {
         "variant": "22:21801047_C/T",
         "altFreq": 0.0157712,
-        "pvalue": 0.0141058
+        "pvalue": 0.0141058,
+        "score": -88.7443
       },
       {
         "variant": "22:21801073_C/T",
         "altFreq": 0.000314117,
-        "pvalue": 0.361339
+        "pvalue": 0.361339,
+        "score": 4.50488
       },
       {
         "variant": "22:21801280_G/A",
         "altFreq": 0.0131379,
-        "pvalue": 0.335651
+        "pvalue": 0.335651,
+        "score": -32.1762
       },
       {
         "variant": "22:21801422_C/T",
         "altFreq": 0.000310602,
-        "pvalue": 0.662625
+        "pvalue": 0.662625,
+        "score": 2.14144
       },
       {
         "variant": "22:21801436_T/G",
         "altFreq": 0.000282621,
-        "pvalue": 0.443636
+        "pvalue": 0.443636,
+        "score": -3.74532
       },
       {
         "variant": "22:21801488_A/G",
         "altFreq": 0.000425619,
-        "pvalue": 0.649518
+        "pvalue": 0.649518,
+        "score": -2.72067
       },
       {
         "variant": "22:21801553_ACAGT/A",
         "altFreq": 0.000142154,
-        "pvalue": 0.156589
+        "pvalue": 0.156589,
+        "score": 4.89816
       },
       {
         "variant": "22:21801572_C/T",
         "altFreq": 0.000853487,
-        "pvalue": 0.356348
+        "pvalue": 0.356348,
+        "score": -7.806
       },
       {
         "variant": "22:21801588_T/A",
         "altFreq": 0.993813,
-        "pvalue": 0.606969
+        "pvalue": 0.606969,
+        "score": 11.7262
       },
       {
         "variant": "22:21801670_A/G",
         "altFreq": 0.000563555,
-        "pvalue": 0.219185
+        "pvalue": 0.219185,
+        "score": -8.50148
       },
       {
         "variant": "22:21801728_G/C",
         "altFreq": 0.00071527,
-        "pvalue": 0.903088
+        "pvalue": 0.903088,
+        "score": -0.941417
       },
       {
         "variant": "22:21801743_CAG/C",
         "altFreq": 0.000285011,
-        "pvalue": 0.149925
+        "pvalue": 0.149925,
+        "score": -7.03919
       },
       {
         "variant": "22:21801801_C/T",
         "altFreq": 0.000143279,
-        "pvalue": 0.150178
+        "pvalue": 0.150178,
+        "score": 4.97522
       },
       {
         "variant": "22:21801823_A/C",
         "altFreq": 0.000283324,
-        "pvalue": 0.93784
+        "pvalue": 0.93784,
+        "score": -0.381269
       },
       {
         "variant": "22:21802029_C/T",
         "altFreq": 0.00293785,
-        "pvalue": 0.757182
+        "pvalue": 0.757182,
+        "score": 4.8573
       },
       {
         "variant": "22:21802066_C/CGT",
         "altFreq": 0.000196007,
-        "pvalue": 0.501905
+        "pvalue": 0.501905,
+        "score": -2.32241
       },
       {
         "variant": "22:21802074_T/TGC",
         "altFreq": 0.000896091,
-        "pvalue": 0.16075
+        "pvalue": 0.16075,
+        "score": -11.8878
       },
       {
         "variant": "22:21802090_CGTATGTGT/C",
         "altFreq": 0.000783183,
-        "pvalue": 0.855402
+        "pvalue": 0.855402,
+        "score": -1.41159
       },
       {
         "variant": "22:21802103_CTA/C",
         "altFreq": 0.000434899,
-        "pvalue": 0.545877
+        "pvalue": 0.545877,
+        "score": 3.61579
       },
       {
         "variant": "22:21802250_C/CT",
         "altFreq": 0.00626378,
-        "pvalue": 0.992606
+        "pvalue": 0.992606,
+        "score": -0.209973
       },
       {
         "variant": "22:21802383_G/T",
         "altFreq": 0.000566929,
-        "pvalue": 0.458626
+        "pvalue": 0.458626,
+        "score": 5.12272
       },
       {
         "variant": "22:21802461_CAG/C",
         "altFreq": 0.000285433,
-        "pvalue": 0.316521
+        "pvalue": 0.316521,
+        "score": 4.897
       },
       {
         "variant": "22:21802790_G/A",
         "altFreq": 0.000281496,
-        "pvalue": 0.386431
+        "pvalue": 0.386431,
+        "score": -4.23442
       },
       {
         "variant": "22:21802800_C/T",
         "altFreq": 0.00780582,
-        "pvalue": 0.133247
+        "pvalue": 0.133247,
+        "score": -38.1709
       },
       {
         "variant": "22:21802832_T/TC",
         "altFreq": 0.000568616,
-        "pvalue": 0.911484
+        "pvalue": 0.911484,
+        "score": -0.768403
       },
       {
         "variant": "22:21802882_C/T",
         "altFreq": 0.000147075,
-        "pvalue": 0.14629
+        "pvalue": 0.14629,
+        "score": 5.02557
       },
       {
         "variant": "22:21802955_G/A",
         "altFreq": 0.00118012,
-        "pvalue": 0.205173
+        "pvalue": 0.205173,
+        "score": 12.4108
       },
       {
         "variant": "22:21802959_C/T",
         "altFreq": 0.000285855,
-        "pvalue": 0.880725
+        "pvalue": 0.880725,
+        "score": -0.733602
       },
       {
         "variant": "22:21802995_C/G",
         "altFreq": 0.00063878,
-        "pvalue": 0.403985
+        "pvalue": 0.403985,
+        "score": -5.9405
       },
       {
         "variant": "22:21803164_C/T",
         "altFreq": 0.00535616,
-        "pvalue": 0.784588
+        "pvalue": 0.784588,
+        "score": 5.68476
       },
       {
         "variant": "22:21803184_C/A",
         "altFreq": 0.00140354,
-        "pvalue": 0.544545
+        "pvalue": 0.544545,
+        "score": 6.52379
       },
       {
         "variant": "22:21803232_T/C",
         "altFreq": 0.000146232,
-        "pvalue": 0.139971
+        "pvalue": 0.139971,
+        "score": 5.10455
       },
       {
         "variant": "22:21803241_G/A",
         "altFreq": 0.000287542,
-        "pvalue": 0.640905
+        "pvalue": 0.640905,
+        "score": 2.28082
       },
       {
         "variant": "22:21803265_G/A",
         "altFreq": 0.000316085,
-        "pvalue": 0.180844
+        "pvalue": 0.180844,
+        "score": 6.60856
       },
       {
         "variant": "22:21803268_CT/C",
         "altFreq": 0.00168715,
-        "pvalue": 0.852541
+        "pvalue": 0.852541,
+        "score": -2.22267
       },
       {
         "variant": "22:21803363_G/A",
         "altFreq": 0.000284589,
-        "pvalue": 0.926543
+        "pvalue": 0.926543,
+        "score": -0.450761
       },
       {
         "variant": "22:21803370_C/G",
         "altFreq": 0.00115607,
-        "pvalue": 0.242308
+        "pvalue": 0.242308,
+        "score": 11.4311
       },
       {
         "variant": "22:21803529_C/T",
         "altFreq": 0.000285996,
-        "pvalue": 0.168301
+        "pvalue": 0.168301,
+        "score": 6.73571
       },
       {
         "variant": "22:21803544_AGT/A",
         "altFreq": 0.00160911,
-        "pvalue": 0.171963
+        "pvalue": 0.171963,
+        "score": -14.9065
       },
       {
         "variant": "22:21804029_TC/T",
         "altFreq": 0.00043518,
-        "pvalue": 0.245012
+        "pvalue": 0.245012,
+        "score": -6.9601
       },
       {
         "variant": "22:21804092_C/T",
         "altFreq": 0.000288245,
-        "pvalue": 0.0783584
+        "pvalue": 0.0783584,
+        "score": 8.60813
       },
       {
         "variant": "22:21804135_C/T",
         "altFreq": 0.0048712,
-        "pvalue": 0.624807
+        "pvalue": 0.624807,
+        "score": 9.81192
       },
       {
         "variant": "22:21804293_C/T",
         "altFreq": 0.0012088,
-        "pvalue": 0.434002
+        "pvalue": 0.434002,
+        "score": -7.76157
       },
       {
         "variant": "22:21804425_C/T",
         "altFreq": 0.00014342,
-        "pvalue": 0.153943
+        "pvalue": 0.153943,
+        "score": 4.92976
       },
       {
         "variant": "22:21804456_C/T",
         "altFreq": 0.000352643,
-        "pvalue": 0.515896
+        "pvalue": 0.515896,
+        "score": -3.35538
       },
       {
         "variant": "22:21804471_C/T",
         "altFreq": 0.000424916,
-        "pvalue": 0.214379
+        "pvalue": 0.214379,
+        "score": -7.43359
       },
       {
         "variant": "22:21804556_A/G",
         "altFreq": 0.00037275,
-        "pvalue": 0.481415
+        "pvalue": 0.481415,
+        "score": 3.76173
       },
       {
         "variant": "22:21804662_C/A",
         "altFreq": 0.000283465,
-        "pvalue": 0.297987
+        "pvalue": 0.297987,
+        "score": -5.08835
       },
       {
         "variant": "22:21804782_C/G",
         "altFreq": 0.00171822,
-        "pvalue": 0.0280983
+        "pvalue": 0.0280983,
+        "score": -25.7111
       },
       {
         "variant": "22:21804889_A/G",
         "altFreq": 0.0101959,
-        "pvalue": 0.955515
+        "pvalue": 0.955515,
+        "score": -1.63854
       },
       {
         "variant": "22:21804903_C/T",
         "altFreq": 0.0406499,
-        "pvalue": 0.789471
+        "pvalue": 0.789471,
+        "score": -15.363
       },
       {
         "variant": "22:21804924_GCT/G",
         "altFreq": 0.000600675,
-        "pvalue": 0.376225
+        "pvalue": 0.376225,
+        "score": 6.12993
       },
       {
         "variant": "22:21804941_G/T",
         "altFreq": 0.000855877,
-        "pvalue": 0.560891
+        "pvalue": 0.560891,
+        "score": -4.93313
       },
       {
         "variant": "22:21804960_GTCC/G",
         "altFreq": 0.000431946,
-        "pvalue": 0.0530362
+        "pvalue": 0.0530362,
+        "score": 11.5825
       },
       {
         "variant": "22:21804965_C/G",
         "altFreq": 0.00100253,
-        "pvalue": 0.128832
+        "pvalue": 0.128832,
+        "score": -13.8812
       },
       {
         "variant": "22:21805046_A/G",
         "altFreq": 0.0401102,
-        "pvalue": 0.329419
+        "pvalue": 0.329419,
+        "score": -54.9698
       },
       {
         "variant": "22:21805301_G/A",
         "altFreq": 0.000294291,
-        "pvalue": 0.473674
+        "pvalue": 0.473674,
+        "score": -3.57745
       },
       {
         "variant": "22:21805359_C/T",
         "altFreq": 0.0005741,
-        "pvalue": 0.0397851
+        "pvalue": 0.0397851,
+        "score": -14.2124
       },
       {
         "variant": "22:21805433_G/A",
         "altFreq": 0.000996907,
-        "pvalue": 0.403361
+        "pvalue": 0.403361,
+        "score": -7.64252
       },
       {
         "variant": "22:21805503_C/T",
         "altFreq": 0.000283605,
-        "pvalue": 0.0389191
+        "pvalue": 0.0389191,
+        "score": -10.0962
       },
       {
         "variant": "22:21821916_C/T",
         "altFreq": 0.000375844,
-        "pvalue": 0.856491
+        "pvalue": 0.856491,
+        "score": -0.888277
       },
       {
         "variant": "22:21822666_G/C",
         "altFreq": 0.00425886,
-        "pvalue": 0.0646786
+        "pvalue": 0.0646786,
+        "score": 31.231
       },
       {
         "variant": "22:21823633_C/T",
         "altFreq": 0.0012635,
-        "pvalue": 0.909329
+        "pvalue": 0.909329,
+        "score": -0.602901
       },
       {
         "variant": "22:21823652_G/C",
         "altFreq": 0.00167463,
-        "pvalue": 0.440902
+        "pvalue": 0.440902,
+        "score": -4.11337
       },
       {
         "variant": "22:21823863_CCCG/C",
         "altFreq": 0.0313145,
-        "pvalue": 0.804418
+        "pvalue": 0.804418,
+        "score": 12.3222
       },
       {
         "variant": "22:21825107_T/C",
         "altFreq": 0.00682368,
-        "pvalue": 0.517675
+        "pvalue": 0.517675,
+        "score": -4.08729
       },
       {
         "variant": "22:21825376_T/TC",
         "altFreq": 0.000284871,
-        "pvalue": 0.788495
+        "pvalue": 0.788495,
+        "score": 1.31155
       },
       {
         "variant": "22:21825395_C/T",
         "altFreq": 0.000293729,
-        "pvalue": 0.182661
+        "pvalue": 0.182661,
+        "score": -6.52372
       },
       {
         "variant": "22:21829010_G/A",
         "altFreq": 0.0011257,
-        "pvalue": 0.510946
+        "pvalue": 0.510946,
+        "score": -6.02858
       },
       {
         "variant": "22:21829039_G/A",
         "altFreq": 0.000529246,
-        "pvalue": 0.0172084
+        "pvalue": 0.0172084,
+        "score": 12.381
       },
       {
         "variant": "22:21829586_G/A",
         "altFreq": 0.00120444,
-        "pvalue": 0.776855
+        "pvalue": 0.776855,
+        "score": 2.6235
       },
       {
         "variant": "22:21834248_G/A",
         "altFreq": 0.000292604,
-        "pvalue": 0.890254
+        "pvalue": 0.890254,
+        "score": 0.674752
       },
       {
         "variant": "22:21834251_G/A",
         "altFreq": 0.00104064,
-        "pvalue": 0.857011
+        "pvalue": 0.857011,
+        "score": -1.65238
       },
       {
         "variant": "22:21842181_C/T",
         "altFreq": 0.00408493,
-        "pvalue": 0.497973
+        "pvalue": 0.497973,
+        "score": 11.8007
       },
       {
         "variant": "22:21842757_G/A",
         "altFreq": 0.000521091,
-        "pvalue": 0.748309
+        "pvalue": 0.748309,
+        "score": 1.91032
       },
       {
         "variant": "22:21843568_G/A",
         "altFreq": 0.000509421,
-        "pvalue": 0.601521
+        "pvalue": 0.601521,
+        "score": 2.73652
       },
       {
         "variant": "22:21843628_C/G",
         "altFreq": 0.00552236,
-        "pvalue": 0.3809
+        "pvalue": 0.3809,
+        "score": -17.9209
       },
       {
         "variant": "22:21843734_C/T",
         "altFreq": 0.0053324,
-        "pvalue": 0.38549
+        "pvalue": 0.38549,
+        "score": -4.32353
       },
       {
         "variant": "22:21843991_G/A",
         "altFreq": 0.000413808,
-        "pvalue": 0.506272
+        "pvalue": 0.506272,
+        "score": 3.55578
       },
       {
         "variant": "22:21844691_T/C",
         "altFreq": 0.0031257,
-        "pvalue": 0.676449
+        "pvalue": 0.676449,
+        "score": 2.25522
       },
       {
         "variant": "22:21899201_T/C",
         "altFreq": 0.00313583,
-        "pvalue": 0.474329
+        "pvalue": 0.474329,
+        "score": 10.9714
       },
       {
         "variant": "22:21921864_A/G",
         "altFreq": 0.000288386,
-        "pvalue": 0.944613
+        "pvalue": 0.944613,
+        "score": -0.339659
       },
       {
         "variant": "22:21921873_C/T",
         "altFreq": 0.000423088,
-        "pvalue": 0.455714
+        "pvalue": 0.455714,
+        "score": 4.44658
       },
       {
         "variant": "22:21921920_G/T",
         "altFreq": 0.0122106,
-        "pvalue": 0.055179
+        "pvalue": 0.055179,
+        "score": -60.8919
       },
       {
         "variant": "22:21922162_C/T",
         "altFreq": 0.000431946,
-        "pvalue": 0.0973116
+        "pvalue": 0.0973116,
+        "score": 9.92654
       },
       {
         "variant": "22:21922273_T/C",
         "altFreq": 0.000987767,
-        "pvalue": 0.999352
+        "pvalue": 0.999352,
+        "score": -0.00736199
       },
       {
         "variant": "22:21922286_G/T",
         "altFreq": 0.00044671,
-        "pvalue": 0.740739
+        "pvalue": 0.740739,
+        "score": 1.98916
       },
       {
         "variant": "22:21922297_G/A",
         "altFreq": 0.000867267,
-        "pvalue": 0.504408
+        "pvalue": 0.504408,
+        "score": -5.51034
       },
       {
         "variant": "22:21922469_C/T",
         "altFreq": 0.000288808,
-        "pvalue": 0.0540643
+        "pvalue": 0.0540643,
+        "score": -9.41785
       },
       {
         "variant": "22:21922597_T/G",
         "altFreq": 0.000143279,
-        "pvalue": 0.16645
+        "pvalue": 0.16645,
+        "score": 4.78497
       },
       {
         "variant": "22:21923719_A/G",
         "altFreq": 0.00334646,
-        "pvalue": 0.207157
+        "pvalue": 0.207157,
+        "score": -21.1371
       },
       {
         "variant": "22:21923908_C/T",
         "altFreq": 0.000565101,
-        "pvalue": 0.743452
+        "pvalue": 0.743452,
+        "score": 2.26225
       },
       {
         "variant": "22:21923973_T/C",
         "altFreq": 0.00028248,
-        "pvalue": 0.815326
+        "pvalue": 0.815326,
+        "score": -1.14188
       },
       {
         "variant": "22:21924043_C/T",
         "altFreq": 0.000281355,
-        "pvalue": 0.563047
+        "pvalue": 0.563047,
+        "score": 2.82743
       },
       {
         "variant": "22:21924384_C/T",
         "altFreq": 0.000427728,
-        "pvalue": 0.118267
+        "pvalue": 0.118267,
+        "score": -9.35387
       },
       {
         "variant": "22:21924499_C/T",
         "altFreq": 0.0211504,
-        "pvalue": 0.438105
+        "pvalue": 0.438105,
+        "score": -32.3671
       },
       {
         "variant": "22:21924506_C/T",
         "altFreq": 0.000284168,
-        "pvalue": 0.263069
+        "pvalue": 0.263069,
+        "score": -5.47167
       },
       {
         "variant": "22:21924596_C/CT",
         "altFreq": 0.000299634,
-        "pvalue": 0.0615298
+        "pvalue": 0.0615298,
+        "score": -9.14371
       },
       {
         "variant": "22:21924603_T/TA",
         "altFreq": 0.00447596,
-        "pvalue": 0.271503
+        "pvalue": 0.271503,
+        "score": 17.6778
       },
       {
         "variant": "22:21924646_G/A",
         "altFreq": 0.000281355,
-        "pvalue": 0.325869
+        "pvalue": 0.325869,
+        "score": -4.80331
       },
       {
         "variant": "22:21924672_C/T",
         "altFreq": 0.000421963,
-        "pvalue": 0.472767
+        "pvalue": 0.472767,
+        "score": 4.29854
       },
       {
         "variant": "22:21924948_A/T",
         "altFreq": 0.001268,
-        "pvalue": 0.539296
+        "pvalue": 0.539296,
+        "score": 6.36036
       },
       {
         "variant": "22:21925080_C/T",
         "altFreq": 0.000281918,
-        "pvalue": 0.453054
+        "pvalue": 0.453054,
+        "score": 3.66839
       },
       {
         "variant": "22:21925132_A/G",
         "altFreq": 0.000425056,
-        "pvalue": 0.612926
+        "pvalue": 0.612926,
+        "score": -3.02888
       },
       {
         "variant": "22:21925360_C/T",
         "altFreq": 0.00106074,
-        "pvalue": 0.112422
+        "pvalue": 0.112422,
+        "score": 14.6856
       },
       {
         "variant": "22:21925366_G/A",
         "altFreq": 0.000704724,
-        "pvalue": 0.597558
+        "pvalue": 0.597558,
+        "score": 4.07918
       },
       {
         "variant": "22:21925502_A/G",
         "altFreq": 0.000705709,
-        "pvalue": 0.374178
+        "pvalue": 0.374178,
+        "score": -6.86674
       },
       {
         "variant": "22:21925704_A/G",
         "altFreq": 0.00028698,
-        "pvalue": 0.545788
+        "pvalue": 0.545788,
+        "score": 2.95388
       },
       {
         "variant": "22:21925760_C/T",
         "altFreq": 0.00027545,
-        "pvalue": 0.269492
+        "pvalue": 0.269492,
+        "score": 5.21836
       },
       {
         "variant": "22:21925800_C/T",
         "altFreq": 0.000287823,
-        "pvalue": 0.0856518
+        "pvalue": 0.0856518,
+        "score": -8.40564
       },
       {
         "variant": "22:21925864_A/ATT",
         "altFreq": 0.000146935,
-        "pvalue": 0.703955
+        "pvalue": 0.703955,
+        "score": 1.31389
       },
       {
         "variant": "22:21925942_A/G",
         "altFreq": 0.000283746,
-        "pvalue": 0.419363
+        "pvalue": 0.419363,
+        "score": 3.94806
       },
       {
         "variant": "22:21925946_C/T",
         "altFreq": 0.000285855,
-        "pvalue": 0.107693
+        "pvalue": 0.107693,
+        "score": -7.86514
       },
       {
         "variant": "22:21926013_C/T",
         "altFreq": 0.0298089,
-        "pvalue": 0.65768
+        "pvalue": 0.65768,
+        "score": -21.8516
       },
       {
         "variant": "22:21926073_A/G",
         "altFreq": 0.0101347,
-        "pvalue": 0.485175
+        "pvalue": 0.485175,
+        "score": -20.5503
       },
       {
         "variant": "22:21926090_G/A",
         "altFreq": 0.00155357,
-        "pvalue": 0.372988
+        "pvalue": 0.372988,
+        "score": 10.2021
       },
       {
         "variant": "22:21926280_C/G",
         "altFreq": 0.00028248,
-        "pvalue": 0.110417
+        "pvalue": 0.110417,
+        "score": 7.80446
       },
       {
         "variant": "22:21926519_C/T",
         "altFreq": 0.000294573,
-        "pvalue": 0.549614
+        "pvalue": 0.549614,
+        "score": -2.93026
       },
       {
         "variant": "22:21926542_T/TG",
         "altFreq": 0.00029176,
-        "pvalue": 0.0934643
+        "pvalue": 0.0934643,
+        "score": 8.20117
       },
       {
         "variant": "22:21926584_C/T",
         "altFreq": 0.0352326,
-        "pvalue": 0.675816
+        "pvalue": 0.675816,
+        "score": -22.8533
       },
       {
         "variant": "22:21926610_G/A",
         "altFreq": 0.000337036,
-        "pvalue": 0.785458
+        "pvalue": 0.785458,
+        "score": -1.37506
       },
       {
         "variant": "22:21926804_G/C",
         "altFreq": 0.0173643,
-        "pvalue": 0.00196602
+        "pvalue": 0.00196602,
+        "score": 118.477
       },
       {
         "variant": "22:21926966_CTG/C",
         "altFreq": 0.00312261,
-        "pvalue": 0.211768
+        "pvalue": 0.211768,
+        "score": -20.1717
       },
       {
         "variant": "22:21927025_G/A",
         "altFreq": 0.0111344,
-        "pvalue": 0.91138
+        "pvalue": 0.91138,
+        "score": 3.37321
       },
       {
         "variant": "22:21927113_T/G",
         "altFreq": 0.000428993,
-        "pvalue": 0.496551
+        "pvalue": 0.496551,
+        "score": 4.07088
       },
       {
         "variant": "22:21927272_CCCCACTCCCACT/C",
         "altFreq": 0.00043054,
-        "pvalue": 0.248955
+        "pvalue": 0.248955,
+        "score": 6.9023
       },
       {
         "variant": "22:21927304_C/T",
         "altFreq": 0.00663428,
-        "pvalue": 0.0463883
+        "pvalue": 0.0463883,
+        "score": -47.717
       },
       {
         "variant": "22:21927346_T/C",
         "altFreq": 0.000329303,
-        "pvalue": 0.0967049
+        "pvalue": 0.0967049,
+        "score": 8.32553
       },
       {
         "variant": "22:21927394_A/G",
         "altFreq": 0.00028234,
-        "pvalue": 0.427004
+        "pvalue": 0.427004,
+        "score": 3.88352
       },
       {
         "variant": "22:21927950_C/T",
         "altFreq": 0.000428712,
-        "pvalue": 0.90216
+        "pvalue": 0.90216,
+        "score": 0.735999
       },
       {
         "variant": "22:21928159_A/G",
         "altFreq": 0.000281777,
-        "pvalue": 0.564125
+        "pvalue": 0.564125,
+        "score": 2.81962
       },
       {
         "variant": "22:21928245_G/A",
         "altFreq": 0.000424494,
-        "pvalue": 0.414222
+        "pvalue": 0.414222,
+        "score": -4.8883
       },
       {
         "variant": "22:21928313_G/A",
         "altFreq": 0.000438976,
-        "pvalue": 0.599651
+        "pvalue": 0.599651,
+        "score": 3.14408
       },
       {
         "variant": "22:21928600_G/A",
         "altFreq": 0.000283746,
-        "pvalue": 0.68015
+        "pvalue": 0.68015,
+        "score": 2.01557
       },
       {
         "variant": "22:21928637_G/A",
         "altFreq": 0.000565101,
-        "pvalue": 0.246093
+        "pvalue": 0.246093,
+        "score": -7.88658
       },
       {
         "variant": "22:21928759_G/A",
         "altFreq": 0.000284027,
-        "pvalue": 0.302714
+        "pvalue": 0.302714,
+        "score": -5.03879
       },
       {
         "variant": "22:21928901_C/A",
         "altFreq": 0.000423931,
-        "pvalue": 0.198183
+        "pvalue": 0.198183,
+        "score": 7.70375
       },
       {
         "variant": "22:21929019_G/C",
         "altFreq": 0.000426744,
-        "pvalue": 0.958413
+        "pvalue": 0.958413,
+        "score": -0.312191
       },
       {
         "variant": "22:21929160_A/G",
         "altFreq": 0.000141592,
-        "pvalue": 0.401327
+        "pvalue": 0.401327,
+        "score": -2.90177
       },
       {
         "variant": "22:21929179_G/A",
         "altFreq": 0.000849128,
-        "pvalue": 0.585869
+        "pvalue": 0.585869,
+        "score": 4.61139
       },
       {
         "variant": "22:21929244_ACT/A",
         "altFreq": 0.000986502,
-        "pvalue": 0.980343
+        "pvalue": 0.980343,
+        "score": -0.225201
       },
       {
         "variant": "22:21929512_C/A",
         "altFreq": 0.00562303,
-        "pvalue": 0.0865005
+        "pvalue": 0.0865005,
+        "score": 36.7948
       },
       {
         "variant": "22:21929701_T/TA",
         "altFreq": 0.0208909,
-        "pvalue": 0.731954
+        "pvalue": 0.731954,
+        "score": -7.01247
       },
       {
         "variant": "22:21929769_T/G",
         "altFreq": 0.000290917,
-        "pvalue": 0.892266
+        "pvalue": 0.892266,
+        "score": 0.66216
       },
       {
         "variant": "22:21931827_A/T",
         "altFreq": 0.000532199,
-        "pvalue": 0.212117
+        "pvalue": 0.212117,
+        "score": -8.1654
       },
       {
         "variant": "22:21931840_C/T",
         "altFreq": 0.000713161,
-        "pvalue": 0.314866
+        "pvalue": 0.314866,
+        "score": -7.76652
       },
       {
         "variant": "22:21932032_TC/T",
         "altFreq": 0.000287964,
-        "pvalue": 0.493281
+        "pvalue": 0.493281,
+        "score": -3.35018
       },
       {
         "variant": "22:21932089_C/T",
         "altFreq": 0.000504921,
-        "pvalue": 0.0735806
+        "pvalue": 0.0735806,
+        "score": 11.1621
       },
       {
         "variant": "22:21932175_G/A",
         "altFreq": 0.00171471,
-        "pvalue": 0.219074
+        "pvalue": 0.219074,
+        "score": -14.7096
       },
       {
         "variant": "22:21932270_G/T",
         "altFreq": 0.00334646,
-        "pvalue": 0.207157
+        "pvalue": 0.207157,
+        "score": -21.1371
       },
       {
         "variant": "22:21932375_G/A",
         "altFreq": 0.000283183,
-        "pvalue": 0.569018
+        "pvalue": 0.569018,
+        "score": 2.7843
       },
       {
         "variant": "22:21932561_A/C",
         "altFreq": 0.00334646,
-        "pvalue": 0.207157
+        "pvalue": 0.207157,
+        "score": -21.1371
       },
       {
         "variant": "22:21932587_T/A",
         "altFreq": 0.000142576,
-        "pvalue": 0.373203
+        "pvalue": 0.373203,
+        "score": -3.07893
       },
       {
         "variant": "22:21932838_A/G",
         "altFreq": 0.000984252,
-        "pvalue": 0.972775
+        "pvalue": 0.972775,
+        "score": -0.311932
       },
       {
         "variant": "22:21932841_G/A",
         "altFreq": 0.000711474,
-        "pvalue": 0.663496
+        "pvalue": 0.663496,
+        "score": 3.36192
       },
       {
         "variant": "22:21932918_C/T",
         "altFreq": 0.00620613,
-        "pvalue": 0.669784
+        "pvalue": 0.669784,
+        "score": 9.7053
       },
       {
         "variant": "22:21932937_G/A",
         "altFreq": 0.000984252,
-        "pvalue": 0.972775
+        "pvalue": 0.972775,
+        "score": -0.311932
       },
       {
         "variant": "22:21933003_G/C",
         "altFreq": 0.000142013,
-        "pvalue": 0.414968
+        "pvalue": 0.414968,
+        "score": 2.81854
       },
       {
         "variant": "22:21933023_G/A",
         "altFreq": 0.00281412,
-        "pvalue": 0.110877
+        "pvalue": 0.110877,
+        "score": 24.5842
       },
       {
         "variant": "22:21933404_C/T",
         "altFreq": 0.000986361,
-        "pvalue": 0.970912
+        "pvalue": 0.970912,
+        "score": -0.333239
       },
       {
         "variant": "22:21933431_C/T",
         "altFreq": 0.000581271,
-        "pvalue": 0.0684606
+        "pvalue": 0.0684606,
+        "score": -12.594
       },
       {
         "variant": "22:21933747_A/T",
         "altFreq": 0.000852222,
-        "pvalue": 0.539905
+        "pvalue": 0.539905,
+        "score": -5.1876
       },
       {
         "variant": "22:21933798_G/A",
         "altFreq": 0.0004259,
-        "pvalue": 0.186885
+        "pvalue": 0.186885,
+        "score": 7.90202
       },
       {
         "variant": "22:21933921_A/T",
         "altFreq": 0.000283465,
-        "pvalue": 0.110672
+        "pvalue": 0.110672,
+        "score": 7.79891
       },
       {
         "variant": "22:21933924_T/C",
         "altFreq": 0.00028234,
-        "pvalue": 0.0638437
+        "pvalue": 0.0638437,
+        "score": -9.06069
       },
       {
         "variant": "22:21934008_C/T",
         "altFreq": 0.0299494,
-        "pvalue": 0.705986
+        "pvalue": 0.705986,
+        "score": -18.6438
       },
       {
         "variant": "22:21934059_CAG/C",
         "altFreq": 0.000587036,
-        "pvalue": 0.605971
+        "pvalue": 0.605971,
+        "score": -3.56634
       },
       {
         "variant": "22:21934074_A/T",
         "altFreq": 0.00267421,
-        "pvalue": 0.274167
+        "pvalue": 0.274167,
+        "score": 16.4378
       },
       {
         "variant": "22:21934155_T/C",
         "altFreq": 0.00141381,
-        "pvalue": 0.703302
+        "pvalue": 0.703302,
+        "score": 4.13788
       },
       {
         "variant": "22:21934294_A/C",
         "altFreq": 0.000427447,
-        "pvalue": 0.30433
+        "pvalue": 0.30433,
+        "score": -6.14987
       },
       {
         "variant": "22:21934521_ATGC/A",
         "altFreq": 0.00014356,
-        "pvalue": 0.306902
+        "pvalue": 0.306902,
+        "score": 3.53277
       },
       {
         "variant": "22:21934656_C/T",
         "altFreq": 0.000283605,
-        "pvalue": 0.260548
+        "pvalue": 0.260548,
+        "score": 5.50066
       },
       {
         "variant": "22:21944074_A/G",
         "altFreq": 0.00108802,
-        "pvalue": 0.400033
+        "pvalue": 0.400033,
+        "score": -7.90359
       },
       {
         "variant": "22:21944196_A/G",
         "altFreq": 0.001268,
-        "pvalue": 0.673841
+        "pvalue": 0.673841,
+        "score": -4.36074
       },
       {
         "variant": "22:21944199_A/T",
         "altFreq": 0.000282621,
-        "pvalue": 0.611732
+        "pvalue": 0.611732,
+        "score": 2.48169
       },
       {
         "variant": "22:21944251_T/C",
         "altFreq": 0.000906918,
-        "pvalue": 0.481736
+        "pvalue": 0.481736,
+        "score": 6.03157
       },
       {
         "variant": "22:21944416_G/A",
         "altFreq": 0.00934955,
-        "pvalue": 0.978741
+        "pvalue": 0.978741,
+        "score": 0.741998
       },
       {
         "variant": "22:21944526_G/A",
         "altFreq": 0.000300619,
-        "pvalue": 0.58344
+        "pvalue": 0.58344,
+        "score": -2.68529
       },
       {
         "variant": "22:21944590_G/A",
         "altFreq": 0.000304134,
-        "pvalue": 0.0963737
+        "pvalue": 0.0963737,
+        "score": -8.14045
       },
       {
         "variant": "22:21944750_G/C",
         "altFreq": 0.00393701,
-        "pvalue": 0.321601
+        "pvalue": 0.321601,
+        "score": 18.0651
       },
       {
         "variant": "22:21945085_T/C",
         "altFreq": 0.000563976,
-        "pvalue": 0.648824
+        "pvalue": 0.648824,
+        "score": -3.14778
       },
       {
         "variant": "22:21945121_G/C",
         "altFreq": 0.000140748,
-        "pvalue": 0.484891
+        "pvalue": 0.484891,
+        "score": 2.41495
       },
       {
         "variant": "22:21945210_G/A",
         "altFreq": 0.000427165,
-        "pvalue": 0.456396
+        "pvalue": 0.456396,
+        "score": 4.45963
       },
       {
         "variant": "22:21945430_T/C",
         "altFreq": 0.000142154,
-        "pvalue": 0.295824
+        "pvalue": 0.295824,
+        "score": 3.61464
       },
       {
         "variant": "22:21945572_C/G",
         "altFreq": 0.00113864,
-        "pvalue": 0.93728
+        "pvalue": 0.93728,
+        "score": 0.768896
       },
       {
         "variant": "22:21945617_A/G",
         "altFreq": 0.000282058,
-        "pvalue": 0.717063
+        "pvalue": 0.717063,
+        "score": -1.74275
       },
       {
         "variant": "22:21945889_G/T",
         "altFreq": 0.000174072,
-        "pvalue": 0.231613
+        "pvalue": 0.231613,
+        "score": 4.23839
       },
       {
         "variant": "22:21946049_G/C",
         "altFreq": 0.000422947,
-        "pvalue": 0.341538
+        "pvalue": 0.341538,
+        "score": -5.6944
       },
       {
         "variant": "22:21946156_G/A",
         "altFreq": 0.00295402,
-        "pvalue": 0.719756
+        "pvalue": 0.719756,
+        "score": 5.6639
       },
       {
         "variant": "22:21946186_A/G",
         "altFreq": 0.000281637,
-        "pvalue": 0.3188
+        "pvalue": 0.3188,
+        "score": -4.874
       },
       {
         "variant": "22:21946726_C/T",
         "altFreq": 0.000142435,
-        "pvalue": 0.852716
+        "pvalue": 0.852716,
+        "score": 0.64191
       },
       {
         "variant": "22:21946742_CT/C",
         "altFreq": 0.000429978,
-        "pvalue": 0.339651
+        "pvalue": 0.339651,
+        "score": -5.71703
       },
       {
         "variant": "22:21976059_C/T",
         "altFreq": 0.00799395,
-        "pvalue": 0.901603
+        "pvalue": 0.901603,
+        "score": -3.10427
       },
       {
         "variant": "22:21976210_A/G",
         "altFreq": 0.00231173,
-        "pvalue": 0.298576
+        "pvalue": 0.298576,
+        "score": -14.3888
       },
       {
         "variant": "22:21976350_G/A",
         "altFreq": 0.000283043,
-        "pvalue": 0.811733
+        "pvalue": 0.811733,
+        "score": 1.16452
       },
       {
         "variant": "22:21976426_T/C",
         "altFreq": 0.00267379,
-        "pvalue": 0.320452
+        "pvalue": 0.320452,
+        "score": -14.9379
       },
       {
         "variant": "22:21976440_A/G",
         "altFreq": 0.00346035,
-        "pvalue": 0.814564
+        "pvalue": 0.814564,
+        "score": -3.98902
       },
       {
         "variant": "22:21976542_C/T",
         "altFreq": 0.00254823,
-        "pvalue": 0.403179
+        "pvalue": 0.403179,
+        "score": -12.2368
       },
       {
         "variant": "22:21976932_A/G",
         "altFreq": 0.0301121,
-        "pvalue": 0.684811
+        "pvalue": 0.684811,
+        "score": -20.1032
       },
       {
         "variant": "22:21977184_G/C",
         "altFreq": 0.00274086,
-        "pvalue": 0.103815
+        "pvalue": 0.103815,
+        "score": -24.5232
       },
       {
         "variant": "22:21977334_G/A",
         "altFreq": 0.00136249,
-        "pvalue": 0.487826
+        "pvalue": 0.487826,
+        "score": 7.28056
       },
       {
         "variant": "22:21977398_G/C",
         "altFreq": 0.00760531,
-        "pvalue": 0.425934
+        "pvalue": 0.425934,
+        "score": -19.8787
       },
       {
         "variant": "22:21977589_C/G",
         "altFreq": 0.000430118,
-        "pvalue": 0.661955
+        "pvalue": 0.661955,
+        "score": -2.61811
       },
       {
         "variant": "22:21977678_C/T",
         "altFreq": 0.000984252,
-        "pvalue": 0.972775
+        "pvalue": 0.972775,
+        "score": -0.311932
       },
       {
         "variant": "22:21977964_T/G",
         "altFreq": 0.00029401,
-        "pvalue": 0.326003
+        "pvalue": 0.326003,
+        "score": -4.80419
       },
       {
         "variant": "22:21978127_C/G",
         "altFreq": 0.000140889,
-        "pvalue": 0.483309
+        "pvalue": 0.483309,
+        "score": 2.42371
       },
       {
         "variant": "22:21978314_TCA/T",
         "altFreq": 0.000290354,
-        "pvalue": 0.421288
+        "pvalue": 0.421288,
+        "score": 3.93187
       },
       {
         "variant": "22:21982385_GAC/G",
         "altFreq": 0.000284449,
-        "pvalue": 0.455175
+        "pvalue": 0.455175,
+        "score": 3.65134
       },
       {
         "variant": "22:21982726_A/T",
         "altFreq": 0.000283465,
-        "pvalue": 0.803734
+        "pvalue": 0.803734,
+        "score": 1.21501
       },
       {
         "variant": "22:21982949_C/G",
         "altFreq": 0.000286417,
-        "pvalue": 0.68223
+        "pvalue": 0.68223,
+        "score": 2.00171
       },
       {
         "variant": "22:21983306_C/G",
         "altFreq": 0.000282058,
-        "pvalue": 0.910238
+        "pvalue": 0.910238,
+        "score": -0.5403
       },
       {
         "variant": "22:21983329_G/A",
         "altFreq": 0.000495079,
-        "pvalue": 0.0969705
+        "pvalue": 0.0969705,
+        "score": -9.99757
       },
       {
         "variant": "22:21983376_G/T",
         "altFreq": 0.000306524,
-        "pvalue": 0.426236
+        "pvalue": 0.426236,
+        "score": -3.89074
       },
       {
         "variant": "22:21983647_C/A",
         "altFreq": 0.000431102,
-        "pvalue": 0.315181
+        "pvalue": 0.315181,
+        "score": -7.76457
       },
       {
         "variant": "22:21983766_G/A",
         "altFreq": 0.00323397,
-        "pvalue": 0.230314
+        "pvalue": 0.230314,
+        "score": -19.8291
       },
       {
         "variant": "22:21983906_G/A",
         "altFreq": 0.00223017,
-        "pvalue": 0.722046
+        "pvalue": 0.722046,
+        "score": 4.79895
       },
       {
         "variant": "22:21984135_C/G",
         "altFreq": 0.000297807,
-        "pvalue": 0.476425
+        "pvalue": 0.476425,
+        "score": -3.48703
       },
       {
         "variant": "22:21984221_G/T",
         "altFreq": 0.000703881,
-        "pvalue": 0.756503
+        "pvalue": 0.756503,
+        "score": -2.39595
       },
       {
         "variant": "22:21984246_G/C",
         "altFreq": 0.000284449,
-        "pvalue": 0.199881
+        "pvalue": 0.199881,
+        "score": -6.26724
       },
       {
         "variant": "22:21984339_G/A",
         "altFreq": 0.000291057,
-        "pvalue": 0.620818
+        "pvalue": 0.620818,
+        "score": 2.41879
       },
       {
         "variant": "22:21988382_A/C",
         "altFreq": 0.000285996,
-        "pvalue": 0.0981777
+        "pvalue": 0.0981777,
+        "score": 8.08562
       },
       {
         "variant": "22:21988641_C/T",
         "altFreq": 0.0011347,
-        "pvalue": 0.90048
+        "pvalue": 0.90048,
+        "score": 1.21138
       },
       {
         "variant": "22:21988758_C/T",
         "altFreq": 0.00029851,
-        "pvalue": 0.319976
+        "pvalue": 0.319976,
+        "score": -4.87212
       },
       {
         "variant": "22:21988774_G/A",
         "altFreq": 0.000281918,
-        "pvalue": 0.529835
+        "pvalue": 0.529835,
+        "score": 3.07157
       },
       {
         "variant": "22:21988833_C/T",
         "altFreq": 0.0315093,
-        "pvalue": 0.663295
+        "pvalue": 0.663295,
+        "score": -22.1203
       },
       {
         "variant": "22:21989008_C/G",
         "altFreq": 0.0124627,
-        "pvalue": 0.0250003
+        "pvalue": 0.0250003,
+        "score": -72.7195
       },
       {
         "variant": "22:21989142_G/A",
         "altFreq": 0.0240412,
-        "pvalue": 0.084973
+        "pvalue": 0.084973,
+        "score": -76.4536
       },
       {
         "variant": "22:21989154_C/T",
         "altFreq": 0.000574522,
-        "pvalue": 0.300126
+        "pvalue": 0.300126,
+        "score": -7.16346
       },
       {
         "variant": "22:21989248_G/A",
         "altFreq": 0.000427587,
-        "pvalue": 0.338791
+        "pvalue": 0.338791,
+        "score": -5.72715
       },
       {
         "variant": "22:21989274_C/T",
         "altFreq": 0.00153923,
-        "pvalue": 0.751386
+        "pvalue": 0.751386,
+        "score": -3.797
       },
       {
         "variant": "22:21989289_C/T",
         "altFreq": 0.000291198,
-        "pvalue": 0.0509555
+        "pvalue": 0.0509555,
+        "score": 9.54386
       },
       {
         "variant": "22:21989325_C/T",
         "altFreq": 0.0316745,
-        "pvalue": 0.625851
+        "pvalue": 0.625851,
+        "score": -24.8508
       },
       {
         "variant": "22:21989452_G/A",
         "altFreq": 0.000293729,
-        "pvalue": 0.715274
+        "pvalue": 0.715274,
+        "score": 1.78408
       },
       {
         "variant": "22:21989490_C/T",
         "altFreq": 0.000147075,
-        "pvalue": 0.101266
+        "pvalue": 0.101266,
+        "score": 5.66662
       },
       {
         "variant": "22:21989496_G/A",
         "altFreq": 0.000284027,
-        "pvalue": 0.503499
+        "pvalue": 0.503499,
+        "score": 3.27077
       },
       {
         "variant": "22:21989621_C/T",
         "altFreq": 0.0241897,
-        "pvalue": 0.079928
+        "pvalue": 0.079928,
+        "score": -77.9588
       },
       {
         "variant": "22:21989710_C/T",
         "altFreq": 0.000854612,
-        "pvalue": 0.928861
+        "pvalue": 0.928861,
+        "score": -0.755593
       },
       {
         "variant": "22:21989808_C/T",
         "altFreq": 0.00042351,
-        "pvalue": 0.337258
+        "pvalue": 0.337258,
+        "score": -5.74509
       },
       {
         "variant": "22:21989847_G/A",
         "altFreq": 0.000314539,
-        "pvalue": 0.531825
+        "pvalue": 0.531825,
+        "score": -3.09303
       },
       {
         "variant": "22:21989951_A/G",
         "altFreq": 0.000429696,
-        "pvalue": 0.346164
+        "pvalue": 0.346164,
+        "score": -5.64051
       },
       {
         "variant": "22:21989957_T/C",
         "altFreq": 0.000286136,
-        "pvalue": 0.0344421
+        "pvalue": 0.0344421,
+        "score": 10.34
       },
       {
         "variant": "22:21989959_AAG/A",
         "altFreq": 0.0314965,
-        "pvalue": 0.0721163
+        "pvalue": 0.0721163,
+        "score": 89.9566
       },
       {
         "variant": "22:21990727_TGCA/T",
         "altFreq": 0.000310883,
-        "pvalue": 0.444636
+        "pvalue": 0.444636,
+        "score": -3.73887
       },
       {
         "variant": "22:21990822_C/T",
         "altFreq": 0.000284589,
-        "pvalue": 0.970845
+        "pvalue": 0.970845,
+        "score": 0.178687
       },
       {
         "variant": "22:21990823_G/A",
         "altFreq": 0.0238373,
-        "pvalue": 0.12283
+        "pvalue": 0.12283,
+        "score": -68.0562
       },
       {
         "variant": "22:21991120_G/A",
         "altFreq": 0.0244169,
-        "pvalue": 0.0927634
+        "pvalue": 0.0927634,
+        "score": -75.1012
       },
       {
         "variant": "22:21991218_C/T",
         "altFreq": 0.000897638,
-        "pvalue": 0.931464
+        "pvalue": 0.931464,
+        "score": -0.731945
       },
       {
         "variant": "22:21991307_A/G",
         "altFreq": 0.00323805,
-        "pvalue": 0.830458
+        "pvalue": 0.830458,
+        "score": -3.53943
       },
       {
         "variant": "22:21991357_T/C",
         "altFreq": 0.000284449,
-        "pvalue": 0.400501
+        "pvalue": 0.400501,
+        "score": 4.11041
       },
       {
         "variant": "22:21991401_C/T",
         "altFreq": 0.00147286,
-        "pvalue": 0.173758
+        "pvalue": 0.173758,
+        "score": 14.9409
       },
       {
         "variant": "22:21991449_C/T",
         "altFreq": 0.0010052,
-        "pvalue": 0.52536
+        "pvalue": 0.52536,
+        "score": 5.80869
       },
       {
         "variant": "22:21991529_C/T",
         "altFreq": 0.000284449,
-        "pvalue": 0.992294
+        "pvalue": 0.992294,
+        "score": 0.0472172
       },
       {
         "variant": "22:21995314_A/G",
         "altFreq": 0.00014131,
-        "pvalue": 0.131649
+        "pvalue": 0.131649,
+        "score": 5.21272
       },
       {
         "variant": "22:21995531_A/C",
         "altFreq": 0.000306384,
-        "pvalue": 0.482617
+        "pvalue": 0.482617,
+        "score": 3.45801
       },
       {
         "variant": "22:21996599_C/T",
         "altFreq": 0.00676786,
-        "pvalue": 0.453961
+        "pvalue": 0.453961,
+        "score": -17.8112
       },
       {
         "variant": "22:21996615_G/A",
         "altFreq": 0.000461614,
-        "pvalue": 0.568601
+        "pvalue": 0.568601,
+        "score": -3.42511
       },
       {
         "variant": "22:21996619_C/A",
         "altFreq": 0.000292604,
-        "pvalue": 0.631763
+        "pvalue": 0.631763,
+        "score": -2.34311
       },
       {
         "variant": "22:21997379_C/G",
         "altFreq": 0.0025824,
-        "pvalue": 0.110485
+        "pvalue": 0.110485,
+        "score": -23.3152
       },
       {
         "variant": "22:21997418_C/G",
         "altFreq": 0.00362373,
-        "pvalue": 0.609753
+        "pvalue": 0.609753,
+        "score": -8.88293
       },
       {
         "variant": "22:21997448_GGAAATTTCACTTCAGA/G",
         "altFreq": 0.00029162,
-        "pvalue": 0.67605
+        "pvalue": 0.67605,
+        "score": 2.04297
       },
       {
         "variant": "22:21997462_A/G",
         "altFreq": 0.0033421,
-        "pvalue": 0.779591
+        "pvalue": 0.779591,
+        "score": 4.67484
       },
       {
         "variant": "22:21997509_C/T",
         "altFreq": 0.000580146,
-        "pvalue": 0.699192
+        "pvalue": 0.699192,
+        "score": -2.6742
       },
       {
         "variant": "22:21997574_T/C",
         "altFreq": 0.0308481,
-        "pvalue": 0.829839
+        "pvalue": 0.829839,
+        "score": -10.7581
       },
       {
         "variant": "22:21998280_G/A",
         "altFreq": 0.0155117,
-        "pvalue": 0.764138
+        "pvalue": 0.764138,
+        "score": -10.7111
       },
       {
         "variant": "22:21998445_C/T",
         "altFreq": 0.00112753,
-        "pvalue": 0.231315
+        "pvalue": 0.231315,
+        "score": -11.2242
       },
       {
         "variant": "22:21998448_G/A",
         "altFreq": 0.00400366,
-        "pvalue": 0.344973
+        "pvalue": 0.344973,
+        "score": -17.2103
       },
       {
         "variant": "22:21998509_T/C",
         "altFreq": 0.0292894,
-        "pvalue": 0.66968
+        "pvalue": 0.66968,
+        "score": -20.8119
       },
       {
         "variant": "22:22006619_G/A",
         "altFreq": 0.00122385,
-        "pvalue": 0.746654
+        "pvalue": 0.746654,
+        "score": 3.18446
       },
       {
         "variant": "22:22007319_C/CAATG",
         "altFreq": 0.000146232,
-        "pvalue": 0.446762
+        "pvalue": 0.446762,
+        "score": -2.63087
       },
       {
         "variant": "22:22007634_G/T",
         "altFreq": 0.00168785,
-        "pvalue": 0.473187
+        "pvalue": 0.473187,
+        "score": -8.27283
       },
       {
         "variant": "22:22007659_G/C",
         "altFreq": 0.000289933,
-        "pvalue": 0.791774
+        "pvalue": 0.791774,
+        "score": 1.29127
       },
       {
         "variant": "22:22012595_G/C",
         "altFreq": 0.000419573,
-        "pvalue": 0.689264
+        "pvalue": 0.689264,
+        "score": -2.34661
       },
       {
         "variant": "22:22016386_C/CGG",
         "altFreq": 0.000145388,
-        "pvalue": 0.318073
+        "pvalue": 0.318073,
+        "score": 3.45214
       },
       {
         "variant": "22:22016390_C/G",
         "altFreq": 0.980737,
-        "pvalue": 0.299983
+        "pvalue": 0.299983,
+        "score": -41.1353
       },
       {
         "variant": "22:22016391_A/G",
         "altFreq": 0.980737,
-        "pvalue": 0.299983
+        "pvalue": 0.299983,
+        "score": -41.1353
       },
       {
         "variant": "22:22016497_G/T",
         "altFreq": 0.000284168,
-        "pvalue": 0.463656
+        "pvalue": 0.463656,
+        "score": 3.5829
       },
       {
         "variant": "22:22016531_A/C",
         "altFreq": 0.00441859,
-        "pvalue": 0.29557
+        "pvalue": 0.29557,
+        "score": 20.7236
       },
       {
         "variant": "22:22020352_T/C",
         "altFreq": 0.000426884,
-        "pvalue": 0.128323
+        "pvalue": 0.128323,
+        "score": -9.08664
       },
       {
         "variant": "22:22020370_TCGC/T",
         "altFreq": 0.000585067,
-        "pvalue": 0.12086
+        "pvalue": 0.12086,
+        "score": 10.7222
       },
       {
         "variant": "22:22024279_G/A",
         "altFreq": 0.000282199,
-        "pvalue": 0.859793
+        "pvalue": 0.859793,
+        "score": 0.863592
       },
       {
         "variant": "22:22024507_G/A",
         "altFreq": 0.980877,
-        "pvalue": 0.26609
+        "pvalue": 0.26609,
+        "score": -43.9824
       },
       {
         "variant": "22:22024612_T/C",
         "altFreq": 0.000427447,
-        "pvalue": 0.346874
+        "pvalue": 0.346874,
+        "score": 5.63201
       },
       {
         "variant": "22:22024965_T/A",
         "altFreq": 0.000317632,
-        "pvalue": 0.319507
+        "pvalue": 0.319507,
+        "score": 4.94504
       },
       {
         "variant": "22:22024990_C/T",
         "altFreq": 0.000426884,
-        "pvalue": 0.677474
+        "pvalue": 0.677474,
+        "score": -2.49012
       },
       {
         "variant": "22:22025244_AG/A",
         "altFreq": 0.000286417,
-        "pvalue": 0.836092
+        "pvalue": 0.836092,
+        "score": -1.01154
       },
       {
         "variant": "22:22025325_C/T",
         "altFreq": 0.000429274,
-        "pvalue": 0.696733
+        "pvalue": 0.696733,
+        "score": -2.33364
       },
       {
         "variant": "22:22027829_G/A",
         "altFreq": 0.0157482,
-        "pvalue": 0.798851
+        "pvalue": 0.798851,
+        "score": 9.17796
       },
       {
         "variant": "22:22027877_C/T",
         "altFreq": 0.000424634,
-        "pvalue": 0.336733
+        "pvalue": 0.336733,
+        "score": -5.75131
       },
       {
         "variant": "22:22035671_G/A",
         "altFreq": 0.000569601,
-        "pvalue": 0.794245
+        "pvalue": 0.794245,
+        "score": -1.80285
       },
       {
         "variant": "22:22036763_G/A",
         "altFreq": 0.00187641,
-        "pvalue": 0.542926
+        "pvalue": 0.542926,
+        "score": -7.57205
       },
       {
         "variant": "22:22036768_C/T",
         "altFreq": 0.000659449,
-        "pvalue": 0.812386
+        "pvalue": 0.812386,
+        "score": 1.69382
       },
       {
         "variant": "22:22037524_T/C",
         "altFreq": 0.000287542,
-        "pvalue": 0.82086
+        "pvalue": 0.82086,
+        "score": -1.10752
       },
       {
         "variant": "22:22039143_G/A",
         "altFreq": 0.000294432,
-        "pvalue": 0.707578
+        "pvalue": 0.707578,
+        "score": -1.83623
       },
       {
         "variant": "22:22039996_C/T",
         "altFreq": 0.0082081,
-        "pvalue": 0.232914
+        "pvalue": 0.232914,
+        "score": 31.1311
       },
       {
         "variant": "22:22042011_G/A",
         "altFreq": 0.000284168,
-        "pvalue": 0.76174
+        "pvalue": 0.76174,
+        "score": -1.48238
       },
       {
         "variant": "22:22042377_C/A",
         "altFreq": 0.00651589,
-        "pvalue": 0.526649
+        "pvalue": 0.526649,
+        "score": -14.7229
       },
       {
         "variant": "22:22048975_G/T",
         "altFreq": 0.000283465,
-        "pvalue": 0.393261
+        "pvalue": 0.393261,
+        "score": 4.17386
       },
       {
         "variant": "22:22049017_C/T",
         "altFreq": 0.00346794,
-        "pvalue": 0.781563
+        "pvalue": 0.781563,
+        "score": 4.70007
       },
       {
         "variant": "22:22049330_C/T",
         "altFreq": 0.000848144,
-        "pvalue": 0.11253
+        "pvalue": 0.11253,
+        "score": -13.2304
       },
       {
         "variant": "22:22049417_G/A",
         "altFreq": 0.000563976,
-        "pvalue": 0.956841
+        "pvalue": 0.956841,
+        "score": -0.371665
       },
       {
         "variant": "22:22049607_G/T",
         "altFreq": 0.000284168,
-        "pvalue": 0.73657
+        "pvalue": 0.73657,
+        "score": -1.64468
       },
       {
         "variant": "22:22049673_C/T",
         "altFreq": 0.000438273,
-        "pvalue": 0.725842
+        "pvalue": 0.725842,
+        "score": 2.10315
       },
       {
         "variant": "22:22049876_C/G",
         "altFreq": 0.0052119,
-        "pvalue": 0.0540725
+        "pvalue": 0.0540725,
+        "score": 40.2807
       },
       {
         "variant": "22:22049920_C/T",
         "altFreq": 0.00028473,
-        "pvalue": 0.327543
+        "pvalue": 0.327543,
+        "score": -4.78684
       },
       {
         "variant": "22:22049962_A/G",
         "altFreq": 0.0036842,
-        "pvalue": 0.95114
+        "pvalue": 0.95114,
+        "score": 1.11816
       },
       {
         "variant": "22:22050065_C/T",
         "altFreq": 0.980368,
-        "pvalue": 0.182518
+        "pvalue": 0.182518,
+        "score": -53.2944
       },
       {
         "variant": "22:22050114_T/A",
         "altFreq": 0.000713864,
-        "pvalue": 0.385591
+        "pvalue": 0.385591,
+        "score": -6.59216
       },
       {
         "variant": "22:22050296_C/A",
         "altFreq": 0.00359238,
-        "pvalue": 0.166217
+        "pvalue": 0.166217,
+        "score": -23.9434
       },
       {
         "variant": "22:22050361_G/A",
         "altFreq": 0.0469633,
-        "pvalue": 0.220879
+        "pvalue": 0.220879,
+        "score": 76.2704
       },
       {
         "variant": "22:22050366_T/C",
         "altFreq": 0.0154639,
-        "pvalue": 0.958058
+        "pvalue": 0.958058,
+        "score": -1.87729
       },
       {
         "variant": "22:22050471_G/A",
         "altFreq": 0.000568054,
-        "pvalue": 0.445962
+        "pvalue": 0.445962,
+        "score": -5.22527
       },
       {
         "variant": "22:22050579_G/A",
         "altFreq": 0.000141029,
-        "pvalue": 0.225838
+        "pvalue": 0.225838,
+        "score": 4.18761
       },
       {
         "variant": "22:22050594_T/G",
         "altFreq": 0.000284589,
-        "pvalue": 0.0494359
+        "pvalue": 0.0494359,
+        "score": -9.60636
       },
       {
         "variant": "22:22050621_G/C",
         "altFreq": 0.00534336,
-        "pvalue": 0.0893083
+        "pvalue": 0.0893083,
+        "score": 36.0101
       },
       {
         "variant": "22:22050727_T/A",
         "altFreq": 0.0297667,
-        "pvalue": 0.842133
+        "pvalue": 0.842133,
+        "score": 9.83715
       },
       {
         "variant": "22:22050769_A/G",
         "altFreq": 0.982595,
-        "pvalue": 0.387096
+        "pvalue": 0.387096,
+        "score": -32.6218
       },
       {
         "variant": "22:22050780_C/T",
         "altFreq": 0.0153214,
-        "pvalue": 0.75388
+        "pvalue": 0.75388,
+        "score": 11.1252
       },
       {
         "variant": "22:22050842_GC/G",
         "altFreq": 0.000295276,
-        "pvalue": 0.770817
+        "pvalue": 0.770817,
+        "score": -1.42437
       },
       {
         "variant": "22:22050927_C/T",
         "altFreq": 0.00085869,
-        "pvalue": 0.582245
+        "pvalue": 0.582245,
+        "score": -4.6558
       },
       {
         "variant": "22:22050951_A/C",
         "altFreq": 0.00147385,
-        "pvalue": 0.227548
+        "pvalue": 0.227548,
+        "score": 13.1964
       },
       {
         "variant": "22:22050988_T/C",
         "altFreq": 0.000984252,
-        "pvalue": 0.991094
+        "pvalue": 0.991094,
+        "score": -0.102022
       },
       {
         "variant": "22:22051030_T/TGTCA",
         "altFreq": 0.000578178,
-        "pvalue": 0.427361
+        "pvalue": 0.427361,
+        "score": -5.48753
       },
       {
         "variant": "22:22051032_TC/T",
         "altFreq": 0.00346682,
-        "pvalue": 0.78178
+        "pvalue": 0.78178,
+        "score": 4.69528
       },
       {
         "variant": "22:22051107_C/A",
         "altFreq": 0.00498735,
-        "pvalue": 0.191293
+        "pvalue": 0.191293,
+        "score": 26.6264
       },
       {
         "variant": "22:22051380_T/G",
         "altFreq": 0.000405934,
-        "pvalue": 0.0516999
+        "pvalue": 0.0516999,
+        "score": 10.9747
       },
       {
         "variant": "22:22051639_CCTGA/C",
         "altFreq": 0.000436024,
-        "pvalue": 0.496754
+        "pvalue": 0.496754,
+        "score": -4.0689
       },
       {
         "variant": "22:22051641_T/G",
         "altFreq": 0.000287261,
-        "pvalue": 0.935094
+        "pvalue": 0.935094,
+        "score": 0.398158
       },
       {
         "variant": "22:22051648_CTG/C",
         "altFreq": 0.000288808,
-        "pvalue": 0.768047
+        "pvalue": 0.768047,
+        "score": -1.44226
       },
       {
         "variant": "22:22051727_C/T",
         "altFreq": 0.00028698,
-        "pvalue": 0.122763
+        "pvalue": 0.122763,
+        "score": 7.54519
       },
       {
         "variant": "22:22051751_C/T",
         "altFreq": 0.00042351,
-        "pvalue": 0.242344
+        "pvalue": 0.242344,
+        "score": 6.99964
       },
       {
         "variant": "22:22051763_C/G",
         "altFreq": 0.000285433,
-        "pvalue": 0.595218
+        "pvalue": 0.595218,
+        "score": -2.59753
       },
       {
         "variant": "22:22051976_G/A",
         "altFreq": 0.000574663,
-        "pvalue": 0.298507
+        "pvalue": 0.298507,
+        "score": 7.04517
       },
       {
         "variant": "22:22052153_C/T",
         "altFreq": 0.000282199,
-        "pvalue": 0.230532
+        "pvalue": 0.230532,
+        "score": -5.8619
       },
       {
         "variant": "22:22052199_C/CTTAT",
         "altFreq": 0.000592801,
-        "pvalue": 0.186056
+        "pvalue": 0.186056,
+        "score": -9.1919
       },
       {
         "variant": "22:22052394_A/ATTGT",
         "altFreq": 0.0154671,
-        "pvalue": 0.957261
+        "pvalue": 0.957261,
+        "score": -1.91335
       },
       {
         "variant": "22:22052617_A/G",
         "altFreq": 0.0154668,
-        "pvalue": 0.957482
+        "pvalue": 0.957482,
+        "score": -1.90345
       },
       {
         "variant": "22:22052812_C/T",
         "altFreq": 0.000373313,
-        "pvalue": 0.523527
+        "pvalue": 0.523527,
+        "score": 3.36756
       },
       {
         "variant": "22:22052823_C/CTGTT",
         "altFreq": 0.000577615,
-        "pvalue": 0.542161
+        "pvalue": 0.542161,
+        "score": 4.21373
       },
       {
         "variant": "22:22052834_A/C",
         "altFreq": 0.000427447,
-        "pvalue": 0.127469
+        "pvalue": 0.127469,
+        "score": -9.12521
       },
       {
         "variant": "22:22052973_T/G",
         "altFreq": 0.000421963,
-        "pvalue": 0.490946
+        "pvalue": 0.490946,
+        "score": 4.09249
       },
       {
         "variant": "22:22053075_G/A",
         "altFreq": 0.000286839,
-        "pvalue": 0.380385
+        "pvalue": 0.380385,
+        "score": 4.28868
       },
       {
         "variant": "22:22053621_C/T",
         "altFreq": 0.0127953,
-        "pvalue": 0.838067
+        "pvalue": 0.838067,
+        "score": 6.72939
       },
       {
         "variant": "22:22053822_T/C",
         "altFreq": 0.00014131,
-        "pvalue": 0.602392
+        "pvalue": 0.602392,
+        "score": -1.80126
       },
       {
         "variant": "22:22053883_G/A",
         "altFreq": 0.0291323,
-        "pvalue": 0.93995
+        "pvalue": 0.93995,
+        "score": 3.68596
       },
       {
         "variant": "22:22053901_G/A",
         "altFreq": 0.0152826,
-        "pvalue": 0.979939
+        "pvalue": 0.979939,
+        "score": -0.890039
       },
       {
         "variant": "22:22054323_T/C",
         "altFreq": 0.00618673,
-        "pvalue": 0.484966
+        "pvalue": 0.484966,
+        "score": -15.9191
       },
       {
         "variant": "22:22054607_C/T",
         "altFreq": 0.981028,
-        "pvalue": 0.272316
+        "pvalue": 0.272316,
+        "score": -43.2377
       },
       {
         "variant": "22:22054614_T/A",
         "altFreq": 0.000567492,
-        "pvalue": 0.256023
+        "pvalue": 0.256023,
+        "score": 7.85118
       },
       {
         "variant": "22:22054640_T/C",
         "altFreq": 0.0154668,
-        "pvalue": 0.957482
+        "pvalue": 0.957482,
+        "score": -1.90345
       },
       {
         "variant": "22:22054720_C/A",
         "altFreq": 4.64004e-06,
-        "pvalue": 0.6371
+        "pvalue": 0.6371,
+        "score": 0.0308103
       },
       {
         "variant": "22:22054855_C/T",
         "altFreq": 0.000424213,
-        "pvalue": 0.353938
+        "pvalue": 0.353938,
+        "score": 5.54978
       },
       {
         "variant": "22:22054913_G/A",
         "altFreq": 0.000346738,
-        "pvalue": 0.322924
+        "pvalue": 0.322924,
+        "score": 5.00096
       },
       {
         "variant": "22:22054925_G/A",
         "altFreq": 0.000361783,
-        "pvalue": 0.945826
+        "pvalue": 0.945826,
+        "score": 0.344129
       },
       {
         "variant": "22:22054939_T/A",
         "altFreq": 0.000283605,
-        "pvalue": 0.574403
+        "pvalue": 0.574403,
+        "score": 2.74557
       },
       {
         "variant": "22:22055060_G/A",
         "altFreq": 0.0469622,
-        "pvalue": 0.220762
+        "pvalue": 0.220762,
+        "score": 76.2886
       },
       {
         "variant": "22:22055340_C/T",
         "altFreq": 0.0195143,
-        "pvalue": 0.971091
+        "pvalue": 0.971091,
+        "score": -1.46578
       },
       {
         "variant": "22:22058257_G/A",
         "altFreq": 0.00258633,
-        "pvalue": 0.11025
+        "pvalue": 0.11025,
+        "score": 22.8113
       },
       {
         "variant": "22:22058265_T/C",
         "altFreq": 0.000712458,
-        "pvalue": 0.418369
+        "pvalue": 0.418369,
+        "score": -6.25312
       },
       {
         "variant": "22:22058377_G/A",
         "altFreq": 0.00534463,
-        "pvalue": 0.57774
+        "pvalue": 0.57774,
+        "score": -12.1131
       },
       {
         "variant": "22:22089932_G/A",
         "altFreq": 0.00030104,
-        "pvalue": 0.791282
+        "pvalue": 0.791282,
+        "score": -1.29411
       }
     ],
     "groups": [
@@ -1933,11 +2317,6 @@
           "22:21576208_G/A",
           "22:21581760_G/A",
           "22:21581838_G/A"
-        ],
-        "scores": [
-          -5.28331,
-          -3.47789,
-          -8.70912
         ],
         "covariance": [
           0.00672271,
@@ -1959,11 +2338,6 @@
           "22:21664347_C/T",
           "22:21665238_A/C"
         ],
-        "scores": [
-          -7.7025,
-          0.383201,
-          -1.73498
-        ],
         "covariance": [
           0.00711428,
           -7.27557e-06,
@@ -1982,10 +2356,6 @@
         "variants": [
           "22:21695956_C/A",
           "22:21697745_C/T"
-        ],
-        "scores": [
-          -65,
-          -12.661
         ],
         "covariance": [
           0.0405157,
@@ -2071,79 +2441,6 @@
           "22:21805359_C/T",
           "22:21805433_G/A",
           "22:21805503_C/T"
-        ],
-        "scores": [
-          14.6965,
-          8.40129,
-          -0.980463,
-          3.65542,
-          -1.57546,
-          -1.49786,
-          -1.31693,
-          2.0623,
-          0.563823,
-          2.39123,
-          11.7305,
-          9.27821,
-          5.49462,
-          13.2684,
-          11.7505,
-          4.50488,
-          2.14144,
-          -3.74532,
-          -2.72067,
-          4.89816,
-          -7.806,
-          11.7262,
-          -8.50148,
-          -0.941417,
-          -7.03919,
-          4.97522,
-          -0.381269,
-          4.8573,
-          -2.32241,
-          -11.8878,
-          -1.41159,
-          3.61579,
-          -0.209973,
-          5.12272,
-          4.897,
-          -4.23442,
-          -38.1709,
-          -0.768403,
-          5.02557,
-          12.4108,
-          -0.733602,
-          -5.9405,
-          5.68476,
-          6.52379,
-          5.10455,
-          2.28082,
-          6.60856,
-          -2.22267,
-          -0.450761,
-          11.4311,
-          6.73571,
-          -14.9065,
-          -6.9601,
-          8.60813,
-          9.81192,
-          -7.76157,
-          4.92976,
-          -3.35538,
-          -7.43359,
-          3.76173,
-          -5.08835,
-          -25.7111,
-          -1.63854,
-          6.12993,
-          -4.93313,
-          11.5825,
-          -13.8812,
-          -3.57745,
-          -14.2124,
-          -7.64252,
-          -10.0962
         ],
         "covariance": [
           0.144575,
@@ -4719,15 +5016,6 @@
           "22:21825376_T/TC",
           "22:21825395_C/T"
         ],
-        "scores": [
-          -0.888277,
-          31.231,
-          -0.602901,
-          -4.11337,
-          -4.08729,
-          1.31155,
-          -6.52372
-        ],
         "covariance": [
           0.0067847,
           -4.08269e-05,
@@ -4778,20 +5066,6 @@
           "22:21843734_C/T",
           "22:21843991_G/A",
           "22:21844691_T/C"
-        ],
-        "scores": [
-          -6.02858,
-          12.381,
-          2.6235,
-          0.674752,
-          -1.65238,
-          11.8007,
-          1.91032,
-          2.73652,
-          -17.9209,
-          -4.32353,
-          3.55578,
-          2.25522
         ],
         "covariance": [
           0.0236513,
@@ -4883,9 +5157,6 @@
         "variants": [
           "22:21899201_T/C"
         ],
-        "scores": [
-          10.9714
-        ],
         "covariance": [
           0.0661306
         ],
@@ -4919,30 +5190,6 @@
           "22:21977964_T/G",
           "22:21978127_C/G",
           "22:21978314_TCA/T"
-        ],
-        "scores": [
-          -0.339659,
-          4.44658,
-          9.92654,
-          -0.00736199,
-          1.98916,
-          -5.51034,
-          -9.41785,
-          4.78497,
-          -3.10427,
-          -14.3888,
-          1.16452,
-          -14.9379,
-          -3.98902,
-          -12.2368,
-          -24.5232,
-          7.28056,
-          -19.8787,
-          -2.61811,
-          -0.311932,
-          -4.80419,
-          2.42371,
-          3.93187
         ],
         "covariance": [
           0.006722,
@@ -5221,21 +5468,6 @@
           "22:21984246_G/C",
           "22:21984339_G/A"
         ],
-        "scores": [
-          3.65134,
-          1.21501,
-          2.00171,
-          -0.5403,
-          -9.99757,
-          -3.89074,
-          -7.76457,
-          -19.8291,
-          4.79895,
-          -3.48703,
-          -2.39595,
-          -6.26724,
-          2.41879
-        ],
         "covariance": [
           0.00672227,
           -3.85675e-06,
@@ -5361,32 +5593,6 @@
           "22:21991401_C/T",
           "22:21991449_C/T",
           "22:21991529_C/T"
-        ],
-        "scores": [
-          8.08562,
-          1.21138,
-          -4.87212,
-          3.07157,
-          -7.16346,
-          -5.72715,
-          -3.797,
-          9.54386,
-          1.78408,
-          5.66662,
-          3.27077,
-          -0.755593,
-          -5.74509,
-          -3.09303,
-          -5.64051,
-          10.34,
-          -3.73887,
-          0.178687,
-          -0.731945,
-          -3.53943,
-          4.11041,
-          14.9409,
-          5.80869,
-          0.0472172
         ],
         "covariance": [
           0.00672239,
@@ -5701,10 +5907,6 @@
           "22:21995314_A/G",
           "22:21995531_A/C"
         ],
-        "scores": [
-          5.21272,
-          3.45801
-        ],
         "covariance": [
           0.00336185,
           0.0033607,
@@ -5728,18 +5930,6 @@
           "22:21997509_C/T",
           "22:21998445_C/T",
           "22:21998448_G/A"
-        ],
-        "scores": [
-          -17.8112,
-          -3.42511,
-          -2.34311,
-          -23.3152,
-          -8.88293,
-          2.04297,
-          4.67484,
-          -2.6742,
-          -11.2242,
-          -17.2103
         ],
         "covariance": [
           0.159097,
@@ -5865,67 +6055,6 @@
           "22:22052973_T/G",
           "22:22053075_G/A",
           "22:22053822_T/C"
-        ],
-        "scores": [
-          3.18446,
-          -8.27283,
-          1.29127,
-          -2.34661,
-          -9.08664,
-          10.7222,
-          0.863592,
-          5.63201,
-          4.94504,
-          -2.49012,
-          -1.01154,
-          -2.33364,
-          -5.75131,
-          -1.80285,
-          -7.57205,
-          1.69382,
-          -1.10752,
-          -1.83623,
-          31.1311,
-          -1.48238,
-          -14.7229,
-          4.17386,
-          4.70007,
-          -13.2304,
-          -0.371665,
-          -1.64468,
-          2.10315,
-          40.2807,
-          -4.78684,
-          1.11816,
-          -6.59216,
-          -23.9434,
-          -5.22527,
-          4.18761,
-          -9.60636,
-          36.0101,
-          -1.42437,
-          -4.6558,
-          13.1964,
-          -0.102022,
-          -5.48753,
-          4.69528,
-          26.6264,
-          10.9747,
-          -4.0689,
-          0.398158,
-          -1.44226,
-          7.54519,
-          6.99964,
-          -2.59753,
-          7.04517,
-          -5.8619,
-          -9.1919,
-          3.36756,
-          4.21373,
-          -9.12521,
-          4.09249,
-          4.28868,
-          -1.80126
         ],
         "covariance": [
           0.0273249,
@@ -7709,9 +7838,6 @@
         "variants": [
           "22:22007319_C/CAATG"
         ],
-        "scores": [
-          -2.63087
-        ],
         "covariance": [
           0.00336255
         ],
@@ -7725,10 +7851,6 @@
         "variants": [
           "22:22007634_G/T",
           "22:22007659_G/C"
-        ],
-        "scores": [
-          -8.27283,
-          1.29127
         ],
         "covariance": [
           0.0374059,
@@ -7746,11 +7868,6 @@
           "22:22016386_C/CGG",
           "22:22016497_G/T",
           "22:22016531_A/C"
-        ],
-        "scores": [
-          3.45214,
-          3.5829,
-          20.7236
         ],
         "covariance": [
           0.00336189,
@@ -7788,28 +7905,6 @@
           "22:22058265_T/C",
           "22:22058377_G/A",
           "22:22089932_G/A"
-        ],
-        "scores": [
-          7.04517,
-          -5.8619,
-          -9.1919,
-          3.36756,
-          4.21373,
-          -9.12521,
-          4.09249,
-          4.28868,
-          -1.80126,
-          -15.9191,
-          7.85118,
-          0.0308103,
-          5.54978,
-          5.00096,
-          0.344129,
-          2.74557,
-          22.8113,
-          -6.25312,
-          -12.1131,
-          -1.29411
         ],
         "covariance": [
           0.0129138,
@@ -8035,11 +8130,6 @@
           "22:21581760_G/A",
           "22:21581838_G/A"
         ],
-        "scores": [
-          -5.28331,
-          -3.47789,
-          -8.70912
-        ],
         "covariance": [
           0.00672271,
           -4.0164e-06,
@@ -8060,11 +8150,6 @@
           "22:21664347_C/T",
           "22:21665238_A/C"
         ],
-        "scores": [
-          -7.7025,
-          0.383201,
-          -1.73498
-        ],
         "covariance": [
           0.00711428,
           -7.27557e-06,
@@ -8083,10 +8168,6 @@
         "variants": [
           "22:21695956_C/A",
           "22:21697745_C/T"
-        ],
-        "scores": [
-          -7.71978,
-          -12.661
         ],
         "covariance": [
           0.0405157,
@@ -8177,84 +8258,6 @@
           "22:21805359_C/T",
           "22:21805433_G/A",
           "22:21805503_C/T"
-        ],
-        "scores": [
-          14.6965,
-          8.40129,
-          -0.980463,
-          3.65542,
-          -1.57546,
-          -1.49786,
-          -1.31693,
-          2.0623,
-          0.563823,
-          2.39123,
-          11.7305,
-          9.27821,
-          5.49462,
-          -16.3756,
-          13.2684,
-          11.7505,
-          -88.7443,
-          4.50488,
-          -32.1762,
-          2.14144,
-          -3.74532,
-          -2.72067,
-          4.89816,
-          -7.806,
-          11.7262,
-          -8.50148,
-          -0.941417,
-          -7.03919,
-          4.97522,
-          -0.381269,
-          4.8573,
-          -2.32241,
-          -11.8878,
-          -1.41159,
-          3.61579,
-          -0.209973,
-          5.12272,
-          4.897,
-          -4.23442,
-          -38.1709,
-          -0.768403,
-          5.02557,
-          12.4108,
-          -0.733602,
-          -5.9405,
-          5.68476,
-          6.52379,
-          5.10455,
-          2.28082,
-          6.60856,
-          -2.22267,
-          -0.450761,
-          11.4311,
-          6.73571,
-          -14.9065,
-          -6.9601,
-          8.60813,
-          9.81192,
-          -7.76157,
-          4.92976,
-          -3.35538,
-          -7.43359,
-          3.76173,
-          -5.08835,
-          -25.7111,
-          -1.63854,
-          -15.363,
-          6.12993,
-          -4.93313,
-          11.5825,
-          -13.8812,
-          -54.9698,
-          -3.57745,
-          -14.2124,
-          -7.64252,
-          -10.0962
         ],
         "covariance": [
           0.144575,
@@ -11201,16 +11204,6 @@
           "22:21825376_T/TC",
           "22:21825395_C/T"
         ],
-        "scores": [
-          -0.888277,
-          31.231,
-          -0.602901,
-          -4.11337,
-          12.3222,
-          -4.08729,
-          1.31155,
-          -6.52372
-        ],
         "covariance": [
           0.0067847,
           -4.08269e-05,
@@ -11269,20 +11262,6 @@
           "22:21843734_C/T",
           "22:21843991_G/A",
           "22:21844691_T/C"
-        ],
-        "scores": [
-          -6.02858,
-          12.381,
-          2.6235,
-          0.674752,
-          -1.65238,
-          11.8007,
-          1.91032,
-          2.73652,
-          -17.9209,
-          -4.32353,
-          3.55578,
-          2.25522
         ],
         "covariance": [
           0.0236513,
@@ -11374,9 +11353,6 @@
         "variants": [
           "22:21899201_T/C"
         ],
-        "scores": [
-          10.9714
-        ],
         "covariance": [
           0.0661306
         ],
@@ -11412,32 +11388,6 @@
           "22:21977964_T/G",
           "22:21978127_C/G",
           "22:21978314_TCA/T"
-        ],
-        "scores": [
-          -0.339659,
-          4.44658,
-          -60.8919,
-          9.92654,
-          -0.00736199,
-          1.98916,
-          -5.51034,
-          -9.41785,
-          4.78497,
-          -3.10427,
-          -14.3888,
-          1.16452,
-          -14.9379,
-          -3.98902,
-          -12.2368,
-          -20.1032,
-          -24.5232,
-          7.28056,
-          -19.8787,
-          -2.61811,
-          -0.311932,
-          -4.80419,
-          2.42371,
-          3.93187
         ],
         "covariance": [
           0.006722,
@@ -11763,21 +11713,6 @@
           "22:21984246_G/C",
           "22:21984339_G/A"
         ],
-        "scores": [
-          3.65134,
-          1.21501,
-          2.00171,
-          -0.5403,
-          -9.99757,
-          -3.89074,
-          -7.76457,
-          -19.8291,
-          4.79895,
-          -3.48703,
-          -2.39595,
-          -6.26724,
-          2.41879
-        ],
         "covariance": [
           0.00672227,
           -3.85675e-06,
@@ -11911,40 +11846,6 @@
           "22:21991401_C/T",
           "22:21991449_C/T",
           "22:21991529_C/T"
-        ],
-        "scores": [
-          8.08562,
-          1.21138,
-          -4.87212,
-          3.07157,
-          -22.1203,
-          -72.7195,
-          -76.4536,
-          -7.16346,
-          -5.72715,
-          -3.797,
-          9.54386,
-          -24.8508,
-          1.78408,
-          5.66662,
-          3.27077,
-          -77.9588,
-          -0.755593,
-          -5.74509,
-          -3.09303,
-          -5.64051,
-          10.34,
-          89.9566,
-          -3.73887,
-          0.178687,
-          -68.0562,
-          -75.1012,
-          -0.731945,
-          -3.53943,
-          4.11041,
-          14.9409,
-          5.80869,
-          0.0472172
         ],
         "covariance": [
           0.00672239,
@@ -12487,10 +12388,6 @@
           "22:21995314_A/G",
           "22:21995531_A/C"
         ],
-        "scores": [
-          5.21272,
-          3.45801
-        ],
         "covariance": [
           0.00336185,
           0.0033607,
@@ -12517,21 +12414,6 @@
           "22:21998445_C/T",
           "22:21998448_G/A",
           "22:21998509_T/C"
-        ],
-        "scores": [
-          -17.8112,
-          -3.42511,
-          -2.34311,
-          -23.3152,
-          -8.88293,
-          2.04297,
-          4.67484,
-          -2.6742,
-          -10.7581,
-          -10.7111,
-          -11.2242,
-          -17.2103,
-          -20.8119
         ],
         "covariance": [
           0.159097,
@@ -12706,80 +12588,6 @@
           "22:22053822_T/C",
           "22:22053883_G/A",
           "22:22053901_G/A"
-        ],
-        "scores": [
-          3.18446,
-          -8.27283,
-          1.29127,
-          -2.34661,
-          -9.08664,
-          10.7222,
-          0.863592,
-          -43.9824,
-          5.63201,
-          4.94504,
-          -2.49012,
-          -1.01154,
-          -2.33364,
-          9.17796,
-          -5.75131,
-          -1.80285,
-          -7.57205,
-          1.69382,
-          -1.10752,
-          -1.83623,
-          31.1311,
-          -1.48238,
-          -14.7229,
-          4.17386,
-          4.70007,
-          -13.2304,
-          -0.371665,
-          -1.64468,
-          2.10315,
-          40.2807,
-          -4.78684,
-          1.11816,
-          -53.2944,
-          -6.59216,
-          -23.9434,
-          76.2704,
-          -1.87729,
-          -5.22527,
-          4.18761,
-          -9.60636,
-          36.0101,
-          9.83715,
-          -32.6218,
-          11.1252,
-          -1.42437,
-          -4.6558,
-          13.1964,
-          -0.102022,
-          -5.48753,
-          4.69528,
-          26.6264,
-          10.9747,
-          -4.0689,
-          0.398158,
-          -1.44226,
-          7.54519,
-          6.99964,
-          -2.59753,
-          7.04517,
-          -5.8619,
-          -9.1919,
-          -1.91335,
-          -1.90345,
-          3.36756,
-          4.21373,
-          -9.12521,
-          4.09249,
-          4.28868,
-          6.72939,
-          -1.80126,
-          3.68596,
-          -0.890039
         ],
         "covariance": [
           0.0273249,
@@ -15421,9 +15229,6 @@
         "variants": [
           "22:22007319_C/CAATG"
         ],
-        "scores": [
-          -2.63087
-        ],
         "covariance": [
           0.00336255
         ],
@@ -15437,10 +15242,6 @@
         "variants": [
           "22:22007634_G/T",
           "22:22007659_G/C"
-        ],
-        "scores": [
-          -8.27283,
-          1.29127
         ],
         "covariance": [
           0.0374059,
@@ -15460,13 +15261,6 @@
           "22:22016391_A/G",
           "22:22016497_G/T",
           "22:22016531_A/C"
-        ],
-        "scores": [
-          3.45214,
-          -41.1353,
-          -41.1353,
-          3.5829,
-          20.7236
         ],
         "covariance": [
           0.00336189,
@@ -15522,37 +15316,6 @@
           "22:22058265_T/C",
           "22:22058377_G/A",
           "22:22089932_G/A"
-        ],
-        "scores": [
-          7.04517,
-          -5.8619,
-          -9.1919,
-          -1.91335,
-          -1.90345,
-          3.36756,
-          4.21373,
-          -9.12521,
-          4.09249,
-          4.28868,
-          6.72939,
-          -1.80126,
-          3.68596,
-          -0.890039,
-          -15.9191,
-          -43.2377,
-          7.85118,
-          -1.90345,
-          0.0308103,
-          5.54978,
-          5.00096,
-          0.344129,
-          2.74557,
-          76.2886,
-          -1.46578,
-          22.8113,
-          -6.25312,
-          -12.1131,
-          -1.29411
         ],
         "covariance": [
           0.0129138,
@@ -15995,7 +15758,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21923600-21929800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -16048,57 +15811,6 @@
           "22:21929512_C/A",
           "22:21929701_T/TA",
           "22:21929769_T/G"
-        ],
-        "scores": [
-          -21.1371,
-          2.26225,
-          -1.14188,
-          2.82743,
-          -9.35387,
-          -5.47167,
-          -9.14371,
-          17.6778,
-          -4.80331,
-          4.29854,
-          6.36036,
-          3.66839,
-          -3.02888,
-          14.6856,
-          4.07918,
-          -6.86674,
-          2.95388,
-          5.21836,
-          -8.40564,
-          1.31389,
-          3.94806,
-          -7.86514,
-          -20.5503,
-          10.2021,
-          7.80446,
-          -2.93026,
-          8.20117,
-          -1.37506,
-          -20.1717,
-          4.07088,
-          6.9023,
-          -47.717,
-          8.32553,
-          3.88352,
-          0.735999,
-          2.81962,
-          -4.8883,
-          3.14408,
-          2.01557,
-          -7.88658,
-          -5.03879,
-          7.70375,
-          -0.312191,
-          -2.90177,
-          4.61139,
-          -0.225201,
-          36.7948,
-          -7.01247,
-          0.66216
         ],
         "covariance": [
           0.0789601,
@@ -17331,7 +17043,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21931800-21934800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -17362,35 +17074,6 @@
           "22:21934294_A/C",
           "22:21934521_ATGC/A",
           "22:21934656_C/T"
-        ],
-        "scores": [
-          -8.1654,
-          -7.76652,
-          -3.35018,
-          11.1621,
-          -14.7096,
-          -21.1371,
-          2.7843,
-          -21.1371,
-          -3.07893,
-          -0.311932,
-          3.36192,
-          9.7053,
-          -0.311932,
-          2.81854,
-          24.5842,
-          -0.333239,
-          -12.594,
-          -5.1876,
-          7.90202,
-          7.79891,
-          -9.06069,
-          -3.56634,
-          16.4378,
-          4.13788,
-          -6.14987,
-          3.53277,
-          5.50066
         ],
         "covariance": [
           0.0120428,
@@ -17776,7 +17459,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21943800-21946800",
         "mask": "ISLET-STRETCH-AF01",
         "variants": [
@@ -17800,28 +17483,6 @@
           "22:21946186_A/G",
           "22:21946726_C/T",
           "22:21946742_CT/C"
-        ],
-        "scores": [
-          -7.90359,
-          -4.36074,
-          2.48169,
-          6.03157,
-          0.741998,
-          -2.68529,
-          -8.14045,
-          18.0651,
-          -3.14778,
-          2.41495,
-          4.45963,
-          3.61464,
-          0.768896,
-          -1.74275,
-          4.23839,
-          -5.6944,
-          5.6639,
-          -4.874,
-          0.64191,
-          -5.71703
         ],
         "covariance": [
           0.0248036,
@@ -18039,7 +17700,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21923600-21929800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
@@ -18097,62 +17758,6 @@
           "22:21929512_C/A",
           "22:21929701_T/TA",
           "22:21929769_T/G"
-        ],
-        "scores": [
-          -21.1371,
-          2.26225,
-          -1.14188,
-          2.82743,
-          -9.35387,
-          -32.3671,
-          -5.47167,
-          -9.14371,
-          17.6778,
-          -4.80331,
-          4.29854,
-          6.36036,
-          3.66839,
-          -3.02888,
-          14.6856,
-          4.07918,
-          -6.86674,
-          2.95388,
-          5.21836,
-          -8.40564,
-          1.31389,
-          3.94806,
-          -7.86514,
-          -21.8516,
-          -20.5503,
-          10.2021,
-          7.80446,
-          -2.93026,
-          8.20117,
-          -22.8533,
-          -1.37506,
-          118.477,
-          -20.1717,
-          3.37321,
-          4.07088,
-          6.9023,
-          -47.717,
-          8.32553,
-          3.88352,
-          0.735999,
-          2.81962,
-          -4.8883,
-          3.14408,
-          2.01557,
-          -7.88658,
-          -5.03879,
-          7.70375,
-          -0.312191,
-          -2.90177,
-          4.61139,
-          -0.225201,
-          36.7948,
-          -7.01247,
-          0.66216
         ],
         "covariance": [
           0.0789601,
@@ -19645,7 +19250,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21931800-21934800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
@@ -19677,36 +19282,6 @@
           "22:21934294_A/C",
           "22:21934521_ATGC/A",
           "22:21934656_C/T"
-        ],
-        "scores": [
-          -8.1654,
-          -7.76652,
-          -3.35018,
-          11.1621,
-          -14.7096,
-          -21.1371,
-          2.7843,
-          -21.1371,
-          -3.07893,
-          -0.311932,
-          3.36192,
-          9.7053,
-          -0.311932,
-          2.81854,
-          24.5842,
-          -0.333239,
-          -12.594,
-          -5.1876,
-          7.90202,
-          7.79891,
-          -9.06069,
-          -18.6438,
-          -3.56634,
-          16.4378,
-          4.13788,
-          -6.14987,
-          3.53277,
-          5.50066
         ],
         "covariance": [
           0.0120428,
@@ -20120,7 +19695,7 @@
         "nSamples": 3556
       },
       {
-        "groupType": "interval",
+        "groupType": "gene",
         "group": "chr22:21943800-21946800",
         "mask": "ISLET-STRETCH-AF05",
         "variants": [
@@ -20144,28 +19719,6 @@
           "22:21946186_A/G",
           "22:21946726_C/T",
           "22:21946742_CT/C"
-        ],
-        "scores": [
-          -7.90359,
-          -4.36074,
-          2.48169,
-          6.03157,
-          0.741998,
-          -2.68529,
-          -8.14045,
-          18.0651,
-          -3.14778,
-          2.41495,
-          4.45963,
-          3.61464,
-          0.768896,
-          -1.74275,
-          4.23839,
-          -5.6944,
-          5.6639,
-          -4.874,
-          0.64191,
-          -5.71703
         ],
         "covariance": [
           0.0248036,

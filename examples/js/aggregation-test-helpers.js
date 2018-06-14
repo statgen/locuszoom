@@ -46,7 +46,6 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     var groups = parsed[0];
     var variants = parsed[1];
 
-
     groups = groups.byMask(chain.header.aggregation_masks);
 
     var calcs = chain.header.aggregation_calcs;
