@@ -112,6 +112,15 @@
     </div>
   </div>
 
+  <div>
+    <h3>References</h3>
+    <ul>
+      <li>
+        Feng, S., Liu, D., Zhan, X., Wing, M. K., & Abecasis, G. R. (2014). RAREMETAL: fast and powerful meta-analysis for rare variants. Bioinformatics, 30(19), 2828-2829. (<a href="https://doi.org/10.1093/bioinformatics/btu367">link</a>)
+      </li>
+    </ul>
+  </div>
+
   <div class="row">
     <footer style="text-align: center;">
       &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical
@@ -163,7 +172,7 @@
             window.plot.applyState({
                 aggregation_tests: { masks: aggregationBuilder.getMasks(),  calcs: aggregationBuilder.getCalcs() }
             }).then(function() {
-                aggregationBuilder.setStatus("Aggregation calculations complete", { color: "green" });
+                aggregationBuilder.setStatus("Calculations complete", { color: "green" });
             }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
         } else {
             aggregationBuilder.setStatus("One or more tests is invalid. Please select at least one mask and at least one test.");
