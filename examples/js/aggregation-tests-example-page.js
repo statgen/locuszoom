@@ -118,10 +118,11 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
 
     addControls: function() {
         // Build these fragments once and reuse
-        var _mask_dropdown = this.__render_selection("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
-        var _aggregation_dropdown = this.__render_selection("calc_choice", this._aggregation_types);
-        this._aggregation_spec_list_container.append(_mask_dropdown);
-        this._aggregation_spec_list_container.append(_aggregation_dropdown);
+        var _mask_choices = this.__render_selection("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
+        var _calc_choices = this.__render_checkboxes("calc_choice", this._aggregation_types);
+
+        this._aggregation_spec_list_container.append(this.__form_row("Select mask(s)", _mask_choices));
+        this._aggregation_spec_list_container.append(this.__form_row("Select test(s)", _calc_choices));
     },
 
     // Display a (styled) status message to the user. Default styling is an error message.
@@ -132,10 +133,19 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
             .css(css);
     },
 
+    __form_row: function (label_text, controls_el) {
+        var row = $("<div></div>", {class: "row"});
+        var label = $("<div></div>", {class: "two columns"}).css("font-weight", "bold").text(label_text);
+        var content = $("<div></div>", {class: "ten columns"});
+        content.append(controls_el);
+        row.append(label, content);
+        return row;
+    },
+
     /**
      *
      * @param {String} name The name of the select menu
-     * @param {String|String[]} options An array where each element specifies [value, displayName]
+     * @param {String[]} options An array where each element specifies [value, displayName]
      * @private
      */
     __render_selection: function (name, options) {
@@ -160,6 +170,37 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     /**
+     *
+     * @param {String} name The name attribute for all checkboxes in this group
+     * @param {String[]} options An array where each element specifies [value, displayName]
+     * @return {Element}
+     * @private
+     */
+    __render_checkboxes: function(name, options) {
+        var htmlescape = LocusZoom.TransformationFunctions.get("htmlescape");
+        var element = $("<div></div>");
+
+        options = options.slice();
+        options.forEach(function(option) {
+            var value;
+            var displayName;
+            if (Array.isArray(option)) {  // Optionally specify a second, human readable name
+                value = option[0];
+                displayName = option[1];
+            } else {
+                value = displayName = option;
+            }
+            var wrapper = $("<label></label>").css("display", "inline");
+            var control = $("<input>", { type: "checkbox", name: name, value: htmlescape(value) });
+            var label = $("<span></span>", { class: "label-body"}).text(displayName);
+
+            wrapper.append(control, label);
+            element.append(wrapper)
+        });
+        return element;
+    },
+
+    /**
      * Must select at least one item from each box
      * @returns {boolean}
      */
@@ -171,12 +212,12 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     getMasks: function() {
-        var masks = this._aggregation_spec_list_container.children("[name='mask_choice']").find(":selected");
+        var masks = this._aggregation_spec_list_container.find("[name='mask_choice']").find(":selected");
         return masks.map(function() { return this.value; }).get();
     },
 
     getCalcs: function() {
-        var masks = this._aggregation_spec_list_container.children("[name='calc_choice']").find(":selected");
+        var masks = this._aggregation_spec_list_container.find("[name='calc_choice']:checked");
         return masks.map(function() { return this.value; }).get();
     }
 });
