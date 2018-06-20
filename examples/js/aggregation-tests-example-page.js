@@ -318,7 +318,7 @@ function createDisplayWidgets(label_store, context) {
         .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
         .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
-        .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
+        .add("constraint", ["GeneConstraintLZ", {url: "http://exac.broadinstitute.org/api/constraint"}]);  // FIXME: use https when exac fixed
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
     var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
