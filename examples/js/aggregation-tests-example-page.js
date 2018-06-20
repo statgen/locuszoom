@@ -6,8 +6,9 @@
 /* global $, raremetal */
 /* eslint-disable no-unused-vars */
 
-// Quick hack observable: a() to get value, a(val) to set, a.subscribe() to add handlers
+
 var Observable = function () { // Allow UI elements to monitor changes in a variable
+    // Very simplified observable: a() to get value, a(val) to set, a.subscribe(fn) to add handlers
     var _subscribers = [];
     var current_value;
     var handle_value = function (value) {
@@ -195,7 +196,7 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
             var label = $("<span></span>", { class: "label-body"}).text(displayName);
 
             wrapper.append(control, label);
-            element.append(wrapper)
+            element.append(wrapper);
         });
         return element;
     },
@@ -284,22 +285,22 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
 
 var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
     prepareData: function (data) {
-        return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given. It does not need the helper object- it can render entirely from the list of json objects
+        return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given
     }
 });
 
 var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {});
 
 /**
- * Creates the plot and tables
- * @param {Observable|function} label_store Observer to label the selected group
+ * Creates the plot and tables. This function contains references to specific DOM elements on one HTML page.
+ * @param {Observable|function} label_store Observable used to label the selected group
  * @param {Object} [context=window] A reference to the widgets will be added here, allowing them to be accessed
  *  outside the function later (eg for debugging purposes)
  */
 function createDisplayWidgets(label_store, context) {
     context = context || window;
 
-    //   Determine if we're online, based on browser state or presence of an optional query parameter
+    // Determine if we're online, based on browser state or presence of an optional query parameter
     var online = !(typeof navigator !== "undefined" && !navigator.onLine);
     if (window.location.search.indexOf("offline") !== -1) {
         online = false;
@@ -309,7 +310,7 @@ function createDisplayWidgets(label_store, context) {
     var apiBase = "//portaldev.sph.umich.edu/api/v1/";
     var data_sources =  new LocusZoom.DataSources()
         .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
-        .add("assoc", ["AssocFromAggregationLZ", {
+        .add("assoc", ["AssocFromAggregationLZ", {  // Use a special source that restructures already-fetched data
             from: "aggregation",
             params: { id_field: "variant" }
         }])
@@ -334,7 +335,7 @@ function createDisplayWidgets(label_store, context) {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
-    //   a previously viewed region)
+    //   a previously viewed region without reloading the page)
     LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
     LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
@@ -347,7 +348,7 @@ function createDisplayWidgets(label_store, context) {
         layout: "fitColumns",
         layoutColumnsOnNewData: true,
         rowSelected: function(row) {
-            label_store(row.row.data); // FIXME: Tabulator doesn't allow changing options after creation, so one variable from the outer scope has to be baked into the layout. (awkwardly less-reusable)
+            label_store(row.row.data); // Tabulator doesn't allow changing options after creation
         },
         rowDeselected: function () {
             label_store(null);
@@ -355,7 +356,7 @@ function createDisplayWidgets(label_store, context) {
         columns: [
             {
                 title: "Gene", field: "group", formatter: "link",
-                // TODO: exac times out with https
+                // TODO: exac gives timeouts if we use https
                 formatterParams: { urlPrefix: "http://exac.broadinstitute.org/gene/", labelField: "group_display_name" }
             },
             { title: "Mask", field: "mask", headerFilter: true },
@@ -389,7 +390,7 @@ function createDisplayWidgets(label_store, context) {
     });
 
     ////////////////////////////////
-    // Make certain symbols available later, eg for debugging
+    // Make certain symbols available later in outer scope, eg for debugging
     context.data_sources = data_sources;
     context.plot = plot;
 
@@ -400,20 +401,20 @@ function createDisplayWidgets(label_store, context) {
 /**
  * Connect a very specific set of widgets together to drive the user experience for this page.
  *
- * Because many things are clickable, this looks like more code than it is. The key concepts are:
+ * Because many things are clickable, this consists of several small pieces. The key concepts are:
  * 1. Allow the plot to tell us when aggregation test results are available.
  * 2. Take that data and update a table
  * 3. If something important gets clicked, update parts of the view that depend on it
  * 4. Have a well-defined way to coordinate many widgets that depend on a common value
  * @param plot
- * @param aggregation_table
- * @param variants_table
- * @param {Observable} result_store Observer for calculation results
- * @param {Observable} label_store Observer to label the selected group
+ * @param aggregationTable
+ * @param variantsTable
+ * @param {Observable} resultStorage Observable that holds calculation results
+ * @param {Observable} labelStorage Observable used to label the selected group
  */
-function setupWidgetListeners(plot, aggregation_table, variants_table, result_store, label_store) {
+function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStorage, labelStorage) {
     plot.on("element_selection", function(eventData) {
-        // Trigger the aggregation test table to filter (or unfilter) on a particular value
+        // Trigger the aggregation test table to filter (or unfilter) if a specific gene on the genes panel is clicked
         if (eventData["sourceID"] !== "lz-plot.genes") {
             return;
         }
@@ -423,13 +424,13 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
         selected_gene = selected_gene.split(".")[0]; // Ignore ensemble version on gene ids
 
         if (eventData["data"]["active"]) {
-            aggregation_table.tableSetFilter(gene_column_name, selected_gene);
+            aggregationTable.tableSetFilter(gene_column_name, selected_gene);
             $("#label-no-group-selected").hide();
             $("#label-current-group-selected").show().text(selected_gene);
         } else {
             $("#label-no-group-selected").show();
             $("#label-current-group-selected").hide();
-            aggregation_table.tableClearFilter(gene_column_name, selected_gene);
+            aggregationTable.tableClearFilter(gene_column_name, selected_gene);
         }
     }.bind(this));
 
@@ -437,13 +438,13 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
         ["aggregation:all", "gene:all"],
         function (data) {
             // chain.discrete provides distinct data from each source
-            var gene_data = data.gene;
-            var agg_data = data.aggregation;
+            var gene_source_data = data.gene;
+            var agg_source_data = data.aggregation;
 
-            var results = agg_data.results;
+            var results = agg_source_data.results;
 
             // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
-            var parsed = raremetal.helpers.parsePortalJSON(agg_data);
+            var parsed = raremetal.helpers.parsePortalJSON(agg_source_data);
             var groups = parsed[0];
             var variants = parsed[1];
 
@@ -453,7 +454,7 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
             // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
             //  that to a human-friendly gene name (as displayed in the LZ plot)
             var _genes_lookup = {};
-            gene_data.forEach(function(gene) {
+            gene_source_data.forEach(function(gene) {
                 var gene_id = gene.gene_id.split(".")[0]; // Ignore ensembl version on gene ids
                 _genes_lookup[gene_id] = gene.gene_name;
             });
@@ -465,7 +466,7 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
             });
 
             // When new data has been received (and post-processed), pass it on to any UI elements that use that data
-            result_store({
+            resultStorage({
                 groups: groups,
                 variants: variants
             });
@@ -474,37 +475,37 @@ function setupWidgetListeners(plot, aggregation_table, variants_table, result_st
     );
 
     // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
-    result_store.subscribe(aggregation_table.renderData.bind(aggregation_table));
-    result_store.subscribe(label_store.bind(null, null)); // just wipe the labels
-    plot.on("element_selection", label_store.bind(null, null));
+    resultStorage.subscribe(aggregationTable.renderData.bind(aggregationTable));
+    resultStorage.subscribe(labelStorage.bind(null, null)); // just wipe the labels
+    plot.on("element_selection", labelStorage.bind(null, null));
 
     // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
-    label_store.subscribe(function (data) {  // User-friendly label
+    labelStorage.subscribe(function (data) {  // User-friendly label
         var text = "";
         if (data) {
             text = data.mask + " / " + data.group_display_name;
         }
         $("#label-mask-selected").text(text);
     });
-    label_store.subscribe(function (data) { // "Show me what variants are in a selected group" table
-        var calcs = result_store();
+    labelStorage.subscribe(function (data) { // Update the "show me what variants are in a selected group" table
+        var calcs = resultStorage();
         if (!data || !calcs) { // If no analysis is selected, no analysis should be shown
-            variants_table.renderData([]);
+            variantsTable.renderData([]);
             return;
         }
-        // When a group is selected, draw a variants table with information about that group
+        // When a group is selected, draw a variants table with information about that group.
         var one_group = calcs.groups.getOne(data.mask, data.group);
         var variant_data = calcs.variants.getGroupVariants(one_group.variants);
-        variants_table.renderData(variant_data);
+        variantsTable.renderData(variant_data);
     });
 
     //////////////////////////////////////////////////////////////
     // Generic UI controls: what to do when buttons are clicked
     $("#download-aggregation").on("click", function() {
-        aggregation_table.tableDownloadData("aggregation-data.csv", "csv");
+        aggregationTable.tableDownloadData("aggregation-data.csv", "csv");
     });
 
     $("#download-variants").on("click", function() {
-        variants_table.tableDownloadData("variants-data.csv", "csv");
+        variantsTable.tableDownloadData("variants-data.csv", "csv");
     });
 }

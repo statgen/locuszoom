@@ -2,10 +2,8 @@
 /* global raremetal, Q */
 
 /*
- * LocusZoom extensions used to calculate and render aggregation test results
- *
- * 1. An aggregation test data source based on an external library (eventually accommodate multiple calculation types)
- * 2. A connector that annotates gene data with aggregation test results
+ * LocusZoom extensions used to calculate and render aggregation test results. Because these calculations depend on an
+ *   external library, the special data sources are defined here, rather than in LocusZoom core code.
  */
 
 /**

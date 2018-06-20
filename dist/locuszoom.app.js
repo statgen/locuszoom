@@ -1,11 +1,17 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['postal'], function (d3, Q) {
+        define([
+            'd3',
+            'Q'
+        ], function (d3, Q) {
+            // amd
             return root.LocusZoom = factory(d3, Q);
         });
     } else if (typeof module === 'object' && module.exports) {
+        // commonJS
         module.exports = root.LocusZoom = factory(require('d3'), require('Q'));
     } else {
+        // globals
         root.LocusZoom = factory(root.d3, root.Q);
     }
 }(this, function (d3, Q) {
@@ -40,7 +46,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.7.2' };
+        var LocusZoom = { version: '0.8.0' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -757,26 +763,33 @@
  *   enable code reuse and customization of known LZ core functionality.
  *
  * @param {Function} parent A parent class constructor that will be extended by the child class
- * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class
- * @param {Function} [new_constructor] An optional constructor function that performs additional setup. If omitted,
- *   just calls the parent constructor by default. Implementer must manage super calls when overriding the constructor.
+ * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class.
+ *   The special "constructor" property can be used to specify a custom constructor, or it will call parent by default.
+ *   Implementer must manage super calls when overriding the constructor.
  * @returns {Function} The constructor for the new child class
  */
-        LocusZoom.subclass = function (parent, extra, new_constructor) {
+        LocusZoom.subclass = function (parent, extra) {
             if (typeof parent !== 'function') {
                 throw 'Parent must be a callable constructor';
             }
             extra = extra || {};
-            var Sub = new_constructor || function () {
+            var Sub = extra.hasOwnProperty('constructor') ? extra.constructor : function () {
                 parent.apply(this, arguments);
             };
             Sub.prototype = Object.create(parent.prototype);
             Object.keys(extra).forEach(function (k) {
                 Sub.prototype[k] = extra[k];
             });
-            Sub.prototype.constructor = Sub;
             return Sub;
         };
+        /**
+ * LocusZoom optional extensions will live under this namespace.
+ *
+ * Extension code is not part of the core LocusZoom app.js bundle.
+ * @namespace
+ * @public
+ */
+        LocusZoom.ext = {};
         /* global LocusZoom */
         'use strict';
         /**
@@ -1317,43 +1330,10 @@
             id: 'genes',
             type: 'genes',
             fields: [
-                '{{namespace[gene]}}gene',
-                '{{namespace[constraint]}}constraint'
+                '{{namespace[gene]}}all',
+                '{{namespace[constraint]}}all'
             ],
             id_field: 'gene_id',
-            // Temporary hack for demo purposes
-            color: [
-                // {
-                //     scale_function: "if",
-                //     field: "effect_pvalue",
-                //     parameters: {
-                //         field_value: undefined,
-                //         then: "#000099"
-                //     }
-                // },
-                {
-                    scale_function: 'numerical_bin',
-                    field: 'effect_pvalue',
-                    parameters: {
-                        breaks: [
-                            -0.8,
-                            -0.4,
-                            0,
-                            0.4,
-                            0.8
-                        ],
-                        values: [
-                            '#9c0000',
-                            '#DA8997',
-                            '#BBBBBB',
-                            '#74EBEE',
-                            '#011ad4'
-                        ]    // breaks: [-1],
-                             // values: ["#000099"]
-                    }
-                },
-                '#B8B8B8'
-            ],
             behaviors: {
                 onmouseover: [{
                         action: 'set',
@@ -2276,7 +2256,8 @@
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
         LocusZoom.DataLayer.prototype.setDefaultState = function () {
-            // Define state parameters specific to this data layer
+            // Define state parameters specific to this data layer. Within plot state, this will live under a key
+            //  `panel_name.layer_name`.
             if (this.parent) {
                 this.state = this.parent.state;
                 this.state_id = this.parent.id + '.' + this.id;
@@ -2925,10 +2906,10 @@
         });
         /**
  * Toggle a status (e.g. highlighted, selected, identified) on an element
- * @param {String} status
- * @param {String|Object} element
- * @param {Boolean} toggle
- * @param {Boolean} exclusive
+ * @param {String} status The name of a recognized status to be added/removed on an appropriate element
+ * @param {String|Object} element The data bound to the element of interest
+ * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
         LocusZoom.DataLayer.prototype.setElementStatus = function (status, element, toggle, exclusive) {
@@ -2969,8 +2950,16 @@
             // Trigger tool tip show/hide logic
             this.showOrHideTooltip(element);
             // Trigger layout changed event hook
-            this.parent.emit('layout_changed');
-            this.parent_plot.emit('layout_changed');
+            this.parent.emit('layout_changed', true);
+            if (status === 'selected') {
+                // Notify parents that a given element has been interacted with. For now, we will only notify on
+                //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
+                //   events will be sent in short order as the previously selected element has to be de-selected first
+                this.parent.emit('element_selection', {
+                    element: element,
+                    active: toggle
+                }, true);
+            }
             return this;
         };
         /**
@@ -3049,7 +3038,7 @@
             return this;
         };
         /**
- * Apply all layout-defined behaviors to a selection of elements with event handlers
+ * Apply all layout-defined behaviors (DOM event handlers) to a selection of elements
  * @param {d3.selection} selection
  */
         LocusZoom.DataLayer.prototype.applyBehaviors = function (selection) {
@@ -3216,9 +3205,8 @@
             this.destroyAllTooltips();
             // hack - only non-visible tooltips should be destroyed
             // and then recreated if returning to visibility
-            // Fetch new data
+            // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
             var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields);
-            //,"ld:best"
             promise.then(function (new_data) {
                 this.data = new_data.body;
                 this.applyDataMethods();
@@ -3568,9 +3556,8 @@
                 // Remove old elements as needed
                 points_selection.exit().remove();
                 // Apply default event emitters to selection
-                points_selection.on('click.event_emitter', function (element) {
-                    this.parent.emit('element_clicked', element);
-                    this.parent_plot.emit('element_clicked', element);
+                points_selection.on('click.event_emitter', function (element_data) {
+                    this.parent.emit('element_clicked', element_data, true);
                 }.bind(this));
                 // Apply behaviors to points
                 this.applyBehaviors(points_selection);
@@ -3591,6 +3578,9 @@
      * @member {Object}
      * */
             this.DefaultLayout = {
+                // Optionally specify different fill and stroke properties
+                stroke: 'rgb(54, 54, 150)',
+                color: '#363696',
                 label_font_size: 12,
                 label_exon_spacing: 4,
                 exon_height: 16,
@@ -3797,19 +3787,20 @@
                         bboxes.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     }
                     bboxes.exit().remove();
-                    // For the exon part, use d.parent.parent to get color correct (different __data__ is bound here)
-                    var boundary_color = function (d) {
+                    // Render gene boundaries
+                    var boundary_fill = function (d) {
                         return self.resolveScalableParameter(self.layout.color, d);
                     };
-                    var exon_color = function (d) {
-                        return self.resolveScalableParameter(self.layout.color, d.parent.parent);
+                    var boundary_stroke = function (d) {
+                        return self.resolveScalableParameter(self.layout.stroke, d);
                     };
-                    // Render gene boundaries
                     var boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary').data([gene], function (d) {
                         return d.gene_name + '_boundary';
+                    }).style({
+                        fill: boundary_fill,
+                        stroke: boundary_stroke
                     });
                     boundaries.enter().append('rect').attr('class', 'lz-data_layer-genes lz-boundary');
-                    boundaries.attr('fill', boundary_color).attr('stroke', boundary_color);
                     width = function (d) {
                         return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                     };
@@ -3857,10 +3848,21 @@
                     }
                     labels.exit().remove();
                     // Render exon rects (first transcript only, for now)
+                    // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
+                    var exon_fill = function (d) {
+                        return self.resolveScalableParameter(self.layout.color, d.parent.parent);
+                    };
+                    var exon_stroke = function (d) {
+                        return self.resolveScalableParameter(self.layout.stroke, d.parent.parent);
+                    };
                     var exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon').data(gene.transcripts[gene.parent.transcript_idx].exons, function (d) {
                         return d.exon_id;
                     });
-                    exons.enter().append('rect').attr('class', 'lz-data_layer-genes lz-exon').attr('fill', exon_color).attr('stroke', exon_color);
+                    exons.enter().append('rect').attr('class', 'lz-data_layer-genes lz-exon');
+                    exons.style({
+                        fill: exon_fill,
+                        stroke: exon_stroke
+                    });
                     width = function (d) {
                         return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                     };
@@ -3912,8 +3914,7 @@
                     clickareas.exit().remove();
                     // Apply default event emitters to clickareas
                     clickareas.on('click.event_emitter', function (element) {
-                        element.parent.parent.emit('element_clicked', element);
-                        element.parent.parent_plot.emit('element_clicked', element);
+                        element.parent.parent.emit('element_clicked', element, true);
                     });
                     // Apply mouse behaviors to clickareas
                     data_layer.applyBehaviors(clickareas);
@@ -4290,9 +4291,8 @@
                     // Remove old clickareas as needed
                     clickareas.exit().remove();
                     // Apply default event emitters to clickareas
-                    clickareas.on('click', function (element) {
-                        element.parent.parent.emit('element_clicked', element);
-                        element.parent.parent_plot.emit('element_clicked', element);
+                    clickareas.on('click', function (element_data) {
+                        element_data.parent.parent.emit('element_clicked', element_data, true);
                     }.bind(this));
                     // Apply mouse behaviors to clickareas
                     data_layer.applyBehaviors(clickareas);
@@ -4673,8 +4673,7 @@
                 }.bind(this));
                 this.path.attr('class', path_class);
                 // Trigger layout changed event hook
-                this.parent.emit('layout_changed');
-                this.parent_plot.emit('layout_changed');
+                this.parent.emit('layout_changed', true);
                 return this;
             };
             return this;
@@ -5197,8 +5196,7 @@
                 selection.exit().remove();
                 // Apply default event emitters to selection
                 selection.on('click.event_emitter', function (element) {
-                    this.parent.emit('element_clicked', element);
-                    this.parent_plot.emit('element_clicked', element);
+                    this.parent.emit('element_clicked', element, true);
                 }.bind(this));
                 // Apply mouse behaviors
                 this.applyBehaviors(selection);
@@ -5209,8 +5207,7 @@
                     this.separate_labels();
                     // Apply default event emitters to selection
                     this.label_texts.on('click.event_emitter', function (element) {
-                        this.parent.emit('element_clicked', element);
-                        this.parent_plot.emit('element_clicked', element);
+                        this.parent.emit('element_clicked', element, true);
                     }.bind(this));
                     // Extend mouse behaviors to labels
                     this.applyBehaviors(this.label_texts);
@@ -5711,11 +5708,13 @@
             if (x === 0) {
                 return '0';
             }
+            var abs = Math.abs(x);
             var log;
-            if (Math.abs(x) > 1) {
-                log = Math.ceil(Math.log(x) / Math.LN10);
+            if (abs > 1) {
+                log = Math.ceil(Math.log(abs) / Math.LN10);
             } else {
-                log = Math.floor(Math.log(x) / Math.LN10);
+                // 0...1
+                log = Math.floor(Math.log(abs) / Math.LN10);
             }
             if (Math.abs(log) <= 3) {
                 return x.toFixed(3);
@@ -6928,6 +6927,7 @@
             this.css_string = '';
             for (var stylesheet in Object.keys(document.styleSheets)) {
                 if (document.styleSheets[stylesheet].href !== null && document.styleSheets[stylesheet].href.indexOf('locuszoom.css') !== -1) {
+                    // TODO: "Download image" button will render the image incorrectly if the stylesheet has been renamed or concatenated
                     LocusZoom.createCORSPromise('GET', document.styleSheets[stylesheet].href).then(function (response) {
                         this.css_string = response.replace(/[\r\n]/g, ' ').replace(/\s+/g, ' ');
                         if (this.css_string.indexOf('/* ! LocusZoom HTML Styles */')) {
@@ -7763,10 +7763,15 @@
         /** @protected */
         LocusZoom.DataSources.prototype.set = function (ns, x) {
             if (Array.isArray(x)) {
+                // If passed array of source name and options, make the source
                 var dsobj = LocusZoom.KnownDataSources.create.apply(null, x);
+                // Each datasource in the chain should be aware of its assigned namespace
+                dsobj.source_id = ns;
                 this.sources[ns] = dsobj;
             } else {
+                // If passed the already-created source object
                 if (x !== null) {
+                    x.source_id = ns;
                     this.sources[ns] = x;
                 } else {
                     delete this.sources[ns];
@@ -7928,7 +7933,7 @@
             this.getData = function (state, fields) {
                 var requests = split_requests(fields);
                 // Create an array of functions that, when called, will trigger the request to the specified datasource
-                var promises = Object.keys(requests).map(function (key) {
+                var request_handles = Object.keys(requests).map(function (key) {
                     if (!sources.get(key)) {
                         throw 'Datasource for namespace ' + key + ' not found';
                     }
@@ -7938,11 +7943,12 @@
                 //TODO: better manage dependencies
                 var ret = Q.when({
                     header: {},
-                    body: {}
+                    body: {},
+                    discrete: {}
                 });
-                for (var i = 0; i < promises.length; i++) {
+                for (var i = 0; i < request_handles.length; i++) {
                     // If a single datalayer uses multiple sources, perform the next request when the previous one completes
-                    ret = ret.then(promises[i]);
+                    ret = ret.then(request_handles[i]);
                 }
                 return ret;
             };
@@ -7987,7 +7993,7 @@
             }
         };
         /**
- * Fetch the internal string used to represent this data when cache is used
+ * A unique identifier that indicates whether cached data is valid for this request
  * @protected
  * @param state
  * @param chain
@@ -7995,11 +8001,16 @@
  * @returns {String|undefined}
  */
         LocusZoom.Data.Source.prototype.getCacheKey = function (state, chain, fields) {
-            var url = this.getURL && this.getURL(state, chain, fields);
-            return url;
+            return this.getURL && this.getURL(state, chain, fields);
         };
         /**
- * Fetch data from a remote location
+ * Stub: build the URL for any requests made by this source.
+ */
+        LocusZoom.Data.Source.prototype.getURL = function (state, chain, fields) {
+            return this.url;
+        };
+        /**
+ * Perform a network request to fetch data for this source
  * @protected
  * @param {Object} state The state of the parent plot
  * @param chain
@@ -8009,9 +8020,8 @@
             var url = this.getURL(state, chain, fields);
             return LocusZoom.createCORSPromise('GET', url);
         };
-        // TODO: move this.getURL stub into parent class and add documentation; parent should not check for methods known only to children
         /**
- * TODO Rename to handleRequest (to disambiguate from, say HTTP get requests) and update wiki docs and other references
+ * Gets the data for just this source, typically via a network request (caching where possible)
  * @protected
  */
         LocusZoom.Data.Source.prototype.getRequest = function (state, chain, fields) {
@@ -8031,15 +8041,17 @@
             return req;
         };
         /**
- * Fetch the data from the specified data source, and format it in a way that can be used by the consuming plot
- * @protected
+ * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
+ * This is the public-facing datasource method that will most commonly be called by external code.
+ *
+ * @public
  * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
+ * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
  * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
  *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
  * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
  *     This must be an array with the same length as `fields`
- * @returns {function(this:LocusZoom.Data.Source)} A callable operation that can be used as part of the data chain
+ * @returns {function} A callable operation that can be used as part of the data chain
  */
         LocusZoom.Data.Source.prototype.getData = function (state, fields, outnames, trans) {
             if (this.preGetData) {
@@ -8064,110 +8076,101 @@
             };
         };
         /**
- * Parse response data. Return an object containing "header" (metadata or request parameters) and "body"
- *   (data to be used for plotting). The response from this request is combined with responses from all other requests
- *   in the chain.
- * @public
- * @param {String|Object} resp The raw data associated with the response
- * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
- * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
- *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
- * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
- *     This must be an array with the same length as `fields`
- * @returns {{header: ({}|*), body: {}}}
- */
-        LocusZoom.Data.Source.prototype.parseResponse = function (resp, chain, fields, outnames, trans) {
-            var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
-            var records = this.parseData(json.data || json, fields, outnames, trans);
-            return {
-                header: chain.header || {},
-                body: records
-            };
-        };
-        /**
- * Some API endpoints return an object containing several arrays, representing columns of data. Each array should have
- *   the same length, and a given array index corresponds to a single row.
+ * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
+ * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
  *
- * This gathers column data into an array of objects, each one representing the combined data for a given record.
- *   See `parseData` for usage
+ * Does not apply namespacing or transformations.
  *
+ * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
+ *  sources.
+ *
+ * @param {Object[]|Object} data The original parsed server response
  * @protected
- * @param {Object} x A response payload object
- * @param {Array} fields
- * @param {Array} outnames
- * @param {Array} trans
- * @returns {Object[]}
  */
-        LocusZoom.Data.Source.prototype.parseArraysToObjects = function (x, fields, outnames, trans) {
-            //intended for an object of arrays
-            //{"id":[1,2], "val":[5,10]}
-            var records = [];
-            fields.forEach(function (f, i) {
-                if (!(f in x)) {
-                    throw 'field ' + f + ' not found in response for ' + outnames[i];
-                }
-            });
-            // Safeguard: check that arrays are of same length
-            var keys = Object.keys(x);
-            var N = x[keys[0]].length;
+        LocusZoom.Data.Source.prototype.normalizeResponse = function (data) {
+            if (Array.isArray(data)) {
+                // Already in the desired form
+                return data;
+            }
+            // Otherwise, assume the server response is an object representing columns of data.
+            // Each array should have the same length (verify), and a given array index corresponds to a single row.
+            var keys = Object.keys(data);
+            var N = data[keys[0]].length;
             var sameLength = keys.every(function (key) {
-                var item = x[key];
+                var item = data[key];
                 return item.length === N;
             });
             if (!sameLength) {
                 throw this.constructor.SOURCE_NAME + ' expects a response in which all arrays of data are the same length';
             }
+            // Go down the rows, and create an object for each record
+            var records = [];
+            var fields = Object.keys(data);
             for (var i = 0; i < N; i++) {
                 var record = {};
                 for (var j = 0; j < fields.length; j++) {
-                    var val = x[fields[j]][i];
-                    if (trans && trans[j]) {
-                        val = trans[j](val);
-                    }
-                    record[outnames[j]] = val;
+                    record[fields[j]] = data[fields[j]][i];
                 }
                 records.push(record);
             }
             return records;
         };
+        /** @deprecated */
+        LocusZoom.Data.Source.prototype.prepareData = function (records) {
+            console.warn('Warning: .prepareData() is deprecated. Use .annotateData() instead');
+            return this.annotateData(records);
+        };
         /**
- *  Given an array response in which each record is represented as one coherent bundle of data (an object of
- *    {field:value} entries), perform any parsing or transformations required to represent the field in a form required
- *    by the datalayer. See `parseData` for usage.
- * @protected
- * @param {Object[]} x An array of response payload objects, each describing one record
- * @param {Array} fields
- * @param {Array} outnames
- * @param {Array} trans
- * @returns {Object[]}
+ * Hook to post-process the data returned by this source with new, additional behavior.
+ *   (eg cleaning up API values or performing complex calculations on the returned data)
+ *
+ * @param {Object[]} records The parsed data from the source (eg standardized api response)
+ * @param {Object} chain The data chain object. For example, chain.headers may provide useful annotation metadata
+ * @returns {Object[]|Promise} The modified set of records
  */
-        LocusZoom.Data.Source.prototype.parseObjectsToObjects = function (x, fields, outnames, trans) {
+        LocusZoom.Data.Source.prototype.annotateData = function (records, chain) {
+            // Default behavior: no transformations
+            return records;
+        };
+        /**
+ * Clean up the server records for use by datalayers: extract only certain fields, with the specified names.
+ *   Apply per-field transformations as appropriate.
+ *
+ * This hook can be overridden, eg to create a source that always returns all records and ignores the "fields" array.
+ *  This is particularly common for sources at the end of a chain- many "dependent" sources do not allow
+ *  cherry-picking individual fields, in which case by **convention** the fields array specifies "last_source_name:all"
+ *
+ * @param {Object[]} data One record object per element
+ * @param {String[]} fields The names of fields to extract (as named in the source data). Eg "afield"
+ * @param {String[]} outnames How to represent the source fields in the output. Eg "namespace:afield|atransform"
+ * @param {function[]} trans An array of transformation functions (if any). One function per data element, or null.
+ * @protected
+ */
+        LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames, trans) {
             //intended for an array of objects
-            // [ {"id":1, "val":5}, {"id":2, "val":10}]
-            var records = [];
+            //  [ {"id":1, "val":5}, {"id":2, "val":10}]
+            // Since a number of sources exist that do not obey this format, we will provide a convenient pass-through
+            if (!Array.isArray(data)) {
+                return data;
+            }
             var fieldFound = [];
             for (var k = 0; k < fields.length; k++) {
                 fieldFound[k] = 0;
             }
-            if (!x.length) {
-                // Do not attempt to parse records if there are no records, and bubble up an informative error message.
-                throw 'No data found for specified query';
-            }
-            for (var i = 0; i < x.length; i++) {
-                var record = {};
+            var records = data.map(function (item) {
+                var output_record = {};
                 for (var j = 0; j < fields.length; j++) {
-                    var val = x[i][fields[j]];
+                    var val = item[fields[j]];
                     if (typeof val != 'undefined') {
                         fieldFound[j] = 1;
                     }
                     if (trans && trans[j]) {
                         val = trans[j](val);
                     }
-                    record[outnames[j]] = val;
+                    output_record[outnames[j]] = val;
                 }
-                records.push(record);
-            }
+                return output_record;
+            });
             fieldFound.forEach(function (v, i) {
                 if (!v) {
                     throw 'field ' + fields[i] + ' not found in response for ' + outnames[i];
@@ -8176,33 +8179,77 @@
             return records;
         };
         /**
- * Parse the response data  TODO Hide private entries from user-facing api docs
+ * Combine records from this source with others in the chain to yield final chain body.
+ *   Handles merging this data with other sources (if applicable).
+ *
+ * @param {Object[]} data The data That would be returned from this source alone
+ * @param {Object} chain The data chain built up during previous requests
+ * @param {String[]} fields
+ * @param {String[]} outnames
+ * @return {Promise|Object[]} The new chain body
  * @protected
- * @param {Object} x The raw response data to be parsed
- * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)  TODO: Clarify how this fieldname maps to raw datasource output, and how it differs from outnames
- * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
- *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
- * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
- *     This must be an array with the same length as `fields`
  */
-        LocusZoom.Data.Source.prototype.parseData = function (x, fields, outnames, trans) {
-            var records;
-            if (Array.isArray(x)) {
-                records = this.parseObjectsToObjects(x, fields, outnames, trans);
-            } else {
-                records = this.parseArraysToObjects(x, fields, outnames, trans);
-            }
-            // Perform any custom transformations on the resulting data
-            return this.prepareData(records);
+        LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames) {
+            return data;
         };
         /**
- * Post-process the server response. This is a hook that allows custom sources to specify any optional transformations
- *   that should be performed on the data that is returned from the server.
- * @param {Object[]} records
- * @returns Object[]
+ * Coordinates the work of parsing a response and returning records. This is broken into 4 steps, which may be
+ *  overridden separately for fine-grained control. Each step can return either raw data or a promise.
+ *
+ * @public
+ * @param {String|Object} resp The raw data associated with the response
+ * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
+ * @param {String[]} fields Array of requested field names (as they would appear in the response payload)
+ * @param {String[]} outnames  Array of field names as they will be represented in the data returned by this source,
+ *  including the namespace. This must be an array with the same length as `fields`
+ * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
+ *     This must be an array with the same length as `fields`
+ * @returns {Promise|{header: ({}|*), discrete: {}, body: []}} A promise that resolves to an object containing
+ *   request metadata (headers), the consolidated data for plotting (body), and the individual responses that would be
+ *   returned by each source in the chain in isolation (discrete)
  */
-        LocusZoom.Data.Source.prototype.prepareData = function (records) {
-            return records;
+        LocusZoom.Data.Source.prototype.parseResponse = function (resp, chain, fields, outnames, trans) {
+            var source_id = this.source_id || this.constructor.SOURCE_NAME;
+            if (!chain.discrete) {
+                chain.discrete = {};
+            }
+            var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
+            var self = this;
+            // Perform the 4 steps of parsing the payload and return a combined chain object
+            return Q.when(self.normalizeResponse(json.data || json)).then(function (standardized) {
+                // Perform calculations on the data from just this source
+                return Q.when(self.annotateData(standardized, chain));
+            }).then(function (data) {
+                return Q.when(self.extractFields(data, fields, outnames, trans));
+            }).then(function (one_source_body) {
+                // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
+                //   fields array into account). This is useful when we want to re-use the source output in many ways.
+                chain.discrete[source_id] = one_source_body;
+                return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames));
+            }).then(function (new_body) {
+                return {
+                    header: chain.header || {},
+                    discrete: chain.discrete,
+                    body: new_body
+                };
+            });
+        };
+        /** @deprecated */
+        LocusZoom.Data.Source.prototype.parseArraysToObjects = function (data, fields, outnames, trans) {
+            console.warn('Warning: .parseArraysToObjects() is no longer used. A stub is provided for legacy use');
+            var standard = this.normalizeResponse(data);
+            return this.extractFields(standard, fields, outnames, trans);
+        };
+        /** @deprecated */
+        LocusZoom.Data.Source.prototype.parseObjectsToObjects = function (data, fields, outnames, trans) {
+            console.warn('Warning: .parseObjectsToObjects() is deprecated. Use .extractFields() instead');
+            return this.extractFields(data, fields, outnames, trans);
+        };
+        /** @deprecated */
+        LocusZoom.Data.Source.prototype.parseData = function (data, fields, outnames, trans) {
+            console.warn('Warning: .parseData() is no longer used. A stub is provided for legacy use');
+            var standard = this.normalizeResponse(data);
+            return this.extractFields(standard, fields, outnames, trans);
         };
         /**
  * Method to define new custom datasources based on a provided constructor. (does not allow registering any additional methods)
@@ -8238,6 +8285,9 @@
         /**
  * Datasources can be instantiated from a JSON object instead of code. This represents an existing source in that data format.
  *   For example, this can be helpful when sharing plots, or to share settings with others when debugging
+ *
+ * Custom sources with their own parameters may need to re-implement this method
+ *
  * @public
  * @returns {Object}
  */
@@ -8348,6 +8398,9 @@
             }
             return obj;
         };
+        LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) {
+            return data;
+        };
         LocusZoom.Data.LDSource.prototype.getURL = function (state, chain, fields) {
             var findExtremeValue = function (x, pval, sign) {
                 pval = pval || 'pvalue';
@@ -8390,8 +8443,7 @@
             chain.header.ldrefvar = refVar;
             return this.url + 'results/?filter=reference eq ' + refSource + ' and chromosome2 eq \'' + state.chr + '\'' + ' and position2 ge ' + state.start + ' and position2 le ' + state.end + ' and variant1 eq \'' + refVar + '\'' + '&fields=chr,pos,rsquare';
         };
-        LocusZoom.Data.LDSource.prototype.parseResponse = function (resp, chain, fields, outnames) {
-            var json = JSON.parse(resp);
+        LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
             var keys = this.findMergeFields(chain);
             var reqFields = this.findRequestedFields(fields, outnames);
             if (!keys.position) {
@@ -8420,11 +8472,11 @@
                     }
                 }
             };
-            leftJoin(chain.body, json.data, reqFields.ldout, 'rsquare');
+            leftJoin(chain.body, data, reqFields.ldout, 'rsquare');
             if (reqFields.isrefvarin && chain.header.ldrefvar) {
                 tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
             }
-            return chain;
+            return chain.body;
         };
         /**
  * Data Source for Gene Data, as fetched from the LocusZoom API server (or compatible)
@@ -8439,12 +8491,13 @@
             var source = state.source || chain.header.source || this.params.source || 2;
             return this.url + '?filter=source in ' + source + ' and chrom eq \'' + state.chr + '\'' + ' and start le ' + state.end + ' and end ge ' + state.start;
         };
-        LocusZoom.Data.GeneSource.prototype.parseResponse = function (resp, chain, fields, outnames) {
-            var json = JSON.parse(resp);
-            return {
-                header: chain.header,
-                body: json.data
-            };
+        // Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with the
+        // exact information returned by the API. (ignoring the fields array in the layout)
+        LocusZoom.Data.GeneSource.prototype.normalizeResponse = function (data) {
+            return data;
+        };
+        LocusZoom.Data.GeneSource.prototype.extractFields = function (data, fields, outnames, trans) {
+            return data;
         };
         /**
  * Data Source for Gene Constraint Data, as fetched from the LocusZoom API server (or compatible)
@@ -8457,6 +8510,9 @@
         }, 'GeneConstraintLZ');
         LocusZoom.Data.GeneConstraintSource.prototype.getURL = function () {
             return this.url;
+        };
+        LocusZoom.Data.GeneConstraintSource.prototype.normalizeResponse = function (data) {
+            return data;
         };
         LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function (state, chain, fields) {
             return this.url + JSON.stringify(state);
@@ -8475,15 +8531,10 @@
             var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
             return LocusZoom.createCORSPromise('POST', url, body, headers);
         };
-        LocusZoom.Data.GeneConstraintSource.prototype.parseResponse = function (resp, chain, fields, outnames) {
-            if (!resp) {
-                return {
-                    header: chain.header,
-                    body: chain.body
-                };
+        LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+            if (!data) {
+                return chain;
             }
-            var data = JSON.parse(resp);
-            // Loop through the array of genes in the body and match each to a result from the constraints request
             var constraint_fields = [
                 'bp',
                 'exp_lof',
@@ -8523,10 +8574,7 @@
                     }
                 });
             });
-            return {
-                header: chain.header,
-                body: chain.body
-            };
+            return chain.body;
         };
         /**
  * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
@@ -8606,6 +8654,81 @@
                 }).join('&')
             ];
             return url.join('');
+        };
+        /**
+ * Base class for "connectors"- this is meant to be subclassed, rather than used directly.
+ *
+ * A connector is a source that makes no server requests and caches no data of its own. Instead, it decides how to
+ *  combine data from other sources in the chain. Connectors are useful when we want to request (or calculate) some
+ *  useful piece of information once, but apply it to many different kinds of record types.
+ *
+ * Typically, a subclass will implement the field merging logic in `combineChainBody`.
+ *
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {Object} init Configuration for this source
+ * @param {Object} init.sources Specify how the hard-coded logic should find the data it relies on in the chain,
+ *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
+ *  assumptions about what namespaces a source is using.
+ * @type {*|Function}
+ */
+        LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function (init) {
+            if (!init || !init.sources) {
+                throw 'Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs';
+            }
+            /**
+     * Tells the connector how to find the data it relies on
+     *
+     * For example, a connector that applies burden test information to the genes layer might specify:
+     *  {gene_ns: "gene", aggregation_ns: "aggregation"}
+     *
+     * @member {Object}
+     */
+            this._source_name_mapping = init.sources;
+            // Validate that this source has been told how to find the required information
+            var specified_ids = Object.keys(init.sources);
+            var self = this;
+            this.REQUIRED_SOURCES.forEach(function (k) {
+                if (specified_ids.indexOf(k) === -1) {
+                    throw 'Configuration for ' + self.constructor.SOURCE_NAME + ' must specify a source ID corresponding to ' + k;
+                }
+            });
+            this.parseInit(init);
+        }, 'ConnectorSource');
+        /** @property {String[]} Specifies the sources that must be provided in the original config object */
+        LocusZoom.Data.ConnectorSource.prototype.REQUIRED_SOURCES = [];
+        LocusZoom.Data.ConnectorSource.prototype.parseInit = function (init) {
+        };
+        // Stub
+        LocusZoom.Data.ConnectorSource.prototype.getRequest = function (state, chain, fields) {
+            // Connectors do not request their own data by definition, but they *do* depend on other sources having been loaded
+            //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
+            var self = this;
+            Object.keys(this._source_name_mapping).forEach(function (ns) {
+                var chain_source_id = self._source_name_mapping[ns];
+                if (chain.discrete && !chain.discrete[chain_source_id]) {
+                    throw self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id;
+                }
+            });
+            return Q.when(chain.body || []);
+        };
+        LocusZoom.Data.ConnectorSource.prototype.parseResponse = function (data, chain, fields, outnames) {
+            // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
+            //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
+            // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
+            // Typically connectors are called with `connector_name:all` in the fields array.
+            return Q.when(this.combineChainBody(data, chain, fields, outnames)).then(function (new_body) {
+                return {
+                    header: chain.header || {},
+                    discrete: chain.discrete || {},
+                    body: new_body
+                };
+            });
+        };
+        LocusZoom.Data.ConnectorSource.prototype.combineChainBody = function (records, chain) {
+            // Stub method: specifies how to combine the data
+            throw 'This method must be implemented in a subclass';
         };
         /* global LocusZoom */
         'use strict';
@@ -8711,8 +8834,18 @@
                 'layout_changed': [],
                 'data_requested': [],
                 'data_rendered': [],
-                'element_clicked': []
+                'element_clicked': [],
+                'element_selection': [],
+                'state_changed': []    // Only triggered when a state change causes rerender
             };
+            /**
+     * @callback eventCallback
+     * @param {object} eventData A description of the event
+     * @param {String|null} eventData.sourceID The unique identifier (eg plot or parent name) of the element that
+     *  triggered the event. Will be automatically filled in if not explicitly provided.
+     * @param {Object|null} eventData.context Any additional information to be passed to the callback, eg the data
+     *   associated with a clicked plot element
+     */
             /**
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
@@ -8721,7 +8854,9 @@
      *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
      *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-     *   - `element_clicked` - context: element - A data element in any of the plot's data layers has been clicked.
+     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
+     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
@@ -8731,9 +8866,9 @@
      *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
-     * @param {function} hook
-     * @returns {LocusZoom.Plot}
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} hook
+     * @returns {function} The registered event listener
      */
             this.on = function (event, hook) {
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
@@ -8743,22 +8878,63 @@
                     throw 'Unable to register event hook, invalid hook function passed';
                 }
                 this.event_hooks[event].push(hook);
+                return hook;
+            };
+            /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {LocusZoom.Plot}
+     */
+            this.off = function (event, hook) {
+                var theseHooks = this.event_hooks[event];
+                if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+                    throw 'Unable to remove event hook, invalid event: ' + event.toString();
+                }
+                if (hook === undefined) {
+                    // Deregistering all hooks for this event may break basic functionality, and should only be used during
+                    //  cleanup operations (eg to prevent memory leaks)
+                    this.event_hooks[event] = [];
+                } else {
+                    var hookMatch = theseHooks.indexOf(hook);
+                    if (hookMatch !== -1) {
+                        theseHooks.splice(hookMatch, 1);
+                    } else {
+                        throw 'The specified event listener is not registered and therefore cannot be removed';
+                    }
+                }
                 return this;
             };
             /**
      * Handle running of event hooks when an event is emitted
-     * @protected
      * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {LocusZoom.Plot}
      */
-            this.emit = function (event, context) {
+            this.emit = function (event, eventData) {
+                // TODO: there are small differences between the emit implementation between plots and panels. In the future,
+                //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
                     throw 'LocusZoom attempted to throw an invalid event: ' + event.toString();
                 }
-                context = context || this;
+                var sourceID = this.getBaseId();
+                var self = this;
                 this.event_hooks[event].forEach(function (hookToRun) {
-                    hookToRun.call(context);
+                    var eventContext;
+                    if (eventData && eventData.sourceID) {
+                        // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
+                        //  when re-emitting the event to plot-level listeners
+                        eventContext = eventData;
+                    } else {
+                        eventContext = {
+                            sourceID: sourceID,
+                            data: eventData || null
+                        };
+                    }
+                    // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+                    //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+                    //  override anything provided to `call` below.
+                    hookToRun.call(self, eventContext);
                 });
                 return this;
             };
@@ -9399,6 +9575,56 @@
             return this.applyState();
         };
         /**
+ * A user-defined callback function that can receive (and potentially act on) new plot data.
+ * @callback externalDataCallback
+ * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
+ *  a data layer making an equivalent request.
+ */
+        /**
+ * A user-defined callback function that can respond to errors received during a previous operation
+ * @callback externalErrorCallback
+ * @param err A representation of the error that occurred
+ */
+        /**
+ * Allow newly fetched data to be made available outside the LocusZoom plot. For example, a callback could be
+ *  registered to draw an HTML table of top GWAS hits, and update that table whenever the plot region changes.
+ *
+ * This is a convenience method for external hooks. It registers an event listener and returns parsed data,
+ *  using the same fields syntax and underlying methods as data layers.
+ *
+ * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
+ *  Different data sources should be prefixed by the source name.
+ * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
+ *  new data is received by the plot.
+ * @param {Object} [opts] Options
+ * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
+ *  occurs during the data request or subsequent callback operations
+ * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
+ *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
+ *  uncombined record info
+ *  @return {function} The newly created event listener, to allow for later cleanup/removal
+ */
+        LocusZoom.Plot.prototype.subscribeToData = function (fields, success_callback, opts) {
+            opts = opts || {};
+            // Register an event listener that is notified whenever new data has been rendered
+            var error_callback = opts.onerror || function (err) {
+                console.log('An error occurred while acting on an external callback', err);
+            };
+            var self = this;
+            var listener = function () {
+                try {
+                    self.lzd.getData(self.state, fields).then(function (new_data) {
+                        success_callback(opts.discrete ? new_data.discrete : new_data.body);
+                    }).catch(error_callback);
+                } catch (error) {
+                    // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
+                    error_callback(error);
+                }
+            };
+            this.on('data_rendered', listener);
+            return listener;
+        };
+        /**
  * Update state values and trigger a pull for fresh data on all data sources for all data layers
  * @param state_changes
  * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
@@ -9462,6 +9688,7 @@
                 // Emit events
                 this.emit('layout_changed');
                 this.emit('data_rendered');
+                this.emit('state_changed', state_changes);
                 this.loading_data = false;
             }.bind(this));
         };
@@ -9676,7 +9903,8 @@
                 'layout_changed': [],
                 'data_requested': [],
                 'data_rendered': [],
-                'element_clicked': []
+                'element_clicked': [],
+                'element_selection': []
             };
             /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
@@ -9686,7 +9914,9 @@
      *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
      *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
-     *   - `element_clicked` - context: element - A data element in any of the panel's data layers has been clicked.
+     *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
+     *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *
@@ -9696,11 +9926,12 @@
      *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
+     * @param {String} event The name of the event (as defined in `event_hooks`)
      * @param {function} hook
-     * @returns {LocusZoom.Panel}
+     * @returns {function} The registered event listener
      */
             this.on = function (event, hook) {
+                // TODO: Dry plot and panel event code into a shared mixin
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
                     throw 'Unable to register event hook, invalid event: ' + event.toString();
                 }
@@ -9708,23 +9939,70 @@
                     throw 'Unable to register event hook, invalid hook function passed';
                 }
                 this.event_hooks[event].push(hook);
+                return hook;
+            };
+            /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {LocusZoom.Panel}
+     */
+            this.off = function (event, hook) {
+                var theseHooks = this.event_hooks[event];
+                if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+                    throw 'Unable to remove event hook, invalid event: ' + event.toString();
+                }
+                if (hook === undefined) {
+                    // Deregistering all hooks for this event may break basic functionality, and should only be used during
+                    //  cleanup operations (eg to prevent memory leaks)
+                    this.event_hooks[event] = [];
+                } else {
+                    var hookMatch = theseHooks.indexOf(hook);
+                    if (hookMatch !== -1) {
+                        theseHooks.splice(hookMatch, 1);
+                    } else {
+                        throw 'The specified event listener is not registered and therefore cannot be removed';
+                    }
+                }
                 return this;
             };
             /**
      * Handle running of event hooks when an event is emitted
-     * @protected
+     *
+     * There is a shorter overloaded form of this method: if the event does not have any data, the second
+     *   argument can be a boolean to control bubbling
+     *
      * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @param {*} [eventData] Data or event description that will be passed to the event listener
+     * @param {boolean} [bubble=false] Whether to bubble the event to the parent
      * @returns {LocusZoom.Panel}
      */
-            this.emit = function (event, context) {
+            this.emit = function (event, eventData, bubble) {
+                bubble = bubble || false;
+                // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
+                // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
                     throw 'LocusZoom attempted to throw an invalid event: ' + event.toString();
                 }
-                context = context || this;
+                if (typeof eventData === 'boolean' && arguments.length === 2) {
+                    // Overloaded method signature: emit(event, bubble)
+                    bubble = eventData;
+                    eventData = null;
+                }
+                var sourceID = this.getBaseId();
+                var self = this;
+                var eventContext = {
+                    sourceID: sourceID,
+                    data: eventData || null
+                };
                 this.event_hooks[event].forEach(function (hookToRun) {
-                    hookToRun.call(context);
+                    // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+                    // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+                    hookToRun.call(self, eventContext);
                 });
+                if (bubble && this.parent) {
+                    this.parent.emit(event, eventContext);
+                }
                 return this;
             };
             /**
@@ -10261,8 +10539,7 @@
             return Q.all(this.data_promises).then(function () {
                 this.initialized = true;
                 this.render();
-                this.emit('layout_changed');
-                this.parent.emit('layout_changed');
+                this.emit('layout_changed', true);
                 this.emit('data_rendered');
             }.bind(this)).catch(function (error) {
                 console.warn(error);
@@ -10826,3 +11103,4 @@
     }
     return LocusZoom;
 }));
+//# sourceMappingURL=locuszoom.app.js.map
