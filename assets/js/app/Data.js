@@ -511,6 +511,15 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
         chain.discrete = {};
     }
 
+    if (!resp) {
+        // FIXME: Hack. Certain browser issues (such as mixed content warnings) are reported as a successful promise
+        //  resolution, even though the request was aborted. This is difficult to reliably detect, and is most likely
+        // to occur for annotation sources (such as from ExAC). If empty response is received, skip parsing and log.
+        // FIXME: Throw an error after pending, eg https://github.com/konradjk/exac_browser/issues/345
+        console.error("No usable response was returned for source: '" + source_id + "'. Parsing will be skipped.");
+        return Q.when(chain);
+    }
+
     var json = typeof resp == "string" ? JSON.parse(resp) : resp;
 
     var self = this;

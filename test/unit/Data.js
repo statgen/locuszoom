@@ -304,6 +304,27 @@ describe("LocusZoom Data", function() {
 
         describe("Source.parseResponse", function() {
             // Parse response is a wrapper for a set of helper methods. Test them individually, and combined.
+
+            beforeEach(function() {
+                this.sandbox = sinon.sandbox.create();
+            });
+
+            afterEach(function() {
+                this.sandbox.restore();
+            });
+
+            it("lets empty response edge cases pass with a warning", function () {
+                // This is a hack around a browser edge case, and intent may change later
+                var error_stub = this.sandbox.stub(console, "error");
+                var source = new LocusZoom.Data.Source();
+
+                var expected_chain = { dummy: true };
+                return source.parseResponse("", expected_chain, [], [], []).then(function(res) {
+                    assert.deepEqual(res, expected_chain);
+                    assert.ok(error_stub.called, "An error message was logged");
+                });
+            });
+
             describe("Source.parseArraysToObjects", function() {
                 it("should provide a legacy wrapper for completely deprecated method", function() {
                     var source = new LocusZoom.Data.Source();
