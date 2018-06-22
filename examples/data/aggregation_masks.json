@@ -5,33 +5,15 @@
       "analysis": "Demonstration data",
       "masks": [
         {
-          "id": "GENCODE-AF01",
-          "description": "Only variants < 1% MAF",
+          "id": "PTV-NSSTRICT-NSBROAD-AF01",
+          "description": "PTV & strict & broad & MAF < 0.01",
           "groupType": "gene",
           "identifier": "ENSEMBL"
         },
         {
-          "id": "GENCODE-AF05",
-          "description": "Only variants < 5% MAF",
+          "id": "PTV-MISSENSE-AF01",
+          "description": "PTV & missense & MAF < 0.01",
           "groupType": "gene",
-          "identifier": "ENSEMBL"
-        },
-        {
-          "id": "ISLET-STRETCH-AF01",
-          "description": "Only variants < 1% MAF",
-          "groupType": "interval",
-          "identifier": "ENSEMBL"
-        },
-        {
-          "id": "ISLET-STRETCH-AF05",
-          "description": "Only variants < 5% MAF",
-          "groupType": "interval",
-          "identifier": "ENSEMBL"
-        },
-        {
-          "id": "FCTUS",
-          "description": "A fictitious interval",
-          "groupType": "interval",
           "identifier": "ENSEMBL"
         }
       ]

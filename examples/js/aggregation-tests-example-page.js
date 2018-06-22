@@ -325,7 +325,7 @@ function createDisplayWidgets(label_store, context) {
     // Fetch initial position from the URL, or use some defaults particular to this demo
     var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
-        initialState = {chr: 22, start: 21552103, end: 22052103};
+        initialState = {chr: 15, start: 58384122, end: 59305748};
     }
 
     var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
