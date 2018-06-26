@@ -68,6 +68,8 @@ describe("LocusZoom Singletons", function(){
         });
         describe("scinotation", function() {
             var tests = [
+                { arg: -14000,          expected: "-1.40 × 10^4" },
+                { arg: -5.50105,            expected: "-5.501" },
                 { arg: 0,               expected: "0" },
                 { arg: 1,               expected: "1.000" },
                 { arg: 0.0562435,       expected: "0.056" },

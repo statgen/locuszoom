@@ -2,7 +2,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.7.2"
+    version: "0.8.0"
 };
 
 /**
@@ -706,18 +706,18 @@ LocusZoom.generateLoader = function(){
  *   enable code reuse and customization of known LZ core functionality.
  *
  * @param {Function} parent A parent class constructor that will be extended by the child class
- * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class
- * @param {Function} [new_constructor] An optional constructor function that performs additional setup. If omitted,
- *   just calls the parent constructor by default. Implementer must manage super calls when overriding the constructor.
+ * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class.
+ *   The special "constructor" property can be used to specify a custom constructor, or it will call parent by default.
+ *   Implementer must manage super calls when overriding the constructor.
  * @returns {Function} The constructor for the new child class
  */
-LocusZoom.subclass = function(parent, extra, new_constructor) {
+LocusZoom.subclass = function(parent, extra) {
     if (typeof parent !== "function" ) {
         throw "Parent must be a callable constructor";
     }
 
     extra = extra || {};
-    var Sub = new_constructor || function() {
+    var Sub = extra.hasOwnProperty("constructor") ? extra.constructor : function() {
         parent.apply(this, arguments);
     };
 
@@ -725,7 +725,15 @@ LocusZoom.subclass = function(parent, extra, new_constructor) {
     Object.keys(extra).forEach(function(k) {
         Sub.prototype[k] = extra[k];
     });
-    Sub.prototype.constructor = Sub;
-
     return Sub;
 };
+
+
+/**
+ * LocusZoom optional extensions will live under this namespace.
+ *
+ * Extension code is not part of the core LocusZoom app.js bundle.
+ * @namespace
+ * @public
+ */
+LocusZoom.ext = {};

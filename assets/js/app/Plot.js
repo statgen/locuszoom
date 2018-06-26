@@ -116,8 +116,20 @@ LocusZoom.Plot = function(id, datasource, layout) {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
-        "element_clicked": []
+        "element_clicked": [],
+        "element_selection": [],
+        "state_changed": []  // Only triggered when a state change causes rerender
     };
+
+    /**
+     * @callback eventCallback
+     * @param {object} eventData A description of the event
+     * @param {String|null} eventData.sourceID The unique identifier (eg plot or parent name) of the element that
+     *  triggered the event. Will be automatically filled in if not explicitly provided.
+     * @param {Object|null} eventData.context Any additional information to be passed to the callback, eg the data
+     *   associated with a clicked plot element
+     */
+
     /**
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
@@ -126,7 +138,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
      *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
      *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-     *   - `element_clicked` - context: element - A data element in any of the plot's data layers has been clicked.
+     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
+     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
@@ -136,9 +150,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
      *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
-     * @param {function} hook
-     * @returns {LocusZoom.Plot}
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} hook
+     * @returns {function} The registered event listener
      */
     this.on = function(event, hook){
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
@@ -148,22 +162,60 @@ LocusZoom.Plot = function(id, datasource, layout) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return hook;
+    };
+    /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {LocusZoom.Plot}
+     */
+    this.off = function(event, hook) {
+        var theseHooks = this.event_hooks[event];
+        if (typeof "event" != "string" || !Array.isArray(theseHooks)){
+            throw("Unable to remove event hook, invalid event: " + event.toString());
+        }
+        if (hook === undefined) {
+            // Deregistering all hooks for this event may break basic functionality, and should only be used during
+            //  cleanup operations (eg to prevent memory leaks)
+            this.event_hooks[event] = [];
+        } else {
+            var hookMatch = theseHooks.indexOf(hook);
+            if (hookMatch !== -1) {
+                theseHooks.splice(hookMatch, 1);
+            } else {
+                throw("The specified event listener is not registered and therefore cannot be removed");
+            }
+        }
         return this;
     };
     /**
      * Handle running of event hooks when an event is emitted
-     * @protected
      * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {LocusZoom.Plot}
      */
-    this.emit = function(event, context){
+    this.emit = function(event, eventData) {
+        // TODO: there are small differences between the emit implementation between plots and panels. In the future,
+        //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
-        context = context || this;
+        var sourceID = this.getBaseId();
+        var self = this;
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun.call(context);
+            var eventContext;
+            if (eventData && eventData.sourceID) {
+                // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
+                //  when re-emitting the event to plot-level listeners
+                eventContext = eventData;
+            } else {
+                eventContext = {sourceID: sourceID, data: eventData || null};
+            }
+            // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+            //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+            //  override anything provided to `call` below.
+            hookToRun.call(self, eventContext);
         });
         return this;
     };
@@ -877,13 +929,69 @@ LocusZoom.Plot.prototype.refresh = function(){
     return this.applyState();
 };
 
+
+/**
+ * A user-defined callback function that can receive (and potentially act on) new plot data.
+ * @callback externalDataCallback
+ * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
+ *  a data layer making an equivalent request.
+ */
+
+/**
+ * A user-defined callback function that can respond to errors received during a previous operation
+ * @callback externalErrorCallback
+ * @param err A representation of the error that occurred
+ */
+
+/**
+ * Allow newly fetched data to be made available outside the LocusZoom plot. For example, a callback could be
+ *  registered to draw an HTML table of top GWAS hits, and update that table whenever the plot region changes.
+ *
+ * This is a convenience method for external hooks. It registers an event listener and returns parsed data,
+ *  using the same fields syntax and underlying methods as data layers.
+ *
+ * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
+ *  Different data sources should be prefixed by the source name.
+ * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
+ *  new data is received by the plot.
+ * @param {Object} [opts] Options
+ * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
+ *  occurs during the data request or subsequent callback operations
+ * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
+ *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
+ *  uncombined record info
+ *  @return {function} The newly created event listener, to allow for later cleanup/removal
+ */
+LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, opts) {
+    opts = opts || {};
+
+    // Register an event listener that is notified whenever new data has been rendered
+    var error_callback = opts.onerror || function(err) {
+        console.log("An error occurred while acting on an external callback", err);
+    };
+    var self = this;
+
+    var listener = function() {
+        try {
+            self.lzd.getData(self.state, fields)
+                .then(function (new_data) {
+                    success_callback(opts.discrete ? new_data.discrete : new_data.body);
+                }).catch(error_callback);
+        } catch (error) {
+            // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
+            error_callback(error);
+        }
+    };
+    this.on("data_rendered", listener);
+    return listener;
+};
+
 /**
  * Update state values and trigger a pull for fresh data on all data sources for all data layers
  * @param state_changes
  * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
  */
 LocusZoom.Plot.prototype.applyState = function(state_changes){
-
     state_changes = state_changes || {};
     if (typeof state_changes != "object"){
         throw("LocusZoom.applyState only accepts an object; " + (typeof state_changes) + " given");
@@ -950,6 +1058,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes){
             // Emit events
             this.emit("layout_changed");
             this.emit("data_rendered");
+            this.emit("state_changed", state_changes);
 
             this.loading_data = false;
 

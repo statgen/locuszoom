@@ -251,6 +251,11 @@ describe("LocusZoom.Panel", function(){
             this.plot = LocusZoom.populate("#plot", datasources, this.layout);
             this.panel = this.plot.panels.test;
         });
+
+        afterEach(function() {
+            d3.select("#plot").remove();
+        });
+
         it("should have a curtain object with show/update/hide methods, a showing boolean, and selectors", function(){
             this.panel.should.have.property("curtain").which.is.an.Object;
             this.panel.curtain.should.have.property("showing").which.is.exactly(false);
@@ -602,4 +607,131 @@ describe("LocusZoom.Panel", function(){
         });
     });
 
+    describe("Panel events", function() {
+        beforeEach(function() {
+            var layout = {
+                panels: [
+                    { id: "panel0" }
+                ]
+            };
+            d3.select("body").append("div").attr("id", "plot");
+            this.plot = LocusZoom.populate("#plot", {}, layout);
+            this.panel = this.plot.panels.panel0;
+        });
+
+        afterEach(function(){
+            d3.select("#plot").remove();
+            this.plot = null;
+        });
+
+        it("should send events packaged with source and data", function() {
+            var spy = sinon.spy();
+            this.panel.on("element_clicked", spy);
+            this.panel.emit("element_clicked", { something: 1 });
+
+            assert.ok(spy.calledWith({
+                sourceID: "plot.panel0",
+                data: {something:1}
+            }));
+        });
+        it("should bubble events to plot and preserve event source + data when expected", function() {
+            var panel_spy = sinon.spy();
+            var plot_spy = sinon.spy();
+
+            this.plot.on("element_clicked", plot_spy);
+            this.panel.on("element_clicked", panel_spy);
+
+            this.panel.emit("element_clicked", {something: 1}, true);
+
+            var expectedEvent = { sourceID: "plot.panel0", data: {something: 1} };
+
+            assert.ok(plot_spy.calledOnce, "Plot event was fired");
+            assert.ok(plot_spy.calledWith(expectedEvent), "Plot called with expected event");
+            assert.ok(panel_spy.calledOnce, "Panel event was fired");
+            assert.ok(panel_spy.calledWith(expectedEvent), "Panel called with expected event");
+        });
+        it("should bubble events to plot (overloaded no-data call signature)", function() {
+            var panel_spy = sinon.spy();
+            var plot_spy = sinon.spy();
+
+            this.plot.on("element_clicked", plot_spy);
+            this.panel.on("element_clicked", panel_spy);
+
+            // When only two arguments are specified, with last one a boolean
+            this.panel.emit("element_clicked", true);
+
+            var expectedEvent = { sourceID: "plot.panel0", data: null };
+
+            assert.ok(plot_spy.calledOnce, "Plot event was fired");
+            assert.ok(plot_spy.calledWith(expectedEvent), "Plot called with expected event");
+            assert.ok(panel_spy.calledOnce, "Panel event was fired");
+            assert.ok(panel_spy.calledWith(expectedEvent), "Panel called with expected event");
+        });
+        it("should not bubble events to plot when not expected", function() {
+            // "No data" call signature
+            var panel_nodata_spy = sinon.spy();
+            var plot_nodata_spy = sinon.spy();
+
+            this.plot.on("element_clicked", plot_nodata_spy);
+            this.panel.on("element_clicked", panel_nodata_spy);
+
+            this.panel.emit("element_clicked", false);
+
+            var expectedEvent = { sourceID: "plot.panel0", data: null };
+
+            assert.ok(plot_nodata_spy.notCalled, "Plot event should not be fired");
+            assert.ok(panel_nodata_spy.calledOnce, "Panel event was fired");
+            assert.ok(panel_nodata_spy.calledWith(expectedEvent), "Panel called with expected event");
+
+            // "Has data" call signature
+            var panel_withdata_spy = sinon.spy();
+            var plot_withdata_spy = sinon.spy();
+            this.panel.on("element_clicked", panel_withdata_spy);
+            this.panel.emit("element_clicked", {something: 1}, false);
+
+            var expectedDataEvent = { sourceID: "plot.panel0", data: {something: 1} };
+
+            assert.ok(plot_withdata_spy.notCalled, "Plot event (with data) should not be not fired");
+            assert.ok(panel_withdata_spy.calledOnce, "Panel event (with data) was fired");
+            assert.ok(panel_withdata_spy.calledWith(expectedDataEvent), "Panel event (with data) called with expected event");
+        });
+        it("allows event listeners to be removed / cleaned up individually", function() {
+            var listener_handle = this.panel.on("element_clicked", function() {});
+            assert.equal(this.panel.event_hooks["element_clicked"].length, 1, "Registered event listener");
+
+            this.panel.off("element_clicked", listener_handle);
+            assert.equal(this.panel.event_hooks["element_clicked"].length, 0, "De-registered event listener");
+        });
+        it("allows event listeners to be removed / cleaned up all at once", function() {
+            // Register two events!
+            this.panel.on("element_clicked", function() {});
+            this.panel.on("element_clicked", function() {});
+            assert.equal(this.panel.event_hooks["element_clicked"].length, 2, "Registered event listeners");
+
+            this.panel.off("element_clicked");
+            assert.equal(this.panel.event_hooks["element_clicked"].length, 0, "De-registered event listener");
+        });
+        it("should scope the value of this to wherever the listener was attached, unless overridden", function() {
+            var call_count = 0;
+            this.plot.on("element_clicked", function() {
+                assert.ok(this instanceof LocusZoom.Plot, "Plot listener is bound to plot");
+                call_count +=1;
+            });
+            this.panel.on("element_clicked", function(event) {
+                assert.ok(this instanceof LocusZoom.Panel, "Panel listener is bound to panel");
+                call_count +=1;
+            });
+
+            // Any manually provided binding context will override the one used by default. For example, an event
+            //  listener could be used to trigger changes to a viewmodel for a different widget
+            var bind_context = { someInstanceMethod: function() {} };
+            this.panel.on("element_clicked", function () {
+                assert.deepEqual(this, bind_context, "Manually bound context overrides defaults");
+                call_count +=1;
+            }.bind(bind_context));
+
+            this.panel.emit("element_clicked", true);
+            assert.equal(call_count, 3, "All listener handlers were called as expected");
+        });
+    });
 });

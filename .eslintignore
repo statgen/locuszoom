@@ -3,7 +3,6 @@ dist/
 
 # Non-code items
 docs/
-examples/
 node_modules/
 staticdata/
 package.json
