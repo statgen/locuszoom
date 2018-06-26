@@ -1569,14 +1569,6 @@
                     position: 'left'
                 },
                 {
-                    type: 'dimensions',
-                    position: 'right'
-                },
-                {
-                    type: 'region_scale',
-                    position: 'right'
-                },
-                {
                     type: 'download',
                     position: 'right'
                 }
