@@ -109,15 +109,11 @@ svg.lz-locuszoom {
     stroke-opacity: 1;
     stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-boundary {
-    stroke: #363696;
     stroke-opacity: 1;
-    stroke-width: 1px;
-    fill: #000099; }
+    stroke-width: 1px; }
   svg.lz-locuszoom rect.lz-data_layer-genes.lz-exon {
-    stroke: #363696;
     stroke-opacity: 1;
-    stroke-width: 1px;
-    fill: #000099; }
+    stroke-width: 1px; }
   svg.lz-locuszoom g.lz-data_layer-intervals-faded {
     opacity: 0.1; }
   svg.lz-locuszoom g.lz-data_layer-intervals-hidden {
