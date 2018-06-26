@@ -245,7 +245,7 @@ The above command with enter forced-watch-mode, which will detect any changes to
 
 LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory, with a one-to-one mapping of test files to app files.
 
-**Note that the plugins used by gulp in this project require Node.js version 4.x or higher.**
+**Note that the build and test process requires Node.js version 6 LTS or higher.**
 
 ### Linting and Strict Mode
 

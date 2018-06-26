@@ -13,11 +13,14 @@ LocusZoom.DataLayers.add("genes", function(layout){
      * @member {Object}
      * */
     this.DefaultLayout = {
+        // Optionally specify different fill and stroke properties
+        stroke: "rgb(54, 54, 150)",
+        color: "#363696",
         label_font_size: 12,
         label_exon_spacing: 4,
         exon_height: 16,
         bounding_box_padding: 6,
-        track_vertical_spacing: 10,
+        track_vertical_spacing: 10
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
@@ -206,6 +209,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
      */
     this.render = function(){
 
+        var self = this;
         this.assignTracks();
 
         var width, height, x, y;
@@ -266,8 +270,11 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 bboxes.exit().remove();
 
                 // Render gene boundaries
+                var boundary_fill = function(d){ return self.resolveScalableParameter(self.layout.color, d); };
+                var boundary_stroke = function(d){ return self.resolveScalableParameter(self.layout.stroke, d); };
                 var boundaries = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-boundary")
-                    .data([gene], function(d){ return d.gene_name + "_boundary"; });
+                    .data([gene], function(d){ return d.gene_name + "_boundary"; })
+                    .style({ fill: boundary_fill, stroke: boundary_stroke });
 
                 boundaries.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-boundary");
@@ -345,12 +352,19 @@ LocusZoom.DataLayers.add("genes", function(layout){
                 labels.exit().remove();
 
                 // Render exon rects (first transcript only, for now)
+                // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
+                var exon_fill = function(d){ return self.resolveScalableParameter(self.layout.color, d.parent.parent); };
+                var exon_stroke = function(d){ return self.resolveScalableParameter(self.layout.stroke, d.parent.parent); };
+
                 var exons = d3.select(this).selectAll("rect.lz-data_layer-genes.lz-exon")
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d){ return d.exon_id; });
-                        
+
                 exons.enter().append("rect")
                     .attr("class", "lz-data_layer-genes lz-exon");
-                        
+
+                exons
+                    .style({ fill: exon_fill, stroke: exon_stroke });
+
                 width = function(d){
                     return data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 };
@@ -425,8 +439,7 @@ LocusZoom.DataLayers.add("genes", function(layout){
 
                 // Apply default event emitters to clickareas
                 clickareas.on("click.event_emitter", function(element){
-                    element.parent.parent.emit("element_clicked", element);
-                    element.parent.parent_plot.emit("element_clicked", element);
+                    element.parent.parent.emit("element_clicked", element, true);
                 });
 
                 // Apply mouse behaviors to clickareas

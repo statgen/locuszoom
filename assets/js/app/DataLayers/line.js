@@ -286,9 +286,7 @@ LocusZoom.DataLayers.add("line", function(layout){
         this.path.attr("class", path_class);
 
         // Trigger layout changed event hook
-        this.parent.emit("layout_changed");
-        this.parent_plot.emit("layout_changed");
-        
+        this.parent.emit("layout_changed", true);
         return this;
     };
 

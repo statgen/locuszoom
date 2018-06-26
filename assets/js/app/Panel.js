@@ -131,7 +131,8 @@ LocusZoom.Panel = function(layout, parent) {
         "layout_changed": [],
         "data_requested": [],
         "data_rendered": [],
-        "element_clicked": []
+        "element_clicked": [],
+        "element_selection": []
     };
     /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
@@ -141,7 +142,9 @@ LocusZoom.Panel = function(layout, parent) {
      *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
      *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
      *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
-     *   - `element_clicked` - context: element - A data element in any of the panel's data layers has been clicked.
+     *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
+     *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
      *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *
@@ -151,11 +154,12 @@ LocusZoom.Panel = function(layout, parent) {
      *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
-     * @param {String} event
+     * @param {String} event The name of the event (as defined in `event_hooks`)
      * @param {function} hook
-     * @returns {LocusZoom.Panel}
+     * @returns {function} The registered event listener
      */
     this.on = function(event, hook){
+        // TODO: Dry plot and panel event code into a shared mixin
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("Unable to register event hook, invalid event: " + event.toString());
         }
@@ -163,23 +167,68 @@ LocusZoom.Panel = function(layout, parent) {
             throw("Unable to register event hook, invalid hook function passed");
         }
         this.event_hooks[event].push(hook);
+        return hook;
+    };
+    /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {LocusZoom.Panel}
+     */
+    this.off = function(event, hook) {
+        var theseHooks = this.event_hooks[event];
+        if (typeof "event" != "string" || !Array.isArray(theseHooks)){
+            throw("Unable to remove event hook, invalid event: " + event.toString());
+        }
+        if (hook === undefined) {
+            // Deregistering all hooks for this event may break basic functionality, and should only be used during
+            //  cleanup operations (eg to prevent memory leaks)
+            this.event_hooks[event] = [];
+        } else {
+            var hookMatch = theseHooks.indexOf(hook);
+            if (hookMatch !== -1) {
+                theseHooks.splice(hookMatch, 1);
+            } else {
+                throw("The specified event listener is not registered and therefore cannot be removed");
+            }
+        }
         return this;
     };
     /**
      * Handle running of event hooks when an event is emitted
-     * @protected
+     *
+     * There is a shorter overloaded form of this method: if the event does not have any data, the second
+     *   argument can be a boolean to control bubbling
+     *
      * @param {string} event A known event name
-     * @param {*} context Controls function execution context (value of `this` for the hook to be fired)
+     * @param {*} [eventData] Data or event description that will be passed to the event listener
+     * @param {boolean} [bubble=false] Whether to bubble the event to the parent
      * @returns {LocusZoom.Panel}
      */
-    this.emit = function(event, context){
+    this.emit = function(event, eventData, bubble)  {
+        bubble = bubble || false;
+
+        // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
+        // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
         if (typeof "event" != "string" || !Array.isArray(this.event_hooks[event])){
             throw("LocusZoom attempted to throw an invalid event: " + event.toString());
         }
-        context = context || this;
+        if (typeof eventData === "boolean" && arguments.length === 2) {
+            // Overloaded method signature: emit(event, bubble)
+            bubble = eventData;
+            eventData = null;
+        }
+        var sourceID = this.getBaseId();
+        var self = this;
+        var eventContext = {sourceID: sourceID, data: eventData || null};
         this.event_hooks[event].forEach(function(hookToRun) {
-            hookToRun.call(context);
+            // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+            // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+            hookToRun.call(self, eventContext);
         });
+        if (bubble && this.parent) {
+            this.parent.emit(event, eventContext);
+        }
         return this;
     };
 
@@ -721,8 +770,7 @@ LocusZoom.Panel.prototype.reMap = function(){
         .then(function(){
             this.initialized = true;
             this.render();
-            this.emit("layout_changed");
-            this.parent.emit("layout_changed");
+            this.emit("layout_changed", true);
             this.emit("data_rendered");
         }.bind(this))
         .catch(function(error){

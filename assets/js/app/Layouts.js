@@ -434,7 +434,7 @@ LocusZoom.Layouts.add("data_layer", "genes", {
     namespace: { "gene": "gene", "constraint": "constraint" },
     id: "genes",
     type: "genes",
-    fields: ["{{namespace[gene]}}gene", "{{namespace[constraint]}}constraint"],
+    fields: ["{{namespace[gene]}}all", "{{namespace[constraint]}}all"],
     id_field: "gene_id",
     behaviors: {
         onmouseover: [
@@ -549,14 +549,6 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
             title: "LocusZoom",
             subtitle: "<a href=\"https://statgen.github.io/locuszoom/\" target=\"_blank\">v" + LocusZoom.version + "</a>",
             position: "left"
-        },
-        {
-            type: "dimensions",
-            position: "right"
-        },
-        {
-            type: "region_scale",
-            position: "right"
         },
         {
             type: "download",

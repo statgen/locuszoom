@@ -35,12 +35,16 @@ var app_build = [
     "./assets/js/app/Panel.js"
 ];
 
+// LocusZoom extensions: not part of the default build, but we may want to bundle separately in the future
+var extensions = ["assets/js/ext/**/*.js"];
+
 // App, vendor, and helper files to be included at the top of each test suite
 // NOTE: Order of inclusion is important!
 var test_include = [
     "./node_modules/should/should.js",
     ...app_build,
-    ...vendor_build
+    ...vendor_build,
+    ...extensions
 ];
 // Since this list gets read manually, resolve the globs first
 test_include = test_include.reduce(function (acc, pattern) {
@@ -51,5 +55,6 @@ module.exports = {
     test_suite: test_suite,
     test_include: test_include,
     app_build: app_build,
+    extensions: extensions,
     vendor_build: vendor_build
 };

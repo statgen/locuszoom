@@ -109,7 +109,8 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
 LocusZoom.DataLayer.prototype.setDefaultState = function() {
-    // Define state parameters specific to this data layer
+    // Define state parameters specific to this data layer. Within plot state, this will live under a key
+    //  `panel_name.layer_name`.
     if (this.parent){
         this.state = this.parent.state;
         this.state_id = this.parent.id + "." + this.id;
@@ -742,14 +743,13 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
 
 /**
  * Toggle a status (e.g. highlighted, selected, identified) on an element
- * @param {String} status
- * @param {String|Object} element
- * @param {Boolean} toggle
- * @param {Boolean} exclusive
+ * @param {String} status The name of a recognized status to be added/removed on an appropriate element
+ * @param {String|Object} element The data bound to the element of interest
+ * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive){
-    
     // Sanity checks
     if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
         throw("Invalid status passed to DataLayer.setElementStatus()");
@@ -793,9 +793,13 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     this.showOrHideTooltip(element);
 
     // Trigger layout changed event hook
-    this.parent.emit("layout_changed");
-    this.parent_plot.emit("layout_changed");
-
+    this.parent.emit("layout_changed", true);
+    if (status === "selected") {
+        // Notify parents that a given element has been interacted with. For now, we will only notify on
+        //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
+        //   events will be sent in short order as the previously selected element has to be de-selected first
+        this.parent.emit("element_selection", { element: element, active: toggle }, true);
+    }
     return this;
     
 };
@@ -870,7 +874,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
 };
 
 /**
- * Apply all layout-defined behaviors to a selection of elements with event handlers
+ * Apply all layout-defined behaviors (DOM event handlers) to a selection of elements
  * @param {d3.selection} selection
  */
 LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
@@ -1048,16 +1052,15 @@ LocusZoom.DataLayer.prototype.reMap = function(){
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
     // and then recreated if returning to visibility
 
-    // Fetch new data
-    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields); //,"ld:best"
-    promise.then(function(new_data){
+    // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
+    var promise = this.parent_plot.lzd.getData(this.state, this.layout.fields);
+    promise.then(function(new_data) {
         this.data = new_data.body;
         this.applyDataMethods();
         this.initialized = true;
     }.bind(this));
 
     return promise;
-
 };
 
 
