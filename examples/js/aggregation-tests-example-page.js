@@ -320,24 +320,11 @@ function createDisplayWidgets(label_store, context) {
         .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
         .add("constraint", ["GeneConstraintLZ", {url: "http://exac.broadinstitute.org/api/constraint"}]);  // FIXME: use https when exac fixed
 
-    // Generate the LocusZoom plot, and reflect the initial plot state in url
-    var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
-    // Fetch initial position from the URL, or use some defaults particular to this demo
-    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
-    if (!Object.keys(initialState).length) {
-        initialState = {chr: 15, start: 58384122, end: 59305748};
-    }
-
+    var initialState = {chr: 15, start: 58384122, end: 59305748};
     var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
     layout = customizePlotLayout(layout);
 
     var plot = LocusZoom.populate("#lz-plot", data_sources, layout);
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
-    //   a previously viewed region without reloading the page)
-    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     var TABLE_SELECTOR_AGGREGATION = "#results-table-aggregation";
     var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
