@@ -79,7 +79,7 @@ describe("LocusZoom.ext.DynamicUrls", function() {
             // jsdom doesn't fully implement navigation, so we will check the act of changing URL instead of the result
             this.sandbox = sinon.sandbox.create();
 
-            this.historySpy = this.sandbox.stub(history, "pushState");
+            this.historySpy = this.sandbox.stub(history, "replaceState"); // We can't set init query string, else this would spy on pushState
         });
 
         it("returns a handle to the newly created event listener", function () {
@@ -106,7 +106,7 @@ describe("LocusZoom.ext.DynamicUrls", function() {
             this.plot.state.chr = 7;
             this.plot.emit("state_changed");
 
-            assert.ok(this.historySpy.called, "pushState was called");
+            assert.ok(this.historySpy.called, "replaceState was called");
             assert.ok(this.historySpy.calledWith({}, "", "?chrom=7"), "History URL params updated with the expected values");
         });
 
