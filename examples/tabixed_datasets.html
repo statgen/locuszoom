@@ -13,6 +13,11 @@
 
   <script src="js/dalliance-tabix-reader.js" type="application/javascript"></script>
 
+  <!-- Vue.js UI / web components -->
+  <script src="https://unpkg.com/vue"></script>
+  <script src="ui/tabix-url.js"></script>
+  <script src="ui/tabix-file.js"></script>
+
   <style>
     .hidden {
       display: none;
@@ -70,13 +75,10 @@
   <div id="choose-gwas">
     <h2>Specify a file to begin</h2>
     <h3>Fetch from a local file</h3>
-    <label>Select a file... <input id="file-picker" type="file" multiple accept="application/gzip,.tbi"></label>
-    <p id="label-file-status"></p>
+    <tabix-file id="fetch-file"></tabix-file>
 
     <h3>Fetch from a remote URL</h3>
-    <input id="text-url" type="text" width="100" value="http://127.0.0.1:8080/fritsche_2015_amd.epacts.gz">
-    <button id="button-fetch">Fetch results</button>
-    <p id="label-fetch-status"></p>
+    <tabix-url id="fetch-url"></tabix-url>
   </div>
 
   <div id="lz-plot" class="lz-container-responsive" data-region="1:796375-832756"></div>
@@ -188,49 +190,13 @@
       });
   </script>
 
-
   <script>
-      var statusNode = document.getElementById('label-file-status');
-      var dropZone = document.getElementById('file-picker');
-      dropZone.addEventListener("change", function (event) {
-          // Fetch files from a file picker and perform validation
-          var files = event.target.files;
-          var hasTabix = false;
-
-          var tabix_file;
-          var gwas_file;
-          for (var i = 0; i < files.length; i++) {
-              var f = files.item(i);
-              if (f.name.endsWith('.tbi')) {
-                  tabix_file = f;
-              } else {
-                  gwas_file = f;
-              }
-          }
-          if (files.length !== 2 || !tabix_file) {
-              statusNode.textContent = "Must select two files: gzipped data and accompanying tabix index";
-              statusNode.style.color = 'red';
-              return;
-          }
-          blobReader(gwas_file, tabix_file).then(function (reader) {
-              createPlot(reader);
-          }).catch(function (err) {
-              // TODO: Show validation/ error messaging
-              console.log(err);
-          });
+      document.getElementById("fetch-file").addEventListener("connect-tabix", function() {
+          createPlot(event.detail[0]); // in web component mode this is an array
       });
-  </script>
 
-  <script>
-      document.getElementById("button-fetch").addEventListener("click", function (event) {
-          var dataUrl = document.getElementById('text-url').value;
-          var indexUrl = dataUrl + ".tbi";
-          urlReader(dataUrl, indexUrl).then(function (reader) {
-              createPlot(reader);
-          }).catch(function (err) {
-              // TODO: Show validation/ error messaging
-              console.log(err);
-          });
+      document.getElementById("fetch-url").addEventListener("connect-tabix", function (event) {
+          createPlot(event.detail[0]); // in web component mode this is an array
       });
   </script>
 
