@@ -1,11 +1,23 @@
 <script type="application/javascript">
     /* global blobReader */
+    /**
+     * Create a reader instance by picking files from a local machine
+     */
+    import TabixOptions from './TabixOptions';
 
-    // Given a url, create a reader
     export default {
+        components: {
+            TabixOptions
+        },
         data() {
             return {
-                validationMessage: ""
+                validationMessage: "",
+                parseOptions: {  // TODO: 2-way binding usage is redundant and a bit ugly
+                    marker_col: 4,
+                    pvalue_col: 5,
+                    is_log_p: false,
+                    delimiter: '\t'
+                }
             }
         },
         methods: {
@@ -28,9 +40,9 @@
                     self.validationMessage = "Must select two files: gzipped data and accompanying tabix index";
                     return;
                 }
-                blobReader(gwas_file, tabix_file).then(function (reader) {
-                    self.$emit('connect-tabix', reader);
-                }).catch(function (err) {
+                blobReader(gwas_file, tabix_file).then((reader) => {
+                    self.$emit('connect-tabix', reader, Object.assign({}, self.parseOptions));
+                }).catch((err) => {
                     self.validationMessage = err;
                 });
             }
@@ -46,6 +58,7 @@
           <input id="file-picker" type="file" multiple accept="application/gzip,.tbi" @change="addSource($event)">
         </label>
         <p id="validation-message">{{validationMessage}}</p>
+        <tabix-options :params.sync="parseOptions"></tabix-options>
       </div>
     </div>
   </div>

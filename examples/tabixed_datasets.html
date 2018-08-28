@@ -17,6 +17,7 @@
   <script src="https://unpkg.com/vue"></script>
   <script src="ui/tabix-url.js"></script>
   <script src="ui/tabix-file.js"></script>
+  <script src="ui/tabix-options.js"></script>
 
   <style>
     .hidden {
@@ -119,15 +120,15 @@
       //   from a UMich API, using a set of data sources that obey a specific URL format and payload structure.
       // If your API has different URL syntax, or needs to reformat data from the server before giving it to LZ.js,
       //   you can write a custom datasource.
-      function createPlot(reader) {
+      function createPlot(reader, params) {
+          params = params || {};
+          params.id_field = "variant";
+
           var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
           window.data_sources = new LocusZoom.DataSources()
               .add("assoc", ["TabixAssociationLZ", {
                   tabix_reader: reader,
-                  params: {
-                      // These config options are specific to a particular file; TODO make configurable
-                      id_field: "variant", marker_col: 4, pvalue_col: 5, is_log_p: false, delimiter: '\t'
-                  }
+                  params: params // These config options are specific to a particular file. Valid options are specified in the vue component.
               }])  // Human-indexed column numbers
               .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
               .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
@@ -192,11 +193,11 @@
 
   <script>
       document.getElementById("fetch-file").addEventListener("connect-tabix", function() {
-          createPlot(event.detail[0]); // in web component mode this is an array
+          createPlot(event.detail[0], event.detail[1]); // in web component mode this is an array
       });
 
       document.getElementById("fetch-url").addEventListener("connect-tabix", function (event) {
-          createPlot(event.detail[0]); // in web component mode this is an array
+          createPlot(event.detail[0], event.detail[1]); // in web component mode this is an array
       });
   </script>
 
