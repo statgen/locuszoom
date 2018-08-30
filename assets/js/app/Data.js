@@ -776,6 +776,11 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
             }
         }
     };
+
+    // Some association sources do not sort their data. They must be sorted in the same order as LD data.
+    //   If the assoc data is not sorted, the result is unused LD information and grey plots
+    chain.body.sort(function (a, b) { return a[keys.position] - b[keys.position]; });
+
     leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
