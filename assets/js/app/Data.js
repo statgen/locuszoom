@@ -511,6 +511,15 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
         chain.discrete = {};
     }
 
+    if (!resp) {
+        // FIXME: Hack. Certain browser issues (such as mixed content warnings) are reported as a successful promise
+        //  resolution, even though the request was aborted. This is difficult to reliably detect, and is most likely
+        // to occur for annotation sources (such as from ExAC). If empty response is received, skip parsing and log.
+        // FIXME: Throw an error after pending, eg https://github.com/konradjk/exac_browser/issues/345
+        console.error("No usable response was returned for source: '" + source_id + "'. Parsing will be skipped.");
+        return Q.when(chain);
+    }
+
     var json = typeof resp == "string" ? JSON.parse(resp) : resp;
 
     var self = this;
@@ -767,6 +776,11 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
             }
         }
     };
+
+    // Some association sources do not sort their data. They must be sorted in the same order as LD data.
+    //   If the assoc data is not sorted, the result is unused LD information and grey plots
+    chain.body.sort(function (a, b) { return a[keys.position] - b[keys.position]; });
+
     leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
@@ -993,7 +1007,7 @@ LocusZoom.Data.ConnectorSource.prototype.REQUIRED_SOURCES = [];
 LocusZoom.Data.ConnectorSource.prototype.parseInit = function(init) {};  // Stub
 
 LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fields) {
-    // Connectors do not have their own data by definition, but they *do* depend on other sources having been loaded
+    // Connectors do not request their own data by definition, but they *do* depend on other sources having been loaded
     //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
     var self = this;
     Object.keys(this._source_name_mapping).forEach(function(ns) {
@@ -1007,9 +1021,10 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
 
 LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, fields, outnames) {
     // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
-    //  and field selection (because it has no data of its own)
-    // Typically connectors are called with `connector_name:all` in the fields array. Since they are only responsible
-    //  for joining two sources, the final fields array is already limited by whatever came in.
+    //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
+
+    // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
+    // Typically connectors are called with `connector_name:all` in the fields array.
     return Q.when(this.combineChainBody(data, chain, fields, outnames))
         .then(function(new_body) {
             return {header: chain.header || {}, discrete: chain.discrete || {}, body: new_body};

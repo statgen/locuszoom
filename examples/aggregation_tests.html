@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+  <!-- Necessary includes for LocusZoom.js -->
+  <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+  <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+
+  <!-- For interactive widgets specific to this page -->
+  <script type="application/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+  <script type="application/javascript" src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha384-Dziy8F2VlJQLMShA6FHWNul/veM9bCkRUaLqr199K94ntO5QUrLJBEbYegdSkkqX" crossorigin="anonymous"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.1/css/tabulator.min.css" integrity="sha384-uUckT6+9734bUz7HdTJ+c+PuMby2lpJoY32bbSz5AxNsX0HafyKd17e654uUdw1x" crossorigin="anonymous">
+  <script type="application/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.1/js/tabulator.min.js" integrity="sha384-RpPuANG8/tgp6BYEwkavx0+frMPygzCmFcKd8bLQ4ReTROYaqH1h/mMgVLeA4cCX" crossorigin="anonymous"></script>
+
+  <!-- Code required to do the calculations (this treats the NPM package as a CDN and uses semver to automatically get the newest patch release) -->
+  <script type="application/javascript" src="https://unpkg.com/raremetal.js@~1.0.2/dist/raremetal.min.js" crossorigin="anonymous"></script>
+
+  <!-- Helpers that use the external library to add functionality to LocusZoom -->
+  <script src="js/aggregation-test-helpers.js" type="application/javascript"></script>
+  <script src="js/aggregation-tests-example-page.js" type="application/javascript"></script>
+
+
+  <title>LocusZoom.js ~ Aggregation Tests</title>
+
+  <style>
+    body {
+      background-color: #FAFAFA;
+      margin: 0px 20px;
+    }
+
+    img {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .tabulator {
+      font-family: sans-serif;
+    }
+  </style>
+
+</head>
+
+<body>
+<div class="container">
+
+  <div class="row">
+    <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+    <h3 style="float: left; color: #777">Aggregation Tests Demonstration</h3>
+    <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+    <hr style="clear: both;">
+
+    <p>
+      This page demonstrates a mechanism for performing custom aggregation tests interactively, in the web browser.
+      The user can compare several different hypotheses, with contextual visualization to help summarize and interpret
+      the results.
+    </p>
+
+    <p>
+      Calculation functionality is provided by <a href="https://github.com/statgen/raremetal.js">raremetal.js</a>.
+    </p>
+    <hr>
+  </div>
+
+  <div class="row">
+    <h3>Build your analysis</h3>
+    <p>
+      Specify the mask(s) and type(s) of aggregation test to run, for all genes in a specified plot region. Use
+      CTRL-click to select more than one mask or test.
+    </p>
+    <div id="widget-aggregation-container">
+      <div id="widget-aggregation-builder">Loading...</div>
+      <button id="button-aggregation-run" class="button-primary">Run tests</button>
+    </div>
+  </div>
+
+  <div class="row" id="section-results" style="display:none;"> <!-- This section is hidden until the first test is run -->
+    <div class="twelve columns">
+      <h3>Interactive Plot</h3>
+      <p>
+        Click on any gene to filter the table of aggregation test results to only those for that gene.
+        Click the gene again to unselect and show all aggregation tests across the entire region.
+
+        Each gene/interval can have more than one mask. The entire set of possible results in a given gene/interval is
+        summarized by color:
+        <span style="color:red">significant</span> /  <span style="color:blue">not significant</span> / <span style="color:grey">no data available</span>.
+      </p>
+      <div id="lz-plot" class="lz-container-responsive"></div>
+
+      <h3>Table of aggregation test results</h3>
+      <div>
+        Currently reviewing results for group:
+          <span id="label-no-group-selected" style="color: grey;">(all genes in view)</span>
+          <span id="label-current-group-selected" style="color: #333333; display: none;"></span>
+
+        <p>Click on a row in the table below to see the variants associated with a specific mask + gene.</p>
+        <br>
+        <button id="download-aggregation" class="button-primary">Download</button><br>
+        <div id="results-table-aggregation"></div>
+      </div>
+
+      <h3>Variants in mask <span id="label-mask-selected"></span> </h3>
+      <div>
+        <button id="download-variants" class="button-primary">Download</button><br>
+        <div id="results-table-variants"></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3>References</h3>
+    <ul>
+      <li>
+        Feng, S., Liu, D., Zhan, X., Wing, M. K., & Abecasis, G. R. (2014). RAREMETAL: fast and powerful meta-analysis for rare variants. Bioinformatics, 30(19), 2828-2829. (<a href="https://doi.org/10.1093/bioinformatics/btu367">link</a>)
+      </li>
+      <li>
+        Liu, D. J., Peloso, G. M., Zhan, X., Holmen, O. L., Zawistowski, M., Feng, S. et al. (2014). Meta-analysis of gene-level tests for rare variant association. Nat Genet, 46(2), 200-204. (<a href="https://doi.org/10.1038/ng.2852">link</a>)
+      </li>
+    </ul>
+  </div>
+
+  <div class="row">
+    <footer style="text-align: center;">
+      &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical
+      Genetics</a><br>
+    </footer>
+  </div>
+</div>
+
+<script type="application/javascript">
+    "use strict";
+
+    ///////////////////////////////////
+    // The user must specify a set of aggregation tests they would like to run. The list of
+    //  masks is fetched from a server endpoint that returns simple metadata for this region
+    var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
+    $.ajax("data/aggregation_masks.json") // For demo purposes. A real UI might provide a different way of defining masks.
+        .done(function(resp) {
+            // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
+            var masks = [];
+            resp.data.forEach(function(dataset) {
+                var set_masks = dataset.masks.filter(function(item) { return item.groupType === "gene"; })
+                  .map(function (item) { return [item.id, item.description]; });
+                Array.prototype.push.apply(masks, set_masks);
+            });
+            // Populate the aggregation test builder UI
+            window.aggregationBuilder = new AggregationTestBuilder(WIDGET_SELECTOR_AGGREGATION, masks);
+        }).fail(function() {
+            $("#widget-aggregation-container").text("An error occurred while fetching available masks. Please reload the page.");
+        });
+
+    // A bunch of stuff is clickable. Use observables to coordinate all the work of updating the UI across widgets
+    window.agg_calc_data = Observable(); // aggregation test results: redraw tables when new results found
+    window.selected_group = Observable(); // Identify the current selection, eg for labels & filters.  (else `null`)
+
+    $("#button-aggregation-run").on("click", function() {
+        var valid = aggregationBuilder.validate();
+        if (valid) {
+            aggregationBuilder.setStatus("");
+
+            // One time only: Create the plot and table widgets if they don't already exist
+            if (!window.plot || !(window.plot instanceof LocusZoom.Plot)) {
+                $("#section-results").css("display", "inherit"); // Hide results section until first use
+                createDisplayWidgets(window.selected_group);  // Hack: func binds widget references to global scope
+                setupWidgetListeners(
+                    window.plot, window.aggregationTable, window.variantsTable,
+                    window.agg_calc_data, window.selected_group
+                );
+            }
+
+            // The "define calculations" widget should put the test definitions in a place that the data source
+            //  will expect to find them- plot state. The widget should define `masks` and `calcs`.
+            // This design runs "all specified masks with all specified calcs", but more fine grained control could be
+            //  added if needed.
+            window.plot.applyState({
+                aggregation_tests: { masks: aggregationBuilder.getMasks(),  calcs: aggregationBuilder.getCalcs() }
+            }).then(function() {
+                aggregationBuilder.setStatus("Calculations complete", { color: "green" });
+            }).catch(function() { aggregationBuilder.setStatus("An error occurred while running calculations"); });
+        } else {
+            aggregationBuilder.setStatus("One or more tests is invalid. Please select at least one mask and at least one test.");
+        }
+    });
+
+</script>
+</body>
+</html>

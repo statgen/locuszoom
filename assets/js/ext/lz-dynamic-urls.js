@@ -143,7 +143,15 @@
                 var update = Object.keys(newParams).some(function(k) { return (oldParams[k] != newParams[k]); });
                 if (update) {
                     var queryString = _serializeQueryParams(newParams);
-                    history.pushState({}, document.title, queryString);
+
+                    if (Object.keys(oldParams).length) {
+                        history.pushState({}, document.title, queryString);
+                    } else {
+                        // Prevent broken back behavior on first page load: the first time query params are set,
+                        //  we don't generate a separate history entry
+                        history.replaceState({}, document.title, queryString);
+                    }
+
                 }
             };
             plot.on("state_changed", listener);

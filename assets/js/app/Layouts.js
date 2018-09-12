@@ -551,14 +551,6 @@ LocusZoom.Layouts.add("dashboard", "standard_plot", {
             position: "left"
         },
         {
-            type: "dimensions",
-            position: "right"
-        },
-        {
-            type: "region_scale",
-            position: "right"
-        },
-        {
             type: "download",
             position: "right"
         }
