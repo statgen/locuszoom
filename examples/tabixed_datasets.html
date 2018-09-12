@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+  <!-- Necessary includes for LocusZoom.js -->
+  <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+  <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
+  <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+
+  <script src="js/dalliance-tabix-reader.js" type="application/javascript"></script>
+
+  <!-- Vue.js UI / web components -->
+  <script src="https://unpkg.com/vue"></script>
+  <script src="ui/tabix-url.js"></script>
+  <script src="ui/tabix-file.js"></script>
+  <script src="ui/tabix-options.js"></script>
+
+  <style>
+    .hidden {
+      display: none;
+    }
+  </style>
+
+  <title>LocusZoom.js ~ Template Example ~ Gallery</title>
+
+  <style>
+    body {
+      background-color: #FAFAFA;
+      margin: 0px 20px;
+    }
+
+    img {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+
+</head>
+
+<body>
+<div class="container">
+
+  <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+  <h3 style="float: left; color: #777">Using LZ.js without an API</h3>
+  <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
+
+  <hr style="clear: both;">
+
+  <h2>Instructions</h2>
+  <div>
+    This is a demonstration of loading GWAS results via the web browser, fetching only the data required for that
+    region.
+    It relies on three assumptions:
+    <ol>
+      <li>Your data has been stored in a compressed format, and indexed using Tabix. The index must be in the same path
+        with the suffix <em>.tbi</em></li>
+      <li>The data is hosted in a place that is reachable by web browser (eg local files or a service such as S3)</li>
+      <li>The host location supports byte range requests. (<a
+          href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Range_requests#Checking_if_a_server_supports_partial_requests">how
+        to check</a>)
+      </li>
+    </ol>
+
+    If you are serving GWAS results from a file on your local machine, note that you will need a local development
+    server. Many popular options do not support range requests; if you have installed node.js, the
+    <a href="https://www.npmjs.com/package/http-server">http-server</a> is one option.
+  </div>
+
+  <hr>
+
+  <div id="choose-gwas">
+    <h2>Specify a file to begin</h2>
+    <h3>Fetch from a local file</h3>
+    <tabix-file id="fetch-file"></tabix-file>
+
+    <h3>Fetch from a remote URL</h3>
+    <tabix-url id="fetch-url"></tabix-url>
+  </div>
+
+  <div id="lz-plot" class="lz-container-responsive" data-region="1:796375-832756"></div>
+
+
+  <div class="row">
+    <footer style="text-align: center;">
+      &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical
+      Genetics</a><br>
+    </footer>
+  </div>
+
+  <script>
+      // function validateRequest(url) {
+      //     // Verify that range requests are supported for this resource by checking Accept-ranges header; return true or false
+      //     // TODO: Development server apparently don't support HEAD requests properly, so sometimes this blocks a request incorrectly
+      //     return fetch(url, {method: 'HEAD'}).then(resp => {
+      //         console.log('headers', resp.headers);
+      //
+      //         return resp.headers.has('Accept-Ranges') && resp.headers.get('Accept-Ranges');
+      //     });
+      // }
+
+      function fetchByteRegion(url, start, end) {
+          var headers = new Headers({Range: "bytes=" + start + "-" + end});
+          return fetch(url, {headers: headers}).then(function (resp) {
+              return resp.blob()
+          });
+      }
+
+
+  </script>
+
+  <script type="application/javascript">
+      "use strict";
+
+      // First, tell the plot how to find each kind of data it will use. By default, it fetches a specific dataset
+      //   from a UMich API, using a set of data sources that obey a specific URL format and payload structure.
+      // If your API has different URL syntax, or needs to reformat data from the server before giving it to LZ.js,
+      //   you can write a custom datasource.
+      function createPlot(reader, params) {
+          params = params || {};
+          params.id_field = "variant";
+
+          var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+          window.data_sources = new LocusZoom.DataSources()
+              .add("assoc", ["TabixAssociationLZ", {
+                  tabix_reader: reader,
+                  params: params // These config options are specific to a particular file. Valid options are specified in the vue component.
+              }])  // Human-indexed column numbers
+              .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+              .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+              .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+              .add("constraint", ["GeneConstraintLZ", {url: "http://exac.broadinstitute.org/api/constraint"}]);
+
+          // Second, specify what kind of information to display. This demo uses a pre-defined set of panels with common
+          //   display options.
+          var layout = LocusZoom.Layouts.get("plot", "standard_association");
+
+          // Last, draw the plot in the div created in the HTML above.
+          //   Using window.x ensures that a reference to the plot is available via the JS console for debugging
+          window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+
+          document.getElementById('choose-gwas').classList.add('hidden');
+      }
+  </script>
+
+
+  <script>
+      LocusZoom.KnownDataSources.extend('AssociationLZ', 'TabixAssociationLZ', {
+          parseInit: function (init) {
+              this.params = init.params;
+              this.reader = init.tabix_reader;
+          },
+          getCacheKey: function (state, chain, fields) {
+              return [state.chr, state.start, state.end].join("_");
+          },
+          fetchRequest: function (state, chain, fields) {
+              var self = this;
+              return new Promise(function (resolve, reject) {
+                  self.reader.fetch(state.chr, state.start, state.end, function (data, err) {
+                      if (err) {
+                          reject(err);
+                      }
+                      resolve(data);
+                  });
+              });
+          },
+          normalizeResponse: function (data) {
+              var self = this;
+              return data.map(function (row) {
+                  // TODO: Handle ref alt in future; Not every file will have this information.
+                  row = row.split(self.params.delimiter);
+
+                  var variant = row[self.params.marker_col - 1];
+                  var chr_pos_parts = variant.split(':');
+                  var pvalue_raw = +row[self.params.pvalue_col - 1];
+                  var log_pval = self.params.is_log_p ? pvalue_raw : -Math.log10(pvalue_raw);
+
+                  return {
+                      chromosome: chr_pos_parts[0],
+                      position: chr_pos_parts[1],
+                      ref_allele: null,
+                      log_pvalue: log_pval,
+                      variant: variant
+                  }
+              });
+          }
+      });
+  </script>
+
+  <script>
+      document.getElementById("fetch-file").addEventListener("connect-tabix", function() {
+          createPlot(event.detail[0], event.detail[1]); // in web component mode this is an array
+      });
+
+      document.getElementById("fetch-url").addEventListener("connect-tabix", function (event) {
+          createPlot(event.detail[0], event.detail[1]); // in web component mode this is an array
+      });
+  </script>
+
+</div>
+
+</body>
+</html>

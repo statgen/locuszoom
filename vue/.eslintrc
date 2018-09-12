@@ -1,0 +1,8 @@
+{
+  "parserOptions": {
+    "ecmaVersion": 6
+  },
+  "extends": [
+    "plugin:vue/essential"
+  ]
+}
