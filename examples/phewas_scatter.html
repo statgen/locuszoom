@@ -221,7 +221,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
           apiBase = "https://portaldev.sph.umich.edu/api/v1/";
           dataSources
             .add("phewas", ["PheWASLZ", {
-                url: "https://portaldev.sph.umich.edu/" + "api_internal_dev/v1/statistic/phewas/",
+                url: "https://portaldev.sph.umich.edu/" + "api/v1/statistic/phewas/",
                 params: { build: ["GRCh37"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
