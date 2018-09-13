@@ -532,6 +532,34 @@ describe("LocusZoom Data", function() {
         });
     });
 
+    describe("Association Data Source", function () {
+        it("allows normalization + sorting of data", function () {
+            var source = new LocusZoom.Data.AssociationSource({
+                url: "locuszoom.org", params: { sort: true }
+            });
+
+            var sampleData = { position: [2, 1] };
+            var expectedData = [{"position": 1}, {"position": 2}];
+
+            return source.parseResponse(sampleData, {}, ["position"], ["position"], [null])
+                .then(function(resp) {
+                    assert.deepEqual(resp.body, expectedData, "Results are sorted by position");
+                });
+        });
+        it("usually returns normalized data in the order the data was provided", function () {
+            var source = new LocusZoom.Data.AssociationSource({
+                url: "locuszoom.org", params: {}
+            });
+            var sampleData = { position: [2, 1] };
+            var expectedData = [{"position": 2}, {"position": 1}];
+
+            return source.parseResponse(sampleData, {}, ["position"], ["position"], [null])
+                .then(function(resp) {
+                    assert.deepEqual(resp.body, expectedData, "Order of results matches server response");
+                });
+        });
+    });
+
     describe("Static JSON Data Source", function() {
         beforeEach(function(){
             this.datasources = new LocusZoom.DataSources();
