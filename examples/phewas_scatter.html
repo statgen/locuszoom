@@ -109,7 +109,7 @@
       <p>Here is an example request that LocusZoom.js will generate:</p>
 
       <pre><div class="spacer">
-http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh37&format=objects&filter=variant eq '10:114758349_C/T'
+http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=objects&filter=variant eq '10:114758349_C/T'
       </div></pre>
 
       <p>The response (JSON) must be in the following format:</p>
@@ -141,11 +141,11 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
       "GRCh37"
     ]
   }
-} 
+}
       </div></pre>
 
       <p>
-        Fields in <span class="required">red</span> above are required fields that must be present in the response. Each record in the <code>data</code> array requires: 
+        Fields in <span class="required">red</span> above are required fields that must be present in the response. Each record in the <code>data</code> array requires:
         <ul>
           <li><code>id</code>: a unique identifier for each record</li>
           <li><code>trait_group</code>: any arbitrary grouping/category for the trait, e.g. "Metabolic diseases"</li>
@@ -157,12 +157,12 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
       </p>
 
       <p>
-        The response should also include a <code>meta</code> object, with one field <code>build</code> that maps to an array of genome builds. 
-        Typically this will only be 1 build, but we may in the future allow for converting a variant up to other builds. 
+        The response should also include a <code>meta</code> object, with one field <code>build</code> that maps to an array of genome builds.
+        Typically this will only be 1 build, but we may in the future allow for converting a variant up to other builds.
       </p>
 
       <p>
-        <code>lastPage</code> is reserved for future use when paging is implemented. 
+        <code>lastPage</code> is reserved for future use when paging is implemented.
       </p>
 
       <hr>
@@ -221,8 +221,7 @@ http://portaldev.sph.umich.edu/api_internal_dev/v1/statistic/phewas/?build=GRCh3
           apiBase = "https://portaldev.sph.umich.edu/api/v1/";
           dataSources
             .add("phewas", ["PheWASLZ", {
-                // TODO: This source is currently development-only
-                url: "https://portaldev.sph.umich.edu/" + "api_internal_dev/v1/statistic/phewas/",
+                url: "https://portaldev.sph.umich.edu/" + "api/v1/statistic/phewas/",
                 params: { build: ["GRCh37"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])

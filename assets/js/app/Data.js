@@ -135,7 +135,7 @@ LocusZoom.DataSources.prototype.toJSON = function() {
  *   `[namespace:]name[|transformation][|transformation]`. For example, `association:pvalue|neglog10`
  */
 LocusZoom.Data.Field = function(field){
-    
+
     var parts = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/.exec(field);
     /** @member {String} */
     this.full_name = field;
@@ -145,7 +145,7 @@ LocusZoom.Data.Field = function(field){
     this.name = parts[2] || null;
     /** @member {Array} */
     this.transformations = [];
-    
+
     if (typeof parts[3] == "string" && parts[3].length > 1){
         this.transformations = parts[3].substring(1).split("|");
         this.transformations.forEach(function(transform, i){
@@ -172,7 +172,7 @@ LocusZoom.Data.Field = function(field){
         }
         return d[this.full_name];
     };
-    
+
 };
 
 /**
@@ -221,7 +221,7 @@ LocusZoom.Data.Requester = function(sources) {
             if (!sources.get(key)) {
                 throw("Datasource for namespace " + key + " not found");
             }
-            return sources.get(key).getData(state, requests[key].fields, 
+            return sources.get(key).getData(state, requests[key].fields,
                                             requests[key].outnames, requests[key].trans);
         });
         //assume the fields are requested in dependent order
@@ -303,7 +303,7 @@ LocusZoom.Data.Source.prototype.getURL = function(state, chain, fields) { return
  */
 LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
     var url = this.getURL(state, chain, fields);
-    return LocusZoom.createCORSPromise("GET", url); 
+    return LocusZoom.createCORSPromise("GET", url);
 };
 
 /**
@@ -369,10 +369,10 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
  * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
  * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
  *
- * Does not apply namespacing or transformations.
+ * Does not apply namespacing, transformations, or field extraction.
  *
  * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
- *  sources.
+ *  sources (eg, if the payload provides extra data rather than a series of records).
  *
  * @param {Object[]|Object} data The original parsed server response
  * @protected
@@ -601,7 +601,7 @@ LocusZoom.Data.Source.extend = function(constructorFun, uniqueName, base) {
  * @returns {Object}
  */
 LocusZoom.Data.Source.prototype.toJSON = function() {
-    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME, 
+    return [Object.getPrototypeOf(this).constructor.SOURCE_NAME,
         {url:this.url, params:this.params}];
 };
 
@@ -628,11 +628,25 @@ LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, 
 };
 
 LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
-    var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
+    var analysis = state.analysis || chain.header.analysis || this.params.analysis;
+    if (typeof analysis == "undefined") {
+        throw "Association source must specify an analysis ID to plot";
+    }
     return this.url + "results/?filter=analysis in " + analysis  +
         " and chromosome in  '" + state.chr + "'" +
         " and position ge " + state.start +
         " and position le " + state.end;
+};
+
+LocusZoom.Data.AssociationSource.prototype.normalizeResponse = function (data) {
+    // Some association sources do not sort their data in a predictable order, which makes it hard to reliably
+    //  align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
+    // TODO: Consider more fine grained sorting control in the future
+    data = LocusZoom.Data.Source.prototype.normalizeResponse.call(this, data);
+    if (this.params && this.params.sort && data.length && data[0]["position"]) {
+        data.sort(function (a, b) { return a["position"] - b["position"]; });
+    }
+    return data;
 };
 
 /**
@@ -658,7 +672,7 @@ LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
 
 LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
     // since LD may be shared across sources with different namespaces
-    // we use regex to find columns to join on rather than 
+    // we use regex to find columns to join on rather than
     // requiring exact matches
     var exactMatch = function(arr) {return function() {
         var regexes = arguments;
@@ -739,11 +753,11 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
     }
     if (!chain.header) {chain.header = {};}
     chain.header.ldrefvar = refVar;
-    return this.url + "results/?filter=reference eq " + refSource + 
-        " and chromosome2 eq '" + state.chr + "'" + 
-        " and position2 ge " + state.start + 
-        " and position2 le " + state.end + 
-        " and variant1 eq '" + refVar + "'" + 
+    return this.url + "results/?filter=reference eq " + refSource +
+        " and chromosome2 eq '" + state.chr + "'" +
+        " and position2 ge " + state.start +
+        " and position2 le " + state.end +
+        " and variant1 eq '" + refVar + "'" +
         "&fields=chr,pos,rsquare";
 };
 
@@ -776,6 +790,7 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
             }
         }
     };
+
     leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
@@ -797,7 +812,7 @@ LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
     var source = state.source || chain.header.source || this.params.source || 2;
     return this.url + "?filter=source in " + source +
-        " and chrom eq '" + state.chr + "'" + 
+        " and chrom eq '" + state.chr + "'" +
         " and start le " + state.end +
         " and end ge " + state.start;
 };
@@ -902,8 +917,8 @@ LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
 
 LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
     var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
-    return this.url + "?filter=id in " + source + 
-        " and chromosome eq '" + state.chr + "'" + 
+    return this.url + "?filter=id in " + source +
+        " and chromosome eq '" + state.chr + "'" +
         " and start le " + state.end +
         " and end ge " + state.start;
 };
