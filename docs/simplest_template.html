@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <!-- Necessary includes for LocusZoom.js -->
+    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="../dist/locuszoom.app.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+
+    <title>LocusZoom.js ~ Minimal Example</title>
+  </head>
+
+  <body>
+    <p>This is a very simple example of LocusZoom usage, stripped of the advanced features used by other demos.</p>
+    <!--
+      This div is used by LocusZoom to draw the plot. In this example, the plot region is specified as a
+      special data-attribute. See other examples for alternative ways to specify the region using JavaScript.
+    -->
+    <div id="lz-plot" data-region="10:114550452-115067678"></div>
+
+    <script type="application/javascript">
+      "use strict";
+
+      // First, tell the plot how to find each kind of data it will use. By default, it fetches a specific dataset
+      //   from a UMich API, using a set of data sources that obey a specific URL format and payload structure.
+      // If your API has different URL syntax, or needs to reformat data from the server before giving it to LZ.js,
+      //   you can write a custom datasource.
+      var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+      var data_sources = new LocusZoom.DataSources()
+        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
+        .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+        .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
+
+      // Second, specify what kind of information to display. This demo uses a pre-defined set of panels with common
+      //   display options.
+      var layout = LocusZoom.Layouts.get("plot", "standard_association");
+
+      // Last, draw the plot in the div created in the HTML above.
+      //   Using window.x ensures that a reference to the plot is available via the JS console for debugging
+      window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+    </script>
+  </body>
+</html>

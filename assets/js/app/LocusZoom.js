@@ -2,7 +2,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.8.0"
+    version: "0.8.1"
 };
 
 /**
@@ -179,24 +179,24 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
         target_tick_count = 5;
     }
     target_tick_count = parseInt(target_tick_count);
-    
+
     var min_n = target_tick_count / 3;
     var shrink_sml = 0.75;
     var high_u_bias = 1.5;
     var u5_bias = 0.5 + 1.5 * high_u_bias;
-    
+
     var d = Math.abs(range[0] - range[1]);
     var c = d / target_tick_count;
     if ((Math.log(d) / Math.LN10) < -2){
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
-    
+
     var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
     var base_toFixed = 0;
     if (base < 1 && base !== 0){
         base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
     }
-    
+
     var unit = base;
     if ( ((2 * base) - c) < (high_u_bias * (c - unit)) ){
         unit = 2 * base;
@@ -207,7 +207,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
             }
         }
     }
-    
+
     var ticks = [];
     var i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
     while (i < range[1]){
@@ -218,7 +218,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
         }
     }
     ticks.push(i);
-    
+
     if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) === -1){
         clip_range = "neither";
     }
@@ -228,7 +228,7 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
     if (clip_range === "high" || clip_range === "both"){
         if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
     }
-    
+
     return ticks;
 };
 
@@ -279,7 +279,7 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
         }
         // Send the request
         xhr.send(body);
-    } 
+    }
     return response.promise;
 };
 
