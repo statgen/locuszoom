@@ -18,7 +18,7 @@
     "Peter VandeHaar",
     "Andy Boughton <abought@umich.edu>"
   ],
-  "main": "dist/locuszoom.app.js",
+  "main": "dist/locuszoom.app.min.js",
   "engines": {
     "node": ">=6.12.0"
   },
