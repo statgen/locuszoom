@@ -798,6 +798,73 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
     return chain.body;
 };
 
+/**
+ * Data source for GWAS catalogs of known variants
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {Object|String} init Configuration (URL or object)
+ * @param {Object} [init.params] Optional configuration parameters
+ * @param {Number} [init.params.catalog=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
+ * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
+ */
+LocusZoom.Data.GwasCatalog = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+    this.dependentSource = true;
+}, "GwasCatalogLZ");
+
+LocusZoom.Data.GwasCatalog.prototype.getURL = function(state, chain, fields) {
+    // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
+    //  (regardless of the actual match field)
+    var catalog = this.params.catalog || 2;
+    return this.url + "?format=objects&sort=pos&filter=id eq " + catalog +
+        " and chrom eq '" + state.chr + "'" +
+        " and pos ge " + state.start +
+        " and pos le " + state.end;
+};
+
+LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (chain) {
+    // Data from previous sources is already namespaced. Find the alignment field by matching.
+    var knownFields = Object.keys(chain.body[0]);
+
+    var varMatch = knownFields.find(function (item) { return item.match(/\b(variant|id)\b/i); });
+    var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
+
+    if (!varMatch || !posMatch) {
+        throw "Could not find data to align with GWAS catalog results";
+    }
+    return {"variant": varMatch, "position": posMatch};
+};
+
+LocusZoom.Data.GwasCatalog.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
+
+LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, fields, outnames) {
+    var match_type = this.params.match_type || "strict";
+
+    var chainFieldNames = this.findMergeFields(chain);
+    var chainMatchName = (match_type === "loose") ? chainFieldNames.position : chainFieldNames.variant;
+    var catMatchName = (match_type === "loose") ? "pos" : "variant"; // These are known field names in the source
+
+    var i=0, j=0;
+    while (i < chain.body.length && j < data.length) {
+        var left = chain.body[i];
+        var right = data[j];
+
+        if (left[chainMatchName] === right[catMatchName]) {
+            // TODO: What data from the catalog should be made available? (its not guaranteed to be a 1:1 unique, eg same snp mult traits)
+            // TODO: Apply proper namespacing, once we decide what fields to select from this source (and how)
+            left["catalog:rsid"] = right["rsid"];
+            i += 1;  // Assumption: 1:1 match
+            j+= 1;
+        } else if (left[chainFieldNames.position] < right.pos) {
+            i += 1;
+        } else {
+            j +=1;
+        }
+    }
+    return chain.body;
+};
+
 
 /**
  * Data Source for Gene Data, as fetched from the LocusZoom API server (or compatible)

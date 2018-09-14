@@ -203,6 +203,8 @@
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
+        // TODO: Add sample data for offline mode
+        .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/', params: { catalog: 2, match_type: "loose" }}])
         .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
@@ -225,6 +227,7 @@
         initialState = {chr: 10, start: 114550452, end: 115067678};
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+    layout.panels.splice(1, 0, LocusZoom.Layouts.get("panel", "gwas_catalog"));
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
     // Add a button to show the study abstract the layout

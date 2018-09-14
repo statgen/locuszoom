@@ -53,7 +53,7 @@ LocusZoom.Layouts = (function() {
             var applyNamespaces = function(element, namespace){
                 if (namespace){
                     if (typeof namespace == "string"){
-                        namespace = { default: namespace }; 
+                        namespace = { default: namespace };
                     }
                 } else {
                     namespace = { default: "" };
@@ -235,6 +235,14 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
     html: "{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}"
+});
+
+LocusZoom.Layouts.add("tooltip", "catalog_variant", {
+    namespace: { "catalog": "catalog" },
+    closable: false,
+    show: { or: ["highlighted", "selected"] },
+    hide: { and: ["unhighlighted", "unselected"] },
+    html: "RSID: {{{{namespace[catalog]}}rsid|htmlescape}}"
 });
 
 /**
@@ -516,6 +524,41 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
+LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
+    // Identify GWAS hits that can are present in the GWAS catalog
+    namespace: {"assoc": "assoc", "catalog": "catalog"},
+    id: "catalog_annotations",
+    type: "annotation_track",
+    id_field: "{{namespace[assoc]}}variant",
+    x_axis: {
+        field: "{{namespace[assoc]}}position"
+    },
+    color: "#0000CC",
+    // Credible set markings are derived fields. Although they don't need to be specified in the fields array,
+    //  we DO need to specify the fields used to do the calculation (eg pvalue)
+    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[catalog]}}rsid"],
+    filters: [
+        // Specify which points to show on the track. Any selection must satisfy ALL filters
+        ["{{namespace[catalog]}}rsid", "!=", null],
+    ],
+    behaviors: {
+        onmouseover: [
+            {action: "set", status: "highlighted"}
+        ],
+        onmouseout: [
+            {action: "unset", status: "highlighted"}
+        ],
+        onclick: [
+            {action: "toggle", status: "selected", exclusive: true}
+        ],
+        onshiftclick: [
+            {action: "toggle", status: "selected"}
+        ]
+    },
+    tooltip: LocusZoom.Layouts.get("tooltip", "catalog_variant"),
+    tooltip_positioning: "vertical"
+});
+
 /**
  * Dashboard Layouts: toolbar buttons etc
   * @namespace Layouts.dashboard
@@ -540,7 +583,7 @@ LocusZoom.Layouts.add("dashboard", "standard_panel", {
             style: { "margin-left": "0.75em" }
         }
     ]
-});                 
+});
 
 LocusZoom.Layouts.add("dashboard", "standard_plot", {
     components: [
@@ -688,7 +731,7 @@ LocusZoom.Layouts.add("panel", "genes", {
             position: "right"
         });
         return l;
-    })(),   
+    })(),
     data_layers: [
         LocusZoom.Layouts.get("data_layer", "genes", { unnamespaced: true })
     ]
@@ -1023,7 +1066,23 @@ LocusZoom.Layouts.add("panel", "intervals", {
     ]
 });
 
-
+LocusZoom.Layouts.add("panel", "gwas_catalog", {
+    id: "gwas_catalog",
+    width: 800,
+    height: 100,
+    min_height: 100,
+    proportional_width: 1,
+    margin: {top: 35, right: 50, bottom: 40, left: 50},
+    inner_border: "rgb(210, 210, 210)",
+    interaction: {
+        drag_background_to_pan: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    data_layers: [
+        LocusZoom.Layouts.get("data_layer", "catalog_annotations", {unnamespaced: true})
+    ]
+});
 /**
  * Plot Layouts
  * @namespace Layouts.plot
