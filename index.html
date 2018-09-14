@@ -227,6 +227,36 @@
         initialState = {chr: 10, start: 114550452, end: 115067678};
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+    var assocPanel = layout.panels[0].data_layers[2];
+
+    assocPanel.namespace["catalog"] = "catalog";
+    assocPanel.fields.push("catalog:all");
+    assocPanel.label = {
+        text: "{{catalog:trait}}",
+        spacing: 6,
+        lines: {
+            style: {
+                "stroke-width": "2px",
+                "stroke": "#333333",
+                "stroke-dasharray": "2px 2px"
+            }
+        },
+        filters: [
+            {
+                field: "catalog:trait",
+                operator: "!=",
+                value: null
+            }
+        ],
+        style: {
+            "font-size": "14px",
+            "font-weight": "bold",
+            "fill": "#333333"
+        }
+    };
+
+
+
     layout.panels.splice(1, 0, LocusZoom.Layouts.get("panel", "gwas_catalog"));
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 

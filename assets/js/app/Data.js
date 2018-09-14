@@ -836,6 +836,7 @@ LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (chain) {
     return {"variant": varMatch, "position": posMatch};
 };
 
+// Skip the "individual field extraction" step; extraction will be handled when building chain body instead
 LocusZoom.Data.GwasCatalog.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
 
 LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, fields, outnames) {
@@ -850,10 +851,12 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
         var left = chain.body[i];
         var right = data[j];
 
+        // TODO: right side may have multiple entries per SNP; this increment strategy could backfire
         if (left[chainMatchName] === right[catMatchName]) {
             // TODO: What data from the catalog should be made available? (its not guaranteed to be a 1:1 unique, eg same snp mult traits)
             // TODO: Apply proper namespacing, once we decide what fields to select from this source (and how)
             left["catalog:rsid"] = right["rsid"];
+            left["catalog:trait"] = right["trait"];
             i += 1;  // Assumption: 1:1 match
             j+= 1;
         } else if (left[chainFieldNames.position] < right.pos) {
