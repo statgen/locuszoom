@@ -390,8 +390,8 @@ LocusZoom.Dashboard.Components = (function() {
  * @class
  * @param {LocusZoom.Dashboard.Component} parent
  */
-LocusZoom.Dashboard.Component.Button = function(parent) {   
-    
+LocusZoom.Dashboard.Component.Button = function(parent) {
+
     if (!(parent instanceof LocusZoom.Dashboard.Component)){
         throw "Unable to create dashboard component button, invalid parent";
     }
@@ -601,7 +601,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         else { this.onclick = function(){}; }
         return this;
     };
-    
+
     // Primary behavior functions
     /**
      * Show the button, including creating DOM elements if necessary for first render
@@ -651,7 +651,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             this.selector = null;
         }
         return this;
-    };    
+    };
 
     /**
      * Button Menu Object
@@ -885,7 +885,7 @@ LocusZoom.Dashboard.Components.add("download", function(layout){
                 }.bind(this));
             break;
         }
-    } 
+    }
     this.generateBase64SVG = function(){
         return Q.fcall(function () {
             // Insert a hidden div, clone the node into that so we can modify it with d3
@@ -1465,7 +1465,7 @@ LocusZoom.Dashboard.Components.add("display_options", function (layout) {
     var defaultConfig = {};
     allowed_fields.forEach(function(name) {
         var configSlot = dataLayerLayout[name];
-        if (configSlot) {
+        if (configSlot !== undefined) {
             defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
         }
     });

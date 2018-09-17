@@ -332,6 +332,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
         { shape: "circle", color: "#357ebd", size: 40, label: "0.2 > r² ≥ 0.0", class: "lz-data_layer-scatter" },
         { shape: "circle", color: "#B8B8B8", size: 40, label: "no r² data", class: "lz-data_layer-scatter" }
     ],
+    label: null,
     fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}log_pvalue|logtoscinotation", "{{namespace[assoc]}}ref_allele", "{{namespace[ld]}}state", "{{namespace[ld]}}isrefvar"],
     id_field: "{{namespace[assoc]}}variant",
     z_index: 2,

@@ -179,6 +179,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         this.seperate_iterations++;
         var data_layer = this;
         var alpha = 0.5;
+        if (!this.layout.label) {
+            // Guard against layout changing in the midst of iterative rerender
+            return;
+        }
         var spacing = this.layout.label.spacing;
         var again = false;
         data_layer.label_texts.each(function () {
@@ -260,7 +264,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
 
-        // Generate labels first (if defined)
         if (this.layout.label){
             // Apply filters to generate a filtered data set
             var filtered_data = this.data.filter(function(d){
@@ -374,6 +377,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             }
             // Remove labels when they're no longer in the filtered data set
             this.label_groups.exit().remove();
+        } else {
+            // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
+            if (this.label_groups){ this.label_groups.remove(); }
+            if (this.label_lines){ this.label_lines.remove(); }
         }
 
         // Generate main scatter data elements
