@@ -238,11 +238,15 @@ LocusZoom.Layouts.add("tooltip", "standard_intervals", {
 });
 
 LocusZoom.Layouts.add("tooltip", "catalog_variant", {
-    namespace: { "catalog": "catalog" },
-    closable: false,
+    namespace: { "assoc": "assoc", "catalog": "catalog" },
+    closable: true,
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
-    html: "RSID: {{{{namespace[catalog]}}rsid|htmlescape}}"
+    html: "<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>"
+        + "Top Trait: <strong>{{{{namespace[catalog]}}trait}}</strong><br>"
+        + "Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>"
+        // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
+        + "<a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">More on GWAS catalog</a>"
 });
 
 /**
@@ -536,10 +540,11 @@ LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
     color: "#0000CC",
     // Credible set markings are derived fields. Although they don't need to be specified in the fields array,
     //  we DO need to specify the fields used to do the calculation (eg pvalue)
-    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[catalog]}}rsid"],
+    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}chromosome", "{{namespace[assoc]}}position", "{{namespace[catalog]}}rsid", "{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue"],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ["{{namespace[catalog]}}rsid", "!=", null],
+        ["{{namespace[catalog]log_pvalue", ">", 7.0301]  // Display only items more significant than -log10(.05/1e6)
     ],
     behaviors: {
         onmouseover: [

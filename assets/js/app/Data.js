@@ -827,8 +827,10 @@ LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (chain) {
     // Data from previous sources is already namespaced. Find the alignment field by matching.
     var knownFields = Object.keys(chain.body[0]);
 
+    // TODO: We explicitly only fetch one chrom at a time so, match on chrom is implied. That might change.
     var varMatch = knownFields.find(function (item) { return item.match(/\b(variant|id)\b/i); });
     var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
+    // var chrMatch = knownFields.find(function (item) { return item.match(/\b(chromosome|chrom|chr)\b/i); });
 
     if (!varMatch || !posMatch) {
         throw "Could not find data to align with GWAS catalog results";
@@ -857,7 +859,6 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
             // TODO: Apply proper namespacing, once we decide what fields to select from this source (and how)
             left["catalog:rsid"] = right["rsid"];
             left["catalog:trait"] = right["trait"];
-            i += 1;  // Assumption: 1:1 match
             j+= 1;
         } else if (left[chainFieldNames.position] < right.pos) {
             i += 1;
