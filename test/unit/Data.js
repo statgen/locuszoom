@@ -560,6 +560,60 @@ describe("LocusZoom Data", function() {
         });
     });
 
+    describe("GwasCatalog Source", function () {
+        beforeEach(function() {
+            this.exampleData = [
+                { "pos": 3, "variant": "1:3_C/T", "log_pvalue": 1.3,  "rsid": "rs3",  "trait": "arithomania" },
+                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.4,  "rsid": "rs4",  "trait": "arithomania" },
+                { "pos": 5, "variant": "1:5_C/T", "log_pvalue": 1.5,  "rsid": "rs5",  "trait": "arithomania" },
+                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.6,  "rsid": "rs6",  "trait": "arithomania" },
+            ];
+            this.sampleChain = {
+                body: [
+                    { "assoc:position": 2, "assoc:variant": "1:2_C/T" },
+                    { "assoc:position": 4, "assoc:variant": "1:4_C/T" },
+                    { "assoc:position": 6, "assoc:variant": "1:6_C/T" },
+                ],
+            };
+        });
+
+        it("aligns records based on loose position match", function () {
+            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "loose"}});
+            var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
+            assert.deepEqual(res, [
+                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania" },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania" },
+            ]);
+        });
+
+        it("handles the case where the same SNP has more than one catalog entry", function() {
+            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "loose"}});
+            var exampleData = [
+                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.40,  "rsid": "rs4",  "trait": "arithomania" },
+                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.41,  "rsid": "rs4",  "trait": "graphomania" },
+                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.61,  "rsid": "rs6",  "trait": "arithomania" },
+                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.60,  "rsid": "rs6",  "trait": "graphomania" },
+            ];
+            var res = source.combineChainBody(exampleData, this.sampleChain, ["log_pvalue"], ["catalog:log_pvalue"]);
+            assert.deepEqual(res, [
+                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T", "catalog:log_pvalue": 1.41 },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:log_pvalue": 1.61 },
+            ]);
+        });
+
+        it("aligns records based on strict variant match", function () {
+            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "strict"}});
+            var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
+            assert.deepEqual(res, [
+                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania" },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania" },
+            ]);
+        });
+    });
+
     describe("Static JSON Data Source", function() {
         beforeEach(function(){
             this.datasources = new LocusZoom.DataSources();

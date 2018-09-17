@@ -540,11 +540,14 @@ LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
     color: "#0000CC",
     // Credible set markings are derived fields. Although they don't need to be specified in the fields array,
     //  we DO need to specify the fields used to do the calculation (eg pvalue)
-    fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}chromosome", "{{namespace[assoc]}}position", "{{namespace[catalog]}}rsid", "{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue"],
+    fields: [
+        "{{namespace[assoc]}}variant", "{{namespace[assoc]}}chromosome", "{{namespace[assoc]}}position",
+        "{{namespace[catalog]}}rsid", "{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue"
+    ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ["{{namespace[catalog]}}rsid", "!=", null],
-        ["{{namespace[catalog]log_pvalue", ">", 7.0301]  // Display only items more significant than -log10(.05/1e6)
+        ["{{namespace[catalog]}}log_pvalue", ">", 7.0301]  // Display only items more significant than -log10(.05/1e6)
     ],
     behaviors: {
         onmouseover: [
