@@ -1,12 +1,11 @@
 "use strict";
 
-/*********************
-  Scatter Data Layer
-  Implements a standard scatter plot
-*/
-
+/**
+ * Scatter Data Layer
+ * Implements a standard scatter plot
+ * @class LocusZoom.DataLayers.scatter
+ */
 LocusZoom.DataLayers.add("scatter", function(layout){
-
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         point_size: 40,
@@ -595,7 +594,7 @@ LocusZoom.DataLayers.extend("scatter", "category_scatter", {
      * @returns {Array}
      */
     getTicks: function(dimension, config) { // Overrides parent method
-        if (["x", "y"].indexOf(dimension) === -1) {
+        if (["x", "y1", "y2"].indexOf(dimension) === -1) {
             throw "Invalid dimension identifier";
         }
         var position = config.position || "left";

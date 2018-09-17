@@ -46,7 +46,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.8.1' };
+        var LocusZoom = { version: '0.8.2' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -2559,7 +2559,7 @@
  *
  *   This method is a stub and should be overridden in data layers that need to specify custom behavior.
  *
- * @param {('x'|'y')} dimension
+ * @param {('x'|'y1'|'y2')} dimension
  * @param {Object} [config] Additional parameters for the panel to specify how it wants ticks to be drawn. The names
  *   and meanings of these parameters may vary between different data layers.
  * @returns {Object[]}
@@ -2573,9 +2573,10 @@
         LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
             if ([
                     'x',
-                    'y'
+                    'y1',
+                    'y2'
                 ].indexOf(dimension) === -1) {
-                throw 'Invalid dimension identifier';
+                throw 'Invalid dimension identifier at layer level' + dimension;
             }
             return [];
         };
@@ -3390,10 +3391,15 @@
             return this;
         });
         'use strict';
-        /*********************
-  Forest Data Layer
-  Implements a standard forest plot
-*/
+        /**
+ * Forest Data Layer
+ * Implements a standard forest plot. In order to space out points, any layout using this must specify axis ticks
+ *  and extent in advance.
+ *
+ * If you are using dynamically fetched data, consider using `category_forest` instead.
+ *
+ * @class LocusZoom.DataLayers.forest
+ */
         LocusZoom.DataLayers.add('forest', function (layout) {
             // Define a default layout for this DataLayer type and merge it with the passed argument
             this.DefaultLayout = {
@@ -3555,6 +3561,58 @@
                 this.applyBehaviors(points_selection);
             };
             return this;
+        });
+        /**
+ * A y-aligned forest plot that dynamically chooses category labels when the data is first loaded.
+ * This allows generating forest plots without defining the layout in advance.
+ *
+ * @class LocusZoom.DataLayers.category_forest
+ * @augments LocusZoom.DataLayers.forest
+ */
+        LocusZoom.DataLayers.extend('forest', 'category_forest', {
+            getTicks: function (dimension, config) {
+                // Overrides parent method
+                if ([
+                        'x',
+                        'y1',
+                        'y2'
+                    ].indexOf(dimension) === -1) {
+                    throw 'Invalid dimension identifier' + dimension;
+                }
+                // Design assumption: one axis (y1 or y2) has the ticks, and the layout says which to use
+                // Also assumes that every tick gets assigned a unique matching label
+                var axis_num = this.layout.y_axis.axis;
+                if (dimension === 'y' + axis_num) {
+                    var category_field = this.layout.y_axis.category_field;
+                    if (!category_field) {
+                        throw 'Layout for ' + this.layout.id + ' must specify category_field';
+                    }
+                    return this.data.map(function (item, index) {
+                        return {
+                            y: index + 1,
+                            text: item[category_field]
+                        };
+                    });
+                } else {
+                    return [];
+                }
+            },
+            applyCustomDataMethods: function () {
+                // Add a synthetic yaxis field to ensure data is spread out on plot. Then, set axis floor and ceiling to
+                //  correct extents.
+                var field_to_add = this.layout.y_axis.field;
+                if (!field_to_add) {
+                    throw 'Layout for ' + this.layout.id + ' must specify yaxis.field';
+                }
+                this.data = this.data.map(function (item, index) {
+                    item[field_to_add] = index + 1;
+                    return item;
+                });
+                // Update axis extents based on one label for every point (with a bit of padding above and below)
+                this.layout.y_axis.floor = 0;
+                this.layout.y_axis.ceiling = this.data.length + 1;
+                return this;
+            }
         });
         'use strict';
         /*********************
@@ -4771,10 +4829,11 @@
             return this;
         });
         'use strict';
-        /*********************
-  Scatter Data Layer
-  Implements a standard scatter plot
-*/
+        /**
+ * Scatter Data Layer
+ * Implements a standard scatter plot
+ * @class LocusZoom.DataLayers.scatter
+ */
         LocusZoom.DataLayers.add('scatter', function (layout) {
             // Define a default layout for this DataLayer type and merge it with the passed argument
             this.DefaultLayout = {
@@ -5362,7 +5421,8 @@
                 // Overrides parent method
                 if ([
                         'x',
-                        'y'
+                        'y1',
+                        'y2'
                     ].indexOf(dimension) === -1) {
                     throw 'Invalid dimension identifier';
                 }
