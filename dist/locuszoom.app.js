@@ -46,7 +46,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.8.0' };
+        var LocusZoom = { version: '0.8.1' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -8131,10 +8131,10 @@
  * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
  * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
  *
- * Does not apply namespacing or transformations.
+ * Does not apply namespacing, transformations, or field extraction.
  *
  * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
- *  sources.
+ *  sources (eg, if the payload provides extra data rather than a series of records).
  *
  * @param {Object[]|Object} data The original parsed server response
  * @protected
@@ -8388,8 +8388,23 @@
             };
         };
         LocusZoom.Data.AssociationSource.prototype.getURL = function (state, chain, fields) {
-            var analysis = state.analysis || chain.header.analysis || this.params.analysis || 3;
+            var analysis = state.analysis || chain.header.analysis || this.params.analysis;
+            if (typeof analysis == 'undefined') {
+                throw 'Association source must specify an analysis ID to plot';
+            }
             return this.url + 'results/?filter=analysis in ' + analysis + ' and chromosome in  \'' + state.chr + '\'' + ' and position ge ' + state.start + ' and position le ' + state.end;
+        };
+        LocusZoom.Data.AssociationSource.prototype.normalizeResponse = function (data) {
+            // Some association sources do not sort their data in a predictable order, which makes it hard to reliably
+            //  align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
+            // TODO: Consider more fine grained sorting control in the future
+            data = LocusZoom.Data.Source.prototype.normalizeResponse.call(this, data);
+            if (this.params && this.params.sort && data.length && data[0]['position']) {
+                data.sort(function (a, b) {
+                    return a['position'] - b['position'];
+                });
+            }
+            return data;
         };
         /**
  * Data Source for LD Data, as fetched from the LocusZoom API server (or compatible)
@@ -8412,7 +8427,7 @@
         };
         LocusZoom.Data.LDSource.prototype.findMergeFields = function (chain) {
             // since LD may be shared across sources with different namespaces
-            // we use regex to find columns to join on rather than 
+            // we use regex to find columns to join on rather than
             // requiring exact matches
             var exactMatch = function (arr) {
                 return function () {
@@ -8532,11 +8547,6 @@
                     }
                 }
             };
-            // Some association sources do not sort their data. They must be sorted in the same order as LD data.
-            //   If the assoc data is not sorted, the result is unused LD information and grey plots
-            chain.body.sort(function (a, b) {
-                return a[keys.position] - b[keys.position];
-            });
             leftJoin(chain.body, data, reqFields.ldout, 'rsquare');
             if (reqFields.isrefvarin && chain.header.ldrefvar) {
                 tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
