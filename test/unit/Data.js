@@ -582,8 +582,8 @@ describe("LocusZoom Data", function() {
             var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
             assert.deepEqual(res, [
                 {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania" },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania" },
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
             ]);
         });
 
@@ -598,8 +598,8 @@ describe("LocusZoom Data", function() {
             var res = source.combineChainBody(exampleData, this.sampleChain, ["log_pvalue"], ["catalog:log_pvalue"]);
             assert.deepEqual(res, [
                 {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T", "catalog:log_pvalue": 1.41 },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:log_pvalue": 1.61 },
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T", "catalog:log_pvalue": 1.41, "n_catalog_matches": 2 },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:log_pvalue": 1.61, "n_catalog_matches": 2 },
             ]);
         });
 
@@ -608,8 +608,8 @@ describe("LocusZoom Data", function() {
             var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
             assert.deepEqual(res, [
                 {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania" },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania" },
+                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
+                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
             ]);
         });
     });

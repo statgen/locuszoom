@@ -243,6 +243,7 @@ LocusZoom.Layouts.add("tooltip", "catalog_variant", {
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
     html: "<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>"
+        + "Catalog entries: <strong>{{n_catalog_matches}}</strong><br>"
         + "Top Trait: <strong>{{{{namespace[catalog]}}trait}}</strong><br>"
         + "Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>"
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL

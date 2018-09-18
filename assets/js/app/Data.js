@@ -846,6 +846,9 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
     var decider_out = outnames[fields.indexOf(decider)];
 
     function leftJoin(left, right, fields, outnames, trans) { // Add `fields` from `right` to `left`
+        // Add a synthetic, un-namespaced field to all matching records
+        var n_matches = left["n_catalog_matches"] || 0;
+        left["n_catalog_matches"] = n_matches + 1;
         if (decider && left[decider_out] && left[decider_out] > right[decider]) {
             // There may be more than one GWAS catalog entry for the same SNP. This source is intended for a 1:1
             //  annotation scenario, so for now it only joins the catalog entry that has the best -log10 pvalue
@@ -864,7 +867,7 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
         }
     }
 
-    var match_type = this.params.match_type || "strict";
+    var match_type = this.params.match_type || "loose"; // TODO: remove strict / loose option entirely- strict is unreliable
 
     var chainFieldNames = this.findMergeFields(chain);
     var chainMatchName = (match_type === "loose") ? chainFieldNames.position : chainFieldNames.variant;
@@ -875,8 +878,8 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
         var left = chain.body[i];
         var right = data[j];
 
-        // TODO: right side may have multiple entries per SNP; this increment strategy could backfire
         if (left[chainMatchName] === right[catMatchName]) {
+            // There may be multiple catalog entries for each matching SNP; evaluate match one at a time
             leftJoin(left, right, fields, outnames, trans);
             j+= 1;
         } else if (left[chainFieldNames.position] < right.pos) {
