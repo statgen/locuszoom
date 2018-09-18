@@ -204,7 +204,7 @@
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
         // TODO: Add sample data for offline mode
-        .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/', params: { catalog: 2, match_type: "loose" }}])
+        .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/', params: { catalog: 2 }}])
         .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])

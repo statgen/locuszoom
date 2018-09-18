@@ -823,25 +823,26 @@ LocusZoom.Data.GwasCatalog.prototype.getURL = function(state, chain, fields) {
         " and pos le " + state.end;
 };
 
-LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (chain) {
+LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
     // Data from previous sources is already namespaced. Find the alignment field by matching.
-    var knownFields = Object.keys(chain.body[0]);
-
-    // TODO: We explicitly only fetch one chrom at a time so, match on chrom is implied. That might change.
-    var varMatch = knownFields.find(function (item) { return item.match(/\b(variant|id)\b/i); });
+    var knownFields = Object.keys(records);
+    // Note: All API endoints involved implicitly only return for same chromosome; match is implied
     var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
-    // var chrMatch = knownFields.find(function (item) { return item.match(/\b(chromosome|chrom|chr)\b/i); });
 
-    if (!varMatch || !posMatch) {
+    if (!posMatch) {
         throw "Could not find data to align with GWAS catalog results";
     }
-    return {"variant": varMatch, "position": posMatch};
+    return { "pos": posMatch };
 };
 
 // Skip the "individual field extraction" step; extraction will be handled when building chain body instead
 LocusZoom.Data.GwasCatalog.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
 
 LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
+    if (!data.length) {
+        return chain.body;
+    }
+
     var decider = "log_pvalue"; //  TODO: Better reuse options in the future
     var decider_out = outnames[fields.indexOf(decider)];
 
@@ -867,22 +868,19 @@ LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, f
         }
     }
 
-    var match_type = this.params.match_type || "loose"; // TODO: remove strict / loose option entirely- strict is unreliable
-
-    var chainFieldNames = this.findMergeFields(chain);
-    var chainMatchName = (match_type === "loose") ? chainFieldNames.position : chainFieldNames.variant;
-    var catMatchName = (match_type === "loose") ? "pos" : "variant"; // These are known field names in the source
+    var chainNames = this.findMergeFields(chain.body[0]);
+    var catNames = this.findMergeFields(data[0]);
 
     var i = 0, j = 0;
     while (i < chain.body.length && j < data.length) {
         var left = chain.body[i];
         var right = data[j];
 
-        if (left[chainMatchName] === right[catMatchName]) {
+        if (left[chainNames.pos] === right[catNames.pos]) {
             // There may be multiple catalog entries for each matching SNP; evaluate match one at a time
             leftJoin(left, right, fields, outnames, trans);
             j+= 1;
-        } else if (left[chainFieldNames.position] < right.pos) {
+        } else if (left[chainNames.pos] < right[catNames.pos]) {
             i += 1;
         } else {
             j +=1;

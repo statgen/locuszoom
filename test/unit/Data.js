@@ -563,16 +563,16 @@ describe("LocusZoom Data", function() {
     describe("GwasCatalog Source", function () {
         beforeEach(function() {
             this.exampleData = [
-                { "pos": 3, "variant": "1:3_C/T", "log_pvalue": 1.3,  "rsid": "rs3",  "trait": "arithomania" },
-                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.4,  "rsid": "rs4",  "trait": "arithomania" },
-                { "pos": 5, "variant": "1:5_C/T", "log_pvalue": 1.5,  "rsid": "rs5",  "trait": "arithomania" },
-                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.6,  "rsid": "rs6",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 3, "log_pvalue": 1.3,  "rsid": "rs3",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 4, "log_pvalue": 1.4,  "rsid": "rs4",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 5, "log_pvalue": 1.5,  "rsid": "rs5",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 6, "log_pvalue": 1.6,  "rsid": "rs6",  "trait": "arithomania" },
             ];
             this.sampleChain = {
                 body: [
-                    { "assoc:position": 2, "assoc:variant": "1:2_C/T" },
-                    { "assoc:position": 4, "assoc:variant": "1:4_C/T" },
-                    { "assoc:position": 6, "assoc:variant": "1:6_C/T" },
+                    { "assoc:chromosome": 1, "assoc:position": 2 },
+                    { "assoc:chromosome": 1, "assoc:position": 4 },
+                    { "assoc:chromosome": 1, "assoc:position": 6 },
                 ],
             };
         });
@@ -581,35 +581,35 @@ describe("LocusZoom Data", function() {
             var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "loose"}});
             var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
             assert.deepEqual(res, [
-                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
+                { "assoc:chromosome": 1, "assoc:position": 2 },  // No annotations available for this point
+                { "assoc:chromosome": 1, "assoc:position": 4, "catalog:rsid": "rs4", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
+                { "assoc:chromosome": 1, "assoc:position": 6, "catalog:rsid": "rs6", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
             ]);
         });
 
         it("handles the case where the same SNP has more than one catalog entry", function() {
-            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "loose"}});
+            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test" });
             var exampleData = [
-                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.40,  "rsid": "rs4",  "trait": "arithomania" },
-                { "pos": 4, "variant": "1:4_C/T", "log_pvalue": 1.41,  "rsid": "rs4",  "trait": "graphomania" },
-                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.61,  "rsid": "rs6",  "trait": "arithomania" },
-                { "pos": 6, "variant": "1:6_C/T", "log_pvalue": 1.60,  "rsid": "rs6",  "trait": "graphomania" },
+                { "chrom": 1, "pos": 4, "log_pvalue": 1.40,  "rsid": "rs4",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 4, "log_pvalue": 1.41,  "rsid": "rs4",  "trait": "graphomania" },
+                { "chrom": 1, "pos": 6, "log_pvalue": 1.61,  "rsid": "rs6",  "trait": "arithomania" },
+                { "chrom": 1, "pos": 6, "log_pvalue": 1.60,  "rsid": "rs6",  "trait": "graphomania" },
             ];
             var res = source.combineChainBody(exampleData, this.sampleChain, ["log_pvalue"], ["catalog:log_pvalue"]);
             assert.deepEqual(res, [
-                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T", "catalog:log_pvalue": 1.41, "n_catalog_matches": 2 },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:log_pvalue": 1.61, "n_catalog_matches": 2 },
+                { "assoc:chromosome": 1, "assoc:position": 2 },  // No annotations available for this point
+                { "assoc:chromosome": 1, "assoc:position": 4, "catalog:log_pvalue": 1.41, "n_catalog_matches": 2 },
+                { "assoc:chromosome": 1, "assoc:position": 6, "catalog:log_pvalue": 1.61, "n_catalog_matches": 2 },
             ]);
         });
 
-        it("aligns records based on strict variant match", function () {
-            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "strict"}});
-            var res = source.combineChainBody(this.exampleData, this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
+        it("gracefully handles no catalog entries in region", function () {
+            var source = new LocusZoom.Data.GwasCatalog({url: "www.fake.test", params: {match_type: "loose"}});
+            var res = source.combineChainBody([], this.sampleChain, ["rsid", "trait"], ["catalog:rsid", "catalog:trait"]);
             assert.deepEqual(res, [
-                {"assoc:position": 2, "assoc:variant": "1:2_C/T" },  // No annotations available for this point
-                {"assoc:position": 4, "assoc:variant": "1:4_C/T",  "catalog:rsid": "rs4", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
-                {"assoc:position": 6, "assoc:variant": "1:6_C/T",  "catalog:rsid": "rs6", "catalog:trait": "arithomania", "n_catalog_matches": 1 },
+                { "assoc:chromosome": 1, "assoc:position": 2 },
+                { "assoc:chromosome": 1, "assoc:position": 4 },
+                { "assoc:chromosome": 1, "assoc:position": 6 },
             ]);
         });
     });
