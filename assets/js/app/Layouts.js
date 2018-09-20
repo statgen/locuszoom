@@ -268,7 +268,7 @@ LocusZoom.Layouts.add("data_layer", "significance", {
     id: "significance",
     type: "orthogonal_line",
     orientation: "horizontal",
-    offset: 4.522
+    offset: 7.301 // -log10(.05/1e6)
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
@@ -645,7 +645,7 @@ LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ["{{namespace[catalog]}}rsid", "!=", null],
-        ["{{namespace[catalog]}}log_pvalue", ">", 7.0301]  // Display only items more significant than -log10(.05/1e6)
+        ["{{namespace[catalog]}}log_pvalue", ">", 7.301]  // -log10(.05/1e6)
     ],
     behaviors: {
         onmouseover: [
@@ -860,7 +860,7 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                             {
                                 field: "{{namespace[catalog]}}log_pvalue",
                                 operator: ">",
-                                value: 7.0301 // p < 5e-8
+                                value: 7.301 // -log10(.05/1e6)
                             }
                         ],
                         style: {
