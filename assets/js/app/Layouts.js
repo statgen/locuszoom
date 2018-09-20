@@ -377,10 +377,12 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues", {
 
 LocusZoom.Layouts.add("data_layer", "association_pvalues_catalog", function () {
     // Slightly modify an existing layout
-    var l = LocusZoom.Layouts.get("data_layer", "association_pvalues", { unnamespaced: true });
-    l.id = "associationpvaluescatalog";
+    var l = LocusZoom.Layouts.get("data_layer", "association_pvalues", {
+        unnamespaced: true,
+        id: "associationpvaluescatalog",
+        fill_opacity: 1
+    });
     l.namespace.catalog = "catalog";
-    l.fill_opacity = 1;
     l.fields.push("{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue");
     return l;
 }());
@@ -520,97 +522,19 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
         }
     },
     legend: [
-        {
-            shape: "rect",
-            color: "rgb(212,63,58)",
-            width: 9,
-            label: "Active Promoter",
-            "{{namespace[intervals]}}state_id": 1
-        },
-        {
-            shape: "rect",
-            color: "rgb(250,120,105)",
-            width: 9,
-            label: "Weak Promoter",
-            "{{namespace[intervals]}}state_id": 2
-        },
-        {
-            shape: "rect",
-            color: "rgb(252,168,139)",
-            width: 9,
-            label: "Poised Promoter",
-            "{{namespace[intervals]}}state_id": 3
-        },
-        {
-            shape: "rect",
-            color: "rgb(240,189,66)",
-            width: 9,
-            label: "Strong enhancer",
-            "{{namespace[intervals]}}state_id": 4
-        },
-        {
-            shape: "rect",
-            color: "rgb(250,224,105)",
-            width: 9,
-            label: "Strong enhancer",
-            "{{namespace[intervals]}}state_id": 5
-        },
-        {
-            shape: "rect",
-            color: "rgb(240,238,84)",
-            width: 9,
-            label: "Weak enhancer",
-            "{{namespace[intervals]}}state_id": 6
-        },
-        {
-            shape: "rect",
-            color: "rgb(244,252,23)",
-            width: 9,
-            label: "Weak enhancer",
-            "{{namespace[intervals]}}state_id": 7
-        },
-        {
-            shape: "rect",
-            color: "rgb(23,232,252)",
-            width: 9,
-            label: "Insulator",
-            "{{namespace[intervals]}}state_id": 8
-        },
-        {
-            shape: "rect",
-            color: "rgb(32,191,17)",
-            width: 9,
-            label: "Transcriptional transition",
-            "{{namespace[intervals]}}state_id": 9
-        },
-        {
-            shape: "rect",
-            color: "rgb(23,166,77)",
-            width: 9,
-            label: "Transcriptional elongation",
-            "{{namespace[intervals]}}state_id": 10
-        },
-        {
-            shape: "rect",
-            color: "rgb(136,240,129)",
-            width: 9,
-            label: "Weak transcribed",
-            "{{namespace[intervals]}}state_id": 11
-        },
-        {
-            shape: "rect",
-            color: "rgb(162,133,166)",
-            width: 9,
-            label: "Polycomb-repressed",
-            "{{namespace[intervals]}}state_id": 12
-        },
-        {
-            shape: "rect",
-            color: "rgb(212,212,212)",
-            width: 9,
-            label: "Heterochromatin / low signal",
-            "{{namespace[intervals]}}state_id": 13
-        }
+        { shape: "rect", color: "rgb(212,63,58)", width: 9, label: "Active Promoter", "{{namespace[intervals]}}state_id": 1 },
+        { shape: "rect", color: "rgb(250,120,105)", width: 9, label: "Weak Promoter", "{{namespace[intervals]}}state_id": 2 },
+        { shape: "rect", color: "rgb(252,168,139)", width: 9, label: "Poised Promoter", "{{namespace[intervals]}}state_id": 3 },
+        { shape: "rect", color: "rgb(240,189,66)", width: 9, label: "Strong enhancer", "{{namespace[intervals]}}state_id": 4 },
+        { shape: "rect", color: "rgb(250,224,105)", width: 9, label: "Strong enhancer", "{{namespace[intervals]}}state_id": 5 },
+        { shape: "rect", color: "rgb(240,238,84)", width: 9, label: "Weak enhancer", "{{namespace[intervals]}}state_id": 6 },
+        { shape: "rect", color: "rgb(244,252,23)", width: 9, label: "Weak enhancer", "{{namespace[intervals]}}state_id": 7 },
+        { shape: "rect", color: "rgb(23,232,252)", width: 9, label: "Insulator", "{{namespace[intervals]}}state_id": 8 },
+        { shape: "rect", color: "rgb(32,191,17)", width: 9, label: "Transcriptional transition", "{{namespace[intervals]}}state_id": 9 },
+        { shape: "rect", color: "rgb(23,166,77)", width: 9, label: "Transcriptional elongation", "{{namespace[intervals]}}state_id": 10 },
+        { shape: "rect", color: "rgb(136,240,129)", width: 9, label: "Weak transcribed", "{{namespace[intervals]}}state_id": 11 },
+        { shape: "rect", color: "rgb(162,133,166)", width: 9, label: "Polycomb-repressed", "{{namespace[intervals]}}state_id": 12 },
+        { shape: "rect", color: "rgb(212,212,212)", width: 9, label: "Heterochromatin / low signal", "{{namespace[intervals]}}state_id": 13 }
     ],
     behaviors: {
         onmouseover: [
@@ -825,9 +749,11 @@ LocusZoom.Layouts.add("panel", "association", {
 });
 
 LocusZoom.Layouts.add("panel", "catalog_association", function () {
-    var l = LocusZoom.Layouts.get("panel", "association", { unnamespaced: true });
-    l.id = "catalogassociation";
-    l.namespace = { "assoc": "assoc", "catalog": "catalog" };  // Required to resolve display options (when applied to panel)
+    var l = LocusZoom.Layouts.get("panel", "association", {
+        unnamespaced: true,
+        id: "catalogassociation",
+        namespace: { "assoc": "assoc", "catalog": "catalog" } // Required to resolve display options
+    });
     l.dashboard.components.push({
         type: "display_options",
         position: "right",
@@ -1338,11 +1264,7 @@ LocusZoom.Layouts.add("plot", "interval_association", {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get("panel", "association", {
-            unnamespaced: true,
-            width: 800,
-            proportional_height: (225 / 570)
-        }),
+        LocusZoom.Layouts.get("panel", "association", { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
         LocusZoom.Layouts.get("panel", "intervals", { unnamespaced: true, proportional_height: (120 / 570) }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
     ]
