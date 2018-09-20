@@ -53,7 +53,7 @@
           <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
         </div>
         <div class="ten columns">
-          <div id="plot"></div>
+          <div id="lz-plot"></div>
         </div>
       </div>
       <p>To see other forms of LocusZoom.js in action take a look at <a href="http://locuszoom.org/locuszoomjs.php">locuszoom.org</a> or the <a href="#examples">examples</a> on this page.</p>
@@ -203,8 +203,6 @@
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
-        // TODO: Add sample data for offline mode
-        .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/', params: { catalog: 2 }}])
         .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
@@ -227,61 +225,6 @@
         initialState = {chr: 10, start: 114550452, end: 115067678};
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
-    var assocPanel = layout.panels[0];
-    var assocLayer = assocPanel.data_layers[2];
-
-    assocLayer.namespace["catalog"] = "catalog";
-    assocLayer.fields.push("catalog:trait", "catalog:log_pvalue"); // TODO: resolve hardcoded labels
-    assocPanel.dashboard.components.push({
-        type: "display_options",
-          position: "right",
-          color: "blue",
-          // Below: special config specific to this widget
-          button_html: "Display options...",
-          button_title: "Control how plot items are displayed",
-
-          layer_name: "associationpvalues",
-          default_config_display_name: "Linkage Disequilibrium (default)", // display name for the default plot color option (allow user to revert to plot defaults)
-
-          options: [
-              {
-                  // First dropdown menu item
-                  display_name: "Label catalog traits",  // Human readable representation of field name
-                  display: {  // Specify layout directives that control display of the plot for this option
-                      label: {
-                          text: "{{catalog:trait}}", // TODO: resolve hardcoded labels
-                          spacing: 6,
-                          lines: {
-                              style: {
-                                  "stroke-width": "2px",
-                                  "stroke": "#333333",
-                                  "stroke-dasharray": "2px 2px"
-                              }
-                          },
-                          filters: [
-                              {
-                                  field: "catalog:trait", // TODO: resolve hardcoded labels
-                                  operator: "!=",
-                                  value: null
-                              },
-                              {
-                                  field: "catalog:log_pvalue",
-                                  operator: ">",
-                                  value: 7.0301 // p < 5e-8
-                              }
-                          ],
-                          style: {
-                              "font-size": "10px",
-                              "font-weight": "bold",
-                              "fill": "#333333"
-                          }
-                      }
-                  }
-              }
-          ]
-    });
-
-    layout.panels.splice(1, 0, LocusZoom.Layouts.get("panel", "gwas_catalog"));
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
     // Add a button to show the study abstract the layout
@@ -295,7 +238,7 @@
     });
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
-    window.plot = LocusZoom.populate("#plot", data_sources, layout);
+    window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

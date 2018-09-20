@@ -805,7 +805,7 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
  * @augments LocusZoom.Data.Source
  * @param {Object|String} init Configuration (URL or object)
  * @param {Object} [init.params] Optional configuration parameters
- * @param {Number} [init.params.catalog=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
+ * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
  * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
  */
 LocusZoom.Data.GwasCatalog = LocusZoom.Data.Source.extend(function(init) {
@@ -816,7 +816,7 @@ LocusZoom.Data.GwasCatalog = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.GwasCatalog.prototype.getURL = function(state, chain, fields) {
     // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
     //  (regardless of the actual match field)
-    var catalog = this.params.catalog || 2;
+    var catalog = this.params.source || 2;
     return this.url + "?format=objects&sort=pos&filter=id eq " + catalog +
         " and chrom eq '" + state.chr + "'" +
         " and pos ge " + state.start +
