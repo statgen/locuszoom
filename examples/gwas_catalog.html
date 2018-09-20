@@ -98,7 +98,7 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
-        initialState = {chr: 16, start: 74947245, end: 75547245};
+        initialState = { chr: 7, start: 14752860, end: 15352860 };
       }
 
       layout = LocusZoom.Layouts.get("plot", "association_catalog", {state: initialState});
@@ -135,6 +135,7 @@
 
       // Populate a list of top hits links for the plot
       var top_hits = [
+          ["7:15052860", "DGKB (default)"],
           ["16:75247245", "BCAR1 (default)"],
           ["10:114758349", "TCF7L2"],
           ["16:53819169", "FTO"],
@@ -144,8 +145,7 @@
           ["8:95937502", "TP53INP1"],
           ["6:20679709", "CDKAL1"],
           ["2:161346447", "RBMS1"],
-          ["15:77832762", "HMG20A"],
-          ["7:15052860", "DGKB"]
+          ["15:77832762", "HMG20A"]
       ];
       top_hits.forEach(function (hit) {
           d3.select("ul.top_hits").append("li")
