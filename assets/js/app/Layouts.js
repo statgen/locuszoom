@@ -1,6 +1,8 @@
 /* global LocusZoom */
 "use strict";
 
+var LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
+
 /**
  * Manage known layouts for all parts of the LocusZoom plot
  *
@@ -156,7 +158,7 @@ LocusZoom.Layouts = (function () {
      *
      * @param {object} custom_layout An object containing configuration parameters that override or add to defaults
      * @param {object} default_layout An object containing default settings.
-     * @returns The custom layout is modified in place and also returned from this method.
+     * @returns {object} The custom layout is modified in place and also returned from this method.
      */
     obj.merge = function (custom_layout, default_layout) {
         if (typeof custom_layout !== "object" || typeof default_layout !== "object") {
@@ -268,7 +270,7 @@ LocusZoom.Layouts.add("data_layer", "significance", {
     id: "significance",
     type: "orthogonal_line",
     orientation: "horizontal",
-    offset: 7.301 // -log10(.05/1e6)
+    offset: LZ_SIG_THRESHOLD_LOGP
 });
 
 LocusZoom.Layouts.add("data_layer", "recomb_rate", {
@@ -378,6 +380,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues_catalog", function () {
     var l = LocusZoom.Layouts.get("data_layer", "association_pvalues", { unnamespaced: true });
     l.id = "associationpvaluescatalog";
     l.namespace.catalog = "catalog";
+    l.fill_opacity = 1;
     l.fields.push("{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue");
     return l;
 }());
@@ -645,7 +648,7 @@ LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ["{{namespace[catalog]}}rsid", "!=", null],
-        ["{{namespace[catalog]}}log_pvalue", ">", 7.301]  // -log10(.05/1e6)
+        ["{{namespace[catalog]}}log_pvalue", ">", LZ_SIG_THRESHOLD_LOGP]
     ],
     behaviors: {
         onmouseover: [
@@ -824,7 +827,7 @@ LocusZoom.Layouts.add("panel", "association", {
 LocusZoom.Layouts.add("panel", "catalog_association", function () {
     var l = LocusZoom.Layouts.get("panel", "association", { unnamespaced: true });
     l.id = "catalogassociation";
-    l.namespace = { "catalog": "catalog" };  // Required to resolve display options (when applied to panel)
+    l.namespace = { "assoc": "assoc", "catalog": "catalog" };  // Required to resolve display options (when applied to panel)
     l.dashboard.components.push({
         type: "display_options",
         position: "right",
@@ -841,6 +844,7 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                 // First dropdown menu item
                 display_name: "Label catalog traits",  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
+                    fill_opacity: 0.7,
                     label: {
                         text: "{{{{namespace[catalog]}}trait}}",
                         spacing: 6,
@@ -852,6 +856,8 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                             }
                         },
                         filters: [
+                            // Only label points if they are significant in this GWAS AND the catalog, with trait
+                            //  info available
                             {
                                 field: "{{namespace[catalog]}}trait",
                                 operator: "!=",
@@ -860,7 +866,12 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                             {
                                 field: "{{namespace[catalog]}}log_pvalue",
                                 operator: ">",
-                                value: 7.301 // -log10(.05/1e6)
+                                value: LZ_SIG_THRESHOLD_LOGP
+                            },
+                            {
+                                field: "{{namespace[assoc]}}log_pvalue",
+                                operator: ">",
+                                value: LZ_SIG_THRESHOLD_LOGP
                             }
                         ],
                         style: {
