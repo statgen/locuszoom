@@ -63,7 +63,7 @@ LocusZoom.DataLayer = function(layout, parent) {
         "faded": false,
         "hidden": false
     };
-    
+
     return this;
 
 };
@@ -274,12 +274,12 @@ LocusZoom.DataLayer.prototype.initialize = function(){
     this.svg.container = this.parent.svg.group.append("g")
         .attr("class", "lz-data_layer-container")
         .attr("id", this.getBaseId() + ".data_layer_container");
-        
+
     // Append clip path to the container element
     this.svg.clipRect = this.svg.container.append("clipPath")
         .attr("id", this.getBaseId() + ".clip")
         .append("rect");
-    
+
     // Append svg group for rendering all data layer elements, clipped by the clip path
     this.svg.group = this.svg.container.append("g")
         .attr("id", this.getBaseId() + ".data_layer")
@@ -579,7 +579,7 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
-    
+
     if (typeof this.layout.tooltip != "object"){ return; }
     var id = this.getElementId(element);
 
@@ -649,7 +649,7 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     }
 
     return this;
-    
+
 };
 
 /**
@@ -669,6 +669,8 @@ LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
     var test = function(element, filter){
         var operators = {
             "=": function(a,b){ return a === b; },
+            // eslint-disable-next-line eqeqeq
+            "!=": function(a,b) { return a != b; }, // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
             "<": function(a,b){ return a < b; },
             "<=": function(a,b){ return a <= b; },
             ">": function(a,b){ return a > b; },
@@ -772,14 +774,14 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
-    
+
     // Set/unset the proper status class on the appropriate DOM element(s)
     d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
     var element_status_node_id = this.getElementStatusNodeId(element);
     if (element_status_node_id !== null){
         d3.select("#" + element_status_node_id).classed("lz-data_layer-" + this.layout.type + "-statusnode-" + status, toggle);
     }
-    
+
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
     if (toggle && element_status_idx === -1){
@@ -788,7 +790,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     if (!toggle && element_status_idx !== -1){
         this.state[this.state_id][status].splice(element_status_idx, 1);
     }
-    
+
     // Trigger tool tip show/hide logic
     this.showOrHideTooltip(element);
 
@@ -801,7 +803,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
         this.parent.emit("element_selection", { element: element, active: toggle }, true);
     }
     return this;
-    
+
 };
 
 /**
@@ -813,7 +815,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
-    
+
     // Sanity check
     if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
         throw("Invalid status passed to DataLayer.setElementStatusByFilters()");
@@ -827,12 +829,12 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     if (exclusive){
         this.setAllElementStatus(status, !toggle);
     }
-    
+
     // Apply statuses
     this.filterElements(filters).forEach(function(element){
         this.setElementStatus(status, element, toggle);
     }.bind(this));
-    
+
     return this;
 };
 
@@ -843,7 +845,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
-    
+
     // Sanity check
     if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
         throw("Invalid status passed to DataLayer.setAllElementStatus()");
@@ -913,29 +915,29 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
 
         // Loop through behaviors making each one go in succession
         behaviors.forEach(function(behavior){
-            
+
             // Route first by the action, if defined
             if (typeof behavior != "object" || behavior === null){ return; }
-            
+
             switch (behavior.action){
-                
+
             // Set a status (set to true regardless of current status, optionally with exclusivity)
             case "set":
                 this.setElementStatus(behavior.status, element, true, behavior.exclusive);
                 break;
-                
+
             // Unset a status (set to false regardless of current status, optionally with exclusivity)
             case "unset":
                 this.setElementStatus(behavior.status, element, false, behavior.exclusive);
                 break;
-                
+
             // Toggle a status
             case "toggle":
                 var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) !== -1);
                 var exclusive = behavior.exclusive && !current_status_boolean;
                 this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                 break;
-                
+
             // Link to a dynamic URL
             case "link":
                 if (typeof behavior.href == "string"){
@@ -947,15 +949,15 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
                     }
                 }
                 break;
-                
+
             // Action not defined, just return
             default:
                 break;
-                
+
             }
-            
+
             return;
-            
+
         }.bind(this));
 
     }.bind(this);

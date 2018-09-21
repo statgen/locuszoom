@@ -390,8 +390,8 @@ LocusZoom.Dashboard.Components = (function() {
  * @class
  * @param {LocusZoom.Dashboard.Component} parent
  */
-LocusZoom.Dashboard.Component.Button = function(parent) {   
-    
+LocusZoom.Dashboard.Component.Button = function(parent) {
+
     if (!(parent instanceof LocusZoom.Dashboard.Component)){
         throw "Unable to create dashboard component button, invalid parent";
     }
@@ -601,7 +601,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         else { this.onclick = function(){}; }
         return this;
     };
-    
+
     // Primary behavior functions
     /**
      * Show the button, including creating DOM elements if necessary for first render
@@ -651,7 +651,7 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
             this.selector = null;
         }
         return this;
-    };    
+    };
 
     /**
      * Button Menu Object
@@ -885,7 +885,7 @@ LocusZoom.Dashboard.Components.add("download", function(layout){
                 }.bind(this));
             break;
         }
-    } 
+    }
     this.generateBase64SVG = function(){
         return Q.fcall(function () {
             // Insert a hidden div, clone the node into that so we can modify it with d3
@@ -1435,7 +1435,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
  * @class LocusZoom.Dashboard.Components.display_options
  * @augments LocusZoom.Dashboard.Component
  * @param {object} layout
- * @param {String} [layout.button_html="Display options"] Text to display on the toolbar button
+ * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
  * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
  * @param {string} layout.layer_name Specify the datalayer that this button should affect
  * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
@@ -1447,7 +1447,7 @@ LocusZoom.Dashboard.Components.add("data_layers", function(layout){
  *  with this `display` option. Display field should include all changes to datalayer presentation options.
  */
 LocusZoom.Dashboard.Components.add("display_options", function (layout) {
-    if (typeof layout.button_html != "string"){ layout.button_html = "Display options"; }
+    if (typeof layout.button_html != "string"){ layout.button_html = "Display options..."; }
     if (typeof layout.button_title != "string"){ layout.button_title = "Control how plot items are displayed"; }
 
     // Call parent constructor
@@ -1465,7 +1465,7 @@ LocusZoom.Dashboard.Components.add("display_options", function (layout) {
     var defaultConfig = {};
     allowed_fields.forEach(function(name) {
         var configSlot = dataLayerLayout[name];
-        if (configSlot) {
+        if (configSlot !== undefined) {
             defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
         }
     });
@@ -1495,9 +1495,11 @@ LocusZoom.Dashboard.Components.add("display_options", function (layout) {
 
         var renderRow = function(display_name, display_options, row_id) { // Helper method
             var row = table.append("tr");
+            var radioId = "" + uniqueID + row_id;
             row.append("td")
                 .append("input")
-                .attr({type: "radio", name: "color-picker-" + uniqueID, value: row_id})
+                .attr({id: radioId, type: "radio", name: "display-option-" + uniqueID, value: row_id})
+                .style("margin", 0) // Override css libraries (eg skeleton) that style form inputs
                 .property("checked", (row_id === self._selected_item))
                 .on("click", function () {
                     Object.keys(display_options).forEach(function(field_name) {
@@ -1511,7 +1513,10 @@ LocusZoom.Dashboard.Components.add("display_options", function (layout) {
                         legend.render();
                     }
                 });
-            row.append("td").text(display_name);
+            row.append("td").append("label")
+                .style("font-weight", "normal")
+                .attr("for", radioId)
+                .text(display_name);
         };
         // Render the "display options" menu: default and special custom options
         var defaultName = menuLayout.default_config_display_name || "Default style";

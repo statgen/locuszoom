@@ -253,7 +253,6 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
         layout.panels[0].margin.top = 32;
-        layout.panels[0].data_layers[0].offset = 7.30103; // Higher offset for line of GWAS significance than the default 4.522
         layout.panels[2].data_layers.push({
           id: "variant",
           type: "orthogonal_line",

@@ -178,6 +178,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         this.seperate_iterations++;
         var data_layer = this;
         var alpha = 0.5;
+        if (!this.layout.label) {
+            // Guard against layout changing in the midst of iterative rerender
+            return;
+        }
         var spacing = this.layout.label.spacing;
         var again = false;
         data_layer.label_texts.each(function () {
@@ -259,7 +263,6 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         var x_scale = "x_scale";
         var y_scale = "y"+this.layout.y_axis.axis+"_scale";
 
-        // Generate labels first (if defined)
         if (this.layout.label){
             // Apply filters to generate a filtered data set
             var filtered_data = this.data.filter(function(d){
@@ -270,10 +273,11 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                     var match = true;
                     data_layer.layout.label.filters.forEach(function(filter){
                         var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
-                        if (isNaN(field_value)){
+                        if (["!=", "="].indexOf(filter.operator) === -1 && isNaN(field_value)) {
+                            // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
                         } else {
-                            switch (filter.operator){
+                            switch (filter.operator) {
                             case "<":
                                 if (!(field_value < filter.value)){ match = false; }
                                 break;
@@ -288,6 +292,11 @@ LocusZoom.DataLayers.add("scatter", function(layout){
                                 break;
                             case "=":
                                 if (!(field_value === filter.value)){ match = false; }
+                                break;
+                            case "!=":
+                                // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
+                                // eslint-disable-next-line eqeqeq
+                                if (field_value == filter.value){ match = false; }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
@@ -367,8 +376,12 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             }
             // Remove labels when they're no longer in the filtered data set
             this.label_groups.exit().remove();
+        } else {
+            // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
+            if (this.label_groups){ this.label_groups.remove(); }
+            if (this.label_lines){ this.label_lines.remove(); }
         }
-            
+
         // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll("path.lz-data_layer-" + this.layout.type)
@@ -424,10 +437,10 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         selection.on("click.event_emitter", function(element){
             this.parent.emit("element_clicked", element, true);
         }.bind(this));
-       
+
         // Apply mouse behaviors
         this.applyBehaviors(selection);
-        
+
         // Apply method to keep labels from overlapping each other
         if (this.layout.label){
             this.flip_labels();
@@ -440,7 +453,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
             // Extend mouse behaviors to labels
             this.applyBehaviors(this.label_texts);
         }
-        
+
     };
 
     // Method to set a passed element as the LD reference in the plot-level state
@@ -461,7 +474,7 @@ LocusZoom.DataLayers.add("scatter", function(layout){
         }
         this.parent_plot.applyState({ ldrefvar: ref });
     };
- 
+
     return this;
 
 });

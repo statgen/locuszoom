@@ -53,7 +53,7 @@
           <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
         </div>
         <div class="ten columns">
-          <div id="plot"></div>
+          <div id="lz-plot"></div>
         </div>
       </div>
       <p>To see other forms of LocusZoom.js in action take a look at <a href="http://locuszoom.org/locuszoomjs.php">locuszoom.org</a> or the <a href="#examples">examples</a> on this page.</p>
@@ -176,7 +176,13 @@
         <div class="four columns example">
           <a href="examples/aggregation_tests.html">
             <h6><strong>Aggregation Tests</strong></h6>
-            <img src="examples/aggregation_tests.png" alt="Credible Sets">
+            <img src="examples/aggregation_tests.png" alt="Aggregation tests">
+          </a>
+        </div>
+        <div class="four columns example">
+          <a href="examples/gwas_catalog.html">
+            <h6><strong>GWAS Catalog</strong></h6>
+            <img src="examples/gwas_catalog.png" alt="GWAS Catalog">
           </a>
         </div>
       </div>
@@ -238,7 +244,7 @@
     });
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
-    window.plot = LocusZoom.populate("#plot", data_sources, layout);
+    window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

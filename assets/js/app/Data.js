@@ -450,7 +450,7 @@ LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames
     }
 
     var fieldFound = [];
-    for (var k=0; k<fields.length; k++) {
+    for (var k=0; k < fields.length; k++) {
         fieldFound[k] = 0;
     }
 
@@ -485,7 +485,7 @@ LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames
  * @return {Promise|Object[]} The new chain body
  * @protected
  */
-LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames) {
+LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
     return data;
 };
 
@@ -534,7 +534,7 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
             // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
             //   fields array into account). This is useful when we want to re-use the source output in many ways.
             chain.discrete[source_id] = one_source_body;
-            return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames));
+            return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
         }).then(function (new_body) {
             return { header: chain.header || {}, discrete: chain.discrete, body: new_body };
         });
@@ -703,6 +703,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
 };
 
 LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outnames) {
+    // Assumption: all usages of this source only ever ask for "isrefvar" or "state". This maps to output names.
     var obj = {};
     for(var i=0; i<fields.length; i++) {
         if(fields[i]==="isrefvar") {
@@ -761,7 +762,7 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         "&fields=chr,pos,rsquare";
 };
 
-LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
@@ -781,19 +782,111 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
             }
         }
     };
-    var tagRefVariant = function(data, refvar, idfield, outname) {
+    var tagRefVariant = function(data, refvar, idfield, outrefname, outldname) {
         for(var i=0; i<data.length; i++) {
             if (data[i][idfield] && data[i][idfield]===refvar) {
-                data[i][outname] = 1;
+                data[i][outrefname] = 1;
+                data[i][outldname] = 1; // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
             } else {
-                data[i][outname] = 0;
+                data[i][outrefname] = 0;
             }
         }
     };
 
     leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
-        tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
+        tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
+    }
+    return chain.body;
+};
+
+/**
+ * Data source for GWAS catalogs of known variants
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {Object|String} init Configuration (URL or object)
+ * @param {Object} [init.params] Optional configuration parameters
+ * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
+ * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
+ */
+LocusZoom.Data.GwasCatalog = LocusZoom.Data.Source.extend(function(init) {
+    this.parseInit(init);
+    this.dependentSource = true;
+}, "GwasCatalogLZ");
+
+LocusZoom.Data.GwasCatalog.prototype.getURL = function(state, chain, fields) {
+    // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
+    //  (regardless of the actual match field)
+    var catalog = this.params.source || 2;
+    return this.url + "?format=objects&sort=pos&filter=id eq " + catalog +
+        " and chrom eq '" + state.chr + "'" +
+        " and pos ge " + state.start +
+        " and pos le " + state.end;
+};
+
+LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
+    // Data from previous sources is already namespaced. Find the alignment field by matching.
+    var knownFields = Object.keys(records);
+    // Note: All API endoints involved only give results for 1 chromosome at a time; match is implied
+    var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
+
+    if (!posMatch) {
+        throw "Could not find data to align with GWAS catalog results";
+    }
+    return { "pos": posMatch };
+};
+
+// Skip the "individual field extraction" step; extraction will be handled when building chain body instead
+LocusZoom.Data.GwasCatalog.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
+
+LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
+    if (!data.length) {
+        return chain.body;
+    }
+
+    var decider = "log_pvalue"; //  TODO: Better reuse options in the future
+    var decider_out = outnames[fields.indexOf(decider)];
+
+    function leftJoin(left, right, fields, outnames, trans) { // Add `fields` from `right` to `left`
+        // Add a synthetic, un-namespaced field to all matching records
+        var n_matches = left["n_catalog_matches"] || 0;
+        left["n_catalog_matches"] = n_matches + 1;
+        if (decider && left[decider_out] && left[decider_out] > right[decider]) {
+            // There may be more than one GWAS catalog entry for the same SNP. This source is intended for a 1:1
+            //  annotation scenario, so for now it only joins the catalog entry that has the best -log10 pvalue
+            return;
+        }
+
+        for (var j=0; j < fields.length; j++) {
+            var fn = fields[j];
+            var outn = outnames[j];
+
+            var val = right[fn];
+            if (trans && trans[j]) {
+                val = trans[j](val);
+            }
+            left[outn] = val;
+        }
+    }
+
+    var chainNames = this.findMergeFields(chain.body[0]);
+    var catNames = this.findMergeFields(data[0]);
+
+    var i = 0, j = 0;
+    while (i < chain.body.length && j < data.length) {
+        var left = chain.body[i];
+        var right = data[j];
+
+        if (left[chainNames.pos] === right[catNames.pos]) {
+            // There may be multiple catalog entries for each matching SNP; evaluate match one at a time
+            leftJoin(left, right, fields, outnames, trans);
+            j+= 1;
+        } else if (left[chainNames.pos] < right[catNames.pos]) {
+            i += 1;
+        } else {
+            j +=1;
+        }
     }
     return chain.body;
 };
@@ -859,7 +952,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
     return LocusZoom.createCORSPromise("POST", url, body, headers);
 };
 
-LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
     if (!data) {
         return chain;
     }
@@ -1029,13 +1122,13 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
     return Q.when(chain.body || []);
 };
 
-LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, fields, outnames) {
+LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, fields, outnames, trans) {
     // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
     //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
 
     // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
     // Typically connectors are called with `connector_name:all` in the fields array.
-    return Q.when(this.combineChainBody(data, chain, fields, outnames))
+    return Q.when(this.combineChainBody(data, chain, fields, outnames, trans))
         .then(function(new_body) {
             return {header: chain.header || {}, discrete: chain.discrete || {}, body: new_body};
         });
