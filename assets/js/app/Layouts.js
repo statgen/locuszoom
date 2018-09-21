@@ -799,7 +799,7 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                                 field: "{{namespace[ld]}}state",
                                 operator: ">",
                                 value: 0.4
-                            }, // TODO: Fix the LD based tooltips
+                            },
                         ],
                         style: {
                             "font-size": "10px",
@@ -1177,6 +1177,7 @@ LocusZoom.Layouts.add("panel", "intervals", {
 
 LocusZoom.Layouts.add("panel", "catalog_annotations", {
     id: "catalogannotations",
+    title: { text: "SNPs in GWAS Catalog", x:50, style: { "font-size": "14px" } },
     width: 800,
     height: 100,
     min_height: 100,

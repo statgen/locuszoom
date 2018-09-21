@@ -46,7 +46,8 @@
   <p>
     It can be helpful to view an association plot in context of all previously reported claims about an association,
     across all traits and studies. LocusZoom is able to mark SNPs that have been previously reported in any of several
-    GWAS catalogs, including the NHGRI-EBI GWAS catalog (build 37) used in this demonstration.</p>
+    GWAS catalogs, including the NHGRI-EBI GWAS catalog (build 37) used in this demonstration.
+  </p>
 
   <p>
     Significant association SNPs with entries in the catalog can be marked with labels on the association plot, a separate
@@ -55,6 +56,7 @@
     The rug track provides more detailed contextual information.
   </p>
   <p>
+    In this demonstration, trait labels can be toggled for GWAS Catalog SNPs with LD > 0.4 of the reference variant.
     To begin, move your mouse over the association results plot below and select "Display Options".
   </p>
 
@@ -98,7 +100,7 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
-        initialState = { chr: 7, start: 14752860, end: 15352860 };
+        initialState = { chr: 9, start: 21751670, end: 22351670 };
       }
 
       layout = LocusZoom.Layouts.get("plot", "association_catalog", {state: initialState});
@@ -135,17 +137,17 @@
 
       // Populate a list of top hits links for the plot
       var top_hits = [
-          ["7:15052860", "DGKB (default)"],
+          ["9:22051670", "CDKN2A/B (default)"],
+          ["7:15052860", "DGKB"],
           ["16:75247245", "BCAR1"],
+          ["15:77832762", "HMG20A"],
+          ["8:95937502", "TP53INP1"],
           ["10:114758349", "TCF7L2"],
           ["16:53819169", "FTO"],
-          ["9:22051670", "CDKN2A/B"],
           ["7:28196413", "JAZF1"],
           ["12:71433293", "TSPAN8"],
-          ["8:95937502", "TP53INP1"],
           ["6:20679709", "CDKAL1"],
-          ["2:161346447", "RBMS1"],
-          ["15:77832762", "HMG20A"]
+          ["2:161346447", "RBMS1"]
       ];
       top_hits.forEach(function (hit) {
           d3.select("ul.top_hits").append("li")
