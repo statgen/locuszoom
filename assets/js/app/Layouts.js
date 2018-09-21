@@ -258,7 +258,7 @@ LocusZoom.Layouts.add("tooltip", "catalog_variant", {
         + "Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>"
         + "Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>"
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-        + "<a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">More on GWAS catalog</a>"
+        + "More: <a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">GWAS catalog</a> / <a href=\"https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid}}\" target=\"_new\">dbSNP</a>"
 });
 
 /**
