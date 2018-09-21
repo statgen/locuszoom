@@ -255,7 +255,7 @@ LocusZoom.Layouts.add("tooltip", "catalog_variant", {
     hide: { and: ["unhighlighted", "unselected"] },
     html: "<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>"
         + "Catalog entries: <strong>{{n_catalog_matches}}</strong><br>"
-        + "Top Trait: <strong>{{{{namespace[catalog]}}trait}}</strong><br>"
+        + "Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>"
         + "Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>"
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
         + "<a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">More on GWAS catalog</a>"
@@ -380,10 +380,12 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues_catalog", function () {
     var l = LocusZoom.Layouts.get("data_layer", "association_pvalues", {
         unnamespaced: true,
         id: "associationpvaluescatalog",
-        fill_opacity: 1
+        fill_opacity: 0.7
     });
+
+    l.tooltip.html += "{{#if {{namespace[catalog]}}rsid}}<a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">See hits on GWAS catalog</a>{{/if}}";
     l.namespace.catalog = "catalog";
-    l.fields.push("{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue");
+    l.fields.push("{{namespace[catalog]}}rsid", "{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue");
     return l;
 }());
 
@@ -554,7 +556,7 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
 });
 
 LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
-    // Identify GWAS hits that can are present in the GWAS catalog
+    // Identify GWAS hits that are present in the GWAS catalog
     namespace: { "assoc": "assoc", "catalog": "catalog" },
     id: "catalog_annotations",
     type: "annotation_track",
@@ -752,7 +754,7 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
     var l = LocusZoom.Layouts.get("panel", "association", {
         unnamespaced: true,
         id: "catalogassociation",
-        namespace: { "assoc": "assoc", "catalog": "catalog" } // Required to resolve display options
+        namespace: { "assoc": "assoc", "ld": "ld", "catalog": "catalog" } // Required to resolve display options
     });
     l.dashboard.components.push({
         type: "display_options",
@@ -763,14 +765,13 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
         button_title: "Control how plot items are displayed",
 
         layer_name: "associationpvaluescatalog",
-        default_config_display_name: "Linkage Disequilibrium (default)", // display name for the default plot color option (allow user to revert to plot defaults)
+        default_config_display_name: "No catalog labels (default)", // display name for the default plot color option (allow user to revert to plot defaults)
 
         options: [
             {
                 // First dropdown menu item
                 display_name: "Label catalog traits",  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
-                    fill_opacity: 0.7,
                     label: {
                         text: "{{{{namespace[catalog]}}trait}}",
                         spacing: 6,
@@ -782,8 +783,8 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                             }
                         },
                         filters: [
-                            // Only label points if they are significant in this GWAS AND the catalog, with trait
-                            //  info available
+                            // Only label points if they are significant for some trait in the catalog, AND in high LD
+                            //  with the top hit of interest
                             {
                                 field: "{{namespace[catalog]}}trait",
                                 operator: "!=",
@@ -795,10 +796,10 @@ LocusZoom.Layouts.add("panel", "catalog_association", function () {
                                 value: LZ_SIG_THRESHOLD_LOGP
                             },
                             {
-                                field: "{{namespace[assoc]}}log_pvalue",
+                                field: "{{namespace[ld]}}state",
                                 operator: ">",
-                                value: LZ_SIG_THRESHOLD_LOGP
-                            }
+                                value: 0.4
+                            }, // TODO: Fix the LD based tooltips
                         ],
                         style: {
                             "font-size": "10px",

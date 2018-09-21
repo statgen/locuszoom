@@ -703,6 +703,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
 };
 
 LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outnames) {
+    // Assumption: all usages of this source only ever ask for "isrefvar" or "state". This maps to output names.
     var obj = {};
     for(var i=0; i<fields.length; i++) {
         if(fields[i]==="isrefvar") {
@@ -781,19 +782,20 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
             }
         }
     };
-    var tagRefVariant = function(data, refvar, idfield, outname) {
+    var tagRefVariant = function(data, refvar, idfield, outrefname, outldname) {
         for(var i=0; i<data.length; i++) {
             if (data[i][idfield] && data[i][idfield]===refvar) {
-                data[i][outname] = 1;
+                data[i][outrefname] = 1;
+                data[i][outldname] = 1; // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
             } else {
-                data[i][outname] = 0;
+                data[i][outrefname] = 0;
             }
         }
     };
 
     leftJoin(chain.body, data, reqFields.ldout, "rsquare");
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
-        tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
+        tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
     }
     return chain.body;
 };
@@ -826,7 +828,7 @@ LocusZoom.Data.GwasCatalog.prototype.getURL = function(state, chain, fields) {
 LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
     // Data from previous sources is already namespaced. Find the alignment field by matching.
     var knownFields = Object.keys(records);
-    // Note: All API endoints involved implicitly only return for same chromosome; match is implied
+    // Note: All API endoints involved only give results for 1 chromosome at a time; match is implied
     var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
 
     if (!posMatch) {
