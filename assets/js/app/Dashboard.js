@@ -443,9 +443,9 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
         return this;
     };
     /**
-     * @deprecated since 0.5.6; use setHTML instead
+     * @deprecated since 0.5.6; use setHtml instead
      */
-    this.setText = this.setHTML;
+    this.setText = this.setHtml;
 
     /**
      * Mouseover title text for the button to show
