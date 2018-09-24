@@ -590,7 +590,7 @@ LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
             { action: "toggle", status: "selected" }
         ]
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "catalog_variant"),
+    tooltip: LocusZoom.Layouts.get("tooltip", "catalog_variant", { unnamespaced: true }),
     tooltip_positioning: "vertical"
 });
 

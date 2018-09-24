@@ -1459,6 +1459,9 @@ LocusZoom.Dashboard.Components.add("display_options", function (layout) {
         "point_shape", "point_size", "tooltip", "tooltip_positioning"];
 
     var dataLayer = this.parent_panel.data_layers[layout.layer_name];
+    if (!dataLayer) {
+        throw "Display options could not locate the specified layer_name: '" + layout.layer_name + "'";
+    }
     var dataLayerLayout = dataLayer.layout;
 
     // Store default configuration for the layer as a clean deep copy, so we may revert later
