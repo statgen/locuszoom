@@ -555,10 +555,10 @@ LocusZoom.Layouts.add("data_layer", "intervals", {
     tooltip: LocusZoom.Layouts.get("tooltip", "standard_intervals", { unnamespaced: true })
 });
 
-LocusZoom.Layouts.add("data_layer", "catalog_annotations", {
+LocusZoom.Layouts.add("data_layer", "annotation_catalog", {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { "assoc": "assoc", "catalog": "catalog" },
-    id: "catalog_annotations",
+    id: "annotation_catalog",
     type: "annotation_track",
     id_field: "{{namespace[assoc]}}variant",
     x_axis: {
@@ -750,10 +750,10 @@ LocusZoom.Layouts.add("panel", "association", {
     ]
 });
 
-LocusZoom.Layouts.add("panel", "catalog_association", function () {
+LocusZoom.Layouts.add("panel", "association_catalog", function () {
     var l = LocusZoom.Layouts.get("panel", "association", {
         unnamespaced: true,
-        id: "catalogassociation",
+        id: "associationcatalog",
         namespace: { "assoc": "assoc", "ld": "ld", "catalog": "catalog" } // Required to resolve display options
     });
     l.dashboard.components.push({
@@ -1175,9 +1175,9 @@ LocusZoom.Layouts.add("panel", "intervals", {
     ]
 });
 
-LocusZoom.Layouts.add("panel", "catalog_annotations", {
-    id: "catalogannotations",
-    title: { text: "SNPs in GWAS Catalog", x:50, style: { "font-size": "14px" } },
+LocusZoom.Layouts.add("panel", "annotation_catalog", {
+    id: "annotationcatalog",
+    title: { text: "SNPs in GWAS Catalog", x: 50, style: { "font-size": "14px" } },
     width: 800,
     height: 100,
     min_height: 100,
@@ -1190,7 +1190,7 @@ LocusZoom.Layouts.add("panel", "catalog_annotations", {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "catalog_annotations", { unnamespaced: true })
+        LocusZoom.Layouts.get("data_layer", "annotation_catalog", { unnamespaced: true })
     ]
 });
 
@@ -1222,8 +1222,8 @@ LocusZoom.Layouts.add("plot", "association_catalog", {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get("panel", "catalog_association", { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get("panel", "catalog_annotations", { unnamespaced: true }),
+        LocusZoom.Layouts.get("panel", "association_catalog", { unnamespaced: true, proportional_height: 0.5 }),
+        LocusZoom.Layouts.get("panel", "annotation_catalog", { unnamespaced: true }),
         LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true, proportional_height: 0.5 })
     ]
 });

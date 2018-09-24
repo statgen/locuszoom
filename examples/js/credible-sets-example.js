@@ -40,14 +40,14 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
     }
 });
 
-LocusZoom.Layouts.add("tooltip", "credible_set_association", function () {
+LocusZoom.Layouts.add("tooltip", "association_credible_set", function () {
     // Extend a known tooltip with an extra row of info showing posterior probabilities
     var l = LocusZoom.Layouts.get("tooltip", "standard_association", { unnamespaced: true });
     l.html += "<br>Posterior probability: <strong>{{{{namespace[assoc]}}credibleSetPosteriorProb|scinotation}}</strong>";
     return l;
 }());
 
-LocusZoom.Layouts.add("tooltip", "credible_set_annotation", {
+LocusZoom.Layouts.add("tooltip", "annotation_credible_set", {
     namespace: {"assoc": "assoc"},
     closable: true,
     show: {or: ["highlighted", "selected"]},
@@ -62,7 +62,7 @@ LocusZoom.Layouts.add("data_layer", "association_credible_set", function () {
         unnamespaced: true,
         id: "associationcredibleset",
         fill_opacity: 0.7,
-        tooltip: LocusZoom.Layouts.get("tooltip", "credible_set_association", { unnamespaced: true }),
+        tooltip: LocusZoom.Layouts.get("tooltip", "association_credible_set", { unnamespaced: true }),
         fields: [
             "{{namespace[assoc]}}variant", "{{namespace[assoc]}}position",
             "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}log_pvalue|logtoscinotation",
@@ -73,9 +73,9 @@ LocusZoom.Layouts.add("data_layer", "association_credible_set", function () {
     });
 }());
 
-LocusZoom.Layouts.add("data_layer", "credible_set_annotation", {
+LocusZoom.Layouts.add("data_layer", "annotation_credible_set", {
     namespace: {"assoc": "assoc"},
-    id: "crediblesetannotation",
+    id: "annotationcredibleset",
     type: "annotation_track",
     id_field: "{{namespace[assoc]}}variant",
     x_axis: {
@@ -103,13 +103,13 @@ LocusZoom.Layouts.add("data_layer", "credible_set_annotation", {
             {action: "toggle", status: "selected"}
         ]
     },
-    tooltip: LocusZoom.Layouts.get("tooltip", "credible_set_annotation", { unnamespaced: true }),
+    tooltip: LocusZoom.Layouts.get("tooltip", "annotation_credible_set", { unnamespaced: true }),
     tooltip_positioning: "vertical"
 });
 
-LocusZoom.Layouts.add("panel", "credible_set_annotation", {
-    id: "crediblesetannotation",
-    title: { text: "Credible Set Members", x:50, style: { "font-size": "14px" } },
+LocusZoom.Layouts.add("panel", "annotation_credible_set", {
+    id: "annotationcredibleset",
+    title: { text: "SNPs in 95% credible set", x:50, style: { "font-size": "14px" } },
     width: 800,
     height: 100,
     min_height: 100,
@@ -122,11 +122,11 @@ LocusZoom.Layouts.add("panel", "credible_set_annotation", {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get("data_layer", "credible_set_annotation", {unnamespaced: true})
+        LocusZoom.Layouts.get("data_layer", "annotation_credible_set", {unnamespaced: true})
     ]
 });
 
-LocusZoom.Layouts.add("panel", "association_credible_sets", function() {
+LocusZoom.Layouts.add("panel", "association_credible_set", function() {
     var l = LocusZoom.Layouts.get("panel", "association", {
         unnamespaced: true,
         id: "associationcrediblesets",
@@ -208,7 +208,7 @@ LocusZoom.Layouts.add("panel", "association_credible_sets", function() {
     return l;
 } ());
 
-LocusZoom.Layouts.add("plot", "association_credible_sets", {
+LocusZoom.Layouts.add("plot", "association_credible_set", {
     state: {},
     width: 800,
     height: 450,
@@ -217,7 +217,7 @@ LocusZoom.Layouts.add("plot", "association_credible_sets", {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", {unnamespaced: true}),
     panels: [
-        LocusZoom.Layouts.get("panel", "association_credible_sets", {unnamespaced: true}),
-        LocusZoom.Layouts.get("panel", "credible_set_annotation", {unnamespaced: true})
+        LocusZoom.Layouts.get("panel", "association_credible_set", {unnamespaced: true}),
+        LocusZoom.Layouts.get("panel", "annotation_credible_set", {unnamespaced: true})
     ]
 });
