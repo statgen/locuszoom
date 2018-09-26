@@ -9,14 +9,15 @@
 */
 "use strict";
 
-/* global gwasCredibleSets */
+/* global gwasCredibleSets, LocusZoom */
+
+if (typeof gwasCredibleSets === "undefined") {
+    throw new Error("The standalone gwas-credible-sets library is required to use this extension");
+}
 
 // Specify a custom datasource that adds "credible sets" fields to the prepared API response
 LocusZoom.KnownDataSources.extend("AssociationLZ", "CredibleAssociationLZ", {
     annotateData: function (records) {
-        // This is a somewhat crude method for adding fields in the front end, after the API response has been returned.
-        //  In the future, features for lazy evaluation and dynamic namespacing of calculated fields may be added.
-
         // Calculate raw bayes factors and posterior probabilities based on information returned from the API
         var nlogpvals = records.map(function (item) {
             return item["log_pvalue"];

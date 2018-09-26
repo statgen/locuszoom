@@ -253,7 +253,7 @@ LocusZoom.Layouts.add("tooltip", "catalog_variant", {
     closable: true,
     show: { or: ["highlighted", "selected"] },
     hide: { and: ["unhighlighted", "unselected"] },
-    html: "<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>"
+    html: "<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>"
         + "Catalog entries: <strong>{{n_catalog_matches}}</strong><br>"
         + "Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>"
         + "Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>"
