@@ -28,21 +28,27 @@ if (typeof gwasCredibleSets === "undefined") {
             var nlogpvals = records.map(function (item) {
                 return item["log_pvalue"];
             });
-            var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
-            var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
 
-            // Use scores to mark the credible set in various ways (depending on your visualization preferences,
-            //    some of these may be unneeded)
-            var credibleSet = gwasCredibleSets.marking.findCredibleSet(scores);
-            var credSetScaled = gwasCredibleSets.marking.rescaleCredibleSet(credibleSet);
-            var credSetBool = gwasCredibleSets.marking.markBoolean(credibleSet);
+            try {
+                var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
+                var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
 
-            // Annotate each response record based on credible set membership
-            records.forEach(function (item, index) {
-                item["credibleSetPosteriorProb"] = posteriorProbabilities[index];
-                item["credibleSetContribution"] = credSetScaled[index]; // Visualization helper: normalized to contribution within the set
-                item["isCredible"] = credSetBool[index];
-            });
+                // Use scores to mark the credible set in various ways (depending on your visualization preferences,
+                //    some of these may be unneeded)
+                var credibleSet = gwasCredibleSets.marking.findCredibleSet(scores);
+                var credSetScaled = gwasCredibleSets.marking.rescaleCredibleSet(credibleSet);
+                var credSetBool = gwasCredibleSets.marking.markBoolean(credibleSet);
+
+                // Annotate each response record based on credible set membership
+                records.forEach(function (item, index) {
+                    item["credibleSetPosteriorProb"] = posteriorProbabilities[index];
+                    item["credibleSetContribution"] = credSetScaled[index]; // Visualization helper: normalized to contribution within the set
+                    item["isCredible"] = credSetBool[index];
+                });
+            } catch (e) {
+                // If the calculation cannot be completed, return the data without annotation fields
+                console.error(e);
+            }
             return records;
         }
     });
@@ -90,8 +96,6 @@ if (typeof gwasCredibleSets === "undefined") {
             field: "{{namespace[assoc]}}position"
         },
         color: "#00CC00",
-        // Credible set markings are derived fields. Although they don't need to be specified in the fields array,
-        //  we DO need to specify the fields used to do the calculation (eg pvalue)
         fields: ["{{namespace[assoc]}}variant", "{{namespace[assoc]}}position", "{{namespace[assoc]}}log_pvalue", "{{namespace[assoc]}}credibleSetPosteriorProb", "{{namespace[assoc]}}credibleSetContribution", "{{namespace[assoc]}}isCredible"],
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
@@ -226,7 +230,8 @@ if (typeof gwasCredibleSets === "undefined") {
         dashboard: LocusZoom.Layouts.get("dashboard", "standard_plot", {unnamespaced: true}),
         panels: [
             LocusZoom.Layouts.get("panel", "association_credible_set", {unnamespaced: true}),
-            LocusZoom.Layouts.get("panel", "annotation_credible_set", {unnamespaced: true})
+            LocusZoom.Layouts.get("panel", "annotation_credible_set", {unnamespaced: true}),
+            LocusZoom.Layouts.get("panel", "genes", { unnamespaced: true })
         ]
     });
 }();

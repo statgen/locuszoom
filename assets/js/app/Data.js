@@ -449,6 +449,11 @@ LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames
         return data;
     }
 
+    if (!data.length) {
+        // Sometimes there are regions that just don't have data- this should not trigger a missing field error message!
+        return data;
+    }
+
     var fieldFound = [];
     for (var k=0; k < fields.length; k++) {
         fieldFound[k] = 0;
