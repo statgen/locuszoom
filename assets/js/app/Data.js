@@ -32,6 +32,11 @@ LocusZoom.DataSources.prototype.addSource = function(ns, x) {
  *   create a known datasource type.
  */
 LocusZoom.DataSources.prototype.add = function(ns, x) {
+    // FIXME: Some existing sites create sources with arbitrary names. This leads to subtle breakage
+    //    of namespaced fields in layouts. To avoid breaking existing usages outright, issue a deprecation warning.
+    if (ns.match(/[^A-Za-z0-9_]/)) {
+        console.warn("Deprecation warning: source name '" + ns + "' should contain only alphanumeric characters or underscores. Use of other characters may break layouts, and will be disallowed in the future.");
+    }
     return this.set(ns, x);
 };
 
