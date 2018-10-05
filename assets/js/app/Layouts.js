@@ -560,7 +560,7 @@ LocusZoom.Layouts.add("data_layer", "annotation_catalog", {
     namespace: { "assoc": "assoc", "catalog": "catalog" },
     id: "annotation_catalog",
     type: "annotation_track",
-    id_field: "{{namespace[assoc]}}variant",
+    id_field: "{{namespace[catalog]}}variant",
     x_axis: {
         field: "{{namespace[assoc]}}position"
     },

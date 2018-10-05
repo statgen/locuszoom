@@ -77,7 +77,7 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
 /**
  * Convert an integer chromosome position to an SI string representation (e.g. 23423456 => "23.42" (Mb))
  * @param {Number} pos Position
- * @param {String} [exp] Exponent to use for the returned string, eg 6=> MB. If not specified, will attempt to guess
+ * @param {Number} [exp] Exponent to use for the returned string, eg 6=> MB. If not specified, will attempt to guess
  *   the most appropriate SI prefix based on the number provided.
  * @param {Boolean} [suffix=false] Whether or not to append a suffix (e.g. "Mb") to the end of the returned string
  * @returns {string}
