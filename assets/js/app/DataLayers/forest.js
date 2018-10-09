@@ -74,7 +74,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         } else { // vertically centered
             top = page_origin.y + y_center - (tooltip_box.height / 2);
             arrow_top = (tooltip_box.height / 2) - arrow_width;
-        }        
+        }
         // Apply positions to the main div
         tooltip.selector.style("left", left + "px").style("top", top + "px");
         // Create / update position on arrow connecting tooltip to data
@@ -135,7 +135,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
             // Remove old elements as needed
             ci_selection.exit().remove();
         }
-            
+
         // Generate a selection for all forest plot points
         var points_selection = this.svg.group
             .selectAll("path.lz-data_layer-forest.lz-data_layer-forest-point")
@@ -146,7 +146,7 @@ LocusZoom.DataLayers.add("forest", function(layout){
         points_selection.enter()
             .append("path")
             .attr("class", "lz-data_layer-forest lz-data_layer-forest-point")
-            .attr("id", function(d){ return this.getElementId(d) + "_point"; }.bind(this))
+            .attr("id", function(d){ return this.getElementId(d); }.bind(this))
             .attr("transform", "translate(0," + initial_y + ")");
 
         // Generate new values (or functions for them) for position, color, size, and shape
@@ -190,24 +190,46 @@ LocusZoom.DataLayers.add("forest", function(layout){
         points_selection.on("click.event_emitter", function(element_data){
             this.parent.emit("element_clicked", element_data, true);
         }.bind(this));
-       
+
         // Apply behaviors to points
         this.applyBehaviors(points_selection);
-        
     };
- 
     return this;
 
 });
 
 /**
- * A y-aligned forest plot that dynamically chooses category labels when the data is first loaded.
- * This allows generating forest plots without defining the layout in advance.
+ * A y-aligned forest plot in which the y-axis represents item labels, which are dynamically chosen when data is loaded.
+ *   Each item is assumed to include both data and confidence intervals.
+ *   This allows generating forest plots without defining the layout in advance.
  *
  * @class LocusZoom.DataLayers.category_forest
  * @augments LocusZoom.DataLayers.forest
  */
 LocusZoom.DataLayers.extend("forest", "category_forest", {
+    _getDataExtent: function(data, axis_config) {
+        // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
+        var ci_config = this.layout.confidence_intervals;
+        if (ci_config
+            && this.layout.fields.indexOf(ci_config.start_field) !== -1
+            && this.layout.fields.indexOf(ci_config.end_field) !== -1) {
+            var min = function(d) {
+                var f = new LocusZoom.Data.Field(ci_config.start_field);
+                return +f.resolve(d);
+            };
+
+            var max = function(d) {
+                var f = new LocusZoom.Data.Field(ci_config.end_field);
+                return +f.resolve(d);
+            };
+
+            return [d3.min(data, min), d3.max(data, max)];
+        }
+
+        // If there are no confidence intervals set, then range must depend only on a single field
+        return LocusZoom.DataLayer.prototype._getDataExtent.call(this, data, axis_config);
+    },
+
     getTicks: function(dimension, config) { // Overrides parent method
         if (["x", "y1", "y2"].indexOf(dimension) === -1) {
             throw "Invalid dimension identifier" + dimension;
