@@ -29,7 +29,7 @@
       var data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
         .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 37 } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 

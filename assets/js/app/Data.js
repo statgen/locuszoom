@@ -913,7 +913,16 @@ LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
 }, "GeneLZ");
 
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
-    var source = state.source || chain.header.source || this.params.source || 2;
+    var source;
+    var build = state.genome_build || this.params.build;
+    if (build && [37, 38].indexOf(build) === -1) {
+        throw "Must specify a valid genome build number";
+    }
+    if (build) {
+        source = (build === 38) ? 1 : 3;  //  Portal API only supports 37 and 38
+    }
+    // Any explicitly specified source will override the one chosen based on build.
+    source = state.source || chain.header.source || this.params.source || source;
     return this.url + "?filter=source in " + source +
         " and chrom eq '" + state.chr + "'" +
         " and start le " + state.end +
