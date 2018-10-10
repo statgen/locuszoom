@@ -2,7 +2,7 @@
 
 /*********************
  * Line Data Layer
- * Implements a standard line plot
+ * Implements a standard line plot, representing either a trace or a filled curve.
  * @class
  * @augments LocusZoom.DataLayer
 */
@@ -191,10 +191,19 @@ LocusZoom.DataLayers.add("line", function(layout){
             .attr("class", "lz-data_layer-line");
 
         // Generate the line
-        this.line = d3.svg.line()
-            .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
-            .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
-            .interpolate(this.layout.interpolate);
+        if (this.layout.style.fill && this.layout.style.fill !== "none") {
+            // Filled curve: define the line as a filled boundary
+            this.line = d3.svg.area()
+                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+                .y0(function(d) {return parseFloat(panel[y_scale](0));})
+                .y1(function(d) { return parseFloat(panel[y_scale](d[y_field])); });
+        } else {
+            // Basic line
+            this.line = d3.svg.line()
+                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
+                .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
+                .interpolate(this.layout.interpolate);
+        }
 
         // Apply line and style
         if (this.canTransition()){
@@ -251,7 +260,7 @@ LocusZoom.DataLayers.add("line", function(layout){
 
         // Remove old elements as needed
         selection.exit().remove();
-        
+
     };
 
     /**
@@ -403,7 +412,7 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
 
         // Remove old elements as needed
         selection.exit().remove();
-        
+
     };
 
     return this;
