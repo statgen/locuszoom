@@ -196,7 +196,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
         }
         element_id = element[id_field].toString().replace(/\W/g,"");
     }
-    return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
+    return (this.getBaseId() + "-" + element_id).replace(/([:.[\],])/g, "_");
 };
 
 /**
@@ -220,7 +220,7 @@ LocusZoom.DataLayer.prototype.getElementStatusNodeId = function(element){
  * @returns {Object|null} The data bound to that element
  */
 LocusZoom.DataLayer.prototype.getElementById = function(id){
-    var selector = d3.select("#" + id.replace(/(:|\.|\[|\]|,)/g, "\\$1"));
+    var selector = d3.select("#" + id.replace(/([:.[\],])/g, "\\$1")); // escape special characters
     if (!selector.empty() && selector.data() && selector.data().length){
         return selector.data()[0];
     } else {
@@ -351,6 +351,25 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
     return ret;
 };
 
+
+/**
+ * Implementation hook for fetching the min and max values of available data. Used to determine axis range, if no other
+ *   explicit axis settings override. Useful for data layers where the data extent depends on more than one field.
+ *   (eg confidence intervals in a forest plot)
+ * @param data
+ * @param axis_config The configuration object for the specified axis.
+ * @returns {Array} [min, max] without any padding applied
+ * @private
+ */
+LocusZoom.DataLayer.prototype._getDataExtent = function(data, axis_config) {
+    data = data || this.data;
+    // By default this depends only on a single field.
+    return d3.extent(data, function (d) {
+        var f = new LocusZoom.Data.Field(axis_config.field);
+        return +f.resolve(d);
+    });
+};
+
 /**
  * Generate dimension extent function based on layout parameters
  * @param {('x'|'y')} dimension
@@ -378,10 +397,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             data_extent = axis_layout.min_extent || [];
             return data_extent;
         } else {
-            data_extent = d3.extent(this.data, function (d) {
-                var f = new LocusZoom.Data.Field(axis_layout.field);
-                return +f.resolve(d);
-            });
+            data_extent = this._getDataExtent(this.data, axis_layout);
 
             // Apply upper/lower buffers, if applicable
             var original_extent_span = data_extent[1] - data_extent[0];
