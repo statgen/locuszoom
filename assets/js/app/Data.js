@@ -685,9 +685,10 @@ LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
 };
 
 LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
-    // since LD may be shared across sources with different namespaces
-    // we use regex to find columns to join on rather than
-    // requiring exact matches
+    // Find the fields (as provided by a previous step in the chain) that are needed to combine with LD data
+
+    // Since LD information may be shared across multiple assoc sources with different namespaces,
+    //   we use regex to find columns to join on, rather than requiring exact matches
     var exactMatch = function(arr) {return function() {
         var regexes = arguments;
         for(var i=0; i<regexes.length; i++) {
@@ -717,7 +718,7 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
 };
 
 LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outnames) {
-    // Assumption: all usages of this source only ever ask for "isrefvar" or "state". This maps to output names.
+    // Assumption: all usages of this source will only ever ask for "isrefvar" or "state". This maps to output names.
     var obj = {};
     for(var i=0; i<fields.length; i++) {
         if(fields[i]==="isrefvar") {
@@ -812,7 +813,9 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
         }
     };
 
-    leftJoin(chain.body, data, reqFields.ldout, "rsquare");
+    // LD servers vary slightly. Some report corr as "rsquare", others as "correlation"
+    var corrField = data.rsquare ? "rsquare" : "correlation";
+    leftJoin(chain.body, data, reqFields.ldout, corrField);
     if(reqFields.isrefvarin && chain.header.ldrefvar) {
         tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
     }
