@@ -663,7 +663,11 @@ LocusZoom.Data.AssociationSource.prototype.normalizeResponse = function (data) {
  * Data Source for LD Data, as fetched from the LocusZoom API server (or compatible)
  * This source is designed to connect its results to association data, and therefore depends on association data having
  *  been loaded by a previous request in the data chain.
+ *
+ *  This source is deprecated in favor of a new, standalone LD server. For new usages, see LDLZ2.
+ *
  * @class
+ * @deprecated
  * @public
  * @augments LocusZoom.Data.Source
  */
@@ -729,7 +733,8 @@ LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outname
 
 LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) { return data; };
 
-LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
+
+LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
     var findExtremeValue = function(x, pval, sign) {
         pval = pval || "pvalue";
         sign = sign || 1;
@@ -743,7 +748,6 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         return extremeIdx;
     };
 
-    var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
     var reqFields = this.findRequestedFields(fields);
     var refVar = reqFields.ldin;
     if (refVar === "state") {
@@ -762,7 +766,12 @@ LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
         }
         refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
-    if (!chain.header) {chain.header = {};}
+    return refVar;
+};
+
+LocusZoom.Data.LDSource.prototype.getURL = function(state, chain, fields) {
+    var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
+    var refVar = this.getRefvar(state, chain, fields);
     chain.header.ldrefvar = refVar;
     return this.url + "results/?filter=reference eq " + refSource +
         " and chromosome2 eq '" + state.chr + "'" +
@@ -809,6 +818,63 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
     }
     return chain.body;
 };
+
+/**
+ * Fetch LD directly from the standalone Portal LD server
+ *
+ * @type {LocusZoom.Data.Source}
+ * @class
+ * @public
+ * @augments LocusZoom.Data.LDSource
+ */
+LocusZoom.LDSource2 = LocusZoom.KnownDataSources.extend("LDLZ", "LDLZ2", {
+    getURL: function(state, chain, fields) {
+        // Accept the following params in this.params:
+        // - method (r, rsquare, cov)
+        // - source (aka panel)
+        // - population
+        // - build
+        // TODO: Make population selectable dynamically
+        var build = state.genome_build || this.params.build || 37;
+        var population = this.params.population || "ALL";
+        var method = this.params.method || "rsquare";
+
+        if ([37, 38].indexOf(build) === -1) {
+            console.log(build, "ld");
+            throw "Must specify a valid genome build number";
+        }
+        var refVar = this.getRefvar(state, chain, fields);
+        chain.header.ldrefvar = refVar;
+        return this.url +  "references/1000G_GRCh" + build + "/populations/" + population + "/variants" +
+            "?correlation=" + method +
+            "&variant=" + encodeURIComponent(refVar) +
+            "&chrom=" + encodeURIComponent(state.chr) +
+            "&start=" + encodeURIComponent(state.start) +
+            "&stop=" + encodeURIComponent(state.end);
+
+        // FIXME: `rsquare` field will be renamed to `correlation`. Make parent class generic to better support.
+    },
+    fetchRequest: function(state, chain, fields) {
+        // The API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
+        var url = this.getURL(state, chain, fields);
+        var combined = { data: {} };
+        var chainRequests = function (url) {
+            return LocusZoom.createCORSPromise("GET", url)
+                .then(function(payload) {
+                    payload = JSON.parse(payload);
+                    Object.keys(payload.data).forEach(function (key) {
+                        combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
+                    });
+                    if (payload.next) {
+                        return chainRequests(payload.next);
+                    }
+                    return combined;
+                });
+        };
+
+        return chainRequests(url);
+    }
+});
 
 /**
  * Data source for GWAS catalogs of known variants
@@ -914,11 +980,11 @@ LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
 
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
     var source;
-    var build = state.genome_build || this.params.build;
+    var build = state.genome_build || this.params.build || 37;
     if (build && [37, 38].indexOf(build) === -1) {
         throw "Must specify a valid genome build number";
     }
-    if (build) {
+    if (build) { // FIXME: no longer can be empty with above change
         source = (build === 38) ? 1 : 3;  //  Portal API only supports 37 and 38
     }
     // Any explicitly specified source will override the one chosen based on build.
@@ -1056,7 +1122,7 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
 };
 
 /**
- * Data source for PheWAS data served from external JSON files
+ * Data source for PheWAS data
  * @public
  * @class
  * @augments LocusZoom.Data.Source
