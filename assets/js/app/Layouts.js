@@ -383,7 +383,7 @@ LocusZoom.Layouts.add("data_layer", "association_pvalues_catalog", function () {
         fill_opacity: 0.7
     });
 
-    l.tooltip.html += "{{#if {{namespace[catalog]}}rsid}}<a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">See hits on GWAS catalog</a>{{/if}}";
+    l.tooltip.html += "{{#if {{namespace[catalog]}}rsid}}<br><a href=\"https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}\" target=\"_new\">See hits in GWAS catalog</a>{{/if}}";
     l.namespace.catalog = "catalog";
     l.fields.push("{{namespace[catalog]}}rsid", "{{namespace[catalog]}}trait", "{{namespace[catalog]}}log_pvalue");
     return l;
