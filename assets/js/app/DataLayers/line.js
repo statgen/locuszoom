@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /*********************
  * Line Data Layer
@@ -6,18 +6,18 @@
  * @class
  * @augments LocusZoom.DataLayer
 */
-LocusZoom.DataLayers.add("line", function(layout){
+LocusZoom.DataLayers.add('line', function(layout) {
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     /** @member {Object} */
     this.DefaultLayout = {
         style: {
-            fill: "none",
-            "stroke-width": "2px"
+            fill: 'none',
+            'stroke-width': '2px'
         },
-        interpolate: "linear",
-        x_axis: { field: "x" },
-        y_axis: { field: "y", axis: 1 },
+        interpolate: 'linear',
+        x_axis: { field: 'x' },
+        y_axis: { field: 'y', axis: 1 },
         hitarea_width: 5
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -48,7 +48,7 @@ LocusZoom.DataLayers.add("line", function(layout){
      *   and the interpolated values of the x/y fields with respect to the line
      * @returns {{display: {x: *, y: null}, data: {}, slope: null}}
      */
-    this.getMouseDisplayAndData = function(){
+    this.getMouseDisplayAndData = function() {
         var ret = {
             display: {
                 x: d3.mouse(this.mouse_event)[0],
@@ -59,8 +59,8 @@ LocusZoom.DataLayers.add("line", function(layout){
         };
         var x_field = this.layout.x_axis.field;
         var y_field = this.layout.y_axis.field;
-        var x_scale = "x_scale";
-        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var x_scale = 'x_scale';
+        var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
         ret.data[x_field] = this.parent[x_scale].invert(ret.display.x);
         var bisect = d3.bisector(function(datum) { return +datum[x_field]; }).left;
         var index = bisect(this.data, ret.data[x_field]) - 1;
@@ -70,10 +70,10 @@ LocusZoom.DataLayers.add("line", function(layout){
         var range = +endDatum[x_field] - +startDatum[x_field];
         ret.data[y_field] = interpolate((ret.data[x_field] % range) / range);
         ret.display.y = this.parent[y_scale](ret.data[y_field]);
-        if (this.layout.tooltip.x_precision){
+        if (this.layout.tooltip.x_precision) {
             ret.data[x_field] = ret.data[x_field].toPrecision(this.layout.tooltip.x_precision);
         }
-        if (this.layout.tooltip.y_precision){
+        if (this.layout.tooltip.y_precision) {
             ret.data[y_field] = ret.data[y_field].toPrecision(this.layout.tooltip.y_precision);
         }
         ret.slope = (this.parent[y_scale](endDatum[y_field]) - this.parent[y_scale](startDatum[y_field]))
@@ -85,18 +85,18 @@ LocusZoom.DataLayers.add("line", function(layout){
      * Reimplement the positionTooltip() method to be line-specific
      * @param {String} id Identify the tooltip to be positioned
      */
-    this.positionTooltip = function(id){
-        if (typeof id != "string"){
-            throw ("Unable to position tooltip: id is not a string");
+    this.positionTooltip = function(id) {
+        if (typeof id != 'string') {
+            throw ('Unable to position tooltip: id is not a string');
         }
-        if (!this.tooltips[id]){
-            throw ("Unable to position tooltip: id does not point to a valid tooltip");
+        if (!this.tooltips[id]) {
+            throw ('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var tooltip = this.tooltips[id];
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
         var arrow_width = 7; // as defined in the default stylesheet
         var border_radius = 6; // as defined in the default stylesheet
-        var stroke_width = parseFloat(this.layout.style["stroke-width"]) || 1;
+        var stroke_width = parseFloat(this.layout.style['stroke-width']) || 1;
         var page_origin = this.getPageOrigin();
         var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
         var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
@@ -107,23 +107,23 @@ LocusZoom.DataLayers.add("line", function(layout){
 
         // If the absolute value of the slope of the line at this point is above 1 (including Infinity)
         // then position the tool tip left/right. Otherwise position top/bottom.
-        if (Math.abs(dd.slope) > 1){
+        if (Math.abs(dd.slope) > 1) {
 
             // Position horizontally on the left or the right depending on which side of the plot the point is on
-            if (dd.display.x <= this.parent.layout.width / 2){
+            if (dd.display.x <= this.parent.layout.width / 2) {
                 left = page_origin.x + dd.display.x + stroke_width + arrow_width + stroke_width;
-                arrow_type = "left";
+                arrow_type = 'left';
                 arrow_left = -1 * (arrow_width + stroke_width);
             } else {
                 left = page_origin.x + dd.display.x - tooltip_box.width - stroke_width - arrow_width - stroke_width;
-                arrow_type = "right";
+                arrow_type = 'right';
                 arrow_left = tooltip_box.width - stroke_width;
             }
             // Position vertically centered unless we're at the top or bottom of the plot
-            if (dd.display.y - (tooltip_box.height / 2) <= 0){ // Too close to the top, push it down
+            if (dd.display.y - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
                 top = page_origin.y + dd.display.y - (1.5 * arrow_width) - border_radius;
                 arrow_top = border_radius;
-            } else if (dd.display.y + (tooltip_box.height / 2) >= data_layer_height){ // Too close to the bottom, pull it up
+            } else if (dd.display.y + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
                 top = page_origin.y + dd.display.y + arrow_width + border_radius - tooltip_box.height;
                 arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
             } else { // vertically centered
@@ -144,54 +144,54 @@ LocusZoom.DataLayers.add("line", function(layout){
             arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
 
             // Position vertically above the line unless there's insufficient space
-            if (tooltip_box.height + stroke_width + arrow_width > dd.display.y){
+            if (tooltip_box.height + stroke_width + arrow_width > dd.display.y) {
                 top = page_origin.y + dd.display.y + stroke_width + arrow_width;
-                arrow_type = "up";
+                arrow_type = 'up';
                 arrow_top = 0 - stroke_width - arrow_width;
             } else {
                 top = page_origin.y + dd.display.y - (tooltip_box.height + stroke_width + arrow_width);
-                arrow_type = "down";
+                arrow_type = 'down';
                 arrow_top = tooltip_box.height - stroke_width;
             }
         }
 
         // Apply positions to the main div
-        tooltip.selector.style({ left: left + "px", top: top + "px" });
+        tooltip.selector.style({ left: left + 'px', top: top + 'px' });
         // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow){
-            tooltip.arrow = tooltip.selector.append("div").style("position", "absolute");
+        if (!tooltip.arrow) {
+            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
         }
         tooltip.arrow
-            .attr("class", "lz-data_layer-tooltip-arrow_" + arrow_type)
-            .style({ "left": arrow_left + "px", top: arrow_top + "px" });
+            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
+            .style({ 'left': arrow_left + 'px', top: arrow_top + 'px' });
 
     };
 
     /**
      * Implement the main render function
      */
-    this.render = function(){
+    this.render = function() {
 
         // Several vars needed to be in scope
         var data_layer = this;
         var panel = this.parent;
         var x_field = this.layout.x_axis.field;
         var y_field = this.layout.y_axis.field;
-        var x_scale = "x_scale";
-        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
+        var x_scale = 'x_scale';
+        var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
 
         // Join data to the line selection
         var selection = this.svg.group
-            .selectAll("path.lz-data_layer-line")
+            .selectAll('path.lz-data_layer-line')
             .data([this.data]);
 
         // Create path element, apply class
         this.path = selection.enter()
-            .append("path")
-            .attr("class", "lz-data_layer-line");
+            .append('path')
+            .attr('class', 'lz-data_layer-line');
 
         // Generate the line
-        if (this.layout.style.fill && this.layout.style.fill !== "none") {
+        if (this.layout.style.fill && this.layout.style.fill !== 'none') {
             // Filled curve: define the line as a filled boundary
             this.line = d3.svg.area()
                 .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
@@ -206,51 +206,51 @@ LocusZoom.DataLayers.add("line", function(layout){
         }
 
         // Apply line and style
-        if (this.canTransition()){
+        if (this.canTransition()) {
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || "cubic-in-out")
-                .attr("d", this.line)
+                .ease(this.layout.transition.ease || 'cubic-in-out')
+                .attr('d', this.line)
                 .style(this.layout.style);
         } else {
             selection
-                .attr("d", this.line)
+                .attr('d', this.line)
                 .style(this.layout.style);
         }
 
         // Apply tooltip, etc
-        if (this.layout.tooltip){
+        if (this.layout.tooltip) {
             // Generate an overlaying transparent "hit area" line for more intuitive mouse events
-            var hitarea_width = parseFloat(this.layout.hitarea_width).toString() + "px";
+            var hitarea_width = parseFloat(this.layout.hitarea_width).toString() + 'px';
             var hitarea = this.svg.group
-                .selectAll("path.lz-data_layer-line-hitarea")
+                .selectAll('path.lz-data_layer-line-hitarea')
                 .data([this.data]);
             hitarea.enter()
-                .append("path")
-                .attr("class", "lz-data_layer-line-hitarea")
-                .style("stroke-width", hitarea_width);
+                .append('path')
+                .attr('class', 'lz-data_layer-line-hitarea')
+                .style('stroke-width', hitarea_width);
             var hitarea_line = d3.svg.line()
                 .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
                 .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
                 .interpolate(this.layout.interpolate);
             hitarea
-                .attr("d", hitarea_line)
-                .on("mouseover", function(){
+                .attr('d', hitarea_line)
+                .on('mouseover', function() {
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
                     data_layer.createTooltip(dd.data);
                 })
-                .on("mousemove", function(){
+                .on('mousemove', function() {
                     clearTimeout(data_layer.tooltip_timeout);
                     data_layer.mouse_event = this;
                     var dd = data_layer.getMouseDisplayAndData();
                     data_layer.updateTooltip(dd.data);
                     data_layer.positionTooltip(data_layer.getElementId());
                 })
-                .on("mouseout", function(){
-                    data_layer.tooltip_timeout = setTimeout(function(){
+                .on('mouseout', function() {
+                    data_layer.tooltip_timeout = setTimeout(function() {
                         data_layer.mouse_event = null;
                         data_layer.destroyTooltip(data_layer.getElementId());
                     }, 300);
@@ -270,32 +270,32 @@ LocusZoom.DataLayers.add("line", function(layout){
      * @param {Boolean} toggle
      * @returns {LocusZoom.DataLayer}
      */
-    this.setElementStatus = function(status, element, toggle){
+    this.setElementStatus = function(status, element, toggle) {
         return this.setAllElementStatus(status, toggle);
     };
-    this.setElementStatusByFilters = function(status, toggle){
+    this.setElementStatusByFilters = function(status, toggle) {
         return this.setAllElementStatus(status, toggle);
     };
-    this.setAllElementStatus = function(status, toggle){
+    this.setAllElementStatus = function(status, toggle) {
         // Sanity check
-        if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
-            throw("Invalid status passed to DataLayer.setAllElementStatus()");
+        if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
+            throw('Invalid status passed to DataLayer.setAllElementStatus()');
         }
-        if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-        if (typeof toggle == "undefined"){ toggle = true; }
+        if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+        if (typeof toggle == 'undefined') { toggle = true; }
 
         // Update global status flag
         this.global_statuses[status] = toggle;
 
         // Apply class to path based on global status flags
-        var path_class = "lz-data_layer-line";
-        Object.keys(this.global_statuses).forEach(function(global_status){
-            if (this.global_statuses[global_status]){ path_class += " lz-data_layer-line-" + global_status; }
+        var path_class = 'lz-data_layer-line';
+        Object.keys(this.global_statuses).forEach(function(global_status) {
+            if (this.global_statuses[global_status]) { path_class += ' lz-data_layer-line-' + global_status; }
         }.bind(this));
-        this.path.attr("class", path_class);
+        this.path.attr('class', path_class);
 
         // Trigger layout changed event hook
-        this.parent.emit("layout_changed", true);
+        this.parent.emit('layout_changed', true);
         return this;
     };
 
@@ -311,16 +311,16 @@ LocusZoom.DataLayers.add("line", function(layout){
  * @class
  * @augments LocusZoom.DataLayer
 */
-LocusZoom.DataLayers.add("orthogonal_line", function(layout){
+LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         style: {
-            "stroke": "#D3D3D3",
-            "stroke-width": "3px",
-            "stroke-dasharray": "10px 10px"
+            'stroke': '#D3D3D3',
+            'stroke-width': '3px',
+            'stroke-dasharray': '10px 10px'
         },
-        orientation: "horizontal",
+        orientation: 'horizontal',
         x_axis: {
             axis: 1,
             decoupled: true
@@ -334,8 +334,8 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     // Require that orientation be "horizontal" or "vertical" only
-    if (["horizontal","vertical"].indexOf(layout.orientation) === -1){
-        layout.orientation = "horizontal";
+    if (['horizontal','vertical'].indexOf(layout.orientation) === -1) {
+        layout.orientation = 'horizontal';
     }
 
     // Vars for storing the data generated line
@@ -350,19 +350,19 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
     /**
      * Implement the main render function
      */
-    this.render = function(){
+    this.render = function() {
 
         // Several vars needed to be in scope
         var panel = this.parent;
-        var x_scale = "x_scale";
-        var y_scale = "y" + this.layout.y_axis.axis + "_scale";
-        var x_extent = "x_extent";
-        var y_extent = "y" + this.layout.y_axis.axis + "_extent";
-        var x_range = "x_range";
-        var y_range = "y" + this.layout.y_axis.axis + "_range";
+        var x_scale = 'x_scale';
+        var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        var x_extent = 'x_extent';
+        var y_extent = 'y' + this.layout.y_axis.axis + '_extent';
+        var x_range = 'x_range';
+        var y_range = 'y' + this.layout.y_axis.axis + '_range';
 
         // Generate data using extents depending on orientation
-        if (this.layout.orientation === "horizontal"){
+        if (this.layout.orientation === 'horizontal') {
             this.data = [
                 { x: panel[x_extent][0], y: this.layout.offset },
                 { x: panel[x_extent][1], y: this.layout.offset }
@@ -376,37 +376,37 @@ LocusZoom.DataLayers.add("orthogonal_line", function(layout){
 
         // Join data to the line selection
         var selection = this.svg.group
-            .selectAll("path.lz-data_layer-line")
+            .selectAll('path.lz-data_layer-line')
             .data([this.data]);
 
         // Create path element, apply class
         this.path = selection.enter()
-            .append("path")
-            .attr("class", "lz-data_layer-line");
+            .append('path')
+            .attr('class', 'lz-data_layer-line');
 
         // Generate the line
         this.line = d3.svg.line()
             .x(function(d, i) {
-                var x = parseFloat(panel[x_scale](d["x"]));
+                var x = parseFloat(panel[x_scale](d['x']));
                 return isNaN(x) ? panel[x_range][i] : x;
             })
             .y(function(d, i) {
-                var y = parseFloat(panel[y_scale](d["y"]));
+                var y = parseFloat(panel[y_scale](d['y']));
                 return isNaN(y) ? panel[y_range][i] : y;
             })
-            .interpolate("linear");
+            .interpolate('linear');
 
         // Apply line and style
-        if (this.canTransition()){
+        if (this.canTransition()) {
             selection
                 .transition()
                 .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || "cubic-in-out")
-                .attr("d", this.line)
+                .ease(this.layout.transition.ease || 'cubic-in-out')
+                .attr('d', this.line)
                 .style(this.layout.style);
         } else {
             selection
-                .attr("d", this.line)
+                .attr('d', this.line)
                 .style(this.layout.style);
         }
 

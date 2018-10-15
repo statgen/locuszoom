@@ -46,7 +46,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.8.2' };
+        var LocusZoom = { version: '0.9.0-a1' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -114,7 +114,7 @@
         /**
  * Convert an integer chromosome position to an SI string representation (e.g. 23423456 => "23.42" (Mb))
  * @param {Number} pos Position
- * @param {String} [exp] Exponent to use for the returned string, eg 6=> MB. If not specified, will attempt to guess
+ * @param {Number} [exp] Exponent to use for the returned string, eg 6=> MB. If not specified, will attempt to guess
  *   the most appropriate SI prefix based on the number provided.
  * @param {Boolean} [suffix=false] Whether or not to append a suffix (e.g. "Mb") to the end of the returned string
  * @returns {string}
@@ -792,6 +792,8 @@
         LocusZoom.ext = {};
         /* global LocusZoom */
         'use strict';
+        var LZ_SIG_THRESHOLD_LOGP = 7.301;
+        // -log10(.05/1e6)
         /**
  * Manage known layouts for all parts of the LocusZoom plot
  *
@@ -945,7 +947,7 @@
      *
      * @param {object} custom_layout An object containing configuration parameters that override or add to defaults
      * @param {object} default_layout An object containing default settings.
-     * @returns The custom layout is modified in place and also returned from this method.
+     * @returns {object} The custom layout is modified in place and also returned from this method.
      */
             obj.merge = function (custom_layout, default_layout) {
                 if (typeof custom_layout !== 'object' || typeof default_layout !== 'object') {
@@ -989,7 +991,6 @@
  * Tooltip Layouts
  * @namespace LocusZoom.Layouts.tooltips
  */
-        // TODO: Improve documentation of predefined types within layout namespaces
         LocusZoom.Layouts.add('tooltip', 'standard_association', {
             namespace: { 'assoc': 'assoc' },
             closable: true,
@@ -1007,9 +1008,11 @@
             },
             html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>' + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>' + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele}}</strong><br>' + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
         });
-        var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
-        LocusZoom.Layouts.add('tooltip', 'covariates_model_association', covariates_model_association);
+        LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
+            var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+            covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
+            return covariates_model_association;
+        }());
         LocusZoom.Layouts.add('tooltip', 'standard_genes', {
             closable: true,
             show: {
@@ -1043,15 +1046,36 @@
             },
             html: '{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}'
         });
+        LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
+            namespace: {
+                'assoc': 'assoc',
+                'catalog': 'catalog'
+            },
+            closable: true,
+            show: {
+                or: [
+                    'highlighted',
+                    'selected'
+                ]
+            },
+            hide: {
+                and: [
+                    'unhighlighted',
+                    'unselected'
+                ]
+            },
+            html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>' + 'Catalog entries: <strong>{{n_catalog_matches}}</strong><br>' + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>' + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'    // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
++ 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid}}" target="_new">dbSNP</a>'
+        });
         /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
-*/
+ */
         LocusZoom.Layouts.add('data_layer', 'significance', {
             id: 'significance',
             type: 'orthogonal_line',
             orientation: 'horizontal',
-            offset: 4.522
+            offset: LZ_SIG_THRESHOLD_LOGP
         });
         LocusZoom.Layouts.add('data_layer', 'recomb_rate', {
             namespace: { 'recomb': 'recomb' },
@@ -1181,6 +1205,7 @@
                     class: 'lz-data_layer-scatter'
                 }
             ],
+            label: null,
             fields: [
                 '{{namespace[assoc]}}variant',
                 '{{namespace[assoc]}}position',
@@ -1224,6 +1249,18 @@
             },
             tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
         });
+        LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
+            // Slightly modify an existing layout
+            var l = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
+                unnamespaced: true,
+                id: 'associationpvaluescatalog',
+                fill_opacity: 0.7
+            });
+            l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
+            l.namespace.catalog = 'catalog';
+            l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
+            return l;
+        }());
         LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
             namespace: { 'phewas': 'phewas' },
             id: 'phewaspvalues',
@@ -1535,9 +1572,64 @@
             },
             tooltip: LocusZoom.Layouts.get('tooltip', 'standard_intervals', { unnamespaced: true })
         });
+        LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
+            // Identify GWAS hits that are present in the GWAS catalog
+            namespace: {
+                'assoc': 'assoc',
+                'catalog': 'catalog'
+            },
+            id: 'annotation_catalog',
+            type: 'annotation_track',
+            id_field: '{{namespace[catalog]}}variant',
+            x_axis: { field: '{{namespace[assoc]}}position' },
+            color: '#0000CC',
+            fields: [
+                '{{namespace[assoc]}}variant',
+                '{{namespace[assoc]}}chromosome',
+                '{{namespace[assoc]}}position',
+                '{{namespace[catalog]}}variant',
+                '{{namespace[catalog]}}rsid',
+                '{{namespace[catalog]}}trait',
+                '{{namespace[catalog]}}log_pvalue'
+            ],
+            filters: [
+                // Specify which points to show on the track. Any selection must satisfy ALL filters
+                [
+                    '{{namespace[catalog]}}rsid',
+                    '!=',
+                    null
+                ],
+                [
+                    '{{namespace[catalog]}}log_pvalue',
+                    '>',
+                    LZ_SIG_THRESHOLD_LOGP
+                ]
+            ],
+            behaviors: {
+                onmouseover: [{
+                        action: 'set',
+                        status: 'highlighted'
+                    }],
+                onmouseout: [{
+                        action: 'unset',
+                        status: 'highlighted'
+                    }],
+                onclick: [{
+                        action: 'toggle',
+                        status: 'selected',
+                        exclusive: true
+                    }],
+                onshiftclick: [{
+                        action: 'toggle',
+                        status: 'selected'
+                    }]
+            },
+            tooltip: LocusZoom.Layouts.get('tooltip', 'catalog_variant', { unnamespaced: true }),
+            tooltip_positioning: 'vertical'
+        });
         /**
  * Dashboard Layouts: toolbar buttons etc
-  * @namespace Layouts.dashboard
+ * @namespace Layouts.dashboard
  */
         LocusZoom.Layouts.add('dashboard', 'standard_panel', {
             components: [
@@ -1574,56 +1666,55 @@
                 }
             ]
         });
-        var covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot');
-        covariates_model_plot_dashboard.components.push({
-            type: 'covariates_model',
-            button_html: 'Model',
-            button_title: 'Show and edit covariates currently in model',
-            position: 'left'
-        });
-        LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', covariates_model_plot_dashboard);
-        var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot');
-        region_nav_plot_dashboard.components.push({
-            type: 'shift_region',
-            step: 500000,
-            button_html: '>>',
-            position: 'right',
-            group_position: 'end'
-        });
-        region_nav_plot_dashboard.components.push({
-            type: 'shift_region',
-            step: 50000,
-            button_html: '>',
-            position: 'right',
-            group_position: 'middle'
-        });
-        region_nav_plot_dashboard.components.push({
-            type: 'zoom_region',
-            step: 0.2,
-            position: 'right',
-            group_position: 'middle'
-        });
-        region_nav_plot_dashboard.components.push({
-            type: 'zoom_region',
-            step: -0.2,
-            position: 'right',
-            group_position: 'middle'
-        });
-        region_nav_plot_dashboard.components.push({
-            type: 'shift_region',
-            step: -50000,
-            button_html: '<',
-            position: 'right',
-            group_position: 'middle'
-        });
-        region_nav_plot_dashboard.components.push({
-            type: 'shift_region',
-            step: -500000,
-            button_html: '<<',
-            position: 'right',
-            group_position: 'start'
-        });
-        LocusZoom.Layouts.add('dashboard', 'region_nav_plot', region_nav_plot_dashboard);
+        LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', function () {
+            var covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
+            covariates_model_plot_dashboard.components.push({
+                type: 'covariates_model',
+                button_html: 'Model',
+                button_title: 'Show and edit covariates currently in model',
+                position: 'left'
+            });
+            return covariates_model_plot_dashboard;
+        }());
+        LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
+            var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
+            region_nav_plot_dashboard.components.push({
+                type: 'shift_region',
+                step: 500000,
+                button_html: '>>',
+                position: 'right',
+                group_position: 'end'
+            }, {
+                type: 'shift_region',
+                step: 50000,
+                button_html: '>',
+                position: 'right',
+                group_position: 'middle'
+            }, {
+                type: 'zoom_region',
+                step: 0.2,
+                position: 'right',
+                group_position: 'middle'
+            }, {
+                type: 'zoom_region',
+                step: -0.2,
+                position: 'right',
+                group_position: 'middle'
+            }, {
+                type: 'shift_region',
+                step: -50000,
+                button_html: '<',
+                position: 'right',
+                group_position: 'middle'
+            }, {
+                type: 'shift_region',
+                step: -500000,
+                button_html: '<<',
+                position: 'right',
+                group_position: 'start'
+            });
+            return region_nav_plot_dashboard;
+        }());
         /**
  * Panel Layouts
  * @namespace Layouts.panel
@@ -1688,6 +1779,77 @@
                 LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true })
             ]
         });
+        LocusZoom.Layouts.add('panel', 'association_catalog', function () {
+            var l = LocusZoom.Layouts.get('panel', 'association', {
+                unnamespaced: true,
+                id: 'associationcatalog',
+                namespace: {
+                    'assoc': 'assoc',
+                    'ld': 'ld',
+                    'catalog': 'catalog'
+                }    // Required to resolve display options
+            });
+            l.dashboard.components.push({
+                type: 'display_options',
+                position: 'right',
+                color: 'blue',
+                // Below: special config specific to this widget
+                button_html: 'Display options...',
+                button_title: 'Control how plot items are displayed',
+                layer_name: 'associationpvaluescatalog',
+                default_config_display_name: 'No catalog labels (default)',
+                // display name for the default plot color option (allow user to revert to plot defaults)
+                options: [{
+                        // First dropdown menu item
+                        display_name: 'Label catalog traits',
+                        // Human readable representation of field name
+                        display: {
+                            // Specify layout directives that control display of the plot for this option
+                            label: {
+                                text: '{{{{namespace[catalog]}}trait}}',
+                                spacing: 6,
+                                lines: {
+                                    style: {
+                                        'stroke-width': '2px',
+                                        'stroke': '#333333',
+                                        'stroke-dasharray': '2px 2px'
+                                    }
+                                },
+                                filters: [
+                                    // Only label points if they are significant for some trait in the catalog, AND in high LD
+                                    //  with the top hit of interest
+                                    {
+                                        field: '{{namespace[catalog]}}trait',
+                                        operator: '!=',
+                                        value: null
+                                    },
+                                    {
+                                        field: '{{namespace[catalog]}}log_pvalue',
+                                        operator: '>',
+                                        value: LZ_SIG_THRESHOLD_LOGP
+                                    },
+                                    {
+                                        field: '{{namespace[ld]}}state',
+                                        operator: '>',
+                                        value: 0.4
+                                    }
+                                ],
+                                style: {
+                                    'font-size': '10px',
+                                    'font-weight': 'bold',
+                                    'fill': '#333333'
+                                }
+                            }
+                        }
+                    }]
+            });
+            l.data_layers = [
+                LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
+                LocusZoom.Layouts.get('data_layer', 'association_pvalues_catalog', { unnamespaced: true })
+            ];
+            return l;
+        }());
         LocusZoom.Layouts.add('panel', 'genes', {
             id: 'genes',
             width: 800,
@@ -2061,6 +2223,31 @@
             },
             data_layers: [LocusZoom.Layouts.get('data_layer', 'intervals', { unnamespaced: true })]
         });
+        LocusZoom.Layouts.add('panel', 'annotation_catalog', {
+            id: 'annotationcatalog',
+            title: {
+                text: 'SNPs in GWAS Catalog',
+                x: 50,
+                style: { 'font-size': '14px' }
+            },
+            width: 800,
+            height: 100,
+            min_height: 100,
+            proportional_width: 1,
+            margin: {
+                top: 35,
+                right: 50,
+                bottom: 40,
+                left: 50
+            },
+            inner_border: 'rgb(210, 210, 210)',
+            interaction: {
+                drag_background_to_pan: true,
+                scroll_to_zoom: true,
+                x_linked: true
+            },
+            data_layers: [LocusZoom.Layouts.get('data_layer', 'annotation_catalog', { unnamespaced: true })]
+        });
         /**
  * Plot Layouts
  * @namespace Layouts.plot
@@ -2078,6 +2265,26 @@
                     unnamespaced: true,
                     proportional_height: 0.5
                 }),
+                LocusZoom.Layouts.get('panel', 'genes', {
+                    unnamespaced: true,
+                    proportional_height: 0.5
+                })
+            ]
+        });
+        LocusZoom.Layouts.add('plot', 'association_catalog', {
+            state: {},
+            width: 800,
+            height: 450,
+            responsive_resize: true,
+            min_region_scale: 20000,
+            max_region_scale: 1000000,
+            dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+            panels: [
+                LocusZoom.Layouts.get('panel', 'association_catalog', {
+                    unnamespaced: true,
+                    proportional_height: 0.5
+                }),
+                LocusZoom.Layouts.get('panel', 'annotation_catalog', { unnamespaced: true }),
                 LocusZoom.Layouts.get('panel', 'genes', {
                     unnamespaced: true,
                     proportional_height: 0.5
@@ -2346,7 +2553,7 @@
                 }
                 element_id = element[id_field].toString().replace(/\W/g, '');
             }
-            return (this.getBaseId() + '-' + element_id).replace(/(:|\.|\[|\]|,)/g, '_');
+            return (this.getBaseId() + '-' + element_id).replace(/([:.[\],])/g, '_');
         };
         /**
  * Fetch an ID that may bind a data element to a separate visual node for displaying status
@@ -2368,7 +2575,8 @@
  * @returns {Object|null} The data bound to that element
  */
         LocusZoom.DataLayer.prototype.getElementById = function (id) {
-            var selector = d3.select('#' + id.replace(/(:|\.|\[|\]|,)/g, '\\$1'));
+            var selector = d3.select('#' + id.replace(/([:.[\],])/g, '\\$1'));
+            // escape special characters
             if (!selector.empty() && selector.data() && selector.data().length) {
                 return selector.data()[0];
             } else {
@@ -2484,6 +2692,23 @@
             return ret;
         };
         /**
+ * Implementation hook for fetching the min and max values of available data. Used to determine axis range, if no other
+ *   explicit axis settings override. Useful for data layers where the data extent depends on more than one field.
+ *   (eg confidence intervals in a forest plot)
+ * @param data
+ * @param axis_config The configuration object for the specified axis.
+ * @returns {Array} [min, max] without any padding applied
+ * @private
+ */
+        LocusZoom.DataLayer.prototype._getDataExtent = function (data, axis_config) {
+            data = data || this.data;
+            // By default this depends only on a single field.
+            return d3.extent(data, function (d) {
+                var f = new LocusZoom.Data.Field(axis_config.field);
+                return +f.resolve(d);
+            });
+        };
+        /**
  * Generate dimension extent function based on layout parameters
  * @param {('x'|'y')} dimension
  */
@@ -2512,10 +2737,7 @@
                     data_extent = axis_layout.min_extent || [];
                     return data_extent;
                 } else {
-                    data_extent = d3.extent(this.data, function (d) {
-                        var f = new LocusZoom.Data.Field(axis_layout.field);
-                        return +f.resolve(d);
-                    });
+                    data_extent = this._getDataExtent(this.data, axis_layout);
                     // Apply upper/lower buffers, if applicable
                     var original_extent_span = data_extent[1] - data_extent[0];
                     if (!isNaN(axis_layout.lower_buffer)) {
@@ -2792,6 +3014,11 @@
                     '=': function (a, b) {
                         return a === b;
                     },
+                    // eslint-disable-next-line eqeqeq
+                    '!=': function (a, b) {
+                        return a != b;
+                    },
+                    // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
                     '<': function (a, b) {
                         return a < b;
                     },
@@ -3314,7 +3541,10 @@
             // In the future we may add additional options for controlling marker size/ shape, based on user feedback
             this.DefaultLayout = {
                 color: '#000000',
-                filters: []
+                filters: [],
+                tooltip_positioning: 'middle',
+                // Allowed values: top, middle, bottom
+                hit_area_width: 8
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
             if (!Array.isArray(layout.filters)) {
@@ -3326,24 +3556,64 @@
                 var self = this;
                 // Only render points that currently satisfy all provided filter conditions.
                 var trackData = this.filter(this.layout.filters, 'elements');
-                var selection = this.svg.group.selectAll('rect.lz-data_layer-' + self.layout.type).data(trackData, function (d) {
+                // Put the <g> containing visible lines before the one containing hit areas, so that the hit areas will be on top.
+                var visible_lines_group = this.svg.group.select('g.lz-data_layer-' + self.layout.type + '-visible_lines');
+                if (visible_lines_group.size() === 0) {
+                    visible_lines_group = this.svg.group.append('g').attr('class', 'lz-data_layer-' + self.layout.type + '-visible_lines');
+                }
+                var selection = visible_lines_group.selectAll('rect.lz-data_layer-' + self.layout.type).data(trackData, function (d) {
                     return d[self.layout.id_field];
                 });
-                // Add new elements as needed
+                // Draw rectangles (visual and tooltip positioning)
                 selection.enter().append('rect').attr('class', 'lz-data_layer-' + this.layout.type).attr('id', function (d) {
                     return self.getElementId(d);
                 });
-                // Update the set of elements to reflect new data
+                var width = 1;
                 selection.attr('x', function (d) {
-                    return self.parent['x_scale'](d[self.layout.x_axis.field]);
-                }).attr('width', 1)    // TODO autocalc width of track? Based on datarange / pixel width presumably
-.attr('height', self.parent.layout.height).attr('fill', function (d) {
+                    return self.parent['x_scale'](d[self.layout.x_axis.field]) - width / 2;
+                }).attr('width', width).attr('height', self.parent.layout.height).attr('fill', function (d) {
                     return self.resolveScalableParameter(self.layout.color, d);
                 });
                 // Remove unused elements
                 selection.exit().remove();
+                var hit_areas_group = this.svg.group.select('g.lz-data_layer-' + self.layout.type + '-hit_areas');
+                if (hit_areas_group.size() === 0) {
+                    hit_areas_group = this.svg.group.append('g').attr('class', 'lz-data_layer-' + self.layout.type + '-hit_areas');
+                }
+                var hit_areas_selection = hit_areas_group.selectAll('rect.lz-data_layer-' + self.layout.type).data(trackData, function (d) {
+                    return d[self.layout.id_field];
+                });
+                // Add new elements as needed
+                hit_areas_selection.enter().append('rect').attr('class', 'lz-data_layer-' + this.layout.type).attr('id', function (d) {
+                    return self.getElementId(d);
+                });
+                // Update the set of elements to reflect new data
+                var _getX = function (d, i) {
+                    // Helper for position calcs below
+                    var x_center = self.parent['x_scale'](d[self.layout.x_axis.field]);
+                    var x_left = x_center - self.layout.hit_area_width / 2;
+                    if (i >= 1) {
+                        // This assumes that the data are in sorted order.
+                        var left_node = trackData[i - 1];
+                        var left_node_x_center = self.parent['x_scale'](left_node[self.layout.x_axis.field]);
+                        x_left = Math.max(x_left, (x_center + left_node_x_center) / 2);
+                    }
+                    return [
+                        x_left,
+                        x_center
+                    ];
+                };
+                hit_areas_selection.attr('height', self.parent.layout.height).attr('opacity', 0).attr('x', function (d, i) {
+                    var crds = _getX(d, i);
+                    return crds[0];
+                }).attr('width', function (d, i) {
+                    var crds = _getX(d, i);
+                    return crds[1] - crds[0] + self.layout.hit_area_width / 2;
+                });
+                // Remove unused elements
+                hit_areas_selection.exit().remove();
                 // Set up tooltips and mouse interaction
-                this.applyBehaviors(selection);
+                this.applyBehaviors(hit_areas_selection);
             };
             // Reimplement the positionTooltip() method to be annotation-specific
             this.positionTooltip = function (id) {
@@ -3371,14 +3641,32 @@
                 var offset_left = Math.max(tooltip_box.width / 2 + x_center - data_layer_width, 0);
                 left = page_origin.x + x_center - tooltip_box.width / 2 - offset_left + offset_right;
                 arrow_left = tooltip_box.width / 2 - arrow_width + offset_left - offset_right - offset;
-                if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - y_center) {
-                    top = page_origin.y + y_center - (tooltip_box.height + stroke_width + arrow_width);
+                var top_offset = 0;
+                switch (this.layout.tooltip_positioning) {
+                case 'top':
                     arrow_type = 'down';
-                    arrow_top = tooltip_box.height - stroke_width;
-                } else {
-                    top = page_origin.y + y_center + stroke_width + arrow_width;
+                    break;
+                case 'bottom':
+                    top_offset = data_layer_height;
                     arrow_type = 'up';
+                    break;
+                case 'middle':
+                default:
+                    var position = d3.mouse(this.svg.container.node());
+                    // Position the tooltip so that it does not overlap the mouse pointer
+                    top_offset = y_center;
+                    if (position[1] > data_layer_height / 2) {
+                        arrow_type = 'down';
+                    } else {
+                        arrow_type = 'up';
+                    }
+                }
+                if (arrow_type === 'up') {
+                    top = page_origin.y + top_offset + stroke_width + arrow_width;
                     arrow_top = 0 - stroke_width - arrow_width;
+                } else if (arrow_type === 'down') {
+                    top = page_origin.y + top_offset - (tooltip_box.height + stroke_width + arrow_width);
+                    arrow_top = tooltip_box.height - stroke_width;
                 }
                 // Apply positions to the main div
                 tooltip.selector.style('left', left + 'px').style('top', top + 'px');
@@ -3520,7 +3808,7 @@
                 // Create elements, apply class, ID, and initial position
                 var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
                 points_selection.enter().append('path').attr('class', 'lz-data_layer-forest lz-data_layer-forest-point').attr('id', function (d) {
-                    return this.getElementId(d) + '_point';
+                    return this.getElementId(d);
                 }.bind(this)).attr('transform', 'translate(0,' + initial_y + ')');
                 // Generate new values (or functions for them) for position, color, size, and shape
                 var transform = function (d) {
@@ -3563,13 +3851,34 @@
             return this;
         });
         /**
- * A y-aligned forest plot that dynamically chooses category labels when the data is first loaded.
- * This allows generating forest plots without defining the layout in advance.
+ * A y-aligned forest plot in which the y-axis represents item labels, which are dynamically chosen when data is loaded.
+ *   Each item is assumed to include both data and confidence intervals.
+ *   This allows generating forest plots without defining the layout in advance.
  *
  * @class LocusZoom.DataLayers.category_forest
  * @augments LocusZoom.DataLayers.forest
  */
         LocusZoom.DataLayers.extend('forest', 'category_forest', {
+            _getDataExtent: function (data, axis_config) {
+                // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
+                var ci_config = this.layout.confidence_intervals;
+                if (ci_config && this.layout.fields.indexOf(ci_config.start_field) !== -1 && this.layout.fields.indexOf(ci_config.end_field) !== -1) {
+                    var min = function (d) {
+                        var f = new LocusZoom.Data.Field(ci_config.start_field);
+                        return +f.resolve(d);
+                    };
+                    var max = function (d) {
+                        var f = new LocusZoom.Data.Field(ci_config.end_field);
+                        return +f.resolve(d);
+                    };
+                    return [
+                        d3.min(data, min),
+                        d3.max(data, max)
+                    ];
+                }
+                // If there are no confidence intervals set, then range must depend only on a single field
+                return LocusZoom.DataLayer.prototype._getDataExtent.call(this, data, axis_config);
+            },
             getTicks: function (dimension, config) {
                 // Overrides parent method
                 if ([
@@ -4467,7 +4776,7 @@
         'use strict';
         /*********************
  * Line Data Layer
- * Implements a standard line plot
+ * Implements a standard line plot, representing either a trace or a filled curve.
  * @class
  * @augments LocusZoom.DataLayer
 */
@@ -4644,11 +4953,23 @@
                 // Create path element, apply class
                 this.path = selection.enter().append('path').attr('class', 'lz-data_layer-line');
                 // Generate the line
-                this.line = d3.svg.line().x(function (d) {
-                    return parseFloat(panel[x_scale](d[x_field]));
-                }).y(function (d) {
-                    return parseFloat(panel[y_scale](d[y_field]));
-                }).interpolate(this.layout.interpolate);
+                if (this.layout.style.fill && this.layout.style.fill !== 'none') {
+                    // Filled curve: define the line as a filled boundary
+                    this.line = d3.svg.area().x(function (d) {
+                        return parseFloat(panel[x_scale](d[x_field]));
+                    }).y0(function (d) {
+                        return parseFloat(panel[y_scale](0));
+                    }).y1(function (d) {
+                        return parseFloat(panel[y_scale](d[y_field]));
+                    });
+                } else {
+                    // Basic line
+                    this.line = d3.svg.line().x(function (d) {
+                        return parseFloat(panel[x_scale](d[x_field]));
+                    }).y(function (d) {
+                        return parseFloat(panel[y_scale](d[y_field]));
+                    }).interpolate(this.layout.interpolate);
+                }
                 // Apply line and style
                 if (this.canTransition()) {
                     selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('d', this.line).style(this.layout.style);
@@ -5005,6 +5326,10 @@
                 this.seperate_iterations++;
                 var data_layer = this;
                 var alpha = 0.5;
+                if (!this.layout.label) {
+                    // Guard against layout changing in the midst of iterative rerender
+                    return;
+                }
                 var spacing = this.layout.label.spacing;
                 var again = false;
                 data_layer.label_texts.each(function () {
@@ -5083,7 +5408,6 @@
                 var data_layer = this;
                 var x_scale = 'x_scale';
                 var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
-                // Generate labels first (if defined)
                 if (this.layout.label) {
                     // Apply filters to generate a filtered data set
                     var filtered_data = this.data.filter(function (d) {
@@ -5094,7 +5418,11 @@
                             var match = true;
                             data_layer.layout.label.filters.forEach(function (filter) {
                                 var field_value = new LocusZoom.Data.Field(filter.field).resolve(d);
-                                if (isNaN(field_value)) {
+                                if ([
+                                        '!=',
+                                        '='
+                                    ].indexOf(filter.operator) === -1 && isNaN(field_value)) {
+                                    // If the filter can only be used with numbers, then the value must be numeric.
                                     match = false;
                                 } else {
                                     switch (filter.operator) {
@@ -5120,6 +5448,13 @@
                                         break;
                                     case '=':
                                         if (!(field_value === filter.value)) {
+                                            match = false;
+                                        }
+                                        break;
+                                    case '!=':
+                                        // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
+                                        // eslint-disable-next-line eqeqeq
+                                        if (field_value == filter.value) {
                                             match = false;
                                         }
                                         break;
@@ -5204,6 +5539,14 @@
                     }
                     // Remove labels when they're no longer in the filtered data set
                     this.label_groups.exit().remove();
+                } else {
+                    // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
+                    if (this.label_groups) {
+                        this.label_groups.remove();
+                    }
+                    if (this.label_lines) {
+                        this.label_lines.remove();
+                    }
                 }
                 // Generate main scatter data elements
                 var selection = this.svg.group.selectAll('path.lz-data_layer-' + this.layout.type).data(this.data, function (d) {
@@ -6487,9 +6830,9 @@
                 return this;
             };
             /**
-     * @deprecated since 0.5.6; use setHTML instead
+     * @deprecated since 0.5.6; use setHtml instead
      */
-            this.setText = this.setHTML;
+            this.setText = this.setHtml;
             /**
      * Mouseover title text for the button to show
      * @protected
@@ -7502,7 +7845,7 @@
  * @class LocusZoom.Dashboard.Components.display_options
  * @augments LocusZoom.Dashboard.Component
  * @param {object} layout
- * @param {String} [layout.button_html="Display options"] Text to display on the toolbar button
+ * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
  * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
  * @param {string} layout.layer_name Specify the datalayer that this button should affect
  * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
@@ -7515,7 +7858,7 @@
  */
         LocusZoom.Dashboard.Components.add('display_options', function (layout) {
             if (typeof layout.button_html != 'string') {
-                layout.button_html = 'Display options';
+                layout.button_html = 'Display options...';
             }
             if (typeof layout.button_title != 'string') {
                 layout.button_title = 'Control how plot items are displayed';
@@ -7535,12 +7878,15 @@
                 'tooltip_positioning'
             ];
             var dataLayer = this.parent_panel.data_layers[layout.layer_name];
+            if (!dataLayer) {
+                throw 'Display options could not locate the specified layer_name: \'' + layout.layer_name + '\'';
+            }
             var dataLayerLayout = dataLayer.layout;
             // Store default configuration for the layer as a clean deep copy, so we may revert later
             var defaultConfig = {};
             allowed_fields.forEach(function (name) {
                 var configSlot = dataLayerLayout[name];
-                if (configSlot) {
+                if (configSlot !== undefined) {
                     defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
                 }
             });
@@ -7564,11 +7910,14 @@
                 var renderRow = function (display_name, display_options, row_id) {
                     // Helper method
                     var row = table.append('tr');
+                    var radioId = '' + uniqueID + row_id;
                     row.append('td').append('input').attr({
+                        id: radioId,
                         type: 'radio',
-                        name: 'color-picker-' + uniqueID,
+                        name: 'display-option-' + uniqueID,
                         value: row_id
-                    }).property('checked', row_id === self._selected_item).on('click', function () {
+                    }).style('margin', 0)    // Override css libraries (eg skeleton) that style form inputs
+.property('checked', row_id === self._selected_item).on('click', function () {
                         Object.keys(display_options).forEach(function (field_name) {
                             dataLayer.layout[field_name] = display_options[field_name];
                         });
@@ -7580,7 +7929,7 @@
                             legend.render();
                         }
                     });
-                    row.append('td').text(display_name);
+                    row.append('td').append('label').style('font-weight', 'normal').attr('for', radioId).text(display_name);
                 };
                 // Render the "display options" menu: default and special custom options
                 var defaultName = menuLayout.default_config_display_name || 'Default style';
@@ -7810,6 +8159,11 @@
  *   create a known datasource type.
  */
         LocusZoom.DataSources.prototype.add = function (ns, x) {
+            // FIXME: Some existing sites create sources with arbitrary names. This leads to subtle breakage
+            //    of namespaced fields in layouts. To avoid breaking existing usages outright, issue a deprecation warning.
+            if (ns.match(/[^A-Za-z0-9_]/)) {
+                console.warn('Deprecation warning: source name \'' + ns + '\' should contain only alphanumeric characters or underscores. Use of other characters may break layouts, and will be disallowed in the future.');
+            }
             return this.set(ns, x);
         };
         /** @protected */
@@ -7995,7 +8349,7 @@
                 //TODO: better manage dependencies
                 var ret = Q.when({
                     header: {},
-                    body: {},
+                    body: [],
                     discrete: {}
                 });
                 for (var i = 0; i < request_handles.length; i++) {
@@ -8205,6 +8559,10 @@
             if (!Array.isArray(data)) {
                 return data;
             }
+            if (!data.length) {
+                // Sometimes there are regions that just don't have data- this should not trigger a missing field error message!
+                return data;
+            }
             var fieldFound = [];
             for (var k = 0; k < fields.length; k++) {
                 fieldFound[k] = 0;
@@ -8241,7 +8599,7 @@
  * @return {Promise|Object[]} The new chain body
  * @protected
  */
-        LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames) {
+        LocusZoom.Data.Source.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
             return data;
         };
         /**
@@ -8285,7 +8643,7 @@
                 // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
                 //   fields array into account). This is useful when we want to re-use the source output in many ways.
                 chain.discrete[source_id] = one_source_body;
-                return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames));
+                return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
             }).then(function (new_body) {
                 return {
                     header: chain.header || {},
@@ -8461,6 +8819,7 @@
             return dataFields;
         };
         LocusZoom.Data.LDSource.prototype.findRequestedFields = function (fields, outnames) {
+            // Assumption: all usages of this source only ever ask for "isrefvar" or "state". This maps to output names.
             var obj = {};
             for (var i = 0; i < fields.length; i++) {
                 if (fields[i] === 'isrefvar') {
@@ -8518,7 +8877,7 @@
             chain.header.ldrefvar = refVar;
             return this.url + 'results/?filter=reference eq ' + refSource + ' and chromosome2 eq \'' + state.chr + '\'' + ' and position2 ge ' + state.start + ' and position2 le ' + state.end + ' and variant1 eq \'' + refVar + '\'' + '&fields=chr,pos,rsquare';
         };
-        LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+        LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
             var keys = this.findMergeFields(chain);
             var reqFields = this.findRequestedFields(fields, outnames);
             if (!keys.position) {
@@ -8538,18 +8897,100 @@
                     }
                 }
             };
-            var tagRefVariant = function (data, refvar, idfield, outname) {
+            var tagRefVariant = function (data, refvar, idfield, outrefname, outldname) {
                 for (var i = 0; i < data.length; i++) {
                     if (data[i][idfield] && data[i][idfield] === refvar) {
-                        data[i][outname] = 1;
+                        data[i][outrefname] = 1;
+                        data[i][outldname] = 1;    // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
                     } else {
-                        data[i][outname] = 0;
+                        data[i][outrefname] = 0;
                     }
                 }
             };
             leftJoin(chain.body, data, reqFields.ldout, 'rsquare');
             if (reqFields.isrefvarin && chain.header.ldrefvar) {
-                tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout);
+                tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
+            }
+            return chain.body;
+        };
+        /**
+ * Data source for GWAS catalogs of known variants
+ * @public
+ * @class
+ * @augments LocusZoom.Data.Source
+ * @param {Object|String} init Configuration (URL or object)
+ * @param {Object} [init.params] Optional configuration parameters
+ * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
+ * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
+ */
+        LocusZoom.Data.GwasCatalog = LocusZoom.Data.Source.extend(function (init) {
+            this.parseInit(init);
+            this.dependentSource = true;
+        }, 'GwasCatalogLZ');
+        LocusZoom.Data.GwasCatalog.prototype.getURL = function (state, chain, fields) {
+            // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
+            //  (regardless of the actual match field)
+            var catalog = this.params.source || 2;
+            return this.url + '?format=objects&sort=pos&filter=id eq ' + catalog + ' and chrom eq \'' + state.chr + '\'' + ' and pos ge ' + state.start + ' and pos le ' + state.end;
+        };
+        LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
+            // Data from previous sources is already namespaced. Find the alignment field by matching.
+            var knownFields = Object.keys(records);
+            // Note: All API endoints involved only give results for 1 chromosome at a time; match is implied
+            var posMatch = knownFields.find(function (item) {
+                return item.match(/\b(position|pos)\b/i);
+            });
+            if (!posMatch) {
+                throw 'Could not find data to align with GWAS catalog results';
+            }
+            return { 'pos': posMatch };
+        };
+        // Skip the "individual field extraction" step; extraction will be handled when building chain body instead
+        LocusZoom.Data.GwasCatalog.prototype.extractFields = function (data, fields, outnames, trans) {
+            return data;
+        };
+        LocusZoom.Data.GwasCatalog.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
+            if (!data.length) {
+                return chain.body;
+            }
+            var decider = 'log_pvalue';
+            //  TODO: Better reuse options in the future
+            var decider_out = outnames[fields.indexOf(decider)];
+            function leftJoin(left, right, fields, outnames, trans) {
+                // Add `fields` from `right` to `left`
+                // Add a synthetic, un-namespaced field to all matching records
+                var n_matches = left['n_catalog_matches'] || 0;
+                left['n_catalog_matches'] = n_matches + 1;
+                if (decider && left[decider_out] && left[decider_out] > right[decider]) {
+                    // There may be more than one GWAS catalog entry for the same SNP. This source is intended for a 1:1
+                    //  annotation scenario, so for now it only joins the catalog entry that has the best -log10 pvalue
+                    return;
+                }
+                for (var j = 0; j < fields.length; j++) {
+                    var fn = fields[j];
+                    var outn = outnames[j];
+                    var val = right[fn];
+                    if (trans && trans[j]) {
+                        val = trans[j](val);
+                    }
+                    left[outn] = val;
+                }
+            }
+            var chainNames = this.findMergeFields(chain.body[0]);
+            var catNames = this.findMergeFields(data[0]);
+            var i = 0, j = 0;
+            while (i < chain.body.length && j < data.length) {
+                var left = chain.body[i];
+                var right = data[j];
+                if (left[chainNames.pos] === right[catNames.pos]) {
+                    // There may be multiple catalog entries for each matching SNP; evaluate match one at a time
+                    leftJoin(left, right, fields, outnames, trans);
+                    j += 1;
+                } else if (left[chainNames.pos] < right[catNames.pos]) {
+                    i += 1;
+                } else {
+                    j += 1;
+                }
             }
             return chain.body;
         };
@@ -8606,7 +9047,7 @@
             var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
             return LocusZoom.createCORSPromise('POST', url, body, headers);
         };
-        LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames) {
+        LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
             if (!data) {
                 return chain;
             }
@@ -8788,12 +9229,12 @@
             });
             return Q.when(chain.body || []);
         };
-        LocusZoom.Data.ConnectorSource.prototype.parseResponse = function (data, chain, fields, outnames) {
+        LocusZoom.Data.ConnectorSource.prototype.parseResponse = function (data, chain, fields, outnames, trans) {
             // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
             //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
             // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
             // Typically connectors are called with `connector_name:all` in the fields array.
-            return Q.when(this.combineChainBody(data, chain, fields, outnames)).then(function (new_body) {
+            return Q.when(this.combineChainBody(data, chain, fields, outnames, trans)).then(function (new_body) {
                 return {
                     header: chain.header || {},
                     discrete: chain.discrete || {},

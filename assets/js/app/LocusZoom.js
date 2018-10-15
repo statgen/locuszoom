@@ -2,7 +2,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: "0.9.0-a1"
+    version: '0.9.0-a1'
 };
 
 /**
@@ -15,42 +15,42 @@ var LocusZoom = {
  * @returns {LocusZoom.Plot} The newly created plot instance
  */
 LocusZoom.populate = function(selector, datasource, layout) {
-    if (typeof selector == "undefined"){
-        throw ("LocusZoom.populate selector not defined");
+    if (typeof selector == 'undefined') {
+        throw ('LocusZoom.populate selector not defined');
     }
     // Empty the selector of any existing content
-    d3.select(selector).html("");
+    d3.select(selector).html('');
     var plot;
-    d3.select(selector).call(function(){
+    d3.select(selector).call(function() {
         // Require each containing element have an ID. If one isn't present, create one.
-        if (typeof this.node().id == "undefined"){
+        if (typeof this.node().id == 'undefined') {
             var iterator = 0;
-            while (!d3.select("#lz-" + iterator).empty()){ iterator++; }
-            this.attr("id", "#lz-" + iterator);
+            while (!d3.select('#lz-' + iterator).empty()) { iterator++; }
+            this.attr('id', '#lz-' + iterator);
         }
         // Create the plot
         plot = new LocusZoom.Plot(this.node().id, datasource, layout);
         plot.container = this.node();
         // Detect data-region and fill in state values if present
-        if (typeof this.node().dataset !== "undefined" && typeof this.node().dataset.region !== "undefined"){
+        if (typeof this.node().dataset !== 'undefined' && typeof this.node().dataset.region !== 'undefined') {
             var parsed_state = LocusZoom.parsePositionQuery(this.node().dataset.region);
-            Object.keys(parsed_state).forEach(function(key){
+            Object.keys(parsed_state).forEach(function(key) {
                 plot.state[key] = parsed_state[key];
             });
         }
         // Add an SVG to the div and set its dimensions
-        plot.svg = d3.select("div#" + plot.id)
-            .append("svg")
-            .attr("version", "1.1")
-            .attr("xmlns", "http://www.w3.org/2000/svg")
-            .attr("id", plot.id + "_svg").attr("class", "lz-locuszoom")
+        plot.svg = d3.select('div#' + plot.id)
+            .append('svg')
+            .attr('version', '1.1')
+            .attr('xmlns', 'http://www.w3.org/2000/svg')
+            .attr('id', plot.id + '_svg').attr('class', 'lz-locuszoom')
             .style(plot.layout.style);
         plot.setDimensions();
         plot.positionPanels();
         // Initialize the plot
         plot.initialize();
         // If the plot has defined data sources then trigger its first mapping based on state values
-        if (typeof datasource == "object" && Object.keys(datasource).length){
+        if (typeof datasource == 'object' && Object.keys(datasource).length) {
             plot.refresh();
         }
     });
@@ -82,19 +82,19 @@ LocusZoom.populateAll = function(selector, datasource, layout) {
  * @param {Boolean} [suffix=false] Whether or not to append a suffix (e.g. "Mb") to the end of the returned string
  * @returns {string}
  */
-LocusZoom.positionIntToString = function(pos, exp, suffix){
-    var exp_symbols = { 0: "", 3: "K", 6: "M", 9: "G" };
+LocusZoom.positionIntToString = function(pos, exp, suffix) {
+    var exp_symbols = { 0: '', 3: 'K', 6: 'M', 9: 'G' };
     suffix = suffix || false;
-    if (isNaN(exp) || exp === null){
+    if (isNaN(exp) || exp === null) {
         var log = Math.log(pos) / Math.LN10;
         exp = Math.min(Math.max(log - (log % 3), 0), 9);
     }
     var places_exp = exp - Math.floor((Math.log(pos) / Math.LN10).toFixed(exp + 3));
     var min_exp = Math.min(Math.max(exp, 0), 2);
     var places = Math.min(Math.max(places_exp, min_exp), 12);
-    var ret = "" + (pos / Math.pow(10, exp)).toFixed(places);
-    if (suffix && typeof exp_symbols[exp] !== "undefined"){
-        ret += " " + exp_symbols[exp] + "b";
+    var ret = '' + (pos / Math.pow(10, exp)).toFixed(places);
+    if (suffix && typeof exp_symbols[exp] !== 'undefined') {
+        ret += ' ' + exp_symbols[exp] + 'b';
     }
     return ret;
 };
@@ -106,19 +106,19 @@ LocusZoom.positionIntToString = function(pos, exp, suffix){
  */
 LocusZoom.positionStringToInt = function(p) {
     var val = p.toUpperCase();
-    val = val.replace(/,/g, "");
+    val = val.replace(/,/g, '');
     var suffixre = /([KMG])[B]*$/;
     var suffix = suffixre.exec(val);
     var mult = 1;
     if (suffix) {
-        if (suffix[1]==="M") {
+        if (suffix[1] === 'M') {
             mult = 1e6;
-        } else if (suffix[1]==="G") {
+        } else if (suffix[1] === 'G') {
             mult = 1e9;
         } else {
             mult = 1e3; //K
         }
-        val = val.replace(suffixre,"");
+        val = val.replace(suffixre,'');
     }
     val = Number(val) * mult;
     return val;
@@ -136,7 +136,7 @@ LocusZoom.parsePositionQuery = function(x) {
     var chrpos = /^(\w+):([\d,.]+[kmgbKMGB]*)$/;
     var match = chrposoff.exec(x);
     if (match) {
-        if (match[3] === "+") {
+        if (match[3] === '+') {
             var center = LocusZoom.positionStringToInt(match[2]);
             var offset = LocusZoom.positionStringToInt(match[4]);
             return {
@@ -174,8 +174,8 @@ LocusZoom.parsePositionQuery = function(x) {
  * @param {Number} [target_tick_count=5] The approximate number of ticks you would like to be returned; may not be exact
  * @returns {Number[]}
  */
-LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
-    if (typeof target_tick_count == "undefined" || isNaN(parseInt(target_tick_count))){
+LocusZoom.prettyTicks = function(range, clip_range, target_tick_count) {
+    if (typeof target_tick_count == 'undefined' || isNaN(parseInt(target_tick_count))) {
         target_tick_count = 5;
     }
     target_tick_count = parseInt(target_tick_count);
@@ -187,46 +187,46 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
 
     var d = Math.abs(range[0] - range[1]);
     var c = d / target_tick_count;
-    if ((Math.log(d) / Math.LN10) < -2){
+    if ((Math.log(d) / Math.LN10) < -2) {
         c = (Math.max(Math.abs(d)) * shrink_sml) / min_n;
     }
 
-    var base = Math.pow(10, Math.floor(Math.log(c)/Math.LN10));
+    var base = Math.pow(10, Math.floor(Math.log(c) / Math.LN10));
     var base_toFixed = 0;
-    if (base < 1 && base !== 0){
-        base_toFixed = Math.abs(Math.round(Math.log(base)/Math.LN10));
+    if (base < 1 && base !== 0) {
+        base_toFixed = Math.abs(Math.round(Math.log(base) / Math.LN10));
     }
 
     var unit = base;
-    if ( ((2 * base) - c) < (high_u_bias * (c - unit)) ){
+    if ( ((2 * base) - c) < (high_u_bias * (c - unit)) ) {
         unit = 2 * base;
-        if ( ((5 * base) - c) < (u5_bias * (c - unit)) ){
+        if ( ((5 * base) - c) < (u5_bias * (c - unit)) ) {
             unit = 5 * base;
-            if ( ((10 * base) - c) < (high_u_bias * (c - unit)) ){
+            if ( ((10 * base) - c) < (high_u_bias * (c - unit)) ) {
                 unit = 10 * base;
             }
         }
     }
 
     var ticks = [];
-    var i = parseFloat( (Math.floor(range[0]/unit)*unit).toFixed(base_toFixed) );
-    while (i < range[1]){
+    var i = parseFloat( (Math.floor(range[0] / unit) * unit).toFixed(base_toFixed) );
+    while (i < range[1]) {
         ticks.push(i);
         i += unit;
-        if (base_toFixed > 0){
+        if (base_toFixed > 0) {
             i = parseFloat(i.toFixed(base_toFixed));
         }
     }
     ticks.push(i);
 
-    if (typeof clip_range == "undefined" || ["low", "high", "both", "neither"].indexOf(clip_range) === -1){
-        clip_range = "neither";
+    if (typeof clip_range == 'undefined' || ['low', 'high', 'both', 'neither'].indexOf(clip_range) === -1) {
+        clip_range = 'neither';
     }
-    if (clip_range === "low" || clip_range === "both"){
-        if (ticks[0] < range[0]){ ticks = ticks.slice(1); }
+    if (clip_range === 'low' || clip_range === 'both') {
+        if (ticks[0] < range[0]) { ticks = ticks.slice(1); }
     }
-    if (clip_range === "high" || clip_range === "both"){
-        if (ticks[ticks.length-1] > range[1]){ ticks.pop(); }
+    if (clip_range === 'high' || clip_range === 'both') {
+        if (ticks[ticks.length - 1] > range[1]) { ticks.pop(); }
     }
 
     return ticks;
@@ -247,11 +247,11 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count){
 LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
     var response = Q.defer();
     var xhr = new XMLHttpRequest();
-    if ("withCredentials" in xhr) {
+    if ('withCredentials' in xhr) {
         // Check if the XMLHttpRequest object has a "withCredentials" property.
         // "withCredentials" only exists on XMLHTTPRequest2 objects.
         xhr.open(method, url, true);
-    } else if (typeof XDomainRequest != "undefined") {
+    } else if (typeof XDomainRequest != 'undefined') {
         // Otherwise, check if XDomainRequest.
         // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
         xhr = new XDomainRequest();
@@ -266,14 +266,14 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
                 if (xhr.status === 200 || xhr.status === 0 ) {
                     response.resolve(xhr.response);
                 } else {
-                    response.reject("HTTP " + xhr.status + " for " + url);
+                    response.reject('HTTP ' + xhr.status + ' for ' + url);
                 }
             }
         };
         timeout && setTimeout(response.reject, timeout);
-        body = typeof body !== "undefined" ? body : "";
-        if (typeof headers !== "undefined"){
-            for (var header in headers){
+        body = typeof body !== 'undefined' ? body : '';
+        if (typeof headers !== 'undefined') {
+            for (var header in headers) {
                 xhr.setRequestHeader(header, headers[header]);
             }
         }
@@ -292,7 +292,7 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
  * @param {Object} layout
  * @returns {*|{}}
  */
-LocusZoom.validateState = function(new_state, layout){
+LocusZoom.validateState = function(new_state, layout) {
 
     new_state = new_state || {};
     layout = layout || {};
@@ -300,17 +300,17 @@ LocusZoom.validateState = function(new_state, layout){
     // If a "chr", "start", and "end" are present then resolve start and end
     // to numeric values that are not decimal, negative, or flipped
     var validated_region = false;
-    if (typeof new_state.chr != "undefined" && typeof new_state.start != "undefined" && typeof new_state.end != "undefined"){
+    if (typeof new_state.chr != 'undefined' && typeof new_state.start != 'undefined' && typeof new_state.end != 'undefined') {
         // Determine a numeric scale and midpoint for the attempted region,
         var attempted_midpoint = null; var attempted_scale;
         new_state.start = Math.max(parseInt(new_state.start), 1);
         new_state.end = Math.max(parseInt(new_state.end), 1);
-        if (isNaN(new_state.start) && isNaN(new_state.end)){
+        if (isNaN(new_state.start) && isNaN(new_state.end)) {
             new_state.start = 1;
             new_state.end = 1;
             attempted_midpoint = 0.5;
             attempted_scale = 0;
-        } else if (isNaN(new_state.start) || isNaN(new_state.end)){
+        } else if (isNaN(new_state.start) || isNaN(new_state.end)) {
             attempted_midpoint = new_state.start || new_state.end;
             attempted_scale = 0;
             new_state.start = (isNaN(new_state.start) ? new_state.end : new_state.start);
@@ -318,13 +318,13 @@ LocusZoom.validateState = function(new_state, layout){
         } else {
             attempted_midpoint = Math.round((new_state.start + new_state.end) / 2);
             attempted_scale = new_state.end - new_state.start;
-            if (attempted_scale < 0){
+            if (attempted_scale < 0) {
                 var temp = new_state.start;
                 new_state.end = new_state.start;
                 new_state.start = temp;
                 attempted_scale = new_state.end - new_state.start;
             }
-            if (attempted_midpoint < 0){
+            if (attempted_midpoint < 0) {
                 new_state.start = 1;
                 new_state.end = 1;
                 attempted_scale = 0;
@@ -334,13 +334,13 @@ LocusZoom.validateState = function(new_state, layout){
     }
 
     // Constrain w/r/t layout-defined minimum region scale
-    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale){
+    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;
     }
 
     // Constrain w/r/t layout-defined maximum region scale
-    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale){
+    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
         new_state.end = new_state.start + layout.max_region_scale;
     }
@@ -362,50 +362,52 @@ LocusZoom.validateState = function(new_state, layout){
  * @returns {string}
  */
 LocusZoom.parseFields = function (data, html) {
-    if (typeof data != "object"){
-        throw ("LocusZoom.parseFields invalid arguments: data is not an object");
+    if (typeof data != 'object') {
+        throw ('LocusZoom.parseFields invalid arguments: data is not an object');
     }
-    if (typeof html != "string"){
-        throw ("LocusZoom.parseFields invalid arguments: html is not a string");
+    if (typeof html != 'string') {
+        throw ('LocusZoom.parseFields invalid arguments: html is not a string');
     }
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
     var tokens = [];
     var regex = /\{\{(?:(#if )?([A-Za-z0-9_:|]+)|(\/if))\}\}/;
-    while (html.length > 0){
+    while (html.length > 0) {
         var m = regex.exec(html);
-        if (!m) { tokens.push({text: html}); html = ""; }
+        if (!m) { tokens.push({text: html}); html = ''; }
         else if (m.index !== 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
-        else if (m[1] === "#if ") { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
+        else if (m[1] === '#if ') { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
         else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
-        else if (m[3] === "/if") { tokens.push({close: "if"}); html = html.slice(m[0].length); }
+        else if (m[3] === '/if') { tokens.push({close: 'if'}); html = html.slice(m[0].length); }
         else {
-            console.error("Error tokenizing tooltip when remaining template is " + JSON.stringify(html) +
-                          " and previous tokens are " + JSON.stringify(tokens) +
-                          " and current regex match is " + JSON.stringify([m[1], m[2], m[3]]));
-            html=html.slice(m[0].length);
+            console.error('Error tokenizing tooltip when remaining template is ' + JSON.stringify(html) +
+                          ' and previous tokens are ' + JSON.stringify(tokens) +
+                          ' and current regex match is ' + JSON.stringify([m[1], m[2], m[3]]));
+            html = html.slice(m[0].length);
         }
     }
     var astify = function() {
         var token = tokens.shift();
-        if (typeof token.text !== "undefined" || token.variable) {
+        if (typeof token.text !== 'undefined' || token.variable) {
             return token;
         } else if (token.condition) {
             token.then = [];
             while(tokens.length > 0) {
-                if (tokens[0].close === "if") { tokens.shift(); break; }
+                if (tokens[0].close === 'if') { tokens.shift(); break; }
                 token.then.push(astify());
             }
             return token;
         } else {
-            console.error("Error making tooltip AST due to unknown token " + JSON.stringify(token));
-            return { text: "" };
+            console.error('Error making tooltip AST due to unknown token ' + JSON.stringify(token));
+            return { text: '' };
         }
     };
     // `ast` is like [thing,...]
     // `thing` is like {text: "..."} or {variable:"foo|bar"} or {condition: "foo|bar", then:[thing,...]}
     var ast = [];
-    while (tokens.length > 0) ast.push(astify());
+    while (tokens.length > 0) {
+        ast.push(astify());
+    }
 
     var resolve = function(variable) {
         if (!resolve.cache.hasOwnProperty(variable)) {
@@ -415,26 +417,26 @@ LocusZoom.parseFields = function (data, html) {
     };
     resolve.cache = {};
     var render_node = function(node) {
-        if (typeof node.text !== "undefined") {
+        if (typeof node.text !== 'undefined') {
             return node.text;
         } else if (node.variable) {
             try {
                 var value = resolve(node.variable);
-                if (["string","number","boolean"].indexOf(typeof value) !== -1) { return value; }
-                if (value === null) { return ""; }
-            } catch (error) { console.error("Error while processing variable " + JSON.stringify(node.variable)); }
-            return "{{" + node.variable + "}}";
+                if (['string','number','boolean'].indexOf(typeof value) !== -1) { return value; }
+                if (value === null) { return ''; }
+            } catch (error) { console.error('Error while processing variable ' + JSON.stringify(node.variable)); }
+            return '{{' + node.variable + '}}';
         } else if (node.condition) {
             try {
                 var condition = resolve(node.condition);
                 if (condition || condition === 0) {
-                    return node.then.map(render_node).join("");
+                    return node.then.map(render_node).join('');
                 }
-            } catch (error) { console.error("Error while processing condition " + JSON.stringify(node.variable)); }
-            return "";
-        } else { console.error("Error rendering tooltip due to unknown AST node " + JSON.stringify(node)); }
+            } catch (error) { console.error('Error while processing condition ' + JSON.stringify(node.variable)); }
+            return '';
+        } else { console.error('Error rendering tooltip due to unknown AST node ' + JSON.stringify(node)); }
     };
-    return ast.map(render_node).join("");
+    return ast.map(render_node).join('');
 };
 
 /**
@@ -442,13 +444,13 @@ LocusZoom.parseFields = function (data, html) {
  * @param {Element} node
  * @returns {*} The first element of data bound to the tooltip
  */
-LocusZoom.getToolTipData = function(node){
-    if (typeof node != "object" || typeof node.parentNode == "undefined"){
-        throw("Invalid node object");
+LocusZoom.getToolTipData = function(node) {
+    if (typeof node != 'object' || typeof node.parentNode == 'undefined') {
+        throw('Invalid node object');
     }
     // If this node is a locuszoom tool tip then return its data
     var selector = d3.select(node);
-    if (selector.classed("lz-data_layer-tooltip") && typeof selector.data()[0] != "undefined"){
+    if (selector.classed('lz-data_layer-tooltip') && typeof selector.data()[0] != 'undefined') {
         return selector.data()[0];
     } else {
         return LocusZoom.getToolTipData(node.parentNode);
@@ -460,9 +462,9 @@ LocusZoom.getToolTipData = function(node){
  * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.getToolTipDataLayer = function(node){
+LocusZoom.getToolTipDataLayer = function(node) {
     var data = LocusZoom.getToolTipData(node);
-    if (data.getDataLayer){ return data.getDataLayer(); }
+    if (data.getDataLayer) { return data.getDataLayer(); }
     return null;
 };
 
@@ -471,9 +473,9 @@ LocusZoom.getToolTipDataLayer = function(node){
  * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
  * @returns {LocusZoom.Panel}
  */
-LocusZoom.getToolTipPanel = function(node){
+LocusZoom.getToolTipPanel = function(node) {
     var data_layer = LocusZoom.getToolTipDataLayer(node);
-    if (data_layer){ return data_layer.parent; }
+    if (data_layer) { return data_layer.parent; }
     return null;
 };
 
@@ -482,9 +484,9 @@ LocusZoom.getToolTipPanel = function(node){
  * @param {Element} node The element associated with the tooltip, or any element contained inside the tooltip
  * @returns {LocusZoom.Plot}
  */
-LocusZoom.getToolTipPlot = function(node){
+LocusZoom.getToolTipPlot = function(node) {
     var panel = LocusZoom.getToolTipPanel(node);
-    if (panel){ return panel.parent; }
+    if (panel) { return panel.parent; }
     return null;
 };
 
@@ -496,7 +498,7 @@ LocusZoom.getToolTipPlot = function(node){
  *   TODO: Improve type doc here
  * @returns {object}
  */
-LocusZoom.generateCurtain = function(){
+LocusZoom.generateCurtain = function() {
     var curtain = {
         showing: false,
         selector: null,
@@ -509,13 +511,13 @@ LocusZoom.generateCurtain = function(){
          * @param {string} content Content to be displayed on the curtain (as raw HTML)
          * @param {object} css Apply the specified styles to the curtain and its contents
          */
-        show: function(content, css){
-            if (!this.curtain.showing){
-                this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-curtain").attr("id", this.id + ".curtain");
-                this.curtain.content_selector = this.curtain.selector.append("div").attr("class", "lz-curtain-content");
-                this.curtain.selector.append("div").attr("class", "lz-curtain-dismiss").html("Dismiss")
-                    .on("click", function(){
+        show: function(content, css) {
+            if (!this.curtain.showing) {
+                this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
+                    .attr('class', 'lz-curtain').attr('id', this.id + '.curtain');
+                this.curtain.content_selector = this.curtain.selector.append('div').attr('class', 'lz-curtain-content');
+                this.curtain.selector.append('div').attr('class', 'lz-curtain-dismiss').html('Dismiss')
+                    .on('click', function() {
                         this.curtain.hide();
                     }.bind(this));
                 this.curtain.showing = true;
@@ -529,27 +531,27 @@ LocusZoom.generateCurtain = function(){
          * @param {string} content Content to be displayed on the curtain (as raw HTML)
          * @param {object} css Apply the specified styles to the curtain and its contents
          */
-        update: function(content, css){
-            if (!this.curtain.showing){ return this.curtain; }
+        update: function(content, css) {
+            if (!this.curtain.showing) { return this.curtain; }
             clearTimeout(this.curtain.hide_delay);
             // Apply CSS if provided
-            if (typeof css == "object"){
+            if (typeof css == 'object') {
                 this.curtain.selector.style(css);
             }
             // Update size and position
             var page_origin = this.getPageOrigin();
             this.curtain.selector.style({
-                top: page_origin.y + "px",
-                left: page_origin.x + "px",
-                width: this.layout.width + "px",
-                height: this.layout.height + "px"
+                top: page_origin.y + 'px',
+                left: page_origin.x + 'px',
+                width: this.layout.width + 'px',
+                height: this.layout.height + 'px'
             });
             this.curtain.content_selector.style({
-                "max-width": (this.layout.width - 40) + "px",
-                "max-height": (this.layout.height - 40) + "px"
+                'max-width': (this.layout.width - 40) + 'px',
+                'max-height': (this.layout.height - 40) + 'px'
             });
             // Apply content if provided
-            if (typeof content == "string"){
+            if (typeof content == 'string') {
                 this.curtain.content_selector.html(content);
             }
             return this.curtain;
@@ -559,10 +561,10 @@ LocusZoom.generateCurtain = function(){
          * Remove the curtain
          * @param {number} delay Time to wait (in ms)
          */
-        hide: function(delay){
-            if (!this.curtain.showing){ return this.curtain; }
+        hide: function(delay) {
+            if (!this.curtain.showing) { return this.curtain; }
             // If a delay was passed then defer to a timeout
-            if (typeof delay == "number"){
+            if (typeof delay == 'number') {
                 clearTimeout(this.curtain.hide_delay);
                 this.curtain.hide_delay = setTimeout(this.curtain.hide, delay);
                 return this.curtain;
@@ -587,7 +589,7 @@ LocusZoom.generateCurtain = function(){
  * TODO Improve type documentation
  * @returns {object}
  */
-LocusZoom.generateLoader = function(){
+LocusZoom.generateLoader = function() {
     var loader = {
         showing: false,
         selector: null,
@@ -599,16 +601,16 @@ LocusZoom.generateLoader = function(){
          * Show a loading indicator
          * @param {string} [content='Loading...'] Loading message (displayed as raw HTML)
          */
-        show: function(content){
+        show: function(content) {
             // Generate loader
-            if (!this.loader.showing){
-                this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert("div")
-                    .attr("class", "lz-loader").attr("id", this.id + ".loader");
-                this.loader.content_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-content");
+            if (!this.loader.showing) {
+                this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
+                    .attr('class', 'lz-loader').attr('id', this.id + '.loader');
+                this.loader.content_selector = this.loader.selector.append('div')
+                    .attr('class', 'lz-loader-content');
                 this.loader.progress_selector = this.loader.selector
-                    .append("div").attr("class", "lz-loader-progress-container")
-                    .append("div").attr("class", "lz-loader-progress");
+                    .append('div').attr('class', 'lz-loader-progress-container')
+                    .append('div').attr('class', 'lz-loader-progress');
                 /* TODO: figure out how to make this cancel button work
                 this.loader.cancel_selector = this.loader.selector.append("div")
                     .attr("class", "lz-loader-cancel").html("Cancel")
@@ -617,7 +619,7 @@ LocusZoom.generateLoader = function(){
                     }.bind(this));
                 */
                 this.loader.showing = true;
-                if (typeof content == "undefined"){ content = "Loading..."; }
+                if (typeof content == 'undefined') { content = 'Loading...'; }
             }
             return this.loader.update(content);
         }.bind(this),
@@ -628,11 +630,11 @@ LocusZoom.generateLoader = function(){
          * @param {number} [percent] A number from 1-100. If a value is specified, it will stop all animations
          *   in progress.
          */
-        update: function(content, percent){
-            if (!this.loader.showing){ return this.loader; }
+        update: function(content, percent) {
+            if (!this.loader.showing) { return this.loader; }
             clearTimeout(this.loader.hide_delay);
             // Apply content if provided
-            if (typeof content == "string"){
+            if (typeof content == 'string') {
                 this.loader.content_selector.html(content);
             }
             // Update size and position
@@ -640,8 +642,8 @@ LocusZoom.generateLoader = function(){
             var page_origin = this.getPageOrigin();
             var loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector.style({
-                top: (page_origin.y + this.layout.height - loader_boundrect.height - padding) + "px",
-                left: (page_origin.x + padding) + "px"
+                top: (page_origin.y + this.layout.height - loader_boundrect.height - padding) + 'px',
+                left: (page_origin.x + padding) + 'px'
             });
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
@@ -650,9 +652,9 @@ LocusZoom.generateLoader = function(){
             });
             */
             // Apply percent if provided
-            if (typeof percent == "number"){
+            if (typeof percent == 'number') {
                 this.loader.progress_selector.style({
-                    width: (Math.min(Math.max(percent, 1), 100)) + "%"
+                    width: (Math.min(Math.max(percent, 1), 100)) + '%'
                 });
             }
             return this.loader;
@@ -662,8 +664,8 @@ LocusZoom.generateLoader = function(){
          * Adds a class to the loading bar that makes it loop infinitely in a loading animation. Useful when exact
          *   percent progress is not available.
          */
-        animate: function(){
-            this.loader.progress_selector.classed("lz-loader-progress-animated", true);
+        animate: function() {
+            this.loader.progress_selector.classed('lz-loader-progress-animated', true);
             return this.loader;
         }.bind(this),
 
@@ -671,8 +673,8 @@ LocusZoom.generateLoader = function(){
          *  Sets the loading bar in the loader to percentage width equal to the percent (number) value passed. Percents
          *    will automatically be limited to a range of 1 to 100. Will stop all animations in progress.
          */
-        setPercentCompleted: function(percent){
-            this.loader.progress_selector.classed("lz-loader-progress-animated", false);
+        setPercentCompleted: function(percent) {
+            this.loader.progress_selector.classed('lz-loader-progress-animated', false);
             return this.loader.update(null, percent);
         }.bind(this),
 
@@ -680,10 +682,10 @@ LocusZoom.generateLoader = function(){
          * Remove the loader
          * @param {number} delay Time to wait (in ms)
          */
-        hide: function(delay){
-            if (!this.loader.showing){ return this.loader; }
+        hide: function(delay) {
+            if (!this.loader.showing) { return this.loader; }
             // If a delay was passed then defer to a timeout
-            if (typeof delay == "number"){
+            if (typeof delay == 'number') {
                 clearTimeout(this.loader.hide_delay);
                 this.loader.hide_delay = setTimeout(this.loader.hide, delay);
                 return this.loader;
@@ -712,12 +714,12 @@ LocusZoom.generateLoader = function(){
  * @returns {Function} The constructor for the new child class
  */
 LocusZoom.subclass = function(parent, extra) {
-    if (typeof parent !== "function" ) {
-        throw "Parent must be a callable constructor";
+    if (typeof parent !== 'function' ) {
+        throw 'Parent must be a callable constructor';
     }
 
     extra = extra || {};
-    var Sub = extra.hasOwnProperty("constructor") ? extra.constructor : function() {
+    var Sub = extra.hasOwnProperty('constructor') ? extra.constructor : function() {
         parent.apply(this, arguments);
     };
 
