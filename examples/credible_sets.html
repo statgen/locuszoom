@@ -85,36 +85,17 @@
         Specify the data sources to use
        */
       // Determine if we're online, based on browser state or presence of an optional query parameter
-      var online = !(typeof navigator !== "undefined" && !navigator.onLine);
-      if (window.location.search.indexOf("offline") !== -1) {
-          online = false;
-      }
-
-      var apiBase;
-      var data_sources = new LocusZoom.DataSources();
-      if (online) {
-          apiBase = "//portaldev.sph.umich.edu/api/v1/";
-          data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["CredibleAssociationLZ", {
-                  url: apiBase + "statistic/single/",
-                  params: {analysis: 45, id_field: "variant"}
-              }])
-              .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
-              .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-              .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
-              .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
-      } else {
-          apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
-          data_sources = new LocusZoom.DataSources()
-              .add("assoc", ["AssociationLZ", {
-                  url: apiBase + "assoc_10_114550452-115067678.json?",
-                  params: {analysis: 45, id_field: "variant"}
-              }])
-              .add("ld", ["LDLZ", {url: apiBase + "ld_10_114550452-115067678.json?"}])
-              .add("gene", ["GeneLZ", {url: apiBase + "genes_10_114550452-115067678.json?"}])
-              .add("recomb", ["RecombLZ", {url: apiBase + "recomb_10_114550452-115067678.json?"}])
-              .add("constraint", ["GeneConstraintLZ", {url: apiBase + "constraint_10_114550452-115067678.json?"}]);
-      }
+      var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+      data_sources = new LocusZoom.DataSources()
+          .add("assoc", ["AssociationLZ", {
+              url: apiBase + "statistic/single/",
+              params: {analysis: 45, id_field: "variant"}
+          }])
+          .add("credset", ["CredibleSetLZ", { params: { fields: { log_pvalue: 'assoc:log_pvalue' }, threshold: 0.95 } }])
+          .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
+          .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
+          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+          .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
       /*
         Define and render the plot

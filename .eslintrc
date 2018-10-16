@@ -36,7 +36,8 @@
         ],
         "no-trailing-spaces": "error",
         "curly": "error",
-        "space-before-blocks": "error"
+        "space-before-blocks": "error",
+        "eol-last": "error"
     },
     "globals": {
         "XDomainRequest": false

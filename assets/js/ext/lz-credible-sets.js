@@ -9,7 +9,7 @@
 */
 'use strict';
 
-/* global gwasCredibleSets, LocusZoom */
+/* global gwasCredibleSets, LocusZoom, Q */
 
 if (typeof gwasCredibleSets === 'undefined') {
     throw new Error('The standalone gwas-credible-sets library is required to use this extension');
@@ -20,75 +20,124 @@ if (typeof gwasCredibleSets === 'undefined') {
         LocusZoom.ext.Data = {};
     }
 
-    // Specify a custom datasource that adds "credible sets" fields to the prepared API response,
-    //   and make it available as an "extension" symbol for later use
-    LocusZoom.ext.Data.CredibleAssociationLZ = LocusZoom.KnownDataSources.extend('AssociationLZ', 'CredibleAssociationLZ', {
-        annotateData: function (records) {
-            // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-            var nlogpvals = records.map(function (item) {
-                return item['log_pvalue'];
-            });
+    /**
+     * Custom data source that calculates the 95% credible set based on provided data.
+     * This source must be requested as the second step in a chain, after a previous step that returns fields required
+     *  for the calculation.
+     *
+     * @param {Object} init.params
+     * @param {Object} init.params.fields
+     * @param {String} init.params.fields.log_pvalue The name of the field containing pvalue information
+     * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%)
+     *
+     * @class
+     * @public
+     * @augments LocusZoom.Data.Source
+     */
+    LocusZoom.ext.Data.CredibleSetLZ = LocusZoom.Data.Source.extend(function(init) {
+        this.parseInit(init);
+        this.enableCache = true;
+        this.dependentSource = true; // Don't do calcs for a region with no assoc data
+    }, 'CredibleSetLZ');
 
-            try {
-                var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
-                var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
-
-                // Use scores to mark the credible set in various ways (depending on your visualization preferences,
-                //    some of these may be unneeded)
-                var credibleSet = gwasCredibleSets.marking.findCredibleSet(scores);
-                var credSetScaled = gwasCredibleSets.marking.rescaleCredibleSet(credibleSet);
-                var credSetBool = gwasCredibleSets.marking.markBoolean(credibleSet);
-
-                // Annotate each response record based on credible set membership
-                records.forEach(function (item, index) {
-                    item['credibleSetPosteriorProb'] = posteriorProbabilities[index];
-                    item['credibleSetContribution'] = credSetScaled[index]; // Visualization helper: normalized to contribution within the set
-                    item['isCredible'] = credSetBool[index];
-                });
-            } catch (e) {
-                // If the calculation cannot be completed, return the data without annotation fields
-                console.error(e);
-            }
-            return records;
+    LocusZoom.ext.Data.CredibleSetLZ.prototype.parseInit = function (init) {
+        this.params = init.params;
+        if (!(this.params.fields && this.params.fields.log_pvalue)) {
+            throw 'Source config for ' + this.constructor.SOURCE_NAME + "must specify how to find 'fields.log_pvalue'";
         }
-    });
+        if (!this.params.threshold) {
+            this.params.threshold = 0.95;
+        }
+    };
+
+    LocusZoom.ext.Data.CredibleSetLZ.prototype.getCacheKey = function(state, chain, fields) {
+        var threshold = state.credible_set_threshold || this.params.threshold;
+        return [ threshold, state.chr, state.start, state.end ].join('_');
+    };
+
+    LocusZoom.ext.Data.CredibleSetLZ.prototype.fetchRequest = function (state, chain) {
+        var self = this;
+        // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
+        var threshold = state.credible_set_threshold || this.params.threshold;
+        // Calculate raw bayes factors and posterior probabilities based on information returned from the API
+        if (!chain.body[0][self.params.fields.log_pvalue]) {
+            throw 'Credible set source could not locate the required fields from a previous request.';
+        }
+        var nlogpvals = chain.body.map(function (item) { return item[self.params.fields.log_pvalue]; });
+        var credset_data = [];
+        try {
+            var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
+            var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
+
+            // Use scores to mark the credible set in various ways (depending on your visualization preferences,
+            //   some of these may not be needed)
+            var credibleSet = gwasCredibleSets.marking.findCredibleSet(scores, threshold);
+            var credSetScaled = gwasCredibleSets.marking.rescaleCredibleSet(credibleSet);
+            var credSetBool = gwasCredibleSets.marking.markBoolean(credibleSet);
+
+            // Annotate each response record based on credible set membership
+            for (var i = 0; i < chain.body.length; i++) {
+                credset_data.push({
+                    posterior_prob: posteriorProbabilities[i],
+                    contrib_fraction: credSetScaled[i],
+                    is_member: credSetBool[i]
+                });
+            }
+        } catch (e) {
+            // If the calculation cannot be completed, return the data without annotation fields
+            console.error(e);
+        }
+        return Q.when(credset_data);
+    };
+
+    LocusZoom.ext.Data.CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
+        // At this point namespacing has been applied; add the calculated fields for this source to the chain
+        for (var i = 0; i < data.length ; i++) {
+            var src = data[i];
+            var dest = chain.body[i];
+            Object.keys(src).forEach(function(attr) { dest[attr] = src[attr]; });
+        }
+        return chain.body;
+    };
 
     // Add related layouts to the central global registry
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
         var l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '<br>Posterior probability: <strong>{{{{namespace[assoc]}}credibleSetPosteriorProb|scinotation}}</strong>';
+        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>';
         return l;
     }());
 
     LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', {
-        namespace: {'assoc': 'assoc'},
+        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
         closable: true,
         show: {or: ['highlighted', 'selected']},
         hide: {and: ['unhighlighted', 'unselected']},
         html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>'
         + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>' +
-        '<br>Posterior probability: <strong>{{{{namespace[assoc]}}credibleSetPosteriorProb|scinotation}}</strong>'
+        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>'
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
         return LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
             unnamespaced: true,
             id: 'associationcredibleset',
+            namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
             fill_opacity: 0.7,
             tooltip: LocusZoom.Layouts.get('tooltip', 'association_credible_set', { unnamespaced: true }),
             fields: [
                 '{{namespace[assoc]}}variant', '{{namespace[assoc]}}position',
                 '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation',
-                '{{namespace[assoc]}}ref_allele', '{{namespace[assoc]}}credibleSetPosteriorProb',
-                '{{namespace[assoc]}}credibleSetContribution', '{{namespace[assoc]}}isCredible',
+                '{{namespace[assoc]}}ref_allele',
+                '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
+                '{{namespace[credset]}}is_member',
                 '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'
             ]
         });
     }());
 
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', {
-        namespace: {'assoc': 'assoc'},
+        namespace: { 'assoc': 'assoc', 'credset': 'credset' },
         id: 'annotationcredibleset',
         type: 'annotation_track',
         id_field: '{{namespace[assoc]}}variant',
@@ -96,10 +145,10 @@ if (typeof gwasCredibleSets === 'undefined') {
             field: '{{namespace[assoc]}}position'
         },
         color: '#00CC00',
-        fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}credibleSetPosteriorProb', '{{namespace[assoc]}}credibleSetContribution', '{{namespace[assoc]}}isCredible'],
+        fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
-            ['{{namespace[assoc]}}isCredible', true]
+            ['{{namespace[credset]}}is_member', true]
         ],
         behaviors: {
             onmouseover: [
@@ -142,7 +191,7 @@ if (typeof gwasCredibleSets === 'undefined') {
         var l = LocusZoom.Layouts.get('panel', 'association', {
             unnamespaced: true,
             id: 'associationcrediblesets',
-            namespace: { 'assoc': 'assoc' },
+            namespace: { 'assoc': 'assoc', 'credset': 'credset' },
             data_layers: [
                 LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
                 LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
@@ -169,7 +218,7 @@ if (typeof gwasCredibleSets === 'undefined') {
                             point_shape: 'circle',
                             point_size: 40,
                             color: {
-                                field: '{{namespace[assoc]}}isCredible',
+                                field: '{{namespace[credset]}}is_member',
                                 scale_function: 'if',
                                 parameters: {
                                     field_value: true,
@@ -191,7 +240,7 @@ if (typeof gwasCredibleSets === 'undefined') {
                             point_size: 40,
                             color: [
                                 {
-                                    field: '{{namespace[assoc]}}credibleSetContribution',
+                                    field: '{{namespace[credset]}}contrib_fraction',
                                     scale_function: 'if',
                                     parameters: {
                                         field_value: 0,
@@ -200,7 +249,7 @@ if (typeof gwasCredibleSets === 'undefined') {
                                 },
                                 {
                                     scale_function: 'interpolate',
-                                    field: '{{namespace[assoc]}}credibleSetContribution',
+                                    field: '{{namespace[credset]}}contrib_fraction',
                                     parameters: {
                                         breaks: [0, 1],
                                         values: ['#fafe87', '#9c0000']
@@ -235,5 +284,3 @@ if (typeof gwasCredibleSets === 'undefined') {
         ]
     });
 }();
-
-

@@ -305,6 +305,7 @@ LocusZoom.Data.Source.prototype.getURL = function(state, chain, fields) { return
  * @param {Object} state The state of the parent plot
  * @param chain
  * @param fields
+ * @returns {Promise}
  */
 LocusZoom.Data.Source.prototype.fetchRequest = function(state, chain, fields) {
     var url = this.getURL(state, chain, fields);
