@@ -454,8 +454,9 @@
             // `ast` is like [thing,...]
             // `thing` is like {text: "..."} or {variable:"foo|bar"} or {condition: "foo|bar", then:[thing,...]}
             var ast = [];
-            while (tokens.length > 0)
+            while (tokens.length > 0) {
                 ast.push(astify());
+            }
             var resolve = function (variable) {
                 if (!resolve.cache.hasOwnProperty(variable)) {
                     resolve.cache[variable] = new LocusZoom.Data.Field(variable).resolve(data);
@@ -5297,8 +5298,9 @@
                 data_layer.label_texts.each(function (d, i) {
                     var a = this;
                     var da = d3.select(a);
-                    if (da.style('text-anchor') === 'end')
+                    if (da.style('text-anchor') === 'end') {
                         return;
+                    }
                     var dax = +da.attr('x');
                     var abound = da.node().getBoundingClientRect();
                     var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
@@ -5339,19 +5341,22 @@
                     data_layer.label_texts.each(function () {
                         var b = this;
                         // a & b are the same element and don't collide.
-                        if (a === b)
+                        if (a === b) {
                             return;
+                        }
                         var db = d3.select(b);
                         // a & b are on opposite sides of the chart and
                         // don't collide
-                        if (da.attr('text-anchor') !== db.attr('text-anchor'))
+                        if (da.attr('text-anchor') !== db.attr('text-anchor')) {
                             return;
+                        }
                         // Determine if the  bounding rects for the two text elements collide
                         var abound = da.node().getBoundingClientRect();
                         var bbound = db.node().getBoundingClientRect();
                         var collision = abound.left < bbound.left + bbound.width + 2 * spacing && abound.left + abound.width + 2 * spacing > bbound.left && abound.top < bbound.top + bbound.height + 2 * spacing && abound.height + abound.top + 2 * spacing > bbound.top;
-                        if (!collision)
+                        if (!collision) {
                             return;
+                        }
                         again = true;
                         // If the labels collide, we'll push each
                         // of the two labels up and down a little bit.
