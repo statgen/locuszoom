@@ -24,10 +24,8 @@ var mainFile = manifest.main;
 var destinationFolder = path.dirname(mainFile);
 
 // Remove all existing built assets
-gulp.task('clean', function(done) {
-    del([destinationFolder]).then(function() {
-        done();
-    });
+gulp.task('clean', function() {
+    return del([destinationFolder]);
 });
 
 // Perform syntax checking on all files
@@ -38,13 +36,8 @@ gulp.task('lint', function() {
         .pipe(eslint.failAfterError());
 });
 
-// Test app files, then build both app and vendor javascript files if all tests pass (DEPRECATED)
-gulp.task('js', function() {
-    return gulp.start('app_js', 'vendor_js');
-});
-
 // Run Mocha unit tests (iff linting passes first)
-gulp.task('test', ['lint'], function () {
+gulp.task('test', gulp.parallel('lint', function () {
     return gulp.src(files.test_suite)
         .pipe(mocha())
         .on('end', function() {
@@ -64,12 +57,12 @@ gulp.task('test', ['lint'], function () {
                 gutil.log(gutil.colors.bold.white.bgRed(' Tests failed! '));
             }
         });
-});
+}));
 
 // Concatenate all app-specific JS libraries into unminified and minified single app files
-gulp.task('app_js', ['test'], function() {
+gulp.task('app_js', function() {
     var moduleTemplate = fs.readFileSync('./assets/js/app/wrapper.txt', 'utf8');
-    gulp.src(files.app_build)
+    return gulp.src(files.app_build)
         .pipe(sourcemaps.init())
         .pipe(concat('locuszoom.app.js'))
         .pipe(wrapJS(moduleTemplate))
@@ -88,9 +81,11 @@ gulp.task('app_js', ['test'], function() {
         }).on('error', function() {
             gutil.log(gutil.colors.bold.white.bgRed(' FAILED to generate locuszoom.app.js bundles '));
         });
+});
 
-    // Provide minified versions of each optional extension, separate from the main bundle
-    gulp.src(files.extensions)
+// Provide minified versions of each optional extension, separate from the main bundle
+gulp.task('ext_js', function() {
+    return gulp.src(files.extensions)
         .pipe(rename(function (fn) {
             fn.extname = '.min.js';
         }))
@@ -121,6 +116,9 @@ gulp.task('vendor_js', function() {
         });
 });
 
+// Test app files, then build both app and vendor javascript files if all tests pass (DEPRECATED)
+gulp.task('js', gulp.parallel('app_js', 'ext_js', 'vendor_js'));
+
 // Build CSS
 gulp.task('css', function() {
     return gulp.src('./assets/css/*.scss')
@@ -137,12 +135,11 @@ gulp.task('css', function() {
 // Watch for changes in app source files to trigger fresh builds
 gulp.task('watch', function() {
     gutil.log(gutil.colors.bold.black.bgYellow('Watching for changes in app and test files...'));
-    gulp.watch(files.app_build.concat(files.extensions, files.test_suite), ['app_js']);
-    gulp.watch(['./assets/css/*.scss'], ['css']);
+    gulp.watch(files.app_build.concat(files.extensions, files.test_suite), gulp.series('test', gulp.parallel('app_js', 'ext_js')));
+    gulp.watch(['./assets/css/*.scss'], gulp.series('css'));
 });
 
 // Default task: do a clean build of all assets, and ensure tests + linting pass (suitable for making a release)
-gulp.task('build', ['clean'], function() {
-    return gulp.start('app_js', 'vendor_js', 'css');
-});
-gulp.task('default', ['build']);
+gulp.task('build', gulp.series('clean', 'test', gulp.parallel('js', 'css')));
+
+gulp.task('default', gulp.parallel('build'));
