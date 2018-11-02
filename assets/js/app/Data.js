@@ -320,14 +320,12 @@ LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     var req;
     var cacheKey = this.getCacheKey(state, chain, fields);
     if (this.enableCache && typeof(cacheKey) !== 'undefined' && cacheKey === this._cachedKey) {
-        req = Q.when(this._cachedResponse);
+        req = Q.when(this._cachedResponse);  // Resolve to the value of the current promise
     } else {
         req = this.fetchRequest(state, chain, fields);
         if (this.enableCache) {
-            req = req.then(function(x) {
-                this._cachedKey = cacheKey;
-                return this._cachedResponse = x;
-            }.bind(this));
+            this._cachedKey = cacheKey;
+            this._cachedResponse = req;
         }
     }
     return req;
@@ -1020,7 +1018,7 @@ LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
 }, 'IntervalLZ');
 
 LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
-    var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
+    var source = state.bedtracksource || chain.header.bedtracksource || this.params.source;
     return this.url + '?filter=id in ' + source +
         " and chromosome eq '" + state.chr + "'" +
         ' and start le ' + state.end +
