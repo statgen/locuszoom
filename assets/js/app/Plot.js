@@ -1024,7 +1024,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
     return Q.all(this.remap_promises)
         .catch(function(error) {
             console.error(error);
-            this.curtain.drop(error);
+            this.curtain.show(error.message || error);
             this.loading_data = false;
         }.bind(this))
         .then(function() {

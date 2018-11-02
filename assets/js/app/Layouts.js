@@ -1182,6 +1182,7 @@ LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
+    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,

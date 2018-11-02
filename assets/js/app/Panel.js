@@ -762,7 +762,7 @@ LocusZoom.Panel.prototype.reMap = function() {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
             console.warn(error);
-            this.curtain.show(error);
+            this.curtain.show(error.message || error);
         }
     }
     // When all finished trigger a render
@@ -775,7 +775,7 @@ LocusZoom.Panel.prototype.reMap = function() {
         }.bind(this))
         .catch(function(error) {
             console.warn(error);
-            this.curtain.show(error);
+            this.curtain.show(error.message || error);
         }.bind(this));
 };
 

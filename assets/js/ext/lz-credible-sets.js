@@ -43,7 +43,7 @@ if (typeof gwasCredibleSets === 'undefined') {
     LocusZoom.ext.Data.CredibleSetLZ.prototype.parseInit = function (init) {
         this.params = init.params;
         if (!(this.params.fields && this.params.fields.log_pvalue)) {
-            throw 'Source config for ' + this.constructor.SOURCE_NAME + "must specify how to find 'fields.log_pvalue'";
+            throw 'Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'";
         }
         if (!this.params.threshold) {
             this.params.threshold = 0.95;
@@ -177,6 +177,7 @@ if (typeof gwasCredibleSets === 'undefined') {
         proportional_width: 1,
         margin: {top: 35, right: 50, bottom: 40, left: 50},
         inner_border: 'rgb(210, 210, 210)',
+        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
         interaction: {
             drag_background_to_pan: true,
             scroll_to_zoom: true,
