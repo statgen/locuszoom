@@ -1,6 +1,6 @@
 (function (root, factory) {
     if (typeof define === "function" && define.amd) {
-        define(["d3", "Q"], function(d3, Q){  // amd
+        define(["d3", "q"], function(d3, Q){  // amd
             return (root.LocusZoom = factory(d3, Q));
         });
     } else if(typeof module === "object" && module.exports) {  // commonJS
@@ -35,7 +35,7 @@
         if (!semanticVersionIsOk(minimum_d3_version, d3.version)){
             throw("d3 dependency not met. Outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher (found: " + d3.version + ").");
         }
-        
+
         // Verify dependency: Q.js
         if (typeof Q != "function"){
             throw("Q dependency not met. Library missing.");
