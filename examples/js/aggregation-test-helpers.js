@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 /* global raremetal, Q */
 
 /*
@@ -17,7 +17,7 @@
  */
 LocusZoom.Data.AggregationTestSource = LocusZoom.Data.Source.extend(function (init) {
     this.parseInit(init);
-}, "AggregationTestSourceLZ");
+}, 'AggregationTestSourceLZ');
 
 LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, fields) {
     // Unlike most sources, calculations may require access to plot state data even after the initial request
@@ -38,7 +38,7 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     // In a page using live API data, the UI would only request the masks it needs from the API.
     // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
     //  type, and to the set of groups requested by the user)
-    records.groups = records.groups.filter(function(item) {return item.groupType === "gene"; });
+    records.groups = records.groups.filter(function(item) {return item.groupType === 'gene'; });
 
     var parsed = raremetal.helpers.parsePortalJSON(records);
     var groups = parsed[0];
@@ -76,10 +76,10 @@ LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (reco
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.KnownDataSources.extend("AssociationLZ", "AssocFromAggregationLZ", {
+LocusZoom.KnownDataSources.extend('AssociationLZ', 'AssocFromAggregationLZ', {
     parseInit: function (init) {
         if (!init || !init.from) {
-            throw "Must specify the name of the source that contains association data";
+            throw 'Must specify the name of the source that contains association data';
         }
         this.params = init.params || {};
         this._from = init.from;
@@ -88,16 +88,16 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "AssocFromAggregationLZ", {
     getRequest: function (state, chain, fields) {
         // Does not actually make a request. Just pick off the specific bundle of data from a known payload structure.
         if (chain.discrete && !chain.discrete[this._from]) {
-            throw self.constructor.SOURCE_NAME  + " cannot be used before loading required data for: " + this._from;
+            throw self.constructor.SOURCE_NAME  + ' cannot be used before loading required data for: ' + this._from;
         }
         // Copy the data so that mutations (like sorting) don't affect the original
-        return Q.when(JSON.parse(JSON.stringify(chain.discrete[this._from]["variants"])));
+        return Q.when(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
     },
 
     normalizeResponse: function (data) {
         // The payload structure of the association source is slightly different than the one required by association
         //   plots. For example, we need to parse variant names and convert to log_pvalue
-        var REGEX_EPACTS = new RegExp("(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?");  // match API variant strings
+        var REGEX_EPACTS = new RegExp('(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?');  // match API variant strings
         return data.map(function(one_variant) {
             var match = one_variant.variant.match(REGEX_EPACTS);
             return {
@@ -135,14 +135,14 @@ LocusZoom.KnownDataSources.extend("AssociationLZ", "AssocFromAggregationLZ", {
  * @class
  * @augments LocusZoom.Data.Source
  */
-LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ", {
-    REQUIRED_SOURCES: ["gene_ns", "aggregation_ns"],
+LocusZoom.KnownDataSources.extend('ConnectorSource', 'GeneAggregationConnectorLZ', {
+    REQUIRED_SOURCES: ['gene_ns', 'aggregation_ns'],
     combineChainBody: function (data, chain) {
         // The genes layer receives all results, and displays only the best pvalue for each gene
 
         // Tie the calculated group-test results to genes with a matching name
-        var aggregation_source_id = this._source_name_mapping["aggregation_ns"];
-        var gene_source_id = this._source_name_mapping["gene_ns"];
+        var aggregation_source_id = this._source_name_mapping['aggregation_ns'];
+        var gene_source_id = this._source_name_mapping['gene_ns'];
         // This connector assumes that genes are the main body of records from the chain, and that aggregation tests are
         //   a standalone source that has not acted on genes data yet
         var aggregationData = chain.discrete[aggregation_source_id];
@@ -159,7 +159,7 @@ LocusZoom.KnownDataSources.extend("ConnectorSource", "GeneAggregationConnectorLZ
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            var gene_id = gene.gene_id.split(".")[0];
+            var gene_id = gene.gene_id.split('.')[0];
             var tests = groupedAggregation[gene_id];
             if (tests) {
                 gene.aggregation_best_pvalue = Math.min.apply(null, tests);
