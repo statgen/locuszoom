@@ -10,9 +10,10 @@
                 "CallExpression": { "arguments": "first" }
             }
         ],
+        "space-infix-ops": "error",
         "quotes": [
             2,
-            "double",
+            "single",
             {
                 "avoidEscape": true
             }
@@ -32,7 +33,11 @@
         "no-unused-vars": [
             "error",
             { "args": "none" }
-        ]
+        ],
+        "no-trailing-spaces": "error",
+        "curly": "error",
+        "space-before-blocks": "error",
+        "eol-last": "error"
     },
     "globals": {
         "XDomainRequest": false
