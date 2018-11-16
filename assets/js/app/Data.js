@@ -834,27 +834,31 @@ LocusZoom.LDSource2 = LocusZoom.KnownDataSources.extend('LDLZ', 'LDLZ2', {
         // Accept the following params in this.params:
         // - method (r, rsquare, cov)
         // - source (aka panel)
-        // - population
+        // - population (ALL, AFR, EUR, etc)
         // - build
         // TODO: Make population selectable dynamically
         var build = state.genome_build || this.params.build || 37;
+        var source = this.params.source || '1000G';
         var population = this.params.population || 'ALL';
         var method = this.params.method || 'rsquare';
 
         if ([37, 38].indexOf(build) === -1) {
             console.log(build, 'ld');
             throw 'Must specify a valid genome build number';
+        } else {
+            build = 'GRCh' + build;
         }
         var refVar = this.getRefvar(state, chain, fields);
         chain.header.ldrefvar = refVar;
-        return this.url +  'references/1000G_GRCh' + build + '/populations/' + population + '/variants' +
-            '?correlation=' + method +
-            '&variant=' + encodeURIComponent(refVar) +
-            '&chrom=' + encodeURIComponent(state.chr) +
-            '&start=' + encodeURIComponent(state.start) +
-            '&stop=' + encodeURIComponent(state.end);
 
-        // FIXME: `rsquare` field will be renamed to `correlation`. Make parent class generic to better support.
+        return  [
+            this.url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
+            '?correlation=', method,
+            '&variant=', encodeURIComponent(refVar),
+            '&chrom=', encodeURIComponent(state.chr),
+            '&start=', encodeURIComponent(state.start),
+            '&stop=', encodeURIComponent(state.end)
+        ].join('');
     },
     fetchRequest: function(state, chain, fields) {
         // The API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
