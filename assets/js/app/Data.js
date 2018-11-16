@@ -637,7 +637,7 @@ LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, 
 };
 
 LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
-    var analysis = state.analysis || chain.header.analysis || this.params.analysis;
+    var analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
     if (typeof analysis == 'undefined') {
         throw 'Association source must specify an analysis ID to plot';
     }
@@ -836,7 +836,6 @@ LocusZoom.LDSource2 = LocusZoom.KnownDataSources.extend('LDLZ', 'LDLZ2', {
         // - source (aka panel)
         // - population (ALL, AFR, EUR, etc)
         // - build
-        // TODO: Make population selectable dynamically
         var build = state.genome_build || this.params.build || 37;
         var source = this.params.source || '1000G';
         var population = this.params.population || 'ALL';
@@ -985,16 +984,22 @@ LocusZoom.Data.GeneSource = LocusZoom.Data.Source.extend(function(init) {
 }, 'GeneLZ');
 
 LocusZoom.Data.GeneSource.prototype.getURL = function(state, chain, fields) {
-    var source;
-    var build = state.genome_build || this.params.build || 37;
-    if (build && [37, 38].indexOf(build) === -1) {
+    var build_option = state.genome_build || this.params.build;
+    var build = build_option || 37;
+    if (!build || [37, 38].indexOf(build) === -1) {
         throw 'Must specify a valid genome build number';
     }
-    if (build) { // FIXME: no longer can be empty with above change
-        source = (build === 38) ? 1 : 3;  //  Portal API only supports 37 and 38
+    var source;
+    if (build_option) {
+        source = (build === 38) ? 1 : 3;  //  Portal API only has datasets for build 37 and 38
+    } else {
+        // Only respect the source ID if build is not directly specified.
+        //  This is because annotation tracks should make all possible efforts to match the build of the data.
+        source = this.params.source;
     }
-    // Any explicitly specified source will override the one chosen based on build.
-    source = state.source || chain.header.source || this.params.source || source;
+
+    // Any explicitly specified source will override the one chosen based on build. TODO: different from other sources; consider changing?
+    source = this.params.source || source;
     return this.url + '?filter=source in ' + source +
         " and chrom eq '" + state.chr + "'" +
         ' and start le ' + state.end +
@@ -1082,7 +1087,11 @@ LocusZoom.Data.RecombinationRateSource = LocusZoom.Data.Source.extend(function(i
 }, 'RecombLZ');
 
 LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain, fields) {
-    var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
+    // TODO: Add build 38 support once an appropriate data source becomes available
+    if (state.genome_build && state.genome_build !== 37) {
+        throw 'Recombination data source only supports build 37 datasets';
+    }
+    var source = chain.header.recombsource || this.params.source || 15; // In LZ API, source 15 = data for build 37 / HapMap Phase 2
     return this.url + '?filter=id in ' + source +
         " and chromosome eq '" + state.chr + "'" +
         ' and position le ' + state.end +
@@ -1100,7 +1109,7 @@ LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
 }, 'IntervalLZ');
 
 LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
-    var source = state.bedtracksource || chain.header.bedtracksource || this.params.source;
+    var source = chain.header.bedtracksource || this.params.source;
     return this.url + '?filter=id in ' + source +
         " and chromosome eq '" + state.chr + "'" +
         ' and start le ' + state.end +
@@ -1132,14 +1141,14 @@ LocusZoom.Data.StaticSource.prototype.toJSON = function() {
  * @public
  * @class
  * @augments LocusZoom.Data.Source
- * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
- *   provide pheWAS results for this position. Note positions may not translate between builds.
+ * @param {String[]} init.params.build This datasource expects to be provided the name of the genome build that will
+ *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
 LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
     this.parseInit(init);
 }, 'PheWASLZ');
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
-    var build = this.params.build;
+    var build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
     if (!build || !Array.isArray(build) || !build.length) {
         throw ['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' ');
     }

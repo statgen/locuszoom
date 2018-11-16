@@ -116,7 +116,7 @@ gulp.task('vendor_js', function() {
         });
 });
 
-// Test app files, then build both app and vendor javascript files if all tests pass (DEPRECATED)
+// Build app and vendor javascript files if all tests pass (DEPRECATED)
 gulp.task('js', gulp.parallel('app_js', 'ext_js', 'vendor_js'));
 
 // Build CSS
