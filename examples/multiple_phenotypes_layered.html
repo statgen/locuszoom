@@ -67,7 +67,7 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 37 } }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 
     // Build the base layout

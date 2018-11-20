@@ -86,10 +86,10 @@
       var apiBase = "//portaldev.sph.umich.edu/api/v1/";
       var data_sources = new LocusZoom.DataSources()
           .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" } }])
-          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 37, population: 'ALL' } }])
-          .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: { build: 37 }}])
-          .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/', params: { source: 2 }}])
-          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
+          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', population: 'ALL' } }])
+          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
+          .add("catalog", ["GwasCatalogLZ", {url: apiBase + 'annotation/gwascatalog/results/' }])
+          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: { source: 15 }}])
           .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
 
       /*
@@ -102,8 +102,13 @@
       if (!Object.keys(initialState).length) {
         initialState = { chr: 9, start: 21751670, end: 22351670 };
       }
+      // This example demonstrates using the `state.genome_build` param, which tells LZ annotation sources to
+      //  automatically select an appropriate dataset based on genome build.
+      initialState.genome_build = 'GRCh37';
 
-      layout = LocusZoom.Layouts.get("plot", "association_catalog", {state: initialState});
+      layout = LocusZoom.Layouts.get("plot", "association_catalog", {
+          state: initialState
+      });
       layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
       // Generate the LocusZoom plot

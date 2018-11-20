@@ -314,8 +314,8 @@ function createDisplayWidgets(label_store, context) {
             from: 'aggregation',
             params: { id_field: 'variant' }
         }])
-        .add('ld', ['LDLZ2', { url: 'https://portaldev.sph.umich.edu/ld/', params: { source: '1000G', build: 37, population: 'ALL' } }])
-        .add('gene', ['GeneLZ', {url: apiBase + 'annotation/genes/', params: { build: 37 }}])
+        .add('ld', ['LDLZ2', { url: 'https://portaldev.sph.umich.edu/ld/', params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add('gene', ['GeneLZ', {url: apiBase + 'annotation/genes/', params: { build: 'GRCh37' }}])
         .add('aggregation_genes', ['GeneAggregationConnectorLZ', {sources: {aggregation_ns: 'aggregation', gene_ns: 'gene'}}])
         .add('recomb', ['RecombLZ', {url: apiBase + 'annotation/recomb/results/', params: {source: 15}}])
         .add('constraint', ['GeneConstraintLZ', {url: 'http://exac.broadinstitute.org/api/constraint'}]);  // FIXME: use https when exac fixed

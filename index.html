@@ -209,9 +209,9 @@
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 37, population: 'ALL' } }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 37 } }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+        .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { source: 15 } }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
