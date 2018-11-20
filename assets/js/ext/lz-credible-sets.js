@@ -165,7 +165,7 @@ if (typeof gwasCredibleSets === 'undefined') {
             ]
         },
         tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
-        tooltip_positioning: 'vertical'
+        tooltip_positioning: 'top'
     });
 
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
