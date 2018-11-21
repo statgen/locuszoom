@@ -1505,14 +1505,15 @@ LocusZoom.Dashboard.Components.add('display_options', function (layout) {
                 .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
                 .property('checked', (row_id === self._selected_item))
                 .on('click', function () {
-                    Object.keys(display_options).forEach(function(field_name) {
-                        dataLayer.layout[field_name] = display_options[field_name];
+                    // If an option is not specified in these display options, use the original defaults
+                    allowed_fields.forEach(function(field_name) {
+                        dataLayer.layout[field_name] = display_options[field_name] || defaultConfig[field_name];
                     });
+
                     self._selected_item = row_id;
                     self.parent_panel.render();
                     var legend = self.parent_panel.legend;
-                    if (legend && display_options.legend) {
-                        // Update the legend only if necessary
+                    if (legend) {
                         legend.render();
                     }
                 });
