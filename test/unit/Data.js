@@ -560,6 +560,46 @@ describe('LocusZoom Data', function() {
         });
     });
 
+    describe('Genome build support in annotations', function() {
+        // Run the same tests on two sources
+        ['GeneSource', 'RecombinationRateSource'].forEach(function(source_name) {
+            it('accepts either build or source as config option, but not both', function () {
+                var source_type = LocusZoom.Data[source_name];  // Allows generating dynamic tests before LZ symbol is loaded
+
+                var source = new source_type({url: 'www.fake.test', params: { source: 'a', build: 'GRCh37' }});
+                assert.throws(function() { source.getURL({});  }, /must specify either/, 'Bad configuration should raise an exception in ' + source_name);
+
+                source = new source_type({url: 'www.fake.test', params: { source: 'a' }});
+                assert.ok(source.getURL({}), 'Works when specifying source ID for ' + source_name);
+
+                source = new source_type({ url: 'www.fake.test' });
+                assert.ok(source.getURL({ genome_build: 'GRCh37' }), 'Works when specifying build name for ' + source_name);
+            });
+
+            it('gives precedence to state.genome_build over its own config', function () {
+                var source_type = LocusZoom.Data[source_name];
+
+                var source = new source_type({url: 'www.fake.test', params: { build: 'GRCh37' }});
+                var url = source.getURL({ genome_build: 'GRCh38' });
+
+                // HACK: This is the only part of these tests that differs between sources
+                var pattern;
+                if (source_name === 'GeneSource') {
+                    pattern = /source in 1/;
+                } else {
+                    pattern = /id in 16/;
+                }
+                assert.ok(url.match(pattern), source_name + ' produced formed URL: ' + url );
+            });
+
+            it('validates genome build', function () {
+                var source_type = LocusZoom.Data[source_name];
+                var source = new source_type({url: 'www.fake.test', params: { build: 99 }});
+                assert.throws(function () { source.getURL({}); }, /must specify a valid genome build number/, 'Should validate options for ' + source_name);
+            });
+        });
+    });
+
     describe('GwasCatalog Source', function () {
         beforeEach(function() {
             this.exampleData = [
@@ -575,6 +615,12 @@ describe('LocusZoom Data', function() {
                     { 'assoc:chromosome': 1, 'assoc:position': 6 },
                 ],
             };
+        });
+
+        it('will respect a specific source ID over the global build param', function() {
+            var source = new LocusZoom.Data.GwasCatalog({url: 'www.fake.test', params: { source: 'fjord' }});
+            var url = source.getURL( { genome_build: 'GRCh37' } );
+            assert.ok(url.match('fjord'));
         });
 
         it('aligns records based on loose position match', function () {
@@ -611,6 +657,13 @@ describe('LocusZoom Data', function() {
                 { 'assoc:chromosome': 1, 'assoc:position': 4 },
                 { 'assoc:chromosome': 1, 'assoc:position': 6 },
             ]);
+        });
+    });
+
+    describe('LDLZ2 Source', function() {
+        it('validates the selected build name', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 99 }});
+            assert.throws(function () { source.getURL({}); }, /must specify a valid genome build number/);
         });
     });
 

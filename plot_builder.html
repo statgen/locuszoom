@@ -53,9 +53,9 @@
     <div class="row">
       <h2>LocusZoom Plot Builder</h2>
     </div>
-    
+
     <div class="row">
-      
+
       <div id="layout_column" class="six columns">
         <textarea id="layout" style="height: 460px;"></textarea>
         <br>
@@ -93,10 +93,10 @@
     // Define LocusZoom Data Sources object
     var apiBase = "http://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("assoc", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { analysis: 45, id_field: "variant" }}])
+      .add("assoc", ["AssociationLZ", {url:apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
       .add("ld", ["LDLZ", apiBase + "pair/LD/"])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { source: 2 } }])
-      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37'  } }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }])
       .add("sig", ["StaticJSON", [{ "x": 0, "y": 7.30103 }, { "x": 2881033286, "y": 7.30103 }] ]);
 
@@ -267,7 +267,7 @@
         $("#layout").val(JSON.stringify(plot.layout, null, "  "));
       });
     }
-    
+
     function updatePlot(){
       var layout = null;
       var state = null;

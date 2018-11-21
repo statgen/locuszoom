@@ -239,8 +239,8 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count) {
  *
  * @param {String} method The HTTP verb
  * @param {String} url
- * @param {String} body The request body to send to the server
- * @param {Object} headers Object of custom request headers
+ * @param {String} [body] The request body to send to the server
+ * @param {Object} [headers] Object of custom request headers
  * @param {Number} [timeout] If provided, wait this long (in ms) before timing out
  * @returns {Promise}
  */

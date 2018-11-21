@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
-    
+
     <!-- Necessary includes for LocusZoom.js -->
     <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    
+
     <title>LocusZoom.js ~ Multiple Phenotypes (Layered) Example</title>
 
     <style>
@@ -62,12 +62,12 @@
     </div>
 
     <script type="text/javascript">
-      
+
     // Define base data sources
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 
     // Build the base layout
@@ -102,7 +102,7 @@
         { namespace: "cholesterol", title: "Total cholesterol meta-analysis", color: "rgb(53, 126, 189)", study_id: 30 }
     ];
     phenos.forEach(function(pheno){
-        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: pheno.study_id, id_field: "variant"}}]);
+        data_sources.add(pheno.namespace, ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: pheno.study_id, id_field: "variant" }}]);
         var association_data_layer_mods = {
             namespace: { "assoc": pheno.namespace },
             id: "associationpvalues_" + pheno.namespace,
