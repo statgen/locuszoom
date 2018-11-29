@@ -24,7 +24,7 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 
     if (!Array.isArray(layout.filters)) {
-        throw 'Annotation track must specify array of filters for selecting points to annotate';
+        throw new Error('Annotation track must specify array of filters for selecting points to annotate');
     }
 
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
@@ -107,10 +107,10 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
     // Reimplement the positionTooltip() method to be annotation-specific
     this.positionTooltip = function(id) {
         if (typeof id != 'string') {
-            throw ('Unable to position tooltip: id is not a string');
+            throw new Error('Unable to position tooltip: id is not a string');
         }
         if (!this.tooltips[id]) {
-            throw ('Unable to position tooltip: id does not point to a valid tooltip');
+            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var top, left, arrow_type, arrow_top, arrow_left;
         var tooltip = this.tooltips[id];

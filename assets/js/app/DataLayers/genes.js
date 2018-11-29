@@ -458,10 +458,10 @@ LocusZoom.DataLayers.add('genes', function(layout) {
      */
     this.positionTooltip = function(id) {
         if (typeof id != 'string') {
-            throw ('Unable to position tooltip: id is not a string');
+            throw new Error('Unable to position tooltip: id is not a string');
         }
         if (!this.tooltips[id]) {
-            throw ('Unable to position tooltip: id does not point to a valid tooltip');
+            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var tooltip = this.tooltips[id];
         var arrow_width = 7; // as defined in the default stylesheet

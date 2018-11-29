@@ -35,10 +35,10 @@ LocusZoom.DataLayers.add('forest', function(layout) {
     // Reimplement the positionTooltip() method to be forest-specific
     this.positionTooltip = function(id) {
         if (typeof id != 'string') {
-            throw ('Unable to position tooltip: id is not a string');
+            throw new Error('Unable to position tooltip: id is not a string');
         }
         if (!this.tooltips[id]) {
-            throw ('Unable to position tooltip: id does not point to a valid tooltip');
+            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var tooltip = this.tooltips[id];
         var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
@@ -232,7 +232,7 @@ LocusZoom.DataLayers.extend('forest', 'category_forest', {
 
     getTicks: function(dimension, config) { // Overrides parent method
         if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
-            throw 'Invalid dimension identifier' + dimension;
+            throw new Error('Invalid dimension identifier' + dimension);
         }
 
         // Design assumption: one axis (y1 or y2) has the ticks, and the layout says which to use
@@ -241,7 +241,7 @@ LocusZoom.DataLayers.extend('forest', 'category_forest', {
         if (dimension === ('y' + axis_num)) {
             var category_field = this.layout.y_axis.category_field;
             if (!category_field) {
-                throw 'Layout for ' + this.layout.id + ' must specify category_field';
+                throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
             }
 
             return this.data.map(function (item, index) {
@@ -260,7 +260,7 @@ LocusZoom.DataLayers.extend('forest', 'category_forest', {
         //  correct extents.
         var field_to_add = this.layout.y_axis.field;
         if (!field_to_add) {
-            throw 'Layout for ' + this.layout.id + ' must specify yaxis.field';
+            throw new Error('Layout for ' + this.layout.id + ' must specify yaxis.field');
         }
 
         this.data = this.data.map(function (item, index) {

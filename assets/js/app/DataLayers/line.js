@@ -87,10 +87,10 @@ LocusZoom.DataLayers.add('line', function(layout) {
      */
     this.positionTooltip = function(id) {
         if (typeof id != 'string') {
-            throw ('Unable to position tooltip: id is not a string');
+            throw new Error('Unable to position tooltip: id is not a string');
         }
         if (!this.tooltips[id]) {
-            throw ('Unable to position tooltip: id does not point to a valid tooltip');
+            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var tooltip = this.tooltips[id];
         var tooltip_box = tooltip.selector.node().getBoundingClientRect();
@@ -279,7 +279,7 @@ LocusZoom.DataLayers.add('line', function(layout) {
     this.setAllElementStatus = function(status, toggle) {
         // Sanity check
         if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-            throw('Invalid status passed to DataLayer.setAllElementStatus()');
+            throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
         }
         if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
         if (typeof toggle == 'undefined') { toggle = true; }

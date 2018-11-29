@@ -43,7 +43,7 @@ if (typeof gwasCredibleSets === 'undefined') {
     LocusZoom.ext.Data.CredibleSetLZ.prototype.parseInit = function (init) {
         this.params = init.params;
         if (!(this.params.fields && this.params.fields.log_pvalue)) {
-            throw 'Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'";
+            throw new Error('Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'");
         }
         if (!this.params.threshold) {
             this.params.threshold = 0.95;
@@ -61,7 +61,7 @@ if (typeof gwasCredibleSets === 'undefined') {
         var threshold = state.credible_set_threshold || this.params.threshold;
         // Calculate raw bayes factors and posterior probabilities based on information returned from the API
         if (!chain.body[0][self.params.fields.log_pvalue]) {
-            throw 'Credible set source could not locate the required fields from a previous request.';
+            throw new Error('Credible set source could not locate the required fields from a previous request.');
         }
         var nlogpvals = chain.body.map(function (item) { return item[self.params.fields.log_pvalue]; });
         var credset_data = [];

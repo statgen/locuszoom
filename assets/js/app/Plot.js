@@ -156,10 +156,10 @@ LocusZoom.Plot = function(id, datasource, layout) {
      */
     this.on = function(event, hook) {
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw('Unable to register event hook, invalid event: ' + event.toString());
+            throw new Error('Unable to register event hook, invalid event: ' + event.toString());
         }
         if (typeof hook != 'function') {
-            throw('Unable to register event hook, invalid hook function passed');
+            throw new Error('Unable to register event hook, invalid hook function passed');
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -173,7 +173,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
     this.off = function(event, hook) {
         var theseHooks = this.event_hooks[event];
         if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-            throw('Unable to remove event hook, invalid event: ' + event.toString());
+            throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
         }
         if (hook === undefined) {
             // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -184,7 +184,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
             if (hookMatch !== -1) {
                 theseHooks.splice(hookMatch, 1);
             } else {
-                throw('The specified event listener is not registered and therefore cannot be removed');
+                throw new Error('The specified event listener is not registered and therefore cannot be removed');
             }
         }
         return this;
@@ -199,7 +199,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
         // TODO: there are small differences between the emit implementation between plots and panels. In the future,
         //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw('LocusZoom attempted to throw an invalid event: ' + event.toString());
+            throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
         }
         var sourceID = this.getBaseId();
         var self = this;
@@ -320,7 +320,7 @@ LocusZoom.Plot.DefaultLayout = {
  */
 LocusZoom.Plot.prototype.sumProportional = function(dimension) {
     if (dimension !== 'height' && dimension !== 'width') {
-        throw ('Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional');
+        throw new Error('Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional');
     }
     var total = 0;
     for (var id in this.panels) {
@@ -352,13 +352,13 @@ LocusZoom.Plot.prototype.initializeLayout = function() {
     // Sanity check layout values
     // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
     if (isNaN(this.layout.width) || this.layout.width <= 0) {
-        throw ('Plot layout parameter `width` must be a positive number');
+        throw new Error('Plot layout parameter `width` must be a positive number');
     }
     if (isNaN(this.layout.height) || this.layout.height <= 0) {
-        throw ('Plot layout parameter `width` must be a positive number');
+        throw new Error('Plot layout parameter `width` must be a positive number');
     }
     if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0) {
-        throw ('Plot layout parameter `aspect_ratio` must be a positive number');
+        throw new Error('Plot layout parameter `aspect_ratio` must be a positive number');
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
@@ -488,7 +488,7 @@ LocusZoom.Plot.prototype.addPanel = function(layout) {
 
     // Sanity checks
     if (typeof layout !== 'object') {
-        throw 'Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()';
+        throw new Error('Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()');
     }
 
     // Create the Panel and set its parent
@@ -579,7 +579,7 @@ LocusZoom.Plot.prototype.clearPanelData = function(panelId, mode) {
  */
 LocusZoom.Plot.prototype.removePanel = function(id) {
     if (!this.panels[id]) {
-        throw ('Unable to remove panel, ID not found: ' + id);
+        throw new Error('Unable to remove panel, ID not found: ' + id);
     }
 
     // Hide all panel boundaries
@@ -994,7 +994,7 @@ LocusZoom.Plot.prototype.subscribeToData = function(fields, success_callback, op
 LocusZoom.Plot.prototype.applyState = function(state_changes) {
     state_changes = state_changes || {};
     if (typeof state_changes != 'object') {
-        throw('LocusZoom.applyState only accepts an object; ' + (typeof state_changes) + ' given');
+        throw new Error('LocusZoom.applyState only accepts an object; ' + (typeof state_changes) + ' given');
     }
 
     // First make a copy of the current (old) state to work with
@@ -1028,7 +1028,6 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
             this.loading_data = false;
         }.bind(this))
         .then(function() {
-            // TODO: Check logic here; in some promise implementations, this would cause the error to be considered handled, and "then" would always fire. (may or may not be desired behavior)
             // Update dashboard / components
             this.dashboard.update();
 
@@ -1047,7 +1046,8 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
                                 try {
                                     this.setElementStatus(property, this.getElementById(element_id), true);
                                 } catch (e) {
-                                    console.error('Unable to apply state: ' + state_id + ', ' + property);
+                                    console.warn('Unable to apply state: ' + state_id + ', ' + property);
+                                    console.error(e);
                                 }
                             }.bind(data_layer));
                         }

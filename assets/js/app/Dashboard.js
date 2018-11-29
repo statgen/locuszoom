@@ -14,7 +14,7 @@
 LocusZoom.Dashboard = function(parent) {
     // parent must be a locuszoom plot or panel
     if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)) {
-        throw 'Unable to create dashboard, parent must be a locuszoom plot or panel';
+        throw new Error('Unable to create dashboard, parent must be a locuszoom plot or panel');
     }
     /** @member {LocusZoom.Plot|LocusZoom.Panel} */
     this.parent = parent;
@@ -332,12 +332,12 @@ LocusZoom.Dashboard.Components = (function() {
             return null;
         } else if (components[name]) {
             if (typeof layout != 'object') {
-                throw('invalid layout argument for dashboard component [' + name + ']');
+                throw new Error('invalid layout argument for dashboard component [' + name + ']');
             } else {
                 return new components[name](layout, parent);
             }
         } else {
-            throw('dashboard component [' + name + '] not found');
+            throw new Error('dashboard component [' + name + '] not found');
         }
     };
     /**
@@ -349,7 +349,7 @@ LocusZoom.Dashboard.Components = (function() {
     obj.set = function(name, component) {
         if (component) {
             if (typeof component != 'function') {
-                throw('unable to set dashboard component [' + name + '], argument provided is not a function');
+                throw new Error('unable to set dashboard component [' + name + '], argument provided is not a function');
             } else {
                 components[name] = component;
                 components[name].prototype = new LocusZoom.Dashboard.Component();
@@ -366,7 +366,7 @@ LocusZoom.Dashboard.Components = (function() {
      */
     obj.add = function(name, component) {
         if (components[name]) {
-            throw('dashboard component already exists with name: ' + name);
+            throw new Error('dashboard component already exists with name: ' + name);
         } else {
             obj.set(name, component);
         }
@@ -393,7 +393,7 @@ LocusZoom.Dashboard.Components = (function() {
 LocusZoom.Dashboard.Component.Button = function(parent) {
 
     if (!(parent instanceof LocusZoom.Dashboard.Component)) {
-        throw 'Unable to create dashboard component button, invalid parent';
+        throw new Error('Unable to create dashboard component button, invalid parent');
     }
     /** @member {LocusZoom.Dashboard.Component} */
     this.parent = parent;
@@ -1164,7 +1164,7 @@ LocusZoom.Dashboard.Components.add('covariates_model', function(layout) {
              */
             removeByIdx: function(idx) {
                 if (typeof this.state.model.covariates[idx] == 'undefined') {
-                    throw('Unable to remove model covariate, invalid index: ' + idx.toString());
+                    throw new Error('Unable to remove model covariate, invalid index: ' + idx.toString());
                 }
                 this.state.model.covariates.splice(idx, 1);
                 this.applyState();
@@ -1261,7 +1261,7 @@ LocusZoom.Dashboard.Components.add('toggle_split_tracks', function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
     if (!layout.data_layer_id) { layout.data_layer_id = 'intervals'; }
     if (!this.parent_panel.data_layers[layout.data_layer_id]) {
-        throw ('Dashboard toggle split tracks component missing valid data layer ID');
+        throw new Error('Dashboard toggle split tracks component missing valid data layer ID');
     }
     this.update = function() {
         var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
@@ -1460,7 +1460,7 @@ LocusZoom.Dashboard.Components.add('display_options', function (layout) {
 
     var dataLayer = this.parent_panel.data_layers[layout.layer_name];
     if (!dataLayer) {
-        throw "Display options could not locate the specified layer_name: '" + layout.layer_name + "'";
+        throw new Error("Display options could not locate the specified layer_name: '" + layout.layer_name + "'");
     }
     var dataLayerLayout = dataLayer.layout;
 

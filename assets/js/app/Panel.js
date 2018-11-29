@@ -11,7 +11,7 @@
 LocusZoom.Panel = function(layout, parent) {
 
     if (typeof layout !== 'object') {
-        throw 'Unable to create panel, invalid layout';
+        throw new Error('Unable to create panel, invalid layout');
     }
 
     /** @member {LocusZoom.Plot|null} */
@@ -35,7 +35,7 @@ LocusZoom.Panel = function(layout, parent) {
         }
     } else if (this.parent) {
         if (typeof this.parent.panels[layout.id] !== 'undefined') {
-            throw 'Cannot create panel with id [' + layout.id + ']; panel with that id already exists';
+            throw new Error('Cannot create panel with id [' + layout.id + ']; panel with that id already exists');
         }
     }
     /** @member {String} */
@@ -161,10 +161,10 @@ LocusZoom.Panel = function(layout, parent) {
     this.on = function(event, hook) {
         // TODO: Dry plot and panel event code into a shared mixin
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw('Unable to register event hook, invalid event: ' + event.toString());
+            throw new Error('Unable to register event hook, invalid event: ' + event.toString());
         }
         if (typeof hook != 'function') {
-            throw('Unable to register event hook, invalid hook function passed');
+            throw new Error('Unable to register event hook, invalid hook function passed');
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -178,7 +178,7 @@ LocusZoom.Panel = function(layout, parent) {
     this.off = function(event, hook) {
         var theseHooks = this.event_hooks[event];
         if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-            throw('Unable to remove event hook, invalid event: ' + event.toString());
+            throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
         }
         if (hook === undefined) {
             // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -189,7 +189,7 @@ LocusZoom.Panel = function(layout, parent) {
             if (hookMatch !== -1) {
                 theseHooks.splice(hookMatch, 1);
             } else {
-                throw('The specified event listener is not registered and therefore cannot be removed');
+                throw new Error('The specified event listener is not registered and therefore cannot be removed');
             }
         }
         return this;
@@ -211,7 +211,7 @@ LocusZoom.Panel = function(layout, parent) {
         // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
         // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw('LocusZoom attempted to throw an invalid event: ' + event.toString());
+            throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
         }
         if (typeof eventData === 'boolean' && arguments.length === 2) {
             // Overloaded method signature: emit(event, bubble)
@@ -649,13 +649,13 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout) {
 
     // Sanity checks
     if (typeof layout !== 'object' || typeof layout.id !== 'string' || !layout.id.length) {
-        throw 'Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()';
+        throw new Error('Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()');
     }
     if (typeof this.data_layers[layout.id] !== 'undefined') {
-        throw 'Cannot create data_layer with id [' + layout.id + ']; data layer with that id already exists in the panel';
+        throw new Error('Cannot create data_layer with id [' + layout.id + ']; data layer with that id already exists in the panel');
     }
     if (typeof layout.type !== 'string') {
-        throw 'Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()';
+        throw new Error('Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()');
     }
 
     // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
@@ -706,7 +706,7 @@ LocusZoom.Panel.prototype.addDataLayer = function(layout) {
  */
 LocusZoom.Panel.prototype.removeDataLayer = function(id) {
     if (!this.data_layers[id]) {
-        throw ('Unable to remove data layer, ID not found: ' + id);
+        throw new Error('Unable to remove data layer, ID not found: ' + id);
     }
 
     // Destroy all tooltips for the data layer
@@ -761,7 +761,7 @@ LocusZoom.Panel.prototype.reMap = function() {
         try {
             this.data_promises.push(this.data_layers[id].reMap());
         } catch (error) {
-            console.warn(error);
+            console.error(error);
             this.curtain.show(error.message || error);
         }
     }
@@ -774,7 +774,7 @@ LocusZoom.Panel.prototype.reMap = function() {
             this.emit('data_rendered');
         }.bind(this))
         .catch(function(error) {
-            console.warn(error);
+            console.error(error);
             this.curtain.show(error.message || error);
         }.bind(this));
 };
@@ -1080,7 +1080,7 @@ LocusZoom.Panel.prototype.render = function() {
 LocusZoom.Panel.prototype.renderAxis = function(axis) {
 
     if (['x', 'y1', 'y2'].indexOf(axis) === -1) {
-        throw('Unable to render axis; invalid axis identifier: ' + axis);
+        throw new Error('Unable to render axis; invalid axis identifier: ' + axis);
     }
 
     var canRender = this.layout.axes[axis].render

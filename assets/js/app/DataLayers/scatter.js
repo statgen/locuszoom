@@ -32,10 +32,10 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // Reimplement the positionTooltip() method to be scatter-specific
     this.positionTooltip = function(id) {
         if (typeof id != 'string') {
-            throw ('Unable to position tooltip: id is not a string');
+            throw new Error('Unable to position tooltip: id is not a string');
         }
         if (!this.tooltips[id]) {
-            throw ('Unable to position tooltip: id does not point to a valid tooltip');
+            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
         }
         var top, left, arrow_type, arrow_top, arrow_left;
         var tooltip = this.tooltips[id];
@@ -468,7 +468,7 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     this.makeLDReference = function(element) {
         var ref = null;
         if (typeof element == 'undefined') {
-            throw('makeLDReference requires one argument of any type');
+            throw new Error('makeLDReference requires one argument of any type');
         } else if (typeof element == 'object') {
             if (this.layout.id_field && typeof element[this.layout.id_field] != 'undefined') {
                 ref = element[this.layout.id_field].toString();
@@ -508,7 +508,7 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
         // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         var category_field = this.layout.x_axis.category_field;
         if (!category_field) {
-            throw 'Layout for ' + this.layout.id + ' must specify category_field';
+            throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
         }
         // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
         var sourceData = this.data
@@ -578,7 +578,7 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
 
         // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
         if (this.layout.color.scale_function !== 'categorical_bin') {
-            throw 'This layer requires that coloring be specified as a `categorical_bin`';
+            throw new Error('This layer requires that coloring be specified as a `categorical_bin`');
         }
 
         if (baseParams.categories.length && baseParams.values.length) {
@@ -616,11 +616,11 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      */
     getTicks: function(dimension, config) { // Overrides parent method
         if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
-            throw 'Invalid dimension identifier';
+            throw new Error('Invalid dimension identifier');
         }
         var position = config.position || 'left';
         if (['left', 'center', 'right'].indexOf(position) === -1) {
-            throw 'Invalid tick position';
+            throw new Error('Invalid tick position');
         }
 
         var categoryBounds = this._categories;

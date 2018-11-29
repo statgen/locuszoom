@@ -30,22 +30,22 @@
         // Verify dependency: d3.js
         var minimum_d3_version = "3.5.6";
         if (typeof d3 != "object"){
-            throw("d3 dependency not met. Library missing.");
+            throw new Error("d3 dependency not met. Library missing.");
         }
         if (!semanticVersionIsOk(minimum_d3_version, d3.version)){
-            throw("d3 dependency not met. Outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher (found: " + d3.version + ").");
+            throw new Error("d3 dependency not met. Outdated version detected.\nRequired d3 version: " + minimum_d3_version + " or higher (found: " + d3.version + ").");
         }
 
         // Verify dependency: Q.js
         if (typeof Q != "function"){
-            throw("Q dependency not met. Library missing.");
+            throw new Error("Q dependency not met. Library missing.");
         }
 
         // ESTemplate: module content goes here
         ;%= body %;
 
     } catch (plugin_loading_error){
-        console.error("LocusZoom Plugin error: " + plugin_loading_error);
+        console.error("LocusZoom Plugin error: ", plugin_loading_error);
     }
 
     return LocusZoom;

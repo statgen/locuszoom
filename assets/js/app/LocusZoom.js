@@ -16,7 +16,7 @@ var LocusZoom = {
  */
 LocusZoom.populate = function(selector, datasource, layout) {
     if (typeof selector == 'undefined') {
-        throw ('LocusZoom.populate selector not defined');
+        throw new Error('LocusZoom.populate selector not defined');
     }
     // Empty the selector of any existing content
     d3.select(selector).html('');
@@ -363,10 +363,10 @@ LocusZoom.validateState = function(new_state, layout) {
  */
 LocusZoom.parseFields = function (data, html) {
     if (typeof data != 'object') {
-        throw ('LocusZoom.parseFields invalid arguments: data is not an object');
+        throw new Error('LocusZoom.parseFields invalid arguments: data is not an object');
     }
     if (typeof html != 'string') {
-        throw ('LocusZoom.parseFields invalid arguments: html is not a string');
+        throw new Error('LocusZoom.parseFields invalid arguments: html is not a string');
     }
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
@@ -446,7 +446,7 @@ LocusZoom.parseFields = function (data, html) {
  */
 LocusZoom.getToolTipData = function(node) {
     if (typeof node != 'object' || typeof node.parentNode == 'undefined') {
-        throw('Invalid node object');
+        throw new Error('Invalid node object');
     }
     // If this node is a locuszoom tool tip then return its data
     var selector = d3.select(node);
@@ -715,7 +715,7 @@ LocusZoom.generateLoader = function() {
  */
 LocusZoom.subclass = function(parent, extra) {
     if (typeof parent !== 'function' ) {
-        throw 'Parent must be a callable constructor';
+        throw new Error('Parent must be a callable constructor');
     }
 
     extra = extra || {};

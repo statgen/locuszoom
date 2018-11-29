@@ -4,11 +4,11 @@
 function validateBuildSource(class_name, build, source) {
     // Build OR Source, not both
     if ((build && source) || !(build || source)) {
-        throw class_name + ' must specify either "build" or "source", but not both';
+        throw new Error(class_name + ' must specify either "build" or "source", but not both');
     }
     // If the build isn't recognized, our APIs can't transparently select a source to match
     if (build && ['GRCh37', 'GRCh38'].indexOf(build) === -1) {
-        throw class_name + ' must specify a valid genome build number';
+        throw new Error(class_name + ' must specify a valid genome build number');
     }
 }
 
@@ -235,7 +235,7 @@ LocusZoom.Data.Requester = function(sources) {
         // Create an array of functions that, when called, will trigger the request to the specified datasource
         var request_handles = Object.keys(requests).map(function(key) {
             if (!sources.get(key)) {
-                throw('Datasource for namespace ' + key + ' not found');
+                throw new Error('Datasource for namespace ' + key + ' not found');
             }
             return sources.get(key).getData(state, requests[key].fields,
                                             requests[key].outnames, requests[key].trans);
@@ -288,7 +288,7 @@ LocusZoom.Data.Source.prototype.parseInit = function(init) {
         this.params = init.params || {};
     }
     if (!this.url) {
-        throw('Source not initialized with required URL');
+        throw new Error('Source not initialized with required URL');
     }
 
 };
@@ -407,7 +407,7 @@ LocusZoom.Data.Source.prototype.normalizeResponse = function (data) {
         return item.length === N;
     });
     if (!sameLength) {
-        throw this.constructor.SOURCE_NAME + ' expects a response in which all arrays of data are the same length';
+        throw new Error(this.constructor.SOURCE_NAME + ' expects a response in which all arrays of data are the same length');
     }
 
     // Go down the rows, and create an object for each record
@@ -489,7 +489,7 @@ LocusZoom.Data.Source.prototype.extractFields = function (data, fields, outnames
         return output_record;
     });
     fieldFound.forEach(function(v, i) {
-        if (!v) {throw 'field ' + fields[i] + ' not found in response for ' + outnames[i];}
+        if (!v) {throw new Error('field ' + fields[i] + ' not found in response for ' + outnames[i]);}
     });
     return records;
 };
@@ -650,7 +650,7 @@ LocusZoom.Data.AssociationSource.prototype.preGetData = function(state, fields, 
 LocusZoom.Data.AssociationSource.prototype.getURL = function(state, chain, fields) {
     var analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
     if (typeof analysis == 'undefined') {
-        throw 'Association source must specify an analysis ID to plot';
+        throw new Error('Association source must specify an analysis ID to plot');
     }
     return this.url + 'results/?filter=analysis in ' + analysis  +
         " and chromosome in  '" + state.chr + "'" +
@@ -689,7 +689,7 @@ LocusZoom.Data.LDSource = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
     if (fields.length > 1) {
         if (fields.length !== 2 || fields.indexOf('isrefvar') === -1) {
-            throw('LD does not know how to get all fields: ' + fields.join(', '));
+            throw new Error('LD does not know how to get all fields: ' + fields.join(', '));
         }
     }
 };
@@ -766,14 +766,14 @@ LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
     }
     if (refVar === 'best') {
         if (!chain.body) {
-            throw('No association data found to find best pvalue');
+            throw new Error('No association data found to find best pvalue');
         }
         var keys = this.findMergeFields(chain);
         if (!keys.pvalue || !keys.id) {
             var columns = '';
             if (!keys.id) { columns += (columns.length ? ', ' : '') + 'id'; }
             if (!keys.pvalue) { columns += (columns.length ? ', ' : '') + 'pvalue'; }
-            throw('Unable to find necessary column(s) for merge: ' + columns + ' (available: ' + keys._names_ + ')');
+            throw new Error('Unable to find necessary column(s) for merge: ' + columns + ' (available: ' + keys._names_ + ')');
         }
         refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
     }
@@ -796,7 +796,7 @@ LocusZoom.Data.LDSource.prototype.combineChainBody = function (data, chain, fiel
     var keys = this.findMergeFields(chain);
     var reqFields = this.findRequestedFields(fields, outnames);
     if (!keys.position) {
-        throw('Unable to find position field for merge: ' + keys._names_);
+        throw new Error('Unable to find position field for merge: ' + keys._names_);
     }
     var leftJoin = function(left, right, lfield, rfield) {
         var i = 0, j = 0;
@@ -927,7 +927,7 @@ LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
     var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
 
     if (!posMatch) {
-        throw 'Could not find data to align with GWAS catalog results';
+        throw new Error('Could not find data to align with GWAS catalog results');
     }
     return { 'pos': posMatch };
 };
@@ -1157,7 +1157,7 @@ LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function(init) {
 LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
     var build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
     if (!build || !Array.isArray(build) || !build.length) {
-        throw ['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' ');
+        throw new Error(['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
     }
     var url = [
         this.url,
@@ -1187,7 +1187,7 @@ LocusZoom.Data.PheWASSource.prototype.getURL = function(state, chain, fields) {
  */
 LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
     if (!init || !init.sources) {
-        throw 'Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs';
+        throw new Error('Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs');
     }
 
     /**
@@ -1205,7 +1205,7 @@ LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function(init) {
     var self = this;
     this.REQUIRED_SOURCES.forEach(function (k) {
         if (specified_ids.indexOf(k) === -1) {
-            throw 'Configuration for ' + self.constructor.SOURCE_NAME + ' must specify a source ID corresponding to ' + k;
+            throw new Error('Configuration for ' + self.constructor.SOURCE_NAME + ' must specify a source ID corresponding to ' + k);
         }
     });
     this.parseInit(init);
@@ -1223,7 +1223,7 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
     Object.keys(this._source_name_mapping).forEach(function(ns) {
         var chain_source_id = self._source_name_mapping[ns];
         if (chain.discrete && !chain.discrete[chain_source_id]) {
-            throw self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id;
+            throw new Error(self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id);
         }
     });
     return Q.when(chain.body || []);
@@ -1243,5 +1243,5 @@ LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, f
 
 LocusZoom.Data.ConnectorSource.prototype.combineChainBody = function(records, chain) {
     // Stub method: specifies how to combine the data
-    throw 'This method must be implemented in a subclass';
+    throw new Error('This method must be implemented in a subclass');
 };

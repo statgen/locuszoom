@@ -25,7 +25,7 @@ LocusZoom.KnownDataSources = (function() {
     var findSourceByName = function(x) {
         for(var i = 0; i < sources.length; i++) {
             if (!sources[i].SOURCE_NAME) {
-                throw('KnownDataSources at position ' + i + " does not have a 'SOURCE_NAME' static property");
+                throw new Error('KnownDataSources at position ' + i + " does not have a 'SOURCE_NAME' static property");
             }
             if (sources[i].SOURCE_NAME === x) {
                 return sources[i];
@@ -66,13 +66,13 @@ LocusZoom.KnownDataSources = (function() {
     obj.extend = function(parent_name, source_name, overrides) {
         var parent = findSourceByName(parent_name);
         if (!parent) {
-            throw 'Attempted to subclass an unknown or unregistered data source';
+            throw new Error('Attempted to subclass an unknown or unregistered data source');
         }
         if (!source_name) {
-            throw 'Must provide a name for the new data source';
+            throw new Error('Must provide a name for the new data source');
         }
         if (typeof overrides !== 'object') {
-            throw 'Must specify an object of properties and methods';
+            throw new Error('Must specify an object of properties and methods');
         }
         var child = LocusZoom.subclass(parent, overrides);
         child.SOURCE_NAME = source_name;
@@ -107,7 +107,7 @@ LocusZoom.KnownDataSources = (function() {
             params[0] = null;
             return new (Function.prototype.bind.apply(newObj, params));
         } else {
-            throw('Unable to find data source for name: ' + name);
+            throw new Error('Unable to find data source for name: ' + name);
         }
     };
 
@@ -167,7 +167,7 @@ LocusZoom.TransformationFunctions = (function() {
         if (fun)  {
             return fun;
         } else {
-            throw('transformation ' + name + ' not found');
+            throw new Error('transformation ' + name + ' not found');
         }
     };
 
@@ -221,7 +221,7 @@ LocusZoom.TransformationFunctions = (function() {
      */
     obj.set = function(name, fn) {
         if (name.substring(0,1) === '|') {
-            throw('transformation name should not start with a pipe');
+            throw new Error('transformation name should not start with a pipe');
         } else {
             if (fn) {
                 transformations[name] = fn;
@@ -238,7 +238,7 @@ LocusZoom.TransformationFunctions = (function() {
      */
     obj.add = function(name, fn) {
         if (transformations[name]) {
-            throw('transformation already exists with name: ' + name);
+            throw new Error('transformation already exists with name: ' + name);
         } else {
             obj.set(name, fn);
         }
@@ -380,7 +380,7 @@ LocusZoom.ScaleFunctions = (function() {
                 return functions[name](parameters, value);
             }
         } else {
-            throw('scale function [' + name + '] not found');
+            throw new Error('scale function [' + name + '] not found');
         }
     };
 
@@ -404,7 +404,7 @@ LocusZoom.ScaleFunctions = (function() {
      */
     obj.add = function(name, fn) {
         if (functions[name]) {
-            throw('scale function already exists with name: ' + name);
+            throw new Error('scale function already exists with name: ' + name);
         } else {
             obj.set(name, fn);
         }

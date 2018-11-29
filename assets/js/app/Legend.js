@@ -11,7 +11,7 @@
 */
 LocusZoom.Legend = function(parent) {
     if (!(parent instanceof LocusZoom.Panel)) {
-        throw 'Unable to create legend, parent must be a locuszoom panel';
+        throw new Error('Unable to create legend, parent must be a locuszoom panel');
     }
     /** @member {LocusZoom.Panel} */
     this.parent = parent;

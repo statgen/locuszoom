@@ -81,7 +81,7 @@ LocusZoom.DataLayer = function(layout, parent) {
  */
 LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transformations) {
     if (!fieldName || !namespace) {
-        throw 'Must specify field name and namespace to use when adding field';
+        throw new Error('Must specify field name and namespace to use when adding field');
     }
     var fieldString = namespace + ':' + fieldName;
     if (transformations) {
@@ -91,7 +91,7 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
         } else if (Array.isArray(transformations)) {
             fieldString += transformations.join('|');
         } else {
-            throw 'Must provide transformations as either a string or array of strings';
+            throw new Error('Must provide transformations as either a string or array of strings');
         }
     }
     var fields = this.layout.fields;
@@ -192,7 +192,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element) {
     } else if (typeof element == 'object') {
         var id_field = this.layout.id_field || 'id';
         if (typeof element[id_field] == 'undefined') {
-            throw('Unable to generate element ID');
+            throw new Error('Unable to generate element ID');
         }
         element_id = element[id_field].toString().replace(/\W/g,'');
     }
@@ -377,7 +377,7 @@ LocusZoom.DataLayer.prototype._getDataExtent = function(data, axis_config) {
 LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension) {
 
     if (['x', 'y'].indexOf(dimension) === -1) {
-        throw('Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()');
+        throw new Error('Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()');
     }
 
     var axis_name = dimension + '_axis';
@@ -457,7 +457,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension) {
  */
 LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
     if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
-        throw('Invalid dimension identifier at layer level' + dimension);
+        throw new Error('Invalid dimension identifier at layer level' + dimension);
     }
     return [];
 };
@@ -469,7 +469,7 @@ LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
  */
 LocusZoom.DataLayer.prototype.createTooltip = function(d, id) {
     if (typeof this.layout.tooltip != 'object') {
-        throw ('DataLayer [' + this.id + '] layout does not define a tooltip');
+        throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
     }
     if (typeof id == 'undefined') { id = this.getElementId(d); }
     if (this.tooltips[id]) {
@@ -560,7 +560,7 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
  */
 LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
     if (typeof id != 'string') {
-        throw ('Unable to position tooltip: id is not a string');
+        throw new Error('Unable to position tooltip: id is not a string');
     }
     // Position the div itself
     this.tooltips[id].selector
@@ -770,10 +770,10 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx) {
 LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive) {
     // Sanity checks
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-        throw('Invalid status passed to DataLayer.setElementStatus()');
+        throw new Error('Invalid status passed to DataLayer.setElementStatus()');
     }
     if (typeof element == 'undefined') {
-        throw('Invalid element passed to DataLayer.setElementStatus()');
+        throw new Error('Invalid element passed to DataLayer.setElementStatus()');
     }
     if (typeof toggle == 'undefined') {
         toggle = true;
@@ -834,7 +834,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
 
     // Sanity check
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-        throw('Invalid status passed to DataLayer.setElementStatusByFilters()');
+        throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
     }
     if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; } else { toggle = !!toggle; }
@@ -864,7 +864,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
 
     // Sanity check
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-        throw('Invalid status passed to DataLayer.setAllElementStatus()');
+        throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
     }
     if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; }
@@ -1010,7 +1010,8 @@ LocusZoom.DataLayer.prototype.exportData = function(format) {
             ret = JSON.stringify(this.data);
         } catch (e) {
             ret = null;
-            console.error('Unable to export JSON data from data layer: ' + this.getBaseId() + ';', e);
+            console.warn('Unable to export JSON data from data layer: ' + this.getBaseId());
+            console.error(e);
         }
         break;
     case 'tsv':
@@ -1101,12 +1102,12 @@ LocusZoom.DataLayers = (function() {
             return null;
         } else if (datalayers[name]) {
             if (typeof layout != 'object') {
-                throw('invalid layout argument for data layer [' + name + ']');
+                throw new Error('invalid layout argument for data layer [' + name + ']');
             } else {
                 return new datalayers[name](layout, parent);
             }
         } else {
-            throw('data layer [' + name + '] not found');
+            throw new Error('data layer [' + name + '] not found');
         }
     };
 
@@ -1119,7 +1120,7 @@ LocusZoom.DataLayers = (function() {
     obj.set = function(name, datalayer) {
         if (datalayer) {
             if (typeof datalayer != 'function') {
-                throw('unable to set data layer [' + name + '], argument provided is not a function');
+                throw new Error('unable to set data layer [' + name + '], argument provided is not a function');
             } else {
                 datalayers[name] = datalayer;
                 datalayers[name].prototype = new LocusZoom.DataLayer();
@@ -1137,7 +1138,7 @@ LocusZoom.DataLayers = (function() {
      */
     obj.add = function(name, datalayer) {
         if (datalayers[name]) {
-            throw('data layer already exists with name: ' + name);
+            throw new Error('data layer already exists with name: ' + name);
         } else {
             obj.set(name, datalayer);
         }
@@ -1156,10 +1157,10 @@ LocusZoom.DataLayers = (function() {
 
         var parent = datalayers[parent_name];
         if (!parent) {
-            throw 'Attempted to subclass an unknown or unregistered datalayer type';
+            throw new Error('Attempted to subclass an unknown or unregistered datalayer type');
         }
         if (typeof overrides !== 'object') {
-            throw 'Must specify an object of properties and methods';
+            throw new Error('Must specify an object of properties and methods');
         }
         var child = LocusZoom.subclass(parent, overrides);
         // Bypass .set() because we want a layer of inheritance below `DataLayer`

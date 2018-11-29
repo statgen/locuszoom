@@ -30,7 +30,7 @@ LocusZoom.Layouts = (function () {
      */
     obj.get = function (type, name, modifications) {
         if (typeof type != 'string' || typeof name != 'string') {
-            throw('invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)');
+            throw new Error('invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)');
         } else if (layouts[type][name]) {
             // Get the base layout
             var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
@@ -100,14 +100,14 @@ LocusZoom.Layouts = (function () {
             // Return the layout as valid JSON only
             return JSON.parse(JSON.stringify(layout));
         } else {
-            throw('layout type [' + type + '] name [' + name + '] not found');
+            throw new Error('layout type [' + type + '] name [' + name + '] not found');
         }
     };
 
     /** @private */
     obj.set = function (type, name, layout) {
         if (typeof type != 'string' || typeof name != 'string' || typeof layout != 'object') {
-            throw ('unable to set new layout; bad arguments passed to set()');
+            throw new Error('unable to set new layout; bad arguments passed to set()');
         }
         if (!layouts[type]) {
             layouts[type] = {};
@@ -162,7 +162,7 @@ LocusZoom.Layouts = (function () {
      */
     obj.merge = function (custom_layout, default_layout) {
         if (typeof custom_layout !== 'object' || typeof default_layout !== 'object') {
-            throw('LocusZoom.Layouts.merge only accepts two layout objects; ' + (typeof custom_layout) + ', ' + (typeof default_layout) + ' given');
+            throw new Error('LocusZoom.Layouts.merge only accepts two layout objects; ' + (typeof custom_layout) + ', ' + (typeof default_layout) + ' given');
         }
         for (var property in default_layout) {
             if (!default_layout.hasOwnProperty(property)) {
@@ -181,7 +181,7 @@ LocusZoom.Layouts = (function () {
             }
             // Unsupported property types: throw an exception
             if (custom_type === 'function' || default_type === 'function') {
-                throw('LocusZoom.Layouts.merge encountered an unsupported property type');
+                throw new Error('LocusZoom.Layouts.merge encountered an unsupported property type');
             }
             // Undefined custom value: pull the default value
             if (custom_type === 'undefined') {
