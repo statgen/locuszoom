@@ -33,7 +33,7 @@
     "watch": "gulp watch"
   },
   "dependencies": {
-    "d3": "3.5.6",
+    "d3": "3.5.17",
     "q": "1.4.1"
   },
   "devDependencies": {
