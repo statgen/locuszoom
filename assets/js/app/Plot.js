@@ -116,8 +116,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
         'layout_changed': [],
         'data_requested': [],
         'data_rendered': [],
-        'element_clicked': [],
-        'element_selection': [],
+        'element_clicked': [], // Select or unselect
+        'element_selection': [], // Element becomes active (only)
+        'panel_removed': [],
         'state_changed': []  // Only triggered when a state change causes rerender
     };
 
@@ -623,6 +624,8 @@ LocusZoom.Plot.prototype.removePanel = function(id) {
         // positioning. TODO: make this additional call unnecessary.
         this.setDimensions(this.layout.width, this.layout.height);
     }
+
+    this.emit('panel_removed', id);
 
     return this;
 };
