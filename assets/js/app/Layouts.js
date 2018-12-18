@@ -1177,10 +1177,10 @@ LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     id: 'annotationcatalog',
     title: { text: 'SNPs in GWAS Catalog', x: 50, style: { 'font-size': '14px' } },
     width: 800,
-    height: 100,
-    min_height: 100,
+    height: 50,
+    min_height: 50,
     proportional_width: 1,
-    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    margin: { top: 30, right: 50, bottom: 10, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
     interaction: {
@@ -1202,7 +1202,7 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
     state: {},
     width: 800,
     height: 450,
-    responsive_resize: true,
+    responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
@@ -1215,15 +1215,15 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
 LocusZoom.Layouts.add('plot', 'association_catalog', {
     state: {},
     width: 800,
-    height: 450,
-    responsive_resize: true,
+    height: 500,
+    responsive_resize: 'width_only',
     min_region_scale: 20000,
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association_catalog', { unnamespaced: true, proportional_height: 0.5 }),
         LocusZoom.Layouts.get('panel', 'annotation_catalog', { unnamespaced: true }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
+        LocusZoom.Layouts.get('panel', 'association_catalog', { unnamespaced: true }),
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
     ]
 });
 
@@ -1235,7 +1235,7 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
     height: 600,
     min_width: 800,
     min_height: 600,
-    responsive_resize: true,
+    responsive_resize: 'both',
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
         LocusZoom.Layouts.get('panel', 'phewas', { unnamespaced: true, proportional_height: 0.45 }),
@@ -1260,7 +1260,7 @@ LocusZoom.Layouts.add('plot', 'interval_association', {
     state: {},
     width: 800,
     height: 550,
-    responsive_resize: true,
+    responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),

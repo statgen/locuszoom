@@ -274,7 +274,7 @@ if (typeof gwasCredibleSets === 'undefined') {
         state: {},
         width: 800,
         height: 450,
-        responsive_resize: true,
+        responsive_resize: 'both',
         min_region_scale: 20000,
         max_region_scale: 1000000,
         dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', {unnamespaced: true}),
