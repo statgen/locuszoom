@@ -1175,12 +1175,11 @@ LocusZoom.Layouts.add('panel', 'intervals', {
 
 LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     id: 'annotationcatalog',
-    title: { text: 'SNPs in GWAS Catalog', x: 50, style: { 'font-size': '14px' } },
     width: 800,
     height: 50,
     min_height: 50,
     proportional_width: 1,
-    margin: { top: 30, right: 50, bottom: 10, left: 50 },
+    margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
     interaction: {
