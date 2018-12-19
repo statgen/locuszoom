@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
-    
+
     <!-- Necessary includes for LocusZoom.js -->
     <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    
+
     <title>LocusZoom.js ~ Covariates Model Example</title>
 
     <style>
@@ -60,14 +60,14 @@
     </div>
 
     <script type="text/javascript">
-      
+
     // Define Data Sources
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
-      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
-      .add("ld", ["LDLZ" ,apiBase + "pair/LD/"])
-      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
-      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+      .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts

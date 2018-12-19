@@ -1,5 +1,5 @@
 /* global LocusZoom */
-"use strict";
+'use strict';
 
 /**
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
@@ -25,15 +25,15 @@ LocusZoom.DataLayer = function(layout, parent) {
 
     /** @member {LocusZoom.Plot} */
     this.parent_plot = null;
-    if (typeof parent != "undefined" && parent instanceof LocusZoom.Panel){ this.parent_plot = parent.parent; }
+    if (typeof parent != 'undefined' && parent instanceof LocusZoom.Panel) { this.parent_plot = parent.parent; }
 
     /** @member {Object} */
     this.layout = LocusZoom.Layouts.merge(layout || {}, LocusZoom.DataLayer.DefaultLayout);
-    if (this.layout.id){ this.id = this.layout.id; }
+    if (this.layout.id) { this.id = this.layout.id; }
 
     // Ensure any axes defined in the layout have an explicit axis number (default: 1)
-    if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== "number"){ this.layout.x_axis.axis = 1; }
-    if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== "number"){ this.layout.y_axis.axis = 1; }
+    if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') { this.layout.x_axis.axis = 1; }
+    if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') { this.layout.y_axis.axis = 1; }
 
     /**
      * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
@@ -51,19 +51,19 @@ LocusZoom.DataLayer = function(layout, parent) {
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
     this.data = [];
-    if (this.layout.tooltip){
+    if (this.layout.tooltip) {
         /** @member {Object} */
         this.tooltips = {};
     }
 
     // Initialize flags for tracking global statuses
     this.global_statuses = {
-        "highlighted": false,
-        "selected": false,
-        "faded": false,
-        "hidden": false
+        'highlighted': false,
+        'selected': false,
+        'faded': false,
+        'hidden': false
     };
-    
+
     return this;
 
 };
@@ -81,17 +81,17 @@ LocusZoom.DataLayer = function(layout, parent) {
  */
 LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transformations) {
     if (!fieldName || !namespace) {
-        throw "Must specify field name and namespace to use when adding field";
+        throw new Error('Must specify field name and namespace to use when adding field');
     }
-    var fieldString = namespace + ":" + fieldName;
+    var fieldString = namespace + ':' + fieldName;
     if (transformations) {
-        fieldString += "|";
-        if (typeof transformations === "string") {
+        fieldString += '|';
+        if (typeof transformations === 'string') {
             fieldString += transformations;
         } else if (Array.isArray(transformations)) {
-            fieldString += transformations.join("|");
+            fieldString += transformations.join('|');
         } else {
-            throw "Must provide transformations as either a string or array of strings";
+            throw new Error('Must provide transformations as either a string or array of strings');
         }
     }
     var fields = this.layout.fields;
@@ -111,11 +111,11 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
 LocusZoom.DataLayer.prototype.setDefaultState = function() {
     // Define state parameters specific to this data layer. Within plot state, this will live under a key
     //  `panel_name.layer_name`.
-    if (this.parent){
+    if (this.parent) {
         this.state = this.parent.state;
-        this.state_id = this.parent.id + "." + this.id;
+        this.state_id = this.parent.id + '.' + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
+        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
             this.state[this.state_id][status] = this.state[this.state_id][status] || [];
         }.bind(this));
     }
@@ -127,7 +127,7 @@ LocusZoom.DataLayer.prototype.setDefaultState = function() {
  * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 LocusZoom.DataLayer.DefaultLayout = {
-    type: "",
+    type: '',
     fields: [],
     x_axis: {},
     y_axis: {}
@@ -143,9 +143,9 @@ LocusZoom.DataLayer.DefaultLayout = {
  * @type {{verbs: String[], adjectives: String[], menu_antiverbs: String[]}}
  */
 LocusZoom.DataLayer.Statuses = {
-    verbs: ["highlight", "select", "fade", "hide"],
-    adjectives: ["highlighted", "selected", "faded", "hidden"],
-    menu_antiverbs: ["unhighlight", "deselect", "unfade", "show"]
+    verbs: ['highlight', 'select', 'fade', 'hide'],
+    adjectives: ['highlighted', 'selected', 'faded', 'hidden'],
+    menu_antiverbs: ['unhighlight', 'deselect', 'unfade', 'show']
 };
 
 /**
@@ -153,8 +153,8 @@ LocusZoom.DataLayer.Statuses = {
  *
  * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
  */
-LocusZoom.DataLayer.prototype.getBaseId = function(){
-    return this.parent_plot.id + "." + this.parent.id + "." + this.id;
+LocusZoom.DataLayer.prototype.getBaseId = function() {
+    return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
 };
 
 /**
@@ -165,7 +165,7 @@ LocusZoom.DataLayer.prototype.getBaseId = function(){
  * @public
  * @returns {number}
  */
-LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
+LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function() {
     var dataBCR = this.svg.group.node().getBoundingClientRect();
     return dataBCR.height;
 };
@@ -174,8 +174,8 @@ LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function(){
  * Whether transitions can be applied to this data layer
  * @returns {boolean}
  */
-LocusZoom.DataLayer.prototype.canTransition = function(){
-    if (!this.layout.transition){ return false; }
+LocusZoom.DataLayer.prototype.canTransition = function() {
+    if (!this.layout.transition) { return false; }
     return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
 };
 
@@ -185,18 +185,18 @@ LocusZoom.DataLayer.prototype.canTransition = function(){
  * @param {String|Object} element
  * @returns {String}
  */
-LocusZoom.DataLayer.prototype.getElementId = function(element){
-    var element_id = "element";
-    if (typeof element == "string"){
+LocusZoom.DataLayer.prototype.getElementId = function(element) {
+    var element_id = 'element';
+    if (typeof element == 'string') {
         element_id = element;
-    } else if (typeof element == "object"){
-        var id_field = this.layout.id_field || "id";
-        if (typeof element[id_field] == "undefined"){
-            throw("Unable to generate element ID");
+    } else if (typeof element == 'object') {
+        var id_field = this.layout.id_field || 'id';
+        if (typeof element[id_field] == 'undefined') {
+            throw new Error('Unable to generate element ID');
         }
-        element_id = element[id_field].toString().replace(/\W/g,"");
+        element_id = element[id_field].toString().replace(/\W/g,'');
     }
-    return (this.getBaseId() + "-" + element_id).replace(/(:|\.|\[|\]|,)/g, "_");
+    return (this.getBaseId() + '-' + element_id).replace(/([:.[\],])/g, '_');
 };
 
 /**
@@ -208,7 +208,7 @@ LocusZoom.DataLayer.prototype.getElementId = function(element){
  * @param {String|Object} element
  * @returns {String|null}
  */
-LocusZoom.DataLayer.prototype.getElementStatusNodeId = function(element){
+LocusZoom.DataLayer.prototype.getElementStatusNodeId = function(element) {
     return null;
 };
 
@@ -219,9 +219,9 @@ LocusZoom.DataLayer.prototype.getElementStatusNodeId = function(element){
  * @param {String} id The unique identifier for the element, as defined by `getElementId`
  * @returns {Object|null} The data bound to that element
  */
-LocusZoom.DataLayer.prototype.getElementById = function(id){
-    var selector = d3.select("#" + id.replace(/(:|\.|\[|\]|,)/g, "\\$1"));
-    if (!selector.empty() && selector.data() && selector.data().length){
+LocusZoom.DataLayer.prototype.getElementById = function(id) {
+    var selector = d3.select('#' + id.replace(/([:.[\],])/g, '\\$1')); // escape special characters
+    if (!selector.empty() && selector.data() && selector.data().length) {
         return selector.data()[0];
     } else {
         return null;
@@ -233,21 +233,21 @@ LocusZoom.DataLayer.prototype.getElementById = function(id){
  *   This is called on all data immediately after being fetched.
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.applyDataMethods = function(){
-    this.data.forEach(function(d, i){
+LocusZoom.DataLayer.prototype.applyDataMethods = function() {
+    this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
-        this.data[i].toHTML = function(){
-            var id_field = this.layout.id_field || "id";
-            var html = "";
-            if (this.data[i][id_field]){ html = this.data[i][id_field].toString(); }
+        this.data[i].toHTML = function() {
+            var id_field = this.layout.id_field || 'id';
+            var html = '';
+            if (this.data[i][id_field]) { html = this.data[i][id_field].toString(); }
             return html;
         }.bind(this);
         // getDataLayer() method - return a reference to the data layer
-        this.data[i].getDataLayer = function(){
+        this.data[i].getDataLayer = function() {
             return this;
         }.bind(this);
         // deselect() method - shortcut method to deselect the element
-        this.data[i].deselect = function(){
+        this.data[i].deselect = function() {
             var data_layer = this.getDataLayer();
             data_layer.unselectElement(this);
         };
@@ -260,7 +260,7 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function(){
  * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.applyCustomDataMethods = function(){
+LocusZoom.DataLayer.prototype.applyCustomDataMethods = function() {
     return this;
 };
 
@@ -268,22 +268,22 @@ LocusZoom.DataLayer.prototype.applyCustomDataMethods = function(){
  * Initialize a data layer
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.initialize = function(){
+LocusZoom.DataLayer.prototype.initialize = function() {
 
     // Append a container group element to house the main data layer group element and the clip path
-    this.svg.container = this.parent.svg.group.append("g")
-        .attr("class", "lz-data_layer-container")
-        .attr("id", this.getBaseId() + ".data_layer_container");
-        
+    this.svg.container = this.parent.svg.group.append('g')
+        .attr('class', 'lz-data_layer-container')
+        .attr('id', this.getBaseId() + '.data_layer_container');
+
     // Append clip path to the container element
-    this.svg.clipRect = this.svg.container.append("clipPath")
-        .attr("id", this.getBaseId() + ".clip")
-        .append("rect");
-    
+    this.svg.clipRect = this.svg.container.append('clipPath')
+        .attr('id', this.getBaseId() + '.clip')
+        .append('rect');
+
     // Append svg group for rendering all data layer elements, clipped by the clip path
-    this.svg.group = this.svg.container.append("g")
-        .attr("id", this.getBaseId() + ".data_layer")
-        .attr("clip-path", "url(#" + this.getBaseId() + ".clip)");
+    this.svg.group = this.svg.container.append('g')
+        .attr('id', this.getBaseId() + '.data_layer')
+        .attr('clip-path', 'url(#' + this.getBaseId() + '.clip)');
 
     return this;
 
@@ -293,8 +293,8 @@ LocusZoom.DataLayer.prototype.initialize = function(){
  * Move a data layer up relative to others by z-index
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.moveUp = function(){
-    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]){
+LocusZoom.DataLayer.prototype.moveUp = function() {
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]) {
         this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
         this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
         this.parent.resortDataLayers();
@@ -306,8 +306,8 @@ LocusZoom.DataLayer.prototype.moveUp = function(){
  * Move a data layer down relative to others by z-index
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.moveDown = function(){
-    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]){
+LocusZoom.DataLayer.prototype.moveDown = function() {
+    if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]) {
         this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
         this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
         this.parent.resortDataLayers();
@@ -322,22 +322,22 @@ LocusZoom.DataLayer.prototype.moveDown = function(){
  * @param {*} data The value to be used with the filter
  * @returns {*} The transformed value
  */
-LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) {
     var ret = null;
-    if (Array.isArray(layout)){
+    if (Array.isArray(layout)) {
         var idx = 0;
-        while (ret === null && idx < layout.length){
+        while (ret === null && idx < layout.length) {
             ret = this.resolveScalableParameter(layout[idx], data);
             idx++;
         }
     } else {
-        switch (typeof layout){
-        case "number":
-        case "string":
+        switch (typeof layout) {
+        case 'number':
+        case 'string':
             ret = layout;
             break;
-        case "object":
-            if (layout.scale_function){
+        case 'object':
+            if (layout.scale_function) {
                 if(layout.field) {
                     var f = new LocusZoom.Data.Field(layout.field);
                     ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
@@ -351,21 +351,40 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data){
     return ret;
 };
 
+
+/**
+ * Implementation hook for fetching the min and max values of available data. Used to determine axis range, if no other
+ *   explicit axis settings override. Useful for data layers where the data extent depends on more than one field.
+ *   (eg confidence intervals in a forest plot)
+ * @param data
+ * @param axis_config The configuration object for the specified axis.
+ * @returns {Array} [min, max] without any padding applied
+ * @private
+ */
+LocusZoom.DataLayer.prototype._getDataExtent = function(data, axis_config) {
+    data = data || this.data;
+    // By default this depends only on a single field.
+    return d3.extent(data, function (d) {
+        var f = new LocusZoom.Data.Field(axis_config.field);
+        return +f.resolve(d);
+    });
+};
+
 /**
  * Generate dimension extent function based on layout parameters
  * @param {('x'|'y')} dimension
  */
-LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
+LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension) {
 
-    if (["x", "y"].indexOf(dimension) === -1){
-        throw("Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()");
+    if (['x', 'y'].indexOf(dimension) === -1) {
+        throw new Error('Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()');
     }
 
-    var axis_name = dimension + "_axis";
+    var axis_name = dimension + '_axis';
     var axis_layout = this.layout[axis_name];
 
     // If a floor AND a ceiling are explicitly defined then just return that extent and be done
-    if (!isNaN(axis_layout.floor) && !isNaN(axis_layout.ceiling)){
+    if (!isNaN(axis_layout.floor) && !isNaN(axis_layout.ceiling)) {
         return [+axis_layout.floor, +axis_layout.ceiling];
     }
 
@@ -378,10 +397,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
             data_extent = axis_layout.min_extent || [];
             return data_extent;
         } else {
-            data_extent = d3.extent(this.data, function (d) {
-                var f = new LocusZoom.Data.Field(axis_layout.field);
-                return +f.resolve(d);
-            });
+            data_extent = this._getDataExtent(this.data, axis_layout);
 
             // Apply upper/lower buffers, if applicable
             var original_extent_span = data_extent[1] - data_extent[0];
@@ -392,7 +408,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
                 data_extent[1] += original_extent_span * axis_layout.upper_buffer;
             }
 
-            if (typeof axis_layout.min_extent == "object") {
+            if (typeof axis_layout.min_extent == 'object') {
                 // The data should span at least the range specified by min_extent, an array with [low, high]
                 var range_min = axis_layout.min_extent[0];
                 var range_max = axis_layout.min_extent[1];
@@ -413,7 +429,7 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
 
     // If this is for the x axis and no extent could be generated yet but state has a defined start and end
     // then default to using the state-defined region as the extent
-    if (dimension === "x" && !isNaN(this.state.start) && !isNaN(this.state.end)) {
+    if (dimension === 'x' && !isNaN(this.state.start) && !isNaN(this.state.end)) {
         return [this.state.start, this.state.end];
     }
 
@@ -440,8 +456,8 @@ LocusZoom.DataLayer.prototype.getAxisExtent = function(dimension){
  *     * color: string or LocusZoom scalable parameter object
  */
 LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
-    if (["x", "y1", "y2"].indexOf(dimension) === -1) {
-        throw("Invalid dimension identifier at layer level" + dimension);
+    if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
+        throw new Error('Invalid dimension identifier at layer level' + dimension);
     }
     return [];
 };
@@ -451,21 +467,21 @@ LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
  * @param {String|Object} d The element associated with the tooltip
  * @param {String} [id] An identifier to the tooltip
  */
-LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
-    if (typeof this.layout.tooltip != "object"){
-        throw ("DataLayer [" + this.id + "] layout does not define a tooltip");
+LocusZoom.DataLayer.prototype.createTooltip = function(d, id) {
+    if (typeof this.layout.tooltip != 'object') {
+        throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
     }
-    if (typeof id == "undefined"){ id = this.getElementId(d); }
-    if (this.tooltips[id]){
+    if (typeof id == 'undefined') { id = this.getElementId(d); }
+    if (this.tooltips[id]) {
         this.positionTooltip(id);
         return;
     }
     this.tooltips[id] = {
         data: d,
         arrow: null,
-        selector: d3.select(this.parent_plot.svg.node().parentNode).append("div")
-            .attr("class", "lz-data_layer-tooltip")
-            .attr("id", id + "-tooltip")
+        selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
+            .attr('class', 'lz-data_layer-tooltip')
+            .attr('id', id + '-tooltip')
     };
     this.updateTooltip(d);
     return this;
@@ -476,23 +492,23 @@ LocusZoom.DataLayer.prototype.createTooltip = function(d, id){
  * @param {String|Object} d The element associated with the tooltip
  * @param {String} [id] An identifier to the tooltip
  */
-LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
-    if (typeof id == "undefined"){ id = this.getElementId(d); }
+LocusZoom.DataLayer.prototype.updateTooltip = function(d, id) {
+    if (typeof id == 'undefined') { id = this.getElementId(d); }
     // Empty the tooltip of all HTML (including its arrow!)
-    this.tooltips[id].selector.html("");
+    this.tooltips[id].selector.html('');
     this.tooltips[id].arrow = null;
     // Set the new HTML
-    if (this.layout.tooltip.html){
+    if (this.layout.tooltip.html) {
         this.tooltips[id].selector.html(LocusZoom.parseFields(d, this.layout.tooltip.html));
     }
     // If the layout allows tool tips on this data layer to be closable then add the close button
     // and add padding to the tooltip to accommodate it
-    if (this.layout.tooltip.closable){
-        this.tooltips[id].selector.insert("button", ":first-child")
-            .attr("class", "lz-tooltip-close-button")
-            .attr("title", "Close")
-            .text("×")
-            .on("click", function(){
+    if (this.layout.tooltip.closable) {
+        this.tooltips[id].selector.insert('button', ':first-child')
+            .attr('class', 'lz-tooltip-close-button')
+            .attr('title', 'Close')
+            .text('×')
+            .on('click', function() {
                 this.destroyTooltip(id);
             }.bind(this));
     }
@@ -509,14 +525,14 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id){
  * @param {String} [id] An identifier to the tooltip
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
-    if (typeof d == "string"){
+LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id) {
+    if (typeof d == 'string') {
         id = d;
-    } else if (typeof id == "undefined"){
+    } else if (typeof id == 'undefined') {
         id = this.getElementId(d);
     }
-    if (this.tooltips[id]){
-        if (typeof this.tooltips[id].selector == "object"){
+    if (this.tooltips[id]) {
+        if (typeof this.tooltips[id].selector == 'object') {
             this.tooltips[id].selector.remove();
         }
         delete this.tooltips[id];
@@ -528,8 +544,8 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id){
  * Loop through and destroy all tool tips on this data layer
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
-    for (var id in this.tooltips){
+LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
+    for (var id in this.tooltips) {
         this.destroyTooltip(id);
     }
     return this;
@@ -542,23 +558,23 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function(){
  * @param {String} id The identifier of the tooltip to position
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.positionTooltip = function(id){
-    if (typeof id != "string"){
-        throw ("Unable to position tooltip: id is not a string");
+LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
+    if (typeof id != 'string') {
+        throw new Error('Unable to position tooltip: id is not a string');
     }
     // Position the div itself
     this.tooltips[id].selector
-        .style("left", (d3.event.pageX) + "px")
-        .style("top", (d3.event.pageY) + "px");
+        .style('left', (d3.event.pageX) + 'px')
+        .style('top', (d3.event.pageY) + 'px');
     // Create / update position on arrow connecting tooltip to data
-    if (!this.tooltips[id].arrow){
-        this.tooltips[id].arrow = this.tooltips[id].selector.append("div")
-            .style("position", "absolute")
-            .attr("class", "lz-data_layer-tooltip-arrow_top_left");
+    if (!this.tooltips[id].arrow) {
+        this.tooltips[id].arrow = this.tooltips[id].selector.append('div')
+            .style('position', 'absolute')
+            .attr('class', 'lz-data_layer-tooltip-arrow_top_left');
     }
     this.tooltips[id].arrow
-        .style("left", "-1px")
-        .style("top", "-1px");
+        .style('left', '-1px')
+        .style('top', '-1px');
     return this;
 };
 
@@ -566,8 +582,8 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id){
  * Loop through and position all tool tips on this data layer
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
-    for (var id in this.tooltips){
+LocusZoom.DataLayer.prototype.positionAllTooltips = function() {
+    for (var id in this.tooltips) {
         this.positionTooltip(id);
     }
     return this;
@@ -578,37 +594,37 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function(){
  * @param {String|Object} element The element associated with the tooltip
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
-    
-    if (typeof this.layout.tooltip != "object"){ return; }
+LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element) {
+
+    if (typeof this.layout.tooltip != 'object') { return; }
     var id = this.getElementId(element);
 
-    var resolveStatus = function(statuses, directive, operator){
+    var resolveStatus = function(statuses, directive, operator) {
         var status = null;
-        if (typeof statuses != "object" || statuses === null){ return null; }
-        if (Array.isArray(directive)){
-            if (typeof operator == "undefined"){ operator = "and"; }
-            if (directive.length === 1){
+        if (typeof statuses != 'object' || statuses === null) { return null; }
+        if (Array.isArray(directive)) {
+            if (typeof operator == 'undefined') { operator = 'and'; }
+            if (directive.length === 1) {
                 status = statuses[directive[0]];
             } else {
                 status = directive.reduce(function(previousValue, currentValue) {
-                    if (operator === "and"){
+                    if (operator === 'and') {
                         return statuses[previousValue] && statuses[currentValue];
-                    } else if (operator === "or"){
+                    } else if (operator === 'or') {
                         return statuses[previousValue] || statuses[currentValue];
                     }
                     return null;
                 });
             }
-        } else if (typeof directive == "object"){
+        } else if (typeof directive == 'object') {
             var sub_status;
-            for (var sub_operator in directive){
+            for (var sub_operator in directive) {
                 sub_status = resolveStatus(statuses, directive[sub_operator], sub_operator);
-                if (status === null){
+                if (status === null) {
                     status = sub_status;
-                } else if (operator === "and"){
+                } else if (operator === 'and') {
                     status = status && sub_status;
-                } else if (operator === "or"){
+                } else if (operator === 'or') {
                     status = status || sub_status;
                 }
             }
@@ -617,22 +633,22 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
     };
 
     var show_directive = {};
-    if (typeof this.layout.tooltip.show == "string"){
+    if (typeof this.layout.tooltip.show == 'string') {
         show_directive = { and: [ this.layout.tooltip.show ] };
-    } else if (typeof this.layout.tooltip.show == "object"){
+    } else if (typeof this.layout.tooltip.show == 'object') {
         show_directive = this.layout.tooltip.show;
     }
 
     var hide_directive = {};
-    if (typeof this.layout.tooltip.hide == "string"){
+    if (typeof this.layout.tooltip.hide == 'string') {
         hide_directive = { and: [ this.layout.tooltip.hide ] };
-    } else if (typeof this.layout.tooltip.hide == "object"){
+    } else if (typeof this.layout.tooltip.hide == 'object') {
         hide_directive = this.layout.tooltip.hide;
     }
 
     var statuses = {};
-    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status){
-        var antistatus = "un" + status;
+    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
+        var antistatus = 'un' + status;
         statuses[status] = this.state[this.state_id][status].indexOf(id) !== -1;
         statuses[antistatus] = !statuses[status];
     }.bind(this));
@@ -642,14 +658,14 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
 
     // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
     // Otherwise ensure tooltip does not exist
-    if (show_resolved && !hide_resolved){
+    if (show_resolved && !hide_resolved) {
         this.createTooltip(element);
     } else {
         this.destroyTooltip(element);
     }
 
     return this;
-    
+
 };
 
 /**
@@ -661,36 +677,38 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element){
  *   elements, or references to the elements themselves
  * @returns {Array}
  */
-LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
-    if (typeof return_type == "undefined" || ["indexes","elements"].indexOf(return_type) === -1){
-        return_type = "indexes";
+LocusZoom.DataLayer.prototype.filter = function(filters, return_type) {
+    if (typeof return_type == 'undefined' || ['indexes','elements'].indexOf(return_type) === -1) {
+        return_type = 'indexes';
     }
-    if (!Array.isArray(filters)){ return []; }
-    var test = function(element, filter){
+    if (!Array.isArray(filters)) { return []; }
+    var test = function(element, filter) {
         var operators = {
-            "=": function(a,b){ return a === b; },
-            "<": function(a,b){ return a < b; },
-            "<=": function(a,b){ return a <= b; },
-            ">": function(a,b){ return a > b; },
-            ">=": function(a,b){ return a >= b; },
-            "%": function(a,b){ return a % b; }
+            '=': function(a,b) { return a === b; },
+            // eslint-disable-next-line eqeqeq
+            '!=': function(a,b) { return a != b; }, // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
+            '<': function(a,b) { return a < b; },
+            '<=': function(a,b) { return a <= b; },
+            '>': function(a,b) { return a > b; },
+            '>=': function(a,b) { return a >= b; },
+            '%': function(a,b) { return a % b; }
         };
-        if (!Array.isArray(filter)){ return false; }
-        if (filter.length === 2){
+        if (!Array.isArray(filter)) { return false; }
+        if (filter.length === 2) {
             return element[filter[0]] === filter[1];
-        } else if (filter.length === 3 && operators[filter[1]]){
+        } else if (filter.length === 3 && operators[filter[1]]) {
             return operators[filter[1]](element[filter[0]], filter[2]);
         } else {
             return false;
         }
     };
     var matches = [];
-    this.data.forEach(function(element, idx){
+    this.data.forEach(function(element, idx) {
         var match = true;
-        filters.forEach(function(filter){
-            if (!test(element, filter)){ match = false; }
+        filters.forEach(function(filter) {
+            if (!test(element, filter)) { match = false; }
         });
-        if (match){ matches.push(return_type === "indexes" ? idx : element); }
+        if (match) { matches.push(return_type === 'indexes' ? idx : element); }
     });
     return matches;
 };
@@ -699,43 +717,43 @@ LocusZoom.DataLayer.prototype.filter = function(filters, return_type){
  * @param filters
  * @returns {Array}
  */
-LocusZoom.DataLayer.prototype.filterIndexes = function(filters){ return this.filter(filters, "indexes"); };
+LocusZoom.DataLayer.prototype.filterIndexes = function(filters) { return this.filter(filters, 'indexes'); };
 /**
  * @param filters
  * @returns {Array}
  */
-LocusZoom.DataLayer.prototype.filterElements = function(filters){ return this.filter(filters, "elements"); };
+LocusZoom.DataLayer.prototype.filterElements = function(filters) { return this.filter(filters, 'elements'); };
 
-LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
+LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx) {
     var adjective = LocusZoom.DataLayer.Statuses.adjectives[idx];
-    var antiverb = "un" + verb;
+    var antiverb = 'un' + verb;
     // Set/unset a single element's status
     // TODO: Improve documentation for dynamically generated methods/properties
-    LocusZoom.DataLayer.prototype[verb + "Element"] = function(element, exclusive){
-        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    LocusZoom.DataLayer.prototype[verb + 'Element'] = function(element, exclusive) {
+        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         this.setElementStatus(adjective, element, true, exclusive);
         return this;
     };
-    LocusZoom.DataLayer.prototype[antiverb + "Element"] = function(element, exclusive){
-        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    LocusZoom.DataLayer.prototype[antiverb + 'Element'] = function(element, exclusive) {
+        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         this.setElementStatus(adjective, element, false, exclusive);
         return this;
     };
     // Set/unset status for arbitrarily many elements given a set of filters
-    LocusZoom.DataLayer.prototype[verb + "ElementsByFilters"] = function(filters, exclusive){
-        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    LocusZoom.DataLayer.prototype[verb + 'ElementsByFilters'] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
-    LocusZoom.DataLayer.prototype[antiverb + "ElementsByFilters"] = function(filters, exclusive){
-        if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
+    LocusZoom.DataLayer.prototype[antiverb + 'ElementsByFilters'] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
     // Set/unset status for all elements
-    LocusZoom.DataLayer.prototype[verb + "AllElements"] = function(){
+    LocusZoom.DataLayer.prototype[verb + 'AllElements'] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
-    LocusZoom.DataLayer.prototype[antiverb + "AllElements"] = function(){
+    LocusZoom.DataLayer.prototype[antiverb + 'AllElements'] = function() {
         this.setAllElementStatus(adjective, false);
         return this;
     };
@@ -749,59 +767,59 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx){
  * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive){
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive) {
     // Sanity checks
-    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
-        throw("Invalid status passed to DataLayer.setElementStatus()");
+    if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
+        throw new Error('Invalid status passed to DataLayer.setElementStatus()');
     }
-    if (typeof element == "undefined"){
-        throw("Invalid element passed to DataLayer.setElementStatus()");
+    if (typeof element == 'undefined') {
+        throw new Error('Invalid element passed to DataLayer.setElementStatus()');
     }
-    if (typeof toggle == "undefined"){
+    if (typeof toggle == 'undefined') {
         toggle = true;
     }
 
     // Get an ID for the element or return having changed nothing
     try {
         var element_id = this.getElementId(element);
-    } catch (get_element_id_error){
+    } catch (get_element_id_error) {
         return this;
     }
 
     // Enforce exclusivity (force all elements to have the opposite of toggle first)
-    if (exclusive){
+    if (exclusive) {
         this.setAllElementStatus(status, !toggle);
     }
-    
+
     // Set/unset the proper status class on the appropriate DOM element(s)
-    d3.select("#" + element_id).classed("lz-data_layer-" + this.layout.type + "-" + status, toggle);
+    d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, toggle);
     var element_status_node_id = this.getElementStatusNodeId(element);
-    if (element_status_node_id !== null){
-        d3.select("#" + element_status_node_id).classed("lz-data_layer-" + this.layout.type + "-statusnode-" + status, toggle);
+    if (element_status_node_id !== null) {
+        d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, toggle);
     }
-    
+
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
-    if (toggle && element_status_idx === -1){
+    if (toggle && element_status_idx === -1) {
         this.state[this.state_id][status].push(element_id);
     }
-    if (!toggle && element_status_idx !== -1){
+    if (!toggle && element_status_idx !== -1) {
         this.state[this.state_id][status].splice(element_status_idx, 1);
     }
-    
+
     // Trigger tool tip show/hide logic
     this.showOrHideTooltip(element);
 
     // Trigger layout changed event hook
-    this.parent.emit("layout_changed", true);
-    if (status === "selected") {
+    this.parent.emit('layout_changed', true);
+    if (status === 'selected') {
         // Notify parents that a given element has been interacted with. For now, we will only notify on
         //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
         //   events will be sent in short order as the previously selected element has to be de-selected first
-        this.parent.emit("element_selection", { element: element, active: toggle }, true);
+        this.parent.emit('element_selection', { element: element, active: toggle }, true);
     }
     return this;
-    
+
 };
 
 /**
@@ -812,27 +830,27 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
  * @param {Boolean} exclusive
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive){
-    
+LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggle, filters, exclusive) {
+
     // Sanity check
-    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
-        throw("Invalid status passed to DataLayer.setElementStatusByFilters()");
+    if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
+        throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
     }
-    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-    if (typeof toggle == "undefined"){ toggle = true; } else { toggle = !!toggle; }
-    if (typeof exclusive == "undefined"){ exclusive = false; } else { exclusive = !!exclusive; }
-    if (!Array.isArray(filters)){ filters = []; }
+    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof toggle == 'undefined') { toggle = true; } else { toggle = !!toggle; }
+    if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    if (!Array.isArray(filters)) { filters = []; }
 
     // Enforce exclusivity (force all elements to have the opposite of toggle first)
-    if (exclusive){
+    if (exclusive) {
         this.setAllElementStatus(status, !toggle);
     }
-    
+
     // Apply statuses
-    this.filterElements(filters).forEach(function(element){
+    this.filterElements(filters).forEach(function(element) {
         this.setElementStatus(status, element, toggle);
     }.bind(this));
-    
+
     return this;
 };
 
@@ -842,25 +860,25 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
  * @param {Boolean} toggle
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
-    
+LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
+
     // Sanity check
-    if (typeof status == "undefined" || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1){
-        throw("Invalid status passed to DataLayer.setAllElementStatus()");
+    if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
+        throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
     }
-    if (typeof this.state[this.state_id][status] == "undefined"){ return this; }
-    if (typeof toggle == "undefined"){ toggle = true; }
+    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof toggle == 'undefined') { toggle = true; }
 
     // Apply statuses
-    if (toggle){
-        this.data.forEach(function(element){
+    if (toggle) {
+        this.data.forEach(function(element) {
             this.setElementStatus(status, element, true);
         }.bind(this));
     } else {
         var status_ids = this.state[this.state_id][status].slice();
-        status_ids.forEach(function(id){
+        status_ids.forEach(function(id) {
             var element = this.getElementById(id);
-            if (typeof element == "object" && element !== null){
+            if (typeof element == 'object' && element !== null) {
                 this.setElementStatus(status, element, false);
             }
         }.bind(this));
@@ -877,12 +895,12 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle){
  * Apply all layout-defined behaviors (DOM event handlers) to a selection of elements
  * @param {d3.selection} selection
  */
-LocusZoom.DataLayer.prototype.applyBehaviors = function(selection){
-    if (typeof this.layout.behaviors != "object"){ return; }
-    Object.keys(this.layout.behaviors).forEach(function(directive){
+LocusZoom.DataLayer.prototype.applyBehaviors = function(selection) {
+    if (typeof this.layout.behaviors != 'object') { return; }
+    Object.keys(this.layout.behaviors).forEach(function(directive) {
         var event_match = /(click|mouseover|mouseout)/.exec(directive);
-        if (!event_match){ return; }
-        selection.on(event_match[0] + "." + directive, this.executeBehaviors(directive, this.layout.behaviors[directive]));
+        if (!event_match) { return; }
+        selection.on(event_match[0] + '.' + directive, this.executeBehaviors(directive, this.layout.behaviors[directive]));
     }.bind(this));
 };
 
@@ -902,60 +920,60 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
 
     // Determine the required state of control and shift keys during the event
     var requiredKeyStates = {
-        "ctrl": (directive.indexOf("ctrl") !== -1),
-        "shift": (directive.indexOf("shift") !== -1)
+        'ctrl': (directive.indexOf('ctrl') !== -1),
+        'shift': (directive.indexOf('shift') !== -1)
     };
 
-    return function(element){
+    return function(element) {
 
         // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
-        if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey){ return; }
+        if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) { return; }
 
         // Loop through behaviors making each one go in succession
-        behaviors.forEach(function(behavior){
-            
+        behaviors.forEach(function(behavior) {
+
             // Route first by the action, if defined
-            if (typeof behavior != "object" || behavior === null){ return; }
-            
-            switch (behavior.action){
-                
+            if (typeof behavior != 'object' || behavior === null) { return; }
+
+            switch (behavior.action) {
+
             // Set a status (set to true regardless of current status, optionally with exclusivity)
-            case "set":
+            case 'set':
                 this.setElementStatus(behavior.status, element, true, behavior.exclusive);
                 break;
-                
+
             // Unset a status (set to false regardless of current status, optionally with exclusivity)
-            case "unset":
+            case 'unset':
                 this.setElementStatus(behavior.status, element, false, behavior.exclusive);
                 break;
-                
+
             // Toggle a status
-            case "toggle":
+            case 'toggle':
                 var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) !== -1);
                 var exclusive = behavior.exclusive && !current_status_boolean;
                 this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                 break;
-                
+
             // Link to a dynamic URL
-            case "link":
-                if (typeof behavior.href == "string"){
+            case 'link':
+                if (typeof behavior.href == 'string') {
                     var url = LocusZoom.parseFields(element, behavior.href);
-                    if (typeof behavior.target == "string"){
+                    if (typeof behavior.target == 'string') {
                         window.open(url, behavior.target);
                     } else {
                         window.location.href = url;
                     }
                 }
                 break;
-                
+
             // Action not defined, just return
             default:
                 break;
-                
+
             }
-            
+
             return;
-            
+
         }.bind(this));
 
     }.bind(this);
@@ -967,7 +985,7 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
  *   Necessary for positioning any HTML elements over the panel
  * @returns {{x: Number, y: Number}}
  */
-LocusZoom.DataLayer.prototype.getPageOrigin = function(){
+LocusZoom.DataLayer.prototype.getPageOrigin = function() {
     var panel_origin = this.parent.getPageOrigin();
     return {
         x: panel_origin.x + this.parent.layout.margin.left,
@@ -980,49 +998,50 @@ LocusZoom.DataLayer.prototype.getPageOrigin = function(){
  * @param {('csv'|'tsv'|'json')} format How to export the data
  * @returns {*}
  */
-LocusZoom.DataLayer.prototype.exportData = function(format){
-    var default_format = "json";
+LocusZoom.DataLayer.prototype.exportData = function(format) {
+    var default_format = 'json';
     format = format || default_format;
-    format = (typeof format == "string" ? format.toLowerCase() : default_format);
-    if (["json","csv","tsv"].indexOf(format) === -1){ format = default_format; }
+    format = (typeof format == 'string' ? format.toLowerCase() : default_format);
+    if (['json','csv','tsv'].indexOf(format) === -1) { format = default_format; }
     var ret;
-    switch (format){
-    case "json":
+    switch (format) {
+    case 'json':
         try {
             ret = JSON.stringify(this.data);
-        } catch (e){
+        } catch (e) {
             ret = null;
-            console.error("Unable to export JSON data from data layer: " + this.getBaseId() + ";", e);
+            console.warn('Unable to export JSON data from data layer: ' + this.getBaseId());
+            console.error(e);
         }
         break;
-    case "tsv":
-    case "csv":
+    case 'tsv':
+    case 'csv':
         try {
             var jsonified = JSON.parse(JSON.stringify(this.data));
-            if (typeof jsonified != "object"){
+            if (typeof jsonified != 'object') {
                 ret = jsonified.toString();
-            } else if (!Array.isArray(jsonified)){
-                ret = "Object";
+            } else if (!Array.isArray(jsonified)) {
+                ret = 'Object';
             } else {
-                var delimiter = (format === "tsv") ? "\t" : ",";
-                var header = this.layout.fields.map(function(header){
+                var delimiter = (format === 'tsv') ? '\t' : ',';
+                var header = this.layout.fields.map(function(header) {
                     return JSON.stringify(header);
-                }).join(delimiter) + "\n";
-                ret = header + jsonified.map(function(record){
-                    return this.layout.fields.map(function(field){
-                        if (typeof record[field] == "undefined"){
+                }).join(delimiter) + '\n';
+                ret = header + jsonified.map(function(record) {
+                    return this.layout.fields.map(function(field) {
+                        if (typeof record[field] == 'undefined') {
                             return JSON.stringify(null);
-                        } else if (typeof record[field] == "object" && record[field] !== null){
-                            return Array.isArray(record[field]) ? "\"[Array(" + record[field].length + ")]\"" : "\"[Object]\"";
+                        } else if (typeof record[field] == 'object' && record[field] !== null) {
+                            return Array.isArray(record[field]) ? '"[Array(' + record[field].length + ')]"' : '"[Object]"';
                         } else {
                             return JSON.stringify(record[field]);
                         }
                     }).join(delimiter);
-                }.bind(this)).join("\n");
+                }.bind(this)).join('\n');
             }
-        } catch (e){
+        } catch (e) {
             ret = null;
-            console.error("Unable to export CSV data from data layer: " + this.getBaseId() + ";", e);
+            console.error('Unable to export CSV data from data layer: ' + this.getBaseId() + ';', e);
         }
         break;
     }
@@ -1033,11 +1052,11 @@ LocusZoom.DataLayer.prototype.exportData = function(format){
  * Position the datalayer and all tooltips
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.draw = function(){
-    this.svg.container.attr("transform", "translate(" + this.parent.layout.cliparea.origin.x +  "," + this.parent.layout.cliparea.origin.y + ")");
+LocusZoom.DataLayer.prototype.draw = function() {
+    this.svg.container.attr('transform', 'translate(' + this.parent.layout.cliparea.origin.x +  ',' + this.parent.layout.cliparea.origin.y + ')');
     this.svg.clipRect
-        .attr("width", this.parent.layout.cliparea.width)
-        .attr("height", this.parent.layout.cliparea.height);
+        .attr('width', this.parent.layout.cliparea.width)
+        .attr('height', this.parent.layout.cliparea.height);
     this.positionAllTooltips();
     return this;
 };
@@ -1047,7 +1066,7 @@ LocusZoom.DataLayer.prototype.draw = function(){
  * Re-Map a data layer to reflect changes in the state of a plot (such as viewing region/ chromosome range)
  * @return {Promise}
  */
-LocusZoom.DataLayer.prototype.reMap = function(){
+LocusZoom.DataLayer.prototype.reMap = function() {
 
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
     // and then recreated if returning to visibility
@@ -1082,13 +1101,13 @@ LocusZoom.DataLayers = (function() {
         if (!name) {
             return null;
         } else if (datalayers[name]) {
-            if (typeof layout != "object"){
-                throw("invalid layout argument for data layer [" + name + "]");
+            if (typeof layout != 'object') {
+                throw new Error('invalid layout argument for data layer [' + name + ']');
             } else {
                 return new datalayers[name](layout, parent);
             }
         } else {
-            throw("data layer [" + name + "] not found");
+            throw new Error('data layer [' + name + '] not found');
         }
     };
 
@@ -1100,8 +1119,8 @@ LocusZoom.DataLayers = (function() {
      */
     obj.set = function(name, datalayer) {
         if (datalayer) {
-            if (typeof datalayer != "function"){
-                throw("unable to set data layer [" + name + "], argument provided is not a function");
+            if (typeof datalayer != 'function') {
+                throw new Error('unable to set data layer [' + name + '], argument provided is not a function');
             } else {
                 datalayers[name] = datalayer;
                 datalayers[name].prototype = new LocusZoom.DataLayer();
@@ -1119,7 +1138,7 @@ LocusZoom.DataLayers = (function() {
      */
     obj.add = function(name, datalayer) {
         if (datalayers[name]) {
-            throw("data layer already exists with name: " + name);
+            throw new Error('data layer already exists with name: ' + name);
         } else {
             obj.set(name, datalayer);
         }
@@ -1138,10 +1157,10 @@ LocusZoom.DataLayers = (function() {
 
         var parent = datalayers[parent_name];
         if (!parent) {
-            throw "Attempted to subclass an unknown or unregistered datalayer type";
+            throw new Error('Attempted to subclass an unknown or unregistered datalayer type');
         }
-        if (typeof overrides !== "object") {
-            throw "Must specify an object of properties and methods";
+        if (typeof overrides !== 'object') {
+            throw new Error('Must specify an object of properties and methods');
         }
         var child = LocusZoom.subclass(parent, overrides);
         // Bypass .set() because we want a layer of inheritance below `DataLayer`

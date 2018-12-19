@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
-    
+
     <!-- Necessary includes for LocusZoom.js -->
     <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    
+
     <title>LocusZoom.js ~ PheWAS (Forest) Example</title>
 
     <style>
@@ -59,15 +59,21 @@
         LocusZoom.Layouts.add("plot", "phewas_forest", {
             width: 800,
             height: 800,
-            responsive_resize: true,
+            responsive_resize: 'both',
             panels: [
                 {
-                    id: "phewas",
+                    id: "phewasforest",
                     width: 800,
                     height: 800,
                     proportional_width: 1,
-                    margin: { top: 20, right: 220, bottom: 50, left: 20 },
+                    margin: { top: 35, right: 220, bottom: 50, left: 20 },
                     inner_border: "rgba(210, 210, 210, 0.85)",
+                    dashboard: {
+                        components: [{
+                            type: "toggle_legend",
+                            position: "left"
+                        }]
+                    },
                     axes: {
                         x: {
                             label: "Beta",
@@ -83,7 +89,7 @@
                         }
                     },
                     legend: {
-                        origin: { x: 30, y: 30 },
+                        origin: { x: 30, y: 45 },
                         orientation: "vertical"
                     },
                     data_layers: [
@@ -124,29 +130,34 @@
                             fields: ["{{namespace[phewas]}}phenotype", "{{namespace[phewas]}}log_pvalue", "{{namespace[phewas]}}log_pvalue|logtoscinotation", "{{namespace[phewas]}}beta", "{{namespace[phewas]}}ci_start", "{{namespace[phewas]}}ci_end"],
                             x_axis: {
                                 field: "{{namespace[phewas]}}beta",
-                                floor: -0.2,
-                                ceiling: 0.2
+                                lower_buffer: 0.1,
+                                upper_buffer: 0.1
                             },
                             y_axis: {
                                 axis: 2,
                                 category_field: "{{namespace[phewas]}}phenotype",  // Labels
-                                field: "{{namespace[phewas]}}y_offset",  // Positions (dynamicaly added)
-                                floor: 0,
-                                ceiling: 0
+                                field: "{{namespace[phewas]}}y_offset",  // Positions (dynamically added)
                             },
                             confidence_intervals: {
                                 start_field: "{{namespace[phewas]}}ci_start",
                                 end_field: "{{namespace[phewas]}}ci_end"
                             },
-                            highlighted: {
-                                onmouseover: "on",
-                                onmouseout: "off"
-                            },
-                            selected: {
-                                onclick: "toggle_exclusive",
-                                onshiftclick: "toggle"
+                            behaviors: {
+                                onmouseover: [
+                                    { action: "set", status: "highlighted" }
+                                ],
+                                onmouseout: [
+                                    { action: "unset", status: "highlighted" }
+                                ],
+                                onclick: [
+                                    { action: "toggle", status: "selected", exclusive: true }
+                                ],
+                                onshiftclick: [
+                                    { action: "toggle", status: "selected" }
+                                ]
                             },
                             tooltip: {
+                                namespace: { "phewas": "phewas" },
                                 closable: true,
                                 show: { or: ["highlighted", "selected"] },
                                 hide: { and: ["unhighlighted", "unselected"] },
@@ -173,7 +184,7 @@
         var layout = LocusZoom.Layouts.get("plot", "phewas_forest");
 
         window.plot = LocusZoom.populate("#plot", data_sources, layout);
-        
+
       </script>
 
     </div>

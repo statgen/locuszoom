@@ -1,5 +1,5 @@
 /* global LocusZoom */
-"use strict";
+'use strict';
 
 /**
  *
@@ -23,9 +23,9 @@ LocusZoom.KnownDataSources = (function() {
     var sources = [];
 
     var findSourceByName = function(x) {
-        for(var i=0; i<sources.length; i++) {
+        for(var i = 0; i < sources.length; i++) {
             if (!sources[i].SOURCE_NAME) {
-                throw("KnownDataSources at position " + i + " does not have a 'SOURCE_NAME' static property");
+                throw new Error('KnownDataSources at position ' + i + " does not have a 'SOURCE_NAME' static property");
             }
             if (sources[i].SOURCE_NAME === x) {
                 return sources[i];
@@ -50,7 +50,7 @@ LocusZoom.KnownDataSources = (function() {
      */
     obj.add = function(source) {
         if (!source.SOURCE_NAME) {
-            console.warn("Data source added does not have a SOURCE_NAME");
+            console.warn('Data source added does not have a SOURCE_NAME');
         }
         sources.push(source);
     };
@@ -66,13 +66,13 @@ LocusZoom.KnownDataSources = (function() {
     obj.extend = function(parent_name, source_name, overrides) {
         var parent = findSourceByName(parent_name);
         if (!parent) {
-            throw "Attempted to subclass an unknown or unregistered data source";
+            throw new Error('Attempted to subclass an unknown or unregistered data source');
         }
         if (!source_name) {
-            throw "Must provide a name for the new data source";
+            throw new Error('Must provide a name for the new data source');
         }
-        if (typeof overrides !== "object") {
-            throw "Must specify an object of properties and methods";
+        if (typeof overrides !== 'object') {
+            throw new Error('Must specify an object of properties and methods');
         }
         var child = LocusZoom.subclass(parent, overrides);
         child.SOURCE_NAME = source_name;
@@ -82,7 +82,7 @@ LocusZoom.KnownDataSources = (function() {
 
     /** @deprecated */
     obj.push = function(source) {
-        console.warn("Warning: KnownDataSources.push() is deprecated. Use .add() instead");
+        console.warn('Warning: KnownDataSources.push() is deprecated. Use .add() instead');
         obj.add(source);
     };
 
@@ -107,7 +107,7 @@ LocusZoom.KnownDataSources = (function() {
             params[0] = null;
             return new (Function.prototype.bind.apply(newObj, params));
         } else {
-            throw("Unable to find data source for name: " + name); 
+            throw new Error('Unable to find data source for name: ' + name);
         }
     };
 
@@ -167,7 +167,7 @@ LocusZoom.TransformationFunctions = (function() {
         if (fun)  {
             return fun;
         } else {
-            throw("transformation " + name + " not found");
+            throw new Error('transformation ' + name + ' not found');
         }
     };
 
@@ -183,15 +183,15 @@ LocusZoom.TransformationFunctions = (function() {
         var funs = [];
         var re = /\|([^|]+)/g;
         var result;
-        while((result = re.exec(x))!==null) {
+        while((result = re.exec(x)) !== null) {
             funs.push(result[1]);
         }
-        if (funs.length===1) {
+        if (funs.length === 1) {
             return parseTrans(funs[0]);
         } else if (funs.length > 1) {
             return function(x) {
                 var val = x;
-                for(var i = 0; i<funs.length; i++) {
+                for(var i = 0; i < funs.length; i++) {
                     val = parseTrans(funs[i])(val);
                 }
                 return val;
@@ -207,7 +207,7 @@ LocusZoom.TransformationFunctions = (function() {
      * @returns {function} The constructor for the transformation function
      */
     obj.get = function(name) {
-        if (name && name.substring(0,1)==="|") {
+        if (name && name.substring(0,1) === '|') {
             return parseTransString(name);
         } else {
             return parseTrans(name);
@@ -220,8 +220,8 @@ LocusZoom.TransformationFunctions = (function() {
      * @param {function} fn
      */
     obj.set = function(name, fn) {
-        if (name.substring(0,1)==="|") {
-            throw("transformation name should not start with a pipe");
+        if (name.substring(0,1) === '|') {
+            throw new Error('transformation name should not start with a pipe');
         } else {
             if (fn) {
                 transformations[name] = fn;
@@ -238,7 +238,7 @@ LocusZoom.TransformationFunctions = (function() {
      */
     obj.add = function(name, fn) {
         if (transformations[name]) {
-            throw("transformation already exists with name: " + name);
+            throw new Error('transformation already exists with name: ' + name);
         } else {
             obj.set(name, fn);
         }
@@ -258,8 +258,8 @@ LocusZoom.TransformationFunctions = (function() {
  * Return the -log (base 10)
  * @function neglog10
  */
-LocusZoom.TransformationFunctions.add("neglog10", function(x) {
-    if (isNaN(x) || x <= 0){ return null; }
+LocusZoom.TransformationFunctions.add('neglog10', function(x) {
+    if (isNaN(x) || x <= 0) { return null; }
     return -Math.log(x) / Math.LN10;
 });
 
@@ -267,18 +267,18 @@ LocusZoom.TransformationFunctions.add("neglog10", function(x) {
  * Convert a number from logarithm to scientific notation. Useful for, eg, a datasource that returns -log(p) by default
  * @function logtoscinotation
  */
-LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
-    if (isNaN(x)){ return "NaN"; }
-    if (x === 0){ return "1"; }
+LocusZoom.TransformationFunctions.add('logtoscinotation', function(x) {
+    if (isNaN(x)) { return 'NaN'; }
+    if (x === 0) { return '1'; }
     var exp = Math.ceil(x);
     var diff = exp - x;
     var base = Math.pow(10, diff);
-    if (exp === 1){
+    if (exp === 1) {
         return (base / 10).toFixed(4);
-    } else if (exp === 2){
+    } else if (exp === 2) {
         return (base / 100).toFixed(3);
     } else {
-        return base.toFixed(2) + " × 10^-" + exp;
+        return base.toFixed(2) + ' × 10^-' + exp;
     }
 });
 
@@ -288,9 +288,9 @@ LocusZoom.TransformationFunctions.add("logtoscinotation", function(x) {
  * @param {Number} x
  * @returns {String}
  */
-LocusZoom.TransformationFunctions.add("scinotation", function(x) {
-    if (isNaN(x)){ return "NaN"; }
-    if (x === 0){ return "0"; }
+LocusZoom.TransformationFunctions.add('scinotation', function(x) {
+    if (isNaN(x)) { return 'NaN'; }
+    if (x === 0) { return '0'; }
 
     var abs = Math.abs(x);
     var log;
@@ -299,10 +299,10 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
     } else {  // 0...1
         log = Math.floor(Math.log(abs) / Math.LN10);
     }
-    if (Math.abs(log) <= 3){
+    if (Math.abs(log) <= 3) {
         return x.toFixed(3);
     } else {
-        return x.toExponential(2).replace("+", "").replace("e", " × 10^");
+        return x.toExponential(2).replace('+', '').replace('e', ' × 10^');
     }
 });
 
@@ -311,7 +311,7 @@ LocusZoom.TransformationFunctions.add("scinotation", function(x) {
  * @function urlencode
  * @param {String} str
  */
-LocusZoom.TransformationFunctions.add("urlencode", function(str) {
+LocusZoom.TransformationFunctions.add('urlencode', function(str) {
     return encodeURIComponent(str);
 });
 
@@ -322,26 +322,26 @@ LocusZoom.TransformationFunctions.add("urlencode", function(str) {
  * @function htmlescape
  * @param {String} str HTML-escape the provided value
  */
-LocusZoom.TransformationFunctions.add("htmlescape", function(str) {
+LocusZoom.TransformationFunctions.add('htmlescape', function(str) {
     if ( !str ) {
-        return "";
+        return '';
     }
-    str = str + "";
+    str = str + '';
 
     return str.replace( /['"<>&`]/g, function( s ) {
         switch ( s ) {
         case "'":
-            return "&#039;";
-        case "\"":
-            return "&quot;";
-        case "<":
-            return "&lt;";
-        case ">":
-            return "&gt;";
-        case "&":
-            return "&amp;";
-        case "`":
-            return "&#x60;";
+            return '&#039;';
+        case '"':
+            return '&quot;';
+        case '<':
+            return '&lt;';
+        case '>':
+            return '&gt;';
+        case '&':
+            return '&amp;';
+        case '`':
+            return '&#x60;';
         }
     });
 });
@@ -374,13 +374,13 @@ LocusZoom.ScaleFunctions = (function() {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            if (typeof parameters === "undefined" && typeof value === "undefined"){
+            if (typeof parameters === 'undefined' && typeof value === 'undefined') {
                 return functions[name];
             } else {
                 return functions[name](parameters, value);
             }
         } else {
-            throw("scale function [" + name + "] not found");
+            throw new Error('scale function [' + name + '] not found');
         }
     };
 
@@ -404,7 +404,7 @@ LocusZoom.ScaleFunctions = (function() {
      */
     obj.add = function(name, fn) {
         if (functions[name]) {
-            throw("scale function already exists with name: " + name);
+            throw new Error('scale function already exists with name: ' + name);
         } else {
             obj.set(name, fn);
         }
@@ -431,9 +431,9 @@ LocusZoom.ScaleFunctions = (function() {
  *   to match field_value.
  * @param {*} input value
  */
-LocusZoom.ScaleFunctions.add("if", function(parameters, input){
-    if (typeof input == "undefined" || parameters.field_value !== input){
-        if (typeof parameters.else != "undefined"){
+LocusZoom.ScaleFunctions.add('if', function(parameters, input) {
+    if (typeof input == 'undefined' || parameters.field_value !== input) {
+        if (typeof parameters.else != 'undefined') {
             return parameters.else;
         } else {
             return null;
@@ -458,14 +458,14 @@ LocusZoom.ScaleFunctions.add("if", function(parameters, input){
  * @param {*} input value
  * @returns
  */
-LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
+LocusZoom.ScaleFunctions.add('numerical_bin', function(parameters, input) {
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
-    if (typeof input == "undefined" || input === null || isNaN(+input)){
+    if (typeof input == 'undefined' || input === null || isNaN(+input)) {
         return (parameters.null_value ? parameters.null_value : null);
     }
-    var threshold = breaks.reduce(function(prev, curr){
-        if (+input < prev || (+input >= prev && +input < curr)){
+    var threshold = breaks.reduce(function(prev, curr) {
+        if (+input < prev || (+input >= prev && +input < curr)) {
             return prev;
         } else {
             return curr;
@@ -487,9 +487,9 @@ LocusZoom.ScaleFunctions.add("numerical_bin", function(parameters, input){
  *   value in the categories parameter.
  * @param {*} parameters.null_value  Value to return if the input value fails to match to any categories. Optional.
  */
-LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
-    if (typeof value == "undefined" || parameters.categories.indexOf(value) === -1){
-        return (parameters.null_value ? parameters.null_value : null); 
+LocusZoom.ScaleFunctions.add('categorical_bin', function(parameters, value) {
+    if (typeof value == 'undefined' || parameters.categories.indexOf(value) === -1) {
+        return (parameters.null_value ? parameters.null_value : null);
     } else {
         return parameters.values[parameters.categories.indexOf(value)];
     }
@@ -510,25 +510,25 @@ LocusZoom.ScaleFunctions.add("categorical_bin", function(parameters, value){
  *   colors, shapes, etc.
  * @parameters {*} parameters.null_value
  */
-LocusZoom.ScaleFunctions.add("interpolate", function(parameters, input){
+LocusZoom.ScaleFunctions.add('interpolate', function(parameters, input) {
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
     var nullval = (parameters.null_value ? parameters.null_value : null);
-    if (breaks.length < 2 || breaks.length !== values.length){ return nullval; }
-    if (typeof input == "undefined" || input === null || isNaN(+input)){ return nullval; }
-    if (+input <= parameters.breaks[0]){
+    if (breaks.length < 2 || breaks.length !== values.length) { return nullval; }
+    if (typeof input == 'undefined' || input === null || isNaN(+input)) { return nullval; }
+    if (+input <= parameters.breaks[0]) {
         return values[0];
-    } else if (+input >= parameters.breaks[parameters.breaks.length-1]){
-        return values[breaks.length-1];
+    } else if (+input >= parameters.breaks[parameters.breaks.length - 1]) {
+        return values[breaks.length - 1];
     } else {
         var upper_idx = null;
-        breaks.forEach(function(brk, idx){
-            if (!idx){ return; }
-            if (breaks[idx-1] <= +input && breaks[idx] >= +input){ upper_idx = idx; }
+        breaks.forEach(function(brk, idx) {
+            if (!idx) { return; }
+            if (breaks[idx - 1] <= +input && breaks[idx] >= +input) { upper_idx = idx; }
         });
-        if (upper_idx === null){ return nullval; }
-        var normalized_input = (+input - breaks[upper_idx-1]) / (breaks[upper_idx] - breaks[upper_idx-1]);
-        if (!isFinite(normalized_input)){ return nullval; }
-        return d3.interpolate(values[upper_idx-1], values[upper_idx])(normalized_input);
+        if (upper_idx === null) { return nullval; }
+        var normalized_input = (+input - breaks[upper_idx - 1]) / (breaks[upper_idx] - breaks[upper_idx - 1]);
+        if (!isFinite(normalized_input)) { return nullval; }
+        return d3.interpolate(values[upper_idx - 1], values[upper_idx])(normalized_input);
     }
 });
