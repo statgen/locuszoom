@@ -2,7 +2,7 @@
     if (typeof define === 'function' && define.amd) {
         define([
             'd3',
-            'Q'
+            'q'
         ], function (d3, Q) {
             // amd
             return root.LocusZoom = factory(d3, Q);
@@ -35,18 +35,18 @@
         // Verify dependency: d3.js
         var minimum_d3_version = '3.5.6';
         if (typeof d3 != 'object') {
-            throw 'd3 dependency not met. Library missing.';
+            throw new Error('d3 dependency not met. Library missing.');
         }
         if (!semanticVersionIsOk(minimum_d3_version, d3.version)) {
-            throw 'd3 dependency not met. Outdated version detected.\nRequired d3 version: ' + minimum_d3_version + ' or higher (found: ' + d3.version + ').';
+            throw new Error('d3 dependency not met. Outdated version detected.\nRequired d3 version: ' + minimum_d3_version + ' or higher (found: ' + d3.version + ').');
         }    // Verify dependency: Q.js
         // Verify dependency: Q.js
         if (typeof Q != 'function') {
-            throw 'Q dependency not met. Library missing.';
+            throw new Error('Q dependency not met. Library missing.');
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.9.0-a1' };
+        var LocusZoom = { version: '0.9.0' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -58,7 +58,7 @@
  */
         LocusZoom.populate = function (selector, datasource, layout) {
             if (typeof selector == 'undefined') {
-                throw 'LocusZoom.populate selector not defined';
+                throw new Error('LocusZoom.populate selector not defined');
             }
             // Empty the selector of any existing content
             d3.select(selector).html('');
@@ -279,8 +279,8 @@
  *
  * @param {String} method The HTTP verb
  * @param {String} url
- * @param {String} body The request body to send to the server
- * @param {Object} headers Object of custom request headers
+ * @param {String} [body] The request body to send to the server
+ * @param {Object} [headers] Object of custom request headers
  * @param {Number} [timeout] If provided, wait this long (in ms) before timing out
  * @returns {Promise}
  */
@@ -397,10 +397,10 @@
  */
         LocusZoom.parseFields = function (data, html) {
             if (typeof data != 'object') {
-                throw 'LocusZoom.parseFields invalid arguments: data is not an object';
+                throw new Error('LocusZoom.parseFields invalid arguments: data is not an object');
             }
             if (typeof html != 'string') {
-                throw 'LocusZoom.parseFields invalid arguments: html is not a string';
+                throw new Error('LocusZoom.parseFields invalid arguments: html is not a string');
             }
             // `tokens` is like [token,...]
             // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
@@ -507,7 +507,7 @@
  */
         LocusZoom.getToolTipData = function (node) {
             if (typeof node != 'object' || typeof node.parentNode == 'undefined') {
-                throw 'Invalid node object';
+                throw new Error('Invalid node object');
             }
             // If this node is a locuszoom tool tip then return its data
             var selector = d3.select(node);
@@ -771,7 +771,7 @@
  */
         LocusZoom.subclass = function (parent, extra) {
             if (typeof parent !== 'function') {
-                throw 'Parent must be a callable constructor';
+                throw new Error('Parent must be a callable constructor');
             }
             extra = extra || {};
             var Sub = extra.hasOwnProperty('constructor') ? extra.constructor : function () {
@@ -821,7 +821,7 @@
      */
             obj.get = function (type, name, modifications) {
                 if (typeof type != 'string' || typeof name != 'string') {
-                    throw 'invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)';
+                    throw new Error('invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)');
                 } else if (layouts[type][name]) {
                     // Get the base layout
                     var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
@@ -894,13 +894,13 @@
                     // Return the layout as valid JSON only
                     return JSON.parse(JSON.stringify(layout));
                 } else {
-                    throw 'layout type [' + type + '] name [' + name + '] not found';
+                    throw new Error('layout type [' + type + '] name [' + name + '] not found');
                 }
             };
             /** @private */
             obj.set = function (type, name, layout) {
                 if (typeof type != 'string' || typeof name != 'string' || typeof layout != 'object') {
-                    throw 'unable to set new layout; bad arguments passed to set()';
+                    throw new Error('unable to set new layout; bad arguments passed to set()');
                 }
                 if (!layouts[type]) {
                     layouts[type] = {};
@@ -952,7 +952,7 @@
      */
             obj.merge = function (custom_layout, default_layout) {
                 if (typeof custom_layout !== 'object' || typeof default_layout !== 'object') {
-                    throw 'LocusZoom.Layouts.merge only accepts two layout objects; ' + typeof custom_layout + ', ' + typeof default_layout + ' given';
+                    throw new Error('LocusZoom.Layouts.merge only accepts two layout objects; ' + typeof custom_layout + ', ' + typeof default_layout + ' given');
                 }
                 for (var property in default_layout) {
                     if (!default_layout.hasOwnProperty(property)) {
@@ -971,7 +971,7 @@
                     }
                     // Unsupported property types: throw an exception
                     if (custom_type === 'function' || default_type === 'function') {
-                        throw 'LocusZoom.Layouts.merge encountered an unsupported property type';
+                        throw new Error('LocusZoom.Layouts.merge encountered an unsupported property type');
                     }
                     // Undefined custom value: pull the default value
                     if (custom_type === 'undefined') {
@@ -1626,7 +1626,7 @@
                     }]
             },
             tooltip: LocusZoom.Layouts.get('tooltip', 'catalog_variant', { unnamespaced: true }),
-            tooltip_positioning: 'vertical'
+            tooltip_positioning: 'top'
         });
         /**
  * Dashboard Layouts: toolbar buttons etc
@@ -2226,22 +2226,18 @@
         });
         LocusZoom.Layouts.add('panel', 'annotation_catalog', {
             id: 'annotationcatalog',
-            title: {
-                text: 'SNPs in GWAS Catalog',
-                x: 50,
-                style: { 'font-size': '14px' }
-            },
             width: 800,
-            height: 100,
-            min_height: 100,
+            height: 50,
+            min_height: 50,
             proportional_width: 1,
             margin: {
-                top: 35,
+                top: 25,
                 right: 50,
-                bottom: 40,
+                bottom: 0,
                 left: 50
             },
             inner_border: 'rgb(210, 210, 210)',
+            dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
             interaction: {
                 drag_background_to_pan: true,
                 scroll_to_zoom: true,
@@ -2257,7 +2253,7 @@
             state: {},
             width: 800,
             height: 450,
-            responsive_resize: true,
+            responsive_resize: 'both',
             min_region_scale: 20000,
             max_region_scale: 1000000,
             dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
@@ -2275,21 +2271,15 @@
         LocusZoom.Layouts.add('plot', 'association_catalog', {
             state: {},
             width: 800,
-            height: 450,
-            responsive_resize: true,
+            height: 500,
+            responsive_resize: 'width_only',
             min_region_scale: 20000,
             max_region_scale: 1000000,
             dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
             panels: [
-                LocusZoom.Layouts.get('panel', 'association_catalog', {
-                    unnamespaced: true,
-                    proportional_height: 0.5
-                }),
                 LocusZoom.Layouts.get('panel', 'annotation_catalog', { unnamespaced: true }),
-                LocusZoom.Layouts.get('panel', 'genes', {
-                    unnamespaced: true,
-                    proportional_height: 0.5
-                })
+                LocusZoom.Layouts.get('panel', 'association_catalog', { unnamespaced: true }),
+                LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
             ]
         });
         // Shortcut to "StandardLayout" for backward compatibility
@@ -2299,7 +2289,7 @@
             height: 600,
             min_width: 800,
             min_height: 600,
-            responsive_resize: true,
+            responsive_resize: 'both',
             dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
             panels: [
                 LocusZoom.Layouts.get('panel', 'phewas', {
@@ -2330,7 +2320,7 @@
             state: {},
             width: 800,
             height: 550,
-            responsive_resize: true,
+            responsive_resize: 'both',
             min_region_scale: 20000,
             max_region_scale: 1000000,
             dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
@@ -2429,7 +2419,7 @@
  */
         LocusZoom.DataLayer.prototype.addField = function (fieldName, namespace, transformations) {
             if (!fieldName || !namespace) {
-                throw 'Must specify field name and namespace to use when adding field';
+                throw new Error('Must specify field name and namespace to use when adding field');
             }
             var fieldString = namespace + ':' + fieldName;
             if (transformations) {
@@ -2439,7 +2429,7 @@
                 } else if (Array.isArray(transformations)) {
                     fieldString += transformations.join('|');
                 } else {
-                    throw 'Must provide transformations as either a string or array of strings';
+                    throw new Error('Must provide transformations as either a string or array of strings');
                 }
             }
             var fields = this.layout.fields;
@@ -2550,7 +2540,7 @@
             } else if (typeof element == 'object') {
                 var id_field = this.layout.id_field || 'id';
                 if (typeof element[id_field] == 'undefined') {
-                    throw 'Unable to generate element ID';
+                    throw new Error('Unable to generate element ID');
                 }
                 element_id = element[id_field].toString().replace(/\W/g, '');
             }
@@ -2718,7 +2708,7 @@
                     'x',
                     'y'
                 ].indexOf(dimension) === -1) {
-                throw 'Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()';
+                throw new Error('Invalid dimension identifier passed to LocusZoom.DataLayer.getAxisExtent()');
             }
             var axis_name = dimension + '_axis';
             var axis_layout = this.layout[axis_name];
@@ -2799,7 +2789,7 @@
                     'y1',
                     'y2'
                 ].indexOf(dimension) === -1) {
-                throw 'Invalid dimension identifier at layer level' + dimension;
+                throw new Error('Invalid dimension identifier at layer level' + dimension);
             }
             return [];
         };
@@ -2810,7 +2800,7 @@
  */
         LocusZoom.DataLayer.prototype.createTooltip = function (d, id) {
             if (typeof this.layout.tooltip != 'object') {
-                throw 'DataLayer [' + this.id + '] layout does not define a tooltip';
+                throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
             }
             if (typeof id == 'undefined') {
                 id = this.getElementId(d);
@@ -2895,7 +2885,7 @@
  */
         LocusZoom.DataLayer.prototype.positionTooltip = function (id) {
             if (typeof id != 'string') {
-                throw 'Unable to position tooltip: id is not a string';
+                throw new Error('Unable to position tooltip: id is not a string');
             }
             // Position the div itself
             this.tooltips[id].selector.style('left', d3.event.pageX + 'px').style('top', d3.event.pageY + 'px');
@@ -3136,10 +3126,10 @@
         LocusZoom.DataLayer.prototype.setElementStatus = function (status, element, toggle, exclusive) {
             // Sanity checks
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-                throw 'Invalid status passed to DataLayer.setElementStatus()';
+                throw new Error('Invalid status passed to DataLayer.setElementStatus()');
             }
             if (typeof element == 'undefined') {
-                throw 'Invalid element passed to DataLayer.setElementStatus()';
+                throw new Error('Invalid element passed to DataLayer.setElementStatus()');
             }
             if (typeof toggle == 'undefined') {
                 toggle = true;
@@ -3194,7 +3184,7 @@
         LocusZoom.DataLayer.prototype.setElementStatusByFilters = function (status, toggle, filters, exclusive) {
             // Sanity check
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-                throw 'Invalid status passed to DataLayer.setElementStatusByFilters()';
+                throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
             }
             if (typeof this.state[this.state_id][status] == 'undefined') {
                 return this;
@@ -3231,7 +3221,7 @@
         LocusZoom.DataLayer.prototype.setAllElementStatus = function (status, toggle) {
             // Sanity check
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-                throw 'Invalid status passed to DataLayer.setAllElementStatus()';
+                throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
             }
             if (typeof this.state[this.state_id][status] == 'undefined') {
                 return this;
@@ -3372,7 +3362,8 @@
                     ret = JSON.stringify(this.data);
                 } catch (e) {
                     ret = null;
-                    console.error('Unable to export JSON data from data layer: ' + this.getBaseId() + ';', e);
+                    console.warn('Unable to export JSON data from data layer: ' + this.getBaseId());
+                    console.error(e);
                 }
                 break;
             case 'tsv':
@@ -3454,12 +3445,12 @@
                     return null;
                 } else if (datalayers[name]) {
                     if (typeof layout != 'object') {
-                        throw 'invalid layout argument for data layer [' + name + ']';
+                        throw new Error('invalid layout argument for data layer [' + name + ']');
                     } else {
                         return new datalayers[name](layout, parent);
                     }
                 } else {
-                    throw 'data layer [' + name + '] not found';
+                    throw new Error('data layer [' + name + '] not found');
                 }
             };
             /**
@@ -3471,7 +3462,7 @@
             obj.set = function (name, datalayer) {
                 if (datalayer) {
                     if (typeof datalayer != 'function') {
-                        throw 'unable to set data layer [' + name + '], argument provided is not a function';
+                        throw new Error('unable to set data layer [' + name + '], argument provided is not a function');
                     } else {
                         datalayers[name] = datalayer;
                         datalayers[name].prototype = new LocusZoom.DataLayer();
@@ -3488,7 +3479,7 @@
      */
             obj.add = function (name, datalayer) {
                 if (datalayers[name]) {
-                    throw 'data layer already exists with name: ' + name;
+                    throw new Error('data layer already exists with name: ' + name);
                 } else {
                     obj.set(name, datalayer);
                 }
@@ -3505,10 +3496,10 @@
                 overrides = overrides || {};
                 var parent = datalayers[parent_name];
                 if (!parent) {
-                    throw 'Attempted to subclass an unknown or unregistered datalayer type';
+                    throw new Error('Attempted to subclass an unknown or unregistered datalayer type');
                 }
                 if (typeof overrides !== 'object') {
-                    throw 'Must specify an object of properties and methods';
+                    throw new Error('Must specify an object of properties and methods');
                 }
                 var child = LocusZoom.subclass(parent, overrides);
                 // Bypass .set() because we want a layer of inheritance below `DataLayer`
@@ -3549,7 +3540,7 @@
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
             if (!Array.isArray(layout.filters)) {
-                throw 'Annotation track must specify array of filters for selecting points to annotate';
+                throw new Error('Annotation track must specify array of filters for selecting points to annotate');
             }
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
             LocusZoom.DataLayer.apply(this, arguments);
@@ -3619,10 +3610,10 @@
             // Reimplement the positionTooltip() method to be annotation-specific
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var top, left, arrow_type, arrow_top, arrow_left;
                 var tooltip = this.tooltips[id];
@@ -3710,10 +3701,10 @@
             // Reimplement the positionTooltip() method to be forest-specific
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var tooltip = this.tooltips[id];
                 var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
@@ -3887,7 +3878,7 @@
                         'y1',
                         'y2'
                     ].indexOf(dimension) === -1) {
-                    throw 'Invalid dimension identifier' + dimension;
+                    throw new Error('Invalid dimension identifier' + dimension);
                 }
                 // Design assumption: one axis (y1 or y2) has the ticks, and the layout says which to use
                 // Also assumes that every tick gets assigned a unique matching label
@@ -3895,7 +3886,7 @@
                 if (dimension === 'y' + axis_num) {
                     var category_field = this.layout.y_axis.category_field;
                     if (!category_field) {
-                        throw 'Layout for ' + this.layout.id + ' must specify category_field';
+                        throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
                     }
                     return this.data.map(function (item, index) {
                         return {
@@ -3912,7 +3903,7 @@
                 //  correct extents.
                 var field_to_add = this.layout.y_axis.field;
                 if (!field_to_add) {
-                    throw 'Layout for ' + this.layout.id + ' must specify yaxis.field';
+                    throw new Error('Layout for ' + this.layout.id + ' must specify yaxis.field');
                 }
                 this.data = this.data.map(function (item, index) {
                     item[field_to_add] = index + 1;
@@ -4288,10 +4279,10 @@
      */
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var tooltip = this.tooltips[id];
                 var arrow_width = 7;
@@ -4383,7 +4374,7 @@
                 // Assumes that variant string is of the format 10:123352136_C/T or 10:123352136
                 var variant_parts = /([^:]+):(\d+)(?:_.*)?/.exec(this.state.variant);
                 if (!variant_parts) {
-                    throw 'Genome legend cannot understand the specified variant position';
+                    throw new Error('Genome legend cannot understand the specified variant position');
                 }
                 var chr = variant_parts[1];
                 var offset = variant_parts[2];
@@ -4668,10 +4659,10 @@
             // Reimplement the positionTooltip() method to be interval-specific
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var tooltip = this.tooltips[id];
                 var arrow_width = 7;
@@ -4858,10 +4849,10 @@
      */
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var tooltip = this.tooltips[id];
                 var tooltip_box = tooltip.selector.node().getBoundingClientRect();
@@ -5026,7 +5017,7 @@
             this.setAllElementStatus = function (status, toggle) {
                 // Sanity check
                 if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-                    throw 'Invalid status passed to DataLayer.setAllElementStatus()';
+                    throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
                 }
                 if (typeof this.state[this.state_id][status] == 'undefined') {
                     return this;
@@ -5178,10 +5169,10 @@
             // Reimplement the positionTooltip() method to be scatter-specific
             this.positionTooltip = function (id) {
                 if (typeof id != 'string') {
-                    throw 'Unable to position tooltip: id is not a string';
+                    throw new Error('Unable to position tooltip: id is not a string');
                 }
                 if (!this.tooltips[id]) {
-                    throw 'Unable to position tooltip: id does not point to a valid tooltip';
+                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
                 }
                 var top, left, arrow_type, arrow_top, arrow_left;
                 var tooltip = this.tooltips[id];
@@ -5616,7 +5607,7 @@
             this.makeLDReference = function (element) {
                 var ref = null;
                 if (typeof element == 'undefined') {
-                    throw 'makeLDReference requires one argument of any type';
+                    throw new Error('makeLDReference requires one argument of any type');
                 } else if (typeof element == 'object') {
                     if (this.layout.id_field && typeof element[this.layout.id_field] != 'undefined') {
                         ref = element[this.layout.id_field].toString();
@@ -5653,7 +5644,7 @@
                 // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
                 var category_field = this.layout.x_axis.category_field;
                 if (!category_field) {
-                    throw 'Layout for ' + this.layout.id + ' must specify category_field';
+                    throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
                 }
                 // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
                 var sourceData = this.data.sort(function (a, b) {
@@ -5724,7 +5715,7 @@
                 var baseParams = this._base_layout.color.parameters;
                 // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
                 if (this.layout.color.scale_function !== 'categorical_bin') {
-                    throw 'This layer requires that coloring be specified as a `categorical_bin`';
+                    throw new Error('This layer requires that coloring be specified as a `categorical_bin`');
                 }
                 if (baseParams.categories.length && baseParams.values.length) {
                     // If there are preset category/color combos, make sure that they apply to the actual dataset
@@ -5772,7 +5763,7 @@
                         'y1',
                         'y2'
                     ].indexOf(dimension) === -1) {
-                    throw 'Invalid dimension identifier';
+                    throw new Error('Invalid dimension identifier');
                 }
                 var position = config.position || 'left';
                 if ([
@@ -5780,7 +5771,7 @@
                         'center',
                         'right'
                     ].indexOf(position) === -1) {
-                    throw 'Invalid tick position';
+                    throw new Error('Invalid tick position');
                 }
                 var categoryBounds = this._categories;
                 if (!categoryBounds || !Object.keys(categoryBounds).length) {
@@ -5850,7 +5841,7 @@
             var findSourceByName = function (x) {
                 for (var i = 0; i < sources.length; i++) {
                     if (!sources[i].SOURCE_NAME) {
-                        throw 'KnownDataSources at position ' + i + ' does not have a \'SOURCE_NAME\' static property';
+                        throw new Error('KnownDataSources at position ' + i + ' does not have a \'SOURCE_NAME\' static property');
                     }
                     if (sources[i].SOURCE_NAME === x) {
                         return sources[i];
@@ -5888,13 +5879,13 @@
             obj.extend = function (parent_name, source_name, overrides) {
                 var parent = findSourceByName(parent_name);
                 if (!parent) {
-                    throw 'Attempted to subclass an unknown or unregistered data source';
+                    throw new Error('Attempted to subclass an unknown or unregistered data source');
                 }
                 if (!source_name) {
-                    throw 'Must provide a name for the new data source';
+                    throw new Error('Must provide a name for the new data source');
                 }
                 if (typeof overrides !== 'object') {
-                    throw 'Must specify an object of properties and methods';
+                    throw new Error('Must specify an object of properties and methods');
                 }
                 var child = LocusZoom.subclass(parent, overrides);
                 child.SOURCE_NAME = source_name;
@@ -5928,7 +5919,7 @@
                     params[0] = null;
                     return new (Function.prototype.bind.apply(newObj, params))();
                 } else {
-                    throw 'Unable to find data source for name: ' + name;
+                    throw new Error('Unable to find data source for name: ' + name);
                 }
             };
             /**
@@ -5982,7 +5973,7 @@
                 if (fun) {
                     return fun;
                 } else {
-                    throw 'transformation ' + name + ' not found';
+                    throw new Error('transformation ' + name + ' not found');
                 }
             };
             //a single transformation with any parameters
@@ -6033,7 +6024,7 @@
      */
             obj.set = function (name, fn) {
                 if (name.substring(0, 1) === '|') {
-                    throw 'transformation name should not start with a pipe';
+                    throw new Error('transformation name should not start with a pipe');
                 } else {
                     if (fn) {
                         transformations[name] = fn;
@@ -6049,7 +6040,7 @@
      */
             obj.add = function (name, fn) {
                 if (transformations[name]) {
-                    throw 'transformation already exists with name: ' + name;
+                    throw new Error('transformation already exists with name: ' + name);
                 } else {
                     obj.set(name, fn);
                 }
@@ -6192,7 +6183,7 @@
                         return functions[name](parameters, value);
                     }
                 } else {
-                    throw 'scale function [' + name + '] not found';
+                    throw new Error('scale function [' + name + '] not found');
                 }
             };
             /**
@@ -6214,7 +6205,7 @@
      */
             obj.add = function (name, fn) {
                 if (functions[name]) {
-                    throw 'scale function already exists with name: ' + name;
+                    throw new Error('scale function already exists with name: ' + name);
                 } else {
                     obj.set(name, fn);
                 }
@@ -6363,7 +6354,7 @@
         LocusZoom.Dashboard = function (parent) {
             // parent must be a locuszoom plot or panel
             if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)) {
-                throw 'Unable to create dashboard, parent must be a locuszoom plot or panel';
+                throw new Error('Unable to create dashboard, parent must be a locuszoom plot or panel');
             }
             /** @member {LocusZoom.Plot|LocusZoom.Panel} */
             this.parent = parent;
@@ -6729,12 +6720,12 @@
                     return null;
                 } else if (components[name]) {
                     if (typeof layout != 'object') {
-                        throw 'invalid layout argument for dashboard component [' + name + ']';
+                        throw new Error('invalid layout argument for dashboard component [' + name + ']');
                     } else {
                         return new components[name](layout, parent);
                     }
                 } else {
-                    throw 'dashboard component [' + name + '] not found';
+                    throw new Error('dashboard component [' + name + '] not found');
                 }
             };
             /**
@@ -6746,7 +6737,7 @@
             obj.set = function (name, component) {
                 if (component) {
                     if (typeof component != 'function') {
-                        throw 'unable to set dashboard component [' + name + '], argument provided is not a function';
+                        throw new Error('unable to set dashboard component [' + name + '], argument provided is not a function');
                     } else {
                         components[name] = component;
                         components[name].prototype = new LocusZoom.Dashboard.Component();
@@ -6762,7 +6753,7 @@
      */
             obj.add = function (name, component) {
                 if (components[name]) {
-                    throw 'dashboard component already exists with name: ' + name;
+                    throw new Error('dashboard component already exists with name: ' + name);
                 } else {
                     obj.set(name, component);
                 }
@@ -6785,7 +6776,7 @@
  */
         LocusZoom.Dashboard.Component.Button = function (parent) {
             if (!(parent instanceof LocusZoom.Dashboard.Component)) {
-                throw 'Unable to create dashboard component button, invalid parent';
+                throw new Error('Unable to create dashboard component button, invalid parent');
             }
             /** @member {LocusZoom.Dashboard.Component} */
             this.parent = parent;
@@ -7611,7 +7602,7 @@
              */
                     removeByIdx: function (idx) {
                         if (typeof this.state.model.covariates[idx] == 'undefined') {
-                            throw 'Unable to remove model covariate, invalid index: ' + idx.toString();
+                            throw new Error('Unable to remove model covariate, invalid index: ' + idx.toString());
                         }
                         this.state.model.covariates.splice(idx, 1);
                         this.applyState();
@@ -7695,7 +7686,7 @@
                 layout.data_layer_id = 'intervals';
             }
             if (!this.parent_panel.data_layers[layout.data_layer_id]) {
-                throw 'Dashboard toggle split tracks component missing valid data layer ID';
+                throw new Error('Dashboard toggle split tracks component missing valid data layer ID');
             }
             this.update = function () {
                 var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
@@ -7884,7 +7875,7 @@
             ];
             var dataLayer = this.parent_panel.data_layers[layout.layer_name];
             if (!dataLayer) {
-                throw 'Display options could not locate the specified layer_name: \'' + layout.layer_name + '\'';
+                throw new Error('Display options could not locate the specified layer_name: \'' + layout.layer_name + '\'');
             }
             var dataLayerLayout = dataLayer.layout;
             // Store default configuration for the layer as a clean deep copy, so we may revert later
@@ -7923,14 +7914,14 @@
                         value: row_id
                     }).style('margin', 0)    // Override css libraries (eg skeleton) that style form inputs
 .property('checked', row_id === self._selected_item).on('click', function () {
-                        Object.keys(display_options).forEach(function (field_name) {
-                            dataLayer.layout[field_name] = display_options[field_name];
+                        // If an option is not specified in these display options, use the original defaults
+                        allowed_fields.forEach(function (field_name) {
+                            dataLayer.layout[field_name] = display_options[field_name] || defaultConfig[field_name];
                         });
                         self._selected_item = row_id;
                         self.parent_panel.render();
                         var legend = self.parent_panel.legend;
-                        if (legend && display_options.legend) {
-                            // Update the legend only if necessary
+                        if (legend) {
                             legend.render();
                         }
                     });
@@ -7961,7 +7952,7 @@
 */
         LocusZoom.Legend = function (parent) {
             if (!(parent instanceof LocusZoom.Panel)) {
-                throw 'Unable to create legend, parent must be a locuszoom panel';
+                throw new Error('Unable to create legend, parent must be a locuszoom panel');
             }
             /** @member {LocusZoom.Panel} */
             this.parent = parent;
@@ -8136,6 +8127,19 @@
         };
         /* global LocusZoom */
         'use strict';
+        function validateBuildSource(class_name, build, source) {
+            // Build OR Source, not both
+            if (build && source || !(build || source)) {
+                throw new Error(class_name + ' must specify either "build" or "source", but not both');
+            }
+            // If the build isn't recognized, our APIs can't transparently select a source to match
+            if (build && [
+                    'GRCh37',
+                    'GRCh38'
+                ].indexOf(build) === -1) {
+                throw new Error(class_name + ' must specify a valid genome build number');
+            }
+        }
         /**
  * LocusZoom functionality used for data parsing and retrieval
  * @namespace
@@ -8346,7 +8350,7 @@
                 // Create an array of functions that, when called, will trigger the request to the specified datasource
                 var request_handles = Object.keys(requests).map(function (key) {
                     if (!sources.get(key)) {
-                        throw 'Datasource for namespace ' + key + ' not found';
+                        throw new Error('Datasource for namespace ' + key + ' not found');
                     }
                     return sources.get(key).getData(state, requests[key].fields, requests[key].outnames, requests[key].trans);
                 });
@@ -8400,7 +8404,7 @@
                 this.params = init.params || {};
             }
             if (!this.url) {
-                throw 'Source not initialized with required URL';
+                throw new Error('Source not initialized with required URL');
             }
         };
         /**
@@ -8426,6 +8430,7 @@
  * @param {Object} state The state of the parent plot
  * @param chain
  * @param fields
+ * @returns {Promise}
  */
         LocusZoom.Data.Source.prototype.fetchRequest = function (state, chain, fields) {
             var url = this.getURL(state, chain, fields);
@@ -8439,14 +8444,12 @@
             var req;
             var cacheKey = this.getCacheKey(state, chain, fields);
             if (this.enableCache && typeof cacheKey !== 'undefined' && cacheKey === this._cachedKey) {
-                req = Q.when(this._cachedResponse);
+                req = Q.when(this._cachedResponse);    // Resolve to the value of the current promise
             } else {
                 req = this.fetchRequest(state, chain, fields);
                 if (this.enableCache) {
-                    req = req.then(function (x) {
-                        this._cachedKey = cacheKey;
-                        return this._cachedResponse = x;
-                    }.bind(this));
+                    this._cachedKey = cacheKey;
+                    this._cachedResponse = req;
                 }
             }
             return req;
@@ -8512,7 +8515,7 @@
                 return item.length === N;
             });
             if (!sameLength) {
-                throw this.constructor.SOURCE_NAME + ' expects a response in which all arrays of data are the same length';
+                throw new Error(this.constructor.SOURCE_NAME + ' expects a response in which all arrays of data are the same length');
             }
             // Go down the rows, and create an object for each record
             var records = [];
@@ -8588,7 +8591,7 @@
             });
             fieldFound.forEach(function (v, i) {
                 if (!v) {
-                    throw 'field ' + fields[i] + ' not found in response for ' + outnames[i];
+                    throw new Error('field ' + fields[i] + ' not found in response for ' + outnames[i]);
                 }
             });
             return records;
@@ -8751,9 +8754,10 @@
             };
         };
         LocusZoom.Data.AssociationSource.prototype.getURL = function (state, chain, fields) {
-            var analysis = state.analysis || chain.header.analysis || this.params.analysis;
+            var analysis = chain.header.analysis || this.params.source || this.params.analysis;
+            // Old usages called this param "analysis"
             if (typeof analysis == 'undefined') {
-                throw 'Association source must specify an analysis ID to plot';
+                throw new Error('Association source must specify an analysis ID to plot');
             }
             return this.url + 'results/?filter=analysis in ' + analysis + ' and chromosome in  \'' + state.chr + '\'' + ' and position ge ' + state.start + ' and position le ' + state.end;
         };
@@ -8773,7 +8777,11 @@
  * Data Source for LD Data, as fetched from the LocusZoom API server (or compatible)
  * This source is designed to connect its results to association data, and therefore depends on association data having
  *  been loaded by a previous request in the data chain.
+ *
+ *  This source is deprecated in favor of a new, standalone LD server. For new usages, see LDLZ2.
+ *
  * @class
+ * @deprecated
  * @public
  * @augments LocusZoom.Data.Source
  */
@@ -8784,14 +8792,14 @@
         LocusZoom.Data.LDSource.prototype.preGetData = function (state, fields) {
             if (fields.length > 1) {
                 if (fields.length !== 2 || fields.indexOf('isrefvar') === -1) {
-                    throw 'LD does not know how to get all fields: ' + fields.join(', ');
+                    throw new Error('LD does not know how to get all fields: ' + fields.join(', '));
                 }
             }
         };
         LocusZoom.Data.LDSource.prototype.findMergeFields = function (chain) {
-            // since LD may be shared across sources with different namespaces
-            // we use regex to find columns to join on rather than
-            // requiring exact matches
+            // Find the fields (as provided by a previous step in the chain) that are needed to combine with LD data
+            // Since LD information may be shared across multiple assoc sources with different namespaces,
+            //   we use regex to find columns to join on, rather than requiring exact matches
             var exactMatch = function (arr) {
                 return function () {
                     var regexes = arguments;
@@ -8824,7 +8832,7 @@
             return dataFields;
         };
         LocusZoom.Data.LDSource.prototype.findRequestedFields = function (fields, outnames) {
-            // Assumption: all usages of this source only ever ask for "isrefvar" or "state". This maps to output names.
+            // Assumption: all usages of this source will only ever ask for "isrefvar" or "state". This maps to output names.
             var obj = {};
             for (var i = 0; i < fields.length; i++) {
                 if (fields[i] === 'isrefvar') {
@@ -8840,7 +8848,7 @@
         LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) {
             return data;
         };
-        LocusZoom.Data.LDSource.prototype.getURL = function (state, chain, fields) {
+        LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
             var findExtremeValue = function (x, pval, sign) {
                 pval = pval || 'pvalue';
                 sign = sign || 1;
@@ -8853,7 +8861,6 @@
                 }
                 return extremeIdx;
             };
-            var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
             var reqFields = this.findRequestedFields(fields);
             var refVar = reqFields.ldin;
             if (refVar === 'state') {
@@ -8861,7 +8868,7 @@
             }
             if (refVar === 'best') {
                 if (!chain.body) {
-                    throw 'No association data found to find best pvalue';
+                    throw new Error('No association data found to find best pvalue');
                 }
                 var keys = this.findMergeFields(chain);
                 if (!keys.pvalue || !keys.id) {
@@ -8872,13 +8879,15 @@
                     if (!keys.pvalue) {
                         columns += (columns.length ? ', ' : '') + 'pvalue';
                     }
-                    throw 'Unable to find necessary column(s) for merge: ' + columns + ' (available: ' + keys._names_ + ')';
+                    throw new Error('Unable to find necessary column(s) for merge: ' + columns + ' (available: ' + keys._names_ + ')');
                 }
                 refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
             }
-            if (!chain.header) {
-                chain.header = {};
-            }
+            return refVar;
+        };
+        LocusZoom.Data.LDSource.prototype.getURL = function (state, chain, fields) {
+            var refSource = state.ldrefsource || chain.header.ldrefsource || 1;
+            var refVar = this.getRefvar(state, chain, fields);
             chain.header.ldrefvar = refVar;
             return this.url + 'results/?filter=reference eq ' + refSource + ' and chromosome2 eq \'' + state.chr + '\'' + ' and position2 ge ' + state.start + ' and position2 le ' + state.end + ' and variant1 eq \'' + refVar + '\'' + '&fields=chr,pos,rsquare';
         };
@@ -8886,7 +8895,7 @@
             var keys = this.findMergeFields(chain);
             var reqFields = this.findRequestedFields(fields, outnames);
             if (!keys.position) {
-                throw 'Unable to find position field for merge: ' + keys._names_;
+                throw new Error('Unable to find position field for merge: ' + keys._names_);
             }
             var leftJoin = function (left, right, lfield, rfield) {
                 var i = 0, j = 0;
@@ -8912,12 +8921,78 @@
                     }
                 }
             };
-            leftJoin(chain.body, data, reqFields.ldout, 'rsquare');
+            // LD servers vary slightly. Some report corr as "rsquare", others as "correlation"
+            var corrField = data.rsquare ? 'rsquare' : 'correlation';
+            leftJoin(chain.body, data, reqFields.ldout, corrField);
             if (reqFields.isrefvarin && chain.header.ldrefvar) {
                 tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
             }
             return chain.body;
         };
+        /**
+ * Fetch LD directly from the standalone Portal LD server
+ *
+ * @class
+ * @public
+ * @augments LocusZoom.Data.LDSource
+ */
+        LocusZoom.Data.LDSource2 = LocusZoom.KnownDataSources.extend('LDLZ', 'LDLZ2', {
+            getURL: function (state, chain, fields) {
+                // Accept the following params in this.params:
+                // - method (r, rsquare, cov)
+                // - source (aka panel)
+                // - population (ALL, AFR, EUR, etc)
+                // - build
+                // The LD source/pop can be overridden from plot.state for dynamic layouts
+                var build = state.genome_build || this.params.build || 'GRCh37';
+                var source = state.ld_source || this.params.source || '1000G';
+                var population = state.ld_pop || this.params.population || 'ALL';
+                // LDServer panels will always have an ALL
+                var method = this.params.method || 'rsquare';
+                validateBuildSource(this.constructor.SOURCE_NAME, build, null);
+                // LD doesn't need to validate `source` option
+                var refVar = this.getRefvar(state, chain, fields);
+                chain.header.ldrefvar = refVar;
+                return [
+                    this.url,
+                    'genome_builds/',
+                    build,
+                    '/references/',
+                    source,
+                    '/populations/',
+                    population,
+                    '/variants',
+                    '?correlation=',
+                    method,
+                    '&variant=',
+                    encodeURIComponent(refVar),
+                    '&chrom=',
+                    encodeURIComponent(state.chr),
+                    '&start=',
+                    encodeURIComponent(state.start),
+                    '&stop=',
+                    encodeURIComponent(state.end)
+                ].join('');
+            },
+            fetchRequest: function (state, chain, fields) {
+                // The API is paginated, but we need all of the data to render a plot. Depaginate and combine where appropriate.
+                var url = this.getURL(state, chain, fields);
+                var combined = { data: {} };
+                var chainRequests = function (url) {
+                    return LocusZoom.createCORSPromise('GET', url).then(function (payload) {
+                        payload = JSON.parse(payload);
+                        Object.keys(payload.data).forEach(function (key) {
+                            combined.data[key] = (combined.data[key] || []).concat(payload.data[key]);
+                        });
+                        if (payload.next) {
+                            return chainRequests(payload.next);
+                        }
+                        return combined;
+                    });
+                };
+                return chainRequests(url);
+            }
+        });
         /**
  * Data source for GWAS catalogs of known variants
  * @public
@@ -8935,8 +9010,16 @@
         LocusZoom.Data.GwasCatalog.prototype.getURL = function (state, chain, fields) {
             // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
             //  (regardless of the actual match field)
-            var catalog = this.params.source || 2;
-            return this.url + '?format=objects&sort=pos&filter=id eq ' + catalog + ' and chrom eq \'' + state.chr + '\'' + ' and pos ge ' + state.start + ' and pos le ' + state.end;
+            var build_option = state.genome_build || this.params.build;
+            validateBuildSource(this.constructor.SOURCE_NAME, build_option, null);
+            // Source can override build- not mutually exclusive
+            // Most of our annotations will respect genome build before any other option.
+            //   But there can be more than one GWAS catalog for the same build, so an explicit config option will always take
+            //   precedence.
+            var default_source = build_option === 'GRCh38' ? 1 : 2;
+            // EBI GWAS catalog
+            var source = this.params.source || default_source;
+            return this.url + '?format=objects&sort=pos&filter=id eq ' + source + ' and chrom eq \'' + state.chr + '\'' + ' and pos ge ' + state.start + ' and pos le ' + state.end;
         };
         LocusZoom.Data.GwasCatalog.prototype.findMergeFields = function (records) {
             // Data from previous sources is already namespaced. Find the alignment field by matching.
@@ -8946,7 +9029,7 @@
                 return item.match(/\b(position|pos)\b/i);
             });
             if (!posMatch) {
-                throw 'Could not find data to align with GWAS catalog results';
+                throw new Error('Could not find data to align with GWAS catalog results');
             }
             return { 'pos': posMatch };
         };
@@ -9009,7 +9092,13 @@
             this.parseInit(init);
         }, 'GeneLZ');
         LocusZoom.Data.GeneSource.prototype.getURL = function (state, chain, fields) {
-            var source = state.source || chain.header.source || this.params.source || 2;
+            var build = state.genome_build || this.params.build;
+            var source = this.params.source;
+            validateBuildSource(this.constructor.SOURCE_NAME, build, source);
+            if (build) {
+                // If build specified, choose a known Portal API dataset IDs (build 37/38)
+                source = build === 'GRCh38' ? 1 : 3;
+            }
             return this.url + '?filter=source in ' + source + ' and chrom eq \'' + state.chr + '\'' + ' and start le ' + state.end + ' and end ge ' + state.start;
         };
         // Genes have a very complex internal data format. Bypass any record parsing, and provide the data layer with the
@@ -9107,7 +9196,13 @@
             this.parseInit(init);
         }, 'RecombLZ');
         LocusZoom.Data.RecombinationRateSource.prototype.getURL = function (state, chain, fields) {
-            var source = state.recombsource || chain.header.recombsource || this.params.source || 15;
+            var build = state.genome_build || this.params.build;
+            var source = this.params.source;
+            validateBuildSource(this.constructor.SOURCE_NAME, build, source);
+            if (build) {
+                // If build specified, choose a known Portal API dataset IDs (build 37/38)
+                source = build === 'GRCh38' ? 16 : 15;
+            }
             return this.url + '?filter=id in ' + source + ' and chromosome eq \'' + state.chr + '\'' + ' and position le ' + state.end + ' and position ge ' + state.start;
         };
         /**
@@ -9120,7 +9215,7 @@
             this.parseInit(init);
         }, 'IntervalLZ');
         LocusZoom.Data.IntervalSource.prototype.getURL = function (state, chain, fields) {
-            var source = state.bedtracksource || chain.header.bedtracksource || this.params.source || 16;
+            var source = chain.header.bedtracksource || this.params.source;
             return this.url + '?filter=id in ' + source + ' and chromosome eq \'' + state.chr + '\'' + ' and start le ' + state.end + ' and end ge ' + state.start;
         };
         /**
@@ -9146,24 +9241,24 @@
             ];
         };
         /**
- * Data source for PheWAS data served from external JSON files
+ * Data source for PheWAS data
  * @public
  * @class
  * @augments LocusZoom.Data.Source
- * @param {String[]} init.build This datasource expects to be provided the name of the genome build that will be used to
- *   provide pheWAS results for this position. Note positions may not translate between builds.
+ * @param {String[]} init.params.build This datasource expects to be provided the name of the genome build that will
+ *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
         LocusZoom.Data.PheWASSource = LocusZoom.Data.Source.extend(function (init) {
             this.parseInit(init);
         }, 'PheWASLZ');
         LocusZoom.Data.PheWASSource.prototype.getURL = function (state, chain, fields) {
-            var build = this.params.build;
+            var build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
             if (!build || !Array.isArray(build) || !build.length) {
-                throw [
+                throw new Error([
                     'Data source',
                     this.constructor.SOURCE_NAME,
                     'requires that you specify array of one or more desired genome build names'
-                ].join(' ');
+                ].join(' '));
             }
             var url = [
                 this.url,
@@ -9196,7 +9291,7 @@
  */
         LocusZoom.Data.ConnectorSource = LocusZoom.Data.Source.extend(function (init) {
             if (!init || !init.sources) {
-                throw 'Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs';
+                throw new Error('Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs');
             }
             /**
      * Tells the connector how to find the data it relies on
@@ -9212,7 +9307,7 @@
             var self = this;
             this.REQUIRED_SOURCES.forEach(function (k) {
                 if (specified_ids.indexOf(k) === -1) {
-                    throw 'Configuration for ' + self.constructor.SOURCE_NAME + ' must specify a source ID corresponding to ' + k;
+                    throw new Error('Configuration for ' + self.constructor.SOURCE_NAME + ' must specify a source ID corresponding to ' + k);
                 }
             });
             this.parseInit(init);
@@ -9229,7 +9324,7 @@
             Object.keys(this._source_name_mapping).forEach(function (ns) {
                 var chain_source_id = self._source_name_mapping[ns];
                 if (chain.discrete && !chain.discrete[chain_source_id]) {
-                    throw self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id;
+                    throw new Error(self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id);
                 }
             });
             return Q.when(chain.body || []);
@@ -9249,7 +9344,7 @@
         };
         LocusZoom.Data.ConnectorSource.prototype.combineChainBody = function (records, chain) {
             // Stub method: specifies how to combine the data
-            throw 'This method must be implemented in a subclass';
+            throw new Error('This method must be implemented in a subclass');
         };
         /* global LocusZoom */
         'use strict';
@@ -9356,7 +9451,10 @@
                 'data_requested': [],
                 'data_rendered': [],
                 'element_clicked': [],
+                // Select or unselect
                 'element_selection': [],
+                // Element becomes active (only)
+                'panel_removed': [],
                 'state_changed': []    // Only triggered when a state change causes rerender
             };
             /**
@@ -9393,10 +9491,10 @@
      */
             this.on = function (event, hook) {
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                    throw 'Unable to register event hook, invalid event: ' + event.toString();
+                    throw new Error('Unable to register event hook, invalid event: ' + event.toString());
                 }
                 if (typeof hook != 'function') {
-                    throw 'Unable to register event hook, invalid hook function passed';
+                    throw new Error('Unable to register event hook, invalid hook function passed');
                 }
                 this.event_hooks[event].push(hook);
                 return hook;
@@ -9410,7 +9508,7 @@
             this.off = function (event, hook) {
                 var theseHooks = this.event_hooks[event];
                 if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-                    throw 'Unable to remove event hook, invalid event: ' + event.toString();
+                    throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
                 }
                 if (hook === undefined) {
                     // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -9421,7 +9519,7 @@
                     if (hookMatch !== -1) {
                         theseHooks.splice(hookMatch, 1);
                     } else {
-                        throw 'The specified event listener is not registered and therefore cannot be removed';
+                        throw new Error('The specified event listener is not registered and therefore cannot be removed');
                     }
                 }
                 return this;
@@ -9436,7 +9534,7 @@
                 // TODO: there are small differences between the emit implementation between plots and panels. In the future,
                 //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                    throw 'LocusZoom attempted to throw an invalid event: ' + event.toString();
+                    throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
                 }
                 var sourceID = this.getBaseId();
                 var self = this;
@@ -9524,7 +9622,6 @@
             };
             // Initialize the layout
             this.initializeLayout();
-            // TODO: Possibly superfluous return from constructor
             return this;
         };
         /**
@@ -9541,6 +9638,7 @@
             min_width: 1,
             min_height: 1,
             responsive_resize: false,
+            // Allowed values: false, "width_only", "both" (synonym for true)
             aspect_ratio: 1,
             panels: [],
             dashboard: { components: [] },
@@ -9554,7 +9652,7 @@
  */
         LocusZoom.Plot.prototype.sumProportional = function (dimension) {
             if (dimension !== 'height' && dimension !== 'width') {
-                throw 'Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional';
+                throw new Error('Bad dimension value passed to LocusZoom.Plot.prototype.sumProportional');
             }
             var total = 0;
             for (var id in this.panels) {
@@ -9581,15 +9679,19 @@
  */
         LocusZoom.Plot.prototype.initializeLayout = function () {
             // Sanity check layout values
-            // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
             if (isNaN(this.layout.width) || this.layout.width <= 0) {
-                throw 'Plot layout parameter `width` must be a positive number';
+                throw new Error('Plot layout parameter `width` must be a positive number');
             }
             if (isNaN(this.layout.height) || this.layout.height <= 0) {
-                throw 'Plot layout parameter `width` must be a positive number';
+                throw new Error('Plot layout parameter `width` must be a positive number');
             }
             if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0) {
-                throw 'Plot layout parameter `aspect_ratio` must be a positive number';
+                throw new Error('Plot layout parameter `aspect_ratio` must be a positive number');
+            }
+            if (this.layout.responsive_resize === true) {
+                // Backwards compatible support
+                console.warn('"responsive_resize" should specify a mode, not a boolean');
+                this.layout.responsive_resize = 'both';
             }
             // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
             if (this.layout.responsive_resize) {
@@ -9642,13 +9744,17 @@
                 this.layout.aspect_ratio = this.layout.width / this.layout.height;
                 // Override discrete values if resizing responsively
                 if (this.layout.responsive_resize) {
+                    // All resize modes will affect width
                     if (this.svg) {
                         this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
                     }
-                    this.layout.height = this.layout.width / this.layout.aspect_ratio;
-                    if (this.layout.height < this.layout.min_height) {
-                        this.layout.height = this.layout.min_height;
-                        this.layout.width = this.layout.height * this.layout.aspect_ratio;
+                    if (this.layout.responsive_resize === 'both') {
+                        // Then also change the height
+                        this.layout.height = this.layout.width / this.layout.aspect_ratio;
+                        if (this.layout.height < this.layout.min_height) {
+                            this.layout.height = this.layout.min_height;
+                            this.layout.width = this.layout.height * this.layout.aspect_ratio;
+                        }
                     }
                 }
                 // Resize/reposition panels to fit, update proportional origins if necessary
@@ -9679,7 +9785,7 @@
             this.layout.aspect_ratio = this.layout.width / this.layout.height;
             // Apply layout width and height as discrete values or viewbox values
             if (this.svg !== null) {
-                if (this.layout.responsive_resize) {
+                if (this.layout.responsive_resize === 'both') {
                     this.svg.attr('viewBox', '0 0 ' + this.layout.width + ' ' + this.layout.height).attr('preserveAspectRatio', 'xMinYMin meet');
                 } else {
                     this.svg.attr('width', this.layout.width).attr('height', this.layout.height);
@@ -9702,7 +9808,7 @@
         LocusZoom.Plot.prototype.addPanel = function (layout) {
             // Sanity checks
             if (typeof layout !== 'object') {
-                throw 'Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()';
+                throw new Error('Invalid panel layout passed to LocusZoom.Plot.prototype.addPanel()');
             }
             // Create the Panel and set its parent
             var panel = new LocusZoom.Panel(layout, this);
@@ -9783,7 +9889,7 @@
  */
         LocusZoom.Plot.prototype.removePanel = function (id) {
             if (!this.panels[id]) {
-                throw 'Unable to remove panel, ID not found: ' + id;
+                throw new Error('Unable to remove panel, ID not found: ' + id);
             }
             // Hide all panel boundaries
             this.panel_boundaries.hide();
@@ -9818,6 +9924,7 @@
                 // positioning. TODO: make this additional call unnecessary.
                 this.setDimensions(this.layout.width, this.layout.height);
             }
+            this.emit('panel_removed', id);
             return this;
         };
         /**
@@ -10153,7 +10260,7 @@
         LocusZoom.Plot.prototype.applyState = function (state_changes) {
             state_changes = state_changes || {};
             if (typeof state_changes != 'object') {
-                throw 'LocusZoom.applyState only accepts an object; ' + typeof state_changes + ' given';
+                throw new Error('LocusZoom.applyState only accepts an object; ' + typeof state_changes + ' given');
             }
             // First make a copy of the current (old) state to work with
             var new_state = JSON.parse(JSON.stringify(this.state));
@@ -10176,10 +10283,9 @@
             }
             return Q.all(this.remap_promises).catch(function (error) {
                 console.error(error);
-                this.curtain.drop(error);
+                this.curtain.show(error.message || error);
                 this.loading_data = false;
             }.bind(this)).then(function () {
-                // TODO: Check logic here; in some promise implementations, this would cause the error to be considered handled, and "then" would always fire. (may or may not be desired behavior)
                 // Update dashboard / components
                 this.dashboard.update();
                 // Apply panel-level state values
@@ -10199,7 +10305,8 @@
                                     try {
                                         this.setElementStatus(property, this.getElementById(element_id), true);
                                     } catch (e) {
-                                        console.error('Unable to apply state: ' + state_id + ', ' + property);
+                                        console.warn('Unable to apply state: ' + state_id + ', ' + property);
+                                        console.error(e);
                                     }
                                 }.bind(data_layer));
                             }
@@ -10319,7 +10426,7 @@
 */
         LocusZoom.Panel = function (layout, parent) {
             if (typeof layout !== 'object') {
-                throw 'Unable to create panel, invalid layout';
+                throw new Error('Unable to create panel, invalid layout');
             }
             /** @member {LocusZoom.Plot|null} */
             this.parent = parent || null;
@@ -10341,7 +10448,7 @@
                 }
             } else if (this.parent) {
                 if (typeof this.parent.panels[layout.id] !== 'undefined') {
-                    throw 'Cannot create panel with id [' + layout.id + ']; panel with that id already exists';
+                    throw new Error('Cannot create panel with id [' + layout.id + ']; panel with that id already exists');
                 }
             }
             /** @member {String} */
@@ -10454,10 +10561,10 @@
             this.on = function (event, hook) {
                 // TODO: Dry plot and panel event code into a shared mixin
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                    throw 'Unable to register event hook, invalid event: ' + event.toString();
+                    throw new Error('Unable to register event hook, invalid event: ' + event.toString());
                 }
                 if (typeof hook != 'function') {
-                    throw 'Unable to register event hook, invalid hook function passed';
+                    throw new Error('Unable to register event hook, invalid hook function passed');
                 }
                 this.event_hooks[event].push(hook);
                 return hook;
@@ -10471,7 +10578,7 @@
             this.off = function (event, hook) {
                 var theseHooks = this.event_hooks[event];
                 if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-                    throw 'Unable to remove event hook, invalid event: ' + event.toString();
+                    throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
                 }
                 if (hook === undefined) {
                     // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -10482,7 +10589,7 @@
                     if (hookMatch !== -1) {
                         theseHooks.splice(hookMatch, 1);
                     } else {
-                        throw 'The specified event listener is not registered and therefore cannot be removed';
+                        throw new Error('The specified event listener is not registered and therefore cannot be removed');
                     }
                 }
                 return this;
@@ -10503,7 +10610,7 @@
                 // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
                 // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
                 if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                    throw 'LocusZoom attempted to throw an invalid event: ' + event.toString();
+                    throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
                 }
                 if (typeof eventData === 'boolean' && arguments.length === 2) {
                     // Overloaded method signature: emit(event, bubble)
@@ -10952,13 +11059,13 @@
         LocusZoom.Panel.prototype.addDataLayer = function (layout) {
             // Sanity checks
             if (typeof layout !== 'object' || typeof layout.id !== 'string' || !layout.id.length) {
-                throw 'Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()';
+                throw new Error('Invalid data layer layout passed to LocusZoom.Panel.prototype.addDataLayer()');
             }
             if (typeof this.data_layers[layout.id] !== 'undefined') {
-                throw 'Cannot create data_layer with id [' + layout.id + ']; data layer with that id already exists in the panel';
+                throw new Error('Cannot create data_layer with id [' + layout.id + ']; data layer with that id already exists in the panel');
             }
             if (typeof layout.type !== 'string') {
-                throw 'Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()';
+                throw new Error('Invalid data layer type in layout passed to LocusZoom.Panel.prototype.addDataLayer()');
             }
             // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
             if (typeof layout.y_axis == 'object' && (typeof layout.y_axis.axis == 'undefined' || [
@@ -11006,7 +11113,7 @@
  */
         LocusZoom.Panel.prototype.removeDataLayer = function (id) {
             if (!this.data_layers[id]) {
-                throw 'Unable to remove data layer, ID not found: ' + id;
+                throw new Error('Unable to remove data layer, ID not found: ' + id);
             }
             // Destroy all tooltips for the data layer
             this.data_layers[id].destroyAllTooltips();
@@ -11052,8 +11159,8 @@
                 try {
                     this.data_promises.push(this.data_layers[id].reMap());
                 } catch (error) {
-                    console.warn(error);
-                    this.curtain.show(error);
+                    console.error(error);
+                    this.curtain.show(error.message || error);
                 }
             }
             // When all finished trigger a render
@@ -11063,8 +11170,8 @@
                 this.emit('layout_changed', true);
                 this.emit('data_rendered');
             }.bind(this)).catch(function (error) {
-                console.warn(error);
-                this.curtain.show(error);
+                console.error(error);
+                this.curtain.show(error.message || error);
             }.bind(this));
         };
         /**
@@ -11391,7 +11498,7 @@
                     'y1',
                     'y2'
                 ].indexOf(axis) === -1) {
-                throw 'Unable to render axis; invalid axis identifier: ' + axis;
+                throw new Error('Unable to render axis; invalid axis identifier: ' + axis);
             }
             var canRender = this.layout.axes[axis].render && typeof this[axis + '_scale'] == 'function' && !isNaN(this[axis + '_scale'](0));
             // If the axis has already been rendered then check if we can/can't render it
@@ -11620,7 +11727,7 @@
             return this;
         };
     } catch (plugin_loading_error) {
-        console.error('LocusZoom Plugin error: ' + plugin_loading_error);
+        console.error('LocusZoom Plugin error: ', plugin_loading_error);
     }
     return LocusZoom;
 }));
