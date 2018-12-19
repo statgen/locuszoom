@@ -13,11 +13,7 @@
 
   <script type="application/javascript" src="../dist/ext/lz-dynamic-urls.min.js"></script>
 
-  <!-- Additional standalone code required for credible set calculations; not part of base LZjs -->
-  <script type="application/javascript" src="https://unpkg.com/gwas-credible-sets@0.1.0/dist/gwas-credible-sets.min.js" integrity="sha384-lJL/xQT18Xu6GVovitlKgX4kL8hw6YfgLGVM5PWcFUMe+tfvznEwsJlauLzB1AnQ" crossorigin="anonymous"></script>
-  <script type="application/javascript" src="../dist/ext/lz-credible-sets.min.js"></script>
-
-  <title>LocusZoom.js ~ Credible Sets</title>
+  <title>LocusZoom.js ~ GWAS Catalog</title>
 
   <style>
     body {
@@ -42,23 +38,26 @@
 
   <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
 
-  <h3 style="float: left; color: #777">Credible Sets Demonstration</h3>
+  <h3 style="float: left; color: #777">GWAS Catalog Demonstration</h3>
   <h6 style="float: right;"><a href="../index.html">&lt; return home</a></h6>
 
   <hr style="clear: both;">
 
   <p>
-    With the help of a standalone JavaScript library, LocusZoom can identify and plot the members of a credible set
-    based on the displayed plot region. This example shows how to integrate that library into a custom datasource, and
-    how to take advantage of several visualization options for displaying the credible set members. See the library
-    <a href="https://github.com/statgen/gwas-credible-sets/">source code</a> and
-    <a href="https://statgen.github.io/gwas-credible-sets/">documentation</a> for information about the method.
+    It can be helpful to view an association plot in context of all previously reported claims about an association,
+    across all traits and studies. LocusZoom is able to mark SNPs that have been previously reported in any of several
+    GWAS catalogs, including the NHGRI-EBI GWAS catalog (build 37) used in this demonstration.
+  </p>
+
+  <p>
+    Significant association SNPs with entries in the catalog can be marked with labels on the association plot, a separate
+    annotation "rug" track, or both. In the case where the GWAS Catalog contains multiple reports about a single SNP,
+    all entries are matched by chromosome and position, and the trait with the most significant pvalue is reported.
+    The rug track provides more detailed contextual information.
   </p>
   <p>
-    To begin, move your mouse over the plot below and select "Display Options". This demonstration allows credible
-    sets to be displayed as a primary coloring overlay, a separate annotation track, or both. Note that credible sets
-    are calculated client-side by the web browser, which means that this feature can be used without requiring backend
-    changes to an existing API server.
+    In this demonstration, trait labels can be toggled for GWAS Catalog SNPs within LD > 0.4 of the reference variant.
+    To begin, move your mouse over the association results plot below and select "Display Options".
   </p>
 
   <h3>Interactive Plot</h3>
@@ -68,7 +67,7 @@
       <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
     </div>
     <div class="ten columns">
-      <div id="plot" class="lz-container-responsive"></div>
+      <div id="lz-plot" class="lz-container-responsive"></div>
     </div>
   </div>
   <hr>
@@ -84,18 +83,14 @@
       /*
         Specify the data sources to use
        */
-      // Determine if we're online, based on browser state or presence of an optional query parameter
       var apiBase = "//portaldev.sph.umich.edu/api/v1/";
-      data_sources = new LocusZoom.DataSources()
-          .add("assoc", ["AssociationLZ", {
-              url: apiBase + "statistic/single/",
-              params: { source: 45, id_field: "variant" }
-          }])
-          .add("credset", ["CredibleSetLZ", { params: { fields: { log_pvalue: 'assoc:log_pvalue' }, threshold: 0.95 } }])
-          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
-          .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: { build: 'GRCh37' }}])
-          .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' }}])
-          .add("constraint", ["GeneConstraintLZ", {url: "//exac.broadinstitute.org/api/constraint"}]);
+      var data_sources = new LocusZoom.DataSources()
+          .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" } }])
+          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', population: 'ALL' } }])
+          .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
+          .add("catalog", ["GwasCatalogLZ", { url: apiBase + 'annotation/gwascatalog/results/' }])
+          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/" }])
+          .add("constraint", ["GeneConstraintLZ", { url: "//exac.broadinstitute.org/api/constraint" }]);
 
       /*
         Define and render the plot
@@ -105,14 +100,19 @@
       // Fetch initial position from the URL, or use some defaults
       var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
-        initialState = {chr: 16, start: 74947245, end: 75547245};
+        initialState = { chr: 9, start: 21751670, end: 22351670 };
       }
+      // This example demonstrates using the `state.genome_build` param, which tells LZ annotation sources to
+      //  automatically select an appropriate dataset based on a globally specified genome build.
+      initialState.genome_build = 'GRCh37';
 
-      layout = LocusZoom.Layouts.get("plot", "association_credible_set", {state: initialState});
+      layout = LocusZoom.Layouts.get("plot", "association_catalog", {
+          state: initialState
+      });
       layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
       // Generate the LocusZoom plot
-      window.plot = LocusZoom.populate("#plot", data_sources, layout);
+      window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
 
       // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
       //   a previously viewed region)
@@ -142,17 +142,17 @@
 
       // Populate a list of top hits links for the plot
       var top_hits = [
-          ["16:75247245", "BCAR1 (default)"],
+          ["9:22051670", "CDKN2A/B (default)"],
+          ["7:15052860", "DGKB"],
+          ["16:75247245", "BCAR1"],
+          ["15:77832762", "HMG20A"],
+          ["8:95937502", "TP53INP1"],
           ["10:114758349", "TCF7L2"],
           ["16:53819169", "FTO"],
-          ["9:22051670", "CDKN2A/B"],
           ["7:28196413", "JAZF1"],
           ["12:71433293", "TSPAN8"],
-          ["8:95937502", "TP53INP1"],
           ["6:20679709", "CDKAL1"],
-          ["2:161346447", "RBMS1"],
-          ["15:77832762", "HMG20A"],
-          ["7:15052860", "DGKB"]
+          ["2:161346447", "RBMS1"]
       ];
       top_hits.forEach(function (hit) {
           d3.select("ul.top_hits").append("li")

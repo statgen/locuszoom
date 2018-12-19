@@ -53,7 +53,7 @@
           <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
         </div>
         <div class="ten columns">
-          <div id="plot"></div>
+          <div id="lz-plot"></div>
         </div>
       </div>
       <p>To see other forms of LocusZoom.js in action take a look at <a href="http://locuszoom.org/locuszoomjs.php">locuszoom.org</a> or the <a href="#examples">examples</a> on this page.</p>
@@ -63,7 +63,7 @@
       <a name="get_it"></a>
       <h3>Get LocusZoom.js</h3>
 
-      <h5><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.8.2">v0.8.2</a></strong></h5>
+      <h5><strong>Current stable release: <a href="https://github.com/statgen/locuszoom/releases/tag/v0.9.0">v0.9.0</a></strong></h5>
       <p>To use LocusZoom.js in your application you will need <i>both</i> LocusZoom's compiled Javascript and CSS <i>and</i> two third-party Javascript libraries (available here in a single vendor bundle).</p>
 
       <div class="row">
@@ -71,9 +71,9 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.app.js</a></tt>
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.app.js">https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.app.js</a></tt>
           <br>
-          <small><i>minified:</i> <tt><a href="https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.app.min.js">locuszoom.app.min.js</a></tt></small>
+          <small><i>minified:</i> <tt><a href="https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.app.min.js">locuszoom.app.min.js</a></tt></small>
         </div>
       </div>
 
@@ -84,7 +84,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.css</a></tt>
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.css">https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -97,7 +97,7 @@
           <h6><strong>Dependencies</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.vendor.min.js">https://statgen.github.io/locuszoom/versions/0.8.2/locuszoom.vendor.min.js</a></tt>
+          <tt><a href="https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.vendor.min.js">https://statgen.github.io/locuszoom/versions/0.9.0/locuszoom.vendor.min.js</a></tt>
           <br>
           <small><i>Contains <a href="https://github.com/d3/d3">d3</a> v3.5.6 and <a href="https://github.com/kriskowal/Q">Q</a> (any version)</i></small>
         </div>
@@ -138,36 +138,15 @@
           </a>
         </div>
         <div class="four columns example">
-          <a href="examples/phewas_scatter.html">
-            <h6><strong>PheWAS (Scatter)</strong></h6>
-            <img src="examples/phewas_scatter.png" alt="PheWAS (Scatter)">
-          </a>
-        </div>
-        <div class="four columns example">
           <a href="examples/phewas_forest.html">
             <h6><strong>PheWAS (Forest)</strong></h6>
             <img src="examples/phewas_forest.png" alt="PheWAS (Forest)">
           </a>
         </div>
-      </div>
-
-      <div class="row">
         <div class="four columns example">
-          <a href="examples/multiple_phenotypes_layered.html">
-            <h6><strong>Multiple Phenotypes (Layered)</strong></h6>
-            <img src="examples/multiple_phenotypes_layered.png" alt="Multiple Phenotypes (Layered)">
-          </a>
-        </div>
-        <div class="four columns example">
-          <a href="examples/covariates_model.html">
-            <h6><strong>Covariates Model</strong></h6>
-            <img src="examples/covariates_model.png" alt="Covariates Model">
-          </a>
-        </div>
-        <div class="four columns example">
-          <a href="examples/credible_sets.html">
-            <h6><strong>Credible Sets</strong></h6>
-            <img src="examples/credible_sets.png" alt="Credible Sets">
+          <a href="examples/phewas_scatter.html">
+            <h6><strong>PheWAS (Scatter)</strong></h6>
+            <img src="examples/phewas_scatter.png" alt="PheWAS (Scatter)">
           </a>
         </div>
       </div>
@@ -176,7 +155,34 @@
         <div class="four columns example">
           <a href="examples/aggregation_tests.html">
             <h6><strong>Aggregation Tests</strong></h6>
-            <img src="examples/aggregation_tests.png" alt="Credible Sets">
+            <img src="examples/aggregation_tests.png" alt="Aggregation tests">
+          </a>
+        </div>
+        <div class="four columns example">
+          <a href="examples/credible_sets.html">
+            <h6><strong>Credible Sets</strong></h6>
+            <img src="examples/credible_sets.png" alt="Credible Sets">
+          </a>
+        </div>
+        <div class="four columns example">
+          <a href="examples/gwas_catalog.html">
+            <h6><strong>GWAS Catalog</strong></h6>
+            <img src="examples/gwas_catalog.png" alt="GWAS Catalog">
+          </a>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="four columns example">
+          <a href="examples/covariates_model.html">
+            <h6><strong>Covariates Model</strong></h6>
+            <img src="examples/covariates_model.png" alt="Covariates Model">
+          </a>
+        </div>
+        <div class="four columns example">
+          <a href="examples/multiple_phenotypes_layered.html">
+            <h6><strong>Multiple Phenotypes (Layered)</strong></h6>
+            <img src="examples/multiple_phenotypes_layered.png" alt="Multiple Phenotypes (Layered)">
           </a>
         </div>
       </div>
@@ -202,15 +208,15 @@
     if (online){
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: {analysis: 45, id_field: "variant"}}])
-        .add("ld", ["LDLZ", { url:apiBase + "pair/LD/" }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: {source: 2} }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: {source: 15} }])
+        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+        .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
         .add("constraint", ["GeneConstraintLZ", { url: "http://exac.broadinstitute.org/api/constraint" }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
-        .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 45, id_field: "variant"}}])
+        .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?" }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?" }])
@@ -238,7 +244,7 @@
     });
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
-    window.plot = LocusZoom.populate("#plot", data_sources, layout);
+    window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

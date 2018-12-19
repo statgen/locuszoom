@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /*********************
   Genome Legend Data Layer
@@ -6,17 +6,17 @@
 */
 
 // Build a custom data layer for a genome legend
-LocusZoom.DataLayers.add("genome_legend", function(layout){
+LocusZoom.DataLayers.add('genome_legend', function(layout) {
 
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         chromosome_fill_colors: {
-            light: "rgb(155, 155, 188)",
-            dark: "rgb(95, 95, 128)"
+            light: 'rgb(155, 155, 188)',
+            dark: 'rgb(95, 95, 128)'
         },
         chromosome_label_colors: {
-            light: "rgb(120, 120, 186)",
-            dark: "rgb(0, 0, 66)"
+            light: 'rgb(120, 120, 186)',
+            dark: 'rgb(0, 0, 66)'
         }
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -25,35 +25,35 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
     LocusZoom.DataLayer.apply(this, arguments);
 
     // Implement the main render function
-    this.render = function(){
+    this.render = function() {
 
         // Iterate over data to generate genome-wide start/end values for each chromosome
         var position = 0;
-        this.data.forEach(function(d, i){
+        this.data.forEach(function(d, i) {
             this.data[i].genome_start = position;
-            this.data[i].genome_end = position + d["genome:base_pairs"];
-            position += d["genome:base_pairs"];
+            this.data[i].genome_end = position + d['genome:base_pairs'];
+            position += d['genome:base_pairs'];
         }.bind(this));
 
         var chromosomes = this.svg.group
-            .selectAll("rect.lz-data_layer-genome_legend")
-            .data(this.data, function(d){ return d["genome:chr"]; });
+            .selectAll('rect.lz-data_layer-genome_legend')
+            .data(this.data, function(d) { return d['genome:chr']; });
 
         // Create chromosome elements, apply class
         chromosomes.enter()
-            .append("rect")
-            .attr("class", "lz-data_layer-genome_legend");
+            .append('rect')
+            .attr('class', 'lz-data_layer-genome_legend');
 
         // Position and fill chromosome rects
         var data_layer = this;
         var panel = this.parent;
 
         chromosomes
-            .attr("fill", function(d){ return (d["genome:chr"] % 2 ? data_layer.layout.chromosome_fill_colors.light : data_layer.layout.chromosome_fill_colors.dark); })
-            .attr("x", function(d){ return panel.x_scale(d.genome_start); })
-            .attr("y", 0)
-            .attr("width", function(d){ return panel.x_scale(d["genome:base_pairs"]); })
-            .attr("height", panel.layout.cliparea.height);
+            .attr('fill', function(d) { return (d['genome:chr'] % 2 ? data_layer.layout.chromosome_fill_colors.light : data_layer.layout.chromosome_fill_colors.dark); })
+            .attr('x', function(d) { return panel.x_scale(d.genome_start); })
+            .attr('y', 0)
+            .attr('width', function(d) { return panel.x_scale(d['genome:base_pairs']); })
+            .attr('height', panel.layout.cliparea.height);
 
         // Remove old elements as needed
         chromosomes.exit().remove();
@@ -62,39 +62,39 @@ LocusZoom.DataLayers.add("genome_legend", function(layout){
         // Assumes that variant string is of the format 10:123352136_C/T or 10:123352136
         var variant_parts = /([^:]+):(\d+)(?:_.*)?/.exec(this.state.variant);
         if (!variant_parts) {
-            throw("Genome legend cannot understand the specified variant position");
+            throw new Error('Genome legend cannot understand the specified variant position');
         }
         var chr = variant_parts[1];
         var offset = variant_parts[2];
         // TODO: How does this handle representation of X or Y chromosomes?
-        position = +this.data[chr-1].genome_start + +offset;
+        position = +this.data[chr - 1].genome_start + +offset;
 
         // Render the position
         var region = this.svg.group
-            .selectAll("rect.lz-data_layer-genome_legend-marker")
+            .selectAll('rect.lz-data_layer-genome_legend-marker')
             .data([{ start: position, end: position + 1 }]);
 
         region.enter()
-            .append("rect")
-            .attr("class", "lz-data_layer-genome_legend-marker");
+            .append('rect')
+            .attr('class', 'lz-data_layer-genome_legend-marker');
 
         region
             .transition()
             .duration(500)
             .style({
-                "fill": "rgba(255, 250, 50, 0.8)",
-                "stroke": "rgba(255, 250, 50, 0.8)",
-                "stroke-width": "3px"
+                'fill': 'rgba(255, 250, 50, 0.8)',
+                'stroke': 'rgba(255, 250, 50, 0.8)',
+                'stroke-width': '3px'
             })
-            .attr("x", function(d){ return panel.x_scale(d.start); })
-            .attr("y", 0)
-            .attr("width", function(d){ return panel.x_scale(d.end - d.start); })
-            .attr("height", panel.layout.cliparea.height);
+            .attr('x', function(d) { return panel.x_scale(d.start); })
+            .attr('y', 0)
+            .attr('width', function(d) { return panel.x_scale(d.end - d.start); })
+            .attr('height', panel.layout.cliparea.height);
 
         region.exit().remove();
-        
+
     };
-       
+
     return this;
 
 });

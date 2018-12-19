@@ -9,17 +9,17 @@
  *  as the user interacts with the page). Optionally, there is support for custom callbacks to connect the URL to
  *  arbitrarily complex plot behaviors.
  */
-"use strict";
+'use strict';
 
 !function() {
     function _serializeQueryParams(paramsObj) {
         // Serialize an object of parameter values into a query string
         // TODO: Improve support for array values v[]=1&v[]=2
-        return "?" +
+        return '?' +
             Object.keys(paramsObj).map(function(key) {
-                return encodeURIComponent(key) + "=" +
+                return encodeURIComponent(key) + '=' +
                     encodeURIComponent(paramsObj[key]);
-            }).join("&");
+            }).join('&');
     }
 
     function _parseQueryParams(queryString) {
@@ -28,10 +28,10 @@
         // TODO future: Support arrays / params that specify more than one value
         var query = {};
         if (queryString) {
-            var pairs = (queryString[0] === "?" ? queryString.substr(1) : queryString).split("&");
+            var pairs = (queryString[0] === '?' ? queryString.substr(1) : queryString).split('&');
             for (var i = 0; i < pairs.length; i++) {
-                var pair = pairs[i].split("=");
-                query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || "");
+                var pair = pairs[i].split('=');
+                query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
             }
         }
         return query;
@@ -115,7 +115,7 @@
                 // Tell the plot what to do with the params extracted from the URL
                 callback(plot, stateData);
             };
-            window.addEventListener("popstate", listener);
+            window.addEventListener('popstate', listener);
             return listener;
         },
         /**
@@ -154,7 +154,7 @@
 
                 }
             };
-            plot.on("state_changed", listener);
+            plot.on('state_changed', listener);
             return listener;
         }
     };

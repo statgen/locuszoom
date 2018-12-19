@@ -1,8 +1,8 @@
 $namespace: "lz";
 $default_black: "rgb(24, 24, 24)";
-$default_black_opacity: "1"; 
+$default_black_opacity: "1";
 $default_white: "rgb(232, 232, 232)";
-$default_white_opacity: "1"; 
+$default_white_opacity: "1";
 $default_black_shadow: "rgb(24, 24, 24)";
 $default_black_shadow_opacity: "0.4";
 $default_black_shadow_rgba: "rgba(24, 24, 24, 0.4)";
@@ -10,7 +10,7 @@ $default_black_shadow_rgba: "rgba(24, 24, 24, 0.4)";
 $tooltip_arrow_width: "7";
 $tooltip_padding: "6";
 
-svg.#{$namespace}-locuszoom {
+svg.#{$namespace}-locuszoom  {
 
   background-color: #FFFFFF;
   border: none;
@@ -304,7 +304,7 @@ div.#{$namespace}-data_layer-tooltip {
   button {
     text-decoration: none;
     height: auto;
-    line-height: inherit; 
+    line-height: inherit;
     padding: 0.2em 0.5em 0.2em 0.5em;
     background-color: rgba(216,216,216,1);
     color: #{$default_black};
@@ -329,7 +329,7 @@ div.#{$namespace}-data_layer-tooltip {
     right: -#{$tooltip_padding}px;
     margin: 0px 0px #{$tooltip_padding}px #{$tooltip_padding}px;
   }
-  
+
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_up {
@@ -365,7 +365,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_left {
   pointer-events: none;
   border-top: #{$tooltip_arrow_width}px solid transparent;
   border-bottom: #{$tooltip_arrow_width}px solid transparent;
-  border-right: #{$tooltip_arrow_width}px solid #{$default_black}; 
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
 }
 
 div.#{$namespace}-data_layer-tooltip-arrow_top_left {
@@ -420,7 +420,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 }
 
 .#{$namespace}-curtain {
-  
+
   position: absolute;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -457,7 +457,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     background-color: #333333;
     color: #D8D8D8;
   }
-  
+
 }
 
 .#{$namespace}-loader {
@@ -518,8 +518,8 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     animation-duration: 1.5s;
     animation-iteration-count: infinite;
     animation-timing-function: ease-in-out;
-  } 
-  
+  }
+
 }
 
 @keyframes #{$namespace}-loader-animate {
@@ -538,7 +538,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     text-decoration: none;
     padding: 3px 7px 3px 7px;
     height: auto;
-    line-height: inherit;  
+    line-height: inherit;
     border-radius: 4px;
     pointer-events: auto;
     outline: none;
@@ -548,11 +548,11 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     align-items: flex-start;
     text-align: center;
   }
-  
+
   .#{$namespace}-dashboard-button-group-start { border-radius: 4px 0px 0px 4px !important; }
   .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
   .#{$namespace}-dashboard-button-group-end { border-radius: 0px 4px 4px 0px !important; border-left-width: 0px !important; }
-  
+
 }
 
 .#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
@@ -588,7 +588,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     text-decoration: none;
     padding: 2px 6px 2px 6px;
     height: auto;
-    line-height: inherit;  
+    line-height: inherit;
     border-radius: 3px;
     pointer-events: auto;
     outline: none;
@@ -602,7 +602,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
   .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
   .#{$namespace}-dashboard-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
-  
+
 }
 
 .#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-left {
@@ -667,7 +667,7 @@ div.#{$namespace}-dashboard-menu {
       text-decoration: none;
       padding: 2px 6px 2px 6px;
       height: auto;
-      line-height: inherit;  
+      line-height: inherit;
       border-radius: 3px;
       pointer-events: auto;
       outline: none;

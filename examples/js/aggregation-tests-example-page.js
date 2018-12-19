@@ -1,7 +1,7 @@
 /**
  Custom code used to demonstrate interactive page widget features in the aggregation test visualization example
  */
-"use strict";
+'use strict';
 
 /* global $, raremetal */
 /* eslint-disable no-unused-vars */
@@ -37,27 +37,27 @@ function customizePlotLayout (layout) {
     //  the gene track by aggregation test results
 
     var assocLayout = layout.panels[0].data_layers[2];
-    assocLayout.fields.unshift("aggregation: all");
+    assocLayout.fields.unshift('aggregation: all');
 
     var genesLayout = layout.panels[1].data_layers[0];
-    genesLayout.namespace["aggregation"] = "aggregation";
-    genesLayout.namespace["aggregation_genes"] = "aggregation_genes";
-    genesLayout.fields.push("aggregation:all", "aggregation_genes:all");
+    genesLayout.namespace['aggregation'] = 'aggregation';
+    genesLayout.namespace['aggregation_genes'] = 'aggregation_genes';
+    genesLayout.fields.push('aggregation:all', 'aggregation_genes:all');
     var colorConfig = [
         {
-            scale_function: "if",
-            field: "aggregation_best_pvalue",
+            scale_function: 'if',
+            field: 'aggregation_best_pvalue',
             parameters: {
                 field_value: null,
-                then: "#B8B8B8"
+                then: '#B8B8B8'
             }
         },
         {
-            scale_function: "numerical_bin",
-            field: "aggregation_best_pvalue",
+            scale_function: 'numerical_bin',
+            field: 'aggregation_best_pvalue',
             parameters: { // Default significance threshold is based on 20k human protein coding genes
                 breaks: [0, 0.05 / 20000],
-                values: ["#d43f3a", "#357ebd"]
+                values: ['#d43f3a', '#357ebd']
             }
         }
     ];
@@ -82,7 +82,7 @@ function customizePlotLayout (layout) {
 function _formatSciNotation (cell, params) {
     // Tabulator cell formatter using sci notation
     var value = cell.getValue();
-    return LocusZoom.TransformationFunctions.get("scinotation")(value);
+    return LocusZoom.TransformationFunctions.get('scinotation')(value);
 }
 
 // Controllers for page widgets
@@ -100,44 +100,44 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
         // Store the options used to populate the dropdown
         this._mask_names = mask_names;
         this._aggregation_types = aggregation_names  || [  // Defaults (correspond to hard-coded serialization logic)
-            ["burden", "Burden"],
-            ["skat", "SKAT"]
+            ['burden', 'Burden'],
+            ['skat', 'SKAT']
         ];
 
-        if (typeof selector === "string") {
+        if (typeof selector === 'string') {
             selector = $(selector);
         }
 
-        selector.html("");
+        selector.html('');
         this._container = selector;
-        this._aggregation_spec_list_container = $("<div></div>").appendTo(selector);
+        this._aggregation_spec_list_container = $('<div></div>').appendTo(selector);
 
         // Make sure that at least one set of test-description input elements appears on first render
         this.addControls();
-        this._status_div = $("<div></div>").css("color", "red;").appendTo(selector);
+        this._status_div = $('<div></div>').css('color', 'red;').appendTo(selector);
     },
 
     addControls: function() {
         // Build these fragments once and reuse
-        var _mask_choices = this.__render_selection("mask_choice", this._mask_names);  // Assume this comes from an API / remote source
-        var _calc_choices = this.__render_checkboxes("calc_choice", this._aggregation_types);
+        var _mask_choices = this.__render_selection('mask_choice', this._mask_names);  // Assume this comes from an API / remote source
+        var _calc_choices = this.__render_checkboxes('calc_choice', this._aggregation_types);
 
-        this._aggregation_spec_list_container.append(this.__form_row("Select mask(s)", _mask_choices));
-        this._aggregation_spec_list_container.append(this.__form_row("Select test(s)", _calc_choices));
+        this._aggregation_spec_list_container.append(this.__form_row('Select mask(s)', _mask_choices));
+        this._aggregation_spec_list_container.append(this.__form_row('Select test(s)', _calc_choices));
     },
 
     // Display a (styled) status message to the user. Default styling is an error message.
     setStatus: function (message, css) {
-        css = css || { color: "red" };
+        css = css || { color: 'red' };
         this._status_div
-            .text(message || "")
+            .text(message || '')
             .css(css);
     },
 
     __form_row: function (label_text, controls_el) {
-        var row = $("<div></div>", {class: "row"});
-        var label = $("<div></div>", {class: "two columns"}).css("font-weight", "bold").text(label_text);
-        var content = $("<div></div>", {class: "ten columns"});
+        var row = $('<div></div>', {class: 'row'});
+        var label = $('<div></div>', {class: 'two columns'}).css('font-weight', 'bold').text(label_text);
+        var content = $('<div></div>', {class: 'ten columns'});
         content.append(controls_el);
         row.append(label, content);
         return row;
@@ -150,8 +150,8 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
      * @private
      */
     __render_selection: function (name, options) {
-        var htmlescape = LocusZoom.TransformationFunctions.get("htmlescape");
-        var element = $("<select></select>", { name: name, size: 5 }).prop("multiple", true).css("height", "auto");
+        var htmlescape = LocusZoom.TransformationFunctions.get('htmlescape');
+        var element = $('<select></select>', { name: name, size: 5 }).prop('multiple', true).css('height', 'auto');
 
         options = options.slice();
 
@@ -164,7 +164,7 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
             } else {
                 value = displayName = option;
             }
-            var choice = $("<option></option>"  , { value: htmlescape(value) }).text(displayName);
+            var choice = $('<option></option>'  , { value: htmlescape(value) }).text(displayName);
             element.append(choice);
         });
         return element;
@@ -178,8 +178,8 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
      * @private
      */
     __render_checkboxes: function(name, options) {
-        var htmlescape = LocusZoom.TransformationFunctions.get("htmlescape");
-        var element = $("<div></div>");
+        var htmlescape = LocusZoom.TransformationFunctions.get('htmlescape');
+        var element = $('<div></div>');
 
         options = options.slice();
         options.forEach(function(option) {
@@ -191,9 +191,9 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
             } else {
                 value = displayName = option;
             }
-            var wrapper = $("<label></label>").css("display", "inline");
-            var control = $("<input>", { type: "checkbox", name: name, value: htmlescape(value) });
-            var label = $("<span></span>", { class: "label-body"}).text(displayName);
+            var wrapper = $('<label></label>').css('display', 'inline');
+            var control = $('<input>', { type: 'checkbox', name: name, value: htmlescape(value) });
+            var label = $('<span></span>', { class: 'label-body'}).text(displayName);
 
             wrapper.append(control, label);
             element.append(wrapper);
@@ -213,7 +213,7 @@ var AggregationTestBuilder = LocusZoom.subclass(function() {}, {
     },
 
     getMasks: function() {
-        var masks = this._aggregation_spec_list_container.find("[name='mask_choice']").find(":selected");
+        var masks = this._aggregation_spec_list_container.find("[name='mask_choice']").find(':selected');
         return masks.map(function() { return this.value; }).get();
     },
 
@@ -235,7 +235,7 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
      * @param {object} table_config An object specifying the tabulator layout for this table
      */
     constructor: function(selector, table_config) {
-        if (typeof selector === "string") {
+        if (typeof selector === 'string') {
             selector = $(selector);
         }
         this.selector = selector;
@@ -249,7 +249,7 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
      * @param {object} data
      */
     _tableUpdateData: function (data) {
-        this.selector.tabulator("setData", data);
+        this.selector.tabulator('setData', data);
     },
 
     /**
@@ -265,21 +265,21 @@ var GenericTabulatorTableController = LocusZoom.subclass(function() {}, {
     },
 
     tableSetFilter: function (column, value) {
-        this.selector.tabulator("setFilter", column, "=", value);
+        this.selector.tabulator('setFilter', column, '=', value);
     },
 
     tableClearFilter: function (column, value) {
-        if (typeof value !== "undefined") {
-            this.selector.tabulator("removeFilter", column, "=", value);
+        if (typeof value !== 'undefined') {
+            this.selector.tabulator('removeFilter', column, '=', value);
         } else {
-            this.selector.tabulator("clearFilter");
+            this.selector.tabulator('clearFilter');
         }
 
     },
 
     tableDownloadData: function(filename, format) {
-        format = format || "csv";
-        this.selector.tabulator("download", format, filename);
+        format = format || 'csv';
+        this.selector.tabulator('download', format, filename);
     }
 });
 
@@ -301,38 +301,38 @@ function createDisplayWidgets(label_store, context) {
     context = context || window;
 
     // Determine if we're online, based on browser state or presence of an optional query parameter
-    var online = !(typeof navigator !== "undefined" && !navigator.onLine);
-    if (window.location.search.indexOf("offline") !== -1) {
+    var online = !(typeof navigator !== 'undefined' && !navigator.onLine);
+    if (window.location.search.indexOf('offline') !== -1) {
         online = false;
     }
 
     // Specify the data sources to use, then build the plot
-    var apiBase = "//portaldev.sph.umich.edu/api/v1/";
+    var apiBase = '//portaldev.sph.umich.edu/api/v1/';
     var data_sources =  new LocusZoom.DataSources()
-        .add("aggregation", ["AggregationTestSourceLZ", {url: "data/scorecov.json"}])
-        .add("assoc", ["AssocFromAggregationLZ", {  // Use a special source that restructures already-fetched data
-            from: "aggregation",
-            params: { id_field: "variant" }
+        .add('aggregation', ['AggregationTestSourceLZ', {url: 'data/scorecov.json'}])
+        .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
+            from: 'aggregation',
+            params: { id_field: 'variant' }
         }])
-        .add("ld", ["LDLZ", {url: apiBase + "pair/LD/"}])
-        .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: {source: 2}}])
-        .add("aggregation_genes", ["GeneAggregationConnectorLZ", {sources: {aggregation_ns: "aggregation", gene_ns: "gene"}}])
-        .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: {source: 15}}])
-        .add("constraint", ["GeneConstraintLZ", {url: "http://exac.broadinstitute.org/api/constraint"}]);  // FIXME: use https when exac fixed
+        .add('ld', ['LDLZ2', { url: 'https://portaldev.sph.umich.edu/ld/', params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add('gene', ['GeneLZ', {url: apiBase + 'annotation/genes/', params: { build: 'GRCh37' }}])
+        .add('aggregation_genes', ['GeneAggregationConnectorLZ', {sources: {aggregation_ns: 'aggregation', gene_ns: 'gene'}}])
+        .add('recomb', ['RecombLZ', {url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' }}])
+        .add('constraint', ['GeneConstraintLZ', {url: 'http://exac.broadinstitute.org/api/constraint'}]);  // FIXME: use https when exac fixed
 
     var initialState = {chr: 15, start: 58384122, end: 59305748};
-    var layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+    var layout = LocusZoom.Layouts.get('plot', 'standard_association', {state: initialState});
     layout = customizePlotLayout(layout);
 
-    var plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+    var plot = LocusZoom.populate('#lz-plot', data_sources, layout);
 
-    var TABLE_SELECTOR_AGGREGATION = "#results-table-aggregation";
-    var TABLE_SELECTOR_VARIANTS = "#results-table-variants";
+    var TABLE_SELECTOR_AGGREGATION = '#results-table-aggregation';
+    var TABLE_SELECTOR_VARIANTS = '#results-table-variants';
 
     var aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
-        index: "id",
+        index: 'id',
         height: 300,
-        layout: "fitColumns",
+        layout: 'fitColumns',
         layoutColumnsOnNewData: true,
         rowSelected: function(row) {
             label_store(row.row.data); // Tabulator doesn't allow changing options after creation
@@ -342,19 +342,19 @@ function createDisplayWidgets(label_store, context) {
         },
         columns: [
             {
-                title: "Gene", field: "group", formatter: "link",
+                title: 'Gene', field: 'group', formatter: 'link',
                 // TODO: exac gives timeouts if we use https
-                formatterParams: { urlPrefix: "http://exac.broadinstitute.org/gene/", labelField: "group_display_name" }
+                formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' }
             },
-            { title: "Mask", field: "mask", headerFilter: true },
-            { title: "# Variants", field: "variant_count" },
-            { title: "Test type", field: "test", headerFilter: true },
-            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
-            { title: "Statistic", field: "stat", formatter: _formatSciNotation, sorter: "number", visible: false }
+            { title: 'Mask', field: 'mask', headerFilter: true },
+            { title: '# Variants', field: 'variant_count' },
+            { title: 'Test type', field: 'test', headerFilter: true },
+            { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number' },
+            { title: 'Statistic', field: 'stat', formatter: _formatSciNotation, sorter: 'number', visible: false }
         ],
-        placeholder: "No Data Available",
+        placeholder: 'No Data Available',
         initialSort: [
-            { column: "pvalue", dir: "asc" }
+            { column: 'pvalue', dir: 'asc' }
         ],
         selectable: 1,
         selectablePersistence: false
@@ -362,17 +362,17 @@ function createDisplayWidgets(label_store, context) {
 
     var variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
         height: 300,
-        layout: "fitColumns",
+        layout: 'fitColumns',
         layoutColumnsOnNewData: true,
-        index: "id",
+        index: 'id',
         columns: [
-            { title: "Variant", field: "variant" },
-            { title: "p-value", field: "pvalue", formatter: _formatSciNotation, sorter: "number" },
-            { title: "Alt allele frequency", field: "altFreq", formatter: _formatSciNotation, sorter: "number" }
+            { title: 'Variant', field: 'variant' },
+            { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number' },
+            { title: 'Alt allele frequency', field: 'altFreq', formatter: _formatSciNotation, sorter: 'number' }
         ],
-        placeholder: "No Data Available",
+        placeholder: 'No Data Available',
         initialSort: [
-            { column: "variant", dir: "asc" }
+            { column: 'variant', dir: 'asc' }
         ]
     });
 
@@ -400,29 +400,29 @@ function createDisplayWidgets(label_store, context) {
  * @param {Observable} labelStorage Observable used to label the selected group
  */
 function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStorage, labelStorage) {
-    plot.on("element_selection", function(eventData) {
+    plot.on('element_selection', function(eventData) {
         // Trigger the aggregation test table to filter (or unfilter) if a specific gene on the genes panel is clicked
-        if (eventData["sourceID"] !== "lz-plot.genes") {
+        if (eventData['sourceID'] !== 'lz-plot.genes') {
             return;
         }
 
-        var gene_column_name = "group";
-        var selected_gene = eventData["data"]["element"]["gene_id"];
-        selected_gene = selected_gene.split(".")[0]; // Ignore ensemble version on gene ids
+        var gene_column_name = 'group';
+        var selected_gene = eventData['data']['element']['gene_id'];
+        selected_gene = selected_gene.split('.')[0]; // Ignore ensemble version on gene ids
 
-        if (eventData["data"]["active"]) {
+        if (eventData['data']['active']) {
             aggregationTable.tableSetFilter(gene_column_name, selected_gene);
-            $("#label-no-group-selected").hide();
-            $("#label-current-group-selected").show().text(selected_gene);
+            $('#label-no-group-selected').hide();
+            $('#label-current-group-selected').show().text(selected_gene);
         } else {
-            $("#label-no-group-selected").show();
-            $("#label-current-group-selected").hide();
+            $('#label-no-group-selected').show();
+            $('#label-current-group-selected').hide();
             aggregationTable.tableClearFilter(gene_column_name, selected_gene);
         }
     }.bind(this));
 
     plot.subscribeToData(
-        ["aggregation:all", "gene:all"],
+        ['aggregation:all', 'gene:all'],
         function (data) {
             // chain.discrete provides distinct data from each source
             var gene_source_data = data.gene;
@@ -442,7 +442,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
             //  that to a human-friendly gene name (as displayed in the LZ plot)
             var _genes_lookup = {};
             gene_source_data.forEach(function(gene) {
-                var gene_id = gene.gene_id.split(".")[0]; // Ignore ensembl version on gene ids
+                var gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
                 _genes_lookup[gene_id] = gene.gene_name;
             });
             groups.data.forEach(function(one_result) {
@@ -464,15 +464,15 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
     // When results are updated, make sure we are not "drilling down" into a calculation that no longer exists
     resultStorage.subscribe(aggregationTable.renderData.bind(aggregationTable));
     resultStorage.subscribe(labelStorage.bind(null, null)); // just wipe the labels
-    plot.on("element_selection", labelStorage.bind(null, null));
+    plot.on('element_selection', labelStorage.bind(null, null));
 
     // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
     labelStorage.subscribe(function (data) {  // User-friendly label
-        var text = "";
+        var text = '';
         if (data) {
-            text = data.mask + " / " + data.group_display_name;
+            text = data.mask + ' / ' + data.group_display_name;
         }
-        $("#label-mask-selected").text(text);
+        $('#label-mask-selected').text(text);
     });
     labelStorage.subscribe(function (data) { // Update the "show me what variants are in a selected group" table
         var calcs = resultStorage();
@@ -488,11 +488,11 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
 
     //////////////////////////////////////////////////////////////
     // Generic UI controls: what to do when buttons are clicked
-    $("#download-aggregation").on("click", function() {
-        aggregationTable.tableDownloadData("aggregation-data.csv", "csv");
+    $('#download-aggregation').on('click', function() {
+        aggregationTable.tableDownloadData('aggregation-data.csv', 'csv');
     });
 
-    $("#download-variants").on("click", function() {
-        variantsTable.tableDownloadData("variants-data.csv", "csv");
+    $('#download-variants').on('click', function() {
+        variantsTable.tableDownloadData('variants-data.csv', 'csv');
     });
 }
