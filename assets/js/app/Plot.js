@@ -116,8 +116,9 @@ LocusZoom.Plot = function(id, datasource, layout) {
         'layout_changed': [],
         'data_requested': [],
         'data_rendered': [],
-        'element_clicked': [],
-        'element_selection': [],
+        'element_clicked': [], // Select or unselect
+        'element_selection': [], // Element becomes active (only)
+        'panel_removed': [],
         'state_changed': []  // Only triggered when a state change causes rerender
     };
 
@@ -286,7 +287,6 @@ LocusZoom.Plot = function(id, datasource, layout) {
 
     // Initialize the layout
     this.initializeLayout();
-    // TODO: Possibly superfluous return from constructor
     return this;
 };
 
@@ -303,7 +303,7 @@ LocusZoom.Plot.DefaultLayout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    responsive_resize: false,
+    responsive_resize: false, // Allowed values: false, "width_only", "both" (synonym for true)
     aspect_ratio: 1,
     panels: [],
     dashboard: {
@@ -350,7 +350,6 @@ LocusZoom.Plot.prototype.rescaleSVG = function() {
 LocusZoom.Plot.prototype.initializeLayout = function() {
 
     // Sanity check layout values
-    // TODO: Find a way to generally abstract this, maybe into an object that models allowed layout values?
     if (isNaN(this.layout.width) || this.layout.width <= 0) {
         throw new Error('Plot layout parameter `width` must be a positive number');
     }
@@ -359,6 +358,11 @@ LocusZoom.Plot.prototype.initializeLayout = function() {
     }
     if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0) {
         throw new Error('Plot layout parameter `aspect_ratio` must be a positive number');
+    }
+    if (this.layout.responsive_resize === true) {
+        // Backwards compatible support
+        console.warn('"responsive_resize" should specify a mode, not a boolean');
+        this.layout.responsive_resize = 'both';
     }
 
     // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
@@ -418,13 +422,17 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height) {
         this.layout.aspect_ratio = this.layout.width / this.layout.height;
         // Override discrete values if resizing responsively
         if (this.layout.responsive_resize) {
+            // All resize modes will affect width
             if (this.svg) {
                 this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
             }
-            this.layout.height = this.layout.width / this.layout.aspect_ratio;
-            if (this.layout.height < this.layout.min_height) {
-                this.layout.height = this.layout.min_height;
-                this.layout.width  = this.layout.height * this.layout.aspect_ratio;
+
+            if (this.layout.responsive_resize === 'both') { // Then also change the height
+                this.layout.height = this.layout.width / this.layout.aspect_ratio;
+                if (this.layout.height < this.layout.min_height) {
+                    this.layout.height = this.layout.min_height;
+                    this.layout.width  = this.layout.height * this.layout.aspect_ratio;
+                }
             }
         }
         // Resize/reposition panels to fit, update proportional origins if necessary
@@ -459,7 +467,7 @@ LocusZoom.Plot.prototype.setDimensions = function(width, height) {
 
     // Apply layout width and height as discrete values or viewbox values
     if (this.svg !== null) {
-        if (this.layout.responsive_resize) {
+        if (this.layout.responsive_resize === 'both') {
             this.svg
                 .attr('viewBox', '0 0 ' + this.layout.width + ' ' + this.layout.height)
                 .attr('preserveAspectRatio', 'xMinYMin meet');
@@ -623,6 +631,8 @@ LocusZoom.Plot.prototype.removePanel = function(id) {
         // positioning. TODO: make this additional call unnecessary.
         this.setDimensions(this.layout.width, this.layout.height);
     }
+
+    this.emit('panel_removed', id);
 
     return this;
 };

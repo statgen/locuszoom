@@ -215,7 +215,7 @@ all matching elements for a single selector string use `LocusZoom.populateAll()`
 <div class="plot" id="plot_2"></div>
 <div class="plot" id="plot_3"></div>
 <script type="text/javascript">
-  var plots[] = LocusZoom.populateAll(".plot", data_source, layout);
+  var plots = LocusZoom.populateAll(".plot", data_source, layout);
 </script>
 ```
 
