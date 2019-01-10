@@ -567,7 +567,7 @@ describe('LocusZoom Data', function() {
                 var source_type = LocusZoom.Data[source_name];  // Allows generating dynamic tests before LZ symbol is loaded
 
                 var source = new source_type({url: 'www.fake.test', params: { source: 'a', build: 'GRCh37' }});
-                assert.throws(function() { source.getURL({});  }, /must specify either/, 'Bad configuration should raise an exception in ' + source_name);
+                assert.throws(function() { source.getURL({});  }, /must provide a parameter specifying either/, 'Bad configuration should raise an exception in ' + source_name);
 
                 source = new source_type({url: 'www.fake.test', params: { source: 'a' }});
                 assert.ok(source.getURL({}), 'Works when specifying source ID for ' + source_name);

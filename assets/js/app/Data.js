@@ -4,7 +4,7 @@
 function validateBuildSource(class_name, build, source) {
     // Build OR Source, not both
     if ((build && source) || !(build || source)) {
-        throw new Error(class_name + ' must specify either "build" or "source", but not both');
+        throw new Error(class_name + ' must provide a parameter specifying either "build" or "source". It should not specify both.');
     }
     // If the build isn't recognized, our APIs can't transparently select a source to match
     if (build && ['GRCh37', 'GRCh38'].indexOf(build) === -1) {
