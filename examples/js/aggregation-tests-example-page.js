@@ -384,8 +384,7 @@ function makeUI(selector, masks, phenotypes) {
             return {
                 // options passed in at creation
                 masks: masks,
-                phenotypes: phenotypes,
-                // categories: ['Cardiovascular'],
+                phenotypes: phenotypes,  // { categoryID: {description: str, phenotypes: [str]} }
                 calc_names: [
                     ['burden', 'Burden'],
                     ['skat', 'SKAT']
@@ -395,7 +394,6 @@ function makeUI(selector, masks, phenotypes) {
                 status_message: null,
 
                 // API supports one pheno/multiple masks/ multiple tests
-                // TODO: Once live server returns, write UI for "category--> phenotypes" (using optgroup)
                 selected_phenotype: null,
                 selected_masks: [],
                 selected_tests: [],
@@ -407,8 +405,7 @@ function makeUI(selector, masks, phenotypes) {
                 this.status_css.color = success ? 'green' : 'red';
             },
             isValid: function () {
-                //return //this.selected_phenotype &&
-                return this.selected_masks.length && this.selected_tests.length;
+                return this.selected_phenotype && this.selected_masks.length && this.selected_tests.length;
             },
             runTests: function () {
                 var status = this.isValid();

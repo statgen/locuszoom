@@ -88,18 +88,20 @@
     <div id="widget-aggregation-builder">
       <div>
         <div class="row">
-          <div class="two columns" style="font-weight: bold;">Select phenotype</div>
+          <div class="two columns" style="font-weight: bold;"><label for="pheno-select">Select phenotype</label></div>
           <div class="ten columns">
-            <select v-model="selected_phenotype" style="min-width: 200px;">
-              <option v-for="(item, index) in phenotypes" :value="item.name" :key="index">{{ item.description }}
-              </option>
+            <select id="pheno-select" v-model="selected_phenotype" style="min-width: 200px;">
+              <option disabled selected value> ------- </option>
+              <optgroup v-for="(val, key) in phenotypes" :label="val.description">
+                <option v-for="(item, index) in val.phenotypes" :value="item.name" :key="index">{{ item.description }}</option>
+              </optgroup>
             </select>
           </div>
         </div>
         <div class="row">
-          <div class="two columns" style="font-weight: bold;">Select mask(s)</div>
+          <div class="two columns" style="font-weight: bold;"><label for="mask-select">Select mask(s)</label></div>
           <div class="ten columns">
-            <select size="5" multiple style="height: auto; min-width: 200px;" v-model="selected_masks">
+            <select id="mask-select" size="5" multiple style="height: auto; min-width: 200px;" v-model="selected_masks">
               <option v-for="(item, index) in masks" :value="item.name" :key="index">{{item.description}}</option>
             </select>
           </div>
@@ -193,23 +195,26 @@
         .done(function (resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
             var masks = [];
-            // var pheno_categories = [];  // labels
-            // var phenotypes = {}; // {label : pheno_details}
-            resp.data.forEach(function (dataset) { // TODO: Rewrite later to work with new payload structure
-                var set_masks = dataset.masks
+            var phenotypes = {}; // { datasetID: { desc: , phenos:  }}
+            resp.data.forEach(function (dataset) {
+                var genotype_masks = dataset.masks
                     .filter(function (item) {
                         return item.groupType.toLowerCase() === "gene";
                     }).map(function (item) {
                         return { name: item.id, description: item.description }
                     });
-                Array.prototype.push.apply(masks, set_masks);
+
+                var phenotype_masks = dataset.phenotypeDatasets.forEach(function(phenoSet) {
+                    phenotypes[phenoSet.phenotypeDataset] = {
+                        description: phenoSet.description,
+                        phenotypes: phenoSet.phenotypes
+                    };
+                });
+                Array.prototype.push.apply(masks, genotype_masks);
             });
 
             // Populate the aggregation test builder UI
-            window.aggregationBuilder = makeUI(WIDGET_SELECTOR_AGGREGATION, masks, [{
-                name: 'apheno',
-                description: 'Sample phenotype'
-            }]);
+            window.aggregationBuilder = makeUI(WIDGET_SELECTOR_AGGREGATION, masks, phenotypes);
 
             window.aggregationBuilder.$on('run', function (options) {
                 // One time only: Create the plot and table widgets if they don't already exist

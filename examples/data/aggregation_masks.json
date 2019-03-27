@@ -1,8 +1,8 @@
 {
   "data": [
     {
-      "dataset": 42,
-      "analysis": "Demonstration data",
+      "genotypeDataset": 42,
+      "description": "Demonstration data",
       "masks": [
         {
           "id": "PTV-NSSTRICT-NSBROAD-AF01",
@@ -15,6 +15,36 @@
           "description": "PTV & missense & MAF < 0.01",
           "groupType": "gene",
           "identifier": "ENSEMBL"
+        }
+      ],
+      "phenotypeDatasets": [
+        {
+          "phenotypeDataset": 1,
+          "description": "52K Exomes - Cardiovascular Traits",
+          "phenotypes": [
+            {
+              "name": "ldl",
+              "description": "Low density lipoproteins"
+            },
+            {
+              "name": "hdl",
+              "description": "High density lipoproteins"
+            }
+          ]
+        },
+        {
+          "phenotypeDataset": 2,
+          "description": "52K Exomes - Diabetes-related Traits",
+          "phenotypes": [
+            {
+              "name": "T2D",
+              "description": "Type 2 diabetes"
+            },
+            {
+              "name": "FG",
+              "description": "Fasting glucose"
+            }
+          ]
         }
       ]
     }
