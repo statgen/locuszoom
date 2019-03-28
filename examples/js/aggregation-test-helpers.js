@@ -23,13 +23,39 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
     // Unlike most sources, calculations may require access to plot state data even after the initial request
     // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
     //  field called `aggregation_tests` (an object {masks: [], calcs: {})
-    // TODO: In the future, getURL will need to account for the specific masks selected by an external widget (when requesting covar data)
     var required_info = state.aggregation_tests || {};
 
-    if (!chain.header) {chain.header = {};}
+    if (!chain.header) {
+        chain.header = {};
+    }
+    // All of these fields are required in order to use this datasource. TODO: Add validation?
+    chain.header.aggregation_genoset_id = required_info.genoset_id || null;
+    chain.header.aggregation_genoset_build = required_info.genoset_build || null;
+    chain.header.aggregation_phenoset_id = required_info.phenoset_id || null;
+    chain.header.aggregation_pheno = required_info.pheno || null;
     chain.header.aggregation_calcs = required_info.calcs || {};
     chain.header.aggregation_masks = required_info.masks || [];
     return this.url;
+};
+
+LocusZoom.Data.AggregationTestSource.prototype.fetchRequest = function (state, chain, fields) {
+    var url = this.getURL(state, chain, fields);
+    var body = JSON.stringify({
+        chrom: state.chr,
+        start: state.start,
+        stop: state.end,
+        genotypeDataset: chain.header.aggregation_genoset_id,
+        phenotypeDataset: chain.header.aggregation_phenoset_id,
+        phenotype: chain.header.aggregation_pheno,
+        samples: 'ALL',
+        genomeBuild: chain.header.aggregation_genoset_build,
+        masks: chain.header.masks,
+    });
+    var headers = {
+        'Content-Type': 'application/json'
+    };
+    console.log(body);
+    return LocusZoom.createCORSPromise('POST', url, body, headers);
 };
 
 LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records, chain) {
@@ -38,7 +64,9 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     // In a page using live API data, the UI would only request the masks it needs from the API.
     // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
     //  type, and to the set of groups requested by the user)
-    records.groups = records.groups.filter(function(item) {return item.groupType === 'gene'; });
+    records.groups = records.groups.filter(function (item) {
+        return item.groupType === 'gene';
+    });
 
     var parsed = raremetal.helpers.parsePortalJSON(records);
     var groups = parsed[0];
@@ -57,7 +85,9 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     return res.data;
 };
 
-LocusZoom.Data.AggregationTestSource.prototype.normalizeResponse = function(data) { return data; };
+LocusZoom.Data.AggregationTestSource.prototype.normalizeResponse = function (data) {
+    return data;
+};
 
 LocusZoom.Data.AggregationTestSource.prototype.combineChainBody = function (records, chain) {
     // aggregation tests are a bit unique, in that the data is rarely used directly- instead it is used to annotate many
@@ -88,7 +118,7 @@ LocusZoom.KnownDataSources.extend('AssociationLZ', 'AssocFromAggregationLZ', {
     getRequest: function (state, chain, fields) {
         // Does not actually make a request. Just pick off the specific bundle of data from a known payload structure.
         if (chain.discrete && !chain.discrete[this._from]) {
-            throw self.constructor.SOURCE_NAME  + ' cannot be used before loading required data for: ' + this._from;
+            throw self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + this._from;
         }
         // Copy the data so that mutations (like sorting) don't affect the original
         return Q.when(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
@@ -98,7 +128,7 @@ LocusZoom.KnownDataSources.extend('AssociationLZ', 'AssocFromAggregationLZ', {
         // The payload structure of the association source is slightly different than the one required by association
         //   plots. For example, we need to parse variant names and convert to log_pvalue
         var REGEX_EPACTS = new RegExp('(?:chr)?(.+):(\\d+)_?(\\w+)?/?([^_]+)?_?(.*)?');  // match API variant strings
-        return data.map(function(one_variant) {
+        return data.map(function (one_variant) {
             var match = one_variant.variant.match(REGEX_EPACTS);
             return {
                 variant: one_variant.variant,
@@ -122,7 +152,6 @@ LocusZoom.KnownDataSources.extend('AssociationLZ', 'AssocFromAggregationLZ', {
         });
     }
 });
-
 
 
 /**
@@ -150,7 +179,7 @@ LocusZoom.KnownDataSources.extend('ConnectorSource', 'GeneAggregationConnectorLZ
 
         var groupedAggregation = {};  // Group together all tests done on that gene- any mask, any test
 
-        aggregationData.groups.forEach(function(result) {
+        aggregationData.groups.forEach(function (result) {
             if (!groupedAggregation.hasOwnProperty(result.group)) {
                 groupedAggregation[result.group] = [];
             }

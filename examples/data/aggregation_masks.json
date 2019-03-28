@@ -2,6 +2,7 @@
   "data": [
     {
       "genotypeDataset": 42,
+      "genomeBuild": "GRCh37",
       "description": "Demonstration data",
       "masks": [
         {

@@ -194,27 +194,26 @@
     $.ajax("data/aggregation_masks.json") // For demo purposes. A real UI might provide a different way of defining masks.
         .done(function (resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
-            var masks = [];
-            var phenotypes = {}; // { datasetID: { desc: , phenos:  }}
-            resp.data.forEach(function (dataset) {
-                var genotype_masks = dataset.masks
-                    .filter(function (item) {
-                        return item.groupType.toLowerCase() === "gene";
-                    }).map(function (item) {
-                        return { name: item.id, description: item.description }
-                    });
 
-                var phenotype_masks = dataset.phenotypeDatasets.forEach(function(phenoSet) {
-                    phenotypes[phenoSet.phenotypeDataset] = {
-                        description: phenoSet.description,
-                        phenotypes: phenoSet.phenotypes
-                    };
+            var dataset = resp.data[0];
+            var build = dataset.genomeBuild;
+            var geno_id = dataset.genotypeDataset;
+            var phenotypes = {}; // { datasetID: { desc: , phenos:  }}
+            var masks = dataset.masks
+                .filter(function (item) {
+                    return item.groupType.toLowerCase() === "gene";
+                }).map(function (item) {
+                    return { name: item.id, description: item.description }
                 });
-                Array.prototype.push.apply(masks, genotype_masks);
+            dataset.phenotypeDatasets.forEach(function(phenoSet) {
+                phenotypes[phenoSet.phenotypeDataset] = {
+                    description: phenoSet.description,
+                    phenotypes: phenoSet.phenotypes
+                };
             });
 
             // Populate the aggregation test builder UI
-            window.aggregationBuilder = makeUI(WIDGET_SELECTOR_AGGREGATION, masks, phenotypes);
+            window.aggregationBuilder = makeUI(WIDGET_SELECTOR_AGGREGATION, geno_id, build, masks, phenotypes);
 
             window.aggregationBuilder.$on('run', function (options) {
                 // One time only: Create the plot and table widgets if they don't already exist

@@ -69,7 +69,7 @@ function customizePlotLayout(layout) {
     genesLayout.stroke = colorConfig;
 
     // The demo does not have real covariance data, and therefore only works on a narrow plot region. Lock all panels
-    //   to prevent scrolling
+    //   to prevent scrolling  TODO Update here
     layout.panels.forEach(function (panel_layout) {
         panel_layout.interaction = {
             drag_background_to_pan: false,
@@ -179,7 +179,7 @@ function createDisplayWidgets(label_store, context) {
     // Specify the data sources to use, then build the plot
     var apiBase = '//portaldev.sph.umich.edu/api/v1/';
     var data_sources = new LocusZoom.DataSources()
-        .add('aggregation', ['AggregationTestSourceLZ', { url: 'data/scorecov.json' }])
+        .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/aggregation/covariance/' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
             params: { id_field: 'variant' }
@@ -376,7 +376,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
 }
 
 
-function makeUI(selector, masks, phenotypes) {
+function makeUI(selector, geno_id, build, masks, phenotypes) {
     // The UI is written in Vue.js. Although modern tooling can be nice, this example can be reused via plain JS.
     return new Vue({
         el: selector,
@@ -392,6 +392,10 @@ function makeUI(selector, masks, phenotypes) {
                 // Tracking internal state
                 status_css: { color: 'red' },
                 status_message: null,
+
+                // Track information that will be required to run the calculation
+                genoset_id: geno_id,
+                genome_build: build,
 
                 // API supports one pheno/multiple masks/ multiple tests
                 selected_phenotype: null,
@@ -410,11 +414,29 @@ function makeUI(selector, masks, phenotypes) {
             runTests: function () {
                 var status = this.isValid();
                 this.setStatus(status ? '' : 'Please select at least one option from each category', status);
+                var by_cat = this.phenotypes;
+                var selected = this.selected_phenotype;
+
                 if (status) {
+                    // Slightly inelegant demo UI : assumes phenonames are globally unique and we find the first match
+                    var phenosetId;
+                    for (var pId in by_cat ) {
+                        if (!by_cat.hasOwnProperty(pId)) {
+                            continue;
+                        }
+                        var pheno_list = this.phenotypes[pId].phenotypes;
+                        if (pheno_list.find(function(element) { return element.name === selected; })) {
+                            phenosetId = pId;
+                            break;
+                        }
+                    }
                     this.$emit('run', {
-                        masks: this.selected_masks,
+                        genoset_id: this.genoset_id,
+                        genoset_build: this.genome_build,
+                        phenoset_id: phenosetId,
+                        pheno: selected,
                         calcs: this.selected_tests,
-                        pheno: this.selected_phenotype
+                        masks: this.selected_masks,
                     });
                 }
             }
