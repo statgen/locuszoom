@@ -9,7 +9,7 @@
         });
     } else if (typeof module === 'object' && module.exports) {
         // commonJS
-        module.exports = root.LocusZoom = factory(require('d3'), require('Q'));
+        module.exports = root.LocusZoom = factory(require('d3'), require('q'));
     } else {
         // globals
         root.LocusZoom = factory(root.d3, root.Q);
@@ -8130,7 +8130,7 @@
         function validateBuildSource(class_name, build, source) {
             // Build OR Source, not both
             if (build && source || !(build || source)) {
-                throw new Error(class_name + ' must specify either "build" or "source", but not both');
+                throw new Error(class_name + ' must provide a parameter specifying either "build" or "source". It should not specify both.');
             }
             // If the build isn't recognized, our APIs can't transparently select a source to match
             if (build && [
@@ -9690,8 +9690,16 @@
             }
             if (this.layout.responsive_resize === true) {
                 // Backwards compatible support
-                console.warn('"responsive_resize" should specify a mode, not a boolean');
+                console.warn('LocusZoom "responsive_resize" specifies a deprecated value. The new value should be "both". Please update your layout.');
                 this.layout.responsive_resize = 'both';
+            }
+            var RESIZE_MODES = [
+                false,
+                'both',
+                'width_only'
+            ];
+            if (RESIZE_MODES.indexOf(this.layout.responsive_resize) === -1) {
+                throw new Error('LocusZoom option "responsive_resize" should specify one of the following modes: ' + RESIZE_MODES.join(', '));
             }
             // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
             if (this.layout.responsive_resize) {
