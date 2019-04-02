@@ -4,7 +4,7 @@
             return (root.LocusZoom = factory(d3, Q));
         });
     } else if(typeof module === "object" && module.exports) {  // commonJS
-        module.exports = (root.LocusZoom = factory(require("d3"), require("Q")));
+        module.exports = (root.LocusZoom = factory(require("d3"), require("q")));
     } else {  // globals
         root.LocusZoom = factory(root.d3, root.Q);
     }
