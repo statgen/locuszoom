@@ -179,7 +179,7 @@ function createDisplayWidgets(label_store, context) {
     // Specify the data sources to use, then build the plot
     var apiBase = '//portaldev.sph.umich.edu/api/v1/';
     var data_sources = new LocusZoom.DataSources()
-        .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/aggregation/covariance/' }])
+        .add('aggregation', ['AggregationTestSourceLZ', { url: 'http://localhost:4545/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
             params: { id_field: 'variant' }
@@ -198,7 +198,7 @@ function createDisplayWidgets(label_store, context) {
         .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
         .add('constraint', ['GeneConstraintLZ', { url: 'http://exac.broadinstitute.org/api/constraint' }]);  // FIXME: use https when exac fixed
 
-    var initialState = { chr: 15, start: 58384122, end: 59305748 };
+    var initialState = { chr: '22', start: 50276998, end: 50357719 };
     var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: initialState });
     layout = customizePlotLayout(layout);
 
@@ -420,12 +420,14 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                 if (status) {
                     // Slightly inelegant demo UI : assumes phenonames are globally unique and we find the first match
                     var phenosetId;
-                    for (var pId in by_cat ) {
+                    for (var pId in by_cat) {
                         if (!by_cat.hasOwnProperty(pId)) {
                             continue;
                         }
                         var pheno_list = this.phenotypes[pId].phenotypes;
-                        if (pheno_list.find(function(element) { return element.name === selected; })) {
+                        if (pheno_list.find(function (element) {
+                            return element.name === selected;
+                        })) {
                             phenosetId = pId;
                             break;
                         }
@@ -433,7 +435,7 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                     this.$emit('run', {
                         genoset_id: this.genoset_id,
                         genoset_build: this.genome_build,
-                        phenoset_id: phenosetId,
+                        phenoset_id: +phenosetId,
                         pheno: selected,
                         calcs: this.selected_tests,
                         masks: this.selected_masks,

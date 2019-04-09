@@ -191,7 +191,7 @@
     // The user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
     var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
-    $.ajax("data/aggregation_masks.json") // For demo purposes. A real UI might provide a different way of defining masks.
+    $.ajax("http://localhost:4545/aggregation/metadata") // For demo purposes. A real UI might provide a different way of defining masks.
         .done(function (resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
 
@@ -201,7 +201,7 @@
             var phenotypes = {}; // { datasetID: { desc: , phenos:  }}
             var masks = dataset.masks
                 .filter(function (item) {
-                    return item.groupType.toLowerCase() === "gene";
+                    return item.groupType === 'GENE';
                 }).map(function (item) {
                     return { name: item.id, description: item.description }
                 });

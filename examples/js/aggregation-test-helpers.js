@@ -49,12 +49,11 @@ LocusZoom.Data.AggregationTestSource.prototype.fetchRequest = function (state, c
         phenotype: chain.header.aggregation_pheno,
         samples: 'ALL',
         genomeBuild: chain.header.aggregation_genoset_build,
-        masks: chain.header.masks,
+        masks: chain.header.aggregation_masks,
     });
     var headers = {
         'Content-Type': 'application/json'
     };
-    console.log(body);
     return LocusZoom.createCORSPromise('POST', url, body, headers);
 };
 
@@ -65,7 +64,7 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
     // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
     //  type, and to the set of groups requested by the user)
     records.groups = records.groups.filter(function (item) {
-        return item.groupType === 'gene';
+        return item.groupType === 'GENE';
     });
 
     var parsed = raremetal.helpers.parsePortalJSON(records);
