@@ -59,7 +59,8 @@ function customizePlotLayout(layout) {
         {
             scale_function: 'numerical_bin',
             field: 'aggregation_best_pvalue',
-            parameters: { // Default significance threshold is based on 20k human protein coding genes
+            // This UI is for gene-based tests, hence Default significance threshold is based on 20k human protein coding genes
+            parameters: {
                 breaks: [0, 0.05 / 20000],
                 values: ['#d43f3a', '#357ebd']
             }
@@ -70,16 +71,16 @@ function customizePlotLayout(layout) {
 
     // The demo does not have real covariance data, and therefore only works on a narrow plot region. Lock all panels
     //   to prevent scrolling  TODO Update here
-    layout.panels.forEach(function (panel_layout) {
-        panel_layout.interaction = {
-            drag_background_to_pan: false,
-            drag_x_ticks_to_scale: false,
-            drag_y1_ticks_to_scale: false,
-            drag_y2_ticks_to_scale: false,
-            scroll_to_zoom: false,
-            x_linked: false
-        };
-    });
+    // layout.panels.forEach(function (panel_layout) {
+    //     panel_layout.interaction = {
+    //         drag_background_to_pan: false,
+    //         drag_x_ticks_to_scale: false,
+    //         drag_y1_ticks_to_scale: false,
+    //         drag_y2_ticks_to_scale: false,
+    //         scroll_to_zoom: false,
+    //         x_linked: false
+    //     };
+    // });
     return layout;
 }
 
@@ -203,6 +204,10 @@ function createDisplayWidgets(label_store, context) {
     layout = customizePlotLayout(layout);
 
     var plot = LocusZoom.populate('#lz-plot', data_sources, layout);
+    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
+    plot.layout.panels.forEach(function(panel) {
+        plot.panels[panel.id].addBasicLoader();
+    });
 
     var TABLE_SELECTOR_AGGREGATION = '#results-table-aggregation';
     var TABLE_SELECTOR_VARIANTS = '#results-table-variants';
@@ -285,8 +290,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
         }
 
         var gene_column_name = 'group';
-        var selected_gene = eventData['data']['element']['gene_id'];
-        selected_gene = selected_gene.split('.')[0]; // Ignore ensemble version on gene ids
+        var selected_gene = eventData['data']['element']['gene_name'];
 
         if (eventData['data']['active']) {
             aggregationTable.tableSetFilter(gene_column_name, selected_gene);
@@ -437,8 +441,8 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                         genoset_build: this.genome_build,
                         phenoset_id: +phenosetId,
                         pheno: selected,
-                        calcs: this.selected_tests,
-                        masks: this.selected_masks,
+                        calcs: this.selected_tests.slice(),
+                        masks: this.selected_masks.slice(),
                     });
                 }
             }

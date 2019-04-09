@@ -38,9 +38,9 @@ LocusZoom.Data.AggregationTestSource.prototype.getURL = function (state, chain, 
     return this.url;
 };
 
-LocusZoom.Data.AggregationTestSource.prototype.fetchRequest = function (state, chain, fields) {
-    var url = this.getURL(state, chain, fields);
-    var body = JSON.stringify({
+LocusZoom.Data.AggregationTestSource.prototype.getCacheKey = function (state, chain, fields) {
+    this.getURL(state, chain, fields);  // TODO: This just sets the chain.header fields
+    return JSON.stringify({
         chrom: state.chr,
         start: state.start,
         stop: state.end,
@@ -51,6 +51,12 @@ LocusZoom.Data.AggregationTestSource.prototype.fetchRequest = function (state, c
         genomeBuild: chain.header.aggregation_genoset_build,
         masks: chain.header.aggregation_masks,
     });
+};
+
+
+LocusZoom.Data.AggregationTestSource.prototype.fetchRequest = function (state, chain, fields) {
+    var url = this.getURL(state, chain, fields);
+    var body = this.getCacheKey(state, chain, fields);
     var headers = {
         'Content-Type': 'application/json'
     };
@@ -80,7 +86,13 @@ LocusZoom.Data.AggregationTestSource.prototype.annotateData = function (records,
         return { variants: [], groups: [], results: [] };
     }
     var runner = new raremetal.helpers.PortalTestRunner(groups, variants, calcs);
-    var res = runner.toJSON();
+    try {
+        var res = runner.toJSON();
+    } catch (e) {
+        console.error(e);
+        throw new Error('Failed to calculate aggregation test results');
+    }
+
     return res.data;
 };
 
@@ -187,7 +199,7 @@ LocusZoom.KnownDataSources.extend('ConnectorSource', 'GeneAggregationConnectorLZ
 
         // Annotate any genes that have test results
         genesData.forEach(function (gene) {
-            var gene_id = gene.gene_id.split('.')[0];
+            var gene_id = gene.gene_name;
             var tests = groupedAggregation[gene_id];
             if (tests) {
                 gene.aggregation_best_pvalue = Math.min.apply(null, tests);
