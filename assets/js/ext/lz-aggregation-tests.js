@@ -15,11 +15,11 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'raremetal', 'q'] , function(LocusZoom, raremetal, Q) {  // amd
+        define(['locuszoom', 'raremetal.js', 'q'] , function(LocusZoom, raremetal, Q) {  // amd
             return factory(LocusZoom, raremetal, Q);
         });
     } else if(typeof module === 'object' && module.exports) {  // commonJS
-        module.exports = factory(require('locuszoom'), require('raremetal'), require('q'));
+        module.exports = factory(require('locuszoom'), require('raremetal.js'), require('q'));
     } else {  // globals
         if (!root.LocusZoom.ext.Data) {
             root.LocusZoom.ext.Data = {};
