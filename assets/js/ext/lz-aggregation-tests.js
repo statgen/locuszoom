@@ -93,6 +93,13 @@
         // In a page using live API data, the UI would only request the masks it needs from the API.
         // But in our demos, sometimes boilerplate JSON has more masks than the UI asked for. Limit what calcs we run (by
         //  type, and to the set of groups requested by the user)
+
+        // The Raremetal-server API has a quirk: it returns a different payload structure if no groups are defined
+        //  for the request region. Detect when that happens and end the calculation immediately in that case
+        if (!records.groups) {
+            return { groups: [], variants: [] };
+        }
+
         records.groups = records.groups.filter(function (item) {
             return item.groupType === 'GENE';
         });

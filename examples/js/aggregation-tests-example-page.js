@@ -199,7 +199,12 @@ function createDisplayWidgets(label_store, context) {
         .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
         .add('constraint', ['GeneConstraintLZ', { url: 'http://exac.broadinstitute.org/api/constraint' }]);  // FIXME: use https when exac fixed
 
-    var initialState = { chr: '22', start: 50276998, end: 50357719 };
+    var stateUrlMapping = {chr: 'chrom', start: 'start', end: 'end'};
+    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    if (!Object.keys(initialState).length) {
+        initialState = { chr: '22', start: 50276998, end: 50357719 };
+    }
+
     var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: initialState });
     layout = customizePlotLayout(layout);
 
@@ -208,6 +213,11 @@ function createDisplayWidgets(label_store, context) {
     plot.layout.panels.forEach(function(panel) {
         plot.panels[panel.id].addBasicLoader();
     });
+
+    // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
+    //   a previously viewed region)
+    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     var TABLE_SELECTOR_AGGREGATION = '#results-table-aggregation';
     var TABLE_SELECTOR_VARIANTS = '#results-table-variants';
