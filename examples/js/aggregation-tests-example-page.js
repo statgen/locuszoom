@@ -225,7 +225,7 @@ function createDisplayWidgets(label_store, context) {
     var aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: 'id',
         height: 300,
-        layout: 'fitColumns',
+        layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
         rowSelected: function (row) {
             label_store(row.row.data); // Tabulator doesn't allow changing options after creation
@@ -239,7 +239,7 @@ function createDisplayWidgets(label_store, context) {
                 // TODO: exac gives timeouts if we use https
                 formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' }
             },
-            { title: 'Mask', field: 'mask', headerFilter: true },
+            { title: 'Mask', field: 'mask_name', headerFilter: true, widthGrow: 10 },
             { title: '# Variants', field: 'variant_count' },
             { title: 'Test type', field: 'test', headerFilter: true },
             { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number' },
@@ -255,7 +255,7 @@ function createDisplayWidgets(label_store, context) {
 
     var variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
         height: 300,
-        layout: 'fitColumns',
+        layout: 'fitDataFill',
         layoutColumnsOnNewData: true,
         index: 'id',
         columns: [
@@ -362,7 +362,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
     labelStorage.subscribe(function (data) {  // User-friendly label
         var text = '';
         if (data) {
-            text = data.mask + ' / ' + data.group_display_name;
+            text = data.mask_name + ' / ' + data.group_display_name;
         }
         $('#label-mask-selected').text(text);
     });

@@ -103,7 +103,7 @@
           <div class="two columns" style="font-weight: bold;"><label for="mask-select">Select mask(s)</label></div>
           <div class="ten columns">
             <select id="mask-select" size="5" multiple style="height: auto; min-width: 200px;" v-model="selected_masks">
-              <option v-for="(item, index) in masks" :value="item.name" :key="index">{{item.description}}</option>
+              <option v-for="(item, index) in masks" :value="item" :key="index">{{item.description}}</option>
             </select>
           </div>
         </div>

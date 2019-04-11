@@ -53,12 +53,14 @@
             chain.header = {};
         }
         // All of these fields are required in order to use this datasource. TODO: Add validation?
-        chain.header.aggregation_genoset_id = required_info.genoset_id || null;
-        chain.header.aggregation_genoset_build = required_info.genoset_build || null;
-        chain.header.aggregation_phenoset_id = required_info.phenoset_id || null;
-        chain.header.aggregation_pheno = required_info.pheno || null;
-        chain.header.aggregation_calcs = required_info.calcs || {};
-        chain.header.aggregation_masks = required_info.masks || [];
+        chain.header.aggregation_genoset_id = required_info.genoset_id || null; // Number
+        chain.header.aggregation_genoset_build = required_info.genoset_build || null; // String
+        chain.header.aggregation_phenoset_id = required_info.phenoset_id || null;  // Number
+        chain.header.aggregation_pheno = required_info.pheno || null; // String
+        chain.header.aggregation_calcs = required_info.calcs || {};  // String[]
+        var mask_data = required_info.masks || [];
+        chain.header.aggregation_masks = mask_data;  // {name:desc}[]
+        chain.header.aggregation_mask_ids = mask_data.map(function(item) { return item.name; }); // Number[]
         return this.url;
     };
 
@@ -73,7 +75,7 @@
             phenotype: chain.header.aggregation_pheno,
             samples: 'ALL',
             genomeBuild: chain.header.aggregation_genoset_build,
-            masks: chain.header.aggregation_masks,
+            masks: chain.header.aggregation_mask_ids,
         });
     };
 
@@ -107,11 +109,12 @@
         var parsed = raremetal.helpers.parsePortalJSON(records);
         var groups = parsed[0];
         var variants = parsed[1];
+        // Some APIs may return more data than we want (eg simple sites that are just serving up premade scorecov json files).
+        //  Filter the response to just what the user has chosen to analyze.
+        groups = groups.byMask(chain.header.aggregation_mask_ids);
 
-        groups = groups.byMask(chain.header.aggregation_masks);
-
+        // Determine what calculations to run
         var calcs = chain.header.aggregation_calcs;
-
         if (!calcs || Object.keys(calcs).length === 0) {
             // If no calcs have been requested, then return a dummy placeholder immediately
             return { variants: [], groups: [], results: [] };
@@ -123,6 +126,16 @@
             console.error(e);
             throw new Error('Failed to calculate aggregation test results');
         }
+
+        // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
+        // We will annotate each mask name (id) with a human-friendly description for later use
+        var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
+            acc[val.name] = val.description;
+            return acc;
+        }, {});
+        res.data.groups.forEach(function(group)  {
+            group.mask_name = mask_id_to_desc[group.mask];
+        });
 
         return res.data;
     };
