@@ -192,7 +192,7 @@
     // The user must specify a set of aggregation tests they would like to run. The list of
     //  masks is fetched from a server endpoint that returns simple metadata for this region
     var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
-    $.ajax("http://localhost:4545/aggregation/metadata") // For demo purposes. A real UI might provide a different way of defining masks.
+    $.ajax("https://portaldev.sph.umich.edu/raremetal/v1/aggregation/metadata") // For demo purposes. A real UI might provide a different way of defining masks.
         .done(function (resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
 

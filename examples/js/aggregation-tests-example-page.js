@@ -180,7 +180,7 @@ function createDisplayWidgets(label_store, context) {
     // Specify the data sources to use, then build the plot
     var apiBase = '//portaldev.sph.umich.edu/api/v1/';
     var data_sources = new LocusZoom.DataSources()
-        .add('aggregation', ['AggregationTestSourceLZ', { url: 'http://localhost:4545/aggregation/covariance' }])
+        .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/v1/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
             params: { id_field: 'variant' }
