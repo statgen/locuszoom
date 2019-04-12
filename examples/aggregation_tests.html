@@ -136,6 +136,19 @@
         <span style="color:red">significant</span> / <span style="color:blue">not significant</span> / <span
           style="color:grey">no data available</span>.
       </p>
+
+      <div class="row">
+        <div class="twelve columns">
+          <input id="input-region" type="text" placeholder="22:50276998-50357719" style="min-width: 250px;">
+          <button id="button-jump" class="button-primary">Go</button>
+        </div>
+      </div>
+      <div class="row" id="error-region" style="display: none">
+        <div class="twelve columns">
+          <span class="error">Invalid position. Must be in chrom:start-end format.</span>
+        </div>
+      </div>
+
       <div id="lz-plot" class="lz-container-responsive"></div>
 
       <h3>Table of aggregation test results</h3>
@@ -249,6 +262,9 @@
     window.agg_calc_data = Observable(); // aggregation test results: redraw tables when new results found
     window.selected_group = Observable(); // Identify the current selection, eg for labels & filters.  (else `null`)
 
+    document.getElementById("button-jump").addEventListener("click", function(event) {
+        jumpToRegion(window.plot, 'input-region', 'error-region')
+    });
 </script>
 </body>
 </html>

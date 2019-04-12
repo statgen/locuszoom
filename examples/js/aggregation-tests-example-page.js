@@ -90,6 +90,24 @@ function _formatSciNotation(cell, params) {
     return LocusZoom.TransformationFunctions.get('scinotation')(value);
 }
 
+function jumpToRegion(plot, input_selector, error_selector) {
+    var input = document.getElementById(input_selector);
+    var error = document.getElementById(error_selector);
+    error.style.display = 'none';
+    var target = input.value || input.placeholder || '';
+
+    var match = target.match(/^([0-9XY]+):(\d+)-(\d+)/);
+    if (!match) {
+        error.style.display = '';
+    } else {
+        plot.applyState({
+            chr: match[1],
+            start: +match[2],
+            end: +match[3]
+        });
+    }
+}
+
 // Controllers for page widgets
 /**
  * Define shared functionality for all tables, providing helper methods to control the tabulator
