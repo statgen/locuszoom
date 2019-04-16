@@ -243,7 +243,7 @@ function createDisplayWidgets(label_store, context) {
     var aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: 'id',
         height: 300,
-        layout: 'fitDataFill',
+        layout: 'fitColumns',
         layoutColumnsOnNewData: true,
         rowSelected: function (row) {
             label_store(row.row.data); // Tabulator doesn't allow changing options after creation
@@ -253,15 +253,15 @@ function createDisplayWidgets(label_store, context) {
         },
         columns: [
             {
-                title: 'Gene', field: 'group', formatter: 'link',
+                title: 'Gene', field: 'group', formatter: 'link', widthGrow: 3,
                 // TODO: exac gives timeouts if we use https
                 formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' }
             },
-            { title: 'Mask', field: 'mask_name', headerFilter: true, widthGrow: 10 },
-            { title: '# Variants', field: 'variant_count' },
-            { title: 'Test type', field: 'test', headerFilter: true },
-            { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number' },
-            { title: 'Statistic', field: 'stat', formatter: _formatSciNotation, sorter: 'number', visible: false }
+            { title: 'Mask', field: 'mask_name', headerFilter: true, widthGrow: 8 },
+            { title: '# Variants', field: 'variant_count', widthGrow: 2 },
+            { title: 'Test type', field: 'test', headerFilter: true, widthGrow: 2 },
+            { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number', widthGrow: 2 },
+            { title: 'Statistic', field: 'stat', formatter: _formatSciNotation, sorter: 'number', visible: false, widthGrow: 2 }
         ],
         placeholder: 'No Data Available',
         initialSort: [
@@ -273,7 +273,7 @@ function createDisplayWidgets(label_store, context) {
 
     var variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
         height: 300,
-        layout: 'fitDataFill',
+        layout: 'fitColumns',
         layoutColumnsOnNewData: true,
         index: 'id',
         columns: [
