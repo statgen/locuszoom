@@ -379,7 +379,7 @@ describe('LocusZoom Data', function() {
             describe('Source.annotateData', function() {
                 it('should be able to add fields to the returned records', function () {
                     var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        annotateData(records) {
+                        annotateData: function (records) {
                             // Custom hook that adds a field to every parsed record
                             return records.map(function(item) {
                                 item.force = true;
@@ -398,7 +398,7 @@ describe('LocusZoom Data', function() {
 
                 it('should be able to annotate based on info in the body and chain', function() {
                     var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        annotateData (records, chain) { return records + chain.header.param; }
+                        annotateData: function (records, chain) { return records + chain.header.param; }
                     });
                     var result = new source().annotateData(
                         'some data',
@@ -463,7 +463,7 @@ describe('LocusZoom Data', function() {
 
                 it('can build a body based on records from all sources in the chain', function() {
                     var base_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        combineChainBody(records, chain) {
+                        combineChainBody: function(records, chain) {
                             return records.map(function(item, index) {
                                 return Object.assign({}, item, chain.body[index]);
                             });
@@ -491,8 +491,8 @@ describe('LocusZoom Data', function() {
                 it('should store annotations in body and chain.discrete where appropriate', function() {
                     var source = LocusZoom.subclass(LocusZoom.Data.Source, {
                         annotateData: function (data) { return data + ' with annotation'; },
-                        normalizeResponse(data) { return data; },
-                        extractFields(data) { return data; }
+                        normalizeResponse: function (data) { return data; },
+                        extractFields: function (data) { return data; }
                     });
                     source.prototype.constructor.SOURCE_NAME = 'fake_source';
 
@@ -506,17 +506,17 @@ describe('LocusZoom Data', function() {
                 it('integrates all methods via promise semantics', function () {
                     // Returning a promise is optional, but should be supported if a custom subclass chooses to do so
                     var basic_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        normalizeResponse() { return Q.when( [{a:1}] ); },
-                        annotateData(records) {
+                        normalizeResponse: function () { return Q.when( [{a:1}] ); },
+                        annotateData: function (records) {
                             return Q.when(records.map(function(item) {
                                 item.b = item.a + 1;
                                 return item;
                             }));
                         },
-                        extractFields(data, fields, outnames, trans) {
+                        extractFields: function (data, fields, outnames, trans) {
                             var rec = data.map(function(item) { return {'bfield': item.b}; });
                             return Q.when(rec); },
-                        combineChainBody(records) { return Q.when(records); }
+                        combineChainBody: function (records) { return Q.when(records); }
                     });
                     basic_source.prototype.constructor.SOURCE_NAME = 'fake_source';
 
@@ -664,6 +664,50 @@ describe('LocusZoom Data', function() {
         it('validates the selected build name', function () {
             var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 99 }});
             assert.throws(function () { source.getURL({}); }, /must specify a valid genome build number/);
+        });
+
+        it('will prefer a refvar in plot.state if one is provided', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var ref = source.getRefvar(
+                {ldrefvar: 'Something'},
+                {header: {}, body: [{id: 'a', pvalue: 0}]},
+                ['ldrefvar', 'state']
+            );
+            assert.equal(ref, 'Something');
+        });
+
+        it('auto-selects the best reference variant (lowest pvalue)', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var ref = source.getRefvar(
+                {},
+                {
+                    header: {},
+                    body: [
+                        { id: 'a', pvalue: 0.5 },
+                        { id: 'b', pvalue: 0.05 },
+                        { id: 'c', pvalue: 0.1 },
+                    ],
+                },
+                ['isrefvar', 'state']
+            );
+            assert.equal(ref, 'b');
+        });
+
+        it('auto-selects the best reference variant (largest nlog_pvalue)', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var ref = source.getRefvar(
+                {},
+                {
+                    header: {},
+                    body: [
+                        { id: 'a', log_pvalue: 10 },
+                        { id: 'b', log_pvalue: 50 },
+                        { id: 'c', log_pvalue: 7 },
+                    ],
+                },
+                ['isrefvar', 'state']
+            );
+            assert.equal(ref, 'b');
         });
     });
 
