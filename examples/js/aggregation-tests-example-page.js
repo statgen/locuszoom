@@ -220,7 +220,7 @@ function createDisplayWidgets(label_store, context) {
     var stateUrlMapping = {chr: 'chrom', start: 'start', end: 'end'};
     var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
-        initialState = { chr: '19', start: 45409039, end: 45412650 };
+        initialState = { chr: '19', start: 45312079, end: 45512079 };
     }
 
     var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: initialState });

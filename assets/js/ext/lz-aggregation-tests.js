@@ -86,7 +86,17 @@
         var headers = {
             'Content-Type': 'application/json'
         };
-        return LocusZoom.createCORSPromise('POST', url, body, headers);
+        return LocusZoom.createCORSPromise('POST', url, body, headers)
+            .then(function (resp) {
+                var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
+                if (json.error) {
+                    // RAREMETAL-server quirk: The API sometimes returns a 200 status code for failed requests,
+                    //    with a human-readable error description as a key
+                    // For now, this should be treated strictly as an error
+                    throw new Error(json.error);
+                }
+                return json;
+            });
     };
 
     AggregationTestSource.prototype.annotateData = function (records, chain) {
