@@ -391,8 +391,10 @@
  * @param {Object} data
  * @param {String} html A placeholder string in which to substitute fields. Supports several template options:
  *   `{{field_name}}` is a variable placeholder for the value of `field_name` from the provided data
- *   `{{#if {{field_name}} }} Conditional text {{/if}} will insert the contents of the tag only if the value exists.
+ *   `{{#if field_name}} Conditional text {{/if}}` will insert the contents of the tag only if the value exists.
  *     Since this is only an existence check, **variables with a value of 0 will be evaluated as true**.
+ *     This can be used with namespaced values, `{{#if assoc:field}}`; any dynamic namespacing will be applied when the
+ *     layout is first retrieved.
  * @returns {string}
  */
         LocusZoom.parseFields = function (data, html) {
