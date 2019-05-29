@@ -4,7 +4,7 @@
 function validateBuildSource(class_name, build, source) {
     // Build OR Source, not both
     if ((build && source) || !(build || source)) {
-        throw new Error(class_name + ' must specify either "build" or "source", but not both');
+        throw new Error(class_name + ' must provide a parameter specifying either "build" or "source". It should not specify both.');
     }
     // If the build isn't recognized, our APIs can't transparently select a source to match
     if (build && ['GRCh37', 'GRCh38'].indexOf(build) === -1) {
@@ -746,13 +746,20 @@ LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) { return d
 
 
 LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
-    var findExtremeValue = function(x, pval, sign) {
-        pval = pval || 'pvalue';
-        sign = sign || 1;
-        var extremeVal = x[0][pval], extremeIdx = 0;
-        for(var i = 1; i < x.length; i++) {
-            if (x[i][pval] * sign > extremeVal) {
-                extremeVal = x[i][pval] * sign;
+    var findExtremeValue = function(records, pval_field) {
+        // Finds the most significant hit (smallest pvalue, or largest -log10p). Will try to auto-detect the appropriate comparison.
+        pval_field = pval_field || 'log_pvalue';  // The official LZ API returns log_pvalue
+        var is_log = /log/.test(pval_field);
+        var cmp;
+        if (is_log) {
+            cmp = function(a, b) { return a > b; };
+        } else {
+            cmp = function(a, b) { return a < b; };
+        }
+        var extremeVal = records[0][pval_field], extremeIdx = 0;
+        for(var i = 1; i < records.length; i++) {
+            if (cmp(records[i][pval_field], extremeVal)) {
+                extremeVal = records[i][pval_field];
                 extremeIdx = i;
             }
         }

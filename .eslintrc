@@ -15,7 +15,8 @@
             2,
             "single",
             {
-                "avoidEscape": true
+                "avoidEscape": true,
+                "allowTemplateLiterals": true
             }
         ],
         "linebreak-style": [
