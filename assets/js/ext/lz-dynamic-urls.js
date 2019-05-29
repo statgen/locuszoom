@@ -1,4 +1,3 @@
-/* global LocusZoom */
 /**
  * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
  *
@@ -11,7 +10,20 @@
  */
 'use strict';
 
-!function() {
+// This is defined as a UMD module, to work with multiple different module systems / bundlers
+/* global define, module, require */
+
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['locuszoom'], function(LocusZoom) {  // amd
+            return factory(LocusZoom);
+        });
+    } else if(typeof module === 'object' && module.exports) {  // commonJS
+        module.exports = factory(require('locuszoom'));
+    } else {  // globals
+        root.LocusZoom.ext.DynamicUrls = factory(root.LocusZoom);
+    }
+}(this, function(LocusZoom) {
     function _serializeQueryParams(paramsObj) {
         // Serialize an object of parameter values into a query string
         // TODO: Improve support for array values v[]=1&v[]=2
@@ -84,7 +96,7 @@
     }
 
     // Public interface for this extension
-    LocusZoom.ext.DynamicUrls = {
+    return {
         /**
          * Extract plot parameters from the URL query string. Very useful for setting up the plot on initial page load.
          * @param {object} mapping How to map elements of plot state to URL param fields. Hash of
@@ -158,4 +170,4 @@
             return listener;
         }
     };
-}();
+}));

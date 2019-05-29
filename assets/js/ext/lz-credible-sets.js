@@ -9,17 +9,25 @@
 */
 'use strict';
 
-/* global gwasCredibleSets, LocusZoom, Q */
+// This is defined as a UMD module, to work with multiple different module systems / bundlers
+// Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
+//  systems may require being told that this file has side effects.
+/* global define, module, require */
 
-if (typeof gwasCredibleSets === 'undefined') {
-    throw new Error('The standalone gwas-credible-sets library is required to use this extension');
-}
-
-!function() {
-    if (!LocusZoom.ext.Data) {
-        LocusZoom.ext.Data = {};
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['locuszoom', 'gwas-credible-sets', 'q'] , function(LocusZoom, gwasCredibleSets, Q) {  // amd
+            return factory(LocusZoom, gwasCredibleSets, Q);
+        });
+    } else if(typeof module === 'object' && module.exports) {  // commonJS
+        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'), require('q'));
+    } else {  // globals
+        if (!root.LocusZoom.ext.Data) {
+            root.LocusZoom.ext.Data = {};
+        }
+        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets, root.Q);
     }
-
+}(this, function(LocusZoom, gwasCredibleSets, Q) {
     /**
      * Custom data source that calculates the 95% credible set based on provided data.
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
@@ -34,13 +42,13 @@ if (typeof gwasCredibleSets === 'undefined') {
      * @public
      * @augments LocusZoom.Data.Source
      */
-    LocusZoom.ext.Data.CredibleSetLZ = LocusZoom.Data.Source.extend(function(init) {
+    var CredibleSetLZ = LocusZoom.Data.Source.extend(function(init) {
         this.parseInit(init);
         this.enableCache = true;
         this.dependentSource = true; // Don't do calcs for a region with no assoc data
     }, 'CredibleSetLZ');
 
-    LocusZoom.ext.Data.CredibleSetLZ.prototype.parseInit = function (init) {
+    CredibleSetLZ.prototype.parseInit = function (init) {
         this.params = init.params;
         if (!(this.params.fields && this.params.fields.log_pvalue)) {
             throw new Error('Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'");
@@ -50,12 +58,12 @@ if (typeof gwasCredibleSets === 'undefined') {
         }
     };
 
-    LocusZoom.ext.Data.CredibleSetLZ.prototype.getCacheKey = function(state, chain, fields) {
+    CredibleSetLZ.prototype.getCacheKey = function(state, chain, fields) {
         var threshold = state.credible_set_threshold || this.params.threshold;
         return [ threshold, state.chr, state.start, state.end ].join('_');
     };
 
-    LocusZoom.ext.Data.CredibleSetLZ.prototype.fetchRequest = function (state, chain) {
+    CredibleSetLZ.prototype.fetchRequest = function (state, chain) {
         var self = this;
         // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
         var threshold = state.credible_set_threshold || this.params.threshold;
@@ -90,7 +98,7 @@ if (typeof gwasCredibleSets === 'undefined') {
         return Q.when(credset_data);
     };
 
-    LocusZoom.ext.Data.CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
+    CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
         // At this point namespacing has been applied; add the calculated fields for this source to the chain
         for (var i = 0; i < data.length ; i++) {
             var src = data[i];
@@ -284,4 +292,8 @@ if (typeof gwasCredibleSets === 'undefined') {
             LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
         ]
     });
-}();
+
+    // Public interface for this extension; since everything is registered w/LocusZoom, this is rarely used directly.
+    return { CredibleSetLZ: CredibleSetLZ };
+}));
+
