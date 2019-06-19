@@ -887,7 +887,7 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
         }
     }
     this.generateBase64SVG = function() {
-        return Q.fcall(function () {
+        return new Promise(function (resolve, reject) {
             // Insert a hidden div, clone the node into that so we can modify it with d3
             var container = this.parent.selector.append('div').style('display', 'none')
                 .html(this.parent_plot.svg.node().outerHTML);
@@ -908,9 +908,9 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
             // Delete the container node
             container.remove();
             // Base64-encode the string and return it
-            return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+            resolve(btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
                 return String.fromCharCode('0x' + p1);
-            }));
+            })));
         }.bind(this));
     };
 });

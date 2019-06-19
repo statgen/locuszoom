@@ -562,7 +562,7 @@ describe('LocusZoom.DataLayer', function() {
                     assert.deepEqual(json1, this.ds1_expected_json_data);
                     assert.deepEqual(json2, this.ds2_expected_json_data);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
         it("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function(done) {
             this.plot.applyState({ start: 0, end: 100 })
@@ -572,7 +572,7 @@ describe('LocusZoom.DataLayer', function() {
                     assert.deepEqual(csv1, this.ds1_expected_csv_data);
                     assert.deepEqual(csv2, this.ds2_expected_csv_data);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
         it("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function(done) {
             this.plot.applyState({ start: 0, end: 100 })
@@ -582,7 +582,7 @@ describe('LocusZoom.DataLayer', function() {
                     assert.deepEqual(tsv1, this.ds1_expected_csv_data.replace(/,/g,'\t'));
                     assert.deepEqual(tsv2, this.ds2_expected_csv_data.replace(/,/g,'\t'));
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
     });
 
@@ -639,7 +639,7 @@ describe('LocusZoom.DataLayer', function() {
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
                     this.plot.state[state_id].highlighted.length.should.be.exactly(0);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
         it('should allow for highlighting and unhighlighting all elements', function(done) {
             this.plot.lzd.getData({}, ['d:id'])
@@ -657,7 +657,7 @@ describe('LocusZoom.DataLayer', function() {
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
                     this.plot.state[state_id].highlighted.length.should.be.exactly(0);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
     });
 
@@ -714,7 +714,7 @@ describe('LocusZoom.DataLayer', function() {
                     this.plot.panels.p.data_layers.d.unselectElement(c);
                     this.plot.state[state_id].selected.length.should.be.exactly(0);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
         it('should allow for selecting and unselecting all elements', function(done) {
             this.plot.lzd.getData({}, ['d:id'])
@@ -732,7 +732,7 @@ describe('LocusZoom.DataLayer', function() {
                     this.plot.panels.p.data_layers.d.unselectAllElements();
                     this.plot.state[state_id].selected.length.should.be.exactly(0);
                     done();
-                }.bind(this)).fail(done);
+                }.bind(this)).catch(done);
         });
     });
 

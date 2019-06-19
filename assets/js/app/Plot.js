@@ -1035,7 +1035,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
         this.remap_promises.push(this.panels[id].reMap());
     }
 
-    return Q.all(this.remap_promises)
+    return Promise.all(this.remap_promises)
         .catch(function(error) {
             console.error(error);
             this.curtain.show(error.message || error);

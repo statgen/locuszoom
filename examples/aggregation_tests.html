@@ -206,7 +206,7 @@
     //  masks is fetched from a server endpoint that returns simple metadata for this region
     var WIDGET_SELECTOR_AGGREGATION = "#widget-aggregation-builder";
     $.ajax("https://portaldev.sph.umich.edu/raremetal/v1/aggregation/metadata") // For demo purposes. A real UI might provide a different way of defining masks.
-        .done(function (resp) {
+        .then(function (resp) {
             // Flatten out the masks from all datasets into a single array, then load mask list into builder widget
 
             var dataset = resp.data[0];
@@ -254,7 +254,7 @@
 
             })
 
-        }).fail(function () {
+        }).catch(function () {
         $(WIDGET_SELECTOR_AGGREGATION).text("An error occurred while fetching available masks. Please reload the page.");
     });
 

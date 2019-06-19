@@ -12,22 +12,22 @@
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
 // Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
 //  systems may require being told that this file has side effects.
-/* global define, module, require */
+/* global define, module, require, Promise */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'gwas-credible-sets', 'q'] , function(LocusZoom, gwasCredibleSets, Q) {  // amd
-            return factory(LocusZoom, gwasCredibleSets, Q);
+        define(['locuszoom', 'gwas-credible-sets'] , function(LocusZoom, gwasCredibleSets) {  // amd
+            return factory(LocusZoom, gwasCredibleSets);
         });
     } else if(typeof module === 'object' && module.exports) {  // commonJS
-        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'), require('q'));
+        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'));
     } else {  // globals
         if (!root.LocusZoom.ext.Data) {
             root.LocusZoom.ext.Data = {};
         }
-        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets, root.Q);
+        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets);
     }
-}(this, function(LocusZoom, gwasCredibleSets, Q) {
+}(this, function(LocusZoom, gwasCredibleSets) {
     /**
      * Custom data source that calculates the 95% credible set based on provided data.
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
@@ -95,7 +95,7 @@
             // If the calculation cannot be completed, return the data without annotation fields
             console.error(e);
         }
-        return Q.when(credset_data);
+        return Promise.resolve(credset_data);
     };
 
     CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {

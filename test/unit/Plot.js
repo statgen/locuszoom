@@ -469,31 +469,31 @@ describe('LocusZoom.Plot', function() {
         it('Should apply basic start/end state validation when necessary', function(done) {
             this.layout.state = { chr: 1, start: -60, end: 10300050 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
         it('Should apply minimum region scale state validation if set in the plot layout', function(done) {
             this.layout.min_region_scale = 2000;
             this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
         it('Should apply maximum region scale state validation if set in the plot layout', function(done) {
             this.layout.max_region_scale = 4000000;
             this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
     });
 
