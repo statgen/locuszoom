@@ -407,6 +407,10 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
     });
 }
 
+// For the UI, reformat the list of available tests as [id, Label] entries
+var TEST_LABELS = Object.keys(raremetal.helpers.AGGREGATION_TESTS).map(function (id) {
+    return [id, raremetal.helpers.AGGREGATION_TESTS[id].label];
+});
 
 function makeUI(selector, geno_id, build, masks, phenotypes) {
     // The UI is written in Vue.js. Although modern tooling can be nice, this example can be reused via plain JS.
@@ -417,10 +421,7 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                 // options passed in at creation
                 masks: masks,
                 phenotypes: phenotypes,  // { categoryID: {description: str, phenotypes: [str]} }
-                calc_names: [
-                    ['burden', 'Burden'],
-                    ['skat', 'SKAT']
-                ],
+                calc_names: TEST_LABELS,
                 // Tracking internal state
                 status_css: { color: 'red' },
                 status_message: null,

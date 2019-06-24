@@ -15,21 +15,21 @@
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'raremetal.js'] , function(LocusZoom, raremetal) {  // amd
+        define(['locuszoom', 'raremetal.js'], function (LocusZoom, raremetal) {  // amd
             return factory(LocusZoom, raremetal);
         });
-    } else if(typeof module === 'object' && module.exports) {  // commonJS
+    } else if (typeof module === 'object' && module.exports) {  // commonJS
         module.exports = factory(require('locuszoom'), require('raremetal.js'));
     } else {  // globals
         if (!root.LocusZoom.ext.Data) {
             root.LocusZoom.ext.Data = {};
         }
         var sources = factory(root.LocusZoom, root.raremetal);
-        Object.keys(sources).forEach(function(key) {
+        Object.keys(sources).forEach(function (key) {
             root.LocusZoom.ext.Data[key] = sources[key];
         });
     }
-}(this, function(LocusZoom, raremetal) {
+}(this, function (LocusZoom, raremetal) {
     /**
      * Data Source that calculates gene or region-based tests based on provided data
      *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
@@ -60,7 +60,9 @@
         chain.header.aggregation_calcs = required_info.calcs || {};  // String[]
         var mask_data = required_info.masks || [];
         chain.header.aggregation_masks = mask_data;  // {name:desc}[]
-        chain.header.aggregation_mask_ids = mask_data.map(function(item) { return item.name; }); // Number[]
+        chain.header.aggregation_mask_ids = mask_data.map(function (item) {
+            return item.name;
+        }); // Number[]
         return this.url;
     };
 
@@ -130,24 +132,25 @@
             return { variants: [], groups: [], results: [] };
         }
         var runner = new raremetal.helpers.PortalTestRunner(groups, variants, calcs);
-        try {
-            var res = runner.toJSON();
-        } catch (e) {
-            console.error(e);
-            throw new Error('Failed to calculate aggregation test results');
-        }
 
-        // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
-        // We will annotate each mask name (id) with a human-friendly description for later use
-        var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
-            acc[val.name] = val.description;
-            return acc;
-        }, {});
-        res.data.groups.forEach(function(group)  {
-            group.mask_name = mask_id_to_desc[group.mask];
-        });
+        return runner.toJSON()
+            .then(function (res) {
+                // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
+                // We will annotate each mask name (id) with a human-friendly description for later use
+                var mask_id_to_desc = chain.header.aggregation_masks.reduce(function (acc, val) {
+                    acc[val.name] = val.description;
+                    return acc;
+                }, {});
+                res.data.groups.forEach(function (group) {
+                    group.mask_name = mask_id_to_desc[group.mask];
+                });
 
-        return res.data;
+                return res.data;
+            })
+            .catch(function (e) {
+                console.error(e);
+                throw new Error('Failed to calculate aggregation test results');
+            });
     };
 
     AggregationTestSource.prototype.normalizeResponse = function (data) {
