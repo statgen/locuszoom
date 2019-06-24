@@ -284,7 +284,7 @@ describe('LocusZoom Data', function() {
             it('dependentSource makes a request if chain.body has data from previous sources', function(done) {
                 var source = new LocusZoom.Data.Source();
                 source.dependentSource = false;
-                var requestStub = this.sandbox.stub(source, 'getRequest').callsFake(function() { return Q.when(); });
+                var requestStub = this.sandbox.stub(source, 'getRequest').callsFake(function() { return Promise.resolve(); });
                 this.sandbox.stub(source, 'parseResponse').callsFake(function() {
                     // Because this is an async test, `done` will serve as proof that parseResponse was called
                     done();
@@ -506,17 +506,17 @@ describe('LocusZoom Data', function() {
                 it('integrates all methods via promise semantics', function () {
                     // Returning a promise is optional, but should be supported if a custom subclass chooses to do so
                     var basic_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        normalizeResponse: function () { return Q.when( [{a:1}] ); },
+                        normalizeResponse: function () { return Promise.resolve( [{a:1}] ); },
                         annotateData: function (records) {
-                            return Q.when(records.map(function(item) {
+                            return Promise.resolve(records.map(function(item) {
                                 item.b = item.a + 1;
                                 return item;
                             }));
                         },
                         extractFields: function (data, fields, outnames, trans) {
                             var rec = data.map(function(item) { return {'bfield': item.b}; });
-                            return Q.when(rec); },
-                        combineChainBody: function (records) { return Q.when(records); }
+                            return Promise.resolve(rec); },
+                        combineChainBody: function (records) { return Promise.resolve(records); }
                     });
                     basic_source.prototype.constructor.SOURCE_NAME = 'fake_source';
 
@@ -754,7 +754,7 @@ describe('LocusZoom Data', function() {
                     data.should.have.property('body').which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
                     done();
-                }).fail(done);
+                }).catch(done);
         });
         it('should pass only specifically requested fields on static JSON through a getData() request (2)', function(done) {
             this.plot.lzd.getData({}, ['test:q'])
@@ -764,7 +764,7 @@ describe('LocusZoom Data', function() {
                     data.should.have.property('body').which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
                     done();
-                }).fail(done);
+                }).catch(done);
         });
     });
 

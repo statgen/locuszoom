@@ -766,7 +766,7 @@ LocusZoom.Panel.prototype.reMap = function() {
         }
     }
     // When all finished trigger a render
-    return Q.all(this.data_promises)
+    return Promise.all(this.data_promises)
         .then(function() {
             this.initialized = true;
             this.render();

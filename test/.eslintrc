@@ -8,7 +8,7 @@
     "assert": false,
     "d3": false,
     "LocusZoom": false,
-    "Q": false,
+    "Promise": false,
     "should": false,
     "sinon": false
   }
