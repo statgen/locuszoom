@@ -856,9 +856,9 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
                 this.button.selector
                     .classed('lz-dashboard-button-gray-disabled', true)
                     .html('Preparing Image');
-                this.generateBase64SVG().then(function(base64_string) {
+                this.generateBase64SVG().then(function(url) {
                     this.button.selector
-                        .attr('href', 'data:image/svg+xml;base64,\n' + base64_string)
+                        .attr('href', url)
                         .classed('lz-dashboard-button-gray-disabled', false)
                         .classed('lz-dashboard-button-gray-highlighted', true)
                         .html('Download Image');
@@ -907,10 +907,9 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
             initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
             // Delete the container node
             container.remove();
-            // Base64-encode the string and return it
-            resolve(btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function(match, p1) {
-                return String.fromCharCode('0x' + p1);
-            })));
+            // Create an object URL based on the rendered markup
+            var content = new Blob([initial_html], { type: 'image/svg+xml' });
+            resolve(URL.createObjectURL(content));
         }.bind(this));
     };
 });
