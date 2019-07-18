@@ -33,7 +33,8 @@
     "watch": "gulp watch"
   },
   "dependencies": {
-    "d3": "3.5.17"
+    "d3": "3.5.17",
+    "promise-polyfill": "^8.1.3"
   },
   "devDependencies": {
     "del": "~3.0.0",

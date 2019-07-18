@@ -20,7 +20,8 @@ The page you build that embeds the LocusZoom plugin must include the following r
 
 * `locuszoom.vendor.min.js`  
   This file contains the concatenated vendor libraries. You can alternatively include [d3](http://d3js.org/)
-  from other sources, so long as it is included **before including LocusZoom files**.
+  from other sources, so long as it is included **before including LocusZoom files**. This bundle also contains a 
+  polyfill for ES6 `Promise`, which you may need if your site supports certain older browsers such as Internet Explorer.
 
 * `locuszoom.app.js` OR `locuszoom.app.min.js`  
   This is the primary application logic. It should only be included *after* the vendor dependencies have been included.  
