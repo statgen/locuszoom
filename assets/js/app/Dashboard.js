@@ -857,6 +857,8 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
                     .classed('lz-dashboard-button-gray-disabled', true)
                     .html('Preparing Image');
                 this.generateBase64SVG().then(function(url) {
+                    var old = this.button.selector.attr('href');
+                    if (old) { URL.revokeObjectURL(old); }  // Clean up old url instance to prevent memory leaks
                     this.button.selector
                         .attr('href', url)
                         .classed('lz-dashboard-button-gray-disabled', false)
