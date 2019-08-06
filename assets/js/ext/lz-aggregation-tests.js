@@ -130,24 +130,24 @@
             return { variants: [], groups: [], results: [] };
         }
         var runner = new raremetal.helpers.PortalTestRunner(groups, variants, calcs);
-        try {
-            var res = runner.toJSON();
-        } catch (e) {
-            console.error(e);
-            throw new Error('Failed to calculate aggregation test results');
-        }
 
-        // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
-        // We will annotate each mask name (id) with a human-friendly description for later use
-        var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
-            acc[val.name] = val.description;
-            return acc;
-        }, {});
-        res.data.groups.forEach(function(group)  {
-            group.mask_name = mask_id_to_desc[group.mask];
-        });
-
-        return res.data;
+        return runner.toJSON()
+            .then(function(res) {
+                // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
+                // We will annotate each mask name (id) with a human-friendly description for later use
+                var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
+                    acc[val.name] = val.description;
+                    return acc;
+                }, {});
+                res.data.groups.forEach(function(group)  {
+                    group.mask_name = mask_id_to_desc[group.mask];
+                });
+                return res.data;
+            })
+            .catch(function(e) {
+                console.error(e);
+                throw new Error('Failed to calculate aggregation test results');
+            });
     };
 
     AggregationTestSource.prototype.normalizeResponse = function (data) {
