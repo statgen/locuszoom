@@ -234,8 +234,18 @@ LocusZoom.DataLayer.prototype.getElementById = function(id) {
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.applyDataMethods = function() {
+    var to_match = (this.layout.match && this.layout.match.receive);
+    var broadcast_value = this.parent_plot.state.lz_match_value;
+
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
+
+        if (to_match && broadcast_value && d[to_match] === broadcast_value) {
+            // When this layer receives data, mark any points that are found to match a globally declared value.
+            //   Layout configs can be told to render points in a custom way if this field is present.
+            d.lz_highlight_match = true;
+        }
+
         this.data[i].toHTML = function() {
             var id_field = this.layout.id_field || 'id';
             var html = '';
@@ -812,14 +822,22 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Trigger layout changed event hook
     this.parent.emit('layout_changed', true);
-    if (status === 'selected') {
+
+    var is_selected =  (status === 'selected');
+    if (is_selected) {
         // Notify parents that a given element has been interacted with. For now, we will only notify on
         //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
         //   events will be sent in short order as the previously selected element has to be de-selected first
         this.parent.emit('element_selection', { element: element, active: toggle }, true);
     }
-    return this;
 
+    var value_to_broadcast = (this.layout.match && this.layout.match.send);
+    if (is_selected && value_to_broadcast) {
+        this.parent.emit('highlight_requested', { value: element[value_to_broadcast], initiator: this.id }, true);
+        // TODO: Provide a mechanism to *un*highlight point when the previously selected element is de-selected
+        // TODO: Short of a full re-render, can we just update the matching points?
+    }
+    return this;
 };
 
 /**

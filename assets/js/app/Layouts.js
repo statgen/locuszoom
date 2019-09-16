@@ -383,6 +383,16 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
         fill_opacity: 0.7
     });
 
+    l.match = { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' };
+    l.color.shift({
+        field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+        scale_function: 'if',
+        parameters: {
+            field_value: true,
+            then: '#fff000'
+        }
+    });
+
     l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
     l.namespace.catalog = 'catalog';
     l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
@@ -569,6 +579,7 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
         '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue'
     ],
+    match: { send: '{{namespace[catalog]}}variant', receive: '{{namespace[catalog]}}variant' },
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ['{{namespace[catalog]}}rsid', '!=', null],
