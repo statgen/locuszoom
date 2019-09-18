@@ -810,6 +810,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
+    var new_status = element_status_idx === -1;
     if (toggle && element_status_idx === -1) {
         this.state[this.state_id][status].push(element_id);
     }
@@ -821,19 +822,22 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     this.showOrHideTooltip(element);
 
     // Trigger layout changed event hook
-    this.parent.emit('layout_changed', true);
+    if (new_status) {
+        this.parent.emit('layout_changed', true);
+    }
 
     var is_selected =  (status === 'selected');
-    if (is_selected) {
-        // Notify parents that a given element has been interacted with. For now, we will only notify on
+    if (is_selected && new_status) {
+        // Notify parents that a given element has been interacted with.
+        // For now, we will only notify on
         //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
         //   events will be sent in short order as the previously selected element has to be de-selected first
         this.parent.emit('element_selection', { element: element, active: toggle }, true);
     }
 
     var value_to_broadcast = (this.layout.match && this.layout.match.send);
-    if (is_selected && value_to_broadcast) {
-        this.parent.emit('highlight_requested', { value: element[value_to_broadcast], initiator: this.id }, true);
+    if (is_selected && new_status && value_to_broadcast) {
+        this.parent.emit('highlight_requested', element[value_to_broadcast], true);
         // TODO: Provide a mechanism to *un*highlight point when the previously selected element is de-selected
         // TODO: Short of a full re-render, can we just update the matching points?
     }
