@@ -383,13 +383,13 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
         fill_opacity: 0.7
     });
 
-    l.match = { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' };
-    l.color.shift({
+    l.match = { send: '{{namespace[assoc]}}position', receive: '{{namespace[assoc]}}position' };
+    l.color.unshift({
         field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
         scale_function: 'if',
         parameters: {
             field_value: true,
-            then: '#fff000'
+            then: '#FFf000'
         }
     });
 
@@ -577,9 +577,10 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
     color: '#0000CC',
     fields: [
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
-        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue'
+        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait',
+        '{{namespace[catalog]}}log_pvalue', '{{namespace[catalog]}}pos'
     ],
-    match: { send: '{{namespace[catalog]}}variant', receive: '{{namespace[catalog]}}variant' },
+    match: { send: '{{namespace[catalog]}}pos', receive: '{{namespace[catalog]}}pos' },
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ['{{namespace[catalog]}}rsid', '!=', null],
