@@ -574,7 +574,17 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
     x_axis: {
         field: '{{namespace[assoc]}}position'
     },
-    color: '#0000CC',
+    color: [
+        {
+            field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#FF0000'
+            }
+        },
+        '#0000CC'
+    ],
     fields: [
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
         '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait',
