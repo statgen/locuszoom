@@ -133,7 +133,7 @@ LocusZoom.Panel = function(layout, parent) {
         'data_rendered': [],
         'element_clicked': [],
         'element_selection': [],
-        'highlight_requested': [] // A data layer is attempting to highlight matching points (internal use only)
+        'match_requested': [] // A data layer is attempting to highlight matching points (internal use only)
     };
 
     /**

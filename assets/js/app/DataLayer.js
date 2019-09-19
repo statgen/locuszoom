@@ -773,11 +773,11 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx) {
  * Toggle a status (e.g. highlighted, selected, identified) on an element
  * @param {String} status The name of a recognized status to be added/removed on an appropriate element
  * @param {String|Object} element The data bound to the element of interest
- * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it
  * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive) {
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, active, exclusive) {
     // Sanity checks
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setElementStatus()');
@@ -785,8 +785,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     if (typeof element == 'undefined') {
         throw new Error('Invalid element passed to DataLayer.setElementStatus()');
     }
-    if (typeof toggle == 'undefined') {
-        toggle = true;
+    if (typeof active == 'undefined') {
+        active = true;
     }
 
     // Get an ID for the element or return having changed nothing
@@ -798,23 +798,23 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive) {
-        this.setAllElementStatus(status, !toggle);
+        this.setAllElementStatus(status, !active);
     }
 
     // Set/unset the proper status class on the appropriate DOM element(s)
-    d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, toggle);
+    d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, active);
     var element_status_node_id = this.getElementStatusNodeId(element);
     if (element_status_node_id !== null) {
-        d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, toggle);
+        d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, active);
     }
 
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
-    var new_status = element_status_idx === -1;
-    if (toggle && element_status_idx === -1) {
+    var new_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
+    if (active && new_status) {
         this.state[this.state_id][status].push(element_id);
     }
-    if (!toggle && element_status_idx !== -1) {
+    if (!active && !new_status) {
         this.state[this.state_id][status].splice(element_status_idx, 1);
     }
 
@@ -829,17 +829,16 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     var is_selected =  (status === 'selected');
     if (is_selected && new_status) {
         // Notify parents that a given element has been interacted with.
-        // For now, we will only notify on
-        //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
-        //   events will be sent in short order as the previously selected element has to be de-selected first
-        this.parent.emit('element_selection', { element: element, active: toggle }, true);
+        this.parent.emit('element_selection', { element: element, active: active }, true);
     }
 
     var value_to_broadcast = (this.layout.match && this.layout.match.send);
-    if (is_selected && new_status && value_to_broadcast) {
-        this.parent.emit('highlight_requested', element[value_to_broadcast], true);
-        // TODO: Provide a mechanism to *un*highlight point when the previously selected element is de-selected
-        // TODO: Short of a full re-render, can we just update the matching points?
+    if (is_selected && value_to_broadcast && (new_status || !active)) {
+        this.parent.emit(
+            'match_requested',
+            { value: element[value_to_broadcast], active: active },
+            true
+        );
     }
     return this;
 };
