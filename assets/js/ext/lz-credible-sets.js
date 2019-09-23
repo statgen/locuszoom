@@ -127,7 +127,7 @@
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
-        return LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
+        var base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
             unnamespaced: true,
             id: 'associationcredibleset',
             namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
@@ -140,8 +140,18 @@
                 '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
                 '{{namespace[credset]}}is_member',
                 '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'
-            ]
+            ],
+            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' }
         });
+        base.color.unshift({
+            field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#FFf000'
+            }
+        });
+        return base;
     }());
 
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', {
@@ -152,8 +162,19 @@
         x_axis: {
             field: '{{namespace[assoc]}}position'
         },
-        color: '#00CC00',
+        color: [
+            {
+                field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+                scale_function: 'if',
+                parameters: {
+                    field_value: true,
+                    then: '#001cee'
+                }
+            },
+            '#00CC00'
+        ],
         fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
+        match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
             ['{{namespace[credset]}}is_member', true]
