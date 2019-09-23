@@ -843,30 +843,30 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
 
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
-    var new_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
-    if (active && new_status) {
+    var added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
+    if (active && added_status) {
         this.state[this.state_id][status].push(element_id);
     }
-    if (!active && !new_status) {
+    if (!active && !added_status) {
         this.state[this.state_id][status].splice(element_status_idx, 1);
     }
 
     // Trigger tool tip show/hide logic
-    this.showOrHideTooltip(element, new_status);
+    this.showOrHideTooltip(element, added_status);
 
     // Trigger layout changed event hook
-    if (new_status) {
+    if (added_status) {
         this.parent.emit('layout_changed', true);
     }
 
     var is_selected =  (status === 'selected');
-    if (is_selected && new_status) {
-        // Notify parents that a given element has been interacted with.
+    if (is_selected && (added_status || !active)) {
+        // Notify parents that an element has changed selection status (either active, or inactive)
         this.parent.emit('element_selection', { element: element, active: active }, true);
     }
 
     var value_to_broadcast = (this.layout.match && this.layout.match.send);
-    if (is_selected && value_to_broadcast && (new_status || !active)) {
+    if (is_selected && value_to_broadcast && (added_status || !active)) {
         this.parent.emit(
             'match_requested',
             { value: element[value_to_broadcast], active: active },
