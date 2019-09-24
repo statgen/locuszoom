@@ -499,7 +499,6 @@ describe('LocusZoom.Plot', function() {
 
     describe('subscribeToData', function() {
         beforeEach(function() {
-            this.sandbox = sinon.sandbox.create();
             var layout = {
                 panels: [ { id: 'panel0' } ]
             };
@@ -514,13 +513,13 @@ describe('LocusZoom.Plot', function() {
 
         afterEach(function() {
             d3.select('#plot').remove();
-            this.sandbox.restore();
+            sinon.restore();
         });
 
         it('allows subscribing to data using a standard limited fields array', function (done) {
             var expectedData = [ {'first:x': 0}, {'first:x': 1} ];
 
-            var dataCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'first:x' ],
@@ -545,7 +544,7 @@ describe('LocusZoom.Plot', function() {
 
         it('allows subscribing to individual (not combined) sources', function (done) {
             var expectedData = { first: [ {'first:x': 0}, {'first:x': 1} ] };
-            var dataCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'first:x' ],
@@ -566,8 +565,8 @@ describe('LocusZoom.Plot', function() {
         });
 
         it('calls an error callback if a problem occurs while fetching data', function() {
-            var dataCallback = this.sandbox.spy();
-            var errorCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
+            var errorCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'nosource:x' ],

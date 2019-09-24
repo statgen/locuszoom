@@ -75,11 +75,8 @@ describe('LocusZoom.ext.DynamicUrls', function() {
     describe('plotUpdateUrl', function() {
         beforeEach(function() {
             this.plot = new LocusZoom.Plot('plot', null, {state: { chr: 1, start: 1000, end: 5000 }});
-
             // jsdom doesn't fully implement navigation, so we will check the act of changing URL instead of the result
-            this.sandbox = sinon.sandbox.create();
-
-            this.historySpy = this.sandbox.stub(history, 'replaceState'); // We can't set init query string, else this would spy on pushState
+            this.historySpy = sinon.stub(history, 'replaceState'); // We can't set init query string, else this would spy on pushState
         });
 
         it('returns a handle to the newly created event listener', function () {
@@ -88,7 +85,7 @@ describe('LocusZoom.ext.DynamicUrls', function() {
         });
 
         it('calls a custom serialization callback if provided', function() {
-            var spy = this.sandbox.spy(function() { return {}; });
+            var spy = sinon.spy(function() { return {}; });
             var stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
             this.extension.plotUpdatesUrl(this.plot, stateUrlMapping, spy);
 
@@ -130,7 +127,7 @@ describe('LocusZoom.ext.DynamicUrls', function() {
             delete this.plot;
 
             // Remove all sinon stubs used for this test
-            this.sandbox.restore();
+            sinon.restore();
         });
     });
 
@@ -140,13 +137,12 @@ describe('LocusZoom.ext.DynamicUrls', function() {
             this.plot = new LocusZoom.Plot('plot', null, {state: { chr: 1, start: 1000, end: 5000 }});
 
             // jsdom doesn't fully implement navigation, so we will check the act of changing URL instead of the result
-            this.sandbox = sinon.sandbox.create();
         });
 
         it('calls a custom deserialization callback when appropriate', function() {
             var stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
             var plot = this.plot;
-            var spy = this.sandbox.spy(function(plot, data) {
+            var spy = sinon.spy(function(plot, data) {
                 // jsdom has trouble mutating window.location, so data will be blank. The callback can perform
                 //   arbitrary operations on the plot as evidence the watcher has worked.
                 plot.state.newField = 1;
@@ -165,7 +161,7 @@ describe('LocusZoom.ext.DynamicUrls', function() {
 
         it('uses new information from the url to alter the plot state', function() {
             var stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
-            var spy = this.sandbox.spy();
+            var spy = sinon.spy();
 
             this.extension.plotWatchesUrl(this.plot, stateUrlMapping, spy);
 
@@ -182,7 +178,7 @@ describe('LocusZoom.ext.DynamicUrls', function() {
             delete this.plot;
 
             // Remove all sinon stubs used for this test
-            this.sandbox.restore();
+            sinon.restore();
         });
     });
 

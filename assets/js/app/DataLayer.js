@@ -826,6 +826,7 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
     try {
         var element_id = this.getElementId(element);
     } catch (get_element_id_error) {
+        console.warn(get_element_id_error);
         return this;
     }
 
