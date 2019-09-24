@@ -420,7 +420,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
         floor: 0,
         upper_buffer: 0.15
     },
-    color: {
+    color: [{
         field: '{{namespace[phewas]}}trait_group',
         scale_function: 'categorical_bin',
         parameters: {
@@ -428,7 +428,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
             values: [],
             null_value: '#B8B8B8'
         }
-    },
+    }],
     fill_opacity: 0.7,
     tooltip: {
         closable: true,
