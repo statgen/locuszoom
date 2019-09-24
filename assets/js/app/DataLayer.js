@@ -243,7 +243,7 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function() {
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
-        if (to_match && broadcast_value && d[to_match] === broadcast_value) {
+        if (to_match && broadcast_value !== undefined && d[to_match] === broadcast_value) {
             // When this layer receives data, mark any points that are found to match a globally declared value.
             //   Layout configs can be told to render points in a custom way if this field is present.
             d.lz_highlight_match = true;
@@ -483,7 +483,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(data) {
     if (typeof this.layout.tooltip != 'object') {
         throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
     }
-    var id = id || this.getElementId(data);
+    var id = this.getElementId(data);
     if (this.tooltips[id]) {
         this.positionTooltip(id);
         return;
