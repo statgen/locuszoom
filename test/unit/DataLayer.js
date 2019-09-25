@@ -754,7 +754,19 @@ describe('LocusZoom.DataLayer', function () {
                 panels: [
                     {
                         id: 'p',
-                        data_layers: []
+                        data_layers: [
+                            {
+                                id: 'd',
+                                type: 'scatter',
+                                tooltip: {
+                                    closable: true,
+                                    show: { or: ['highlighted', 'selected'] },
+                                    hide: { and: ['unhighlighted', 'unselected'] },
+                                    html: 'foo'
+                                },
+                                behaviors: { onclick: [{ action: 'toggle', status: 'selected', exclusive: true }] }
+                            }
+                        ]
                     }
                 ]
             };
@@ -765,16 +777,9 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
-        it('should allow for creating and destroying tool tips', function() {
-            this.plot.panels.p.addDataLayer({
-                id: 'd',
-                type: 'scatter',
-                tooltip: {
-                    html: 'foo'
-                }
-            });
-            this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' },{ id: 'c' }];
-            this.plot.panels.p.data_layers.d.positionTooltip = function() { return 0; };
+        it('should allow for creating and destroying tool tips', function () {
+            this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+            this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
             var a = this.plot.panels.p.data_layers.d.data[0];
             var a_id = this.plot.panels.p.data_layers.d.getElementId(a);
             var a_id_q = '#' + (a_id + '-tooltip').replace(/(:|\.|\[|\]|,)/g, '\\$1');
@@ -789,20 +794,9 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], 'undefined');
             assert.equal(d3.select(a_id_q).empty(), true);
         });
-        it('should allow for showing or hiding a tool tip based on layout directives and element status', function() {
-            this.plot.panels.p.addDataLayer({
-                id: 'd',
-                type: 'scatter',
-                highlighted: { onmouseover: 'toggle' },
-                selected: { onclick: 'toggle' },
-                tooltip: {
-                    show: { or: ['highlighted', 'selected'] },
-                    hide: { and: ['unhighlighted', 'unselected'] },
-                    html: ''
-                }
-            });
-            this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' },{ id: 'c' }];
-            this.plot.panels.p.data_layers.d.positionTooltip = function() { return 0; };
+        it('should allow for showing or hiding a tool tip based on layout directives and element status', function () {
+            this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+            this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
             var d = this.plot.panels.p.data_layers.d;
             var a = d.data[0];
             var a_id = d.getElementId(a);
@@ -828,6 +822,41 @@ describe('LocusZoom.DataLayer', function () {
             d.unhighlightElement(b);
             d.unselectElement(b);
             should(d.tooltips[b_id]).be.type('undefined');
+        });
+
+        it('should allow tooltip open/close state to be tracked separately from element selection', function () {
+            // Regression test for zombie tooltips returning after re-render
+            var layer = this.plot.panels.p.data_layers.d;
+
+            var item_a = { id: 'a' };
+            layer.data = [item_a, { id: 'b' }, { id: 'c' }];
+            layer.positionTooltip = function () {
+                return 0;
+            }; // Override for unit testing
+
+            // Select a point (which will create a tooltip due to element status). Then close tooltip and re-render.
+            //  Confirm state is tracked and tooltip does not magically return.
+            var self = this;
+            return self.plot.applyState().then(function () { // Render initially so that plot is set up right
+                var layer_state = layer.state[layer.state_id];
+                layer.setElementStatus('selected', item_a, true, true);
+                var internal_id = layer.getElementId(item_a);
+
+                assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
+                assert.ok(layer_state['selected'].includes(internal_id), 'Item was initially selected');
+
+                layer.destroyTooltip(item_a);
+                assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
+
+                assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
+                assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
+
+                return self.plot.applyState().then(function () { // Force a re-render to see if zombie items remain
+                    var layer_state = layer.state[layer.state_id];
+                    assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after re-render');
+                    assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
+                });
+            });
         });
     });
 
