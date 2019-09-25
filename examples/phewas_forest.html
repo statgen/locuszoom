@@ -161,10 +161,10 @@
                                 closable: true,
                                 show: { or: ["highlighted", "selected"] },
                                 hide: { and: ["unhighlighted", "unselected"] },
-                                html: "<strong>{{{{namespace[phewas]}}phenotype}}</strong><br>"
-                                    + "P Value: <strong>{{{{namespace[phewas]}}log_pvalue|logtoscinotation}}</strong><br>"
-                                    + "Odds Ratio: <strong>{{{{namespace[phewas]}}beta}}</strong><br>"
-                                    + "95% Conf. Interval: <strong>[ {{{{namespace[phewas]}}ci_start}} {{{{namespace[phewas]}}ci_end}} ]</strong>"
+                                html: "<strong>{{{{namespace[phewas]}}phenotype|htmlescape}}</strong><br>"
+                                    + "P Value: <strong>{{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                                    + "Odds Ratio: <strong>{{{{namespace[phewas]}}beta|htmlescape}}</strong><br>"
+                                    + "95% Conf. Interval: <strong>[ {{{{namespace[phewas]}}ci_start|htmlescape}} {{{{namespace[phewas]}}ci_end|htmlescape}} ]</strong>"
                             }
                         },
                         {
