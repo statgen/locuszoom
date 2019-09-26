@@ -657,9 +657,9 @@ describe('LocusZoom.Plot', function() {
                 var d2 = get_matches(plot.panels.p.data_layers.d2.data);
                 var d3 = get_matches(plot.panels.p.data_layers.d3.data);
 
-                assert.deepEqual(d1, [true, undefined], 'd1 responded to match event');
-                assert.deepEqual(d2, [undefined, undefined], 'd2 ignored match event');
-                assert.deepEqual(d3, [undefined, undefined], 'd3 saw match event but no values matched');
+                assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
+                assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
+                assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
             });
         });
     });

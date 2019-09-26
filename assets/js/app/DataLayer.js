@@ -237,16 +237,16 @@ LocusZoom.DataLayer.prototype.getElementById = function(id) {
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.applyDataMethods = function() {
-    var to_match = (this.layout.match && this.layout.match.receive);
+    var field_to_match = (this.layout.match && this.layout.match.receive);
     var broadcast_value = this.parent_plot.state.lz_match_value;
 
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
-        if (to_match && broadcast_value !== undefined && d[to_match] === broadcast_value) {
-            // When this layer receives data, mark any points that are found to match a globally declared value.
-            //   Layout configs can be told to render points in a custom way if this field is present.
-            d.lz_highlight_match = true;
+        // When this layer receives data, mark whether points match (via a synthetic boolean field)
+        //   Any field-based layout directives (color, size, shape) can then be used to control display
+        if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
+            d.lz_highlight_match = (d[field_to_match] === broadcast_value);
         }
 
         this.data[i].toHTML = function() {
