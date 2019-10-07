@@ -112,7 +112,7 @@
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
         var l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>';
+        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>';
         return l;
     }());
 
@@ -121,9 +121,9 @@
         closable: true,
         show: {or: ['highlighted', 'selected']},
         hide: {and: ['unhighlighted', 'unselected']},
-        html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>'
-        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>' +
-        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>'
+        html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
+        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
+        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>'
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {

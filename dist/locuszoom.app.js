@@ -1,20 +1,17 @@
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define([
-            'd3',
-            'q'
-        ], function (d3, Q) {
+        define(['d3'], function (d3) {
             // amd
-            return root.LocusZoom = factory(d3, Q);
+            return root.LocusZoom = factory(d3);
         });
     } else if (typeof module === 'object' && module.exports) {
         // commonJS
-        module.exports = root.LocusZoom = factory(require('d3'), require('q'));
+        module.exports = root.LocusZoom = factory(require('d3'));
     } else {
         // globals
-        root.LocusZoom = factory(root.d3, root.Q);
+        root.LocusZoom = factory(root.d3);
     }
-}(this, function (d3, Q) {
+}(this, function (d3) {
     var semanticVersionIsOk = function (minimum_version, current_version) {
         // handle the trivial case
         if (current_version == minimum_version) {
@@ -39,10 +36,6 @@
         }
         if (!semanticVersionIsOk(minimum_d3_version, d3.version)) {
             throw new Error('d3 dependency not met. Outdated version detected.\nRequired d3 version: ' + minimum_d3_version + ' or higher (found: ' + d3.version + ').');
-        }    // Verify dependency: Q.js
-        // Verify dependency: Q.js
-        if (typeof Q != 'function') {
-            throw new Error('Q dependency not met. Library missing.');
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
@@ -285,42 +278,42 @@
  * @returns {Promise}
  */
         LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
-            var response = Q.defer();
-            var xhr = new XMLHttpRequest();
-            if ('withCredentials' in xhr) {
-                // Check if the XMLHttpRequest object has a "withCredentials" property.
-                // "withCredentials" only exists on XMLHTTPRequest2 objects.
-                xhr.open(method, url, true);
-            } else if (typeof XDomainRequest != 'undefined') {
-                // Otherwise, check if XDomainRequest.
-                // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
-                xhr = new XDomainRequest();
-                xhr.open(method, url);
-            } else {
-                // Otherwise, CORS is not supported by the browser.
-                xhr = null;
-            }
-            if (xhr) {
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200 || xhr.status === 0) {
-                            response.resolve(xhr.response);
-                        } else {
-                            response.reject('HTTP ' + xhr.status + ' for ' + url);
+            return new Promise(function (resolve, reject) {
+                var xhr = new XMLHttpRequest();
+                if ('withCredentials' in xhr) {
+                    // Check if the XMLHttpRequest object has a "withCredentials" property.
+                    // "withCredentials" only exists on XMLHTTPRequest2 objects.
+                    xhr.open(method, url, true);
+                } else if (typeof XDomainRequest != 'undefined') {
+                    // Otherwise, check if XDomainRequest.
+                    // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+                    xhr = new XDomainRequest();
+                    xhr.open(method, url);
+                } else {
+                    // Otherwise, CORS is not supported by the browser.
+                    xhr = null;
+                }
+                if (xhr) {
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200 || xhr.status === 0) {
+                                resolve(xhr.response);
+                            } else {
+                                reject('HTTP ' + xhr.status + ' for ' + url);
+                            }
+                        }
+                    };
+                    timeout && setTimeout(reject, timeout);
+                    body = typeof body !== 'undefined' ? body : '';
+                    if (typeof headers !== 'undefined') {
+                        for (var header in headers) {
+                            xhr.setRequestHeader(header, headers[header]);
                         }
                     }
-                };
-                timeout && setTimeout(response.reject, timeout);
-                body = typeof body !== 'undefined' ? body : '';
-                if (typeof headers !== 'undefined') {
-                    for (var header in headers) {
-                        xhr.setRequestHeader(header, headers[header]);
-                    }
+                    // Send the request
+                    xhr.send(body);
                 }
-                // Send the request
-                xhr.send(body);
-            }
-            return response.promise;
+            });
         };
         /**
  * Validate a (presumed complete) plot state object against internal rules for consistency, and ensure the plot fits
@@ -7307,8 +7300,13 @@
                 }
                 this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml('Download Image').setTitle('Download image of the current plot as locuszoom.svg').setOnMouseover(function () {
                     this.button.selector.classed('lz-dashboard-button-gray-disabled', true).html('Preparing Image');
-                    this.generateBase64SVG().then(function (base64_string) {
-                        this.button.selector.attr('href', 'data:image/svg+xml;base64,\n' + base64_string).classed('lz-dashboard-button-gray-disabled', false).classed('lz-dashboard-button-gray-highlighted', true).html('Download Image');
+                    this.generateBase64SVG().then(function (url) {
+                        var old = this.button.selector.attr('href');
+                        if (old) {
+                            URL.revokeObjectURL(old);
+                        }
+                        // Clean up old url instance to prevent memory leaks
+                        this.button.selector.attr('href', url).classed('lz-dashboard-button-gray-disabled', false).classed('lz-dashboard-button-gray-highlighted', true).html('Download Image');
                     }.bind(this));
                 }.bind(this)).setOnMouseout(function () {
                     this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
@@ -7331,7 +7329,7 @@
                 }
             }
             this.generateBase64SVG = function () {
-                return Q.fcall(function () {
+                return new Promise(function (resolve, reject) {
                     // Insert a hidden div, clone the node into that so we can modify it with d3
                     var container = this.parent.selector.append('div').style('display', 'none').html(this.parent_plot.svg.node().outerHTML);
                     // Remove unnecessary elements
@@ -7350,10 +7348,9 @@
                     initial_html = initial_html.slice(0, insert_at) + style_def + initial_html.slice(insert_at);
                     // Delete the container node
                     container.remove();
-                    // Base64-encode the string and return it
-                    return btoa(encodeURIComponent(initial_html).replace(/%([0-9A-F]{2})/g, function (match, p1) {
-                        return String.fromCharCode('0x' + p1);
-                    }));
+                    // Create an object URL based on the rendered markup
+                    var content = new Blob([initial_html], { type: 'image/svg+xml' });
+                    resolve(URL.createObjectURL(content));
                 }.bind(this));
             };
         });
@@ -8358,7 +8355,7 @@
                 });
                 //assume the fields are requested in dependent order
                 //TODO: better manage dependencies
-                var ret = Q.when({
+                var ret = Promise.resolve({
                     header: {},
                     body: [],
                     discrete: {}
@@ -8446,7 +8443,7 @@
             var req;
             var cacheKey = this.getCacheKey(state, chain, fields);
             if (this.enableCache && typeof cacheKey !== 'undefined' && cacheKey === this._cachedKey) {
-                req = Q.when(this._cachedResponse);    // Resolve to the value of the current promise
+                req = Promise.resolve(this._cachedResponse);    // Resolve to the value of the current promise
             } else {
                 req = this.fetchRequest(state, chain, fields);
                 if (this.enableCache) {
@@ -8484,7 +8481,7 @@
                 if (self.dependentSource && chain && chain.body && !chain.body.length) {
                     // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
                     // Therefore, it should simply return the previous data chain.
-                    return Q.when(chain);
+                    return Promise.resolve(chain);
                 }
                 return self.getRequest(state, chain, fields).then(function (resp) {
                     return self.parseResponse(resp, chain, fields, outnames, trans);
@@ -8639,21 +8636,21 @@
                 // to occur for annotation sources (such as from ExAC). If empty response is received, skip parsing and log.
                 // FIXME: Throw an error after pending, eg https://github.com/konradjk/exac_browser/issues/345
                 console.error('No usable response was returned for source: \'' + source_id + '\'. Parsing will be skipped.');
-                return Q.when(chain);
+                return Promise.resolve(chain);
             }
             var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
             var self = this;
             // Perform the 4 steps of parsing the payload and return a combined chain object
-            return Q.when(self.normalizeResponse(json.data || json)).then(function (standardized) {
+            return Promise.resolve(self.normalizeResponse(json.data || json)).then(function (standardized) {
                 // Perform calculations on the data from just this source
-                return Q.when(self.annotateData(standardized, chain));
+                return Promise.resolve(self.annotateData(standardized, chain));
             }).then(function (data) {
-                return Q.when(self.extractFields(data, fields, outnames, trans));
+                return Promise.resolve(self.extractFields(data, fields, outnames, trans));
             }).then(function (one_source_body) {
                 // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
                 //   fields array into account). This is useful when we want to re-use the source output in many ways.
                 chain.discrete[source_id] = one_source_body;
-                return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
+                return Promise.resolve(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
             }).then(function (new_body) {
                 return {
                     header: chain.header || {},
@@ -9244,9 +9241,7 @@
             this._data = data;
         }, 'StaticJSON');
         LocusZoom.Data.StaticSource.prototype.getRequest = function (state, chain, fields) {
-            return Q.fcall(function () {
-                return this._data;
-            }.bind(this));
+            return Promise.resolve(this._data);
         };
         LocusZoom.Data.StaticSource.prototype.toJSON = function () {
             return [
@@ -9341,14 +9336,14 @@
                     throw new Error(self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id);
                 }
             });
-            return Q.when(chain.body || []);
+            return Promise.resolve(chain.body || []);
         };
         LocusZoom.Data.ConnectorSource.prototype.parseResponse = function (data, chain, fields, outnames, trans) {
             // A connector source does not update chain.discrete, but it may use it. It bypasses data formatting
             //  and field selection (both are assumed to have been done already, by the previous sources this draws from)
             // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
             // Typically connectors are called with `connector_name:all` in the fields array.
-            return Q.when(this.combineChainBody(data, chain, fields, outnames, trans)).then(function (new_body) {
+            return Promise.resolve(this.combineChainBody(data, chain, fields, outnames, trans)).then(function (new_body) {
                 return {
                     header: chain.header || {},
                     discrete: chain.discrete || {},
@@ -10303,7 +10298,7 @@
             for (var id in this.panels) {
                 this.remap_promises.push(this.panels[id].reMap());
             }
-            return Q.all(this.remap_promises).catch(function (error) {
+            return Promise.all(this.remap_promises).catch(function (error) {
                 console.error(error);
                 this.curtain.show(error.message || error);
                 this.loading_data = false;
@@ -11186,7 +11181,7 @@
                 }
             }
             // When all finished trigger a render
-            return Q.all(this.data_promises).then(function () {
+            return Promise.all(this.data_promises).then(function () {
                 this.initialized = true;
                 this.render();
                 this.emit('layout_changed', true);

@@ -119,9 +119,9 @@
                 show: { or: ["highlighted", "selected"] },
                 hide: { and: ["unhighlighted", "unselected"] },
                 html: "<strong>" + pheno.title + "</strong><br>"
-                    + "<strong>{{" + pheno.namespace + ":variant}}</strong><br>"
-                    + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation}}</strong><br>"
-                    + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele}}</strong><br>"
+                    + "<strong>{{" + pheno.namespace + ":variant|htmlescape}}</strong><br>"
+                    + "P Value: <strong>{{" + pheno.namespace + ":log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                    + "Ref. Allele: <strong>{{" + pheno.namespace + ":ref_allele|htmlescape}}</strong><br>"
             }
         };
         layout.panels[0].data_layers.push(LocusZoom.Layouts.get("data_layer", "association_pvalues", association_data_layer_mods));
