@@ -11,25 +11,25 @@
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
 // Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
 //  systems may require being told that this file has side effects.
-/* global define, module, require */
+/* global define, module, require, Promise */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'raremetal.js', 'q'] , function(LocusZoom, raremetal, Q) {  // amd
-            return factory(LocusZoom, raremetal, Q);
+        define(['locuszoom', 'raremetal.js'] , function(LocusZoom, raremetal) {  // amd
+            return factory(LocusZoom, raremetal);
         });
     } else if(typeof module === 'object' && module.exports) {  // commonJS
-        module.exports = factory(require('locuszoom'), require('raremetal.js'), require('q'));
+        module.exports = factory(require('locuszoom'), require('raremetal.js'));
     } else {  // globals
         if (!root.LocusZoom.ext.Data) {
             root.LocusZoom.ext.Data = {};
         }
-        var sources = factory(root.LocusZoom, root.raremetal, root.Q);
+        var sources = factory(root.LocusZoom, root.raremetal);
         Object.keys(sources).forEach(function(key) {
             root.LocusZoom.ext.Data[key] = sources[key];
         });
     }
-}(this, function(LocusZoom, raremetal, Q) {
+}(this, function(LocusZoom, raremetal) {
     /**
      * Data Source that calculates gene or region-based tests based on provided data
      *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
@@ -130,24 +130,24 @@
             return { variants: [], groups: [], results: [] };
         }
         var runner = new raremetal.helpers.PortalTestRunner(groups, variants, calcs);
-        try {
-            var res = runner.toJSON();
-        } catch (e) {
-            console.error(e);
-            throw new Error('Failed to calculate aggregation test results');
-        }
 
-        // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
-        // We will annotate each mask name (id) with a human-friendly description for later use
-        var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
-            acc[val.name] = val.description;
-            return acc;
-        }, {});
-        res.data.groups.forEach(function(group)  {
-            group.mask_name = mask_id_to_desc[group.mask];
-        });
-
-        return res.data;
+        return runner.toJSON()
+            .then(function(res) {
+                // Internally, raremetal helpers track how the calculation is done, but not any display-friendly values
+                // We will annotate each mask name (id) with a human-friendly description for later use
+                var mask_id_to_desc  = chain.header.aggregation_masks.reduce(function(acc, val) {
+                    acc[val.name] = val.description;
+                    return acc;
+                }, {});
+                res.data.groups.forEach(function(group)  {
+                    group.mask_name = mask_id_to_desc[group.mask];
+                });
+                return res.data;
+            })
+            .catch(function(e) {
+                console.error(e);
+                throw new Error('Failed to calculate aggregation test results');
+            });
     };
 
     AggregationTestSource.prototype.normalizeResponse = function (data) {
@@ -186,7 +186,7 @@
                 throw self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + this._from;
             }
             // Copy the data so that mutations (like sorting) don't affect the original
-            return Q.when(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
+            return Promise.resolve(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
         },
 
         normalizeResponse: function (data) {

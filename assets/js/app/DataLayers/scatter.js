@@ -552,6 +552,29 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
     },
 
     /**
+     * This layer relies on defining its own category-based color scheme. Find the correct color config object to
+     *  be modified.
+     * @param [from_source]
+     * @returns {Object} A mutable reference to the layout configuration object
+     * @private
+     */
+    _getColorScale: function(from_source) {
+        from_source = from_source || this.layout;
+        // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
+
+        // For legacy reasons, layouts can specify color as an object (only one way to set color), as opposed to the
+        //  preferred mechanism of array (multiple coloring options)
+        var color_params = from_source.color || []; // Object or scalar, no other options allowed
+        if (Array.isArray(color_params)) {
+            color_params = color_params.find(function(item) { return item.scale_function === 'categorical_bin'; });
+        }
+        if (!color_params || color_params.scale_function !== 'categorical_bin') {
+            throw new Error('This layer requires that color options be provided as a `categorical_bin`');
+        }
+        return color_params;
+    },
+
+    /**
      * Automatically define a color scheme for the layer based on data returned from the server.
      *   If part of the color scheme has been specified, it will fill in remaining missing information.
      *
@@ -573,13 +596,8 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * @private
      */
     _setDynamicColorScheme: function(categoryNames) {
-        var colorParams = this.layout.color.parameters;
-        var baseParams = this._base_layout.color.parameters;
-
-        // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
-        if (this.layout.color.scale_function !== 'categorical_bin') {
-            throw new Error('This layer requires that coloring be specified as a `categorical_bin`');
-        }
+        var colorParams = this._getColorScale(this.layout).parameters;
+        var baseParams = this._getColorScale(this._base_layout).parameters;
 
         if (baseParams.categories.length && baseParams.values.length) {
             // If there are preset category/color combos, make sure that they apply to the actual dataset
@@ -634,8 +652,9 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
 
         if (dimension === 'x') {
             // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
-            var knownCategories = this.layout.color.parameters.categories || [];
-            var knownColors = this.layout.color.parameters.values || [];
+            var colors = this._getColorScale(this.layout);
+            var knownCategories = colors.parameters.categories || [];
+            var knownColors = colors.parameters.values || [];
 
             return Object.keys(categoryBounds).map(function (category, index) {
                 var bounds = categoryBounds[category];

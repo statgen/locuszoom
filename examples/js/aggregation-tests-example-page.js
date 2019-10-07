@@ -419,7 +419,9 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                 phenotypes: phenotypes,  // { categoryID: {description: str, phenotypes: [str]} }
                 calc_names: [
                     ['burden', 'Burden'],
-                    ['skat', 'SKAT']
+                    ['skat', 'SKAT'],
+                    ['vt', 'VT'],
+                    ['skat-o', 'SKAT-O']
                 ],
                 // Tracking internal state
                 status_css: { color: 'red' },

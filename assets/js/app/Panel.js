@@ -132,8 +132,10 @@ LocusZoom.Panel = function(layout, parent) {
         'data_requested': [],
         'data_rendered': [],
         'element_clicked': [],
-        'element_selection': []
+        'element_selection': [],
+        'match_requested': [] // A data layer is attempting to highlight matching points (internal use only)
     };
+
     /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
@@ -766,7 +768,7 @@ LocusZoom.Panel.prototype.reMap = function() {
         }
     }
     // When all finished trigger a render
-    return Q.all(this.data_promises)
+    return Promise.all(this.data_promises)
         .then(function() {
             this.initialized = true;
             this.render();

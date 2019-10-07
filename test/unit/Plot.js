@@ -469,37 +469,36 @@ describe('LocusZoom.Plot', function() {
         it('Should apply basic start/end state validation when necessary', function(done) {
             this.layout.state = { chr: 1, start: -60, end: 10300050 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 1);
                 assert.equal(this.plot.state.end, 10300050);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
         it('Should apply minimum region scale state validation if set in the plot layout', function(done) {
             this.layout.min_region_scale = 2000;
             this.layout.state = { chr: 1, start: 10300000, end: 10300050 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 10299025);
                 assert.equal(this.plot.state.end, 10301025);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
         it('Should apply maximum region scale state validation if set in the plot layout', function(done) {
             this.layout.max_region_scale = 4000000;
             this.layout.state = { chr: 1, start: 10300000, end: 15300000 };
             this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
-            Q.all(this.plot.remap_promises).then(function() {
+            Promise.all(this.plot.remap_promises).then(function() {
                 assert.equal(this.plot.state.start, 10800000);
                 assert.equal(this.plot.state.end, 14800000);
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
     });
 
     describe('subscribeToData', function() {
         beforeEach(function() {
-            this.sandbox = sinon.sandbox.create();
             var layout = {
                 panels: [ { id: 'panel0' } ]
             };
@@ -514,13 +513,13 @@ describe('LocusZoom.Plot', function() {
 
         afterEach(function() {
             d3.select('#plot').remove();
-            this.sandbox.restore();
+            sinon.restore();
         });
 
         it('allows subscribing to data using a standard limited fields array', function (done) {
             var expectedData = [ {'first:x': 0}, {'first:x': 1} ];
 
-            var dataCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'first:x' ],
@@ -545,7 +544,7 @@ describe('LocusZoom.Plot', function() {
 
         it('allows subscribing to individual (not combined) sources', function (done) {
             var expectedData = { first: [ {'first:x': 0}, {'first:x': 1} ] };
-            var dataCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'first:x' ],
@@ -566,8 +565,8 @@ describe('LocusZoom.Plot', function() {
         });
 
         it('calls an error callback if a problem occurs while fetching data', function() {
-            var dataCallback = this.sandbox.spy();
-            var errorCallback = this.sandbox.spy();
+            var dataCallback = sinon.spy();
+            var errorCallback = sinon.spy();
 
             this.plot.subscribeToData(
                 [ 'nosource:x' ],
@@ -604,4 +603,64 @@ describe('LocusZoom.Plot', function() {
         });
     });
 
+    describe('allows communication between layers via match events', function () {
+        beforeEach(function() {
+            this.plot = null;
+            var first_source_data = [ { id: 'a', x: 0, y: false  }, { id: 'b', x: 1, y: true } ];
+            var data_sources = new LocusZoom.DataSources()
+                .add('s', ['StaticJSON', first_source_data ]);
+            this.layout = {
+                panels: [
+                    {
+                        id: 'p',
+                        data_layers: [
+                            {
+                                id: 'd1',
+                                id_field: 's:id',
+                                type: 'scatter',
+                                fields: ['s:id', 's:x'],
+                                match: { send: 's:x', receive: 's:x' }
+                            },
+                            {
+                                id: 'd2',
+                                id_field: 's:id',
+                                type: 'scatter',
+                                fields: ['s:id', 's:x', 's:y']
+                            },
+                            {
+                                id: 'd3',
+                                id_field: 's:id',
+                                type: 'scatter',
+                                fields: ['s:id', 's:y'],
+                                match: { receive: 's:y' }
+                            }
+                        ]
+                    }
+                ]
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = LocusZoom.populate('#plot', data_sources, this.layout);
+        });
+
+        afterEach(function() {
+            d3.select('#plot').remove();
+            delete this.plot;
+        });
+
+        it('notifies all layers to find matches when an event fires', function () {
+            // This is the end result of triggering a match event, and lets us test after render promise complete
+            var plot = this.plot;
+            return this.plot.applyState({ lz_match_value: 0 }).then(function() {
+
+                var get_matches = function(data) { return data.map(function(item) {return item.lz_highlight_match; }); };
+                var d1 = get_matches(plot.panels.p.data_layers.d1.data);
+                var d2 = get_matches(plot.panels.p.data_layers.d2.data);
+                var d3 = get_matches(plot.panels.p.data_layers.d3.data);
+
+                assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
+                assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
+                assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+            });
+        });
+    });
 });
