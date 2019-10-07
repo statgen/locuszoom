@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.9.1' };
+        var LocusZoom = { version: '0.10.0-beta.1' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -1002,7 +1002,7 @@
                     'unselected'
                 ]
             },
-            html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>' + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>' + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele}}</strong><br>' + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
+            html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>' + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>' + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
         });
         LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
             var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
@@ -1023,7 +1023,7 @@
                     'unselected'
                 ]
             },
-            html: '<h4><strong><i>{{gene_name}}</i></strong></h4>' + '<div style="float: left;">Gene ID: <strong>{{gene_id}}</strong></div>' + '<div style="float: right;">Transcript ID: <strong>{{transcript_id}}</strong></div>' + '<div style="clear: both;"></div>' + '<table>' + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>' + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>' + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>' + '<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>' + '</table>' + '<a href="http://exac.broadinstitute.org/gene/{{gene_id}}" target="_new">More data on ExAC</a>'
+            html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + '<div style="float: left;">Gene ID: <strong>{{gene_id|htmlescape}}</strong></div>' + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>' + '<div style="clear: both;"></div>' + '<table>' + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>' + '<tr><td>Synonymous</td><td>{{exp_syn|htmlescape}}</td><td>{{n_syn|htmlescape}}</td><td>z = {{syn_z|htmlescape}}</td></tr>' + '<tr><td>Missense</td><td>{{exp_mis|htmlescape}}</td><td>{{n_mis|htmlescape}}</td><td>z = {{mis_z|htmlescape}}</td></tr>' + '<tr><td>LoF</td><td>{{exp_lof|htmlescape}}</td><td>{{n_lof|htmlescape}}</td><td>pLI = {{pLI|htmlescape}}</td></tr>' + '</table>' + '<a href="http://exac.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_new">More data on ExAC</a>'
         });
         LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
             namespace: { 'intervals': 'intervals' },
@@ -1040,7 +1040,7 @@
                     'unselected'
                 ]
             },
-            html: '{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}'
+            html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
         });
         LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
             namespace: {
@@ -1060,8 +1060,8 @@
                     'unselected'
                 ]
             },
-            html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>' + 'Catalog entries: <strong>{{n_catalog_matches}}</strong><br>' + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>' + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'    // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-+ 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid}}" target="_new">dbSNP</a>'
+            html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>' + 'Catalog entries: <strong>{{n_catalog_matches|htmlescape}}</strong><br>' + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>' + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'    // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
++ 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">dbSNP</a>'
         });
         /**
  * Data Layer Layouts: represent specific information from a data source
@@ -1252,7 +1252,7 @@
                 id: 'associationpvaluescatalog',
                 fill_opacity: 0.7
             });
-            l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
+            l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
             l.namespace.catalog = 'catalog';
             l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
             return l;
@@ -1284,15 +1284,15 @@
                 floor: 0,
                 upper_buffer: 0.15
             },
-            color: {
-                field: '{{namespace[phewas]}}trait_group',
-                scale_function: 'categorical_bin',
-                parameters: {
-                    categories: [],
-                    values: [],
-                    null_value: '#B8B8B8'
-                }
-            },
+            color: [{
+                    field: '{{namespace[phewas]}}trait_group',
+                    scale_function: 'categorical_bin',
+                    parameters: {
+                        categories: [],
+                        values: [],
+                        null_value: '#B8B8B8'
+                    }
+                }],
             fill_opacity: 0.7,
             tooltip: {
                 closable: true,
@@ -1334,7 +1334,7 @@
                     }]
             },
             label: {
-                text: '{{{{namespace[phewas]}}trait_label}}',
+                text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
                 spacing: 6,
                 lines: {
                     style: {
@@ -1586,7 +1586,8 @@
                 '{{namespace[catalog]}}variant',
                 '{{namespace[catalog]}}rsid',
                 '{{namespace[catalog]}}trait',
-                '{{namespace[catalog]}}log_pvalue'
+                '{{namespace[catalog]}}log_pvalue',
+                '{{namespace[catalog]}}pos'
             ],
             filters: [
                 // Specify which points to show on the track. Any selection must satisfy ALL filters
@@ -1739,7 +1740,7 @@
             }(),
             axes: {
                 x: {
-                    label: 'Chromosome {{chr}} (Mb)',
+                    label: 'Chromosome {{chr|htmlescape}} (Mb)',
                     label_offset: 32,
                     tick_format: 'region',
                     extent: 'state'
@@ -1802,7 +1803,7 @@
                         display: {
                             // Specify layout directives that control display of the plot for this option
                             label: {
-                                text: '{{{{namespace[catalog]}}trait}}',
+                                text: '{{{{namespace[catalog]}}trait|htmlescape}}',
                                 spacing: 6,
                                 lines: {
                                     style: {
@@ -2301,7 +2302,7 @@
                     margin: { bottom: 40 },
                     axes: {
                         x: {
-                            label: 'Chromosome {{chr}} (Mb)',
+                            label: 'Chromosome {{chr|htmlescape}} (Mb)',
                             label_offset: 32,
                             tick_format: 'region',
                             extent: 'state'
@@ -2447,9 +2448,12 @@
                 this.state = this.parent.state;
                 this.state_id = this.parent.id + '.' + this.id;
                 this.state[this.state_id] = this.state[this.state_id] || {};
+                var layer_state = this.state[this.state_id];
                 LocusZoom.DataLayer.Statuses.adjectives.forEach(function (status) {
-                    this.state[this.state_id][status] = this.state[this.state_id][status] || [];
-                }.bind(this));
+                    layer_state[status] = layer_state[status] || [];
+                });
+                // Also initialize "internal-only" state fields
+                layer_state['has_tooltip'] = layer_state['has_tooltip'] || [];
             }
         };
         /**
@@ -2575,8 +2579,15 @@
  * @returns {LocusZoom.DataLayer}
  */
         LocusZoom.DataLayer.prototype.applyDataMethods = function () {
+            var field_to_match = this.layout.match && this.layout.match.receive;
+            var broadcast_value = this.parent_plot.state.lz_match_value;
             this.data.forEach(function (d, i) {
                 // Basic toHTML() method - return the stringified value in the id_field, if defined.
+                // When this layer receives data, mark whether points match (via a synthetic boolean field)
+                //   Any field-based layout directives (color, size, shape) can then be used to control display
+                if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
+                    d.lz_highlight_match = d[field_to_match] === broadcast_value;
+                }
                 this.data[i].toHTML = function () {
                     var id_field = this.layout.id_field || 'id';
                     var html = '';
@@ -2790,26 +2801,24 @@
         };
         /**
  * Generate a tool tip for a given element
- * @param {String|Object} d The element associated with the tooltip
- * @param {String} [id] An identifier to the tooltip
+ * @param {String|Object} data Data for the element associated with the tooltip
  */
-        LocusZoom.DataLayer.prototype.createTooltip = function (d, id) {
+        LocusZoom.DataLayer.prototype.createTooltip = function (data) {
             if (typeof this.layout.tooltip != 'object') {
                 throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
             }
-            if (typeof id == 'undefined') {
-                id = this.getElementId(d);
-            }
+            var id = this.getElementId(data);
             if (this.tooltips[id]) {
                 this.positionTooltip(id);
                 return;
             }
             this.tooltips[id] = {
-                data: d,
+                data: data,
                 arrow: null,
                 selector: d3.select(this.parent_plot.svg.node().parentNode).append('div').attr('class', 'lz-data_layer-tooltip').attr('id', id + '-tooltip')
             };
-            this.updateTooltip(d);
+            this.state[this.state_id]['has_tooltip'].push(id);
+            this.updateTooltip(data);
             return this;
         };
         /**
@@ -2843,21 +2852,29 @@
         };
         /**
  * Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
- * @param {String|Object} d The element associated with the tooltip
- * @param {String} [id] An identifier to the tooltip
+ * @param {String|Object} element_or_id The element (or id) associated with the tooltip
+ * @param {boolean} [temporary=false] Whether this is temporary (not to be tracked in state). Differentiates
+ *  "recreate tooltips on re-render" (which is temporary) from "user has closed this tooltip" (permanent)
  * @returns {LocusZoom.DataLayer}
  */
-        LocusZoom.DataLayer.prototype.destroyTooltip = function (d, id) {
-            if (typeof d == 'string') {
-                id = d;
-            } else if (typeof id == 'undefined') {
-                id = this.getElementId(d);
+        LocusZoom.DataLayer.prototype.destroyTooltip = function (element_or_id, temporary) {
+            var id;
+            if (typeof element_or_id == 'string') {
+                id = element_or_id;
+            } else {
+                id = this.getElementId(element_or_id);
             }
             if (this.tooltips[id]) {
                 if (typeof this.tooltips[id].selector == 'object') {
                     this.tooltips[id].selector.remove();
                 }
                 delete this.tooltips[id];
+            }
+            // When a tooltip is removed, also remove the reference from the state
+            if (!temporary) {
+                var state = this.state[this.state_id]['has_tooltip'];
+                var label_mark_position = state.indexOf(id);
+                state.splice(label_mark_position, 1);
             }
             return this;
         };
@@ -2867,7 +2884,7 @@
  */
         LocusZoom.DataLayer.prototype.destroyAllTooltips = function () {
             for (var id in this.tooltips) {
-                this.destroyTooltip(id);
+                this.destroyTooltip(id, true);
             }
             return this;
         };
@@ -2904,22 +2921,30 @@
         /**
  * Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
  * @param {String|Object} element The element associated with the tooltip
+ * @param {boolean} first_time Because panels can re-render, the rules for showing a tooltip
+ *  depend on whether this is the first time a status change affecting display has been applied.
  * @returns {LocusZoom.DataLayer}
  */
-        LocusZoom.DataLayer.prototype.showOrHideTooltip = function (element) {
+        LocusZoom.DataLayer.prototype.showOrHideTooltip = function (element, first_time) {
             if (typeof this.layout.tooltip != 'object') {
                 return;
             }
             var id = this.getElementId(element);
+            /**
+     * Apply rules and decide whether to show or hide the tooltip
+     * @param {Object} statuses All statuses that apply to an element
+     * @param {String[]|object} directive A layout directive object
+     * @param operator
+     * @returns {null|bool}
+     */
             var resolveStatus = function (statuses, directive, operator) {
                 var status = null;
                 if (typeof statuses != 'object' || statuses === null) {
                     return null;
                 }
                 if (Array.isArray(directive)) {
-                    if (typeof operator == 'undefined') {
-                        operator = 'and';
-                    }
+                    // This happens when the function is called on the inner part of the directive
+                    operator = operator || 'and';
                     if (directive.length === 1) {
                         status = statuses[directive[0]];
                     } else {
@@ -2944,6 +2969,8 @@
                             status = status || sub_status;
                         }
                     }
+                } else {
+                    return false;
                 }
                 return status;
             };
@@ -2959,17 +2986,24 @@
             } else if (typeof this.layout.tooltip.hide == 'object') {
                 hide_directive = this.layout.tooltip.hide;
             }
+            // Find all the statuses that apply to just this single element
+            var layer_state = this.state[this.state_id];
             var statuses = {};
+            // {status_name: bool}
             LocusZoom.DataLayer.Statuses.adjectives.forEach(function (status) {
                 var antistatus = 'un' + status;
-                statuses[status] = this.state[this.state_id][status].indexOf(id) !== -1;
+                statuses[status] = layer_state[status].indexOf(id) !== -1;
                 statuses[antistatus] = !statuses[status];
-            }.bind(this));
+            });
+            // Decide whether to show/hide the tooltip based solely on the underlying element
             var show_resolved = resolveStatus(statuses, show_directive);
             var hide_resolved = resolveStatus(statuses, hide_directive);
-            // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
-            // Otherwise ensure tooltip does not exist
-            if (show_resolved && !hide_resolved) {
+            // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
+            // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
+            //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
+            var has_tooltip = layer_state['has_tooltip'].indexOf(id) !== -1;
+            var tooltip_was_closed = first_time ? false : !has_tooltip;
+            if (show_resolved && !tooltip_was_closed && !hide_resolved) {
                 this.createTooltip(element);
             } else {
                 this.destroyTooltip(element);
@@ -3114,11 +3148,16 @@
  * Toggle a status (e.g. highlighted, selected, identified) on an element
  * @param {String} status The name of a recognized status to be added/removed on an appropriate element
  * @param {String|Object} element The data bound to the element of interest
- * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it
  * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
-        LocusZoom.DataLayer.prototype.setElementStatus = function (status, element, toggle, exclusive) {
+        LocusZoom.DataLayer.prototype.setElementStatus = function (status, element, active, exclusive) {
+            if (status === 'has_tooltip') {
+                // This is a special adjective that exists solely to track tooltip state. It has no CSS and never gets set
+                //  directly. It is invisible to the official enums.
+                return this;
+            }
             // Sanity checks
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
                 throw new Error('Invalid status passed to DataLayer.setElementStatus()');
@@ -3126,8 +3165,8 @@
             if (typeof element == 'undefined') {
                 throw new Error('Invalid element passed to DataLayer.setElementStatus()');
             }
-            if (typeof toggle == 'undefined') {
-                toggle = true;
+            if (typeof active == 'undefined') {
+                active = true;
             }
             // Get an ID for the element or return having changed nothing
             try {
@@ -3137,33 +3176,43 @@
             }
             // Enforce exclusivity (force all elements to have the opposite of toggle first)
             if (exclusive) {
-                this.setAllElementStatus(status, !toggle);
+                this.setAllElementStatus(status, !active);
             }
             // Set/unset the proper status class on the appropriate DOM element(s)
-            d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, toggle);
+            d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, active);
             var element_status_node_id = this.getElementStatusNodeId(element);
             if (element_status_node_id !== null) {
-                d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, toggle);
+                d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, active);
             }
             // Track element ID in the proper status state array
             var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
-            if (toggle && element_status_idx === -1) {
+            var added_status = element_status_idx === -1;
+            // On a re-render, existing statuses will be reapplied.
+            if (active && added_status) {
                 this.state[this.state_id][status].push(element_id);
             }
-            if (!toggle && element_status_idx !== -1) {
+            if (!active && !added_status) {
                 this.state[this.state_id][status].splice(element_status_idx, 1);
             }
             // Trigger tool tip show/hide logic
-            this.showOrHideTooltip(element);
+            this.showOrHideTooltip(element, added_status);
             // Trigger layout changed event hook
-            this.parent.emit('layout_changed', true);
-            if (status === 'selected') {
-                // Notify parents that a given element has been interacted with. For now, we will only notify on
-                //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
-                //   events will be sent in short order as the previously selected element has to be de-selected first
+            if (added_status) {
+                this.parent.emit('layout_changed', true);
+            }
+            var is_selected = status === 'selected';
+            if (is_selected && (added_status || !active)) {
+                // Notify parents that an element has changed selection status (either active, or inactive)
                 this.parent.emit('element_selection', {
                     element: element,
-                    active: toggle
+                    active: active
+                }, true);
+            }
+            var value_to_broadcast = this.layout.match && this.layout.match.send;
+            if (is_selected && value_to_broadcast && (added_status || !active)) {
+                this.parent.emit('match_requested', {
+                    value: element[value_to_broadcast],
+                    active: active
                 }, true);
             }
             return this;
@@ -5685,6 +5734,30 @@
                 return uniqueCategories;
             },
             /**
+     * This layer relies on defining its own category-based color scheme. Find the correct color config object to
+     *  be modified.
+     * @param [from_source]
+     * @returns {Object} A mutable reference to the layout configuration object
+     * @private
+     */
+            _getColorScale: function (from_source) {
+                from_source = from_source || this.layout;
+                // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
+                // For legacy reasons, layouts can specify color as an object (only one way to set color), as opposed to the
+                //  preferred mechanism of array (multiple coloring options)
+                var color_params = from_source.color || [];
+                // Object or scalar, no other options allowed
+                if (Array.isArray(color_params)) {
+                    color_params = color_params.find(function (item) {
+                        return item.scale_function === 'categorical_bin';
+                    });
+                }
+                if (!color_params || color_params.scale_function !== 'categorical_bin') {
+                    throw new Error('This layer requires that color options be provided as a `categorical_bin`');
+                }
+                return color_params;
+            },
+            /**
      * Automatically define a color scheme for the layer based on data returned from the server.
      *   If part of the color scheme has been specified, it will fill in remaining missing information.
      *
@@ -5706,12 +5779,8 @@
      * @private
      */
             _setDynamicColorScheme: function (categoryNames) {
-                var colorParams = this.layout.color.parameters;
-                var baseParams = this._base_layout.color.parameters;
-                // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
-                if (this.layout.color.scale_function !== 'categorical_bin') {
-                    throw new Error('This layer requires that coloring be specified as a `categorical_bin`');
-                }
+                var colorParams = this._getColorScale(this.layout).parameters;
+                var baseParams = this._getColorScale(this._base_layout).parameters;
                 if (baseParams.categories.length && baseParams.values.length) {
                     // If there are preset category/color combos, make sure that they apply to the actual dataset
                     var parameters_categories_hash = {};
@@ -5777,8 +5846,9 @@
                 }
                 if (dimension === 'x') {
                     // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
-                    var knownCategories = this.layout.color.parameters.categories || [];
-                    var knownColors = this.layout.color.parameters.values || [];
+                    var colors = this._getColorScale(this.layout);
+                    var knownCategories = colors.parameters.categories || [];
+                    var knownColors = colors.parameters.values || [];
                     return Object.keys(categoryBounds).map(function (category, index) {
                         var bounds = categoryBounds[category];
                         var xPos;
@@ -9463,6 +9533,8 @@
                 // Select or unselect
                 'element_selection': [],
                 // Element becomes active (only)
+                'match_requested': [],
+                // A data layer is attempting to highlight matching points (internal use only)
                 'panel_removed': [],
                 'state_changed': []    // Only triggered when a state change causes rerender
             };
@@ -10203,6 +10275,13 @@
             if (!d3.select('body').empty()) {
                 d3.select('body').on('mouseup' + namespace, mouseup).on('touchend' + namespace, mouseup);
             }
+            this.on('match_requested', function (eventData) {
+                // Layers can broadcast that a specific point has been selected, and the plot will tell every other layer
+                //  to look for that value. Whenever a point is de-selected, it clears the match.
+                var data = eventData.data;
+                var to_send = data.active ? data.value : null;
+                this.applyState({ lz_match_value: to_send });
+            }.bind(this));
             this.initialized = true;
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
@@ -10549,7 +10628,8 @@
                 'data_requested': [],
                 'data_rendered': [],
                 'element_clicked': [],
-                'element_selection': []
+                'element_selection': [],
+                'match_requested': []    // A data layer is attempting to highlight matching points (internal use only)
             };
             /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
