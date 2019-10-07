@@ -169,7 +169,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
 
       <div class="row">
         <footer style="text-align: center;">
-          &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+          &copy; Copyright 2019 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
         </footer>
       </div>
 
@@ -279,7 +279,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
               "<strong>Study:</strong> {{phewas:study|htmlescape}}<br>",
             "{{/if}}",
             "{{#if phewas:pmid}} {{#if phewas:description}}",
-                '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid}}">{{phewas:description|htmlescape}}</a>',
+                '<strong>Description:</strong> <a target=_blank href="https://www.ncbi.nlm.nih.gov/pubmed/?term={{phewas:pmid|htmlescape}}">{{phewas:description|htmlescape}}</a>',
             "{{/if}} {{/if}}"
         ].join("");
 

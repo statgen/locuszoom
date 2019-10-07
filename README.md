@@ -19,8 +19,9 @@ and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#
 The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory:
 
 * `locuszoom.vendor.min.js`  
-  This file contains the concatenated vendor libraries. You can alternatively include [d3](http://d3js.org/) and 
-  [Q](https://github.com/kriskowal/q) from other sources, so long as they are included **before including LocusZoom files**.  
+  This file contains the concatenated vendor libraries. You can alternatively include [d3](http://d3js.org/)
+  from other sources, so long as it is included **before including LocusZoom files**. This bundle also contains a 
+  polyfill for ES6 `Promise`, which you may need if your site supports certain older browsers such as Internet Explorer.
 
 * `locuszoom.app.js` OR `locuszoom.app.min.js`  
   This is the primary application logic. It should only be included *after* the vendor dependencies have been included.  
@@ -227,7 +228,6 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
  or something else entirely. It has the following vendor dependencies:
 
 * [d3](http://d3js.org/) for a data visualization framework
-* [Q](https://github.com/kriskowal/q) for a promises framework
 
 ### Build System and Automated Testing
 
@@ -244,7 +244,7 @@ following files (in the `dist` folder):
 * `locuszoom.app.js` - A concatenated app file suitable for use in development
 * `locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
 * `locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either 
-development or production (contains d3 and Q)
+development or production (contains d3)
 * `locuszoom.css` - A generated CSS file for all LocusZoom styles
 
 This build process will also write sourcemaps, to help with debugging code even in production environments.

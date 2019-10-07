@@ -192,7 +192,7 @@ describe('LocusZoom.Dashboard', function() {
             this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(function() {
                 this.plot.dashboard.components[0].selector.html().should.be.exactly('400.00 Kb');
                 done();
-            }.bind(this)).fail(done);
+            }.bind(this)).catch(done);
         });
     });
 

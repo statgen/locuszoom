@@ -115,9 +115,12 @@ LocusZoom.DataLayer.prototype.setDefaultState = function() {
         this.state = this.parent.state;
         this.state_id = this.parent.id + '.' + this.id;
         this.state[this.state_id] = this.state[this.state_id] || {};
+        var layer_state = this.state[this.state_id];
         LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
-            this.state[this.state_id][status] = this.state[this.state_id][status] || [];
-        }.bind(this));
+            layer_state[status] = layer_state[status] || [];
+        });
+        // Also initialize "internal-only" state fields
+        layer_state['has_tooltip'] = layer_state['has_tooltip'] || [];
     }
 };
 
@@ -234,8 +237,18 @@ LocusZoom.DataLayer.prototype.getElementById = function(id) {
  * @returns {LocusZoom.DataLayer}
  */
 LocusZoom.DataLayer.prototype.applyDataMethods = function() {
+    var field_to_match = (this.layout.match && this.layout.match.receive);
+    var broadcast_value = this.parent_plot.state.lz_match_value;
+
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
+
+        // When this layer receives data, mark whether points match (via a synthetic boolean field)
+        //   Any field-based layout directives (color, size, shape) can then be used to control display
+        if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
+            d.lz_highlight_match = (d[field_to_match] === broadcast_value);
+        }
+
         this.data[i].toHTML = function() {
             var id_field = this.layout.id_field || 'id';
             var html = '';
@@ -464,26 +477,26 @@ LocusZoom.DataLayer.prototype.getTicks = function (dimension, config) {
 
 /**
  * Generate a tool tip for a given element
- * @param {String|Object} d The element associated with the tooltip
- * @param {String} [id] An identifier to the tooltip
+ * @param {String|Object} data Data for the element associated with the tooltip
  */
-LocusZoom.DataLayer.prototype.createTooltip = function(d, id) {
+LocusZoom.DataLayer.prototype.createTooltip = function(data) {
     if (typeof this.layout.tooltip != 'object') {
         throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
     }
-    if (typeof id == 'undefined') { id = this.getElementId(d); }
+    var id = this.getElementId(data);
     if (this.tooltips[id]) {
         this.positionTooltip(id);
         return;
     }
     this.tooltips[id] = {
-        data: d,
+        data: data,
         arrow: null,
         selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
             .attr('class', 'lz-data_layer-tooltip')
             .attr('id', id + '-tooltip')
     };
-    this.updateTooltip(d);
+    this.state[this.state_id]['has_tooltip'].push(id);
+    this.updateTooltip(data);
     return this;
 };
 
@@ -521,21 +534,29 @@ LocusZoom.DataLayer.prototype.updateTooltip = function(d, id) {
 
 /**
  * Destroy tool tip - remove the tool tip element from the DOM and delete the tool tip's record on the data layer
- * @param {String|Object} d The element associated with the tooltip
- * @param {String} [id] An identifier to the tooltip
+ * @param {String|Object} element_or_id The element (or id) associated with the tooltip
+ * @param {boolean} [temporary=false] Whether this is temporary (not to be tracked in state). Differentiates
+ *  "recreate tooltips on re-render" (which is temporary) from "user has closed this tooltip" (permanent)
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id) {
-    if (typeof d == 'string') {
-        id = d;
-    } else if (typeof id == 'undefined') {
-        id = this.getElementId(d);
+LocusZoom.DataLayer.prototype.destroyTooltip = function(element_or_id, temporary) {
+    var id;
+    if (typeof element_or_id == 'string') {
+        id = element_or_id;
+    } else {
+        id = this.getElementId(element_or_id);
     }
     if (this.tooltips[id]) {
         if (typeof this.tooltips[id].selector == 'object') {
             this.tooltips[id].selector.remove();
         }
         delete this.tooltips[id];
+    }
+    // When a tooltip is removed, also remove the reference from the state
+    if (!temporary) {
+        var state = this.state[this.state_id]['has_tooltip'];
+        var label_mark_position = state.indexOf(id);
+        state.splice(label_mark_position, 1);
     }
     return this;
 };
@@ -546,7 +567,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(d, id) {
  */
 LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
     for (var id in this.tooltips) {
-        this.destroyTooltip(id);
+        this.destroyTooltip(id, true);
     }
     return this;
 };
@@ -592,18 +613,27 @@ LocusZoom.DataLayer.prototype.positionAllTooltips = function() {
 /**
  * Show or hide a tool tip by ID depending on directives in the layout and state values relative to the ID
  * @param {String|Object} element The element associated with the tooltip
+ * @param {boolean} first_time Because panels can re-render, the rules for showing a tooltip
+ *  depend on whether this is the first time a status change affecting display has been applied.
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element) {
-
+LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element, first_time) {
     if (typeof this.layout.tooltip != 'object') { return; }
     var id = this.getElementId(element);
 
+    /**
+     * Apply rules and decide whether to show or hide the tooltip
+     * @param {Object} statuses All statuses that apply to an element
+     * @param {String[]|object} directive A layout directive object
+     * @param operator
+     * @returns {null|bool}
+     */
     var resolveStatus = function(statuses, directive, operator) {
         var status = null;
         if (typeof statuses != 'object' || statuses === null) { return null; }
         if (Array.isArray(directive)) {
-            if (typeof operator == 'undefined') { operator = 'and'; }
+            // This happens when the function is called on the inner part of the directive
+            operator = operator || 'and';
             if (directive.length === 1) {
                 status = statuses[directive[0]];
             } else {
@@ -628,6 +658,8 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element) {
                     status = status || sub_status;
                 }
             }
+        } else {
+            return false;
         }
         return status;
     };
@@ -646,26 +678,31 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element) {
         hide_directive = this.layout.tooltip.hide;
     }
 
-    var statuses = {};
+    // Find all the statuses that apply to just this single element
+    var layer_state = this.state[this.state_id];
+    var statuses = {};  // {status_name: bool}
     LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
         var antistatus = 'un' + status;
-        statuses[status] = this.state[this.state_id][status].indexOf(id) !== -1;
+        statuses[status] = (layer_state[status].indexOf(id) !== -1);
         statuses[antistatus] = !statuses[status];
-    }.bind(this));
+    });
 
+    // Decide whether to show/hide the tooltip based solely on the underlying element
     var show_resolved = resolveStatus(statuses, show_directive);
     var hide_resolved = resolveStatus(statuses, hide_directive);
 
-    // Only show tooltip if the resolved logic explicitly shows and explicitly not hides the tool tip
-    // Otherwise ensure tooltip does not exist
-    if (show_resolved && !hide_resolved) {
+    // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
+    // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
+    //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
+    var has_tooltip = (layer_state['has_tooltip'].indexOf(id) !== -1);
+    var tooltip_was_closed = first_time ? false : !has_tooltip;
+    if (show_resolved && !tooltip_was_closed && !hide_resolved) {
         this.createTooltip(element);
     } else {
         this.destroyTooltip(element);
     }
 
     return this;
-
 };
 
 /**
@@ -763,11 +800,17 @@ LocusZoom.DataLayer.Statuses.verbs.forEach(function(verb, idx) {
  * Toggle a status (e.g. highlighted, selected, identified) on an element
  * @param {String} status The name of a recognized status to be added/removed on an appropriate element
  * @param {String|Object} element The data bound to the element of interest
- * @param {Boolean} toggle True to add the status (and associated CSS styles); false to remove it
+ * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it
  * @param {Boolean} exclusive Whether to only allow a state for a single element at a time
  * @returns {LocusZoom.DataLayer}
  */
-LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggle, exclusive) {
+LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, active, exclusive) {
+    if (status === 'has_tooltip') {
+        // This is a special adjective that exists solely to track tooltip state. It has no CSS and never gets set
+        //  directly. It is invisible to the official enums.
+        return this;
+    }
+
     // Sanity checks
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setElementStatus()');
@@ -775,8 +818,8 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
     if (typeof element == 'undefined') {
         throw new Error('Invalid element passed to DataLayer.setElementStatus()');
     }
-    if (typeof toggle == 'undefined') {
-        toggle = true;
+    if (typeof active == 'undefined') {
+        active = true;
     }
 
     // Get an ID for the element or return having changed nothing
@@ -788,38 +831,49 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, toggl
 
     // Enforce exclusivity (force all elements to have the opposite of toggle first)
     if (exclusive) {
-        this.setAllElementStatus(status, !toggle);
+        this.setAllElementStatus(status, !active);
     }
 
     // Set/unset the proper status class on the appropriate DOM element(s)
-    d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, toggle);
+    d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, active);
     var element_status_node_id = this.getElementStatusNodeId(element);
     if (element_status_node_id !== null) {
-        d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, toggle);
+        d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, active);
     }
 
     // Track element ID in the proper status state array
     var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
-    if (toggle && element_status_idx === -1) {
+    var added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
+    if (active && added_status) {
         this.state[this.state_id][status].push(element_id);
     }
-    if (!toggle && element_status_idx !== -1) {
+    if (!active && !added_status) {
         this.state[this.state_id][status].splice(element_status_idx, 1);
     }
 
     // Trigger tool tip show/hide logic
-    this.showOrHideTooltip(element);
+    this.showOrHideTooltip(element, added_status);
 
     // Trigger layout changed event hook
-    this.parent.emit('layout_changed', true);
-    if (status === 'selected') {
-        // Notify parents that a given element has been interacted with. For now, we will only notify on
-        //   "selected" type events, which is (usually) a toggle-able state. If elements are exclusive, two selection
-        //   events will be sent in short order as the previously selected element has to be de-selected first
-        this.parent.emit('element_selection', { element: element, active: toggle }, true);
+    if (added_status) {
+        this.parent.emit('layout_changed', true);
+    }
+
+    var is_selected =  (status === 'selected');
+    if (is_selected && (added_status || !active)) {
+        // Notify parents that an element has changed selection status (either active, or inactive)
+        this.parent.emit('element_selection', { element: element, active: active }, true);
+    }
+
+    var value_to_broadcast = (this.layout.match && this.layout.match.send);
+    if (is_selected && value_to_broadcast && (added_status || !active)) {
+        this.parent.emit(
+            'match_requested',
+            { value: element[value_to_broadcast], active: active },
+            true
+        );
     }
     return this;
-
 };
 
 /**
@@ -1067,7 +1121,6 @@ LocusZoom.DataLayer.prototype.draw = function() {
  * @return {Promise}
  */
 LocusZoom.DataLayer.prototype.reMap = function() {
-
     this.destroyAllTooltips(); // hack - only non-visible tooltips should be destroyed
     // and then recreated if returning to visibility
 

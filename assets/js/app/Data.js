@@ -242,7 +242,7 @@ LocusZoom.Data.Requester = function(sources) {
         });
         //assume the fields are requested in dependent order
         //TODO: better manage dependencies
-        var ret = Q.when({header:{}, body: [], discrete: {}});
+        var ret = Promise.resolve({header:{}, body: [], discrete: {}});
         for(var i = 0; i < request_handles.length; i++) {
             // If a single datalayer uses multiple sources, perform the next request when the previous one completes
             ret = ret.then(request_handles[i]);
@@ -331,7 +331,7 @@ LocusZoom.Data.Source.prototype.getRequest = function(state, chain, fields) {
     var req;
     var cacheKey = this.getCacheKey(state, chain, fields);
     if (this.enableCache && typeof(cacheKey) !== 'undefined' && cacheKey === this._cachedKey) {
-        req = Q.when(this._cachedResponse);  // Resolve to the value of the current promise
+        req = Promise.resolve(this._cachedResponse);  // Resolve to the value of the current promise
     } else {
         req = this.fetchRequest(state, chain, fields);
         if (this.enableCache) {
@@ -371,7 +371,7 @@ LocusZoom.Data.Source.prototype.getData = function(state, fields, outnames, tran
         if (self.dependentSource && chain && chain.body && !chain.body.length) {
             // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
             // Therefore, it should simply return the previous data chain.
-            return Q.when(chain);
+            return Promise.resolve(chain);
         }
 
         return self.getRequest(state, chain, fields).then(function(resp) {
@@ -537,24 +537,24 @@ LocusZoom.Data.Source.prototype.parseResponse = function(resp, chain, fields, ou
         // to occur for annotation sources (such as from ExAC). If empty response is received, skip parsing and log.
         // FIXME: Throw an error after pending, eg https://github.com/konradjk/exac_browser/issues/345
         console.error("No usable response was returned for source: '" + source_id + "'. Parsing will be skipped.");
-        return Q.when(chain);
+        return Promise.resolve(chain);
     }
 
     var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
 
     var self = this;
     // Perform the 4 steps of parsing the payload and return a combined chain object
-    return Q.when(self.normalizeResponse(json.data || json))
+    return Promise.resolve(self.normalizeResponse(json.data || json))
         .then(function(standardized) {
             // Perform calculations on the data from just this source
-            return Q.when(self.annotateData(standardized, chain));
+            return Promise.resolve(self.annotateData(standardized, chain));
         }).then(function (data) {
-            return Q.when(self.extractFields(data, fields, outnames, trans));
+            return Promise.resolve(self.extractFields(data, fields, outnames, trans));
         }).then(function (one_source_body) {
             // Store a copy of the data that would be returned by parsing this source in isolation (and taking the
             //   fields array into account). This is useful when we want to re-use the source output in many ways.
             chain.discrete[source_id] = one_source_body;
-            return Q.when(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
+            return Promise.resolve(self.combineChainBody(one_source_body, chain, fields, outnames, trans));
         }).then(function (new_body) {
             return { header: chain.header || {}, discrete: chain.discrete, body: new_body };
         });
@@ -1143,7 +1143,7 @@ LocusZoom.Data.StaticSource = LocusZoom.Data.Source.extend(function(data) {
 },'StaticJSON');
 
 LocusZoom.Data.StaticSource.prototype.getRequest = function(state, chain, fields) {
-    return Q.fcall(function() {return this._data;}.bind(this));
+    return Promise.resolve(this._data);
 };
 
 LocusZoom.Data.StaticSource.prototype.toJSON = function() {
@@ -1233,7 +1233,7 @@ LocusZoom.Data.ConnectorSource.prototype.getRequest = function(state, chain, fie
             throw new Error(self.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + chain_source_id);
         }
     });
-    return Q.when(chain.body || []);
+    return Promise.resolve(chain.body || []);
 };
 
 LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, fields, outnames, trans) {
@@ -1242,7 +1242,7 @@ LocusZoom.Data.ConnectorSource.prototype.parseResponse = function(data, chain, f
 
     // Because of how the chain works, connectors are not very good at applying new transformations or namespacing.
     // Typically connectors are called with `connector_name:all` in the fields array.
-    return Q.when(this.combineChainBody(data, chain, fields, outnames, trans))
+    return Promise.resolve(this.combineChainBody(data, chain, fields, outnames, trans))
         .then(function(new_body) {
             return {header: chain.header || {}, discrete: chain.discrete || {}, body: new_body};
         });

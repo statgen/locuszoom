@@ -53,7 +53,7 @@
 
       <div class="row">
         <footer style="text-align: center;">
-          &copy; Copyright 2018 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+          &copy; Copyright 2019 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
         </footer>
       </div>
 
@@ -82,9 +82,9 @@
     layout = LocusZoom.Layouts.get("plot", "standard_association", mods);
 
     // Update HTML for variant tooltip to include "Add to Model" link
-    layout.panels[0].data_layers[2].tooltip.html = "<strong>{{assoc:variant}}</strong><br>"
-                                                 + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation}}</strong><br>"
-                                                 + "Ref. Allele: <strong>{{assoc:ref_allele}}</strong><br>"
+    layout.panels[0].data_layers[2].tooltip.html = "<strong>{{assoc:variant|htmlescape}}</strong><br>"
+                                                 + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                                                 + "Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>"
                                                  + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Add to Model</a><br>";
 
     // Add covariates model button/menu to the plot-level dashboard

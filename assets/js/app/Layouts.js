@@ -211,9 +211,9 @@ LocusZoom.Layouts.add('tooltip', 'standard_association', {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>'
-        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>'
-        + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele}}</strong><br>'
+    html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
+        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>'
+        + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>'
         + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
 });
 
@@ -227,17 +227,17 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: '<h4><strong><i>{{gene_name}}</i></strong></h4>'
-        + '<div style="float: left;">Gene ID: <strong>{{gene_id}}</strong></div>'
-        + '<div style="float: right;">Transcript ID: <strong>{{transcript_id}}</strong></div>'
+    html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>'
+        + '<div style="float: left;">Gene ID: <strong>{{gene_id|htmlescape}}</strong></div>'
+        + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>'
         + '<div style="clear: both;"></div>'
         + '<table>'
         + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>'
-        + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{n_syn}}</td><td>z = {{syn_z}}</td></tr>'
-        + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{n_mis}}</td><td>z = {{mis_z}}</td></tr>'
-        + '<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{n_lof}}</td><td>pLI = {{pLI}}</td></tr>'
+        + '<tr><td>Synonymous</td><td>{{exp_syn|htmlescape}}</td><td>{{n_syn|htmlescape}}</td><td>z = {{syn_z|htmlescape}}</td></tr>'
+        + '<tr><td>Missense</td><td>{{exp_mis|htmlescape}}</td><td>{{n_mis|htmlescape}}</td><td>z = {{mis_z|htmlescape}}</td></tr>'
+        + '<tr><td>LoF</td><td>{{exp_lof|htmlescape}}</td><td>{{n_lof|htmlescape}}</td><td>pLI = {{pLI|htmlescape}}</td></tr>'
         + '</table>'
-        + '<a href="http://exac.broadinstitute.org/gene/{{gene_id}}" target="_new">More data on ExAC</a>'
+        + '<a href="http://exac.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_new">More data on ExAC</a>'
 });
 
 LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
@@ -245,7 +245,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
     closable: false,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: '{{{{namespace[intervals]}}state_name}}<br>{{{{namespace[intervals]}}start}}-{{{{namespace[intervals]}}end}}'
+    html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
 });
 
 LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
@@ -254,11 +254,11 @@ LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
     html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>'
-        + 'Catalog entries: <strong>{{n_catalog_matches}}</strong><br>'
+        + 'Catalog entries: <strong>{{n_catalog_matches|htmlescape}}</strong><br>'
         + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>'
         + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid}}" target="_new">dbSNP</a>'
+        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">dbSNP</a>'
 });
 
 /**
@@ -382,8 +382,7 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
         id: 'associationpvaluescatalog',
         fill_opacity: 0.7
     });
-
-    l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
+    l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
     l.namespace.catalog = 'catalog';
     l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
     return l;
@@ -410,7 +409,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
         floor: 0,
         upper_buffer: 0.15
     },
-    color: {
+    color: [{
         field: '{{namespace[phewas]}}trait_group',
         scale_function: 'categorical_bin',
         parameters: {
@@ -418,7 +417,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
             values: [],
             null_value: '#B8B8B8'
         }
-    },
+    }],
     fill_opacity: 0.7,
     tooltip: {
         closable: true,
@@ -445,7 +444,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
         ]
     },
     label: {
-        text: '{{{{namespace[phewas]}}trait_label}}',
+        text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
         spacing: 6,
         lines: {
             style: {
@@ -567,7 +566,8 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
     color: '#0000CC',
     fields: [
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
-        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue'
+        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait',
+        '{{namespace[catalog]}}log_pvalue', '{{namespace[catalog]}}pos'
     ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
@@ -714,7 +714,7 @@ LocusZoom.Layouts.add('panel', 'association', {
     })(),
     axes: {
         x: {
-            label: 'Chromosome {{chr}} (Mb)',
+            label: 'Chromosome {{chr|htmlescape}} (Mb)',
             label_offset: 32,
             tick_format: 'region',
             extent: 'state'
@@ -771,7 +771,7 @@ LocusZoom.Layouts.add('panel', 'association_catalog', function () {
                 display_name: 'Label catalog traits',  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
                     label: {
-                        text: '{{{{namespace[catalog]}}trait}}',
+                        text: '{{{{namespace[catalog]}}trait|htmlescape}}',
                         spacing: 6,
                         lines: {
                             style: {
@@ -1244,7 +1244,7 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
             margin: { bottom: 40 },
             axes: {
                 x: {
-                    label: 'Chromosome {{chr}} (Mb)',
+                    label: 'Chromosome {{chr|htmlescape}} (Mb)',
                     label_offset: 32,
                     tick_format: 'region',
                     extent: 'state'

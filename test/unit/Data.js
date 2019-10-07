@@ -265,14 +265,10 @@ describe('LocusZoom Data', function() {
         });
 
         describe('Source.getData', function() {
-            beforeEach(function() {
-                this.sandbox = sinon.sandbox.create();
-            });
-
             it('dependentSource skips making a request if previous sources did not add data to chain.body', function() {
                 var source = new LocusZoom.Data.Source();
                 source.dependentSource = true;
-                var requestStub = this.sandbox.stub(source, 'getRequest');
+                var requestStub = sinon.stub(source, 'getRequest');
 
                 var callable = source.getData();
                 var noRecordsChain = { body: [] };
@@ -284,8 +280,8 @@ describe('LocusZoom Data', function() {
             it('dependentSource makes a request if chain.body has data from previous sources', function(done) {
                 var source = new LocusZoom.Data.Source();
                 source.dependentSource = false;
-                var requestStub = this.sandbox.stub(source, 'getRequest').callsFake(function() { return Q.when(); });
-                this.sandbox.stub(source, 'parseResponse').callsFake(function() {
+                var requestStub = sinon.stub(source, 'getRequest').callsFake(function() { return Promise.resolve(); });
+                sinon.stub(source, 'parseResponse').callsFake(function() {
                     // Because this is an async test, `done` will serve as proof that parseResponse was called
                     done();
                 });
@@ -298,24 +294,19 @@ describe('LocusZoom Data', function() {
             });
 
             afterEach(function() {
-                this.sandbox.restore();
+                sinon.restore();
             });
         });
 
         describe('Source.parseResponse', function() {
             // Parse response is a wrapper for a set of helper methods. Test them individually, and combined.
-
-            beforeEach(function() {
-                this.sandbox = sinon.sandbox.create();
-            });
-
             afterEach(function() {
-                this.sandbox.restore();
+                sinon.restore();
             });
 
             it('lets empty response edge cases pass with a warning', function () {
                 // This is a hack around a browser edge case, and intent may change later
-                var error_stub = this.sandbox.stub(console, 'error');
+                var error_stub = sinon.stub(console, 'error');
                 var source = new LocusZoom.Data.Source();
 
                 var expected_chain = { dummy: true };
@@ -506,17 +497,17 @@ describe('LocusZoom Data', function() {
                 it('integrates all methods via promise semantics', function () {
                     // Returning a promise is optional, but should be supported if a custom subclass chooses to do so
                     var basic_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        normalizeResponse: function () { return Q.when( [{a:1}] ); },
+                        normalizeResponse: function () { return Promise.resolve( [{a:1}] ); },
                         annotateData: function (records) {
-                            return Q.when(records.map(function(item) {
+                            return Promise.resolve(records.map(function(item) {
                                 item.b = item.a + 1;
                                 return item;
                             }));
                         },
                         extractFields: function (data, fields, outnames, trans) {
                             var rec = data.map(function(item) { return {'bfield': item.b}; });
-                            return Q.when(rec); },
-                        combineChainBody: function (records) { return Q.when(records); }
+                            return Promise.resolve(rec); },
+                        combineChainBody: function (records) { return Promise.resolve(records); }
                     });
                     basic_source.prototype.constructor.SOURCE_NAME = 'fake_source';
 
@@ -754,7 +745,7 @@ describe('LocusZoom Data', function() {
                     data.should.have.property('body').which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
                     done();
-                }).fail(done);
+                }).catch(done);
         });
         it('should pass only specifically requested fields on static JSON through a getData() request (2)', function(done) {
             this.plot.lzd.getData({}, ['test:q'])
@@ -764,14 +755,12 @@ describe('LocusZoom Data', function() {
                     data.should.have.property('body').which.is.an.Object;
                     assert.deepEqual(data.body, expected_data);
                     done();
-                }).fail(done);
+                }).catch(done);
         });
     });
 
     describe('LocusZoom Data.ConnectorSource', function() {
         beforeEach(function () {
-            this.sandbox = sinon.sandbox.create();
-
             // Create a source that internally looks for data as "first" from the specified
             this.basic_config = { sources: { first: 'a_source', second: 'b_source' } };
             this.basic_source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource, {
@@ -794,7 +783,7 @@ describe('LocusZoom Data', function() {
         });
 
         afterEach(function() {
-            this.sandbox.restore();
+            sinon.restore();
         });
 
         it('must specify the data it requires from other sources', function() {
@@ -825,7 +814,7 @@ describe('LocusZoom Data', function() {
         });
         it('should not make any network requests', function() {
             var instance = new this.basic_source(this.basic_config);
-            var fetchSpy = this.sandbox.stub(instance, 'fetchRequest');
+            var fetchSpy = sinon.stub(instance, 'fetchRequest');
 
             return instance.getRequest({}, { discrete: { a_source: 1, b_source: 2 } })
                 .then(function() { assert.ok(fetchSpy.notCalled, 'No network request was fired'); });

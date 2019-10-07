@@ -12,22 +12,22 @@
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
 // Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
 //  systems may require being told that this file has side effects.
-/* global define, module, require */
+/* global define, module, require, Promise */
 
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'gwas-credible-sets', 'q'] , function(LocusZoom, gwasCredibleSets, Q) {  // amd
-            return factory(LocusZoom, gwasCredibleSets, Q);
+        define(['locuszoom', 'gwas-credible-sets'] , function(LocusZoom, gwasCredibleSets) {  // amd
+            return factory(LocusZoom, gwasCredibleSets);
         });
     } else if(typeof module === 'object' && module.exports) {  // commonJS
-        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'), require('q'));
+        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'));
     } else {  // globals
         if (!root.LocusZoom.ext.Data) {
             root.LocusZoom.ext.Data = {};
         }
-        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets, root.Q);
+        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets);
     }
-}(this, function(LocusZoom, gwasCredibleSets, Q) {
+}(this, function(LocusZoom, gwasCredibleSets) {
     /**
      * Custom data source that calculates the 95% credible set based on provided data.
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
@@ -95,7 +95,7 @@
             // If the calculation cannot be completed, return the data without annotation fields
             console.error(e);
         }
-        return Q.when(credset_data);
+        return Promise.resolve(credset_data);
     };
 
     CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
@@ -112,7 +112,7 @@
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
         var l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>';
+        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>';
         return l;
     }());
 
@@ -121,13 +121,13 @@
         closable: true,
         show: {or: ['highlighted', 'selected']},
         hide: {and: ['unhighlighted', 'unselected']},
-        html: '<strong>{{{{namespace[assoc]}}variant}}</strong><br>'
-        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation}}</strong><br>' +
-        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation}}</strong>'
+        html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
+        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
+        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>'
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
-        return LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
+        var base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
             unnamespaced: true,
             id: 'associationcredibleset',
             namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
@@ -140,8 +140,18 @@
                 '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
                 '{{namespace[credset]}}is_member',
                 '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'
-            ]
+            ],
+            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' }
         });
+        base.color.unshift({
+            field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#FFf000'
+            }
+        });
+        return base;
     }());
 
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', {
@@ -152,8 +162,19 @@
         x_axis: {
             field: '{{namespace[assoc]}}position'
         },
-        color: '#00CC00',
+        color: [
+            {
+                field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+                scale_function: 'if',
+                parameters: {
+                    field_value: true,
+                    then: '#001cee'
+                }
+            },
+            '#00CC00'
+        ],
         fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
+        match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
             ['{{namespace[credset]}}is_member', true]

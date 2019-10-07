@@ -10,8 +10,8 @@ var glob = require("glob");
 // Vendor libraries. These are *only* libraries necessary for implementing the plugin.
 // Any vendor libraries needed solely for testing should not appear in this list.
 var vendor_build = [
-    "./node_modules/d3/d3.js",
-    "./node_modules/q/q.js"
+    "./node_modules/promise-polyfill/dist/polyfill.js",
+    "./node_modules/d3/d3.js"
 ];
 
 // Test suites. Should be able to be executed in any order.
