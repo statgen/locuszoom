@@ -382,7 +382,6 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
         id: 'associationpvaluescatalog',
         fill_opacity: 0.7
     });
-
     l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
     l.namespace.catalog = 'catalog';
     l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
@@ -410,7 +409,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
         floor: 0,
         upper_buffer: 0.15
     },
-    color: {
+    color: [{
         field: '{{namespace[phewas]}}trait_group',
         scale_function: 'categorical_bin',
         parameters: {
@@ -418,7 +417,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
             values: [],
             null_value: '#B8B8B8'
         }
-    },
+    }],
     fill_opacity: 0.7,
     tooltip: {
         closable: true,
@@ -567,7 +566,8 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
     color: '#0000CC',
     fields: [
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
-        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue'
+        '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait',
+        '{{namespace[catalog]}}log_pvalue', '{{namespace[catalog]}}pos'
     ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters

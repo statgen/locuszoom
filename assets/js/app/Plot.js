@@ -118,6 +118,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
         'data_rendered': [],
         'element_clicked': [], // Select or unselect
         'element_selection': [], // Element becomes active (only)
+        'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
         'panel_removed': [],
         'state_changed': []  // Only triggered when a state change causes rerender
     };
@@ -921,6 +922,14 @@ LocusZoom.Plot.prototype.initialize = function() {
             .on('mouseup' + namespace, mouseup)
             .on('touchend' + namespace, mouseup);
     }
+
+    this.on('match_requested', function(eventData) {
+        // Layers can broadcast that a specific point has been selected, and the plot will tell every other layer
+        //  to look for that value. Whenever a point is de-selected, it clears the match.
+        var data = eventData.data;
+        var to_send = (data.active ? data.value : null);
+        this.applyState({ lz_match_value: to_send });
+    }.bind(this));
 
     this.initialized = true;
 
