@@ -714,7 +714,7 @@ LocusZoom.Layouts.add('panel', 'association', {
     })(),
     axes: {
         x: {
-            label: 'Chromosome {{chr|htmlescape}} (Mb)',
+            label: 'Chromosome {{chr}} (Mb)',
             label_offset: 32,
             tick_format: 'region',
             extent: 'state'
@@ -1244,7 +1244,7 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
             margin: { bottom: 40 },
             axes: {
                 x: {
-                    label: 'Chromosome {{chr|htmlescape}} (Mb)',
+                    label: 'Chromosome {{chr}} (Mb)',
                     label_offset: 32,
                     tick_format: 'region',
                     extent: 'state'
