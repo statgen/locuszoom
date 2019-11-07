@@ -18,6 +18,7 @@ LocusZoom.Layouts = (function () {
         'panel': {},
         'data_layer': {},
         'dashboard': {},
+        'dashboard_components': {},
         'tooltip': {}
     };
 
@@ -593,7 +594,34 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
 });
 
 /**
- * Dashboard Layouts: toolbar buttons etc
+ * Individual dashboard buttons
+ * @namespace Layouts.dashboard_components
+ */
+LocusZoom.Layouts.add('dashboard_components', 'ldlz2_pop_selector', {
+    // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
+    //  (on the original LD data source) will not work with these population names.
+    type: 'set_state',
+    position: 'right',
+    color: 'blue',
+    button_html: 'LD Population: ',
+    show_selected: true,
+    button_title: 'Select LD Population: ',
+    state_field: 'ld_pop',
+    // This list below is hardcoded to work with the UMich LDServer, default 1000G populations
+    //  It can be customized to work with other LD servers that specify population differently
+    // https://portaldev.sph.umich.edu/ld/genome_builds/GRCh37/references/1000G/populations
+    options: [
+        { display_name: 'ALL (default)', value: 'ALL' },
+        { display_name: 'AFR', value: 'AFR' },
+        { display_name: 'AMR', value: 'AMR' },
+        { display_name: 'EAS', value: 'EAS' },
+        { display_name: 'EUR', value: 'EUR' },
+        { display_name: 'SAS', value: 'SAS' }
+    ]
+});
+
+/**
+ * Dashboard Layouts: Collections of toolbar buttons etc
  * @namespace Layouts.dashboard
  */
 LocusZoom.Layouts.add('dashboard', 'standard_panel', {
@@ -1264,7 +1292,11 @@ LocusZoom.Layouts.add('plot', 'interval_association', {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
+        LocusZoom.Layouts.get('panel', 'association', {
+            unnamespaced: true,
+            width: 800,
+            proportional_height: (225 / 570)
+        }),
         LocusZoom.Layouts.get('panel', 'intervals', { unnamespaced: true, proportional_height: (120 / 570) }),
         LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
     ]
