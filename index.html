@@ -232,7 +232,8 @@
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
-    // Allow users to select custom LD population. This button isn't part of default LocusZoom because not everyone uses the UM 1000G LDServer (LDLZ2 datasource)
+    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
+    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
     layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
     // Add a button to show the study abstract the layout
