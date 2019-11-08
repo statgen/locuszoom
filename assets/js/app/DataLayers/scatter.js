@@ -515,8 +515,8 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
             .sort(function(a, b) {
                 var ak = a[category_field];
                 var bk = b[category_field];
-                var av = ak.toString ? ak.toString().toLowerCase() : ak;
-                var bv = bk.toString ? bk.toString().toLowerCase() : bk;
+                var av = (typeof ak === 'string') ? ak.toLowerCase() : ak;
+                var bv = (typeof bk === 'string') ? bk.toLowerCase() : bk;
                 return (av === bv) ? 0 : (av < bv ? -1 : 1);});
         sourceData.forEach(function(d, i) {
             // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
