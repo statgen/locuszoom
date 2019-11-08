@@ -695,7 +695,8 @@ LocusZoom.Data.LDSource.prototype.preGetData = function(state, fields) {
 };
 
 LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
-    // Find the fields (as provided by a previous step in the chain) that are needed to combine with LD data
+    // Find the fields (as provided by a previous step in the chain, like an association source) that will be needed to
+    //  combine LD data with existing information
 
     // Since LD information may be shared across multiple assoc sources with different namespaces,
     //   we use regex to find columns to join on, rather than requiring exact matches
@@ -719,7 +720,12 @@ LocusZoom.Data.LDSource.prototype.findMergeFields = function(chain) {
     if (chain && chain.body && chain.body.length > 0) {
         var names = Object.keys(chain.body[0]);
         var nameMatch = exactMatch(names);
-        dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
+        // Internally, fields are generally prefixed with the name of the source they come from.
+        // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
+        //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
+        // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
+        var id_match = dataFields.id && nameMatch(new RegExp(dataFields.id + '\\b'));
+        dataFields.id = id_match || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
         dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
         dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
         dataFields._names_ = names;
@@ -745,6 +751,11 @@ LocusZoom.Data.LDSource.prototype.findRequestedFields = function(fields, outname
 LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) { return data; };
 
 
+/**
+ * Get the LD reference variant, which by default will be the most significant hit in the assoc results
+ *   This will be used in making the original query to the LD server for pairwise LD information
+ * @returns {*|string} The marker id (expected to be in `chr:pos_ref/alt` format) of the reference variant
+ */
 LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
     var findExtremeValue = function(records, pval_field) {
         // Finds the most significant hit (smallest pvalue, or largest -log10p). Will try to auto-detect the appropriate comparison.

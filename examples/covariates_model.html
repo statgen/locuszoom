@@ -93,7 +93,7 @@
         button_html: "Model",
         button_title: "Use this feature to interactively build a model using variants from the data set",
         position: "left"
-    });
+    }, LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
     // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);

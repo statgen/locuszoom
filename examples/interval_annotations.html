@@ -81,6 +81,9 @@
       }
     };
     layout = LocusZoom.Layouts.get("plot", "interval_association", mods);
+    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
+    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
+    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
     // Add a track information button to the intervals panel
     layout.panels[1].dashboard.components.push({
@@ -96,7 +99,7 @@
 
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function(panel){
-      plot.panels[panel.id].addBasicLoader();
+        plot.panels[panel.id].addBasicLoader();
     });
 
     // Create a method to parse a region string into a 600Kb genome range and load it
