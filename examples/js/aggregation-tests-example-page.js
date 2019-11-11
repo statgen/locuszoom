@@ -40,6 +40,10 @@ function customizePlotLayout(layout) {
     // 2. Genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
     //  the gene track by aggregation test results
 
+    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
+    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
+    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+
     var assocLayout = layout.panels[0].data_layers[2];
     assocLayout.fields.unshift('aggregation: all');
 
@@ -68,19 +72,6 @@ function customizePlotLayout(layout) {
     ];
     genesLayout.color = colorConfig;
     genesLayout.stroke = colorConfig;
-
-    // The demo does not have real covariance data, and therefore only works on a narrow plot region. Lock all panels
-    //   to prevent scrolling  TODO Update here
-    // layout.panels.forEach(function (panel_layout) {
-    //     panel_layout.interaction = {
-    //         drag_background_to_pan: false,
-    //         drag_x_ticks_to_scale: false,
-    //         drag_y1_ticks_to_scale: false,
-    //         drag_y2_ticks_to_scale: false,
-    //         scroll_to_zoom: false,
-    //         x_linked: false
-    //     };
-    // });
     return layout;
 }
 

@@ -1537,3 +1537,94 @@ LocusZoom.Dashboard.Components.add('display_options', function (layout) {
         return this;
     };
 });
+
+
+/**
+ * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
+ * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
+ *
+ * For example, the LDLZ2 data source can use it to change LD reference population (for all panels) after render
+ *
+ * @class LocusZoom.Dashboard.Components.set_state
+ * @augments LocusZoom.Dashboard.Component
+ * @param {object} layout
+ * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
+ * @param {String} [layout.button_title="Choose an option to customize the plot"] Hover text for the toolbar button
+ * @param {bool} [layout.show_selected=false] Whether to append the selected value to the button label
+ * @param {string} [layout.state_field] The name of the field in plot.state that will be set by this button
+ * @typedef {{display_name: string, value: *}} SetStateOptionsConfigField
+ * @param {SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
+ */
+LocusZoom.Dashboard.Components.add('set_state', function (layout) {
+    var self = this;
+    if (typeof layout.button_html != 'string') { layout.button_html = 'Set option...'; }
+    if (typeof layout.button_title != 'string') { layout.button_title = 'Choose an option to customize the plot'; }
+
+    // Call parent constructor
+    LocusZoom.Dashboard.Component.apply(this, arguments);
+
+    if (this.parent_panel) {
+        throw new Error('This widget is designed to set global options, so it can only be used at the top (plot) level');
+    }
+    if (!layout.state_field) {
+        throw new Error('Must specify the `state_field` that this widget controls');
+    }
+
+    /**
+     * Which item in the menu is currently selected. (track for rerendering menu)
+     * @member {String}
+     * @private
+     */
+    // The first option listed is automatically assumed to be the default, unless a value exists in plot.state
+    this._selected_item = this.parent_plot.state[layout.state_field] || layout.options[0].value;
+    if (!layout.options.find(function(item) { return item.value === self._selected_item; })) {
+        // Check only gets run at widget creation, but generally this widget is assumed to be an exclusive list of options
+        throw new Error('There is an existing state value that does not match the known values in this widget');
+    }
+
+    // Define the button + menu that provides the real functionality for this dashboard component
+    this.button = new LocusZoom.Dashboard.Component.Button(self)
+        .setColor(layout.color)
+        .setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''))
+        .setTitle(layout.button_title)
+        .setOnclick(function () {
+            self.button.menu.populate();
+        });
+    this.button.menu.setPopulate(function () {
+        // Multiple copies of this button might be used on a single LZ page; append unique IDs where needed
+        var uniqueID = Math.floor(Math.random() * 1e4).toString();
+
+        self.button.menu.inner_selector.html('');
+        var table = self.button.menu.inner_selector.append('table');
+
+        var renderRow = function(display_name, value, row_id) { // Helper method
+            var row = table.append('tr');
+            var radioId = '' + uniqueID + row_id;
+            row.append('td')
+                .append('input')
+                .attr({id: radioId, type: 'radio', name: 'set-state-' + uniqueID, value: row_id})
+                .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
+                .property('checked', (value === self._selected_item))
+                .on('click', function () {
+                    var new_state = {};
+                    new_state[layout.state_field] = value;
+                    self._selected_item = value;
+                    self.parent_plot.applyState(new_state);
+                    self.button.setHtml(layout.button_html + (layout.show_selected ? self._selected_item : ''));
+                });
+            row.append('td').append('label')
+                .style('font-weight', 'normal')
+                .attr('for', radioId)
+                .text(display_name);
+        };
+        layout.options.forEach(function (item, index) {
+            renderRow(item.display_name, item.value, index);
+        });
+        return self;
+    });
+
+    this.update = function () {
+        this.button.show();
+        return this;
+    };
+});

@@ -700,6 +700,32 @@ describe('LocusZoom Data', function() {
             );
             assert.equal(ref, 'b');
         });
+
+        it('correctly identifies the variant-marker field', function() {
+            //
+            var source_default = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var dataFields = source_default.findMergeFields(
+                { body: [{ 'assoc:id': 'a', log_pvalue: 10 }] }
+            );
+            assert.equal(dataFields.id, 'assoc:id', 'Uses a default option (ID)');
+
+            dataFields = source_default.findMergeFields(
+                { body: [{ 'assoc:variant': 'a', log_pvalue: 10 }] }
+            );
+            assert.equal(dataFields.id, 'assoc:variant', 'Uses a default option (variant name)');
+
+            var source_options = new LocusZoom.Data.LDSource2({url: 'www.fake.test',
+                params: { build: 'GRCh37', id_field: 'marker' }});
+            dataFields = source_options.findMergeFields(
+                { body: [{ 'assoc:id': 'a', 'assoc:marker': 'b', log_pvalue: 10 }] }
+            );
+            assert.equal(dataFields.id, 'assoc:marker', 'Uses a provided option (from params.id_field)');
+
+            dataFields = source_options.findMergeFields(
+                { body: [{ 'assoc:onefish': 'a', 'assoc:twofish': 'b', log_pvalue: 10 }] }
+            );
+            assert.equal(dataFields.id, null, 'There is no field matching the requested ID field');
+        });
     });
 
     describe('Static JSON Data Source', function() {
