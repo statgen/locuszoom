@@ -76,7 +76,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.css</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -87,7 +87,7 @@
           <h6><strong>Dependencies</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.vendor.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.vendor.min.js</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.vendor.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.vendor.min.js</a></tt>
           <br>
           <small><i>Contains <a href="https://github.com/d3/d3">d3</a> v3.5.17 and <a href="https://www.npmjs.com/package/promise-polyfill">ES6 Promise Polyfill</a></i></small>
         </div>
@@ -98,7 +98,7 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.1/dist/locuszoom.app.min.js</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0-beta.2/dist/locuszoom.app.min.js</a></tt>
           <br>
         </div>
       </div>
@@ -232,6 +232,9 @@
     }
     layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
+    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
+    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
+    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
     // Add a button to show the study abstract the layout
     var abstract = "<h4 style=\"margin-top: 0px;\"><a href=\"https://www.ncbi.nlm.nih.gov/pubmed/?term=22885922\" target=\"_new\">Type 2 diabetes meta-analysis</a></h4>1. Nat Genet. 2012 Sep;44(9):981-90. doi: 10.1038/ng.2383. Epub 2012 Aug 12.<br><br>Large-scale association analysis provides insights into the genetic architecture <br>and pathophysiology of type 2 diabetes.<br><br>Morris AP, Voight BF, Teslovich TM, Ferreira T, Segrè AV, Steinthorsdottir V,<br>Strawbridge RJ, Khan H, Grallert H, Mahajan A, Prokopenko I, Kang HM, Dina C,<br>Esko T, Fraser RM, Kanoni S, Kumar A, Lagou V, Langenberg C, Luan J, Lindgren CM,<br>Müller-Nurasyid M, Pechlivanis S, Rayner NW, Scott LJ, Wiltshire S, Yengo L,<br>Kinnunen L, Rossin EJ, Raychaudhuri S, Johnson AD, Dimas AS, Loos RJ, Vedantam S,<br>Chen H, Florez JC, Fox C, Liu CT, Rybin D, Couper DJ, Kao WH, Li M, Cornelis MC, <br>Kraft P, Sun Q, van Dam RM, Stringham HM, Chines PS, Fischer K, Fontanillas P,<br>Holmen OL, Hunt SE, Jackson AU, Kong A, Lawrence R, Meyer J, Perry JR, Platou CG,<br>Potter S, Rehnberg E, Robertson N, Sivapalaratnam S, Stančáková A, Stirrups K,<br>Thorleifsson G, Tikkanen E, Wood AR, Almgren P, Atalay M, Benediktsson R,<br>Bonnycastle LL, Burtt N, Carey J, Charpentier G, Crenshaw AT, Doney AS, Dorkhan<br>M, Edkins S, Emilsson V, Eury E, Forsen T, Gertow K, Gigante B, Grant GB, Groves <br>CJ, Guiducci C, Herder C, Hreidarsson AB, Hui J, James A, Jonsson A, Rathmann W, <br>Klopp N, Kravic J, Krjutškov K, Langford C, Leander K, Lindholm E, Lobbens S,<br>Männistö S, Mirza G, Mühleisen TW, Musk B, Parkin M, Rallidis L, Saramies J,<br>Sennblad B, Shah S, Sigurðsson G, Silveira A, Steinbach G, Thorand B, Trakalo J, <br>Veglia F, Wennauer R, Winckler W, Zabaneh D, Campbell H, van Duijn C,<br>Uitterlinden AG, Hofman A, Sijbrands E, Abecasis GR, Owen KR, Zeggini E, Trip MD,<br>Forouhi NG, Syvänen AC, Eriksson JG, Peltonen L, Nöthen MM, Balkau B, Palmer CN, <br>Lyssenko V, Tuomi T, Isomaa B, Hunter DJ, Qi L; Wellcome Trust Case Control<br>Consortium; Meta-Analyses of Glucose and Insulin-related traits Consortium<br>(MAGIC) Investigators; Genetic Investigation of ANthropometric Traits (GIANT)<br>Consortium; Asian Genetic Epidemiology Network–Type 2 Diabetes (AGEN-T2D)<br>Consortium; South Asian Type 2 Diabetes (SAT2D) Consortium, Shuldiner AR, Roden<br>M, Barroso I, Wilsgaard T, Beilby J, Hovingh K, Price JF, Wilson JF, Rauramaa R, <br>Lakka TA, Lind L, Dedoussis G, Njølstad I, Pedersen NL, Khaw KT, Wareham NJ,<br>Keinanen-Kiukaanniemi SM, Saaristo TE, Korpi-Hyövälti E, Saltevo J, Laakso M,<br>Kuusisto J, Metspalu A, Collins FS, Mohlke KL, Bergman RN, Tuomilehto J, Boehm<br>BO, Gieger C, Hveem K, Cauchi S, Froguel P, Baldassarre D, Tremoli E, Humphries<br>SE, Saleheen D, Danesh J, Ingelsson E, Ripatti S, Salomaa V, Erbel R, Jöckel KH, <br>Moebus S, Peters A, Illig T, de Faire U, Hamsten A, Morris AD, Donnelly PJ,<br>Frayling TM, Hattersley AT, Boerwinkle E, Melander O, Kathiresan S, Nilsson PM,<br>Deloukas P, Thorsteinsdottir U, Groop LC, Stefansson K, Hu F, Pankow JS, Dupuis<br>J, Meigs JB, Altshuler D, Boehnke M, McCarthy MI; DIAbetes Genetics Replication<br>And Meta-analysis (DIAGRAM) Consortium.<br><br>To extend understanding of the genetic architecture and molecular basis of type 2<br>diabetes (T2D), we conducted a meta-analysis of genetic variants on the<br>Metabochip, including 34,840 cases and 114,981 controls, overwhelmingly of<br>European descent. We identified ten previously unreported T2D susceptibility<br>loci, including two showing sex-differentiated association. Genome-wide analyses <br>of these data are consistent with a long tail of additional common variant loci<br>explaining much of the variation in susceptibility to T2D. Exploration of the<br>enlarged set of susceptibility loci implicates several processes, including<br>CREBBP-related transcription, adipocytokine signaling and cell cycle regulation, <br>in diabetes pathogenesis.<br><br>DOI: 10.1038/ng.2383 <br>PMCID: PMC3442244<br>PMID: 22885922  [PubMed - indexed for MEDLINE]</div>";

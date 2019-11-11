@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.10.0-beta.1' };
+        var LocusZoom = { version: '0.10.0-beta.2' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -805,6 +805,7 @@
                 'panel': {},
                 'data_layer': {},
                 'dashboard': {},
+                'dashboard_components': {},
                 'tooltip': {}
             };
             /**
@@ -1625,7 +1626,51 @@
             tooltip_positioning: 'top'
         });
         /**
- * Dashboard Layouts: toolbar buttons etc
+ * Individual dashboard buttons
+ * @namespace Layouts.dashboard_components
+ */
+        LocusZoom.Layouts.add('dashboard_components', 'ldlz2_pop_selector', {
+            // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
+            //  (on the original LD data source) will not work with these population names.
+            type: 'set_state',
+            position: 'right',
+            color: 'blue',
+            button_html: 'LD Population: ',
+            show_selected: true,
+            button_title: 'Select LD Population: ',
+            state_field: 'ld_pop',
+            // This list below is hardcoded to work with the UMich LDServer, default 1000G populations
+            //  It can be customized to work with other LD servers that specify population differently
+            // https://portaldev.sph.umich.edu/ld/genome_builds/GRCh37/references/1000G/populations
+            options: [
+                {
+                    display_name: 'ALL (default)',
+                    value: 'ALL'
+                },
+                {
+                    display_name: 'AFR',
+                    value: 'AFR'
+                },
+                {
+                    display_name: 'AMR',
+                    value: 'AMR'
+                },
+                {
+                    display_name: 'EAS',
+                    value: 'EAS'
+                },
+                {
+                    display_name: 'EUR',
+                    value: 'EUR'
+                },
+                {
+                    display_name: 'SAS',
+                    value: 'SAS'
+                }
+            ]
+        });
+        /**
+ * Dashboard Layouts: Collections of toolbar buttons etc
  * @namespace Layouts.dashboard
  */
         LocusZoom.Layouts.add('dashboard', 'standard_panel', {
@@ -1740,7 +1785,7 @@
             }(),
             axes: {
                 x: {
-                    label: 'Chromosome {{chr|htmlescape}} (Mb)',
+                    label: 'Chromosome {{chr}} (Mb)',
                     label_offset: 32,
                     tick_format: 'region',
                     extent: 'state'
@@ -2302,7 +2347,7 @@
                     margin: { bottom: 40 },
                     axes: {
                         x: {
-                            label: 'Chromosome {{chr|htmlescape}} (Mb)',
+                            label: 'Chromosome {{chr}} (Mb)',
                             label_offset: 32,
                             tick_format: 'region',
                             extent: 'state'
@@ -5694,8 +5739,8 @@
                 var sourceData = this.data.sort(function (a, b) {
                     var ak = a[category_field];
                     var bk = b[category_field];
-                    var av = ak.toString ? ak.toString().toLowerCase() : ak;
-                    var bv = bk.toString ? bk.toString().toLowerCase() : bk;
+                    var av = typeof ak === 'string' ? ak.toLowerCase() : ak;
+                    var bv = typeof bk === 'string' ? bk.toLowerCase() : bk;
                     return av === bv ? 0 : av < bv ? -1 : 1;
                 });
                 sourceData.forEach(function (d, i) {
@@ -8009,6 +8054,89 @@
                 return this;
             };
         });
+        /**
+ * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
+ * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
+ *
+ * For example, the LDLZ2 data source can use it to change LD reference population (for all panels) after render
+ *
+ * @class LocusZoom.Dashboard.Components.set_state
+ * @augments LocusZoom.Dashboard.Component
+ * @param {object} layout
+ * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
+ * @param {String} [layout.button_title="Choose an option to customize the plot"] Hover text for the toolbar button
+ * @param {bool} [layout.show_selected=false] Whether to append the selected value to the button label
+ * @param {string} [layout.state_field] The name of the field in plot.state that will be set by this button
+ * @typedef {{display_name: string, value: *}} SetStateOptionsConfigField
+ * @param {SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
+ */
+        LocusZoom.Dashboard.Components.add('set_state', function (layout) {
+            var self = this;
+            if (typeof layout.button_html != 'string') {
+                layout.button_html = 'Set option...';
+            }
+            if (typeof layout.button_title != 'string') {
+                layout.button_title = 'Choose an option to customize the plot';
+            }
+            // Call parent constructor
+            LocusZoom.Dashboard.Component.apply(this, arguments);
+            if (this.parent_panel) {
+                throw new Error('This widget is designed to set global options, so it can only be used at the top (plot) level');
+            }
+            if (!layout.state_field) {
+                throw new Error('Must specify the `state_field` that this widget controls');
+            }
+            /**
+     * Which item in the menu is currently selected. (track for rerendering menu)
+     * @member {String}
+     * @private
+     */
+            // The first option listed is automatically assumed to be the default, unless a value exists in plot.state
+            this._selected_item = this.parent_plot.state[layout.state_field] || layout.options[0].value;
+            if (!layout.options.find(function (item) {
+                    return item.value === self._selected_item;
+                })) {
+                // Check only gets run at widget creation, but generally this widget is assumed to be an exclusive list of options
+                throw new Error('There is an existing state value that does not match the known values in this widget');
+            }
+            // Define the button + menu that provides the real functionality for this dashboard component
+            this.button = new LocusZoom.Dashboard.Component.Button(self).setColor(layout.color).setHtml(layout.button_html + (layout.show_selected ? this._selected_item : '')).setTitle(layout.button_title).setOnclick(function () {
+                self.button.menu.populate();
+            });
+            this.button.menu.setPopulate(function () {
+                // Multiple copies of this button might be used on a single LZ page; append unique IDs where needed
+                var uniqueID = Math.floor(Math.random() * 10000).toString();
+                self.button.menu.inner_selector.html('');
+                var table = self.button.menu.inner_selector.append('table');
+                var renderRow = function (display_name, value, row_id) {
+                    // Helper method
+                    var row = table.append('tr');
+                    var radioId = '' + uniqueID + row_id;
+                    row.append('td').append('input').attr({
+                        id: radioId,
+                        type: 'radio',
+                        name: 'set-state-' + uniqueID,
+                        value: row_id
+                    }).style('margin', 0)    // Override css libraries (eg skeleton) that style form inputs
+.property('checked', value === self._selected_item).on('click', function () {
+                        var new_state = {};
+                        new_state[layout.state_field] = value;
+                        self._selected_item = value;
+                        self.parent_plot.applyState(new_state);
+                        self.button.setHtml(layout.button_html + (layout.show_selected ? self._selected_item : ''));
+                    });
+                    row.append('td').append('label').style('font-weight', 'normal').attr('for', radioId).text(display_name);
+                };
+                layout.options.forEach(function (item, index) {
+                    renderRow(item.display_name, item.value, index);
+                });
+                return self;
+            });
+            this.update = function () {
+                this.button.show();
+                return this;
+            };
+        });
         /* global LocusZoom */
         'use strict';
         /**
@@ -8866,7 +8994,8 @@
             }
         };
         LocusZoom.Data.LDSource.prototype.findMergeFields = function (chain) {
-            // Find the fields (as provided by a previous step in the chain) that are needed to combine with LD data
+            // Find the fields (as provided by a previous step in the chain, like an association source) that will be needed to
+            //  combine LD data with existing information
             // Since LD information may be shared across multiple assoc sources with different namespaces,
             //   we use regex to find columns to join on, rather than requiring exact matches
             var exactMatch = function (arr) {
@@ -8893,7 +9022,12 @@
             if (chain && chain.body && chain.body.length > 0) {
                 var names = Object.keys(chain.body[0]);
                 var nameMatch = exactMatch(names);
-                dataFields.id = dataFields.id || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
+                // Internally, fields are generally prefixed with the name of the source they come from.
+                // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
+                //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
+                // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
+                var id_match = dataFields.id && nameMatch(new RegExp(dataFields.id + '\\b'));
+                dataFields.id = id_match || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
                 dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
                 dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
                 dataFields._names_ = names;
@@ -8917,6 +9051,11 @@
         LocusZoom.Data.LDSource.prototype.normalizeResponse = function (data) {
             return data;
         };
+        /**
+ * Get the LD reference variant, which by default will be the most significant hit in the assoc results
+ *   This will be used in making the original query to the LD server for pairwise LD information
+ * @returns {*|string} The marker id (expected to be in `chr:pos_ref/alt` format) of the reference variant
+ */
         LocusZoom.Data.LDSource.prototype.getRefvar = function (state, chain, fields) {
             var findExtremeValue = function (records, pval_field) {
                 // Finds the most significant hit (smallest pvalue, or largest -log10p). Will try to auto-detect the appropriate comparison.
