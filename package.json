@@ -52,7 +52,7 @@
     "gulp-util": "~3.0.8",
     "gulp-watch": "~5.0.1",
     "gulp-wrap-js": "~0.4.1",
-    "jsdoc": "^3.5.5",
+    "jsdoc": "^3.6.3",
     "jsdom": "~9.12.0",
     "mocha": "~5.2.0",
     "mocha-jsdom": "~2.0.0",
