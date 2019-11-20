@@ -870,7 +870,7 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
                 this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
             }.bind(this));
         this.button.show();
-        this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', 'locuszoom.svg');
+        this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', layout.filename || 'locuszoom.svg');
         return this;
     };
     this.css_string = '';
