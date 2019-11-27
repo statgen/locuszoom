@@ -229,7 +229,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
     html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>'
-        + '<div style="float: left;">Gene ID: <strong>{{gene_id|htmlescape}}</strong></div>'
+        + '<div style="float: left;">Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a></div>'
         + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>'
         + '<div style="clear: both;"></div>'
         + '<table>'
@@ -238,7 +238,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
         + '<tr><td>Missense</td><td>{{exp_mis|htmlescape}}</td><td>{{n_mis|htmlescape}}</td><td>z = {{mis_z|htmlescape}}</td></tr>'
         + '<tr><td>LoF</td><td>{{exp_lof|htmlescape}}</td><td>{{n_lof|htmlescape}}</td><td>pLI = {{pLI|htmlescape}}</td></tr>'
         + '</table>'
-        + '<a href="http://exac.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_new">More data on ExAC</a>'
+        + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
 });
 
 LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
@@ -259,7 +259,7 @@ LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
         + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>'
         + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">dbSNP</a>'
+        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
 });
 
 /**
@@ -383,7 +383,7 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
         id: 'associationpvaluescatalog',
         fill_opacity: 0.7
     });
-    l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
+    l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
     l.namespace.catalog = 'catalog';
     l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
     return l;
@@ -651,7 +651,7 @@ LocusZoom.Layouts.add('dashboard', 'standard_plot', {
         {
             type: 'title',
             title: 'LocusZoom',
-            subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank">v' + LocusZoom.version + '</a>',
+            subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v' + LocusZoom.version + '</a>',
             position: 'left'
         },
         {
