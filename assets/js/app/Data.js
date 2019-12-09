@@ -1035,12 +1035,17 @@ LocusZoom.Data.GeneSource.prototype.normalizeResponse = function (data) { return
 LocusZoom.Data.GeneSource.prototype.extractFields = function (data, fields, outnames, trans) { return data; };
 
 /**
- * Data Source for Gene Constraint Data, as fetched from the LocusZoom API server (or compatible)
+ * Data Source for Gene Constraint Data, as fetched from the ExAC server (or compatible)
+ *
+ * FIXME: The ExAc server has been decommissioned. This source is kept here to avoid breaking existing layouts; we may
+ *  be able to restore this feature in the future once the gnomAD API is further developed
+ *
  * @public
  * @class
  * @augments LocusZoom.Data.Source
 */
 LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function(init) {
+    console.warn('The gene constraint source depends on a server (ExAC) that is no longer active. This information may not be displayed.');
     this.parseInit(init);
 }, 'GeneConstraintLZ');
 
