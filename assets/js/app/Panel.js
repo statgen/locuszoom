@@ -1217,7 +1217,7 @@ LocusZoom.Panel.prototype.renderAxis = function(axis) {
 /**
  * Force the height of this panel to the largest absolute height of the data in
  *   all child data layers (if not null for any child data layers)
- * @param {number} [target_height] A target height, which will be used in situations when the expected height can be
+ * @param {number|null} [target_height] A target height, which will be used in situations when the expected height can be
  *   pre-calculated (eg when the layers are transitioning)
  */
 LocusZoom.Panel.prototype.scaleHeightToData = function(target_height) {
@@ -1226,8 +1226,12 @@ LocusZoom.Panel.prototype.scaleHeightToData = function(target_height) {
         this.data_layer_ids_by_z_index.forEach(function(id) {
             var dh = this.data_layers[id].getAbsoluteDataHeight();
             if (+dh) {
-                if (target_height === null) { target_height = +dh; }
-                else { target_height = Math.max(target_height, +dh); }
+                if (target_height === null) {
+                    target_height = +dh;
+                }
+                else {
+                    target_height = Math.max(target_height, +dh);
+                }
             }
         }.bind(this));
     }
