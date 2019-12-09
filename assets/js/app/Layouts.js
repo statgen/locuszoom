@@ -856,7 +856,8 @@ LocusZoom.Layouts.add('panel', 'genes', {
         var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
         l.components.push({
             type: 'resize_to_data',
-            position: 'right'
+            position: 'right',
+            button_html: 'Show all genes',
         });
         return l;
     })(),
