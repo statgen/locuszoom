@@ -20,7 +20,7 @@
   ],
   "main": "dist/locuszoom.app.min.js",
   "engines": {
-    "node": ">=6.12.0"
+    "node": ">=10.17.0"
   },
   "repository": {
     "type": "git",
