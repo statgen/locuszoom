@@ -89,8 +89,7 @@
           .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', population: 'ALL' } }])
           .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
           .add("catalog", ["GwasCatalogLZ", { url: apiBase + 'annotation/gwascatalog/results/' }])
-          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/" }])
-          .add("constraint", ["GeneConstraintLZ", { url: "//exac.broadinstitute.org/api/constraint" }]);
+          .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/" }]);
 
       /*
         Define and render the plot

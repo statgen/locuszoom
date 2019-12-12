@@ -205,8 +205,7 @@ function createDisplayWidgets(label_store, context) {
                 gene_ns: 'gene'
             }
         }])
-        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
-        .add('constraint', ['GeneConstraintLZ', { url: 'http://exac.broadinstitute.org/api/constraint' }]);  // FIXME: use https when exac fixed
+        .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }]);
 
     var stateUrlMapping = {chr: 'chrom', start: 'start', end: 'end'};
     var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
