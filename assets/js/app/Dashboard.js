@@ -845,13 +845,17 @@ LocusZoom.Dashboard.Components.add('region_scale', function(layout) {
  * Button to export current plot to an SVG image
  * @class LocusZoom.Dashboard.Components.download
  * @augments LocusZoom.Dashboard.Component
+ * @param {string} [layout.button_html="Download Image"]
+ * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
  */
 LocusZoom.Dashboard.Components.add('download', function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.update = function() {
         if (this.button) { return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml('Download Image').setTitle('Download image of the current plot as locuszoom.svg')
+            .setColor(layout.color)
+            .setHtml(layout.button_html || 'Download Image')
+            .setTitle(layout.button_title || 'Download image of the current plot as locuszoom.svg')
             .setOnMouseover(function() {
                 this.button.selector
                     .classed('lz-dashboard-button-gray-disabled', true)
@@ -863,14 +867,14 @@ LocusZoom.Dashboard.Components.add('download', function(layout) {
                         .attr('href', url)
                         .classed('lz-dashboard-button-gray-disabled', false)
                         .classed('lz-dashboard-button-gray-highlighted', true)
-                        .html('Download Image');
+                        .html(layout.button_html || 'Download Image');
                 }.bind(this));
             }.bind(this))
             .setOnMouseout(function() {
                 this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
             }.bind(this));
         this.button.show();
-        this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', 'locuszoom.svg');
+        this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', layout.filename || 'locuszoom.svg');
         return this;
     };
     this.css_string = '';
@@ -928,7 +932,9 @@ LocusZoom.Dashboard.Components.add('remove_panel', function(layout) {
     this.update = function() {
         if (this.button) { return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml('×').setTitle('Remove panel')
+            .setColor(layout.color)
+            .setHtml('×')
+            .setTitle('Remove panel')
             .setOnclick(function() {
                 if (!layout.suppress_confirm && !confirm('Are you sure you want to remove this panel? This cannot be undone!')) {
                     return false;
@@ -959,7 +965,9 @@ LocusZoom.Dashboard.Components.add('move_panel_up', function(layout) {
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml('▴').setTitle('Move panel up')
+            .setColor(layout.color)
+            .setHtml('▴')
+            .setTitle('Move panel up')
             .setOnclick(function() {
                 this.parent_panel.moveUp();
                 this.update();
@@ -984,7 +992,9 @@ LocusZoom.Dashboard.Components.add('move_panel_down', function(layout) {
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml('▾').setTitle('Move panel down')
+            .setColor(layout.color)
+            .setHtml('▾')
+            .setTitle('Move panel down')
             .setOnclick(function() {
                 this.parent_panel.moveDown();
                 this.update();
@@ -1018,7 +1028,9 @@ LocusZoom.Dashboard.Components.add('shift_region', function(layout) {
     this.update = function() {
         if (this.button) { return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color)
+            .setHtml(layout.button_html)
+            .setTitle(layout.button_title)
             .setOnclick(function() {
                 this.parent_plot.applyState({
                     start: Math.max(this.parent_plot.state.start + layout.step, 1),
@@ -1063,7 +1075,9 @@ LocusZoom.Dashboard.Components.add('zoom_region', function(layout) {
             return this;
         }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color)
+            .setHtml(layout.button_html)
+            .setTitle(layout.button_title)
             .setOnclick(function() {
                 var current_region_scale = this.parent_plot.state.end - this.parent_plot.state.start;
                 var zoom_factor = 1 + layout.step;
@@ -1199,7 +1213,9 @@ LocusZoom.Dashboard.Components.add('covariates_model', function(layout) {
         if (this.button) { return this; }
 
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color)
+            .setHtml(layout.button_html)
+            .setTitle(layout.button_title)
             .setOnclick(function() {
                 this.button.menu.populate();
             }.bind(this));
@@ -1274,7 +1290,8 @@ LocusZoom.Dashboard.Components.add('toggle_split_tracks', function(layout) {
             return this;
         } else {
             this.button = new LocusZoom.Dashboard.Component.Button(this)
-                .setColor(layout.color).setHtml(html)
+                .setColor(layout.color)
+                .setHtml(html)
                 .setTitle('Toggle whether tracks are split apart or merged together')
                 .setOnclick(function() {
                     data_layer.toggleSplitTracks();
@@ -1295,14 +1312,17 @@ LocusZoom.Dashboard.Components.add('toggle_split_tracks', function(layout) {
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
  * @class LocusZoom.Dashboard.Components.resize_to_data
  * @augments LocusZoom.Dashboard.Component
+ * @param {string} [layout.button_html="Resize to Data"]
+ * @param {string} [layout.button_title]
  */
 LocusZoom.Dashboard.Components.add('resize_to_data', function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.update = function() {
         if (this.button) { return this; }
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml('Resize to Data')
-            .setTitle('Automatically resize this panel to fit the data its currently showing')
+            .setColor(layout.color)
+            .setHtml(layout.button_html || 'Resize to Data')
+            .setTitle(layout.button_title || 'Automatically resize this panel to show all data available')
             .setOnclick(function() {
                 this.parent_panel.scaleHeightToData();
                 this.update();
@@ -1354,7 +1374,9 @@ LocusZoom.Dashboard.Components.add('data_layers', function(layout) {
         if (this.button) { return this; }
 
         this.button = new LocusZoom.Dashboard.Component.Button(this)
-            .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+            .setColor(layout.color)
+            .setHtml(layout.button_html)
+            .setTitle(layout.button_title)
             .setOnclick(function() {
                 this.button.menu.populate();
             }.bind(this));
@@ -1484,7 +1506,9 @@ LocusZoom.Dashboard.Components.add('display_options', function (layout) {
     // Define the button + menu that provides the real functionality for this dashboard component
     var self = this;
     this.button = new LocusZoom.Dashboard.Component.Button(self)
-        .setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title)
+        .setColor(layout.color)
+        .setHtml(layout.button_html)
+        .setTitle(layout.button_title)
         .setOnclick(function () {
             self.button.menu.populate();
         });

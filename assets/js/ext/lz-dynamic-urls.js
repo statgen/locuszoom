@@ -123,9 +123,9 @@
             callback = callback || _setStateFromUrlHandler;
 
             var listener = function(event) {
-                var stateData = paramsFromUrl(mapping);
+                var urlData = paramsFromUrl(mapping);
                 // Tell the plot what to do with the params extracted from the URL
-                callback(plot, stateData);
+                callback(plot, urlData);
             };
             window.addEventListener('popstate', listener);
             return listener;
@@ -168,6 +168,8 @@
             };
             plot.on('state_changed', listener);
             return listener;
-        }
+        },
+        // A useful helper function for serializing values from a provided object
+        extractValues: _extractValues
     };
 }));

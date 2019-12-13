@@ -13,7 +13,7 @@ describe('LocusZoom.ext.DynamicUrls', function() {
         var extension = this.extension;
         should.exist(extension, 'Extension should be registered');
 
-        var publicMethods = ['paramsFromUrl', 'plotWatchesUrl', 'plotUpdatesUrl'];
+        var publicMethods = ['paramsFromUrl', 'plotWatchesUrl', 'plotUpdatesUrl', 'extractValues'];
         assert.equal(Object.keys(extension).length, publicMethods.length, 'Some methods do not match the expected public interface');
         publicMethods.forEach(function(name) {
             assert.ok(extension.hasOwnProperty(name), 'Interface is missing an expected method: ' + name);

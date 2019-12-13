@@ -359,7 +359,6 @@ LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
         var x_extent = 'x_extent';
         var y_extent = 'y' + this.layout.y_axis.axis + '_extent';
         var x_range = 'x_range';
-        var y_range = 'y' + this.layout.y_axis.axis + '_range';
 
         // Generate data using extents depending on orientation
         if (this.layout.orientation === 'horizontal') {
@@ -367,11 +366,13 @@ LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
                 { x: panel[x_extent][0], y: this.layout.offset },
                 { x: panel[x_extent][1], y: this.layout.offset }
             ];
-        } else {
+        } else if (this.layout.orientation === 'vertical') {
             this.data = [
                 { x: this.layout.offset, y: panel[y_extent][0] },
                 { x: this.layout.offset, y: panel[y_extent][1] }
             ];
+        } else {
+            throw new Error('Unrecognized vertical line type. Must be "vertical" or "horizontal"');
         }
 
         // Join data to the line selection
@@ -384,6 +385,11 @@ LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
             .append('path')
             .attr('class', 'lz-data_layer-line');
 
+        // In some cases, a vertical line may overlay a track that has no inherent y-values (extent)
+        //  When that happens, provide a default height based on the current panel dimensions (accounting
+        //      for any resizing that happened after the panel was created)
+        var default_y = [panel.layout.cliparea.height, 0];
+
         // Generate the line
         this.line = d3.svg.line()
             .x(function(d, i) {
@@ -392,7 +398,7 @@ LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
             })
             .y(function(d, i) {
                 var y = parseFloat(panel[y_scale](d['y']));
-                return isNaN(y) ? panel[y_range][i] : y;
+                return isNaN(y) ? default_y[i] : y;
             })
             .interpolate('linear');
 

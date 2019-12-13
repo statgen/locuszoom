@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.10.0-beta.2' };
+        var LocusZoom = { version: '0.10.0' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -1024,7 +1024,7 @@
                     'unselected'
                 ]
             },
-            html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + '<div style="float: left;">Gene ID: <strong>{{gene_id|htmlescape}}</strong></div>' + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>' + '<div style="clear: both;"></div>' + '<table>' + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>' + '<tr><td>Synonymous</td><td>{{exp_syn|htmlescape}}</td><td>{{n_syn|htmlescape}}</td><td>z = {{syn_z|htmlescape}}</td></tr>' + '<tr><td>Missense</td><td>{{exp_mis|htmlescape}}</td><td>{{n_mis|htmlescape}}</td><td>z = {{mis_z|htmlescape}}</td></tr>' + '<tr><td>LoF</td><td>{{exp_lof|htmlescape}}</td><td>{{n_lof|htmlescape}}</td><td>pLI = {{pLI|htmlescape}}</td></tr>' + '</table>' + '<a href="http://exac.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_new">More data on ExAC</a>'
+            html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>' + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>' + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
         });
         LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
             namespace: { 'intervals': 'intervals' },
@@ -1062,7 +1062,7 @@
                 ]
             },
             html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>' + 'Catalog entries: <strong>{{n_catalog_matches|htmlescape}}</strong><br>' + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>' + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'    // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-+ 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">dbSNP</a>'
++ 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
         });
         /**
  * Data Layer Layouts: represent specific information from a data source
@@ -1253,7 +1253,7 @@
                 id: 'associationpvaluescatalog',
                 fill_opacity: 0.7
             });
-            l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_new">See hits in GWAS catalog</a>{{/if}}';
+            l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
             l.namespace.catalog = 'catalog';
             l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
             return l;
@@ -1357,16 +1357,10 @@
             }
         });
         LocusZoom.Layouts.add('data_layer', 'genes', {
-            namespace: {
-                'gene': 'gene',
-                'constraint': 'constraint'
-            },
+            namespace: { 'gene': 'gene' },
             id: 'genes',
             type: 'genes',
-            fields: [
-                '{{namespace[gene]}}all',
-                '{{namespace[constraint]}}all'
-            ],
+            fields: ['{{namespace[gene]}}all'],
             id_field: 'gene_id',
             behaviors: {
                 onmouseover: [{
@@ -1699,7 +1693,7 @@
                 {
                     type: 'title',
                     title: 'LocusZoom',
-                    subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank">v' + LocusZoom.version + '</a>',
+                    subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v' + LocusZoom.version + '</a>',
                     position: 'left'
                 },
                 {
@@ -1915,7 +1909,8 @@
                 var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
                 l.components.push({
                     type: 'resize_to_data',
-                    position: 'right'
+                    position: 'right',
+                    button_html: 'Show all genes'
                 });
                 return l;
             }(),
@@ -5182,7 +5177,6 @@
                 var x_extent = 'x_extent';
                 var y_extent = 'y' + this.layout.y_axis.axis + '_extent';
                 var x_range = 'x_range';
-                var y_range = 'y' + this.layout.y_axis.axis + '_range';
                 // Generate data using extents depending on orientation
                 if (this.layout.orientation === 'horizontal') {
                     this.data = [
@@ -5195,7 +5189,7 @@
                             y: this.layout.offset
                         }
                     ];
-                } else {
+                } else if (this.layout.orientation === 'vertical') {
                     this.data = [
                         {
                             x: this.layout.offset,
@@ -5206,18 +5200,27 @@
                             y: panel[y_extent][1]
                         }
                     ];
+                } else {
+                    throw new Error('Unrecognized vertical line type. Must be "vertical" or "horizontal"');
                 }
                 // Join data to the line selection
                 var selection = this.svg.group.selectAll('path.lz-data_layer-line').data([this.data]);
                 // Create path element, apply class
                 this.path = selection.enter().append('path').attr('class', 'lz-data_layer-line');
+                // In some cases, a vertical line may overlay a track that has no inherent y-values (extent)
+                //  When that happens, provide a default height based on the current panel dimensions (accounting
+                //      for any resizing that happened after the panel was created)
+                var default_y = [
+                    panel.layout.cliparea.height,
+                    0
+                ];
                 // Generate the line
                 this.line = d3.svg.line().x(function (d, i) {
                     var x = parseFloat(panel[x_scale](d['x']));
                     return isNaN(x) ? panel[x_range][i] : x;
                 }).y(function (d, i) {
                     var y = parseFloat(panel[y_scale](d['y']));
-                    return isNaN(y) ? panel[y_range][i] : y;
+                    return isNaN(y) ? default_y[i] : y;
                 }).interpolate('linear');
                 // Apply line and style
                 if (this.canTransition()) {
@@ -7406,6 +7409,8 @@
  * Button to export current plot to an SVG image
  * @class LocusZoom.Dashboard.Components.download
  * @augments LocusZoom.Dashboard.Component
+ * @param {string} [layout.button_html="Download Image"]
+ * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
  */
         LocusZoom.Dashboard.Components.add('download', function (layout) {
             LocusZoom.Dashboard.Component.apply(this, arguments);
@@ -7413,7 +7418,7 @@
                 if (this.button) {
                     return this;
                 }
-                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml('Download Image').setTitle('Download image of the current plot as locuszoom.svg').setOnMouseover(function () {
+                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml(layout.button_html || 'Download Image').setTitle(layout.button_title || 'Download image of the current plot as locuszoom.svg').setOnMouseover(function () {
                     this.button.selector.classed('lz-dashboard-button-gray-disabled', true).html('Preparing Image');
                     this.generateBase64SVG().then(function (url) {
                         var old = this.button.selector.attr('href');
@@ -7421,13 +7426,13 @@
                             URL.revokeObjectURL(old);
                         }
                         // Clean up old url instance to prevent memory leaks
-                        this.button.selector.attr('href', url).classed('lz-dashboard-button-gray-disabled', false).classed('lz-dashboard-button-gray-highlighted', true).html('Download Image');
+                        this.button.selector.attr('href', url).classed('lz-dashboard-button-gray-disabled', false).classed('lz-dashboard-button-gray-highlighted', true).html(layout.button_html || 'Download Image');
                     }.bind(this));
                 }.bind(this)).setOnMouseout(function () {
                     this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
                 }.bind(this));
                 this.button.show();
-                this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', 'locuszoom.svg');
+                this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', layout.filename || 'locuszoom.svg');
                 return this;
             };
             this.css_string = '';
@@ -7831,6 +7836,8 @@
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
  * @class LocusZoom.Dashboard.Components.resize_to_data
  * @augments LocusZoom.Dashboard.Component
+ * @param {string} [layout.button_html="Resize to Data"]
+ * @param {string} [layout.button_title]
  */
         LocusZoom.Dashboard.Components.add('resize_to_data', function (layout) {
             LocusZoom.Dashboard.Component.apply(this, arguments);
@@ -7838,7 +7845,7 @@
                 if (this.button) {
                     return this;
                 }
-                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml('Resize to Data').setTitle('Automatically resize this panel to fit the data its currently showing').setOnclick(function () {
+                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml(layout.button_html || 'Resize to Data').setTitle(layout.button_title || 'Automatically resize this panel to show all data available').setOnclick(function () {
                     this.parent_panel.scaleHeightToData();
                     this.update();
                 }.bind(this));
@@ -9330,12 +9337,17 @@
             return data;
         };
         /**
- * Data Source for Gene Constraint Data, as fetched from the LocusZoom API server (or compatible)
+ * Data Source for Gene Constraint Data, as fetched from the ExAC server (or compatible)
+ *
+ * FIXME: The ExAc server has been decommissioned. This source is kept here to avoid breaking existing layouts; we may
+ *  be able to restore this feature in the future once the gnomAD API is further developed
+ *
  * @public
  * @class
  * @augments LocusZoom.Data.Source
 */
         LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function (init) {
+            console.warn('The gene constraint source depends on a server (ExAC) that is no longer active. This information may not be displayed.');
             this.parseInit(init);
         }, 'GeneConstraintLZ');
         LocusZoom.Data.GeneConstraintSource.prototype.getURL = function () {
@@ -11857,7 +11869,7 @@
         /**
  * Force the height of this panel to the largest absolute height of the data in
  *   all child data layers (if not null for any child data layers)
- * @param {number} [target_height] A target height, which will be used in situations when the expected height can be
+ * @param {number|null} [target_height] A target height, which will be used in situations when the expected height can be
  *   pre-calculated (eg when the layers are transitioning)
  */
         LocusZoom.Panel.prototype.scaleHeightToData = function (target_height) {
