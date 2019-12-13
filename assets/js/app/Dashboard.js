@@ -847,6 +847,7 @@ LocusZoom.Dashboard.Components.add('region_scale', function(layout) {
  * @augments LocusZoom.Dashboard.Component
  * @param {string} [layout.button_html="Download Image"]
  * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
+ * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
  */
 LocusZoom.Dashboard.Components.add('download', function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
