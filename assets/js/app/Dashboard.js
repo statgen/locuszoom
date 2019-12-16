@@ -789,9 +789,11 @@ LocusZoom.Dashboard.Component.Button = function(parent) {
 LocusZoom.Dashboard.Components.add('title', function(layout) {
     LocusZoom.Dashboard.Component.apply(this, arguments);
     this.show = function() {
-        this.div_selector = this.parent.selector.append('div')
-            .attr('class', 'lz-dashboard-title lz-dashboard-' + this.layout.position);
-        this.title_selector = this.div_selector.append('h3');
+        if (!this.div_selector) {
+            this.div_selector = this.parent.selector.append('div')
+                .attr('class', 'lz-dashboard-title lz-dashboard-' + this.layout.position);
+            this.title_selector = this.div_selector.append('h3');
+        }
         return this.update();
     };
     this.update = function() {
