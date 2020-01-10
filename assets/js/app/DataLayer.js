@@ -240,6 +240,7 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function() {
     var field_to_match = (this.layout.match && this.layout.match.receive);
     var broadcast_value = this.parent_plot.state.lz_match_value;
 
+    var self = this;
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
@@ -249,22 +250,22 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function() {
             d.lz_highlight_match = (d[field_to_match] === broadcast_value);
         }
 
-        this.data[i].toHTML = function() {
-            var id_field = this.layout.id_field || 'id';
+        self.data[i].toHTML = function() {
+            var id_field = self.layout.id_field || 'id';
             var html = '';
-            if (this.data[i][id_field]) { html = this.data[i][id_field].toString(); }
+            if (self.data[i][id_field]) { html = self.data[i][id_field].toString(); }
             return html;
-        }.bind(this);
-        // getDataLayer() method - return a reference to the data layer
-        this.data[i].getDataLayer = function() {
-            return this;
-        }.bind(this);
-        // deselect() method - shortcut method to deselect the element
-        this.data[i].deselect = function() {
-            var data_layer = this.getDataLayer();
-            data_layer.unselectElement(this);
         };
-    }.bind(this));
+        // getDataLayer() method - return a reference to the data layer
+        self.data[i].getDataLayer = function() {
+            return self;
+        };
+        // deselect() method - shortcut method to deselect the element
+        self.data[i].deselect = function() {
+            var data_layer = self.getDataLayer();
+            data_layer.unselectElement(self); // dynamically generated method name. It exists, honest.
+        };
+    });
     this.applyCustomDataMethods();
     return this;
 };
@@ -923,19 +924,20 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
     if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; }
 
+    var self = this;
     // Apply statuses
     if (toggle) {
         this.data.forEach(function(element) {
-            this.setElementStatus(status, element, true);
-        }.bind(this));
+            self.setElementStatus(status, element, true);
+        });
     } else {
         var status_ids = this.state[this.state_id][status].slice();
         status_ids.forEach(function(id) {
-            var element = this.getElementById(id);
+            var element = self.getElementById(id);
             if (typeof element == 'object' && element !== null) {
-                this.setElementStatus(status, element, false);
+                self.setElementStatus(status, element, false);
             }
-        }.bind(this));
+        });
         this.state[this.state_id][status] = [];
     }
 
@@ -977,7 +979,7 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
         'ctrl': (directive.indexOf('ctrl') !== -1),
         'shift': (directive.indexOf('shift') !== -1)
     };
-
+    var self = this;
     return function(element) {
 
         // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
@@ -993,19 +995,19 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
 
             // Set a status (set to true regardless of current status, optionally with exclusivity)
             case 'set':
-                this.setElementStatus(behavior.status, element, true, behavior.exclusive);
+                self.setElementStatus(behavior.status, element, true, behavior.exclusive);
                 break;
 
             // Unset a status (set to false regardless of current status, optionally with exclusivity)
             case 'unset':
-                this.setElementStatus(behavior.status, element, false, behavior.exclusive);
+                self.setElementStatus(behavior.status, element, false, behavior.exclusive);
                 break;
 
             // Toggle a status
             case 'toggle':
-                var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) !== -1);
+                var current_status_boolean = (self.state[self.state_id][behavior.status].indexOf(self.getElementId(element)) !== -1);
                 var exclusive = behavior.exclusive && !current_status_boolean;
-                this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
+                self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                 break;
 
             // Link to a dynamic URL
@@ -1025,13 +1027,9 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
                 break;
 
             }
-
             return;
-
-        }.bind(this));
-
-    }.bind(this);
-
+        });
+    };
 };
 
 /**
