@@ -84,6 +84,35 @@
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
     layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
+    // Modify the association panel: custom "label point" tooltip option + add the required filters directive
+    var assoc_layer = layout.panels[0].data_layers[2];
+    assoc_layer.tooltip = LocusZoom.Layouts.get('tooltip', 'standard_association_with_label');
+    assoc_layer.label = {
+        text: '{{assoc:variant}}',
+        spacing: 3,
+        lines: {
+            style: { 'stroke-width': '2px', 'stroke': '#333333', 'stroke-dasharray': '2px 2px' }
+        },
+        filters: [
+            {
+                // FIXME: When there is only one filter, since match = true by default,
+                //  "non-exclusive" mode results in EVERYTHING getting labeled- and the browser hangs
+                field: 'assoc:log_pvalue',
+                operator: '>=',
+                value: 100
+            },
+            {
+              field: 'assoc:variant',
+              operator: 'in',
+              exclusive: false,
+              values: []
+            }
+        ],
+        style: {
+            'font-weight': 'bold',
+        }
+    };
+
     // Add a track information button to the intervals panel
     layout.panels[1].dashboard.components.push({
         type: "menu",

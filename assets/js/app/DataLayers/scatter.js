@@ -274,16 +274,17 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
         if (this.layout.label) {
             // Apply filters to generate a filtered data set
             var filtered_data;
-            if (!data_layer.layout.label.filters) {
+            var filters = data_layer.layout.label.filters || [];
+            if (!filters.length) {
                 filtered_data = this.data;
             } else {
                 filtered_data = this.data.filter(function(d) {
                     // Start by assuming a match (base case = no filters).
                     // Test each filters: ALL must be satisfied for match to occur.
                     var match = true;
-                    data_layer.layout.label.filters.forEach(function(filter) {
+                    filters.forEach(function(filter) {
                         var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
-                        if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
+                        if (['!=', '=', 'in'].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
                         } else {
@@ -307,6 +308,16 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                                 // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
                                 // eslint-disable-next-line eqeqeq
                                 if (field_value == filter.value) { match = false; }
+                                break;
+                            case 'in':
+                                // Is the value in a predefined list? This is used so the user can custom-tag selected
+                                // points. Ideally, this could "add" a label above and beyond existing options, so this
+                                // filter includes a special "exclusive" option (default true for consistency; if
+                                // false, then when this is the last filter, it will look for criteria OR tag.)
+                                // )
+                                // Typical use case: filter.values is a very short list, eg "label 3 specified points"
+                                var contains = ~filter.values.indexOf(field_value);
+                                match = filter.exclusive ? match : (match || contains);
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail

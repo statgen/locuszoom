@@ -182,8 +182,11 @@ LocusZoom.Data.Field = function(field) {
     this.resolve = function(d) {
         if (typeof d[this.full_name] == 'undefined') {
             var val = null;
-            if (typeof (d[this.namespace + ':' + this.name]) != 'undefined') { val = d[this.namespace + ':' + this.name]; }
-            else if (typeof d[this.name] != 'undefined') { val = d[this.name]; }
+            if (typeof (d[this.namespace + ':' + this.name]) != 'undefined') {
+                val = d[this.namespace + ':' + this.name];
+            } else if (typeof d[this.name] != 'undefined') {
+                val = d[this.name];
+            }
             d[this.full_name] = this.applyTransformations(val);
         }
         return d[this.full_name];
