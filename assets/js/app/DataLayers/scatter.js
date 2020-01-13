@@ -311,13 +311,10 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                                 break;
                             case 'in':
                                 // Is the value in a predefined list? This is used so the user can custom-tag selected
-                                // points. Ideally, this could "add" a label above and beyond existing options, so this
-                                // filter includes a special "exclusive" option (default true for consistency; if
-                                // false, then when this is the last filter, it will look for criteria OR tag.)
-                                // )
-                                // Typical use case: filter.values is a very short list, eg "label 3 specified points"
+                                //  points. This is not very useful for dynamic layouts but may be nice for data that
+                                //  doesn't change after first render (like PheWAS plots)
                                 var contains = ~filter.values.indexOf(field_value);
-                                match = filter.exclusive ? match : (match || contains);
+                                match = !!contains;
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
