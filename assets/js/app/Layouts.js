@@ -229,8 +229,15 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
     html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>'
-        + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>'
-        + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>'
+        + '<div style="float: left;">Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a></div>'
+        + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>'
+        + '<div style="clear: both;"></div>'
+        + '<table>'
+        + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>'
+        + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{obs_syn}}</td><td>z = {{syn_z}}</td></tr>'
+        + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{obs_mis}}</td><td>z = {{mis_z}}</td></tr>'
+        + '<tr><td>LoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}</td></tr>'
+        + '</table>'
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
 });
 
@@ -463,10 +470,10 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
 });
 
 LocusZoom.Layouts.add('data_layer', 'genes', {
-    namespace: { 'gene': 'gene' },
+    namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
     type: 'genes',
-    fields: ['{{namespace[gene]}}all'],
+    fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
