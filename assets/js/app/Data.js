@@ -1069,7 +1069,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
         // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
         var alias = gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');
         // Each gene is a separate graphQL query, grouped into one request using aliases
-        return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z exp_mis obs_mis mis_z exp_lof obs_lof pLI } } ';
+        return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } ';
     });
 
     if (!query.length) {
