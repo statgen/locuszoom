@@ -229,15 +229,14 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
     html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>'
-        + '<div style="float: left;">Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a></div>'
-        + '<div style="float: right;">Transcript ID: <strong>{{transcript_id|htmlescape}}</strong></div>'
-        + '<div style="clear: both;"></div>'
-        + '<table>'
+        + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>'
+        + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>'
+        + '{{#if pLI}}<table>'
         + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>'
         + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{obs_syn}}</td><td>z = {{syn_z}}<br>o/e = {{oe_syn}} ({{oe_syn_lower}} - {{oe_syn_upper}})</td></tr>'
         + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{obs_mis}}</td><td>z = {{mis_z}}<br>o/e = {{oe_mis}} ({{oe_mis_lower}} - {{oe_mis_upper}})</td></tr>'
         + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>'
-        + '</table>'
+        + '</table><br>{{/if}}'
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
 });
 
