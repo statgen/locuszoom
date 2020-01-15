@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.10.0' };
+        var LocusZoom = { version: '0.10.1' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -1024,7 +1024,7 @@
                     'unselected'
                 ]
             },
-            html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>' + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>' + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
+            html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>' + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>' + '{{#if pLI}}<table>' + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>' + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{obs_syn}}</td><td>z = {{syn_z}}<br>o/e = {{oe_syn}} ({{oe_syn_lower}} - {{oe_syn_upper}})</td></tr>' + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{obs_mis}}</td><td>z = {{mis_z}}<br>o/e = {{oe_mis}} ({{oe_mis_lower}} - {{oe_mis_upper}})</td></tr>' + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>' + '</table><br>{{/if}}' + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
         });
         LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
             namespace: { 'intervals': 'intervals' },
@@ -1357,10 +1357,16 @@
             }
         });
         LocusZoom.Layouts.add('data_layer', 'genes', {
-            namespace: { 'gene': 'gene' },
+            namespace: {
+                'gene': 'gene',
+                'constraint': 'constraint'
+            },
             id: 'genes',
             type: 'genes',
-            fields: ['{{namespace[gene]}}all'],
+            fields: [
+                '{{namespace[gene]}}all',
+                '{{namespace[constraint]}}all'
+            ],
             id_field: 'gene_id',
             behaviors: {
                 onmouseover: [{
@@ -7348,8 +7354,10 @@
         LocusZoom.Dashboard.Components.add('title', function (layout) {
             LocusZoom.Dashboard.Component.apply(this, arguments);
             this.show = function () {
-                this.div_selector = this.parent.selector.append('div').attr('class', 'lz-dashboard-title lz-dashboard-' + this.layout.position);
-                this.title_selector = this.div_selector.append('h3');
+                if (!this.div_selector) {
+                    this.div_selector = this.parent.selector.append('div').attr('class', 'lz-dashboard-title lz-dashboard-' + this.layout.position);
+                    this.title_selector = this.div_selector.append('h3');
+                }
                 return this.update();
             };
             this.update = function () {
@@ -7411,6 +7419,7 @@
  * @augments LocusZoom.Dashboard.Component
  * @param {string} [layout.button_html="Download Image"]
  * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
+ * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
  */
         LocusZoom.Dashboard.Components.add('download', function (layout) {
             LocusZoom.Dashboard.Component.apply(this, arguments);
@@ -9337,17 +9346,16 @@
             return data;
         };
         /**
- * Data Source for Gene Constraint Data, as fetched from the ExAC server (or compatible)
+ * Data Source for Gene Constraint Data, as fetched from the gnomAD server (or compatible)
  *
- * FIXME: The ExAc server has been decommissioned. This source is kept here to avoid breaking existing layouts; we may
- *  be able to restore this feature in the future once the gnomAD API is further developed
+ * In the past, this source used ExAC, which has been completely decommissioned. Since the old source referenced a
+ *  server that no longer exists, this was redefined in 0.11.0 in a backwards-incompatible manner.
  *
  * @public
  * @class
  * @augments LocusZoom.Data.Source
 */
         LocusZoom.Data.GeneConstraintSource = LocusZoom.Data.Source.extend(function (init) {
-            console.warn('The gene constraint source depends on a server (ExAC) that is no longer active. This information may not be displayed.');
             this.parseInit(init);
         }, 'GeneConstraintLZ');
         LocusZoom.Data.GeneConstraintSource.prototype.getURL = function () {
@@ -9360,61 +9368,55 @@
             return this.url + JSON.stringify(state);
         };
         LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function (state, chain, fields) {
-            var geneids = [];
-            chain.body.forEach(function (gene) {
-                var gene_id = gene.gene_id;
-                if (gene_id.indexOf('.')) {
-                    gene_id = gene_id.substr(0, gene_id.indexOf('.'));
-                }
-                geneids.push(gene_id);
+            var build = state.genome_build || this.params.build;
+            if (!build) {
+                throw new Error([
+                    'Data source',
+                    this.constructor.SOURCE_NAME,
+                    'requires that you specify a genome_build'
+                ].join(' '));
+            }
+            var query = chain.body.map(function (gene) {
+                var gene_name = gene.gene_name;
+                // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
+                var alias = gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');
+                // Each gene is a separate graphQL query, grouped into one request using aliases
+                return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } ';
             });
+            if (!query.length) {
+                // If there are no genes, skip the network request
+                return Promise.resolve({ data: null });
+            }
+            query = '{' + query.join(' ') + ' }';
+            // GraphQL isn't quite JSON; items are separated by spaces but not commas
             var url = this.getURL(state, chain, fields);
-            var body = 'geneids=' + encodeURIComponent(JSON.stringify(geneids));
-            var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+            // See: https://graphql.org/learn/serving-over-http/
+            var body = JSON.stringify({ query: query });
+            var headers = { 'Content-Type': 'application/json' };
             return LocusZoom.createCORSPromise('POST', url, body, headers);
         };
         LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
             if (!data) {
                 return chain;
             }
-            var constraint_fields = [
-                'bp',
-                'exp_lof',
-                'exp_mis',
-                'exp_syn',
-                'lof_z',
-                'mis_z',
-                'mu_lof',
-                'mu_mis',
-                'mu_syn',
-                'n_exons',
-                'n_lof',
-                'n_mis',
-                'n_syn',
-                'pLI',
-                'syn_z'
-            ];
-            chain.body.forEach(function (gene, i) {
-                var gene_id = gene.gene_id;
-                if (gene_id.indexOf('.')) {
-                    gene_id = gene_id.substr(0, gene_id.indexOf('.'));
-                }
-                constraint_fields.forEach(function (field) {
-                    // Do not overwrite any fields defined in the original gene source
-                    if (typeof chain.body[i][field] != 'undefined') {
-                        return;
-                    }
-                    if (data[gene_id]) {
-                        var val = data[gene_id][field];
-                        if (typeof val == 'number' && val.toString().indexOf('.') !== -1) {
-                            val = parseFloat(val.toFixed(2));
+            chain.body.forEach(function (gene) {
+                // Find payload keys that match gene names in this response
+                var alias = gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');
+                // aliases are modified gene names
+                var constraint = data[alias] && data[alias]['gnomad_constraint'];
+                // gnomad API has two ways of specifying missing data for a requested gene
+                if (constraint) {
+                    // Add all fields from constraint data- do not override fields present in the gene source
+                    Object.keys(constraint).forEach(function (key) {
+                        var val = constraint[key];
+                        if (typeof gene[key] === 'undefined') {
+                            if (typeof val == 'number' && val.toString().indexOf('.') !== -1) {
+                                val = parseFloat(val.toFixed(2));
+                            }
+                            gene[key] = val;    // These two sources are both designed to bypass namespacing
                         }
-                        chain.body[i][field] = val;
-                    } else {
-                        // If the gene did not come back in the response then set the same field with a null values
-                        chain.body[i][field] = null;
-                    }
-                });
+                    });
+                }
             });
             return chain.body;
         };
