@@ -76,7 +76,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.css</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -87,7 +87,7 @@
           <h6><strong>Dependencies</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.vendor.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.vendor.min.js</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.vendor.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.vendor.min.js</a></tt>
           <br>
           <small><i>Contains <a href="https://github.com/d3/d3">d3</a> v3.5.17 and <a href="https://www.npmjs.com/package/promise-polyfill">ES6 Promise Polyfill</a></i></small>
         </div>
@@ -98,7 +98,7 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.0/dist/locuszoom.app.min.js</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.10.1/dist/locuszoom.app.min.js</a></tt>
           <br>
         </div>
       </div>
@@ -211,14 +211,16 @@
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
         .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }]);
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
     } else {
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
         .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
-        .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);
+        .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
+        .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);
     }
 
     // Get the standard association plot layout from LocusZoom's built-in layouts

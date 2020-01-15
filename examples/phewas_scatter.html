@@ -225,6 +225,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
                 params: { build: ["GRCh37"] }
             }])
             .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+            .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
         } else {
           apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "../staticdata/";
           dataSources
@@ -232,7 +233,8 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
                 url: apiBase + "phewas_" + String(variantChrom) + "_" + String(variantPosition) + "_C-T.json",
                 params: { build: ["GRCh37"] }
             }])
-            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", params: { build: 'GRCh37' } }]);
+            .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", params: { build: 'GRCh37' } }])
+            .add("constraint", ["GeneConstraintLZ", { url: apiBase + "gene_constraints_10_114508349-115008349.json", params: { build: 'GRCh37' } }]);
         }
         // Static blobs (independent of host)
         dataSources

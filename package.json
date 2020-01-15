@@ -1,6 +1,6 @@
 {
   "name": "locuszoom",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Generate interactive visualizations of statistical genetic data",
   "keywords": [
     "visualization",
@@ -20,7 +20,7 @@
   ],
   "main": "dist/locuszoom.app.min.js",
   "engines": {
-    "node": ">=10.17.0"
+    "node": ">=8.9.0"
   },
   "repository": {
     "type": "git",
