@@ -576,7 +576,7 @@ LocusZoom.Plot.prototype.clearPanelData = function(panelId, mode) {
             var layer = self.panels[pid].data_layers[dlid];
             layer.destroyAllTooltips();
 
-            delete self.layout.state[pid + '.' + dlid];
+            delete self.layout.state[layer.state_id];
             if(mode === 'reset') {
                 layer.setDefaultState();
             }
@@ -1020,7 +1020,10 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
         throw new Error('LocusZoom.applyState only accepts an object; ' + (typeof state_changes) + ' given');
     }
 
-    // First make a copy of the current (old) state to work with
+    // First make a copy of the current (old) state to work with. This allows us to validate the resulting state
+    //  object before actually applying it.
+    // A side effect is that it will break all internal references to any child key of state (like layer_state).
+    //  Hence most `plot.state` code references the top object exclusively.
     var new_state = JSON.parse(JSON.stringify(this.state));
 
     // Apply changes by top-level property to the new state
@@ -1060,21 +1063,7 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
                 panel.dashboard.update();
                 // Apply data-layer-level state values
                 panel.data_layer_ids_by_z_index.forEach(function(data_layer_id) {
-                    var data_layer = this.data_layers[data_layer_id];
-                    var state_id = panel_id + '.' + data_layer_id;
-                    for (var property in this.state[state_id]) {
-                        if (!this.state[state_id].hasOwnProperty(property)) { continue; }
-                        if (Array.isArray(this.state[state_id][property])) {
-                            this.state[state_id][property].forEach(function(element_id) {
-                                try {
-                                    this.setElementStatus(property, this.getElementById(element_id), true);
-                                } catch (e) {
-                                    console.warn('Unable to apply state: ' + state_id + ', ' + property);
-                                    console.error(e);
-                                }
-                            }.bind(data_layer));
-                        }
-                    }
+                    this.data_layers[data_layer_id].applyAllElementStatus();
                 }.bind(panel));
             }.bind(this));
 

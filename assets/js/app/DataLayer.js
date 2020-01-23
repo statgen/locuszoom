@@ -69,6 +69,21 @@ LocusZoom.DataLayer = function(layout, parent) {
 };
 
 /**
+ * Define getters
+ */
+Object.defineProperties(LocusZoom.DataLayer.prototype, {
+    'layer_state': {
+        // Convenience alias to access an object by name. Without the getter, reference breaks in deepcopy operations.
+        get: function() {
+            if (!this.state) {
+                return null;
+            }
+            return this.state[this.state_id];
+        }
+    }
+});
+
+/**
  * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
  *
  * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn
@@ -114,13 +129,16 @@ LocusZoom.DataLayer.prototype.setDefaultState = function() {
     if (this.parent) {
         this.state = this.parent.state;
         this.state_id = this.parent.id + '.' + this.id;
-        this.state[this.state_id] = this.state[this.state_id] || {};
-        var layer_state = this.state[this.state_id];
+        // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
+        //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
+        //  persist across re-render)
+        this.state[this.state_id] = this.state[this.state_id] || { status_flags: {}, extra_fields: {} };
+        var status_flags = this.state[this.state_id].status_flags;
         LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
-            layer_state[status] = layer_state[status] || [];
+            status_flags[status] = status_flags[status] || [];
         });
         // Also initialize "internal-only" state fields
-        layer_state['has_tooltip'] = layer_state['has_tooltip'] || [];
+        status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
     }
 };
 
@@ -496,7 +514,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(data) {
             .attr('class', 'lz-data_layer-tooltip')
             .attr('id', id + '-tooltip')
     };
-    this.state[this.state_id]['has_tooltip'].push(id);
+    this.layer_state.status_flags['has_tooltip'].push(id);
     this.updateTooltip(data);
     return this;
 };
@@ -555,7 +573,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(element_or_id, temporary
     }
     // When a tooltip is removed, also remove the reference from the state
     if (!temporary) {
-        var state = this.state[this.state_id]['has_tooltip'];
+        var state = this.layer_state.status_flags['has_tooltip'];
         var label_mark_position = state.indexOf(id);
         state.splice(label_mark_position, 1);
     }
@@ -680,11 +698,11 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element, first_time) 
     }
 
     // Find all the statuses that apply to just this single element
-    var layer_state = this.state[this.state_id];
+    var layer_state = this.layer_state;
     var statuses = {};  // {status_name: bool}
     LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
         var antistatus = 'un' + status;
-        statuses[status] = (layer_state[status].indexOf(id) !== -1);
+        statuses[status] = (layer_state.status_flags[status].indexOf(id) !== -1);
         statuses[antistatus] = !statuses[status];
     });
 
@@ -695,7 +713,7 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element, first_time) 
     // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
     // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
     //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-    var has_tooltip = (layer_state['has_tooltip'].indexOf(id) !== -1);
+    var has_tooltip = (layer_state.status_flags['has_tooltip'].indexOf(id) !== -1);
     var tooltip_was_closed = first_time ? false : !has_tooltip;
     if (show_resolved && !tooltip_was_closed && !hide_resolved) {
         this.createTooltip(element);
@@ -811,14 +829,6 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
         //  directly. It is invisible to the official enums.
         return this;
     }
-
-    // Sanity checks
-    if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-        throw new Error('Invalid status passed to DataLayer.setElementStatus()');
-    }
-    if (typeof element == 'undefined') {
-        throw new Error('Invalid element passed to DataLayer.setElementStatus()');
-    }
     if (typeof active == 'undefined') {
         active = true;
     }
@@ -843,13 +853,13 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
     }
 
     // Track element ID in the proper status state array
-    var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
+    var element_status_idx = this.layer_state.status_flags[status].indexOf(element_id);
     var added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
     if (active && added_status) {
-        this.state[this.state_id][status].push(element_id);
+        this.layer_state.status_flags[status].push(element_id);
     }
     if (!active && !added_status) {
-        this.state[this.state_id][status].splice(element_status_idx, 1);
+        this.layer_state.status_flags[status].splice(element_status_idx, 1);
     }
 
     // Trigger tool tip show/hide logic
@@ -891,7 +901,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
     }
-    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; } else { toggle = !!toggle; }
     if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)) { filters = []; }
@@ -921,7 +931,7 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
     }
-    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; }
 
     var self = this;
@@ -931,14 +941,14 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
             self.setElementStatus(status, element, true);
         });
     } else {
-        var status_ids = this.state[this.state_id][status].slice();
+        var status_ids = this.layer_state.status_flags[status].slice();
         status_ids.forEach(function(id) {
             var element = self.getElementById(id);
             if (typeof element == 'object' && element !== null) {
                 self.setElementStatus(status, element, false);
             }
         });
-        this.state[this.state_id][status] = [];
+        this.layer_state.status_flags[status] = [];
     }
 
     // Update global status flag
@@ -1005,7 +1015,7 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
 
             // Toggle a status
             case 'toggle':
-                var current_status_boolean = (self.state[self.state_id][behavior.status].indexOf(self.getElementId(element)) !== -1);
+                var current_status_boolean = (self.layer_state.status_flags[behavior.status].indexOf(self.getElementId(element)) !== -1);
                 var exclusive = behavior.exclusive && !current_status_boolean;
                 self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                 break;
@@ -1098,6 +1108,28 @@ LocusZoom.DataLayer.prototype.exportData = function(format) {
         break;
     }
     return ret;
+};
+
+/**
+ * Apply all tracked element statuses. This is primarily intended for re-rendering the plot, in order to preserve
+ *  behaviors when items are updated.
+ */
+LocusZoom.DataLayer.prototype.applyAllElementStatus = function () {
+    var status_flags = this.layer_state.status_flags;
+    var self = this;
+    for (var property in status_flags) {
+        if (!status_flags.hasOwnProperty(property)) { continue; }
+        if (Array.isArray(status_flags[property])) {
+            status_flags[property].forEach(function(element_id) {
+                try {
+                    self.setElementStatus(property, self.getElementById(element_id), true);
+                } catch (e) {
+                    console.warn('Unable to apply state: ' + self.state_id + ', ' + property);
+                    console.error(e);
+                }
+            });
+        }
+    }
 };
 
 /**

@@ -838,23 +838,23 @@ describe('LocusZoom.DataLayer', function () {
             //  Confirm state is tracked and tooltip does not magically return.
             var self = this;
             return self.plot.applyState().then(function () { // Render initially so that plot is set up right
-                var layer_state = layer.state[layer.state_id];
+                var status_flags = layer.layer_state.status_flags;
                 layer.setElementStatus('selected', item_a, true, true);
                 var internal_id = layer.getElementId(item_a);
 
                 assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
-                assert.ok(layer_state['selected'].includes(internal_id), 'Item was initially selected');
+                assert.ok(status_flags['selected'].includes(internal_id), 'Item was initially selected');
 
                 layer.destroyTooltip(item_a);
                 assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
 
-                assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
-                assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
+                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
+                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
 
                 return self.plot.applyState().then(function () { // Force a re-render to see if zombie items remain
-                    var layer_state = layer.state[layer.state_id];
-                    assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after re-render');
-                    assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
+                    var status_flags = layer.layer_state.status_flags;
+                    assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
+                    assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
                 });
             });
         });
