@@ -283,7 +283,9 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                     // Test each filters: ALL must be satisfied for match to occur.
                     var match = true;
                     filters.forEach(function(filter) {
-                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
+                        var extra = self.layer_state.extra_fields[self.getElementId(d)];
+
+                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d, extra);
                         if (['!=', '=', 'in'].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;

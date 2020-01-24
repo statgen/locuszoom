@@ -351,7 +351,7 @@ LocusZoom.validateState = function(new_state, layout) {
 //
 /**
  * Replace placeholders in an html string with field values defined in a data object
- *  Only works on scalar values! Will ignore non-scalars.
+ *  Only works on scalar values in data! Will ignore non-scalars. This is useful in, eg, tooltip templates.
  *
  *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
  * @param {Object} data

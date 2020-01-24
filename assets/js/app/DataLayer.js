@@ -350,7 +350,7 @@ LocusZoom.DataLayer.prototype.moveDown = function() {
 /**
  * Apply scaling functions to an element or parameter as needed, based on its layout and the element's data
  * If the layout parameter is already a primitive type, simply return the value as given
- * @param {Array|Number|String|Object} layout
+ * @param {Array|Number|String|Object} layout A (section of) layout controlling display of the desired property
  * @param {*} data The value to be used with the filter
  * @returns {*} The transformed value
  */
@@ -372,7 +372,8 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) 
             if (layout.scale_function) {
                 if(layout.field) {
                     var f = new LocusZoom.Data.Field(layout.field);
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                    var extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(data)];
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data, extra));
                 } else {
                     ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
                 }
