@@ -108,6 +108,7 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // pass on recursive separation
     this.flip_labels = function() {
         var data_layer = this;
+        // Base positions on the default point size (which is what resolve scalable param returns if no data provided)
         var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
         var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);

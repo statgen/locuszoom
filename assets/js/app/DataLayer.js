@@ -372,7 +372,13 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) 
             if (layout.scale_function) {
                 if(layout.field) {
                     var f = new LocusZoom.Data.Field(layout.field);
-                    var extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(data)];
+                    var extra;
+                    try {
+                        extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(data)];
+                    } catch (e) {
+                        extra = null;
+                    }
+
                     ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data, extra));
                 } else {
                     ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
@@ -956,6 +962,30 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
     this.global_statuses[status] = toggle;
 
     return this;
+};
+
+/**
+ * Annotations provide a way to save user-driven additions and have them persist across render. They can be referenced
+ *  by filters and scalable parameters. (template support may be added in the future)
+ * Sample use case: user clicks a tooltip to "label this specific point"
+ *  FIXME: Add template support for "toggle" button, so it will need to see fields
+ * @param {String|Object} element The data object or ID string for the element
+ * @param {String} key The name of the annotation to track
+ * @param {*} value The value of the marked field
+ */
+LocusZoom.DataLayer.prototype.setElementAnnotation = function (element, key, value) {
+    var id = this.getElementId(element);
+    if (!this.layer_state.extra_fields[id]) {
+        this.layer_state.extra_fields[id] = {};
+    }
+    this.layer_state.extra_fields[id][key] = value;
+    return this;
+};
+
+LocusZoom.DataLayer.prototype.getElementAnnotation = function (element, key) {
+    var id = this.getElementId(element);
+    var extra = this.layer_state.extra_fields[id];
+    return extra && extra[key];
 };
 
 /**

@@ -224,7 +224,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
     // 2. The scatter plot MUST have a layout.labels.filters entry of the form " {field: x, op: 'in', values: [], exclusive: false}
     // 3. The special filter directive must be the *last* one present in the last (in LZ, the last filter "wins")
     var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-    base.html += '<a href="javascript:void(0);" onclick="var filters = LocusZoom.getToolTipDataLayer(this).layout.label.filters;var last_filter = filters[filters.length - 1];var val = LocusZoom.getToolTipData(this)[last_filter.field];var pos = last_filter.values.indexOf(val);if (~pos) {last_filter.values.splice(pos, 1)} else {last_filter.values.push(val);}; plot.applyState();">Toggle label</a>';
+    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); plot.applyState();">Toggle label</a>';
     return base;
 }());
 

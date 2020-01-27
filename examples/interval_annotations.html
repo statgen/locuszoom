@@ -89,23 +89,15 @@
     assoc_layer.tooltip = LocusZoom.Layouts.get('tooltip', 'standard_association_with_label');
     assoc_layer.label = {
         text: '{{assoc:variant}}',
-        spacing: 3,
+        spacing: 12,
         lines: {
             style: { 'stroke-width': '2px', 'stroke': '#333333', 'stroke-dasharray': '2px 2px' }
         },
         filters: [
             {
-                // FIXME: When there is only one filter, since match = true by default,
-                //  "non-exclusive" mode results in EVERYTHING getting labeled- and the browser hangs
-                field: 'assoc:log_pvalue',
-                operator: '>=',
-                value: 100
-            },
-            {
-              field: 'assoc:variant',
-              operator: 'in',
-              exclusive: false,
-              values: []
+                field: 'lz_show_label',
+                operator: '=',
+                value: true
             }
         ],
         style: {
