@@ -562,37 +562,37 @@ describe('LocusZoom.DataLayer', function () {
             should.exist(this.plot.panels.p.data_layers.dl2.exportData);
             this.plot.panels.p.data_layers.dl2.exportData.should.be.a.Function;
         });
-        it.skip("exportData() should export clean JSON of a data layer's underlying data by default", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean JSON of a data layer's underlying data by default", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var json0 = this.plot.panels.p.data_layers.dl1.exportData();
-                    var json1 = this.plot.panels.p.data_layers.dl1.exportData('json');
-                    var json2 = this.plot.panels.p.data_layers.dl2.exportData('json');
-                    assert.deepEqual(json0, this.ds1_expected_json_data);
-                    assert.deepEqual(json1, this.ds1_expected_json_data);
-                    assert.deepEqual(json2, this.ds2_expected_json_data);
-                    done();
-                }.bind(this)).catch(done);
+                    var json0 = self.plot.panels.p.data_layers.dl1.exportData();
+                    var json1 = self.plot.panels.p.data_layers.dl1.exportData('json');
+                    var json2 = self.plot.panels.p.data_layers.dl2.exportData('json');
+                    assert.deepEqual(json0, self.ds1_expected_json_data);
+                    assert.deepEqual(json1, self.ds1_expected_json_data);
+                    assert.deepEqual(json2, self.ds2_expected_json_data);
+                });
         });
-        it.skip("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var csv1 = this.plot.panels.p.data_layers.dl1.exportData('csv');
-                    var csv2 = this.plot.panels.p.data_layers.dl2.exportData('csv');
-                    assert.deepEqual(csv1, this.ds1_expected_csv_data);
-                    assert.deepEqual(csv2, this.ds2_expected_csv_data);
-                    done();
-                }.bind(this)).catch(done);
+                    var csv1 = self.plot.panels.p.data_layers.dl1.exportData('csv');
+                    var csv2 = self.plot.panels.p.data_layers.dl2.exportData('csv');
+                    assert.deepEqual(csv1, self.ds1_expected_csv_data);
+                    assert.deepEqual(csv2, self.ds2_expected_csv_data);
+                });
         });
-        it.skip("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var tsv1 = this.plot.panels.p.data_layers.dl1.exportData('tsv');
-                    var tsv2 = this.plot.panels.p.data_layers.dl2.exportData('tsv');
-                    assert.deepEqual(tsv1, this.ds1_expected_csv_data.replace(/,/g, '\t'));
-                    assert.deepEqual(tsv2, this.ds2_expected_csv_data.replace(/,/g, '\t'));
-                    done();
-                }.bind(this)).catch(done);
+                    var tsv1 = self.plot.panels.p.data_layers.dl1.exportData('tsv');
+                    var tsv2 = self.plot.panels.p.data_layers.dl2.exportData('tsv');
+                    assert.deepEqual(tsv1, self.ds1_expected_csv_data.replace(/,/g, '\t'));
+                    assert.deepEqual(tsv2, self.ds2_expected_csv_data.replace(/,/g, '\t'));
+                });
         });
     });
 
