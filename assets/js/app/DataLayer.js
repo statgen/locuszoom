@@ -966,9 +966,8 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
 
 /**
  * Annotations provide a way to save user-driven additions and have them persist across render. They can be referenced
- *  by filters and scalable parameters. (template support may be added in the future)
- * Sample use case: user clicks a tooltip to "label this specific point"
- *  FIXME: Add template support for "toggle" button, so it will need to see fields
+ *  as a named pseudo-field in any filters and scalable parameters. (template support may be added in the future)
+ * Sample use case: user clicks a tooltip to "label this specific point". (or change any other display property)
  * @param {String|Object} element The data object or ID string for the element
  * @param {String} key The name of the annotation to track
  * @param {*} value The value of the marked field

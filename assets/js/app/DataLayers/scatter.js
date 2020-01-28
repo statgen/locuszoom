@@ -285,9 +285,9 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                     var match = true;
                     filters.forEach(function(filter) {
                         var extra = self.layer_state.extra_fields[self.getElementId(d)];
-
                         var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d, extra);
-                        if (['!=', '=', 'in'].indexOf(filter.operator) === -1 && isNaN(field_value)) {
+
+                        if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
                         } else {
@@ -311,13 +311,6 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                                 // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
                                 // eslint-disable-next-line eqeqeq
                                 if (field_value == filter.value) { match = false; }
-                                break;
-                            case 'in':
-                                // Is the value in a predefined list? This is used so the user can custom-tag selected
-                                //  points. This is not very useful for dynamic layouts but may be nice for data that
-                                //  doesn't change after first render (like PheWAS plots)
-                                var contains = ~filter.values.indexOf(field_value);
-                                match = !!contains;
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
