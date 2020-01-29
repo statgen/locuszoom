@@ -5,7 +5,6 @@
  Test composition of the LocusZoom.Panel object and its base classes
  */
 describe('LocusZoom.DataLayer', function () {
-    // Tests
     it('creates an object for its name space', function () {
         should.exist(LocusZoom.DataLayer);
     });
@@ -855,6 +854,57 @@ describe('LocusZoom.DataLayer', function () {
                     assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
                     assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
                 });
+            });
+        });
+    });
+
+    describe('Persistent annotations', function () {
+        beforeEach(function () {
+            this.plot = null;
+            var data_sources = new LocusZoom.DataSources()
+                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+            var layout = {
+                panels: [
+                    {
+                        id: 'p',
+                        data_layers: [
+                            {
+                                id: 'd',
+                                fields: ['id'],  // unnamespaced because StaticJSON is a rebel
+                                id_field: 'id',
+                                type: 'scatter',
+                                selected: { onclick: 'toggle' },
+                                label: {
+                                    text: 'id',
+                                    filters: [ { field: 'custom_field', operator: '=', value: true } ],
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = LocusZoom.populate('#plot', data_sources, layout);
+        });
+
+        it('can store user-defined marks for points that persist across re-renders', function () {
+            var data_layer = this.plot.panels.p.data_layers.d;
+            data_layer.setElementAnnotation('a', 'custom_field', 'some_value');
+
+            assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
+            assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (as id_field)');
+            assert.equal(data_layer.getElementAnnotation({id: 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+            return this.plot.applyState().then(function() {
+                assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Annotations persist across renderings');
+            });
+        });
+
+        it('can use custom markings in layout directives', function () {
+            var data_layer = this.plot.panels.p.data_layers.d;
+            assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
+            data_layer.setElementAnnotation('a', 'custom_field', true);
+            return this.plot.applyState().then(function () {
+                assert.equal(data_layer.label_groups.length, 1, 'Labels are drawn because of annotations');
             });
         });
     });
