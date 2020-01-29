@@ -862,7 +862,7 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             this.plot = null;
             var data_sources = new LocusZoom.DataSources()
-                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
+                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }]]);
             var layout = {
                 panels: [
                     {
@@ -870,12 +870,12 @@ describe('LocusZoom.DataLayer', function () {
                         data_layers: [
                             {
                                 id: 'd',
-                                fields: ['id'],  // unnamespaced because StaticJSON is a rebel
-                                id_field: 'id',
+                                fields: ['d:id', 'd:some_field'],
+                                id_field: 'd:id',
                                 type: 'scatter',
                                 selected: { onclick: 'toggle' },
                                 label: {
-                                    text: 'id',
+                                    text: 'd:id',
                                     filters: [ { field: 'custom_field', operator: '=', value: true } ],
                                 }
                             }
@@ -889,12 +889,14 @@ describe('LocusZoom.DataLayer', function () {
 
         it('can store user-defined marks for points that persist across re-renders', function () {
             var data_layer = this.plot.panels.p.data_layers.d;
+            // Set the annotation for a point with id value of "a"
             data_layer.setElementAnnotation('a', 'custom_field', 'some_value');
 
+            // Find the element annotation for this point via several different ways
             assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
-            assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (as id_field)');
-            assert.equal(data_layer.getElementAnnotation('b', 'custom_field'), null, 'If no annotation found, returns null');
-            assert.equal(data_layer.getElementAnnotation({id: 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+            assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
+            assert.equal(data_layer.getElementAnnotation('b', 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
+            assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
 
             return this.plot.applyState().then(function() {
                 assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Annotations persist across renderings');
@@ -902,11 +904,34 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('can use custom markings in layout directives', function () {
+            var self = this;
             var data_layer = this.plot.panels.p.data_layers.d;
             assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
             data_layer.setElementAnnotation('a', 'custom_field', true);
+
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups.length, 1, 'Labels are drawn because of annotations');
+                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn because of annotations');
+                // After turning labels on, confirm that we can cycle them off and influence rendering
+                data_layer.setElementAnnotation('a', 'custom_field', false);
+                return self.plot.applyState();
+            }).then(function () {
+                assert.equal(data_layer.label_groups[0].length, 0, 'Labels are removed because of annotations');
+            });
+        });
+
+        it('gives precedence to real data fields when an annotation exists with the same name', function () {
+            var self = this;
+            var data_layer = this.plot.panels.p.data_layers.d;
+            data_layer.layout.label.filters[0].field = 'd:some_field';
+
+            // Rerender once so the modified layout takes effect
+            return this.plot.applyState().then(function () {
+                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn on first render because field value says to');
+                // Introduce an annotation that conflicts with the data field from the API
+                data_layer.setElementAnnotation('b', 'd:some_field', false);
+                return self.plot.applyState();
+            }).then(function () {
+                assert.equal(data_layer.label_groups.length, 1, 'Real fields says to label, annotation says no. Real field wins.');
             });
         });
     });
