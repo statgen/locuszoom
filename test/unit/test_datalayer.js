@@ -893,7 +893,9 @@ describe('LocusZoom.DataLayer', function () {
 
             assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
             assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (as id_field)');
+            assert.equal(data_layer.getElementAnnotation('b', 'custom_field'), null, 'If no annotation found, returns null');
             assert.equal(data_layer.getElementAnnotation({id: 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+
             return this.plot.applyState().then(function() {
                 assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Annotations persist across renderings');
             });
