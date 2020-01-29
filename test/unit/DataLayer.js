@@ -624,50 +624,50 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
-        it.skip('should allow for highlighting and unhighlighting a single element', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for highlighting and unhighlighting a single element', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
-                    this.plot.state[state_id].highlighted.should.be.an.Array;
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+                    layer_state.status_flags.highlighted.should.be.an.Array;
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.highlightElement(a);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(a_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
                     this.plot.panels.p.data_layers.d.unhighlightElement(a);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.highlightElement(c);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(c_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unhighlightElement(b);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                }.bind(this));
         });
-        it.skip('should allow for highlighting and unhighlighting all elements', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for highlighting and unhighlighting all elements', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a_id = d.getElementId(d.data[0]);
                     var b_id = d.getElementId(d.data[1]);
                     var c_id = d.getElementId(d.data[2]);
                     this.plot.panels.p.data_layers.d.highlightAllElements();
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(3);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(a_id);
-                    this.plot.state[state_id].highlighted[1].should.be.exactly(b_id);
-                    this.plot.state[state_id].highlighted[2].should.be.exactly(c_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(3);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
+                    layer_state.status_flags.highlighted[1].should.be.exactly(b_id);
+                    layer_state.status_flags.highlighted[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                }.bind(this));
         });
     });
 
@@ -699,51 +699,50 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
-        it.skip('should allow for selecting and unselecting a single element', function (done) {
-            // This test is broken; `.catch=done` is a symptom; it references broken/removed methods
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for selecting and unselecting a single element', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
-                    this.plot.state[state_id].selected.should.be.an.Array;
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
+                    layer_state.status_flags.selected.should.be.an.Array;
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.selectElement(a);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
-                    this.plot.state[state_id].selected[0].should.be.exactly(a_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
                     this.plot.panels.p.data_layers.d.unselectElement(a);
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.selectElement(c);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
-                    this.plot.state[state_id].selected[0].should.be.exactly(c_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected[0].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unselectElement(b);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unselectElement(c);
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                }.bind(this));
         });
-        it.skip('should allow for selecting and unselecting all elements', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for selecting and unselecting all elements', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a_id = d.getElementId(d.data[0]);
                     var b_id = d.getElementId(d.data[1]);
                     var c_id = d.getElementId(d.data[2]);
                     this.plot.panels.p.data_layers.d.selectAllElements();
-                    this.plot.state[state_id].selected.length.should.be.exactly(3);
-                    this.plot.state[state_id].selected[0].should.be.exactly(a_id);
-                    this.plot.state[state_id].selected[1].should.be.exactly(b_id);
-                    this.plot.state[state_id].selected[2].should.be.exactly(c_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(3);
+                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
+                    layer_state.status_flags.selected[1].should.be.exactly(b_id);
+                    layer_state.status_flags.selected[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unselectAllElements();
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                }.bind(this));
         });
     });
 
