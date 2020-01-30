@@ -284,15 +284,18 @@ LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
 };
 
 /**
- * Validate a (presumed complete) plot state object against internal rules for consistency, and ensure the plot fits
- *   within any constraints imposed by the layout.
+ * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within
+ *  any constraints specified by the layout
+ *
+ * This function has side effects; it mutates the proposed state in order to meet certain bounds checks etc.
  * @param {Object} new_state
+ * @param {Number} new_state.chr
  * @param {Number} new_state.start
  * @param {Number} new_state.end
  * @param {Object} layout
  * @returns {*|{}}
  */
-LocusZoom.validateState = function(new_state, layout) {
+LocusZoom._updateStatePosition = function(new_state, layout) {
 
     new_state = new_state || {};
     layout = layout || {};

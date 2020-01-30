@@ -196,6 +196,22 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'witch' }), 'munchkin');
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 'munchkin');
         });
+        it('can resolve based on an annotation field, even when no point data field by that name is present', function () {
+            var layout = {
+                id: 'somelayer',
+                id_field: 'id',
+                scale: [
+                    {
+                        scale_function: 'if',
+                        field: 'custom_field',
+                        parameters: { field_value: 'little_dog', then: 'too' }
+                    }
+                ]
+            };
+            var datalayer = new LocusZoom.DataLayer(layout);
+            datalayer.setElementAnnotation('toto', 'custom_field', 'little_dog');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { id: 'toto' }), 'too');
+        });
     });
 
     describe('Extent generation', function () {
@@ -825,8 +841,11 @@ describe('LocusZoom.DataLayer', function () {
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
             var layer = this.plot.panels.p.data_layers.d;
+            var status_flags = layer.layer_state.status_flags;
 
             var item_a = { id: 'a' };
+            var internal_id = layer.getElementId(item_a);
+
             layer.data = [item_a, { id: 'b' }, { id: 'c' }];
             layer.positionTooltip = function () {
                 return 0;
@@ -836,7 +855,6 @@ describe('LocusZoom.DataLayer', function () {
             //  Confirm state is tracked and tooltip does not magically return.
             var self = this;
             return self.plot.applyState().then(function () { // Render initially so that plot is set up right
-                var status_flags = layer.layer_state.status_flags;
                 layer.setElementStatus('selected', item_a, true, true);
                 var internal_id = layer.getElementId(item_a);
 
@@ -849,11 +867,10 @@ describe('LocusZoom.DataLayer', function () {
                 assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
                 assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
 
-                return self.plot.applyState().then(function () { // Force a re-render to see if zombie items remain
-                    var status_flags = layer.layer_state.status_flags;
-                    assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
-                    assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
-                });
+                return self.plot.applyState();
+            }).then(function () { // Force a re-render to see if zombie items remain
+                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
+                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
             });
         });
     });

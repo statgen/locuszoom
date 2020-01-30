@@ -576,9 +576,10 @@ LocusZoom.Plot.prototype.clearPanelData = function(panelId, mode) {
             var layer = self.panels[pid].data_layers[dlid];
             layer.destroyAllTooltips();
 
+            delete layer.layer_state;
             delete self.layout.state[layer.state_id];
             if(mode === 'reset') {
-                layer.setDefaultState();
+                layer._setDefaultState();
             }
         });
     });
@@ -1020,23 +1021,16 @@ LocusZoom.Plot.prototype.applyState = function(state_changes) {
         throw new Error('LocusZoom.applyState only accepts an object; ' + (typeof state_changes) + ' given');
     }
 
-    // First make a copy of the current (old) state to work with. This allows us to validate the resulting state
-    //  object before actually applying it.
-    // A side effect is that it will break all internal references to any child key of state (like layer_state).
-    //  Hence most `plot.state` code references the top object exclusively.
-    var new_state = JSON.parse(JSON.stringify(this.state));
-
-    // Apply changes by top-level property to the new state
+    // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
+    var mods = { chr: this.state.chr, start: this.state.start, end: this.state.end  };
     for (var property in state_changes) {
-        new_state[property] = state_changes[property];
+        mods[property] = state_changes[property];
     }
-
-    // Validate the new state (may do nothing, may do a lot, depends on how the user has things set up)
-    new_state = LocusZoom.validateState(new_state, this.layout);
+    mods = LocusZoom._updateStatePosition(mods, this.layout);
 
     // Apply new state to the actual state
-    for (property in new_state) {
-        this.state[property] = new_state[property];
+    for (property in mods) {
+        this.state[property] = mods[property];
     }
 
     // Generate requests for all panels given new state

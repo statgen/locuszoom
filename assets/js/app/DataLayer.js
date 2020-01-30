@@ -46,7 +46,10 @@ LocusZoom.DataLayer = function(layout, parent) {
     /** @member {String} */
     this.state_id = null;
 
-    this.setDefaultState();
+    /** @member {Object} */
+    this.layer_state = null;
+    // Create a default state (and set any references to the parent as appropriate)
+    this._setDefaultState();
 
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
@@ -67,21 +70,6 @@ LocusZoom.DataLayer = function(layout, parent) {
     return this;
 
 };
-
-/**
- * Define getters
- */
-Object.defineProperties(LocusZoom.DataLayer.prototype, {
-    'layer_state': {
-        // Convenience alias to access an object by name. Without the getter, reference breaks in deepcopy operations.
-        get: function() {
-            if (!this.state) {
-                return null;
-            }
-            return this.state[this.state_id];
-        }
-    }
-});
 
 /**
  * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
@@ -123,23 +111,25 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
  *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
-LocusZoom.DataLayer.prototype.setDefaultState = function() {
-    // Define state parameters specific to this data layer. Within plot state, this will live under a key
-    //  `panel_name.layer_name`.
+LocusZoom.DataLayer.prototype._setDefaultState = function() {
+    // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
+    //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
+    //  persist across re-render)
+    var layer_state = { status_flags: {}, extra_fields: {} };
+    var status_flags = layer_state.status_flags;
+    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
+        status_flags[status] = status_flags[status] || [];
+    });
+    // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
+    status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
+
     if (this.parent) {
-        this.state = this.parent.state;
+        // If layer has a parent, store a reference in the overarching plot.state object
         this.state_id = this.parent.id + '.' + this.id;
-        // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
-        //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
-        //  persist across re-render)
-        this.state[this.state_id] = this.state[this.state_id] || { status_flags: {}, extra_fields: {} };
-        var status_flags = this.state[this.state_id].status_flags;
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
-            status_flags[status] = status_flags[status] || [];
-        });
-        // Also initialize "internal-only" state fields
-        status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
+        this.state = this.parent.state;
+        this.state[this.state_id] = layer_state;
     }
+    this.layer_state = layer_state;
 };
 
 /**
@@ -175,7 +165,11 @@ LocusZoom.DataLayer.Statuses = {
  * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
  */
 LocusZoom.DataLayer.prototype.getBaseId = function() {
-    return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+    if (this.parent) {
+        return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+    } else {
+        return '';
+    }
 };
 
 /**
