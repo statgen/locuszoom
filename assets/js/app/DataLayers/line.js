@@ -281,7 +281,7 @@ LocusZoom.DataLayers.add('line', function(layout) {
         if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
             throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
         }
-        if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+        if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
         if (typeof toggle == 'undefined') { toggle = true; }
 
         // Update global status flag

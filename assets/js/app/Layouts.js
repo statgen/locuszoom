@@ -218,6 +218,16 @@ LocusZoom.Layouts.add('tooltip', 'standard_association', {
         + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
 });
 
+LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
+    // Add a custom "toggle label" button. This works alongside the label mechanism of scatter plots; it therefore has special requirements:
+    //  1. It can only be used on scatter plots.
+    // 2. The scatter plot MUST have a layout.labels.filters entry of the form " {field: x, op: 'in', values: [], exclusive: false}
+    // 3. The special filter directive must be the *last* one present in the last (in LZ, the last filter "wins")
+    var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); plot.applyState();">Toggle label</a>';
+    return base;
+}());
+
 LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
     var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
     covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';

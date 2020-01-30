@@ -108,6 +108,7 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // pass on recursive separation
     this.flip_labels = function() {
         var data_layer = this;
+        // Base positions on the default point size (which is what resolve scalable param returns if no data provided)
         var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
         var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
@@ -266,21 +267,26 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
 
     // Implement the main render function
     this.render = function() {
-
+        var self = this;
         var data_layer = this;
         var x_scale = 'x_scale';
         var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
 
         if (this.layout.label) {
             // Apply filters to generate a filtered data set
-            var filtered_data = this.data.filter(function(d) {
-                if (!data_layer.layout.label.filters) {
-                    return true;
-                } else {
-                    // Start by assuming a match, run through all filters to test if not a match on any one
+            var filtered_data;
+            var filters = data_layer.layout.label.filters || [];
+            if (!filters.length) {
+                filtered_data = this.data;
+            } else {
+                filtered_data = this.data.filter(function(d) {
+                    // Start by assuming a match (base case = no filters).
+                    // Test each filters: ALL must be satisfied for match to occur.
                     var match = true;
-                    data_layer.layout.label.filters.forEach(function(filter) {
-                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
+                    filters.forEach(function(filter) {
+                        var extra = self.layer_state.extra_fields[self.getElementId(d)];
+                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d, extra);
+
                         if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
@@ -314,10 +320,10 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                         }
                     });
                     return match;
-                }
-            });
+                });
+            }
+
             // Render label groups
-            var self = this;
             this.label_groups = this.svg.group
                 .selectAll('g.lz-data_layer-' + this.layout.type + '-label')
                 .data(filtered_data, function(d) { return d[self.layout.id_field]  + '_label'; });
@@ -393,31 +399,31 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
         // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll('path.lz-data_layer-' + this.layout.type)
-            .data(this.data, function(d) { return d[this.layout.id_field]; }.bind(this));
+            .data(this.data, function(d) { return d[self.layout.id_field]; });
 
         // Create elements, apply class, ID, and initial position
         var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append('path')
             .attr('class', 'lz-data_layer-' + this.layout.type)
-            .attr('id', function(d) { return this.getElementId(d); }.bind(this))
+            .attr('id', function(d) { return self.getElementId(d); })
             .attr('transform', 'translate(0,' + initial_y + ')');
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
-            var x = this.parent[x_scale](d[this.layout.x_axis.field]);
-            var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+            var x = self.parent[x_scale](d[self.layout.x_axis.field]);
+            var y = self.parent[y_scale](d[self.layout.y_axis.field]);
             if (isNaN(x)) { x = -1000; }
             if (isNaN(y)) { y = -1000; }
             return 'translate(' + x + ',' + y + ')';
-        }.bind(this);
+        };
 
-        var fill = function(d) { return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d) { return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d) { return self.resolveScalableParameter(self.layout.color, d); };
+        var fill_opacity = function(d) { return self.resolveScalableParameter(self.layout.fill_opacity, d); };
 
         var shape = d3.svg.symbol()
-            .size(function(d) { return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d) { return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d) { return self.resolveScalableParameter(self.layout.point_size, d); })
+            .type(function(d) { return self.resolveScalableParameter(self.layout.point_shape, d); });
 
         // Apply position and color, using a transition if necessary
 
@@ -443,8 +449,8 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
 
         // Apply default event emitters to selection
         selection.on('click.event_emitter', function(element) {
-            this.parent.emit('element_clicked', element, true);
-        }.bind(this));
+            self.parent.emit('element_clicked', element, true);
+        });
 
         // Apply mouse behaviors
         this.applyBehaviors(selection);
@@ -456,8 +462,8 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             this.separate_labels();
             // Apply default event emitters to selection
             this.label_texts.on('click.event_emitter', function(element) {
-                this.parent.emit('element_clicked', element, true);
-            }.bind(this));
+                self.parent.emit('element_clicked', element, true);
+            });
             // Extend mouse behaviors to labels
             this.applyBehaviors(this.label_texts);
         }

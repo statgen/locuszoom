@@ -176,17 +176,28 @@ LocusZoom.Data.Field = function(field) {
         return val;
     };
 
-    // Resolve the field for a given data element.
-    // First look for a full match with transformations already applied by the data requester.
-    // Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
-    this.resolve = function(d) {
-        if (typeof d[this.full_name] == 'undefined') {
+    /**
+     * Resolve the field for a given data element.
+     *   First look for a full match with transformations already applied by the data requester.
+     *   Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
+     * @param {Object} data Returned data/fields into for this element
+     * @param {Object} [extra] User-applied annotations for this point (info not provided by the server that we want
+     *  to preserve across re-renders). Example usage: "should_show_label"
+     * @returns {*}
+     */
+    this.resolve = function(data, extra) {
+        if (typeof data[this.full_name] == 'undefined') { // Check for cached result
             var val = null;
-            if (typeof (d[this.namespace + ':' + this.name]) != 'undefined') { val = d[this.namespace + ':' + this.name]; }
-            else if (typeof d[this.name] != 'undefined') { val = d[this.name]; }
-            d[this.full_name] = this.applyTransformations(val);
+            if (typeof (data[this.namespace + ':' + this.name]) != 'undefined') { // Fallback: value sans transforms
+                val = data[this.namespace + ':' + this.name];
+            } else if (typeof data[this.name] != 'undefined') { // Fallback: value present without namespace
+                val = data[this.name];
+            } else if (extra && typeof extra[this.full_name] != 'undefined') { // Fallback: check annotations
+                val = extra[this.full_name];
+            } // We should really warn if no value found, but many bad layouts exist and this could break compatibility
+            data[this.full_name] = this.applyTransformations(val);
         }
-        return d[this.full_name];
+        return data[this.full_name];
     };
 
 };
