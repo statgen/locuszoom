@@ -1064,11 +1064,19 @@ LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, cha
         throw new Error(['Data source', this.constructor.SOURCE_NAME, 'requires that you specify a genome_build'].join(' '));
     }
 
-    var query = chain.body.map(function (gene) {
-        var gene_name = gene.gene_name;
+    var unique_gene_names = chain.body.reduce(
+        // In rare cases, the same gene symbol may appear at multiple positions. (issue #179) We de-duplicate the
+        //  gene names to avoid issuing a malformed GraphQL query.
+        function (acc, gene) {
+            acc[gene.gene_name] = null;
+            return acc;
+        },
+        {}
+    );
+    var query = Object.keys(unique_gene_names).map(function (gene_name) {
         // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
-        var alias = gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');
-        // Each gene is a separate graphQL query, grouped into one request using aliases
+        var alias = '_' + gene_name.replace(/[^A-Za-z0-9_]/g, '_');
+        // Each gene symbol is a separate graphQL query, grouped into one request using aliases
         return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } ';
     });
 
@@ -1092,7 +1100,7 @@ LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data,
 
     chain.body.forEach(function(gene) {
         // Find payload keys that match gene names in this response
-        var alias = gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');  // aliases are modified gene names
+        var alias = '_' + gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');  // aliases are modified gene names
         var constraint = data[alias] && data[alias]['gnomad_constraint']; // gnomad API has two ways of specifying missing data for a requested gene
         if (constraint) {
             // Add all fields from constraint data- do not override fields present in the gene source
