@@ -222,7 +222,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
     // Add a special "toggle label" button to the base tooltip. This must be used in tandem with a custom layout
     //   directive (label.filters should check a boolean annotation field called "lz_show_label").
     var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); plot.applyState();">Toggle label</a>';
+    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); layer.parent_plot.applyState();">Toggle label</a>';
     return base;
 }());
 
