@@ -218,6 +218,14 @@ LocusZoom.Layouts.add('tooltip', 'standard_association', {
         + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
 });
 
+LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
+    // Add a special "toggle label" button to the base tooltip. This must be used in tandem with a custom layout
+    //   directive (label.filters should check a boolean annotation field called "lz_show_label").
+    var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); layer.parent_plot.applyState();">Toggle label</a>';
+    return base;
+}());
+
 LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
     var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
     covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
@@ -375,6 +383,25 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
     tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
 });
 
+LocusZoom.Layouts.add('data_layer', 'accessibility', {
+    namespace: { 'access': 'access'},
+    id: 'coaccessibility',
+    type: 'arc',
+    fields: ['{{namespace[access]}}peak1', '{{namespace[access]}}peak2', '{{namespace[access]}}id', '{{namespace[access]}}score'],
+    id_field: '{{namespace[access]}}id',
+    z_index: 2,
+    start_field: '{{namespace[access]}}peak1',
+    end_field: '{{namespace[access]}}peak2',
+    score_field: '{{namespace[access]}}score',
+    track_split_field: '{{namespace[access]}}score',
+    y_axis: {
+        axis: 1,
+        field: '{{namespace[access]}}score',
+        min_extent: [0, 1]
+    },
+    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
+});
+
 LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
     // Slightly modify an existing layout
     var l = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
@@ -469,10 +496,10 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
 });
 
 LocusZoom.Layouts.add('data_layer', 'genes', {
-    namespace: { 'gene': 'gene', 'constraint': 'constraint' },
+    namespace: { 'gene': 'gene' },
     id: 'genes',
     type: 'genes',
-    fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
+    fields: ['{{namespace[gene]}}all'],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -769,9 +796,54 @@ LocusZoom.Layouts.add('panel', 'association', {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true })
+        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true })
+    ]
+});
+
+LocusZoom.Layouts.add('panel', 'accessibility', {
+    id: 'accessibility',
+    width: 800,
+    height: 225,
+    min_width: 400,
+    min_height: 200,
+    proportional_width: 1,
+    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    inner_border: 'rgb(210, 210, 210)',
+    dashboard: (function () {
+        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
+        l.components.push({
+            type: 'toggle_legend',
+            position: 'right'
+        });
+        return l;
+    })(),
+    axes: {
+        x: {
+            label: 'Chromosome {{chr}} (Mb)',
+            label_offset: 32,
+            tick_format: 'region',
+            extent: 'state'
+        },
+        y1: {
+            label: 'Score',
+            label_offset: 28
+        }
+    },
+    legend: {
+        orientation: 'vertical',
+        origin: { x: 55, y: 40 },
+        hidden: true
+    },
+    interaction: {
+        drag_background_to_pan: true,
+        drag_x_ticks_to_scale: true,
+        drag_y1_ticks_to_scale: true,
+        drag_y2_ticks_to_scale: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    data_layers: [
+        LocusZoom.Layouts.get('data_layer', 'accessibility', { unnamespaced: true })
     ]
 });
 
@@ -1299,5 +1371,19 @@ LocusZoom.Layouts.add('plot', 'interval_association', {
         }),
         LocusZoom.Layouts.get('panel', 'intervals', { unnamespaced: true, proportional_height: (120 / 570) }),
         LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
+    ]
+});
+
+LocusZoom.Layouts.add('plot', 'co_accessibility', {
+    state: {},
+    width: 800,
+    height: 450,
+    responsive_resize: 'both',
+    min_region_scale: 20000,
+    max_region_scale: 1000000,
+    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    panels: [
+        LocusZoom.Layouts.get('panel', 'accessibility', { unnamespaced: true, proportional_height: 0.5 }),
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
     ]
 });
