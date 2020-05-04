@@ -412,12 +412,12 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             return 'translate(' + x + ',' + y + ')';
         }.bind(this);
 
-        var fill = function(d) { return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d) { return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d, i) { return this.resolveScalableParameter(this.layout.color, d, i); }.bind(this);
+        var fill_opacity = function(d, i) { return this.resolveScalableParameter(this.layout.fill_opacity, d, i); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d) { return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d) { return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
+            .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
         // Apply position and color, using a transition if necessary
 

@@ -270,8 +270,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 bboxes.exit().remove();
 
                 // Render gene boundaries
-                var boundary_fill = function(d) { return self.resolveScalableParameter(self.layout.color, d); };
-                var boundary_stroke = function(d) { return self.resolveScalableParameter(self.layout.stroke, d); };
+                var boundary_fill = function(d, i) { return self.resolveScalableParameter(self.layout.color, d, i); };
+                var boundary_stroke = function(d, i) { return self.resolveScalableParameter(self.layout.stroke, d, i); };
                 var boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
                     .data([gene], function(d) { return d.gene_name + '_boundary'; })
                     .style({ fill: boundary_fill, stroke: boundary_stroke });
@@ -353,8 +353,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
 
                 // Render exon rects (first transcript only, for now)
                 // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
-                var exon_fill = function(d) { return self.resolveScalableParameter(self.layout.color, d.parent.parent); };
-                var exon_stroke = function(d) { return self.resolveScalableParameter(self.layout.stroke, d.parent.parent); };
+                var exon_fill = function(d, i) { return self.resolveScalableParameter(self.layout.color, d.parent.parent, i); };
+                var exon_stroke = function(d, i) { return self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i); };
 
                 var exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon')
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d) { return d.exon_id; });

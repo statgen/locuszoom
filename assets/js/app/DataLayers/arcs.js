@@ -8,11 +8,11 @@
 LocusZoom.DataLayers.add('arcs', function(layout) {
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
-        // TODO: Configurable options should include styles for lines: color (single, range, multiple, scaleFunction?); weights; fills
+        color: 'seagreen',
         style: {
             fill: 'none',
-            'stroke': 'blue',
-            'stroke-width': '2px',  // todo explore weighting options based on generated svg
+            'stroke-width': '2px',
+            'stroke-opacity': '100%',
         },
         // start_field: 'peak1',
         // end_field: 'peak2',
@@ -33,8 +33,6 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         var filters = layout.filters || [];
         var trackData = this.filter(filters, 'elements');
 
-        console.log(this.data, trackData);
-
         var selection = this.svg.group
             .selectAll('path.lz-data_layer-arcs')
             .data(trackData, function(d) {
@@ -50,8 +48,10 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         // Update selection/set coordinates
         selection
             .style(layout.style) // TODO provide a way to configure item color, filters, other scalable directives
-            .attr('d', function (d,i, a) {
-                console.log('data elem iteration', d,i,a);
+            .attr('stroke', function(d, i) {
+                return self.resolveScalableParameter(self.layout.color, d, i);
+            })
+            .attr('d', function (d, i) {
                 // Each individual data point describes a path composed of 3 points, with a spline to smooth the line
                 var x1 = d[layout.x_axis.field1];
                 var x2 = d[layout.x_axis.field2];

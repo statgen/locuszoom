@@ -389,8 +389,15 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
     type: 'arcs',
     fields: ['{{namespace[access]}}start1', '{{namespace[access]}}start2', '{{namespace[access]}}id', '{{namespace[access]}}score'],
     id_field: '{{namespace[access]}}id',
+    color: [{
+        field: '{{namespace[access]}}id',
+        scale_function: 'ordinal_cycle',
+        parameters: {
+            values: d3.scale.category10().range(), // Array of colors that work well together
+        }
+    }],
     x_axis: {
-        // TODO: Fix extent determination? ?
+        // TODO: Fix extent determination? (eg if not using linked axes)
         field1: '{{namespace[access]}}start1',
         field2: '{{namespace[access]}}start2',
     },

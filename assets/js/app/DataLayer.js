@@ -329,18 +329,23 @@ LocusZoom.DataLayer.prototype.moveDown = function() {
 };
 
 /**
- * Apply scaling functions to an element or parameter as needed, based on its layout and the element's data
+ * Apply scaling functions to an element as needed, based on the layout rules governing display + the element's data
  * If the layout parameter is already a primitive type, simply return the value as given
- * @param {Array|Number|String|Object} layout
- * @param {*} data The value to be used with the filter
+ *
+ * In the future this may be further expanded, so that scaling functions can operate similar to mappers
+ *  (item, index, array). Additional arguments would be added as the need arose.
+ * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
+ *  ("rules for how to choose color based on item value")
+ * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
+ * @param {Number} data_index The array index for the data element
  * @returns {*} The transformed value
  */
-LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) {
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, element_data, data_index) {
     var ret = null;
     if (Array.isArray(layout)) {
         var idx = 0;
         while (ret === null && idx < layout.length) {
-            ret = this.resolveScalableParameter(layout[idx], data);
+            ret = this.resolveScalableParameter(layout[idx], element_data, data_index);
             idx++;
         }
     } else {
@@ -353,9 +358,9 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) 
             if (layout.scale_function) {
                 if(layout.field) {
                     var f = new LocusZoom.Data.Field(layout.field);
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(element_data), data_index);
                 } else {
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, element_data, data_index);
                 }
             }
             break;

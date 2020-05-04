@@ -54,7 +54,7 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
             .attr('x', function (d) {return self.parent['x_scale'](d[self.layout.x_axis.field]) - width / 2; })
             .attr('width', width)
             .attr('height', self.parent.layout.height)
-            .attr('fill', function(d) { return self.resolveScalableParameter(self.layout.color, d); });
+            .attr('fill', function(d, i) { return self.resolveScalableParameter(self.layout.color, d, i); });
 
         // Remove unused elements
         selection.exit()

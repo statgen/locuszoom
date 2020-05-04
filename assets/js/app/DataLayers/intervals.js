@@ -244,11 +244,11 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
                     return ((d.track - 1) * data_layer.getTrackHeight())
                         + data_layer.layout.bounding_box_padding;
                 };
-                fill = function(d) {
-                    return data_layer.resolveScalableParameter(data_layer.layout.color, d);
+                fill = function(d, i) {
+                    return data_layer.resolveScalableParameter(data_layer.layout.color, d, i);
                 };
-                fill_opacity = function(d) {
-                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
+                fill_opacity = function(d, i) {
+                    return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d, i);
                 };
 
 
