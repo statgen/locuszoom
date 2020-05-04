@@ -67,7 +67,7 @@
     // Define LocusZoom Data Sources object differently depending on online status
     var apiBase, data_sources;
     apiBase1 = "http://www.apps.t2depigenome.org/locuszoom/staticdata/";
-    apiBase2 = "https://portaldev.sph.umich.edu/api/v1/";    
+    apiBase2 = "https://portaldev.sph.umich.edu/api/v1/";
     apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
     data_sources = new LocusZoom.DataSources()
       .add("access", ["AccessibilityLZ", {url: apiBase + "co_accesibility.json", params: { build: 'GRCh37' }}])
@@ -79,7 +79,7 @@
     if (!Object.keys(initialState).length) {
         initialState = {chr: 11, start: 2182049, end: 2904920};
     }
-    layout = LocusZoom.Layouts.get("plot", "co_accessibility", {state: initialState});
+    layout = LocusZoom.Layouts.get("plot", "coaccessibility", {state: initialState});
     layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
 
 

@@ -383,22 +383,23 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
     tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
 });
 
-LocusZoom.Layouts.add('data_layer', 'accessibility', {
-    namespace: { 'access': 'access'},
+LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
+    namespace: { 'access': 'access' },
     id: 'coaccessibility',
-    type: 'arc',
-    fields: ['{{namespace[access]}}peak1', '{{namespace[access]}}peak2', '{{namespace[access]}}id', '{{namespace[access]}}score'],
+    type: 'arcs',
+    fields: ['{{namespace[access]}}start1', '{{namespace[access]}}start2', '{{namespace[access]}}id', '{{namespace[access]}}score'],
     id_field: '{{namespace[access]}}id',
-    z_index: 2,
-    start_field: '{{namespace[access]}}peak1',
-    end_field: '{{namespace[access]}}peak2',
-    score_field: '{{namespace[access]}}score',
-    track_split_field: '{{namespace[access]}}score',
+    x_axis: {
+        // TODO: Fix extent determination? ?
+        field1: '{{namespace[access]}}start1',
+        field2: '{{namespace[access]}}start2',
+    },
     y_axis: {
         axis: 1,
         field: '{{namespace[access]}}score',
         min_extent: [0, 1]
     },
+    // TODO: Define a custom tooltip and implement positioning for it
     tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
 });
 
@@ -800,8 +801,8 @@ LocusZoom.Layouts.add('panel', 'association', {
     ]
 });
 
-LocusZoom.Layouts.add('panel', 'accessibility', {
-    id: 'accessibility',
+LocusZoom.Layouts.add('panel', 'coaccessibility', {
+    id: 'coaccessibility',
     width: 800,
     height: 225,
     min_width: 400,
@@ -843,7 +844,7 @@ LocusZoom.Layouts.add('panel', 'accessibility', {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'accessibility', { unnamespaced: true })
+        LocusZoom.Layouts.get('data_layer', 'coaccessibility', { unnamespaced: true })
     ]
 });
 
@@ -1374,7 +1375,7 @@ LocusZoom.Layouts.add('plot', 'interval_association', {
     ]
 });
 
-LocusZoom.Layouts.add('plot', 'co_accessibility', {
+LocusZoom.Layouts.add('plot', 'coaccessibility', {
     state: {},
     width: 800,
     height: 450,
@@ -1383,7 +1384,7 @@ LocusZoom.Layouts.add('plot', 'co_accessibility', {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'accessibility', { unnamespaced: true, proportional_height: 0.5 }),
+        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.5 }),
         LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
     ]
 });
