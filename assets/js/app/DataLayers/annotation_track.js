@@ -18,7 +18,7 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
         color: '#000000',
         filters: [],
         tooltip_positioning: 'middle', // Allowed values: top, middle, bottom
-        hit_area_width: 8,
+        hitarea_width: 8,
     };
 
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -77,7 +77,7 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
 
         var _getX = function (d, i) { // Helper for position calcs below
             var x_center = self.parent['x_scale'](d[self.layout.x_axis.field]);
-            var x_left = x_center - self.layout.hit_area_width / 2;
+            var x_left = x_center - self.layout.hitarea_width / 2;
             if (i >= 1) {
                 // This assumes that the data are in sorted order.
                 var left_node = trackData[i - 1];

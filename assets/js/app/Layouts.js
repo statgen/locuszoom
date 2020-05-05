@@ -402,14 +402,33 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
     id: 'coaccessibility',
     type: 'arcs',
     fields: ['{{namespace[access]}}start1', '{{namespace[access]}}end1', '{{namespace[access]}}start2', '{{namespace[access]}}end2', '{{namespace[access]}}id', '{{namespace[access]}}target', '{{namespace[access]}}score'],
+    match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
     id_field: '{{namespace[access]}}id',
-    color: [{
-        field: '{{namespace[access]}}id',
-        scale_function: 'ordinal_cycle',
-        parameters: {
-            values: d3.scale.category10().range(), // Array of colors that work well together
+    color: [
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#ff0000',
+            },
+        },
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: false,
+                then: '#EAE6E6',
+            },
+        },
+        {
+            field: '{{namespace[access]}}id',
+            scale_function: 'ordinal_cycle',
+            parameters: {
+                values: d3.scale.category10().range(), // Array of colors that work well together
+            }
         }
-    }],
+    ],
     x_axis: {
         field1: '{{namespace[access]}}start1',
         field2: '{{namespace[access]}}start2',

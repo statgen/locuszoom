@@ -86,6 +86,30 @@
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
     window.plot = LocusZoom.populate("#ca-plot", data_sources, layout);
+    // Add a "click gene to match accessibility loop" behavior
+    plot.panels['genes'].data_layers["genes"].layout.match = { send: 'gene_name', receive: 'gene_name' };
+
+    var color_config = [
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+              field_value: true,
+              then: '#ff0000',
+            },
+        },
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: false,
+                then: '#EAE6E6',
+            },
+        },
+        '#363696',
+    ];
+    plot.panels['genes'].data_layers["genes"].layout.color = color_config;
+    plot.panels['genes'].data_layers["genes"].layout.stroke = color_config;
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

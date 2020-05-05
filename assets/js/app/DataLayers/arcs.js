@@ -9,6 +9,7 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
     // Define a default layout for this DataLayer type and merge it with the passed argument
     this.DefaultLayout = {
         color: 'seagreen',
+        hitarea_width: '10px',
         style: {
             fill: 'none',
             'stroke-width': '2px',
@@ -30,8 +31,33 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         var filters = layout.filters || [];
         var trackData = this.filter(filters, 'elements');
 
+        // Helper: Each individual data point describes a path composed of 3 points, with a spline to smooth the line
+        function _make_line(d) {
+            var x1 = d[layout.x_axis.field1];
+            var x2 = d[layout.x_axis.field2];
+            var xmid = (x1 + x2) / 2;
+            var coords = [
+                [x_scale(x1), y_scale(0)],
+                [x_scale(xmid), y_scale(d[layout.y_axis.field])],
+                [x_scale(x2), y_scale(0)]
+            ];
+            // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
+            var line = d3.svg.line()
+                .interpolate('monotone')
+                .x(function (d) {return d[0];})
+                .y(function (d) {return d[1];});
+            return line(coords);
+        }
+
+        // Draw real lines, and also invisible hitareas for easier mouse events
         var selection = this.svg.group
             .selectAll('path.lz-data_layer-arcs')
+            .data(trackData, function(d) {
+                return self.getElementId(d);
+            });
+
+        var hitareas = this.svg.group
+            .selectAll('path.lz-data_layer-arcs-hitarea')
             .data(trackData, function(d) {
                 return self.getElementId(d);
             });
@@ -42,6 +68,12 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             .attr('class', 'lz-data_layer-arcs')
             .attr('id', function(d) { return self.getElementId(d); });
 
+        hitareas
+            .enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-arcs-hitarea')
+            .attr('id', function(d) { return self.getElementId(d); });
+
         // Update selection/set coordinates
         selection
             .style(layout.style) // TODO provide a way to configure item color, filters, other scalable directives
@@ -49,34 +81,24 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
                 return self.resolveScalableParameter(self.layout.color, d, i);
             })
             .attr('d', function (d, i) {
-                // Each individual data point describes a path composed of 3 points, with a spline to smooth the line
-                var x1 = d[layout.x_axis.field1];
-                var x2 = d[layout.x_axis.field2];
-                var xmid = (x1 + x2) / 2;
-                var coords = [
-                    [x_scale(x1), y_scale(0)],
-                    [x_scale(xmid), y_scale(d[layout.y_axis.field])],
-                    [x_scale(x2), y_scale(0)]
-                ];
-                // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
-                var line = d3.svg.line()
-                    .interpolate('monotone')
-                    .x(function (d) {return d[0];})
-                    .y(function (d) {return d[1];});
-                return line(coords);
+                return _make_line(d);
+            });
+
+        hitareas
+            .style('fill', 'none')
+            .style('stroke-width', layout.hitarea_width)
+            .style('stroke-opacity', 0)
+            .style('stroke', 'transparent')
+            .attr('d', function (d, i) {
+                return _make_line(d);
             });
 
         // Remove old elements as needed
         selection.exit().remove();
+        hitareas.exit().remove();
 
-        // Apply default event emitters to selection
-        selection.on('click.event_emitter', function(element) {
-            this.parent.emit('element_clicked', element, true);
-        }.bind(this));
-
-        // Apply mouse behaviors
-        this.applyBehaviors(selection);
-
+        // Apply mouse behaviors to hitareas
+        this.applyBehaviors(hitareas);
         return this;
     };
 
@@ -121,7 +143,6 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             break;
         case 'middle':
         default:
-            // var position = d3.mouse(this.svg.container.node());
             // Position the tooltip so that it does not overlap the mouse pointer
             top_offset = y_center;
             if (y_center > (data_layer_height / 2)) {

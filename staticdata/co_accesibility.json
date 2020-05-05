@@ -6,7 +6,7 @@
       "end1": 2693400,
       "start2": 2182049,
       "end2": 2183049,
-      "target": "Y_RNA",
+      "target": "KCNQ1",
       "score": 0.17,
       "id": "1"
     },
@@ -16,7 +16,7 @@
       "end1": 2699500,
       "start2": 2170903,
       "end2": 2171903,
-      "target": "TSSC4",
+      "target": "TSPAN32",
       "score": 1,
       "id": "2"
     },
@@ -26,6 +26,7 @@
       "end1": 2692500,
       "start2": 2904920,
       "end2": 2905920,
+      "target": "CD81-AS1",
       "score": 0.75,
       "id": "3"
     }
