@@ -269,6 +269,20 @@ LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
         + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
 });
 
+LocusZoom.Layouts.add('tooltip', 'coaccessibility', {
+    namespace: { 'access': 'access' },
+    closable: true,
+    show: { or: ['highlighted', 'selected'] },
+    hide: { and: ['unhighlighted', 'unselected'] },
+    // TODO: Is there a more generic terminology? (eg not every technique is in terms of cis-regulatory element)
+    html: '<strong>Regulatory element</strong><br>' +
+        '{{{{namespace[access]}}start1|htmlescape}}-{{{{namespace[access]}}end1|htmlescape}}<br>' +
+        '<strong>Promoter</strong><br>' +
+        '{{{{namespace[access]}}start2|htmlescape}}-{{{{namespace[access]}}end2|htmlescape}}<br>' +
+        '{{#if {{namespace[access]}}target}}<strong>Target</strong>: {{{{namespace[access]}}target|htmlescape}}<br>{{/if}}' +
+        '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}'
+});
+
 /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
@@ -387,7 +401,7 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
     namespace: { 'access': 'access' },
     id: 'coaccessibility',
     type: 'arcs',
-    fields: ['{{namespace[access]}}start1', '{{namespace[access]}}start2', '{{namespace[access]}}id', '{{namespace[access]}}score'],
+    fields: ['{{namespace[access]}}start1', '{{namespace[access]}}end1', '{{namespace[access]}}start2', '{{namespace[access]}}end2', '{{namespace[access]}}id', '{{namespace[access]}}target', '{{namespace[access]}}score'],
     id_field: '{{namespace[access]}}id',
     color: [{
         field: '{{namespace[access]}}id',
@@ -397,7 +411,6 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
         }
     }],
     x_axis: {
-        // TODO: Fix extent determination? (eg if not using linked axes)
         field1: '{{namespace[access]}}start1',
         field2: '{{namespace[access]}}start2',
     },
@@ -406,8 +419,21 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
         field: '{{namespace[access]}}score',
         min_extent: [0, 1]
     },
-    // TODO: Define a custom tooltip and implement positioning for it
-    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
+    behaviors: {
+        onmouseover: [
+            { action: 'set', status: 'highlighted' }
+        ],
+        onmouseout: [
+            { action: 'unset', status: 'highlighted' }
+        ],
+        onclick: [
+            { action: 'toggle', status: 'selected', exclusive: true }
+        ],
+        onshiftclick: [
+            { action: 'toggle', status: 'selected' }
+        ]
+    },
+    tooltip: LocusZoom.Layouts.get('tooltip', 'coaccessibility', { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {

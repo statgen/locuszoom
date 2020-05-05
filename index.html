@@ -71,7 +71,8 @@
     apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
     data_sources = new LocusZoom.DataSources()
       .add("access", ["AccessibilityLZ", {url: apiBase + "co_accesibility.json", params: { build: 'GRCh37' }}])
-      .add("gene", ["GeneLZ", { url: apiBase + "genes_test.json?", params: { build: 'GRCh37' } }]);
+      .add("gene", ["GeneLZ", { url: apiBase2 + "annotation/genes/", params: { build: 'GRCh37' } }]);
+
     // Get the standard association plot layout from LocusZoom's built-in layouts
     var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
     // Fetch initial position from the URL, or use some defaults

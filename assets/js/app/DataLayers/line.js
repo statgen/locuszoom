@@ -103,6 +103,7 @@ LocusZoom.DataLayers.add('line', function(layout) {
         var top, left, arrow_top, arrow_left, arrow_type;
 
         // Determine x/y coordinates for display and data
+        // FIXME: Not every call depends on a mouse event. This function may not always work as written.
         var dd = this.getMouseDisplayAndData();
 
         // If the absolute value of the slope of the line at this point is above 1 (including Infinity)

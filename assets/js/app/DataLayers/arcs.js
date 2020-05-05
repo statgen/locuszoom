@@ -14,9 +14,6 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             'stroke-width': '2px',
             'stroke-opacity': '100%',
         },
-        // start_field: 'peak1',
-        // end_field: 'peak2',
-        // score_field: 'score'
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
@@ -70,6 +67,15 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
 
         // Remove old elements as needed
         selection.exit().remove();
+
+        // Apply default event emitters to selection
+        selection.on('click.event_emitter', function(element) {
+            this.parent.emit('element_clicked', element, true);
+        }.bind(this));
+
+        // Apply mouse behaviors
+        this.applyBehaviors(selection);
+
         return this;
     };
     return this;

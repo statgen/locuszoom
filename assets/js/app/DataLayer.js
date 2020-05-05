@@ -133,7 +133,9 @@ LocusZoom.DataLayer.DefaultLayout = {
     type: '',
     fields: [],
     x_axis: {},
-    y_axis: {}
+    y_axis: {},
+    // Not every layer allows this attribute, but it is available for the default implementation
+    tooltip_positioning: 'horizontal',
 };
 
 /**
@@ -579,8 +581,9 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
 
 //
 /**
- * Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
- *   Most data layers reimplement this method to position tool tips specifically for the data they display
+ * Position tool tip - naïve function to place a tool tip in the data layer. By default, positions it wrt
+ *   the top-left corner of the data layer.
+ * Most data layers reimplement this method to position tool tips specifically for the data they display
  * @param {String} id The identifier of the tooltip to position
  * @returns {LocusZoom.DataLayer}
  */
@@ -588,10 +591,12 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
     if (typeof id != 'string') {
         throw new Error('Unable to position tooltip: id is not a string');
     }
-    // Position the div itself
+    // Position the div itself, relative to the layer origin
+    var page_origin = this.getPageOrigin();
     this.tooltips[id].selector
-        .style('left', (d3.event.pageX) + 'px')
-        .style('top', (d3.event.pageY) + 'px');
+        .style('left', page_origin.x + 'px')
+        .style('top', page_origin.y + 'px')
+        .style('position', 'absolute');
     // Create / update position on arrow connecting tooltip to data
     if (!this.tooltips[id].arrow) {
         this.tooltips[id].arrow = this.tooltips[id].selector.append('div')
