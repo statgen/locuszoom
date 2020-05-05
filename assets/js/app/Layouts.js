@@ -417,6 +417,7 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
     y_axis: {
         axis: 1,
         field: '{{namespace[access]}}score',
+        upper_buffer: 0.1,
         min_extent: [0, 1]
     },
     behaviors: {
