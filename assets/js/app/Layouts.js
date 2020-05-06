@@ -404,6 +404,9 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
     fields: ['{{namespace[access]}}start1', '{{namespace[access]}}end1', '{{namespace[access]}}start2', '{{namespace[access]}}end2', '{{namespace[access]}}id', '{{namespace[access]}}target', '{{namespace[access]}}score'],
     match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
     id_field: '{{namespace[access]}}id',
+    filters: [
+        ['{{namespace[access]}}score', '!=', null],
+    ],
     color: [
         {
             field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
@@ -550,7 +553,7 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
 });
 
 LocusZoom.Layouts.add('data_layer', 'genes', {
-    namespace: { 'gene': 'gene' },
+    namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
     type: 'genes',
     fields: ['{{namespace[gene]}}all'],
@@ -850,7 +853,9 @@ LocusZoom.Layouts.add('panel', 'association', {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true })
+        LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
+        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
+        LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true })
     ]
 });
 

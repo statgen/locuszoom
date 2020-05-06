@@ -1130,28 +1130,6 @@ LocusZoom.Data.GeneConstraintSource.prototype.combineChainBody = function (data,
 };
 
 /**
- * Data Source for co-accessibility
- * @public
- * @class
- * @augments LocusZoom.Data.Source
- */
-LocusZoom.Data.AccessibilitySource = LocusZoom.Data.Source.extend(function(init) {
-    this.parseInit(init);
-}, 'AccessibilityLZ');
-
-LocusZoom.Data.AccessibilitySource.prototype.getURL = function(state, chain, fields) {
-    var build = state.genome_build || this.params.build;
-    var source = this.params.source;
-    validateBuildSource(this.constructor.SOURCE_NAME, build, source);
-    if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
-        source = (build === 'GRCh38') ? 16 : 15;
-    }
-    return this.url + '?filter=id in ' + source +
-        " and chrom eq '" + state.chr + "'" +
-        ' and peak1 le ' + state.end +
-        ' and peak2 ge ' + state.start;
-};
-/**
  * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
  * @class
