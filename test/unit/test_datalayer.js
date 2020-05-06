@@ -5,7 +5,6 @@
  Test composition of the LocusZoom.Panel object and its base classes
  */
 describe('LocusZoom.DataLayer', function () {
-    // Tests
     it('creates an object for its name space', function () {
         should.exist(LocusZoom.DataLayer);
     });
@@ -196,6 +195,22 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'tiger' }), 'toto');
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'witch' }), 'munchkin');
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 'munchkin');
+        });
+        it('can resolve based on an annotation field, even when no point data field by that name is present', function () {
+            var layout = {
+                id: 'somelayer',
+                id_field: 'id',
+                scale: [
+                    {
+                        scale_function: 'if',
+                        field: 'custom_field',
+                        parameters: { field_value: 'little_dog', then: 'too' }
+                    }
+                ]
+            };
+            var datalayer = new LocusZoom.DataLayer(layout);
+            datalayer.setElementAnnotation('toto', 'custom_field', 'little_dog');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { id: 'toto' }), 'too');
         });
     });
 
@@ -562,37 +577,37 @@ describe('LocusZoom.DataLayer', function () {
             should.exist(this.plot.panels.p.data_layers.dl2.exportData);
             this.plot.panels.p.data_layers.dl2.exportData.should.be.a.Function;
         });
-        it.skip("exportData() should export clean JSON of a data layer's underlying data by default", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean JSON of a data layer's underlying data by default", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var json0 = this.plot.panels.p.data_layers.dl1.exportData();
-                    var json1 = this.plot.panels.p.data_layers.dl1.exportData('json');
-                    var json2 = this.plot.panels.p.data_layers.dl2.exportData('json');
-                    assert.deepEqual(json0, this.ds1_expected_json_data);
-                    assert.deepEqual(json1, this.ds1_expected_json_data);
-                    assert.deepEqual(json2, this.ds2_expected_json_data);
-                    done();
-                }.bind(this)).catch(done);
+                    var json0 = self.plot.panels.p.data_layers.dl1.exportData();
+                    var json1 = self.plot.panels.p.data_layers.dl1.exportData('json');
+                    var json2 = self.plot.panels.p.data_layers.dl2.exportData('json');
+                    assert.deepEqual(json0, self.ds1_expected_json_data);
+                    assert.deepEqual(json1, self.ds1_expected_json_data);
+                    assert.deepEqual(json2, self.ds2_expected_json_data);
+                });
         });
-        it.skip("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var csv1 = this.plot.panels.p.data_layers.dl1.exportData('csv');
-                    var csv2 = this.plot.panels.p.data_layers.dl2.exportData('csv');
-                    assert.deepEqual(csv1, this.ds1_expected_csv_data);
-                    assert.deepEqual(csv2, this.ds2_expected_csv_data);
-                    done();
-                }.bind(this)).catch(done);
+                    var csv1 = self.plot.panels.p.data_layers.dl1.exportData('csv');
+                    var csv2 = self.plot.panels.p.data_layers.dl2.exportData('csv');
+                    assert.deepEqual(csv1, self.ds1_expected_csv_data);
+                    assert.deepEqual(csv2, self.ds2_expected_csv_data);
+                });
         });
-        it.skip("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function (done) {
-            this.plot.applyState({ start: 0, end: 100 })
+        it("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function () {
+            var self = this;
+            return this.plot.applyState({ start: 0, end: 100 })
                 .then(function () {
-                    var tsv1 = this.plot.panels.p.data_layers.dl1.exportData('tsv');
-                    var tsv2 = this.plot.panels.p.data_layers.dl2.exportData('tsv');
-                    assert.deepEqual(tsv1, this.ds1_expected_csv_data.replace(/,/g, '\t'));
-                    assert.deepEqual(tsv2, this.ds2_expected_csv_data.replace(/,/g, '\t'));
-                    done();
-                }.bind(this)).catch(done);
+                    var tsv1 = self.plot.panels.p.data_layers.dl1.exportData('tsv');
+                    var tsv2 = self.plot.panels.p.data_layers.dl2.exportData('tsv');
+                    assert.deepEqual(tsv1, self.ds1_expected_csv_data.replace(/,/g, '\t'));
+                    assert.deepEqual(tsv2, self.ds2_expected_csv_data.replace(/,/g, '\t'));
+                });
         });
     });
 
@@ -624,50 +639,50 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
-        it.skip('should allow for highlighting and unhighlighting a single element', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for highlighting and unhighlighting a single element', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
-                    this.plot.state[state_id].highlighted.should.be.an.Array;
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+                    layer_state.status_flags.highlighted.should.be.an.Array;
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.highlightElement(a);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(a_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
                     this.plot.panels.p.data_layers.d.unhighlightElement(a);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.highlightElement(c);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(c_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unhighlightElement(b);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(1);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                }.bind(this));
         });
-        it.skip('should allow for highlighting and unhighlighting all elements', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for highlighting and unhighlighting all elements', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a_id = d.getElementId(d.data[0]);
                     var b_id = d.getElementId(d.data[1]);
                     var c_id = d.getElementId(d.data[2]);
                     this.plot.panels.p.data_layers.d.highlightAllElements();
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(3);
-                    this.plot.state[state_id].highlighted[0].should.be.exactly(a_id);
-                    this.plot.state[state_id].highlighted[1].should.be.exactly(b_id);
-                    this.plot.state[state_id].highlighted[2].should.be.exactly(c_id);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(3);
+                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
+                    layer_state.status_flags.highlighted[1].should.be.exactly(b_id);
+                    layer_state.status_flags.highlighted[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
-                    this.plot.state[state_id].highlighted.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                }.bind(this));
         });
     });
 
@@ -699,51 +714,50 @@ describe('LocusZoom.DataLayer', function () {
             d3.select('#plot').remove();
             delete this.plot;
         });
-        it.skip('should allow for selecting and unselecting a single element', function (done) {
-            // This test is broken; `.catch=done` is a symptom; it references broken/removed methods
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for selecting and unselecting a single element', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a = d.data[0];
                     var a_id = d.getElementId(a);
                     var b = d.data[1];
                     var c = d.data[2];
                     var c_id = d.getElementId(c);
-                    this.plot.state[state_id].selected.should.be.an.Array;
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
+                    layer_state.status_flags.selected.should.be.an.Array;
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.selectElement(a);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
-                    this.plot.state[state_id].selected[0].should.be.exactly(a_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
                     this.plot.panels.p.data_layers.d.unselectElement(a);
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
                     this.plot.panels.p.data_layers.d.selectElement(c);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
-                    this.plot.state[state_id].selected[0].should.be.exactly(c_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected[0].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unselectElement(b);
-                    this.plot.state[state_id].selected.length.should.be.exactly(1);
+                    layer_state.status_flags.selected.length.should.be.exactly(1);
                     this.plot.panels.p.data_layers.d.unselectElement(c);
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                }.bind(this));
         });
-        it.skip('should allow for selecting and unselecting all elements', function (done) {
-            this.plot.lzd.getData({}, ['d:id'])
+        it('should allow for selecting and unselecting all elements', function () {
+            return this.plot.lzd.getData({}, ['d:id'])
                 .then(function () {
                     var state_id = this.plot.panels.p.data_layers.d.state_id;
+                    var layer_state = this.plot.state[state_id];
                     var d = this.plot.panels.p.data_layers.d;
                     var a_id = d.getElementId(d.data[0]);
                     var b_id = d.getElementId(d.data[1]);
                     var c_id = d.getElementId(d.data[2]);
                     this.plot.panels.p.data_layers.d.selectAllElements();
-                    this.plot.state[state_id].selected.length.should.be.exactly(3);
-                    this.plot.state[state_id].selected[0].should.be.exactly(a_id);
-                    this.plot.state[state_id].selected[1].should.be.exactly(b_id);
-                    this.plot.state[state_id].selected[2].should.be.exactly(c_id);
+                    layer_state.status_flags.selected.length.should.be.exactly(3);
+                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
+                    layer_state.status_flags.selected[1].should.be.exactly(b_id);
+                    layer_state.status_flags.selected[2].should.be.exactly(c_id);
                     this.plot.panels.p.data_layers.d.unselectAllElements();
-                    this.plot.state[state_id].selected.length.should.be.exactly(0);
-                    done();
-                }.bind(this)).catch(done);
+                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                }.bind(this));
         });
     });
 
@@ -827,8 +841,11 @@ describe('LocusZoom.DataLayer', function () {
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
             var layer = this.plot.panels.p.data_layers.d;
+            var status_flags = layer.layer_state.status_flags;
 
             var item_a = { id: 'a' };
+            var internal_id = layer.getElementId(item_a);
+
             layer.data = [item_a, { id: 'b' }, { id: 'c' }];
             layer.positionTooltip = function () {
                 return 0;
@@ -838,24 +855,100 @@ describe('LocusZoom.DataLayer', function () {
             //  Confirm state is tracked and tooltip does not magically return.
             var self = this;
             return self.plot.applyState().then(function () { // Render initially so that plot is set up right
-                var layer_state = layer.state[layer.state_id];
                 layer.setElementStatus('selected', item_a, true, true);
                 var internal_id = layer.getElementId(item_a);
 
                 assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
-                assert.ok(layer_state['selected'].includes(internal_id), 'Item was initially selected');
+                assert.ok(status_flags['selected'].includes(internal_id), 'Item was initially selected');
 
                 layer.destroyTooltip(item_a);
                 assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
 
-                assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
-                assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
+                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
+                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
 
-                return self.plot.applyState().then(function () { // Force a re-render to see if zombie items remain
-                    var layer_state = layer.state[layer.state_id];
-                    assert.ok(layer_state['selected'].includes(internal_id), 'Point remains selected after re-render');
-                    assert.ok(!layer_state['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
-                });
+                return self.plot.applyState();
+            }).then(function () { // Force a re-render to see if zombie items remain
+                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
+                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
+            });
+        });
+    });
+
+    describe('Persistent annotations', function () {
+        beforeEach(function () {
+            this.plot = null;
+            var data_sources = new LocusZoom.DataSources()
+                .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }]]);
+            var layout = {
+                panels: [
+                    {
+                        id: 'p',
+                        data_layers: [
+                            {
+                                id: 'd',
+                                fields: ['d:id', 'd:some_field'],
+                                id_field: 'd:id',
+                                type: 'scatter',
+                                selected: { onclick: 'toggle' },
+                                label: {
+                                    text: 'd:id',
+                                    filters: [ { field: 'custom_field', operator: '=', value: true } ],
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = LocusZoom.populate('#plot', data_sources, layout);
+        });
+
+        it('can store user-defined marks for points that persist across re-renders', function () {
+            var data_layer = this.plot.panels.p.data_layers.d;
+            // Set the annotation for a point with id value of "a"
+            data_layer.setElementAnnotation('a', 'custom_field', 'some_value');
+
+            // Find the element annotation for this point via several different ways
+            assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
+            assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
+            assert.equal(data_layer.getElementAnnotation('b', 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
+            assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+
+            return this.plot.applyState().then(function() {
+                assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Annotations persist across renderings');
+            });
+        });
+
+        it('can use custom markings in layout directives', function () {
+            var self = this;
+            var data_layer = this.plot.panels.p.data_layers.d;
+            assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
+            data_layer.setElementAnnotation('a', 'custom_field', true);
+
+            return this.plot.applyState().then(function () {
+                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn because of annotations');
+                // After turning labels on, confirm that we can cycle them off and influence rendering
+                data_layer.setElementAnnotation('a', 'custom_field', false);
+                return self.plot.applyState();
+            }).then(function () {
+                assert.equal(data_layer.label_groups[0].length, 0, 'Labels are removed because of annotations');
+            });
+        });
+
+        it('gives precedence to real data fields when an annotation exists with the same name', function () {
+            var self = this;
+            var data_layer = this.plot.panels.p.data_layers.d;
+            data_layer.layout.label.filters[0].field = 'd:some_field';
+
+            // Rerender once so the modified layout takes effect
+            return this.plot.applyState().then(function () {
+                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn on first render because field value says to');
+                // Introduce an annotation that conflicts with the data field from the API
+                data_layer.setElementAnnotation('b', 'd:some_field', false);
+                return self.plot.applyState();
+            }).then(function () {
+                assert.equal(data_layer.label_groups.length, 1, 'Real fields says to label, annotation says no. Real field wins.');
             });
         });
     });
