@@ -1,8 +1,11 @@
 'use strict';
 /**
  * Loop Data Layer
- * Implements a data layer that will render chromatin accessibility tracks. Require start(peak1), start(peak2) and accessibility score
- * @class LocusZoom.DataLayers.accessibility
+ * Implements a data layer that will render chromatin accessibility tracks.
+ * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
+ *  with a height determined by y.field.
+ *
+ * @class LocusZoom.DataLayers.arcs
  * @augments LocusZoom.DataLayer
  */
 LocusZoom.DataLayers.add('arcs', function(layout) {
@@ -76,7 +79,7 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
 
         // Update selection/set coordinates
         selection
-            .style(layout.style) // TODO provide a way to configure item color, filters, other scalable directives
+            .style(layout.style)
             .attr('stroke', function(d, i) {
                 return self.resolveScalableParameter(self.layout.color, d, i);
             })
@@ -85,10 +88,12 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             });
 
         hitareas
-            .style('fill', 'none')
-            .style('stroke-width', layout.hitarea_width)
-            .style('stroke-opacity', 0)
-            .style('stroke', 'transparent')
+            .style({
+                fill: 'none',
+                'stroke-width': layout.hitarea_width,
+                'stroke-opacity': 0,
+                stroke: 'transparent',
+            })
             .attr('d', function (d, i) {
                 return _make_line(d);
             });
