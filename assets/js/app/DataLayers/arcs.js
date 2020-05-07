@@ -15,7 +15,7 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         hitarea_width: '10px',
         style: {
             fill: 'none',
-            'stroke-width': '2px',
+            'stroke-width': '1px',
             'stroke-opacity': '100%',
         },
     };

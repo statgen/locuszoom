@@ -601,9 +601,12 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
 
 //
 /**
- * Position tool tip - naïve function to place a tool tip in the data layer. By default, positions it wrt
+ * Position and then redraw tool tip - naïve function to place a tool tip in the data layer. By default, positions wrt
  *   the top-left corner of the data layer.
- * Most data layers reimplement this method to position tool tips specifically for the data they display
+ *
+ * Each layer type may have more specific logic. Consider overriding the provided hooks `_getTooltipPosition` or
+ *  `_drawTooltip` as appropriate
+ *
  * @param {String} id The identifier of the tooltip to position
  * @returns {LocusZoom.DataLayer}
  */
@@ -611,19 +614,48 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
     if (typeof id != 'string') {
         throw new Error('Unable to position tooltip: id is not a string');
     }
-    // Position the div itself, relative to the layer origin
+    if (!this.tooltips[id]) {
+        throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
+    }
+    var tooltip = this.tooltips[id];
+    var coords = this._getTooltipPosition(tooltip);
+    this._drawTooltip(tooltip, coords[0], coords[1], this.layout.tooltip_positioning);
+};
+
+/**
+ * Determine the coordinates for where to draw the top left corner of the tooltip.
+ *  The default implementation is quite naive: it places the tooltip at the origin for that layer. Individual layers
+ *    should override this method to position relative to the chosen data element or mouse event.
+ * @param {Object} tooltip A tooltip object (including attribute tooltip.data)
+ * @returns {Number[]} The x and y coordinates for the tooltip origin
+ */
+LocusZoom.DataLayer.prototype._getTooltipPosition = function(tooltip) {
     var page_origin = this.getPageOrigin();
-    this.tooltips[id].selector
-        .style('left', page_origin.x + 'px')
-        .style('top', page_origin.y + 'px')
+    return [page_origin.x, page_origin.y];
+};
+
+/**
+ * Draw a tooltip on the data layer at the specified coordinates, in the specified orientation.
+ *
+ * @param tooltip {Object} The object representing all data for the tooltip to be drawn
+ * @param {Number} x The x-coordinate of the top left corner of the tooltip
+ * @param {Number} y The x-coordinate of the top left corner of the tooltip
+ * @param {'vertical'|'horizontal'|'top'|'bottom'|'left'|'right'} position Where to draw the tooltip relative to the data
+ * @private
+ */
+LocusZoom.DataLayer.prototype._drawTooltip = function (tooltip, x, y, position) {
+    // Position the div itself, relative to the layer origin
+    tooltip.selector
+        .style('left', x + 'px')
+        .style('top', y + 'px')
         .style('position', 'absolute');
     // Create / update position on arrow connecting tooltip to data
-    if (!this.tooltips[id].arrow) {
-        this.tooltips[id].arrow = this.tooltips[id].selector.append('div')
+    if (!tooltip.arrow) {
+        tooltip.arrow = tooltip.selector.append('div')
             .style('position', 'absolute')
             .attr('class', 'lz-data_layer-tooltip-arrow_top_left');
     }
-    this.tooltips[id].arrow
+    tooltip.arrow
         .style('left', '-1px')
         .style('top', '-1px');
     return this;
