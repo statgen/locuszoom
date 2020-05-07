@@ -79,16 +79,20 @@
     // Define LocusZoom Data Sources object differently depending on online status
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     data_sources = new LocusZoom.DataSources()
+        .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+        .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
         .add("access", ["TabixUrlSource", {
             // Corresponds to: https://www.diabetesepigenome.org/annotations/DSR304SKW/
             // url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/DFF266EZF_sorted.bed.gz',
             url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/DFF022FVS_sorted.bed.gz',
             parser_func: dega_bed_parser,
             // We are fetching two elements, but only one of them is captured in the tabix index.
-            // Fetching a little extra data can ensure that interesting elements are returned when we query tabix.
-            params: { overfetch: 50000 }
+            // Fetching 25% extra data on each side can ensure that things near the edge are returned when we query.
+            params: { overfetch: 0.25 }
         }])
-        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }]);
+        .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
     var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };

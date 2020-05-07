@@ -556,7 +556,7 @@ LocusZoom.Layouts.add('data_layer', 'genes', {
     namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
     type: 'genes',
-    fields: ['{{namespace[gene]}}all'],
+    fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -864,18 +864,11 @@ LocusZoom.Layouts.add('panel', 'coaccessibility', {
     width: 800,
     height: 225,
     min_width: 400,
-    min_height: 200,
+    min_height: 100,
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: (function () {
-        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        l.components.push({
-            type: 'toggle_legend',
-            position: 'right'
-        });
-        return l;
-    })(),
+    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
     axes: {
         x: {
             label: 'Chromosome {{chr}} (Mb)',
@@ -885,19 +878,14 @@ LocusZoom.Layouts.add('panel', 'coaccessibility', {
         },
         y1: {
             label: 'Score',
-            label_offset: 28
+            label_offset: 28,
+            render: false,  // We are mainly concerned with the relative magnitudes: hide y axis to avoid clutter.
         }
-    },
-    legend: {
-        orientation: 'vertical',
-        origin: { x: 55, y: 40 },
-        hidden: true
     },
     interaction: {
         drag_background_to_pan: true,
         drag_x_ticks_to_scale: true,
         drag_y1_ticks_to_scale: true,
-        drag_y2_ticks_to_scale: true,
         scroll_to_zoom: true,
         x_linked: true
     },
@@ -1442,7 +1430,8 @@ LocusZoom.Layouts.add('plot', 'coaccessibility', {
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
+        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, proportional_height: 0.4 }),
+        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.2 }),
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.4 })
     ]
 });

@@ -53,7 +53,8 @@
      * @param {string} init.url_data The URL for the bgzipped and tabix-indexed file
      * @param {string} [init.url_tbi] The URL for the tabix index. Defaults to `url_data` + '.tbi'
      * @param {Object} [init.params]
-     * @param {number} [init.params.overfetch = 0] Optionally fetch more data than is required to satisfy the region query.
+     * @param {number} [init.params.overfetch = 0] Optionally fetch more data than is required to satisfy the
+     *  region query. (specified as a fraction of the region size, 0-1)
      *  Useful for sources where interesting features might lie near the edges of the plot.
      */
     TabixUrlSource.prototype.parseInit = function (init) {
@@ -61,13 +62,21 @@
             throw new Error('Tabix source is missing required configuration options');
         }
         this.parser = init.parser_func;
+        // TODO: In the future, accept a pre-configured reader instance (as an alternative to the URL). Most useful
+        //   for UIs that want to validate the tabix file before adding it to the plot, like LocalZoom.
         this.url_data = init.url_data;
         this.url_tbi = init.url_tbi || this.url_data + '.tbi';
 
         // In tabix mode, sometimes we want to fetch a slightly larger region than is displayed, in case a
-        //    feature is on the edge of what the tabix query would return. Specify overfetch in units of bp.
+        //    feature is on the edge of what the tabix query would return.
+        //    Specify overfetch in units of % of total region size. ("fetch 10% extra before and after")
         var params = init.params || {};
+        this.params = params;
         this._overfetch = params.overfetch || 0;
+
+        if (this._overfetch < 0 || this._overfetch > 1) {
+            throw new Error('Overfetch must be specified as a fraction (0-1) of the requested region size');
+        }
 
         // Assuming that the `tabix-reader` library has been loaded via a CDN, this will create the reader
         // Since fetching the index is a remote operation, all reader usages will be via an async interface.
@@ -86,8 +95,12 @@
         var self = this;
         return new Promise(function (resolve, reject) {
             // Ensure that the reader is fully created (and index available), then make a query
-            var start = state.start - self._overfetch;
-            var end = state.end + self._overfetch;
+            var region_start = state.start;
+            var region_end = state.end;
+            var extra_amount = self._overfetch * (region_end - region_start);
+
+            var start = state.start - extra_amount;
+            var end = state.end + extra_amount;
             self._reader_promise.then(function (reader) {
                 reader.fetch(state.chr, start, end, function (data, err) {
                     if (err) {
@@ -100,7 +113,7 @@
     };
 
     TabixUrlSource.prototype.normalizeResponse = function (data) {
-        // Parse the data
+        // Parse the data from lines of text to objects
         return data.map(this.parser);
     };
 
