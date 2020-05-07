@@ -218,6 +218,27 @@ describe('LocusZoom Singletons', function() {
                 assert.equal(LocusZoom.ScaleFunctions.get('categorical_bin', parameters), 'null_value');
             });
         });
+        describe('ordinal_cycle', function () {
+            before(function () {
+                this.options = { values: ['a', 'b', 'c'] };
+            });
+            it('should give adjacent points a different return value, even for same input', function () {
+                var func = LocusZoom.ScaleFunctions.get('ordinal_cycle');
+                var value = 'bob';
+                assert.equal(func(this.options, value, 0), 'a');
+                assert.equal(func(this.options, value, 1), 'b');
+            });
+            it('should be able to handle n_data > n_options', function () {
+                var func = LocusZoom.ScaleFunctions.get('ordinal_cycle');
+                var value = 'bob';
+                assert.equal(func(this.options, value, 0), 'a');
+                assert.equal(func(this.options, value, 3), 'a', 'Wraps around to start');
+                assert.equal(func(this.options, value, 4), 'b', 'Larger values continue to wrap');
+            });
+            after(function() {
+                delete this.options;
+            });
+        });
         describe('interpolate', function() {
             it('should work with arbitrarily many breaks/values', function() {
                 var parameters = {

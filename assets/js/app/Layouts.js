@@ -425,10 +425,9 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
             },
         },
         {
-            field: '{{namespace[access]}}id',
             scale_function: 'ordinal_cycle',
             parameters: {
-                values: d3.scale.category10().range(), // Array of colors that work well together
+                values: d3.scale.category20().range(), // Array of colors that work well together
             }
         }
     ],
