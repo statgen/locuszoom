@@ -672,7 +672,7 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
         ]
     },
     tooltip: LocusZoom.Layouts.get('tooltip', 'catalog_variant', { unnamespaced: true }),
-    tooltip_positioning: 'top'
+    tooltip_positioning: 'vertical' // TODO change to top
 });
 
 /**

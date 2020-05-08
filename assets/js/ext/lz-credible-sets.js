@@ -194,7 +194,7 @@
             ]
         },
         tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
-        tooltip_positioning: 'top'
+        tooltip_positioning: 'vertical' // TODO change back to top
     });
 
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {

@@ -107,75 +107,31 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         return this;
     };
 
-    this.positionTooltip = function(id) {
-        if (typeof id != 'string') {
-            throw new Error('Unable to position tooltip: id is not a string');
-        }
-        if (!this.tooltips[id]) {
-            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-        }
-        var top, left, arrow_type, arrow_top, arrow_left;
-        var tooltip = this.tooltips[id];
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var offset = stroke_width / 2;
-        var page_origin = this.getPageOrigin();
+    this._getTooltipPosition = function (tooltip) {
+        // Center the tooltip arrow at the apex of the arc. Sometimes, only part of an arc shows on the screen, so we
+        //  clean up these values to ensure that the tooltip will appear within the window.
+        var panel = this.parent;
+        var layout = this.layout;
 
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
+        var y_extent = panel['y' + layout.y_axis.axis + '_extent'];
+        var y_scale = panel['y' + layout.y_axis.axis + '_scale'];
 
-        var xmid = (tooltip.data[this.layout.x_axis.field1] + tooltip.data[this.layout.x_axis.field2]) / 2;
-        var y_scale = this.parent['y' + layout.y_axis.axis + '_scale'];
+        // Center tooltip on the arc, or as close to the extent as possible while still fitting the tooltip on screen
+        var x_mid = (tooltip.data[layout.x_axis.field1] + tooltip.data[layout.x_axis.field2]) / 2;
+        var y_mid = tooltip.data[layout.y_axis.field];
 
-        var x_center = this.parent.x_scale(xmid);
-        var y_center = y_scale(tooltip.data[this.layout.y_axis.field]);
+        x_mid = Math.max(x_mid, panel.x_extent[0]);
+        x_mid = Math.min(x_mid, panel.x_extent[1]);
 
-        // Tooltip should be horizontally centered above the point to be annotated. (or below if space is limited)
-        var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
-        var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
-        left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
-        arrow_left = (tooltip_box.width / 2) - (arrow_width) + offset_left - offset_right - offset;
+        y_mid = Math.max(y_mid, y_extent[0]);
+        y_mid = Math.min(y_mid, y_extent[1]);
 
-        var top_offset = 0;
-        switch(this.layout.tooltip_positioning) {
-        case 'top':
-            arrow_type = 'down';
-            break;
-        case 'bottom':
-            top_offset = data_layer_height;
-            arrow_type = 'up';
-            break;
-        case 'middle':
-        default:
-            // Position the tooltip so that it does not overlap the mouse pointer
-            top_offset = y_center;
-            if (y_center > (data_layer_height / 2)) {
-                arrow_type = 'down';
-            } else {
-                arrow_type = 'up';
-            }
-        }
+        var x_center = panel.x_scale(x_mid);
+        var y_center = y_scale(y_mid);
 
-        if (arrow_type === 'up') {
-            top = page_origin.y + top_offset + stroke_width + arrow_width;
-            arrow_top = 0 - stroke_width - arrow_width;
-        } else if (arrow_type === 'down') {
-            top = page_origin.y + top_offset - (tooltip_box.height + stroke_width + arrow_width);
-            arrow_top = tooltip_box.height - stroke_width;
-        }
-
-        // Apply positions to the main div
-        tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-        // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow) {
-            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-        }
-        tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+        return [x_center, y_center, 0, 0];
     };
+
     // End constructor
     return this;
 });
