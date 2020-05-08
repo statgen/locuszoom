@@ -619,45 +619,115 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
     }
     var tooltip = this.tooltips[id];
     var coords = this._getTooltipPosition(tooltip);
-    this._drawTooltip(tooltip, coords[0], coords[1], this.layout.tooltip_positioning);
+    this._drawTooltip(tooltip, this.layout.tooltip_positioning, coords[0], coords[1], coords[2]);
 };
 
 /**
- * Determine the coordinates for where to draw the top left corner of the tooltip.
+ * Determine the coordinates for where to point the tooltip at. Typically, this is the center of a datum element (eg,
+ *  the middle of a scatter plot point). Also provide an offset if the tooltip should not be at that center (most
+ *  elements are not single points, eg a scatter plot point has a radius).
  *  The default implementation is quite naive: it places the tooltip at the origin for that layer. Individual layers
  *    should override this method to position relative to the chosen data element or mouse event.
  * @param {Object} tooltip A tooltip object (including attribute tooltip.data)
- * @returns {Number[]} The x and y coordinates for the tooltip origin
+ * @returns {Number[]} as [x, y, offset] in px, representing where the tooltip arrow is pointed at.
  */
 LocusZoom.DataLayer.prototype._getTooltipPosition = function(tooltip) {
-    var page_origin = this.getPageOrigin();
-    return [page_origin.x, page_origin.y];
+    // FIXME: The default implementation is positioned a little askew
+    var panel = this.parent;
+    var data_layer_height = panel.layout.height - (panel.layout.margin.top + panel.layout.margin.bottom);
+
+    var y_scale  = 'y' + this.layout.y_axis.axis + '_scale';
+    var y_extent = 'y' + this.layout.y_axis.axis + '_extent';
+
+    var x = panel.x_scale(panel.x_extent[0]);
+    var y = panel[y_scale](panel[y_extent][0]);
+
+    return [x, y, data_layer_height / 2];
 };
 
 /**
- * Draw a tooltip on the data layer at the specified coordinates, in the specified orientation.
+ * Draw a tooltip on the data layer pointed at the specified coordinates, in the specified orientation.
  *
  * @param tooltip {Object} The object representing all data for the tooltip to be drawn
- * @param {Number} x The x-coordinate of the top left corner of the tooltip
- * @param {Number} y The x-coordinate of the top left corner of the tooltip
- * @param {'vertical'|'horizontal'|'top'|'bottom'|'left'|'right'} position Where to draw the tooltip relative to the data
+ * @param {'vertical'|'horizontal'|'top'|'bottom'|'left'|'right'} position Where to draw the tooltip relative to
+ *  the data
+ * @param {Number} x_center The x-coordinate of the top left corner of the tooltip
+ * @param {Number} y_center The x-coordinate of the top left corner of the tooltip
+ * @param {Number} offset The offset to use when positioning the tooltip (eg, difference between center of point
+ * and where to draw the tooltip)
  * @private
  */
-LocusZoom.DataLayer.prototype._drawTooltip = function (tooltip, x, y, position) {
+LocusZoom.DataLayer.prototype._drawTooltip = function (tooltip, position, x_center, y_center, offset) {
+    // FIXME: Implement top/bottom/left/right positioning (explicit keywords)
+    var panel_layout = this.parent.layout;
+    var layer_layout = this.layout;
+
+    // Tooltip position params: as defined in the default stylesheet
+    var arrow_width = 7;
+    var stroke_width = 1;
+    var border_radius = 6;
+
+    var page_origin = this.getPageOrigin();
+    var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+    var data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
+    var data_layer_width = panel_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
+
+    var top, left, arrow_type, arrow_top, arrow_left;
+
+    if (layer_layout.tooltip_positioning === 'vertical') {
+        // Position horizontally centered above the point
+        var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
+        left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+        arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
+        // Position vertically above the point unless there's insufficient space, then go below
+        if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)) {
+            top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
+            arrow_type = 'down';
+            arrow_top = tooltip_box.height - stroke_width;
+        } else {
+            top = page_origin.y + y_center + offset + stroke_width + arrow_width;
+            arrow_type = 'up';
+            arrow_top = 0 - stroke_width - arrow_width;
+        }
+    } else {
+        // Position horizontally on the left or the right depending on which side of the plot the point is on
+        if (x_center <= panel_layout.width / 2) {
+            left = page_origin.x + x_center + offset + arrow_width + stroke_width;
+            arrow_type = 'left';
+            arrow_left = -1 * (arrow_width + stroke_width);
+        } else {
+            left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
+            arrow_type = 'right';
+            arrow_left = tooltip_box.width - stroke_width;
+        }
+        // Position vertically centered unless we're at the top or bottom of the plot
+        data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
+        if (y_center - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
+            top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
+            arrow_top = border_radius;
+        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
+            top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
+            arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
+        } else { // vertically centered
+            top = page_origin.y + y_center - (tooltip_box.height / 2);
+            arrow_top = (tooltip_box.height / 2) - arrow_width;
+        }
+    }
+
     // Position the div itself, relative to the layer origin
     tooltip.selector
-        .style('left', x + 'px')
-        .style('top', y + 'px')
-        .style('position', 'absolute');
+        .style('left', left + 'px')
+        .style('top', top + 'px');
     // Create / update position on arrow connecting tooltip to data
     if (!tooltip.arrow) {
         tooltip.arrow = tooltip.selector.append('div')
-            .style('position', 'absolute')
-            .attr('class', 'lz-data_layer-tooltip-arrow_top_left');
+            .style('position', 'absolute');
     }
     tooltip.arrow
-        .style('left', '-1px')
-        .style('top', '-1px');
+        .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
+        .style('left', arrow_left + 'px')
+        .style('top', arrow_top + 'px');
     return this;
 };
 
