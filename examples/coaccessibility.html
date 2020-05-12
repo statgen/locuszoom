@@ -83,9 +83,16 @@
         .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
         .add("access", ["TabixUrlSource", {
+            /// CHROMATIN INTERACTIONS (scale != 0-1)
             // Corresponds to: https://www.diabetesepigenome.org/annotations/DSR304SKW/
             // url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/DFF266EZF_sorted.bed.gz',
-            url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/DFF022FVS_sorted.bed.gz',
+
+            // Two datasets from single-cell ATAC-seq data: https://pubmed.ncbi.nlm.nih.gov/32029221/
+            // Pancreatic Islet alpha cells from snATAC-seq (scale 0-1 with defined cutoffs)
+            // url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/alpha_gt-0.05.longrange_sorted.bed.gz',
+            // Pancreatic Islet beta cells from snATAC-seq
+            url_data: 'https://locuszoom.s3-us-west-2.amazonaws.com/beta_gt-0.05.longrange_sorted.bed.gz',
+
             parser_func: dega_bed_parser,
             // We are fetching two elements, but only one of them is captured in the tabix index.
             // Fetching 25% extra data on each side can ensure that things near the edge are returned when we query.

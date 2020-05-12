@@ -7,8 +7,8 @@ function dega_bed_parser(line, index) {
     var fields = line.split('\t');
     var chrom = fields[0].replace('chr', '');
 
-    // assume format chr1:123-456_GENE
-    var second_item = fields[3].match(/chr(\d+):(\d+)-(\d+)_(\w+)/);
+    // assume format chr1:123-456_GENE or chr1:123-456
+    var second_item = fields[3].match(/chr(\d+):(\d+)-(\d+)(_(\w+))?/);
     var score = fields[4];
     score = (score === '.') ? null : +score;
     return {
@@ -19,7 +19,8 @@ function dega_bed_parser(line, index) {
         end1: +fields[2],
         start2: +second_item[2],
         end2: +second_item[3],
-        target: second_item[4],
+        // Optional field: chromatin interaction files have it; coaccessibility files do not
+        target: second_item[4] || null,
         score: score,
         gene: null,
         id: index,  // Dummy ID: position in the list of lines TODO: create a better unique ID
