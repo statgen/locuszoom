@@ -21,7 +21,8 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
         bounding_box_padding: 2,
         always_hide_legend: false,
         color: '#B8B8B8',
-        fill_opacity: 1
+        fill_opacity: 1,
+        tooltip_positioning: 'vertical',
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
 

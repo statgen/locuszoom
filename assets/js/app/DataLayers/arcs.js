@@ -18,6 +18,7 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             'stroke-width': '1px',
             'stroke-opacity': '100%',
         },
+        tooltip_positioning: 'top',
     };
     layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
@@ -113,23 +114,17 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         var panel = this.parent;
         var layout = this.layout;
 
-        var y_extent = panel['y' + layout.y_axis.axis + '_extent'];
+        var x1 = tooltip.data[layout.x_axis.field1];
+        var x2 = tooltip.data[layout.x_axis.field2];
+
         var y_scale = panel['y' + layout.y_axis.axis + '_scale'];
-
-        // Center tooltip on the arc, or as close to the extent as possible while still fitting the tooltip on screen
-        var x_mid = (tooltip.data[layout.x_axis.field1] + tooltip.data[layout.x_axis.field2]) / 2;
-        var y_mid = tooltip.data[layout.y_axis.field];
-
-        x_mid = Math.max(x_mid, panel.x_extent[0]);
-        x_mid = Math.min(x_mid, panel.x_extent[1]);
-
-        y_mid = Math.max(y_mid, y_extent[0]);
-        y_mid = Math.min(y_mid, y_extent[1]);
-
-        var x_center = panel.x_scale(x_mid);
-        var y_center = y_scale(y_mid);
-
-        return [x_center, y_center, 0, 0];
+        return {
+            x_min: panel.x_scale(Math.min(x1, x2)),
+            x_max: panel.x_scale(Math.max(x1, x2)),
+            y_min: 0,
+            y_max: y_scale(tooltip.data[layout.y_axis.field]),
+        };
+        // return [x_center, y_center, 0, 0];
     };
 
     // End constructor
