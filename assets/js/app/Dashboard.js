@@ -1272,46 +1272,6 @@ LocusZoom.Dashboard.Components.add('covariates_model', function(layout) {
     };
 });
 
-// TODO: Move to extension
-/**
- * Button to toggle split tracks
- * @class LocusZoom.Dashboard.Components.toggle_split_tracks
- * @augments LocusZoom.Dashboard.Component
- */
-LocusZoom.Dashboard.Components.add('toggle_split_tracks', function(layout) {
-    LocusZoom.Dashboard.Component.apply(this, arguments);
-    if (!layout.data_layer_id) { layout.data_layer_id = 'intervals'; }
-    if (!this.parent_panel.data_layers[layout.data_layer_id]) {
-        throw new Error('Dashboard toggle split tracks component missing valid data layer ID');
-    }
-    this.update = function() {
-        var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
-        var html = data_layer.layout.split_tracks ? 'Merge Tracks' : 'Split Tracks';
-        if (this.button) {
-            this.button.setHtml(html);
-            this.button.show();
-            this.parent.position();
-            return this;
-        } else {
-            this.button = new LocusZoom.Dashboard.Component.Button(this)
-                .setColor(layout.color)
-                .setHtml(html)
-                .setTitle('Toggle whether tracks are split apart or merged together')
-                .setOnclick(function() {
-                    data_layer.toggleSplitTracks();
-                    if (this.scale_timeout) { clearTimeout(this.scale_timeout); }
-                    var timeout = data_layer.layout.transition ? +data_layer.layout.transition.duration || 0 : 0;
-                    this.scale_timeout = setTimeout(function() {
-                        this.parent_panel.scaleHeightToData();
-                        this.parent_plot.positionPanels();
-                    }.bind(this), timeout);
-                    this.update();
-                }.bind(this));
-            return this.update();
-        }
-    };
-});
-
 /**
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
  * @class LocusZoom.Dashboard.Components.resize_to_data

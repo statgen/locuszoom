@@ -1153,25 +1153,6 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         ' and position ge ' + state.start;
 };
 
-// FIXME: Move intervalSource (and associated buttons and scalefunctions) to an extension
-/**
- * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
- * @public
- * @class
- * @augments LocusZoom.Data.Source
- */
-LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function(init) {
-    this.parseInit(init);
-}, 'IntervalLZ');
-
-LocusZoom.Data.IntervalSource.prototype.getURL = function(state, chain, fields) {
-    var source = chain.header.bedtracksource || this.params.source;
-    return this.url + '?filter=id in ' + source +
-        " and chromosome eq '" + state.chr + "'" +
-        ' and start le ' + state.end +
-        ' and end ge ' + state.start;
-};
-
 /**
  * Data Source for static blobs of JSON Data. This does not perform additional parsing, and therefore it is the
  * responsibility of the user to pass information in a format that can be read and understood by the chosen plot.

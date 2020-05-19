@@ -249,13 +249,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
 });
 
-LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
-    namespace: { 'intervals': 'intervals' },
-    closable: false,
-    show: { or: ['highlighted', 'selected'] },
-    hide: { and: ['unhighlighted', 'unselected'] },
-    html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
-});
+
 
 LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
@@ -509,51 +503,6 @@ LocusZoom.Layouts.add('data_layer', 'genome_legend', {
         floor: 0,
         ceiling: 2881033286
     }
-});
-
-// TODO: Move to an extension
-LocusZoom.Layouts.add('data_layer', 'intervals', {
-    namespace: { 'intervals': 'intervals' },
-    id: 'intervals',
-    type: 'intervals',
-    fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name'],
-    id_field: '{{namespace[intervals]}}start',
-    start_field: '{{namespace[intervals]}}start',
-    end_field: '{{namespace[intervals]}}end',
-    // The default implementation uses `state_id` to dictate a preferred visual ordering. Change to `state_name` if
-    //   that field is not available.
-    track_split_field: '{{namespace[intervals]}}state_id',
-    track_label_field: '{{namespace[intervals]}}state_name',
-    // TODO: Change these default options to better suit the portal use case
-    split_tracks: true,
-    always_hide_legend: false,
-    color: [
-        {
-            field: '{{namespace[intervals]}}state_id',
-            scale_function: 'categorical_bin',
-            parameters: {
-                // Placeholder. Empty categories and values will automatically be filled in when new data loads.
-                categories: [],
-                values: [],
-                null_value: '#B8B8B8'
-            }
-        }],
-    legend: [], // Placeholder; auto-filled when data loads.
-    behaviors: {
-        onmouseover: [
-            { action: 'set', status: 'highlighted' }
-        ],
-        onmouseout: [
-            { action: 'unset', status: 'highlighted' }
-        ],
-        onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
-    },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_intervals', { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
@@ -1170,39 +1119,6 @@ LocusZoom.Layouts.add('panel', 'genome_legend', {
     ]
 });
 
-LocusZoom.Layouts.add('panel', 'intervals', {
-    id: 'intervals',
-    width: 1000,
-    height: 50,
-    min_width: 500,
-    min_height: 50,
-    margin: { top: 25, right: 150, bottom: 5, left: 50 },
-    dashboard: (function () {
-        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        l.components.push({
-            type: 'toggle_split_tracks',
-            data_layer_id: 'intervals',
-            position: 'right'
-        });
-        return l;
-    })(),
-    axes: {},
-    interaction: {
-        drag_background_to_pan: true,
-        scroll_to_zoom: true,
-        x_linked: true
-    },
-    legend: {
-        hidden: true,
-        orientation: 'horizontal',
-        origin: { x: 50, y: 0 },
-        pad_from_bottom: 5
-    },
-    data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'intervals', { unnamespaced: true })
-    ]
-});
-
 LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     id: 'annotationcatalog',
     width: 800,
@@ -1283,23 +1199,4 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
         })
     ],
     mouse_guide: false
-});
-
-LocusZoom.Layouts.add('plot', 'interval_association', {
-    state: {},
-    width: 800,
-    height: 550,
-    responsive_resize: 'both',
-    min_region_scale: 20000,
-    max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
-    panels: [
-        LocusZoom.Layouts.get('panel', 'association', {
-            unnamespaced: true,
-            width: 800,
-            proportional_height: (225 / 570)
-        }),
-        LocusZoom.Layouts.get('panel', 'intervals', { unnamespaced: true, proportional_height: (120 / 570) }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
-    ]
 });
