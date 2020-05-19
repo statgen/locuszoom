@@ -12,6 +12,11 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
     this.DefaultLayout = {
         start_field: 'start',
         end_field: 'end',
+        track_label_field: 'state_name', // Used to label items on the y-axis
+        // Used to uniquely identify tracks for coloring. This tends to lead to more stable coloring/sorting
+        //  than using the label field- eg, state_ids allow us to set global colors across the entire dataset,
+        //  not just choose unique colors within a particular narrow region. (where changing region might lead to more
+        //  categories and different colors)
         track_split_field: 'state_id',
         track_split_order: 'DESC',
         track_split_legend_to_y_axis: 2,
@@ -36,7 +41,7 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
      */
     this.getElementStatusNodeId = function(element) {
         if (this.layout.split_tracks) {
-            return (this.getBaseId() + '-statusnode-' + element[this.layout.track_split_field]).replace(/[:.[\],]/g, '_');
+            return (this.getBaseId() + '-statusnode-' + element[this.layout.track_split_field]).replace(/[^\w]/g, '_');
         }
         return this.getElementId(element) + '-statusnode';
     }.bind(this);
@@ -54,14 +59,65 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
     // track-number-indexed object with arrays of interval indexes in the dataset
     this.interval_track_index = { 1: [] };
 
+    // Modify the layout as necessary to ensure that appropriate color, label, and legend options are available
+    // Even when not displayed, the legend is used to generate the y-axis ticks
+    this._applyLayoutOptions = function () {
+        var self = this;
+        var base_layout = this._base_layout;
+        var render_layout = this.layout;
+        var base_color_scale = base_layout.color.find(function (item) {
+            return item.scale_function && item.scale_function === 'categorical_bin';
+        });
+        var color_scale = render_layout.color.find(function (item) {
+            return item.scale_function && item.scale_function === 'categorical_bin';
+        });
+        if (!base_color_scale) {
+            // This can be a placeholder (empty categories & values), but it needs to be there
+            throw new Error('Interval tracks must define a `categorical_bin` color scale');
+        }
+
+        var has_colors = base_color_scale.parameters.categories.length && base_color_scale.parameters.values.length;
+        var has_legend = base_layout.legend && base_layout.legend.length;
+
+        if (has_colors && !has_legend) {
+            // Don't try to auto-resolve values to labels
+            throw new Error('Manually specified color scheme must have a matching legend');
+        }
+
+        var known_categories = this._generateCategoriesFromData(this.data); // [id, label] pairs
+
+        if (!has_colors) {
+            // If no color scheme pre-defined, then make a color scheme that is appropriate and apply to the plot
+            var colors = this._makeColorScheme(known_categories);
+            color_scale.parameters.categories = known_categories.map(function (item) { return item[0]; });
+            color_scale.parameters.values = colors;
+        }
+
+        if (!has_legend) {
+            this.layout.legend = known_categories.map(function (pair, index) {
+                var id = pair[0];
+                var label = pair[1];
+                var item_color = color_scale.parameters.values[index];
+                var item = { shape: 'rect', width: 9, label: label };
+                item['color'] = item_color;
+                item[self.layout.track_split_field] = id;
+                return item;
+            });
+        }
+    }.bind(this);
+
+
     // After we've loaded interval data interpret it to assign
     // each to a track so that they do not overlap in the view
     this.assignTracks = function() {
+        // Autogenerate layout options if not provided
+        this._applyLayoutOptions();
 
         // Reinitialize some metadata
         this.previous_tracks = this.tracks;
         this.tracks = 0;
         this.interval_track_index = { 1: [] };
+        // This maps unique values of track_split_field to unique y indices. It controls the ordering of separate tracks.
         this.track_split_field_index = {};
 
         // If splitting tracks by a field's value then do a first pass determine
@@ -403,6 +459,9 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
                         end: (this.layout.track_height / 2)
                     }
                 };
+                // There is a very tight coupling between the display directives: each legend item must identify a key
+                //  field for unique tracks. (Typically this is `state_id`, the same key field used to assign unique colors)
+                // The list of unique keys corresponds to the order along the y-axis
                 this.layout.legend.forEach(function(element) {
                     var key = element[this.layout.track_split_field];
                     var track = this.track_split_field_index[key];
@@ -445,6 +504,56 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
         this.updateSplitTrackAxis();
         return this;
     };
+
+
+    // Choose an appropriate color scheme based on the number of items in the track.
+    this._makeColorScheme = function(category_info) {
+        // Use a set of color schemes for common 15, 18, or 25 state models, from:
+        //  https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html
+        // These are actually reversed so that dim colors come first, on the premise that usually these are the
+        //  most common states
+        var category_names = Object.keys(category_info);
+        var n_categories = category_names.length;
+        if (n_categories <= 15) {
+            return ['rgb(212,212,212)', 'rgb(192,192,192)', 'rgb(128,128,128)', 'rgb(189,183,107)', 'rgb(233,150,122)', 'rgb(205,92,92)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,0)', 'rgb(194,225,5)', 'rgb(0,100,0)', 'rgb(0,128,0)', 'rgb(50,205,50)', 'rgb(255,69,0)', 'rgb(255,0,0)'];
+        } else if (n_categories <= 18) {
+            return ['rgb(212,212,212)', 'rgb(192,192,192)', 'rgb(128,128,128)', 'rgb(189,183,107)', 'rgb(205,92,92)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,0)', 'rgb(255,195,77)', 'rgb(255,195,77)', 'rgb(194,225,5)', 'rgb(194,225,5)', 'rgb(0,100,0)', 'rgb(0,128,0)', 'rgb(255,69,0)', 'rgb(255,69,0)', 'rgb(255,69,0)', 'rgb(255,0,0)'];
+        } else {
+            // If there are more than 25 categories, the interval layer will fall back to the 'null value' option
+            return ['rgb(212,212,212)', 'rgb(128,128,128)', 'rgb(112,48,160)', 'rgb(230,184,183)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,102)', 'rgb(255,255,0)', 'rgb(255,255,0)', 'rgb(255,255,0)', 'rgb(255,195,77)', 'rgb(255,195,77)', 'rgb(255,195,77)', 'rgb(194,225,5)', 'rgb(194,225,5)', 'rgb(194,225,5)', 'rgb(194,225,5)', 'rgb(0,150,0)', 'rgb(0,128,0)', 'rgb(0,128,0)', 'rgb(0,128,0)', 'rgb(255,69,0)', 'rgb(255,69,0)', 'rgb(255,69,0)', 'rgb(255,0,0)'];
+        }
+    };
+
+    /**
+     * Find all of the unique tracks (a combination of name and ID information)
+     * @param data
+     * @private
+     * @returns {Array} All [unique_id, label] pairs in data. The unique_id is the thing used to define groupings
+     *  most unambiguously.
+     */
+    this._generateCategoriesFromData = function (data) {
+        var self = this;
+        // Use the hard-coded legend if available (ignoring any mods on re-render)
+        var legend = this._base_layout.legend;
+        if (legend && legend.length) {
+            return legend.map(function (item) {
+                return [item[self.layout.track_split_field], item.label];
+            });
+        }
+
+        // Generate options from data, if no preset legend exists
+        var unique_ids = {}; // make categories unique
+        var categories = [];
+
+        data.forEach(function (item, idx) {
+            var id = item[self.layout.track_split_field];
+            if (!unique_ids.hasOwnProperty(id)) {
+                unique_ids[id] = null;
+                categories.push([id, item[self.layout.track_label_field]]);
+            }
+        });
+        return categories;
+    }.bind(this);
 
     return this;
 

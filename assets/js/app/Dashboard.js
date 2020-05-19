@@ -1272,6 +1272,7 @@ LocusZoom.Dashboard.Components.add('covariates_model', function(layout) {
     };
 });
 
+// TODO: Move to extension
 /**
  * Button to toggle split tracks
  * @class LocusZoom.Dashboard.Components.toggle_split_tracks

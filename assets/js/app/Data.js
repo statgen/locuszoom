@@ -1153,6 +1153,7 @@ LocusZoom.Data.RecombinationRateSource.prototype.getURL = function(state, chain,
         ' and position ge ' + state.start;
 };
 
+// FIXME: Move intervalSource (and associated buttons and scalefunctions) to an extension
 /**
  * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
  * @public

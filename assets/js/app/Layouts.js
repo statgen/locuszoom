@@ -226,6 +226,7 @@ LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
     return base;
 }());
 
+// TODO move to a covariates-model extension
 LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
     var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
     covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
@@ -510,6 +511,7 @@ LocusZoom.Layouts.add('data_layer', 'genome_legend', {
     }
 });
 
+// TODO: Move to an extension
 LocusZoom.Layouts.add('data_layer', 'intervals', {
     namespace: { 'intervals': 'intervals' },
     id: 'intervals',
@@ -518,35 +520,25 @@ LocusZoom.Layouts.add('data_layer', 'intervals', {
     id_field: '{{namespace[intervals]}}start',
     start_field: '{{namespace[intervals]}}start',
     end_field: '{{namespace[intervals]}}end',
+    // The default implementation uses `state_id` to dictate a preferred visual ordering. Change to `state_name` if
+    //   that field is not available.
     track_split_field: '{{namespace[intervals]}}state_id',
+    track_label_field: '{{namespace[intervals]}}state_name',
+    // TODO: Change these default options to better suit the portal use case
     split_tracks: true,
     always_hide_legend: false,
-    color: {
-        field: '{{namespace[intervals]}}state_id',
-        scale_function: 'categorical_bin',
-        parameters: {
-            categories: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-            values: ['rgb(212,63,58)', 'rgb(250,120,105)', 'rgb(252,168,139)', 'rgb(240,189,66)', 'rgb(250,224,105)', 'rgb(240,238,84)', 'rgb(244,252,23)', 'rgb(23,232,252)', 'rgb(32,191,17)', 'rgb(23,166,77)', 'rgb(32,191,17)', 'rgb(162,133,166)', 'rgb(187,187,187)', 'rgb(212,212,212)', 'rgb(232,232,232)'],
-            null_value: '#B8B8B8'
-        }
-    },
-    legend: [
-        { shape: 'rect', color: 'rgb(212,63,58)', width: 9, label: 'Active Promoter', '{{namespace[intervals]}}state_id': 1 },
-        { shape: 'rect', color: 'rgb(250,120,105)', width: 9, label: 'Weak Promoter', '{{namespace[intervals]}}state_id': 2 },
-        { shape: 'rect', color: 'rgb(252,168,139)', width: 9, label: 'Poised Promoter', '{{namespace[intervals]}}state_id': 3 },
-        { shape: 'rect', color: 'rgb(240,189,66)', width: 9, label: 'Strong enhancer', '{{namespace[intervals]}}state_id': 4 },
-        { shape: 'rect', color: 'rgb(250,224,105)', width: 9, label: 'Strong enhancer', '{{namespace[intervals]}}state_id': 5 },
-        { shape: 'rect', color: 'rgb(240,238,84)', width: 9, label: 'Weak enhancer', '{{namespace[intervals]}}state_id': 6 },
-        { shape: 'rect', color: 'rgb(244,252,23)', width: 9, label: 'Weak enhancer', '{{namespace[intervals]}}state_id': 7 },
-        { shape: 'rect', color: 'rgb(23,232,252)', width: 9, label: 'Insulator', '{{namespace[intervals]}}state_id': 8 },
-        { shape: 'rect', color: 'rgb(32,191,17)', width: 9, label: 'Transcriptional transition', '{{namespace[intervals]}}state_id': 9 },
-        { shape: 'rect', color: 'rgb(23,166,77)', width: 9, label: 'Transcriptional elongation', '{{namespace[intervals]}}state_id': 10 },
-        { shape: 'rect', color: 'rgb(136,240,129)', width: 9, label: 'Weak transcribed', '{{namespace[intervals]}}state_id': 11 },
-        { shape: 'rect', color: 'rgb(162,133,166)', width: 9, label: 'Polycomb-repressed', '{{namespace[intervals]}}state_id': 12 },
-        { shape: 'rect', color: 'rgb(212,212,212)', width: 9, label: 'Heterochromatin / low signal', '{{namespace[intervals]}}state_id': 13 },
-        { shape: 'rect', color: 'rgb(212,212,212)', width: 9, label: 'Repetitive / CNV', '{{namespace[intervals]}}state_id': 14 },
-        { shape: 'rect', color: 'rgb(212,212,212)', width: 9, label: 'Repetitive / CNV', '{{namespace[intervals]}}state_id': 15 },
-    ],
+    color: [
+        {
+            field: '{{namespace[intervals]}}state_id',
+            scale_function: 'categorical_bin',
+            parameters: {
+                // Placeholder. Empty categories and values will automatically be filled in when new data loads.
+                categories: [],
+                values: [],
+                null_value: '#B8B8B8'
+            }
+        }],
+    legend: [], // Placeholder; auto-filled when data loads.
     behaviors: {
         onmouseover: [
             { action: 'set', status: 'highlighted' }
