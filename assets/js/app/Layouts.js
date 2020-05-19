@@ -226,13 +226,6 @@ LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
     return base;
 }());
 
-// TODO move to a covariates-model extension
-LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
-    var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-    covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
-    return covariates_model_association;
-}());
-
 LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
@@ -248,8 +241,6 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
         + '</table><br>{{/if}}'
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
 });
-
-
 
 LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
@@ -610,17 +601,6 @@ LocusZoom.Layouts.add('dashboard', 'standard_plot', {
         }
     ]
 });
-
-LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', function () {
-    var covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
-    covariates_model_plot_dashboard.components.push({
-        type: 'covariates_model',
-        button_html: 'Model',
-        button_title: 'Show and edit covariates currently in model',
-        position: 'left'
-    });
-    return covariates_model_plot_dashboard;
-}());
 
 LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
     var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
