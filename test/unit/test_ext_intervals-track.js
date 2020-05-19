@@ -12,10 +12,15 @@ describe('Interval annotation track', function () {
         };
 
         beforeEach(function () {
-            var layout = LocusZoom.Layouts.get('data_layer', 'intervals');
+            var layout = LocusZoom.Layouts.get('data_layer', 'intervals', {
+                // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
+                //  a unique ID that is separate from the label)
+                track_split_field: '{{namespace[intervals]}}state_id'
+            });
             var instance = LocusZoom.DataLayers.get('intervals', layout);
             this.instance = instance;
             this.color_config = find_color_options(instance._base_layout);
+            this.color_config.field = '{{namespace[intervals]}}state_id';
             this.legend_config = instance._base_layout.legend;
         });
 

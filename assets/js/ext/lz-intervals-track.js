@@ -685,13 +685,10 @@
         id_field: '{{namespace[intervals]}}start',
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
-        // FIXME: The default implementation uses `state_id` to dictate a preferred visual ordering. Change to `state_name` if
-        //   that field is not available. (then update the demo)
-        track_split_field: '{{namespace[intervals]}}state_id',
+        track_split_field: '{{namespace[intervals]}}state_name',
         track_label_field: '{{namespace[intervals]}}state_name',
-        // TODO: Change these default options to better suit the portal use case (and update demo)
-        split_tracks: true,
-        always_hide_legend: false,
+        split_tracks: false,
+        always_hide_legend: true,
         color: [
             {
                 // If present, an explicit color field will override any other option (and be used to auto-generate legend)
@@ -699,7 +696,7 @@
                 scale_function: 'to_rgb'
             },
             {
-                field: '{{namespace[intervals]}}state_id',
+                field: '{{namespace[intervals]}}state_name',
                 scale_function: 'categorical_bin',
                 parameters: {
                     // Placeholder. Empty categories and values will automatically be filled in when new data loads.
@@ -707,7 +704,8 @@
                     values: [],
                     null_value: '#B8B8B8'
                 }
-            }],
+            }
+        ],
         legend: [], // Placeholder; auto-filled when data loads.
         behaviors: {
             onmouseover: [
