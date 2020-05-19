@@ -85,6 +85,20 @@
     });
 
     /**
+     * Convert a value ""rr,gg,bb" (if given) to a css-friendly color string: "rgb(rr,gg,bb)".
+     * This is tailored specifically to the color specification format embraced by the BED file standard.
+     * @function to_rgb
+     * @param {Object} parameters This function has no defined configuration options
+     * @param {String|null} value The value to convert to rgb
+     */
+    LocusZoom.ScaleFunctions.add('to_rgb', function(parameters, value) {
+        if (value) {
+            return 'rgb(' + value + ')';
+        }
+        return null;
+    });
+
+    /**
      * Intervals Data Layer
      * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
      * @class LocusZoom.DataLayers.intervals
@@ -162,21 +176,28 @@
             var has_colors = base_color_scale.parameters.categories.length && base_color_scale.parameters.values.length;
             var has_legend = base_layout.legend && base_layout.legend.length;
 
-            if (has_colors && !has_legend) {
-                // Don't try to auto-resolve values to labels
-                throw new Error('Manually specified color scheme must have a matching legend');
+            if (!!has_colors ^ !!has_legend) {
+                // Don't allow color OR legend to be set manually. It must be both, or neither.
+                throw new Error('To use a manually specified color scheme, both color and legend options must be set.');
             }
 
-            var known_categories = this._generateCategoriesFromData(this.data); // [id, label] pairs
+            // Harvest any information about an explicit color field that should be considered when generating colors
+            var rgb_option = base_layout.color.find(function (item) {
+                return item.scale_function && item.scale_function === 'to_rgb';
+            });
+            var rgb_field = rgb_option && rgb_option.field;
 
-            if (!has_colors) {
+            // Auto-generate legend based on data
+            var known_categories = this._generateCategoriesFromData(this.data, rgb_field); // [id, label, itemRgb] items
+
+            if (!has_colors && !has_legend) {
                 // If no color scheme pre-defined, then make a color scheme that is appropriate and apply to the plot
+                // The legend must match the color scheme. If we generate one, then we must generate both.
+
                 var colors = this._makeColorScheme(known_categories);
                 color_scale.parameters.categories = known_categories.map(function (item) { return item[0]; });
                 color_scale.parameters.values = colors;
-            }
 
-            if (!has_legend) {
                 this.layout.legend = known_categories.map(function (pair, index) {
                     var id = pair[0];
                     var label = pair[1];
@@ -588,15 +609,20 @@
             return this;
         };
 
-
-        // Choose an appropriate color scheme based on the number of items in the track.
+        // Choose an appropriate color scheme based on the number of items in the track, and whether or not we are
+        //  using explicitly provided itemRgb information
         this._makeColorScheme = function(category_info) {
-            // Use a set of color schemes for common 15, 18, or 25 state models, from:
+            // If at least one element has an explicit itemRgb, assume the entire dataset has colors
+            var has_explicit_colors = category_info.find(function (item) { return item[2]; });
+            if (has_explicit_colors) {
+                return category_info.map(function (item) { return item[2]; });
+            }
+
+            // Use a set of color schemes for common 15, 18, or 25 state models, as specified from:
             //  https://egg2.wustl.edu/roadmap/web_portal/chr_state_learning.html
             // These are actually reversed so that dim colors come first, on the premise that usually these are the
             //  most common states
-            var category_names = Object.keys(category_info);
-            var n_categories = category_names.length;
+            var n_categories = category_info.length;
             if (n_categories <= 15) {
                 return ['rgb(212,212,212)', 'rgb(192,192,192)', 'rgb(128,128,128)', 'rgb(189,183,107)', 'rgb(233,150,122)', 'rgb(205,92,92)', 'rgb(138,145,208)', 'rgb(102,205,170)', 'rgb(255,255,0)', 'rgb(194,225,5)', 'rgb(0,100,0)', 'rgb(0,128,0)', 'rgb(50,205,50)', 'rgb(255,69,0)', 'rgb(255,0,0)'];
             } else if (n_categories <= 18) {
@@ -611,16 +637,16 @@
          * Find all of the unique tracks (a combination of name and ID information)
          * @param data
          * @private
-         * @returns {Array} All [unique_id, label] pairs in data. The unique_id is the thing used to define groupings
+         * @returns {Array} All [unique_id, label, color] pairs in data. The unique_id is the thing used to define groupings
          *  most unambiguously.
          */
-        this._generateCategoriesFromData = function (data) {
+        this._generateCategoriesFromData = function (data, rgb_field) {
             var self = this;
             // Use the hard-coded legend if available (ignoring any mods on re-render)
             var legend = this._base_layout.legend;
             if (legend && legend.length) {
                 return legend.map(function (item) {
-                    return [item[self.layout.track_split_field], item.label];
+                    return [item[self.layout.track_split_field], item.label, item.color];
                 });
             }
 
@@ -632,7 +658,8 @@
                 var id = item[self.layout.track_split_field];
                 if (!unique_ids.hasOwnProperty(id)) {
                     unique_ids[id] = null;
-                    categories.push([id, item[self.layout.track_label_field]]);
+                    // If rgbfield is null, then the last entry is undefined/null as well
+                    categories.push([id, item[self.layout.track_label_field], item[rgb_field]]);
                 }
             });
             return categories;
@@ -654,18 +681,23 @@
         namespace: { 'intervals': 'intervals' },
         id: 'intervals',
         type: 'intervals',
-        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name'],
+        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name', '{{namespace[intervals]}}itemRgb'],
         id_field: '{{namespace[intervals]}}start',
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
-        // The default implementation uses `state_id` to dictate a preferred visual ordering. Change to `state_name` if
-        //   that field is not available.
+        // FIXME: The default implementation uses `state_id` to dictate a preferred visual ordering. Change to `state_name` if
+        //   that field is not available. (then update the demo)
         track_split_field: '{{namespace[intervals]}}state_id',
         track_label_field: '{{namespace[intervals]}}state_name',
-        // TODO: Change these default options to better suit the portal use case
+        // TODO: Change these default options to better suit the portal use case (and update demo)
         split_tracks: true,
         always_hide_legend: false,
         color: [
+            {
+                // If present, an explicit color field will override any other option (and be used to auto-generate legend)
+                field: '{{namespace[intervals]}}itemRgb',
+                scale_function: 'to_rgb'
+            },
             {
                 field: '{{namespace[intervals]}}state_id',
                 scale_function: 'categorical_bin',

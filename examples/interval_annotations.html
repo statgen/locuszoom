@@ -74,16 +74,7 @@
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
-    var mods = {
-      namespace: {
-        default: "assoc",
-        ld: "ld",
-        gene: "gene",
-        recomb: "recomb",
-        intervals: "intervals"
-      }
-    };
-    layout = LocusZoom.Layouts.get("plot", "interval_association", mods);
+    layout = LocusZoom.Layouts.get("plot", "interval_association");
     // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
     layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
@@ -108,6 +99,10 @@
             'font-weight': 'bold',
         }
     };
+
+    var intervals_layout = layout.panels[1].data_layers[0];
+    // Remove the itemRgb field from the default layout, because our demo api does not have this information
+    intervals_layout.fields.pop();
 
     // Add a track information button to the intervals panel
     layout.panels[1].dashboard.components.push({
