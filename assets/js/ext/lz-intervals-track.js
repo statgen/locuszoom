@@ -224,10 +224,11 @@
             // This maps unique values of track_split_field to unique y indices. It controls the ordering of separate tracks.
             this.track_split_field_index = {};
 
-            // If splitting tracks by a field's value then do a first pass determine
-            // a value/track mapping that preserves the order of possible values
+            // If splitting tracks by a field's value then determine how to order them. There are two options here:
+            // a) numeric IDs get sorted in numeric order (JS quirk: int object keys act like array indices), or
+            // b) text labels get sorted based on order in the source data (hash preserves insertion order)
             if (this.layout.track_split_field && this.layout.split_tracks) {
-                this.data.map(function(d) {
+                this.data.forEach(function(d) {
                     this.track_split_field_index[d[this.layout.track_split_field]] = null;
                 }.bind(this));
                 var index = Object.keys(this.track_split_field_index);
@@ -239,7 +240,7 @@
                 }.bind(this));
             }
 
-            this.data.map(function(d, i) {
+            this.data.forEach(function(d, i) {
 
                 // Stash a parent reference on the interval
                 this.data[i].parent = this;
@@ -306,7 +307,6 @@
 
         // Implement the main render function
         this.render = function() {
-
             this.assignTracks();
 
             // Remove any shared highlight nodes and re-render them if we're splitting on tracks
