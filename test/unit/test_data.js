@@ -732,6 +732,19 @@ describe('LocusZoom Data', function() {
             );
             assert.equal(dataFields.id, null, 'There is no field matching the requested ID field');
         });
+
+        it('coerces variant formats to one expected by the LD server', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+
+            var portal_format = '8:117974679:G:A';
+            var ldserver_format = '8:117974679_G/A';
+            var request_url = source.getURL({ ldrefvar: portal_format }, { header: {}, body: [] }, ['isrefvar', 'state']);
+            assert.equal(
+                request_url,
+                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])
+            );
+            assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
+        });
     });
 
     describe('Static JSON Data Source', function() {

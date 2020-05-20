@@ -884,6 +884,15 @@ LocusZoom.Data.LDSource2 = LocusZoom.KnownDataSources.extend('LDLZ', 'LDLZ2', {
         validateBuildSource(this.constructor.SOURCE_NAME, build, null);  // LD doesn't need to validate `source` option
 
         var refVar = this.getRefvar(state, chain, fields);
+        // Some datasets, notably the Portal, use a different marker format.
+        //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
+        var REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?):(\d+)[_:]?(\w+)?[/:|]?([^_]+)?_?(.*)?/;
+        var match = refVar && refVar.match(REGEX_MARKER);
+
+        if(!match) {
+            throw new Error('Could not request LD for a missing or incomplete marker format');
+        }
+        refVar = [match[1], ':', match[2], '_', match[3], '/', match[4]].join('');
         chain.header.ldrefvar = refVar;
 
         return  [
