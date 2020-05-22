@@ -22,7 +22,6 @@ function dega_bed_parser(line, index) {
         // Optional field: chromatin interaction files have it; coaccessibility files do not
         target: second_item[4] || null,
         score: score,
-        gene: null,
         id: index,  // Dummy ID: position in the list of lines TODO: create a better unique ID
     };
 }

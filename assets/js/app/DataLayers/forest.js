@@ -39,7 +39,12 @@ LocusZoom.DataLayers.add('forest', function(layout) {
 
         var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var offset = Math.sqrt(point_size / Math.PI);
-        return [x_center, y_center, offset, offset];
+        return {
+            x_min: x_center - offset,
+            x_max: x_center + offset,
+            y_min: y_center - offset,
+            y_max: y_center + offset
+        };
     };
 
     // Implement the main render function
