@@ -211,7 +211,7 @@
 
     // Define LocusZoom Data Sources object differently depending on online status
     var apiBase, data_sources;
-    if (online){
+    if (online) {
       apiBase = "https://portaldev.sph.umich.edu/api/v1/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])

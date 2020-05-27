@@ -338,50 +338,14 @@ LocusZoom.DataLayers.add('intervals', function(layout) {
 
     };
 
-    // Reimplement the positionTooltip() method to be interval-specific
-    this.positionTooltip = function(id) {
-        if (typeof id != 'string') {
-            throw new Error('Unable to position tooltip: id is not a string');
-        }
-        if (!this.tooltips[id]) {
-            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-        }
-        var tooltip = this.tooltips[id];
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+    this._getTooltipPosition = function (tooltip) {
         var interval_bbox = d3.select('#' + this.getElementStatusNodeId(tooltip.data)).node().getBBox();
-        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-        // Position horizontally: attempt to center on the portion of the interval that's visible,
-        // pad to either side if bumping up against the edge of the data layer
-        var interval_center_x = ((tooltip.data.display_range.start + tooltip.data.display_range.end) / 2) - (this.layout.bounding_box_padding / 2);
-        var offset_right = Math.max((tooltip_box.width / 2) - interval_center_x, 0);
-        var offset_left = Math.max((tooltip_box.width / 2) + interval_center_x - data_layer_width, 0);
-        var left = page_origin.x + interval_center_x - (tooltip_box.width / 2) - offset_left + offset_right;
-        var arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right;
-        // Position vertically below the interval unless there's insufficient space
-        var top, arrow_type, arrow_top;
-        if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (interval_bbox.y + interval_bbox.height)) {
-            top = page_origin.y + interval_bbox.y - (tooltip_box.height + stroke_width + arrow_width);
-            arrow_type = 'down';
-            arrow_top = tooltip_box.height - stroke_width;
-        } else {
-            top = page_origin.y + interval_bbox.y + interval_bbox.height + stroke_width + arrow_width;
-            arrow_type = 'up';
-            arrow_top = 0 - stroke_width - arrow_width;
-        }
-        // Apply positions to the main div
-        tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-        // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow) {
-            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-        }
-        tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+        return {
+            x_min: tooltip.data.display_range.start,
+            x_max: tooltip.data.display_range.end,
+            y_min: interval_bbox.y,
+            y_max: interval_bbox.y + interval_bbox.height
+        };
     };
 
     // Redraw split track axis or hide it, and show/hide the legend, as determined

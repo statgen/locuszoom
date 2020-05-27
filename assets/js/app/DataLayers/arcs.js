@@ -118,11 +118,12 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         var x2 = tooltip.data[layout.x_axis.field2];
 
         var y_scale = panel['y' + layout.y_axis.axis + '_scale'];
+
         return {
             x_min: panel.x_scale(Math.min(x1, x2)),
             x_max: panel.x_scale(Math.max(x1, x2)),
-            y_min: 0,
-            y_max: y_scale(tooltip.data[layout.y_axis.field]),
+            y_min: y_scale(tooltip.data[layout.y_axis.field]),
+            y_max: y_scale(0),
         };
         // return [x_center, y_center, 0, 0];
     };

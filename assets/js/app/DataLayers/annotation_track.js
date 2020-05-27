@@ -17,8 +17,6 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
     this.DefaultLayout = {
         color: '#000000',
         filters: [],
-        // FIXME: another positioning mode to implement
-        // TODO vertical?
         tooltip_positioning: 'vertical', // Allowed values: top, middle, bottom
         hitarea_width: 8,
     };
@@ -112,10 +110,13 @@ LocusZoom.DataLayers.add('annotation_track', function(layout) {
         var stroke_width = 1; // as defined in the default stylesheet
 
         var x_center = panel.x_scale(tooltip.data[this.layout.x_axis.field]);
-        // yc corresponds to positioning mode = middle TODO: improve
         var y_center = data_layer_height / 2;
-
-        return [x_center, y_center, stroke_width / 2, 0];
+        return {
+            x_min: x_center - stroke_width,
+            x_max: x_center + stroke_width,
+            y_min: y_center - panel.layout.margin.top,
+            y_max: y_center + panel.layout.margin.bottom,
+        };
     };
 
     return this;
