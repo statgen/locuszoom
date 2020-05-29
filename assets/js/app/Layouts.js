@@ -1430,10 +1430,37 @@ LocusZoom.Layouts.add('plot', 'coaccessibility', {
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    dashboard: LocusZoom.Layouts.get('dashboard', 'region_nav_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, proportional_height: 0.4 }),
-        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.2 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.4 })
+        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.4 }),
+        function () {
+            // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
+            // This is a companion to the "match" directive in the coaccessibility panel
+            var base = LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.6 });
+            var layer = base.data_layers[0];
+            layer.match = { send: 'gene_name', receive: 'gene_name' };
+            var color_config = [
+                {
+                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: true,
+                        then: '#ff0000',
+                    },
+                },
+                {
+                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: false,
+                        then: '#EAE6E6',
+                    },
+                },
+                '#363696',
+            ];
+            layer.color = color_config;
+            layer.stroke = color_config;
+            return base;
+        }(),
     ]
 });

@@ -51,12 +51,17 @@
   </p>
 
   <p>
+    Data from: Rai, V. et al. Single-cell ATAC-Seq in human pancreatic islets and deep learning upscaling of rare cells reveals cell-specific type 2 diabetes regulatory signatures. Mol Metab 32, 109-121 (2020). (PMID <a href="https://pubmed.ncbi.nlm.nih.gov/32029221/">32029221</a>)
+  </p>
+
+  <p>
     This demonstration shows how to read annotations directly from an external BED track (tabix indexed), without
     needing to convert the data into JSON or load via a remote API. The remote file server must enable some basic
     headers. (see <a
       href="See: https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS">instructions
     for google cloud and s3 buckets</a>)
   </p>
+
   <div id="lz-plot" class="lz-container-responsive"></div>
   <hr>
 
@@ -109,35 +114,11 @@
         initialState = { chr: 11, start: 2182049, end: 2904920 };
     }
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
-    layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
-
+    var loop_panel = layout.panels[0];
+    loop_panel.title =  { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
     window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
-    // Add a custom behavior where clicking genes or accessibility loops will highlight matching elements in an
-    //  adjacent track
-    plot.panels['genes'].data_layers["genes"].layout.match = { send: 'gene_name', receive: 'gene_name' };
-    var color_config = [
-        {
-            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
-            scale_function: 'if',
-            parameters: {
-                field_value: true,
-                then: '#ff0000',
-            },
-        },
-        {
-            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
-            scale_function: 'if',
-            parameters: {
-                field_value: false,
-                then: '#EAE6E6',
-            },
-        },
-        '#363696',
-    ];
-    plot.panels['genes'].data_layers["genes"].layout.color = color_config;
-    plot.panels['genes'].data_layers["genes"].layout.stroke = color_config;
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

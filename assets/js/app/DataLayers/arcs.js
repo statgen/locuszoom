@@ -125,7 +125,6 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             y_min: y_scale(tooltip.data[layout.y_axis.field]),
             y_max: y_scale(0),
         };
-        // return [x_center, y_center, 0, 0];
     };
 
     // End constructor
