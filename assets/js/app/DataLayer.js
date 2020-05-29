@@ -188,15 +188,6 @@ LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function() {
 };
 
 /**
- * Whether transitions can be applied to this data layer
- * @returns {boolean}
- */
-LocusZoom.DataLayer.prototype.canTransition = function() {
-    if (!this.layout.transition) { return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
-};
-
-/**
  * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
  *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
  * @param {String|Object} element

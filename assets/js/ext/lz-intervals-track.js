@@ -72,11 +72,10 @@
                     .setOnclick(function() {
                         data_layer.toggleSplitTracks();
                         if (this.scale_timeout) { clearTimeout(this.scale_timeout); }
-                        var timeout = data_layer.layout.transition ? +data_layer.layout.transition.duration || 0 : 0;
                         this.scale_timeout = setTimeout(function() {
                             this.parent_panel.scaleHeightToData();
                             this.parent_plot.positionPanels();
-                        }.bind(this), timeout);
+                        }.bind(this), 0);
                         this.update();
                     }.bind(this));
                 return this.update();
@@ -375,16 +374,10 @@
                     y = function(d) {
                         return ((d.track - 1) * data_layer.getTrackHeight());
                     };
-                    if (data_layer.canTransition()) {
-                        statusnodes
-                            .transition()
-                            .duration(data_layer.layout.transition.duration || 0)
-                            .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                            .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        statusnodes
-                            .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+
+                    statusnodes
+                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
+
                     statusnodes.exit().remove();
 
                     // Render primary interval rects
@@ -412,23 +405,11 @@
                         return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d, i);
                     };
 
-
-                    if (data_layer.canTransition()) {
-                        rects
-                            .transition()
-                            .duration(data_layer.layout.transition.duration || 0)
-                            .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                            .attr('width', width).attr('height', height)
-                            .attr('x', x).attr('y', y)
-                            .attr('fill', fill)
-                            .attr('fill-opacity', fill_opacity);
-                    } else {
-                        rects
-                            .attr('width', width).attr('height', height)
-                            .attr('x', x).attr('y', y)
-                            .attr('fill', fill)
-                            .attr('fill-opacity', fill_opacity);
-                    }
+                    rects
+                        .attr('width', width).attr('height', height)
+                        .attr('x', x).attr('y', y)
+                        .attr('fill', fill)
+                        .attr('fill-opacity', fill_opacity);
 
                     rects.exit().remove();
 
@@ -462,16 +443,9 @@
                     y = function(d) {
                         return ((d.track - 1) * data_layer.getTrackHeight());
                     };
-                    if (data_layer.canTransition()) {
-                        clickareas
-                            .transition()
-                            .duration(data_layer.layout.transition.duration || 0)
-                            .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                            .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        clickareas
-                            .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+
+                    clickareas
+                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
 
                     // Remove old clickareas as needed
                     clickareas.exit().remove();

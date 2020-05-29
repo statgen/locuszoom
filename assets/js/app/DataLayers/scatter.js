@@ -365,24 +365,12 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
             .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
-        // Apply position and color, using a transition if necessary
-
-        if (this.canTransition()) {
-            selection
-                .transition()
-                .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || 'cubic-in-out')
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        } else {
-            selection
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        }
+        // Apply position and color
+        selection
+            .attr('transform', transform)
+            .attr('fill', fill)
+            .attr('fill-opacity', fill_opacity)
+            .attr('d', shape);
 
         // Remove old elements as needed
         selection.exit().remove();

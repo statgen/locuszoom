@@ -67,7 +67,7 @@ LocusZoom.DataLayers.add('forest', function(layout) {
                 .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
                 .attr('id', function(d) { return this.getElementId(d) + '_ci'; }.bind(this))
                 .attr('transform', 'translate(0,' + (isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height) + ')');
-            // Apply position and size parameters using transition if necessary
+            // Apply position and size parameters
             var ci_transform = function(d) {
                 var x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
                 var y = this.parent[y_scale](d[this.layout.y_axis.field]);
@@ -80,18 +80,11 @@ LocusZoom.DataLayers.add('forest', function(layout) {
                      - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
             }.bind(this);
             var ci_height = 1;
-            if (this.canTransition()) {
-                ci_selection
-                    .transition()
-                    .duration(this.layout.transition.duration || 0)
-                    .ease(this.layout.transition.ease || 'cubic-in-out')
-                    .attr('transform', ci_transform)
-                    .attr('width', ci_width).attr('height', ci_height);
-            } else {
-                ci_selection
-                    .attr('transform', ci_transform)
-                    .attr('width', ci_width).attr('height', ci_height);
-            }
+
+            ci_selection
+                .attr('transform', ci_transform)
+                .attr('width', ci_width).attr('height', ci_height);
+
             // Remove old elements as needed
             ci_selection.exit().remove();
         }
@@ -125,23 +118,12 @@ LocusZoom.DataLayers.add('forest', function(layout) {
             .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
             .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
-        // Apply position and color, using a transition if necessary
-        if (this.canTransition()) {
-            points_selection
-                .transition()
-                .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || 'cubic-in-out')
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        } else {
-            points_selection
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        }
+        // Apply position and color
+        points_selection
+            .attr('transform', transform)
+            .attr('fill', fill)
+            .attr('fill-opacity', fill_opacity)
+            .attr('d', shape);
 
         // Remove old elements as needed
         points_selection.exit().remove();

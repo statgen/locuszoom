@@ -257,16 +257,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 y = function(d) {
                     return ((d.track - 1) * data_layer.getTrackHeight());
                 };
-                if (data_layer.canTransition()) {
-                    bboxes
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                } else {
-                    bboxes
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                }
+                bboxes
+                    .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
 
                 bboxes.exit().remove();
 
@@ -296,16 +288,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                         + data_layer.layout.label_exon_spacing
                         + (Math.max(data_layer.layout.exon_height, 3) / 2);
                 };
-                if (data_layer.canTransition()) {
-                    boundaries
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                } else {
-                    boundaries
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                }
+                boundaries
+                    .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
 
                 boundaries.exit().remove();
 
@@ -339,16 +323,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                         + data_layer.layout.bounding_box_padding
                         + data_layer.layout.label_font_size;
                 };
-                if (data_layer.canTransition()) {
-                    labels
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                        .attr('x', x).attr('y', y);
-                } else {
-                    labels
-                        .attr('x', x).attr('y', y);
-                }
+                labels
+                    .attr('x', x).attr('y', y);
 
                 labels.exit().remove();
 
@@ -381,16 +357,9 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                         + data_layer.layout.label_font_size
                         + data_layer.layout.label_exon_spacing;
                 };
-                if (data_layer.canTransition()) {
-                    exons
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                } else {
-                    exons
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                }
+
+                exons
+                    .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
 
                 exons.exit().remove();
 
@@ -424,16 +393,8 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 y = function(d) {
                     return ((d.track - 1) * data_layer.getTrackHeight());
                 };
-                if (data_layer.canTransition()) {
-                    clickareas
-                        .transition()
-                        .duration(data_layer.layout.transition.duration || 0)
-                        .ease(data_layer.layout.transition.ease || 'cubic-in-out')
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                } else {
-                    clickareas
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                }
+                clickareas
+                    .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
 
                 // Remove old clickareas as needed
                 clickareas.exit().remove();
