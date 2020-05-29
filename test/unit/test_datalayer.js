@@ -137,6 +137,17 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'manatee' }), null);
             assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), null);
         });
+        it('can operate in a state-aware manner based on index in data[]', function () {
+            LocusZoom.ScaleFunctions.add('fake', function (parameters, input, index) { return index; });
+            var datalayer = new LocusZoom.DataLayer({ id: 'test' });
+            var config = { scale_function: 'fake' };
+            // The same input value will yield a different scaling function result, because position in data matters.
+            assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 0), 0);
+            assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 1), 1);
+
+            // Clean up/ deregister scale function when done
+            LocusZoom.ScaleFunctions.set('fake');
+        });
         it('supports operating on an entire data element in the absence of a specified field', function () {
             LocusZoom.ScaleFunctions.add('test_effect_direction', function (parameters, input) {
                 if (typeof input == 'undefined') {

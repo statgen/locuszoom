@@ -101,7 +101,7 @@ describe('LocusZoom Singletons', function() {
         it('should have a method to list available scale functions', function() {
             LocusZoom.ScaleFunctions.should.have.property('list').which.is.a.Function;
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'interpolate'];
+            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'ordinal_cycle', 'interpolate'];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should have a general method to get a scale by function name', function() {
@@ -112,7 +112,7 @@ describe('LocusZoom Singletons', function() {
             var foo = function() { return '#000000'; };
             LocusZoom.ScaleFunctions.add('foo', foo);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'interpolate', 'foo'];
+            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'ordinal_cycle', 'interpolate', 'foo'];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get('foo', {}, 0);
             var expected_value = '#000000';
@@ -123,14 +123,14 @@ describe('LocusZoom Singletons', function() {
             var foo_new = function() { return '#FFFFFF'; };
             LocusZoom.ScaleFunctions.set('foo', foo_new);
             var returned_list = LocusZoom.ScaleFunctions.list();
-            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'interpolate', 'foo'];
+            var expected_list = ['if', 'numerical_bin', 'categorical_bin', 'ordinal_cycle', 'interpolate', 'foo'];
             assert.deepEqual(returned_list, expected_list);
             var returned_value = LocusZoom.ScaleFunctions.get('foo', {}, 0);
             var expected_value = '#FFFFFF';
             assert.equal(returned_value, expected_value);
             LocusZoom.ScaleFunctions.set('foo');
             returned_list = LocusZoom.ScaleFunctions.list();
-            expected_list = ['if', 'numerical_bin', 'categorical_bin', 'interpolate'];
+            expected_list = ['if', 'numerical_bin', 'categorical_bin', 'ordinal_cycle', 'interpolate'];
             assert.deepEqual(returned_list, expected_list);
         });
         it('should throw an exception if asked to get a function that has not been defined', function() {
@@ -216,6 +216,27 @@ describe('LocusZoom Singletons', function() {
                 assert.equal(LocusZoom.ScaleFunctions.get('categorical_bin', parameters, 'CAT'), 'null_value');
                 assert.equal(LocusZoom.ScaleFunctions.get('categorical_bin', parameters, 53), 'null_value');
                 assert.equal(LocusZoom.ScaleFunctions.get('categorical_bin', parameters), 'null_value');
+            });
+        });
+        describe('ordinal_cycle', function () {
+            before(function () {
+                this.options = { values: ['a', 'b', 'c'] };
+            });
+            it('should give adjacent points a different return value, even for same input', function () {
+                var func = LocusZoom.ScaleFunctions.get('ordinal_cycle');
+                var value = 'bob';
+                assert.equal(func(this.options, value, 0), 'a');
+                assert.equal(func(this.options, value, 1), 'b');
+            });
+            it('should be able to handle n_data > n_options', function () {
+                var func = LocusZoom.ScaleFunctions.get('ordinal_cycle');
+                var value = 'bob';
+                assert.equal(func(this.options, value, 0), 'a');
+                assert.equal(func(this.options, value, 3), 'a', 'Wraps around to start');
+                assert.equal(func(this.options, value, 4), 'b', 'Larger values continue to wrap');
+            });
+            after(function() {
+                delete this.options;
             });
         });
         describe('interpolate', function() {

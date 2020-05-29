@@ -1066,7 +1066,10 @@ LocusZoom.Data.GeneConstraintSource.prototype.getURL = function() {
 LocusZoom.Data.GeneConstraintSource.prototype.normalizeResponse = function (data) { return data; };
 
 LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function(state, chain, fields) {
-    return this.url + JSON.stringify(state);
+    var build = state.genome_build || this.params.build;
+    // Gather the state params that govern constraint query for a given region.
+    var query_for = [state.chr, state.start, state.end, build].join(' ');
+    return this.url + query_for;
 };
 
 LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function(state, chain, fields) {

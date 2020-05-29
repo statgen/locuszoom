@@ -32,59 +32,19 @@ LocusZoom.DataLayers.add('forest', function(layout) {
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Reimplement the positionTooltip() method to be forest-specific
-    this.positionTooltip = function(id) {
-        if (typeof id != 'string') {
-            throw new Error('Unable to position tooltip: id is not a string');
-        }
-        if (!this.tooltips[id]) {
-            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-        }
-        var tooltip = this.tooltips[id];
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var border_radius = 6; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
+    this._getTooltipPosition = function (tooltip) {
         var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
         var y_scale  = 'y' + this.layout.y_axis.axis + '_scale';
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        // Position horizontally on the left or the right depending on which side of the plot the point is on
+
+        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
         var offset = Math.sqrt(point_size / Math.PI);
-        var left, arrow_type, arrow_left;
-        if (x_center <= this.parent.layout.width / 2) {
-            left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-            arrow_type = 'left';
-            arrow_left = -1 * (arrow_width + stroke_width);
-        } else {
-            left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-            arrow_type = 'right';
-            arrow_left = tooltip_box.width - stroke_width;
-        }
-        // Position vertically centered unless we're at the top or bottom of the plot
-        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var top, arrow_top;
-        if (y_center - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
-            top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
-            arrow_top = border_radius;
-        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
-            top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-            arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
-        } else { // vertically centered
-            top = page_origin.y + y_center - (tooltip_box.height / 2);
-            arrow_top = (tooltip_box.height / 2) - arrow_width;
-        }
-        // Apply positions to the main div
-        tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-        // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow) {
-            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-        }
-        tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+        return {
+            x_min: x_center - offset,
+            x_max: x_center + offset,
+            y_min: y_center - offset,
+            y_max: y_center + offset
+        };
     };
 
     // Implement the main render function
@@ -158,12 +118,12 @@ LocusZoom.DataLayers.add('forest', function(layout) {
             return 'translate(' + x + ',' + y + ')';
         }.bind(this);
 
-        var fill = function(d) { return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d) { return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d, i) { return this.resolveScalableParameter(this.layout.color, d, i); }.bind(this);
+        var fill_opacity = function(d, i) { return this.resolveScalableParameter(this.layout.fill_opacity, d, i); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d) { return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d) { return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
+            .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
         // Apply position and color, using a transition if necessary
         if (this.canTransition()) {
