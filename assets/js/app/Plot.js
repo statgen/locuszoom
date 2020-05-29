@@ -224,6 +224,7 @@ LocusZoom.Plot = function(id, datasource, layout) {
 
     /**
      * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
+     *  This returns a result with absolute position relative to the page, regardless of current scrolling
      * Necessary for positioning any HTML elements over the plot
      * @returns {{x: Number, y: Number, width: Number, height: Number}}
      */
@@ -233,6 +234,8 @@ LocusZoom.Plot = function(id, datasource, layout) {
         var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
         var container = this.svg.node();
         while (container.parentNode !== null) {
+            // TODO: Recursively seeks offsets for highest non-static parent node. This can lead to incorrect
+            //   calculations of, for example, x coordinate relative to the page. Revisit this logic.
             container = container.parentNode;
             if (container !== document && d3.select(container).style('position') !== 'static') {
                 x_offset = -1 * container.getBoundingClientRect().left;

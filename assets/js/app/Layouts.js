@@ -255,6 +255,20 @@ LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
         + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
 });
 
+LocusZoom.Layouts.add('tooltip', 'coaccessibility', {
+    namespace: { 'access': 'access' },
+    closable: true,
+    show: { or: ['highlighted', 'selected'] },
+    hide: { and: ['unhighlighted', 'unselected'] },
+    // TODO: Is there a more generic terminology? (eg not every technique is in terms of cis-regulatory element)
+    html: '<strong>Regulatory element</strong><br>' +
+        '{{{{namespace[access]}}start1|htmlescape}}-{{{{namespace[access]}}end1|htmlescape}}<br>' +
+        '<strong>Promoter</strong><br>' +
+        '{{{{namespace[access]}}start2|htmlescape}}-{{{{namespace[access]}}end2|htmlescape}}<br>' +
+        '{{#if {{namespace[access]}}target}}<strong>Target</strong>: {{{{namespace[access]}}target|htmlescape}}<br>{{/if}}' +
+        '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}'
+});
+
 /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
@@ -367,6 +381,70 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
         ]
     },
     tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
+});
+
+LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
+    namespace: { 'access': 'access' },
+    id: 'coaccessibility',
+    type: 'arcs',
+    fields: ['{{namespace[access]}}start1', '{{namespace[access]}}end1', '{{namespace[access]}}start2', '{{namespace[access]}}end2', '{{namespace[access]}}id', '{{namespace[access]}}target', '{{namespace[access]}}score'],
+    match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
+    id_field: '{{namespace[access]}}id',
+    filters: [
+        ['{{namespace[access]}}score', '!=', null],
+        // For coaccessibility, range is 0..1 and sig threshold is 0.5. For other data types (like chromatin
+        //  interaction), this filter may not be appropriate.
+        ['{{namespace[access]}}score', '>', 0.5],
+    ],
+    color: [
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: true,
+                then: '#ff0000',
+            },
+        },
+        {
+            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            scale_function: 'if',
+            parameters: {
+                field_value: false,
+                then: '#EAE6E6',
+            },
+        },
+        {
+            scale_function: 'ordinal_cycle',
+            parameters: {
+                values: d3.scale.category20().range(), // Array of colors that work well together
+            }
+        }
+    ],
+    x_axis: {
+        field1: '{{namespace[access]}}start1',
+        field2: '{{namespace[access]}}start2',
+    },
+    y_axis: {
+        axis: 1,
+        field: '{{namespace[access]}}score',
+        upper_buffer: 0.1,
+        min_extent: [0, 1]
+    },
+    behaviors: {
+        onmouseover: [
+            { action: 'set', status: 'highlighted' }
+        ],
+        onmouseout: [
+            { action: 'unset', status: 'highlighted' }
+        ],
+        onclick: [
+            { action: 'toggle', status: 'selected', exclusive: true }
+        ],
+        onshiftclick: [
+            { action: 'toggle', status: 'selected' }
+        ]
+    },
+    tooltip: LocusZoom.Layouts.get('tooltip', 'coaccessibility', { unnamespaced: true })
 });
 
 LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
@@ -695,6 +773,41 @@ LocusZoom.Layouts.add('panel', 'association', {
     ]
 });
 
+LocusZoom.Layouts.add('panel', 'coaccessibility', {
+    id: 'coaccessibility',
+    width: 800,
+    height: 225,
+    min_width: 400,
+    min_height: 100,
+    proportional_width: 1,
+    margin: { top: 35, right: 50, bottom: 40, left: 50 },
+    inner_border: 'rgb(210, 210, 210)',
+    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
+    axes: {
+        x: {
+            label: 'Chromosome {{chr}} (Mb)',
+            label_offset: 32,
+            tick_format: 'region',
+            extent: 'state'
+        },
+        y1: {
+            label: 'Score',
+            label_offset: 28,
+            render: false,  // We are mainly concerned with the relative magnitudes: hide y axis to avoid clutter.
+        }
+    },
+    interaction: {
+        drag_background_to_pan: true,
+        drag_x_ticks_to_scale: true,
+        drag_y1_ticks_to_scale: true,
+        scroll_to_zoom: true,
+        x_linked: true
+    },
+    data_layers: [
+        LocusZoom.Layouts.get('data_layer', 'coaccessibility', { unnamespaced: true })
+    ]
+});
+
 LocusZoom.Layouts.add('panel', 'association_catalog', function () {
     var l = LocusZoom.Layouts.get('panel', 'association', {
         unnamespaced: true,
@@ -904,4 +1017,46 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
         })
     ],
     mouse_guide: false
+});
+
+LocusZoom.Layouts.add('plot', 'coaccessibility', {
+    state: {},
+    width: 800,
+    height: 450,
+    responsive_resize: 'both',
+    min_region_scale: 20000,
+    max_region_scale: 1000000,
+    dashboard: LocusZoom.Layouts.get('dashboard', 'region_nav_plot', { unnamespaced: true }),
+    panels: [
+        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.4 }),
+        function () {
+            // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
+            // This is a companion to the "match" directive in the coaccessibility panel
+            var base = LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.6 });
+            var layer = base.data_layers[0];
+            layer.match = { send: 'gene_name', receive: 'gene_name' };
+            var color_config = [
+                {
+                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: true,
+                        then: '#ff0000',
+                    },
+                },
+                {
+                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: false,
+                        then: '#EAE6E6',
+                    },
+                },
+                '#363696',
+            ];
+            layer.color = color_config;
+            layer.stroke = color_config;
+            return base;
+        }(),
+    ]
 });

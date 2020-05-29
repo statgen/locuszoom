@@ -29,78 +29,18 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Reimplement the positionTooltip() method to be scatter-specific
-    this.positionTooltip = function(id) {
-        if (typeof id != 'string') {
-            throw new Error('Unable to position tooltip: id is not a string');
-        }
-        if (!this.tooltips[id]) {
-            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-        }
-        var top, left, arrow_type, arrow_top, arrow_left;
-        var tooltip = this.tooltips[id];
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-        var offset = Math.sqrt(point_size / Math.PI);
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var border_radius = 6; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
+    // Implement tooltip position to be layer-specific
+    this._getTooltipPosition = function (tooltip) {
         var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
         var y_scale  = 'y' + this.layout.y_axis.axis + '_scale';
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-        if (this.layout.tooltip_positioning === 'vertical') {
-            // Position horizontally centered above the point
-            var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
-            var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
-            left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
-            arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
-            // Position vertically above the point unless there's insufficient space, then go below
-            if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)) {
-                top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
-                arrow_type = 'down';
-                arrow_top = tooltip_box.height - stroke_width;
-            } else {
-                top = page_origin.y + y_center + offset + stroke_width + arrow_width;
-                arrow_type = 'up';
-                arrow_top = 0 - stroke_width - arrow_width;
-            }
-        } else {
-            // Position horizontally on the left or the right depending on which side of the plot the point is on
-            if (x_center <= this.parent.layout.width / 2) {
-                left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-                arrow_type = 'left';
-                arrow_left = -1 * (arrow_width + stroke_width);
-            } else {
-                left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-                arrow_type = 'right';
-                arrow_left = tooltip_box.width - stroke_width;
-            }
-            // Position vertically centered unless we're at the top or bottom of the plot
-            data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-            if (y_center - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
-                top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
-                arrow_top = border_radius;
-            } else if (y_center + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
-                top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
-            } else { // vertically centered
-                top = page_origin.y + y_center - (tooltip_box.height / 2);
-                arrow_top = (tooltip_box.height / 2) - arrow_width;
-            }
-        }
-        // Apply positions to the main div
-        tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-        // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow) {
-            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-        }
-        tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var offset = Math.sqrt(point_size / Math.PI);
+
+        return {
+            x_min: x_center - offset, x_max: x_center + offset,
+            y_min: y_center - offset, y_max: y_center + offset,
+        };
     };
 
     // Function to flip labels from being anchored at the start of the text to the end
@@ -418,12 +358,12 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             return 'translate(' + x + ',' + y + ')';
         };
 
-        var fill = function(d) { return self.resolveScalableParameter(self.layout.color, d); };
-        var fill_opacity = function(d) { return self.resolveScalableParameter(self.layout.fill_opacity, d); };
+        var fill = function(d, i) { return this.resolveScalableParameter(this.layout.color, d, i); }.bind(this);
+        var fill_opacity = function(d, i) { return this.resolveScalableParameter(this.layout.fill_opacity, d, i); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d) { return self.resolveScalableParameter(self.layout.point_size, d); })
-            .type(function(d) { return self.resolveScalableParameter(self.layout.point_shape, d); });
+            .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
+            .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
         // Apply position and color, using a transition if necessary
 

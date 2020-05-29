@@ -368,16 +368,17 @@ LocusZoom.ScaleFunctions = (function() {
      * @param {String} name
      * @param {Object} [parameters] Configuration parameters specific to the specified scale function
      * @param {*} [value] The value to operate on
-     * @returns {*}
+     * @param {*} [value] The value to operate on
+     * @returns {Number} [index] The position of this element in the parent data array
      */
-    obj.get = function(name, parameters, value) {
+    obj.get = function(name, parameters, value, index) {
         if (!name) {
             return null;
         } else if (functions[name]) {
-            if (typeof parameters === 'undefined' && typeof value === 'undefined') {
+            if (typeof parameters === 'undefined' && typeof value === 'undefined' && typeof index === 'undefined') {
                 return functions[name];
             } else {
-                return functions[name](parameters, value);
+                return functions[name](parameters, value, index);
             }
         } else {
             throw new Error('scale function [' + name + '] not found');
@@ -493,6 +494,18 @@ LocusZoom.ScaleFunctions.add('categorical_bin', function(parameters, value) {
     } else {
         return parameters.values[parameters.categories.indexOf(value)];
     }
+});
+
+/**
+ * Cycle through a set of options, so that the each element in a set of data receives a value different than the
+ *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+ *  @param {Object} parameters
+ *  @param {Array} parameters.values A list of option values
+ * @return {*}
+ */
+LocusZoom.ScaleFunctions.add('ordinal_cycle', function (parameters, value, index) {
+    var options = parameters.values;
+    return options[ index % options.length ];
 });
 
 /**
