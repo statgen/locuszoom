@@ -5,7 +5,7 @@ toc-title: Table of Contents
 ---
 # Summary
 LocusZoom provides a rich set of features for visualizing and comparing genetic data, including by comparing multiple
- datasets within the same plot. It does so by embracing a configuration-driven model that decouples 
+ datasets within the same plot. It does so by embracing a configuration-driven model that decouples content 
  ([data sources](https://github.com/statgen/locuszoom/wiki/Data-Sources)) 
  from presentation (data layers).
  
@@ -83,15 +83,15 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
 ```
 
 In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this 
-plot has two tracks (association data and genes data) that are stacked on top of each other. At the plot level, we 
-control how the total space is allocated between two panels (`proportional_height`). The actual details of what to 
+plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
+we control how the total space is allocated between two panels (`proportional_height`). The actual details of what to 
 render are defined as nested layouts (association and genes panels), and the registry also contains predefined options 
-for this piece- `LocusZoom.Layouts.get()` just returns a JSON object.  
+for this piece- `LocusZoom.Layouts.get(...)` just returns a JSON object.  
 
 Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in 
 terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
 
-Note that this layout is defined using `LocusZoom.Layouts.add()`. We will cover this in "working with the registry", below.
+Note that this layout is defined using `LocusZoom.Layouts.add(...)`. We will cover this in "working with the registry", below.
 
 ### Will this layout work with my data?
 LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the 
@@ -122,24 +122,30 @@ Key things to notice are:
 3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax. But the 
     field must always be requested in the `fields` array.
 
+You will sometimes see fields referenced elsewhere with an additional syntax, like `{{namespace[assoc]}}variant|htmlescape`.
+The `|htmlescape` is a *transform* that affects value display. The fields array only needs to specify the names of fields; 
+transforms can be applied at any time later.
+
 #### No system of notation survives contact with developers
 There are some exceptions to this rule- it is difficult to support every possible combination of data sources from every possible set of API conventions.
  
 One place where this breaks down is *dependent* sources- eg, LD information is requested relative to the most significant
  variant in the association data. Differences in field formatting or nomenclature can sometimes break the ability to
- find the relevant information that the second data source requires; efforts are made to handle common use cases on
- request. These sources gradually become more generic over time. 
+ find the relevant information that the second data source requires; efforts are made to handle common use cases.
+  These sources gradually become more generic over time based on user feedback and needs. 
  
-The other main exception to how data layers work involves API endpoints that return complex nested objects (eg the list
+The other main exception to the `fields` mechanism involves API endpoints that return complex nested objects (eg the list
  of genes in a region, a standard dataset that few people will ever need to customize directly). By notation convention,
  the default LocusZoom layouts will indicate that special behavior is in effect via a dummy field called `all`, eg 
  
 ```js
-{ fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'], }
+{ 
+  fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'] 
+}
 ```
 
-Explanation: a data layer will not trigger fetching from a source unless the fields array references at least one piece
- of data from that source. Each data layer must specify the data it needs.
+Explanation: a data layer will not fetch from a source unless the fields array references at least one piece
+ of data from that source. Since the genes source bypasses explicit fields, it uses a dummy field to trigger the request.
   
 Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; 
  this behavior is governed by the `extractFields` method of `LocusZoom.Data.Source`.
@@ -155,7 +161,7 @@ But this is often tedious, and using the registry will save you from writing man
 
 To see the list of pre-defined layouts (as well as any custom ones you have created):
 ```js
-LocusZoom.Layouts.list();
+> LocusZoom.Layouts.list();
 {plot: Array(4), panel: Array(7), data_layer: Array(9), dashboard: Array(4), dashboard_components: Array(1), tooltip: Array(5) }
 ```
 
@@ -168,7 +174,7 @@ of the layouts that come with LocusZoom; see the [example gallery](http://statge
 these layouts would look.
  
 ```js
-LocusZoom.Layouts.list('plot');
+> LocusZoom.Layouts.list('plot');
 (4) ["standard_association", "association_catalog", "standard_phewas", "interval_association"]
 ```
 
@@ -194,7 +200,7 @@ from a particular source". There are three ways to fetch something, and each beh
 1. Fetch an existing layout, and tell it where to find the required data. (the third argument, "modifications", is given an explicit set of namespaces)
 
     ```js
-    LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' } } );
+    > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' } } );
     {
         fields: ["my_dataset_1:variant","my_dataset_1:position","my_dataset_1:log_pvalue","my_dataset_1:log_pvalue|logtoscinotation","my_dataset_1:ref_allele","ld:state","ld:isrefvar"]
     }
@@ -203,7 +209,7 @@ from a particular source". There are three ways to fetch something, and each beh
     (eg naming your data source "assoc" and "ld"), this will automatically find the right data.
     
     ```js
-    LocusZoom.Layouts.get('data_layer', 'association_pvalues');
+    > LocusZoom.Layouts.get('data_layer', 'association_pvalues');
     {
         fields: ["assoc:variant", "assoc:position", "assoc:log_pvalue", "assoc:log_pvalue|logtoscinotation", "assoc:ref_allele", "ld:state", "ld:isrefvar"] 
     }
@@ -214,7 +220,7 @@ from a particular source". There are three ways to fetch something, and each beh
  because it makes it easy to build a reusable layout (like a panel) out of smaller reusable pieces (like datalayers).
  
     ```js
-    LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true });
+    > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true });
     {
         namespace: { assoc: 'assoc', ld: 'ld' },
         fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
@@ -229,10 +235,10 @@ The most straightforward way to modify a layout is to pass just a few overrides.
 
 Consider an association plot, where the only requested change is to use the right side y-axis (2) instead of the 
 left side y-axis (1, the default). This can be accomplished by adding a key to the third argument of 
-`LocusZoom.Layouts.get()`. Note how the other existing options are preserved.
+`LocusZoom.Layouts.get(...)`. Note how the other existing options are preserved.
 
 ```js
-LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' }, y_axis: { axis: 2 } } );
+> LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' }, y_axis: { axis: 2 } } );
 { 
   y_axis: { axis: 2, field: "my_dataset_1:log_pvalue", floor: 0, upper_buffer: 0.1, min_extent: [0, 10] }
 }
@@ -269,14 +275,14 @@ Composition of smaller pieces is a powerful strategy- but it also means that no 
 every feature (because important behavior emerges when two building blocks are combined). As such, examples are a key 
 and explicit part of how LocusZoom usage is documented. 
 
-We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/assets/js/app/Layouts.js)!) 
-as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (and 
-[source code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice. 
-The Layouts [documentation](https://github.com/statgen/locuszoom/wiki/Layouts) also provides a more low-level overview.
+We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/assets/js/app/Layouts.js)) 
+as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with  
+[example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice. 
+The Layouts [documentation](https://github.com/statgen/locuszoom/wiki/Layouts) provides a more low-level overview.
 
 Lastly: LocusZoom works with evolving datasets, and pieces were contributed by different authors. For every hard and 
-fast "rule", there is always an exception! If you find gaps in the documentation, please contact the authors 
-(or mailing list) and we will improve what is missing. 
+fast "rule", there is always an exception! If you find gaps in the documentation, please contact the developers 
+(or [mailing list](https://groups.google.com/forum/#!forum/locuszoom)) and we will make improvements. 
 
 # Advanced use cases
 ## Plotting more than one study
@@ -333,8 +339,8 @@ From the example above, the second panel (which fetches association data from `a
  specification like `{{namespace[assoc]}}variant` into a "concrete" use of one dataset: `assoc_study2:variant`.
  
 ```js
-var layer_data = Object.keys(plot.panels['assoc2'].data_layers['associationpvalues'].data);
-Object.keys(layer_data[0]);
+> var layer_data = Object.keys(plot.panels['assoc_study2'].data_layers['associationpvalues'].data);
+Object.keys(layer_data[0]); // See the field names used by the data for a single point
 ["assoc_study2:variant", "assoc_study2:position", "assoc_study2:log_pvalue", "assoc_study2:log_pvalue|logtoscinotation", "assoc_study2:ref_allele", "ld:state", "ld:isrefvar"]
 ```
 
@@ -361,17 +367,17 @@ const new_panel = existing_plot.addPanel(extra_panel_layout); // Adds the panel 
 new_panel.addBasicLoader(); // Add a nice "loading" indicator for UI
 ```
 
-### Common pitfalls
-One of the most common pitfalls in working with namespaced layouts is the difference between *abstract* and *concrete* 
+### Common issues
+One of the most common issues in working with namespaced layouts is the difference between *abstract* and *concrete* 
 layouts. For example, imagine if the page contained a button to toggle the display of labels on the plot. This button 
 might work by changing the plot layout options, then triggering a re-render.
 
-Here is how coloring options would be specified when defining a layout in the registry (abstract), so that labels were 
+Here is how label options would be specified when defining a layout in the registry (abstract), so that labels were 
 present on the very first re-render for any dataset that used this layout. Note that it identifies the key fields using 
 a generic `namespace` reference:
 
 ```js
-const generic_layout_with_special_color = {
+const generic_layout_with_special_labels = {
     // Other data layer fields omitted for clarity
     label: {
         text: '{{{{namespace[assoc]}}variant|htmlescape}}',
