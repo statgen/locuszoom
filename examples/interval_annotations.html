@@ -100,12 +100,18 @@
         }
     };
 
-    var intervals_layout = layout.panels[1].data_layers[0];
+    var intervals_panel = layout.panels[1];
+    var intervals_layout = intervals_panel.data_layers[0];
+
     // Remove the itemRgb field from the default layout, because our demo api does not have this information
     intervals_layout.fields.pop();
+    // This demo is focused on one track (not many), so show the legend. (the intervals track has additional
+    //  expand/collapse behavior, so this is controlled in two places instead of one)
+    intervals_panel.legend.hidden = false;
+    intervals_layout.always_hide_legend = false;
 
     // Add a track information button to the intervals panel
-    layout.panels[1].dashboard.components.push({
+    intervals_panel.dashboard.components.push({
         type: "menu",
         color: "yellow",
         position: "right",

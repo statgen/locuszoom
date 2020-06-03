@@ -202,14 +202,12 @@
                     var id = pair[0];
                     var label = pair[1];
                     var item_color = color_scale.parameters.values[index];
-                    var item = { shape: 'rect', width: 9, label: label };
-                    item['color'] = item_color;
+                    var item = { shape: 'rect', width: 9, label: label, color:  item_color };
                     item[self.layout.track_split_field] = id;
                     return item;
                 });
             }
         }.bind(this);
-
 
         // After we've loaded interval data interpret it to assign
         // each to a track so that they do not overlap in the view
@@ -315,12 +313,12 @@
             this.svg.group.selectAll('.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared').remove();
             Object.keys(this.track_split_field_index).forEach(function(key) {
                 // Make a psuedo-element so that we can generate an id for the shared node
-                var psuedoElement = {};
-                psuedoElement[this.layout.track_split_field] = key;
+                var pseudoElement = {};
+                pseudoElement[this.layout.track_split_field] = key;
                 // Insert the shared node
                 var sharedstatusnode_style = {display: (this.layout.split_tracks ? null : 'none')};
                 this.svg.group.insert('rect', ':first-child')
-                    .attr('id', this.getElementStatusNodeId(psuedoElement))
+                    .attr('id', this.getElementStatusNodeId(pseudoElement))
                     .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared')
                     .attr('rx', this.layout.bounding_box_padding).attr('ry', this.layout.bounding_box_padding)
                     .attr('width', this.parent.layout.cliparea.width)
@@ -468,8 +466,13 @@
                 this.updateSplitTrackAxis();
             }
 
-            return this;
+            // The intervals track allows legends to be dynamically generated, in which case space can only be
+            //  allocated after the panel has been rendered.
+            if (this.parent && this.parent.legend) {
+                this.parent.legend.render();
+            }
 
+            return this;
         };
 
         this._getTooltipPosition = function (tooltip) {
