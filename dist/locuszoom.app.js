@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.10.2' };
+        var LocusZoom = { version: '0.11.0-beta.1' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -316,15 +316,18 @@
             });
         };
         /**
- * Validate a (presumed complete) plot state object against internal rules for consistency, and ensure the plot fits
- *   within any constraints imposed by the layout.
+ * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within
+ *  any constraints specified by the layout
+ *
+ * This function has side effects; it mutates the proposed state in order to meet certain bounds checks etc.
  * @param {Object} new_state
+ * @param {Number} new_state.chr
  * @param {Number} new_state.start
  * @param {Number} new_state.end
  * @param {Object} layout
  * @returns {*|{}}
  */
-        LocusZoom.validateState = function (new_state, layout) {
+        LocusZoom._updateStatePosition = function (new_state, layout) {
             new_state = new_state || {};
             layout = layout || {};
             // If a "chr", "start", and "end" are present then resolve start and end
@@ -378,7 +381,7 @@
         //
         /**
  * Replace placeholders in an html string with field values defined in a data object
- *  Only works on scalar values! Will ignore non-scalars.
+ *  Only works on scalar values in data! Will ignore non-scalars. This is useful in, eg, tooltip templates.
  *
  *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
  * @param {Object} data
@@ -1005,10 +1008,12 @@
             },
             html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>' + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>' + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
         });
-        LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
-            var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-            covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
-            return covariates_model_association;
+        LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function () {
+            // Add a special "toggle label" button to the base tooltip. This must be used in tandem with a custom layout
+            //   directive (label.filters should check a boolean annotation field called "lz_show_label").
+            var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+            base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); layer.parent_plot.applyState();">Toggle label</a>';
+            return base;
         }());
         LocusZoom.Layouts.add('tooltip', 'standard_genes', {
             closable: true,
@@ -1025,23 +1030,6 @@
                 ]
             },
             html: '<h4><strong><i>{{gene_name|htmlescape}}</i></strong></h4>' + 'Gene ID: <a href="https://useast.ensembl.org/homo_sapiens/Gene/Summary?g={{gene_id|htmlescape}}&db=core" target="_blank" rel="noopener">{{gene_id|htmlescape}}</a><br>' + 'Transcript ID: <strong>{{transcript_id|htmlescape}}</strong><br>' + '{{#if pLI}}<table>' + '<tr><th>Constraint</th><th>Expected variants</th><th>Observed variants</th><th>Const. Metric</th></tr>' + '<tr><td>Synonymous</td><td>{{exp_syn}}</td><td>{{obs_syn}}</td><td>z = {{syn_z}}<br>o/e = {{oe_syn}} ({{oe_syn_lower}} - {{oe_syn_upper}})</td></tr>' + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{obs_mis}}</td><td>z = {{mis_z}}<br>o/e = {{oe_mis}} ({{oe_mis_lower}} - {{oe_mis_upper}})</td></tr>' + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>' + '</table><br>{{/if}}' + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
-        });
-        LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
-            namespace: { 'intervals': 'intervals' },
-            closable: false,
-            show: {
-                or: [
-                    'highlighted',
-                    'selected'
-                ]
-            },
-            hide: {
-                and: [
-                    'unhighlighted',
-                    'unselected'
-                ]
-            },
-            html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
         });
         LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
             namespace: {
@@ -1063,6 +1051,24 @@
             },
             html: '<strong>{{{{namespace[catalog]}}variant|htmlescape}}</strong><br>' + 'Catalog entries: <strong>{{n_catalog_matches|htmlescape}}</strong><br>' + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>' + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'    // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
 + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
+        });
+        LocusZoom.Layouts.add('tooltip', 'coaccessibility', {
+            namespace: { 'access': 'access' },
+            closable: true,
+            show: {
+                or: [
+                    'highlighted',
+                    'selected'
+                ]
+            },
+            hide: {
+                and: [
+                    'unhighlighted',
+                    'unselected'
+                ]
+            },
+            // TODO: Is there a more generic terminology? (eg not every technique is in terms of cis-regulatory element)
+            html: '<strong>Regulatory element</strong><br>' + '{{{{namespace[access]}}start1|htmlescape}}-{{{{namespace[access]}}end1|htmlescape}}<br>' + '<strong>Promoter</strong><br>' + '{{{{namespace[access]}}start2|htmlescape}}-{{{{namespace[access]}}end2|htmlescape}}<br>' + '{{#if {{namespace[access]}}target}}<strong>Target</strong>: {{{{namespace[access]}}target|htmlescape}}<br>{{/if}}' + '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}'
         });
         /**
  * Data Layer Layouts: represent specific information from a data source
@@ -1246,6 +1252,96 @@
             },
             tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
         });
+        LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
+            namespace: { 'access': 'access' },
+            id: 'coaccessibility',
+            type: 'arcs',
+            fields: [
+                '{{namespace[access]}}start1',
+                '{{namespace[access]}}end1',
+                '{{namespace[access]}}start2',
+                '{{namespace[access]}}end2',
+                '{{namespace[access]}}id',
+                '{{namespace[access]}}target',
+                '{{namespace[access]}}score'
+            ],
+            match: {
+                send: '{{namespace[access]}}target',
+                receive: '{{namespace[access]}}target'
+            },
+            id_field: '{{namespace[access]}}id',
+            filters: [
+                [
+                    '{{namespace[access]}}score',
+                    '!=',
+                    null
+                ],
+                // For coaccessibility, range is 0..1 and sig threshold is 0.5. For other data types (like chromatin
+                //  interaction), this filter may not be appropriate.
+                [
+                    '{{namespace[access]}}score',
+                    '>',
+                    0.5
+                ]
+            ],
+            color: [
+                {
+                    field: 'lz_highlight_match',
+                    // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: true,
+                        then: '#ff0000'
+                    }
+                },
+                {
+                    field: 'lz_highlight_match',
+                    // Special field name whose presence triggers custom rendering
+                    scale_function: 'if',
+                    parameters: {
+                        field_value: false,
+                        then: '#EAE6E6'
+                    }
+                },
+                {
+                    scale_function: 'ordinal_cycle',
+                    parameters: { values: d3.scale.category20().range() }
+                }
+            ],
+            x_axis: {
+                field1: '{{namespace[access]}}start1',
+                field2: '{{namespace[access]}}start2'
+            },
+            y_axis: {
+                axis: 1,
+                field: '{{namespace[access]}}score',
+                upper_buffer: 0.1,
+                min_extent: [
+                    0,
+                    1
+                ]
+            },
+            behaviors: {
+                onmouseover: [{
+                        action: 'set',
+                        status: 'highlighted'
+                    }],
+                onmouseout: [{
+                        action: 'unset',
+                        status: 'highlighted'
+                    }],
+                onclick: [{
+                        action: 'toggle',
+                        status: 'selected',
+                        exclusive: true
+                    }],
+                onshiftclick: [{
+                        action: 'toggle',
+                        status: 'selected'
+                    }]
+            },
+            tooltip: LocusZoom.Layouts.get('tooltip', 'coaccessibility', { unnamespaced: true })
+        });
         LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
             // Slightly modify an existing layout
             var l = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
@@ -1389,186 +1485,6 @@
             },
             tooltip: LocusZoom.Layouts.get('tooltip', 'standard_genes', { unnamespaced: true })
         });
-        LocusZoom.Layouts.add('data_layer', 'genome_legend', {
-            namespace: { 'genome': 'genome' },
-            id: 'genome_legend',
-            type: 'genome_legend',
-            fields: [
-                '{{namespace[genome]}}chr',
-                '{{namespace[genome]}}base_pairs'
-            ],
-            x_axis: {
-                floor: 0,
-                ceiling: 2881033286
-            }
-        });
-        LocusZoom.Layouts.add('data_layer', 'intervals', {
-            namespace: { 'intervals': 'intervals' },
-            id: 'intervals',
-            type: 'intervals',
-            fields: [
-                '{{namespace[intervals]}}start',
-                '{{namespace[intervals]}}end',
-                '{{namespace[intervals]}}state_id',
-                '{{namespace[intervals]}}state_name'
-            ],
-            id_field: '{{namespace[intervals]}}start',
-            start_field: '{{namespace[intervals]}}start',
-            end_field: '{{namespace[intervals]}}end',
-            track_split_field: '{{namespace[intervals]}}state_id',
-            split_tracks: true,
-            always_hide_legend: false,
-            color: {
-                field: '{{namespace[intervals]}}state_id',
-                scale_function: 'categorical_bin',
-                parameters: {
-                    categories: [
-                        1,
-                        2,
-                        3,
-                        4,
-                        5,
-                        6,
-                        7,
-                        8,
-                        9,
-                        10,
-                        11,
-                        12,
-                        13
-                    ],
-                    values: [
-                        'rgb(212,63,58)',
-                        'rgb(250,120,105)',
-                        'rgb(252,168,139)',
-                        'rgb(240,189,66)',
-                        'rgb(250,224,105)',
-                        'rgb(240,238,84)',
-                        'rgb(244,252,23)',
-                        'rgb(23,232,252)',
-                        'rgb(32,191,17)',
-                        'rgb(23,166,77)',
-                        'rgb(32,191,17)',
-                        'rgb(162,133,166)',
-                        'rgb(212,212,212)'
-                    ],
-                    null_value: '#B8B8B8'
-                }
-            },
-            legend: [
-                {
-                    shape: 'rect',
-                    color: 'rgb(212,63,58)',
-                    width: 9,
-                    label: 'Active Promoter',
-                    '{{namespace[intervals]}}state_id': 1
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(250,120,105)',
-                    width: 9,
-                    label: 'Weak Promoter',
-                    '{{namespace[intervals]}}state_id': 2
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(252,168,139)',
-                    width: 9,
-                    label: 'Poised Promoter',
-                    '{{namespace[intervals]}}state_id': 3
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(240,189,66)',
-                    width: 9,
-                    label: 'Strong enhancer',
-                    '{{namespace[intervals]}}state_id': 4
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(250,224,105)',
-                    width: 9,
-                    label: 'Strong enhancer',
-                    '{{namespace[intervals]}}state_id': 5
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(240,238,84)',
-                    width: 9,
-                    label: 'Weak enhancer',
-                    '{{namespace[intervals]}}state_id': 6
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(244,252,23)',
-                    width: 9,
-                    label: 'Weak enhancer',
-                    '{{namespace[intervals]}}state_id': 7
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(23,232,252)',
-                    width: 9,
-                    label: 'Insulator',
-                    '{{namespace[intervals]}}state_id': 8
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(32,191,17)',
-                    width: 9,
-                    label: 'Transcriptional transition',
-                    '{{namespace[intervals]}}state_id': 9
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(23,166,77)',
-                    width: 9,
-                    label: 'Transcriptional elongation',
-                    '{{namespace[intervals]}}state_id': 10
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(136,240,129)',
-                    width: 9,
-                    label: 'Weak transcribed',
-                    '{{namespace[intervals]}}state_id': 11
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(162,133,166)',
-                    width: 9,
-                    label: 'Polycomb-repressed',
-                    '{{namespace[intervals]}}state_id': 12
-                },
-                {
-                    shape: 'rect',
-                    color: 'rgb(212,212,212)',
-                    width: 9,
-                    label: 'Heterochromatin / low signal',
-                    '{{namespace[intervals]}}state_id': 13
-                }
-            ],
-            behaviors: {
-                onmouseover: [{
-                        action: 'set',
-                        status: 'highlighted'
-                    }],
-                onmouseout: [{
-                        action: 'unset',
-                        status: 'highlighted'
-                    }],
-                onclick: [{
-                        action: 'toggle',
-                        status: 'selected',
-                        exclusive: true
-                    }],
-                onshiftclick: [{
-                        action: 'toggle',
-                        status: 'selected'
-                    }]
-            },
-            tooltip: LocusZoom.Layouts.get('tooltip', 'standard_intervals', { unnamespaced: true })
-        });
         LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
             // Identify GWAS hits that are present in the GWAS catalog
             namespace: {
@@ -1708,16 +1624,6 @@
                 }
             ]
         });
-        LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', function () {
-            var covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
-            covariates_model_plot_dashboard.components.push({
-                type: 'covariates_model',
-                button_html: 'Model',
-                button_title: 'Show and edit covariates currently in model',
-                position: 'left'
-            });
-            return covariates_model_plot_dashboard;
-        }());
         LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
             var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
             region_nav_plot_dashboard.components.push({
@@ -1820,6 +1726,43 @@
                 LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
                 LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true })
             ]
+        });
+        LocusZoom.Layouts.add('panel', 'coaccessibility', {
+            id: 'coaccessibility',
+            width: 800,
+            height: 225,
+            min_width: 400,
+            min_height: 100,
+            proportional_width: 1,
+            margin: {
+                top: 35,
+                right: 50,
+                bottom: 40,
+                left: 50
+            },
+            inner_border: 'rgb(210, 210, 210)',
+            dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
+            axes: {
+                x: {
+                    label: 'Chromosome {{chr}} (Mb)',
+                    label_offset: 32,
+                    tick_format: 'region',
+                    extent: 'state'
+                },
+                y1: {
+                    label: 'Score',
+                    label_offset: 28,
+                    render: false
+                }
+            },
+            interaction: {
+                drag_background_to_pan: true,
+                drag_x_ticks_to_scale: true,
+                drag_y1_ticks_to_scale: true,
+                scroll_to_zoom: true,
+                x_linked: true
+            },
+            data_layers: [LocusZoom.Layouts.get('data_layer', 'coaccessibility', { unnamespaced: true })]
         });
         LocusZoom.Layouts.add('panel', 'association_catalog', function () {
             var l = LocusZoom.Layouts.get('panel', 'association', {
@@ -1959,313 +1902,6 @@
                 LocusZoom.Layouts.get('data_layer', 'phewas_pvalues', { unnamespaced: true })
             ]
         });
-        LocusZoom.Layouts.add('panel', 'genome_legend', {
-            id: 'genome_legend',
-            width: 800,
-            height: 50,
-            origin: {
-                x: 0,
-                y: 300
-            },
-            min_width: 800,
-            min_height: 50,
-            proportional_width: 1,
-            margin: {
-                top: 0,
-                right: 50,
-                bottom: 35,
-                left: 50
-            },
-            axes: {
-                x: {
-                    label: 'Genomic Position (number denotes chromosome)',
-                    label_offset: 35,
-                    ticks: [
-                        {
-                            x: 124625310,
-                            text: '1',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 370850307,
-                            text: '2',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 591461209,
-                            text: '3',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 786049562,
-                            text: '4',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 972084330,
-                            text: '5',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1148099493,
-                            text: '6',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1313226358,
-                            text: '7',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1465977701,
-                            text: '8',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1609766427,
-                            text: '9',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1748140516,
-                            text: '10',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 1883411148,
-                            text: '11',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2017840353,
-                            text: '12',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2142351240,
-                            text: '13',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2253610949,
-                            text: '14',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2358551415,
-                            text: '15',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2454994487,
-                            text: '16',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2540769469,
-                            text: '17',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2620405698,
-                            text: '18',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2689008813,
-                            text: '19',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2750086065,
-                            text: '20',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2805663772,
-                            text: '21',
-                            style: {
-                                'fill': 'rgb(120, 120, 186)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        },
-                        {
-                            x: 2855381003,
-                            text: '22',
-                            style: {
-                                'fill': 'rgb(0, 0, 66)',
-                                'text-anchor': 'center',
-                                'font-size': '13px',
-                                'font-weight': 'bold'
-                            },
-                            transform: 'translate(0, 2)'
-                        }
-                    ]
-                }
-            },
-            data_layers: [LocusZoom.Layouts.get('data_layer', 'genome_legend', { unnamespaced: true })]
-        });
-        LocusZoom.Layouts.add('panel', 'intervals', {
-            id: 'intervals',
-            width: 1000,
-            height: 50,
-            min_width: 500,
-            min_height: 50,
-            margin: {
-                top: 25,
-                right: 150,
-                bottom: 5,
-                left: 50
-            },
-            dashboard: function () {
-                var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-                l.components.push({
-                    type: 'toggle_split_tracks',
-                    data_layer_id: 'intervals',
-                    position: 'right'
-                });
-                return l;
-            }(),
-            axes: {},
-            interaction: {
-                drag_background_to_pan: true,
-                scroll_to_zoom: true,
-                x_linked: true
-            },
-            legend: {
-                hidden: true,
-                orientation: 'horizontal',
-                origin: {
-                    x: 50,
-                    y: 0
-                },
-                pad_from_bottom: 5
-            },
-            data_layers: [LocusZoom.Layouts.get('data_layer', 'intervals', { unnamespaced: true })]
-        });
         LocusZoom.Layouts.add('panel', 'annotation_catalog', {
             id: 'annotationcatalog',
             width: 800,
@@ -2336,15 +1972,11 @@
             panels: [
                 LocusZoom.Layouts.get('panel', 'phewas', {
                     unnamespaced: true,
-                    proportional_height: 0.45
-                }),
-                LocusZoom.Layouts.get('panel', 'genome_legend', {
-                    unnamespaced: true,
-                    proportional_height: 0.1
+                    proportional_height: 0.5
                 }),
                 LocusZoom.Layouts.get('panel', 'genes', {
                     unnamespaced: true,
-                    proportional_height: 0.45,
+                    proportional_height: 0.5,
                     margin: { bottom: 40 },
                     axes: {
                         x: {
@@ -2358,29 +1990,56 @@
             ],
             mouse_guide: false
         });
-        LocusZoom.Layouts.add('plot', 'interval_association', {
+        LocusZoom.Layouts.add('plot', 'coaccessibility', {
             state: {},
             width: 800,
-            height: 550,
+            height: 450,
             responsive_resize: 'both',
             min_region_scale: 20000,
             max_region_scale: 1000000,
-            dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+            dashboard: LocusZoom.Layouts.get('dashboard', 'region_nav_plot', { unnamespaced: true }),
             panels: [
-                LocusZoom.Layouts.get('panel', 'association', {
+                LocusZoom.Layouts.get('panel', 'coaccessibility', {
                     unnamespaced: true,
-                    width: 800,
-                    proportional_height: 225 / 570
+                    proportional_height: 0.4
                 }),
-                LocusZoom.Layouts.get('panel', 'intervals', {
-                    unnamespaced: true,
-                    proportional_height: 120 / 570
-                }),
-                LocusZoom.Layouts.get('panel', 'genes', {
-                    unnamespaced: true,
-                    width: 800,
-                    proportional_height: 225 / 570
-                })
+                function () {
+                    // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
+                    // This is a companion to the "match" directive in the coaccessibility panel
+                    var base = LocusZoom.Layouts.get('panel', 'genes', {
+                        unnamespaced: true,
+                        proportional_height: 0.6
+                    });
+                    var layer = base.data_layers[0];
+                    layer.match = {
+                        send: 'gene_name',
+                        receive: 'gene_name'
+                    };
+                    var color_config = [
+                        {
+                            field: 'lz_highlight_match',
+                            // Special field name whose presence triggers custom rendering
+                            scale_function: 'if',
+                            parameters: {
+                                field_value: true,
+                                then: '#ff0000'
+                            }
+                        },
+                        {
+                            field: 'lz_highlight_match',
+                            // Special field name whose presence triggers custom rendering
+                            scale_function: 'if',
+                            parameters: {
+                                field_value: false,
+                                then: '#EAE6E6'
+                            }
+                        },
+                        '#363696'
+                    ];
+                    layer.color = color_config;
+                    layer.stroke = color_config;
+                    return base;
+                }()
             ]
         });
         /* global LocusZoom */
@@ -2431,7 +2090,10 @@
             this.state = {};
             /** @member {String} */
             this.state_id = null;
-            this.setDefaultState();
+            /** @member {Object} */
+            this.layer_state = null;
+            // Create a default state (and set any references to the parent as appropriate)
+            this._setDefaultState();
             // Initialize parameters for storing data and tool tips
             /** @member {Array} */
             this.data = [];
@@ -2487,20 +2149,27 @@
  *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
-        LocusZoom.DataLayer.prototype.setDefaultState = function () {
-            // Define state parameters specific to this data layer. Within plot state, this will live under a key
-            //  `panel_name.layer_name`.
+        LocusZoom.DataLayer.prototype._setDefaultState = function () {
+            // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
+            //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
+            //  persist across re-render)
+            var layer_state = {
+                status_flags: {},
+                extra_fields: {}
+            };
+            var status_flags = layer_state.status_flags;
+            LocusZoom.DataLayer.Statuses.adjectives.forEach(function (status) {
+                status_flags[status] = status_flags[status] || [];
+            });
+            // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
+            status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
             if (this.parent) {
-                this.state = this.parent.state;
+                // If layer has a parent, store a reference in the overarching plot.state object
                 this.state_id = this.parent.id + '.' + this.id;
-                this.state[this.state_id] = this.state[this.state_id] || {};
-                var layer_state = this.state[this.state_id];
-                LocusZoom.DataLayer.Statuses.adjectives.forEach(function (status) {
-                    layer_state[status] = layer_state[status] || [];
-                });
-                // Also initialize "internal-only" state fields
-                layer_state['has_tooltip'] = layer_state['has_tooltip'] || [];
+                this.state = this.parent.state;
+                this.state[this.state_id] = layer_state;
             }
+            this.layer_state = layer_state;
         };
         /**
  * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
@@ -2511,7 +2180,9 @@
             type: '',
             fields: [],
             x_axis: {},
-            y_axis: {}
+            y_axis: {},
+            // Not every layer allows this attribute, but it is available for the default implementation
+            tooltip_positioning: 'horizontal'
         };
         /**
  * Available statuses that individual elements can have. Each status is described by
@@ -2548,7 +2219,11 @@
  * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
  */
         LocusZoom.DataLayer.prototype.getBaseId = function () {
-            return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+            if (this.parent) {
+                return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+            } else {
+                return '';
+            }
         };
         /**
  * Determine the pixel height of data-bound objects represented inside this data layer. (excluding elements such as axes)
@@ -2561,16 +2236,6 @@
         LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function () {
             var dataBCR = this.svg.group.node().getBoundingClientRect();
             return dataBCR.height;
-        };
-        /**
- * Whether transitions can be applied to this data layer
- * @returns {boolean}
- */
-        LocusZoom.DataLayer.prototype.canTransition = function () {
-            if (!this.layout.transition) {
-                return false;
-            }
-            return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
         };
         /**
  * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
@@ -2627,6 +2292,7 @@
         LocusZoom.DataLayer.prototype.applyDataMethods = function () {
             var field_to_match = this.layout.match && this.layout.match.receive;
             var broadcast_value = this.parent_plot.state.lz_match_value;
+            var self = this;
             this.data.forEach(function (d, i) {
                 // Basic toHTML() method - return the stringified value in the id_field, if defined.
                 // When this layer receives data, mark whether points match (via a synthetic boolean field)
@@ -2634,24 +2300,24 @@
                 if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
                     d.lz_highlight_match = d[field_to_match] === broadcast_value;
                 }
-                this.data[i].toHTML = function () {
-                    var id_field = this.layout.id_field || 'id';
+                self.data[i].toHTML = function () {
+                    var id_field = self.layout.id_field || 'id';
                     var html = '';
-                    if (this.data[i][id_field]) {
-                        html = this.data[i][id_field].toString();
+                    if (self.data[i][id_field]) {
+                        html = self.data[i][id_field].toString();
                     }
                     return html;
-                }.bind(this);
-                // getDataLayer() method - return a reference to the data layer
-                this.data[i].getDataLayer = function () {
-                    return this;
-                }.bind(this);
-                // deselect() method - shortcut method to deselect the element
-                this.data[i].deselect = function () {
-                    var data_layer = this.getDataLayer();
-                    data_layer.unselectElement(this);
                 };
-            }.bind(this));
+                // getDataLayer() method - return a reference to the data layer
+                self.data[i].getDataLayer = function () {
+                    return self;
+                };
+                // deselect() method - shortcut method to deselect the element
+                self.data[i].deselect = function () {
+                    var data_layer = self.getDataLayer();
+                    data_layer.unselectElement(self);    // dynamically generated method name. It exists, honest.
+                };
+            });
             this.applyCustomDataMethods();
             return this;
         };
@@ -2700,18 +2366,23 @@
             return this;
         };
         /**
- * Apply scaling functions to an element or parameter as needed, based on its layout and the element's data
+ * Apply scaling functions to an element as needed, based on the layout rules governing display + the element's data
  * If the layout parameter is already a primitive type, simply return the value as given
- * @param {Array|Number|String|Object} layout
- * @param {*} data The value to be used with the filter
+ *
+ * In the future this may be further expanded, so that scaling functions can operate similar to mappers
+ *  (item, index, array). Additional arguments would be added as the need arose.
+ * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
+ *  ("rules for how to choose color based on item value")
+ * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
+ * @param {Number} data_index The array index for the data element
  * @returns {*} The transformed value
  */
-        LocusZoom.DataLayer.prototype.resolveScalableParameter = function (layout, data) {
+        LocusZoom.DataLayer.prototype.resolveScalableParameter = function (layout, element_data, data_index) {
             var ret = null;
             if (Array.isArray(layout)) {
                 var idx = 0;
                 while (ret === null && idx < layout.length) {
-                    ret = this.resolveScalableParameter(layout[idx], data);
+                    ret = this.resolveScalableParameter(layout[idx], element_data, data_index);
                     idx++;
                 }
             } else {
@@ -2724,9 +2395,15 @@
                     if (layout.scale_function) {
                         if (layout.field) {
                             var f = new LocusZoom.Data.Field(layout.field);
-                            ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                            var extra;
+                            try {
+                                extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
+                            } catch (e) {
+                                extra = null;
+                            }
+                            ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(element_data, extra), data_index);
                         } else {
-                            ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                            ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, element_data, data_index);
                         }
                     }
                     break;
@@ -2863,7 +2540,7 @@
                 arrow: null,
                 selector: d3.select(this.parent_plot.svg.node().parentNode).append('div').attr('class', 'lz-data_layer-tooltip').attr('id', id + '-tooltip')
             };
-            this.state[this.state_id]['has_tooltip'].push(id);
+            this.layer_state.status_flags['has_tooltip'].push(id);
             this.updateTooltip(data);
             return this;
         };
@@ -2918,7 +2595,7 @@
             }
             // When a tooltip is removed, also remove the reference from the state
             if (!temporary) {
-                var state = this.state[this.state_id]['has_tooltip'];
+                var state = this.layer_state.status_flags['has_tooltip'];
                 var label_mark_position = state.indexOf(id);
                 state.splice(label_mark_position, 1);
             }
@@ -2936,8 +2613,12 @@
         };
         //
         /**
- * Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
- *   Most data layers reimplement this method to position tool tips specifically for the data they display
+ * Position and then redraw tool tip - naïve function to place a tool tip in the data layer. By default, positions wrt
+ *   the top-left corner of the data layer.
+ *
+ * Each layer type may have more specific logic. Consider overriding the provided hooks `_getTooltipPosition` or
+ *  `_drawTooltip` as appropriate
+ *
  * @param {String} id The identifier of the tooltip to position
  * @returns {LocusZoom.DataLayer}
  */
@@ -2945,13 +2626,156 @@
             if (typeof id != 'string') {
                 throw new Error('Unable to position tooltip: id is not a string');
             }
-            // Position the div itself
-            this.tooltips[id].selector.style('left', d3.event.pageX + 'px').style('top', d3.event.pageY + 'px');
-            // Create / update position on arrow connecting tooltip to data
-            if (!this.tooltips[id].arrow) {
-                this.tooltips[id].arrow = this.tooltips[id].selector.append('div').style('position', 'absolute').attr('class', 'lz-data_layer-tooltip-arrow_top_left');
+            if (!this.tooltips[id]) {
+                throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
             }
-            this.tooltips[id].arrow.style('left', '-1px').style('top', '-1px');
+            var tooltip = this.tooltips[id];
+            var coords = this._getTooltipPosition(tooltip);
+            if (!coords) {
+                // Special cutout: normally, tooltips are positioned based on the datum element. Some, like lines/curves,
+                //  work better if based on a mouse event. Since not every redraw contains a mouse event, we can just skip
+                //  calculating position when no position information is available.
+                return null;
+            }
+            this._drawTooltip(tooltip, this.layout.tooltip_positioning, coords.x_min, coords.x_max, coords.y_min, coords.y_max);
+        };
+        /**
+ * Determine the coordinates for where to point the tooltip at. Typically, this is the center of a datum element (eg,
+ *  the middle of a scatter plot point). Also provide an offset if the tooltip should not be at that center (most
+ *  elements are not single points, eg a scatter plot point has a radius and a gene is a rectangle).
+ *  The default implementation is quite naive: it places the tooltip at the origin for that layer. Individual layers
+ *    should override this method to position relative to the chosen data element or mouse event.
+ * @param {Object} tooltip A tooltip object (including attribute tooltip.data)
+ * @returns {Object} as {x_min, x_max, y_min, y_max} in px, representing bounding box of a rectangle around the data pt
+ *  Note that these pixels are in the SVG coordinate system
+ */
+        LocusZoom.DataLayer.prototype._getTooltipPosition = function (tooltip) {
+            var panel = this.parent;
+            var y_scale = panel['y' + this.layout.y_axis.axis + '_scale'];
+            var y_extent = panel['y' + this.layout.y_axis.axis + '_extent'];
+            var x = panel.x_scale(panel.x_extent[0]);
+            var y = y_scale(y_extent[0]);
+            return {
+                x_min: x,
+                x_max: x,
+                y_min: y,
+                y_max: y
+            };
+        };
+        /**
+ * Draw a tooltip on the data layer pointed at the specified coordinates, in the specified orientation.
+ *  Tooltip will be drawn on the edge of the major axis, and centered along the minor axis- see diagram.
+ *   v
+ * > o <
+ *   ^
+ *
+ * @param tooltip {Object} The object representing all data for the tooltip to be drawn
+ * @param {'vertical'|'horizontal'|'top'|'bottom'|'left'|'right'} position Where to draw the tooltip relative to
+ *  the data
+ * @param {Number} x_min The min x-coordinate for the bounding box of the data element
+ * @param {Number} x_max The max x-coordinate for the bounding box of the data element
+ * @param {Number} y_min The min y-coordinate for the bounding box of the data element
+ * @param {Number} y_max The max y-coordinate for the bounding box of the data element
+ * @private
+ */
+        LocusZoom.DataLayer.prototype._drawTooltip = function (tooltip, position, x_min, x_max, y_min, y_max) {
+            var panel_layout = this.parent.layout;
+            var layer_layout = this.layout;
+            // Tooltip position params: as defined in the default stylesheet, used in calculations
+            var arrow_size = 7;
+            var stroke_width = 1;
+            var arrow_total = arrow_size + stroke_width;
+            // Tooltip pos should account for how much space the arrow takes up
+            var tooltip_padding = 6;
+            // bbox size must account for any internal padding applied between data and border
+            var page_origin = this.getPageOrigin();
+            var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+            var data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
+            var data_layer_width = panel_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
+            // Clip the edges of the datum to the available plot area
+            x_min = Math.max(x_min, 0);
+            x_max = Math.min(x_max, data_layer_width);
+            y_min = Math.max(y_min, 0);
+            y_max = Math.min(y_max, data_layer_height);
+            var x_center = (x_min + x_max) / 2;
+            var y_center = (y_min + y_max) / 2;
+            // Default offsets are the far edge of the datum bounding box
+            var x_offset = x_max - x_center;
+            var y_offset = y_max - y_center;
+            var placement = layer_layout.tooltip_positioning;
+            // Coordinate system note: the tooltip is positioned relative to the plot/page; the arrow is positioned relative to
+            //  the tooltip boundaries
+            var tooltip_top, tooltip_left, arrow_type, arrow_top, arrow_left;
+            // The user can specify a generic orientation, and LocusZoom will autoselect whether to place the tooltip above or below
+            if (placement === 'vertical') {
+                // Auto-select whether to position above the item, or below
+                x_offset = 0;
+                if (tooltip_box.height + arrow_total > data_layer_height - (y_center + y_offset)) {
+                    placement = 'top';
+                } else {
+                    placement = 'bottom';
+                }
+            } else if (placement === 'horizontal') {
+                // Auto select whether to position to the left of the item, or to the right
+                y_offset = 0;
+                if (x_center <= panel_layout.width / 2) {
+                    placement = 'left';
+                } else {
+                    placement = 'right';
+                }
+            }
+            if (placement === 'top' || placement === 'bottom') {
+                // Position horizontally centered above the point
+                var offset_right = Math.max(tooltip_box.width / 2 - x_center, 0);
+                var offset_left = Math.max(tooltip_box.width / 2 + x_center - data_layer_width, 0);
+                tooltip_left = page_origin.x + x_center - tooltip_box.width / 2 - offset_left + offset_right;
+                arrow_left = page_origin.x + x_center - tooltip_left - arrow_size;
+                // Arrow should be centered over the data
+                // Position vertically above the point unless there's insufficient space, then go below
+                if (placement === 'top') {
+                    tooltip_top = page_origin.y + y_center - (y_offset + tooltip_box.height + arrow_total);
+                    arrow_type = 'down';
+                    arrow_top = tooltip_box.height - stroke_width;
+                } else {
+                    tooltip_top = page_origin.y + y_center + y_offset + arrow_total;
+                    arrow_type = 'up';
+                    arrow_top = 0 - arrow_total;
+                }
+            } else if (placement === 'left' || placement === 'right') {
+                // Position tooltip horizontally on the left or the right depending on which side of the plot the point is on
+                if (placement === 'left') {
+                    tooltip_left = page_origin.x + x_center + x_offset + arrow_total;
+                    arrow_type = 'left';
+                    arrow_left = -1 * (arrow_size + stroke_width);
+                } else {
+                    tooltip_left = page_origin.x + x_center - tooltip_box.width - x_offset - arrow_total;
+                    arrow_type = 'right';
+                    arrow_left = tooltip_box.width - stroke_width;
+                }
+                // Position with arrow vertically centered along tooltip edge unless we're at the top or bottom of the plot
+                if (y_center - tooltip_box.height / 2 <= 0) {
+                    // Too close to the top, push it down
+                    tooltip_top = page_origin.y + y_center - 1.5 * arrow_size - tooltip_padding;
+                    arrow_top = tooltip_padding;
+                } else if (y_center + tooltip_box.height / 2 >= data_layer_height) {
+                    // Too close to the bottom, pull it up
+                    tooltip_top = page_origin.y + y_center + arrow_size + tooltip_padding - tooltip_box.height;
+                    arrow_top = tooltip_box.height - 2 * arrow_size - tooltip_padding;
+                } else {
+                    // vertically centered
+                    tooltip_top = page_origin.y + y_center - tooltip_box.height / 2;
+                    arrow_top = tooltip_box.height / 2 - arrow_size;
+                }
+            } else {
+                throw new Error('Unrecognized placement value');
+            }
+            // Position the div itself, relative to the layer origin
+            tooltip.selector.style('left', tooltip_left + 'px').style('top', tooltip_top + 'px');
+            // Create / update position on arrow connecting tooltip to data
+            if (!tooltip.arrow) {
+                tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
+            }
+            tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
             return this;
         };
         /**
@@ -3033,12 +2857,12 @@
                 hide_directive = this.layout.tooltip.hide;
             }
             // Find all the statuses that apply to just this single element
-            var layer_state = this.state[this.state_id];
+            var layer_state = this.layer_state;
             var statuses = {};
             // {status_name: bool}
             LocusZoom.DataLayer.Statuses.adjectives.forEach(function (status) {
                 var antistatus = 'un' + status;
-                statuses[status] = layer_state[status].indexOf(id) !== -1;
+                statuses[status] = layer_state.status_flags[status].indexOf(id) !== -1;
                 statuses[antistatus] = !statuses[status];
             });
             // Decide whether to show/hide the tooltip based solely on the underlying element
@@ -3047,7 +2871,7 @@
             // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
             // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
             //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-            var has_tooltip = layer_state['has_tooltip'].indexOf(id) !== -1;
+            var has_tooltip = layer_state.status_flags['has_tooltip'].indexOf(id) !== -1;
             var tooltip_was_closed = first_time ? false : !has_tooltip;
             if (show_resolved && !tooltip_was_closed && !hide_resolved) {
                 this.createTooltip(element);
@@ -3204,13 +3028,6 @@
                 //  directly. It is invisible to the official enums.
                 return this;
             }
-            // Sanity checks
-            if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-                throw new Error('Invalid status passed to DataLayer.setElementStatus()');
-            }
-            if (typeof element == 'undefined') {
-                throw new Error('Invalid element passed to DataLayer.setElementStatus()');
-            }
             if (typeof active == 'undefined') {
                 active = true;
             }
@@ -3231,14 +3048,14 @@
                 d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, active);
             }
             // Track element ID in the proper status state array
-            var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
+            var element_status_idx = this.layer_state.status_flags[status].indexOf(element_id);
             var added_status = element_status_idx === -1;
             // On a re-render, existing statuses will be reapplied.
             if (active && added_status) {
-                this.state[this.state_id][status].push(element_id);
+                this.layer_state.status_flags[status].push(element_id);
             }
             if (!active && !added_status) {
-                this.state[this.state_id][status].splice(element_status_idx, 1);
+                this.layer_state.status_flags[status].splice(element_status_idx, 1);
             }
             // Trigger tool tip show/hide logic
             this.showOrHideTooltip(element, added_status);
@@ -3276,7 +3093,7 @@
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
                 throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
             }
-            if (typeof this.state[this.state_id][status] == 'undefined') {
+            if (typeof this.layer_state.status_flags[status] == 'undefined') {
                 return this;
             }
             if (typeof toggle == 'undefined') {
@@ -3313,30 +3130,52 @@
             if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
                 throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
             }
-            if (typeof this.state[this.state_id][status] == 'undefined') {
+            if (typeof this.layer_state.status_flags[status] == 'undefined') {
                 return this;
             }
             if (typeof toggle == 'undefined') {
                 toggle = true;
             }
+            var self = this;
             // Apply statuses
             if (toggle) {
                 this.data.forEach(function (element) {
-                    this.setElementStatus(status, element, true);
-                }.bind(this));
+                    self.setElementStatus(status, element, true);
+                });
             } else {
-                var status_ids = this.state[this.state_id][status].slice();
+                var status_ids = this.layer_state.status_flags[status].slice();
                 status_ids.forEach(function (id) {
-                    var element = this.getElementById(id);
+                    var element = self.getElementById(id);
                     if (typeof element == 'object' && element !== null) {
-                        this.setElementStatus(status, element, false);
+                        self.setElementStatus(status, element, false);
                     }
-                }.bind(this));
-                this.state[this.state_id][status] = [];
+                });
+                this.layer_state.status_flags[status] = [];
             }
             // Update global status flag
             this.global_statuses[status] = toggle;
             return this;
+        };
+        /**
+ * Annotations provide a way to save user-driven additions and have them persist across render. They can be referenced
+ *  as a named pseudo-field in any filters and scalable parameters. (template support may be added in the future)
+ * Sample use case: user clicks a tooltip to "label this specific point". (or change any other display property)
+ * @param {String|Object} element The data object or ID string for the element
+ * @param {String} key The name of the annotation to track
+ * @param {*} value The value of the marked field
+ */
+        LocusZoom.DataLayer.prototype.setElementAnnotation = function (element, key, value) {
+            var id = this.getElementId(element);
+            if (!this.layer_state.extra_fields[id]) {
+                this.layer_state.extra_fields[id] = {};
+            }
+            this.layer_state.extra_fields[id][key] = value;
+            return this;
+        };
+        LocusZoom.DataLayer.prototype.getElementAnnotation = function (element, key) {
+            var id = this.getElementId(element);
+            var extra = this.layer_state.extra_fields[id];
+            return extra && extra[key];
         };
         /**
  * Apply all layout-defined behaviors (DOM event handlers) to a selection of elements
@@ -3372,6 +3211,7 @@
                 'ctrl': directive.indexOf('ctrl') !== -1,
                 'shift': directive.indexOf('shift') !== -1
             };
+            var self = this;
             return function (element) {
                 // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
                 if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) {
@@ -3386,17 +3226,17 @@
                     switch (behavior.action) {
                     // Set a status (set to true regardless of current status, optionally with exclusivity)
                     case 'set':
-                        this.setElementStatus(behavior.status, element, true, behavior.exclusive);
+                        self.setElementStatus(behavior.status, element, true, behavior.exclusive);
                         break;
                     // Unset a status (set to false regardless of current status, optionally with exclusivity)
                     case 'unset':
-                        this.setElementStatus(behavior.status, element, false, behavior.exclusive);
+                        self.setElementStatus(behavior.status, element, false, behavior.exclusive);
                         break;
                     // Toggle a status
                     case 'toggle':
-                        var current_status_boolean = this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) !== -1;
+                        var current_status_boolean = self.layer_state.status_flags[behavior.status].indexOf(self.getElementId(element)) !== -1;
                         var exclusive = behavior.exclusive && !current_status_boolean;
-                        this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
+                        self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                         break;
                     // Link to a dynamic URL
                     case 'link':
@@ -3414,8 +3254,8 @@
                         break;
                     }
                     return;
-                }.bind(this));
-            }.bind(this);
+                });
+            };
         };
         /**
  * Get an object with the x and y coordinates of the panel's origin in terms of the entire page
@@ -3488,6 +3328,29 @@
                 break;
             }
             return ret;
+        };
+        /**
+ * Apply all tracked element statuses. This is primarily intended for re-rendering the plot, in order to preserve
+ *  behaviors when items are updated.
+ */
+        LocusZoom.DataLayer.prototype.applyAllElementStatus = function () {
+            var status_flags = this.layer_state.status_flags;
+            var self = this;
+            for (var property in status_flags) {
+                if (!status_flags.hasOwnProperty(property)) {
+                    continue;
+                }
+                if (Array.isArray(status_flags[property])) {
+                    status_flags[property].forEach(function (element_id) {
+                        try {
+                            self.setElementStatus(property, self.getElementById(element_id), true);
+                        } catch (e) {
+                            console.warn('Unable to apply state: ' + self.state_id + ', ' + property);
+                            console.error(e);
+                        }
+                    });
+                }
+            }
         };
         /**
  * Position the datalayer and all tooltips
@@ -3624,9 +3487,9 @@
             this.DefaultLayout = {
                 color: '#000000',
                 filters: [],
-                tooltip_positioning: 'middle',
+                tooltip_positioning: 'vertical',
                 // Allowed values: top, middle, bottom
-                hit_area_width: 8
+                hitarea_width: 8
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
             if (!Array.isArray(layout.filters)) {
@@ -3653,8 +3516,8 @@
                 var width = 1;
                 selection.attr('x', function (d) {
                     return self.parent['x_scale'](d[self.layout.x_axis.field]) - width / 2;
-                }).attr('width', width).attr('height', self.parent.layout.height).attr('fill', function (d) {
-                    return self.resolveScalableParameter(self.layout.color, d);
+                }).attr('width', width).attr('height', self.parent.layout.height).attr('fill', function (d, i) {
+                    return self.resolveScalableParameter(self.layout.color, d, i);
                 });
                 // Remove unused elements
                 selection.exit().remove();
@@ -3673,7 +3536,7 @@
                 var _getX = function (d, i) {
                     // Helper for position calcs below
                     var x_center = self.parent['x_scale'](d[self.layout.x_axis.field]);
-                    var x_left = x_center - self.layout.hit_area_width / 2;
+                    var x_left = x_center - self.layout.hitarea_width / 2;
                     if (i >= 1) {
                         // This assumes that the data are in sorted order.
                         var left_node = trackData[i - 1];
@@ -3690,74 +3553,141 @@
                     return crds[0];
                 }).attr('width', function (d, i) {
                     var crds = _getX(d, i);
-                    return crds[1] - crds[0] + self.layout.hit_area_width / 2;
+                    return crds[1] - crds[0] + self.layout.hitarea_width / 2;
                 });
                 // Remove unused elements
                 hit_areas_selection.exit().remove();
                 // Set up tooltips and mouse interaction
                 this.applyBehaviors(hit_areas_selection);
             };
-            // Reimplement the positionTooltip() method to be annotation-specific
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var top, left, arrow_type, arrow_top, arrow_left;
-                var tooltip = this.tooltips[id];
-                var arrow_width = 7;
-                // as defined in the default stylesheet
+            this._getTooltipPosition = function (tooltip) {
+                var panel = this.parent;
+                var data_layer_height = panel.layout.height - (panel.layout.margin.top + panel.layout.margin.bottom);
                 var stroke_width = 1;
                 // as defined in the default stylesheet
-                var offset = stroke_width / 2;
-                var page_origin = this.getPageOrigin();
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-                var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
+                var x_center = panel.x_scale(tooltip.data[this.layout.x_axis.field]);
                 var y_center = data_layer_height / 2;
-                // Tooltip should be horizontally centered above the point to be annotated. (or below if space is limited)
-                var offset_right = Math.max(tooltip_box.width / 2 - x_center, 0);
-                var offset_left = Math.max(tooltip_box.width / 2 + x_center - data_layer_width, 0);
-                left = page_origin.x + x_center - tooltip_box.width / 2 - offset_left + offset_right;
-                arrow_left = tooltip_box.width / 2 - arrow_width + offset_left - offset_right - offset;
-                var top_offset = 0;
-                switch (this.layout.tooltip_positioning) {
-                case 'top':
-                    arrow_type = 'down';
-                    break;
-                case 'bottom':
-                    top_offset = data_layer_height;
-                    arrow_type = 'up';
-                    break;
-                case 'middle':
-                default:
-                    var position = d3.mouse(this.svg.container.node());
-                    // Position the tooltip so that it does not overlap the mouse pointer
-                    top_offset = y_center;
-                    if (position[1] > data_layer_height / 2) {
-                        arrow_type = 'down';
-                    } else {
-                        arrow_type = 'up';
-                    }
-                }
-                if (arrow_type === 'up') {
-                    top = page_origin.y + top_offset + stroke_width + arrow_width;
-                    arrow_top = 0 - stroke_width - arrow_width;
-                } else if (arrow_type === 'down') {
-                    top = page_origin.y + top_offset - (tooltip_box.height + stroke_width + arrow_width);
-                    arrow_top = tooltip_box.height - stroke_width;
-                }
-                // Apply positions to the main div
-                tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
+                return {
+                    x_min: x_center - stroke_width,
+                    x_max: x_center + stroke_width,
+                    y_min: y_center - panel.layout.margin.top,
+                    y_max: y_center + panel.layout.margin.bottom
+                };
             };
+            return this;
+        });
+        'use strict';
+        /**
+ * Loop Data Layer
+ * Implements a data layer that will render chromatin accessibility tracks.
+ * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
+ *  with a height determined by y.field.
+ *
+ * @class LocusZoom.DataLayers.arcs
+ * @augments LocusZoom.DataLayer
+ */
+        LocusZoom.DataLayers.add('arcs', function (layout) {
+            // Define a default layout for this DataLayer type and merge it with the passed argument
+            this.DefaultLayout = {
+                color: 'seagreen',
+                hitarea_width: '10px',
+                style: {
+                    fill: 'none',
+                    'stroke-width': '1px',
+                    'stroke-opacity': '100%'
+                },
+                tooltip_positioning: 'top'
+            };
+            layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+            // Apply the arguments to set LocusZoom.DataLayer as the prototype
+            LocusZoom.DataLayer.apply(this, arguments);
+            // Implement the main render function
+            this.render = function () {
+                var self = this;
+                var layout = self.layout;
+                var x_scale = self.parent['x_scale'];
+                var y_scale = self.parent['y' + layout.y_axis.axis + '_scale'];
+                // Optionally restrict the data to a specific set of filters
+                var filters = layout.filters || [];
+                var trackData = this.filter(filters, 'elements');
+                // Helper: Each individual data point describes a path composed of 3 points, with a spline to smooth the line
+                function _make_line(d) {
+                    var x1 = d[layout.x_axis.field1];
+                    var x2 = d[layout.x_axis.field2];
+                    var xmid = (x1 + x2) / 2;
+                    var coords = [
+                        [
+                            x_scale(x1),
+                            y_scale(0)
+                        ],
+                        [
+                            x_scale(xmid),
+                            y_scale(d[layout.y_axis.field])
+                        ],
+                        [
+                            x_scale(x2),
+                            y_scale(0)
+                        ]
+                    ];
+                    // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
+                    var line = d3.svg.line().interpolate('monotone').x(function (d) {
+                        return d[0];
+                    }).y(function (d) {
+                        return d[1];
+                    });
+                    return line(coords);
+                }
+                // Draw real lines, and also invisible hitareas for easier mouse events
+                var selection = this.svg.group.selectAll('path.lz-data_layer-arcs').data(trackData, function (d) {
+                    return self.getElementId(d);
+                });
+                var hitareas = this.svg.group.selectAll('path.lz-data_layer-arcs-hitarea').data(trackData, function (d) {
+                    return self.getElementId(d);
+                });
+                // Add new points as necessary
+                selection.enter().append('path').attr('class', 'lz-data_layer-arcs').attr('id', function (d) {
+                    return self.getElementId(d);
+                });
+                hitareas.enter().append('path').attr('class', 'lz-data_layer-arcs-hitarea').attr('id', function (d) {
+                    return self.getElementId(d);
+                });
+                // Update selection/set coordinates
+                selection.style(layout.style).attr('stroke', function (d, i) {
+                    return self.resolveScalableParameter(self.layout.color, d, i);
+                }).attr('d', function (d, i) {
+                    return _make_line(d);
+                });
+                hitareas.style({
+                    fill: 'none',
+                    'stroke-width': layout.hitarea_width,
+                    'stroke-opacity': 0,
+                    stroke: 'transparent'
+                }).attr('d', function (d, i) {
+                    return _make_line(d);
+                });
+                // Remove old elements as needed
+                selection.exit().remove();
+                hitareas.exit().remove();
+                // Apply mouse behaviors to hitareas
+                this.applyBehaviors(hitareas);
+                return this;
+            };
+            this._getTooltipPosition = function (tooltip) {
+                // Center the tooltip arrow at the apex of the arc. Sometimes, only part of an arc shows on the screen, so we
+                //  clean up these values to ensure that the tooltip will appear within the window.
+                var panel = this.parent;
+                var layout = this.layout;
+                var x1 = tooltip.data[layout.x_axis.field1];
+                var x2 = tooltip.data[layout.x_axis.field2];
+                var y_scale = panel['y' + layout.y_axis.axis + '_scale'];
+                return {
+                    x_min: panel.x_scale(Math.min(x1, x2)),
+                    x_max: panel.x_scale(Math.max(x1, x2)),
+                    y_min: y_scale(tooltip.data[layout.y_axis.field]),
+                    y_max: y_scale(0)
+                };
+            };
+            // End constructor
             return this;
         });
         'use strict';
@@ -3788,62 +3718,18 @@
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
             LocusZoom.DataLayer.apply(this, arguments);
-            // Reimplement the positionTooltip() method to be forest-specific
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var tooltip = this.tooltips[id];
-                var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-                var arrow_width = 7;
-                // as defined in the default stylesheet
-                var stroke_width = 1;
-                // as defined in the default stylesheet
-                var border_radius = 6;
-                // as defined in the default stylesheet
-                var page_origin = this.getPageOrigin();
+            this._getTooltipPosition = function (tooltip) {
                 var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
                 var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
                 var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-                // Position horizontally on the left or the right depending on which side of the plot the point is on
+                var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
                 var offset = Math.sqrt(point_size / Math.PI);
-                var left, arrow_type, arrow_left;
-                if (x_center <= this.parent.layout.width / 2) {
-                    left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-                    arrow_type = 'left';
-                    arrow_left = -1 * (arrow_width + stroke_width);
-                } else {
-                    left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-                    arrow_type = 'right';
-                    arrow_left = tooltip_box.width - stroke_width;
-                }
-                // Position vertically centered unless we're at the top or bottom of the plot
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var top, arrow_top;
-                if (y_center - tooltip_box.height / 2 <= 0) {
-                    // Too close to the top, push it down
-                    top = page_origin.y + y_center - 1.5 * arrow_width - border_radius;
-                    arrow_top = border_radius;
-                } else if (y_center + tooltip_box.height / 2 >= data_layer_height) {
-                    // Too close to the bottom, pull it up
-                    top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-                    arrow_top = tooltip_box.height - 2 * arrow_width - border_radius;
-                } else {
-                    // vertically centered
-                    top = page_origin.y + y_center - tooltip_box.height / 2;
-                    arrow_top = tooltip_box.height / 2 - arrow_width;
-                }
-                // Apply positions to the main div
-                tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
+                return {
+                    x_min: x_center - offset,
+                    x_max: x_center + offset,
+                    y_min: y_center - offset,
+                    y_max: y_center + offset
+                };
             };
             // Implement the main render function
             this.render = function () {
@@ -3859,7 +3745,7 @@
                     ci_selection.enter().append('rect').attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci').attr('id', function (d) {
                         return this.getElementId(d) + '_ci';
                     }.bind(this)).attr('transform', 'translate(0,' + (isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height) + ')');
-                    // Apply position and size parameters using transition if necessary
+                    // Apply position and size parameters
                     var ci_transform = function (d) {
                         var x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
                         var y = this.parent[y_scale](d[this.layout.y_axis.field]);
@@ -3875,11 +3761,7 @@
                         return this.parent[x_scale](d[this.layout.confidence_intervals.end_field]) - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
                     }.bind(this);
                     var ci_height = 1;
-                    if (this.canTransition()) {
-                        ci_selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('transform', ci_transform).attr('width', ci_width).attr('height', ci_height);
-                    } else {
-                        ci_selection.attr('transform', ci_transform).attr('width', ci_width).attr('height', ci_height);
-                    }
+                    ci_selection.attr('transform', ci_transform).attr('width', ci_width).attr('height', ci_height);
                     // Remove old elements as needed
                     ci_selection.exit().remove();
                 }
@@ -3904,23 +3786,19 @@
                     }
                     return 'translate(' + x + ',' + y + ')';
                 }.bind(this);
-                var fill = function (d) {
-                    return this.resolveScalableParameter(this.layout.color, d);
+                var fill = function (d, i) {
+                    return this.resolveScalableParameter(this.layout.color, d, i);
                 }.bind(this);
-                var fill_opacity = function (d) {
-                    return this.resolveScalableParameter(this.layout.fill_opacity, d);
+                var fill_opacity = function (d, i) {
+                    return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
                 }.bind(this);
-                var shape = d3.svg.symbol().size(function (d) {
-                    return this.resolveScalableParameter(this.layout.point_size, d);
-                }.bind(this)).type(function (d) {
-                    return this.resolveScalableParameter(this.layout.point_shape, d);
+                var shape = d3.svg.symbol().size(function (d, i) {
+                    return this.resolveScalableParameter(this.layout.point_size, d, i);
+                }.bind(this)).type(function (d, i) {
+                    return this.resolveScalableParameter(this.layout.point_shape, d, i);
                 }.bind(this));
-                // Apply position and color, using a transition if necessary
-                if (this.canTransition()) {
-                    points_selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
-                } else {
-                    points_selection.attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
-                }
+                // Apply position and color
+                points_selection.attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
                 // Remove old elements as needed
                 points_selection.exit().remove();
                 // Apply default event emitters to selection
@@ -4026,7 +3904,8 @@
                 label_exon_spacing: 4,
                 exon_height: 16,
                 bounding_box_padding: 6,
-                track_vertical_spacing: 10
+                track_vertical_spacing: 10,
+                tooltip_positioning: 'top'
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
@@ -4222,18 +4101,14 @@
                     y = function (d) {
                         return (d.track - 1) * data_layer.getTrackHeight();
                     };
-                    if (data_layer.canTransition()) {
-                        bboxes.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        bboxes.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+                    bboxes.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     bboxes.exit().remove();
                     // Render gene boundaries
-                    var boundary_fill = function (d) {
-                        return self.resolveScalableParameter(self.layout.color, d);
+                    var boundary_fill = function (d, i) {
+                        return self.resolveScalableParameter(self.layout.color, d, i);
                     };
-                    var boundary_stroke = function (d) {
-                        return self.resolveScalableParameter(self.layout.stroke, d);
+                    var boundary_stroke = function (d, i) {
+                        return self.resolveScalableParameter(self.layout.stroke, d, i);
                     };
                     var boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary').data([gene], function (d) {
                         return d.gene_name + '_boundary';
@@ -4254,11 +4129,7 @@
                     y = function (d) {
                         return (d.track - 1) * data_layer.getTrackHeight() + data_layer.layout.bounding_box_padding + data_layer.layout.label_font_size + data_layer.layout.label_exon_spacing + Math.max(data_layer.layout.exon_height, 3) / 2;
                     };
-                    if (data_layer.canTransition()) {
-                        boundaries.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        boundaries.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+                    boundaries.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     boundaries.exit().remove();
                     // Render gene labels
                     var labels = d3.select(this).selectAll('text.lz-data_layer-genes.lz-label').data([gene], function (d) {
@@ -4282,19 +4153,15 @@
                     y = function (d) {
                         return (d.track - 1) * data_layer.getTrackHeight() + data_layer.layout.bounding_box_padding + data_layer.layout.label_font_size;
                     };
-                    if (data_layer.canTransition()) {
-                        labels.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('x', x).attr('y', y);
-                    } else {
-                        labels.attr('x', x).attr('y', y);
-                    }
+                    labels.attr('x', x).attr('y', y);
                     labels.exit().remove();
                     // Render exon rects (first transcript only, for now)
                     // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
-                    var exon_fill = function (d) {
-                        return self.resolveScalableParameter(self.layout.color, d.parent.parent);
+                    var exon_fill = function (d, i) {
+                        return self.resolveScalableParameter(self.layout.color, d.parent.parent, i);
                     };
-                    var exon_stroke = function (d) {
-                        return self.resolveScalableParameter(self.layout.stroke, d.parent.parent);
+                    var exon_stroke = function (d, i) {
+                        return self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i);
                     };
                     var exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon').data(gene.transcripts[gene.parent.transcript_idx].exons, function (d) {
                         return d.exon_id;
@@ -4316,11 +4183,7 @@
                     y = function () {
                         return (gene.track - 1) * data_layer.getTrackHeight() + data_layer.layout.bounding_box_padding + data_layer.layout.label_font_size + data_layer.layout.label_exon_spacing;
                     };
-                    if (data_layer.canTransition()) {
-                        exons.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        exons.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+                    exons.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     exons.exit().remove();
                     // Render gene click area
                     var clickareas = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-clickarea').data([gene], function (d) {
@@ -4346,11 +4209,7 @@
                     y = function (d) {
                         return (d.track - 1) * data_layer.getTrackHeight();
                     };
-                    if (data_layer.canTransition()) {
-                        clickareas.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        clickareas.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
+                    clickareas.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
                     // Remove old clickareas as needed
                     clickareas.exit().remove();
                     // Apply default event emitters to clickareas
@@ -4363,495 +4222,15 @@
                 // Remove old elements as needed
                 selection.exit().remove();
             };
-            /**
-     * Reimplement the positionTooltip() method to be gene-specific
-     * @param {String} id
-     */
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var tooltip = this.tooltips[id];
-                var arrow_width = 7;
-                // as defined in the default stylesheet
-                var stroke_width = 1;
-                // as defined in the default stylesheet
-                var page_origin = this.getPageOrigin();
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+            this._getTooltipPosition = function (tooltip) {
                 var gene_bbox_id = this.getElementStatusNodeId(tooltip.data);
                 var gene_bbox = d3.select('#' + gene_bbox_id).node().getBBox();
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-                // Position horizontally: attempt to center on the portion of the gene that's visible,
-                // pad to either side if bumping up against the edge of the data layer
-                var gene_center_x = (tooltip.data.display_range.start + tooltip.data.display_range.end) / 2 - this.layout.bounding_box_padding / 2;
-                var offset_right = Math.max(tooltip_box.width / 2 - gene_center_x, 0);
-                var offset_left = Math.max(tooltip_box.width / 2 + gene_center_x - data_layer_width, 0);
-                var left = page_origin.x + gene_center_x - tooltip_box.width / 2 - offset_left + offset_right;
-                var arrow_left = tooltip_box.width / 2 - arrow_width / 2 + offset_left - offset_right;
-                // Position vertically below the gene unless there's insufficient space
-                var top, arrow_type, arrow_top;
-                if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (gene_bbox.y + gene_bbox.height)) {
-                    top = page_origin.y + gene_bbox.y - (tooltip_box.height + stroke_width + arrow_width);
-                    arrow_type = 'down';
-                    arrow_top = tooltip_box.height - stroke_width;
-                } else {
-                    top = page_origin.y + gene_bbox.y + gene_bbox.height + stroke_width + arrow_width;
-                    arrow_type = 'up';
-                    arrow_top = 0 - stroke_width - arrow_width;
-                }
-                // Apply positions to the main div
-                tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
-            };
-            return this;
-        });
-        'use strict';
-        /*********************
-  Genome Legend Data Layer
-  Implements a data layer that will render a genome legend
-*/
-        // Build a custom data layer for a genome legend
-        LocusZoom.DataLayers.add('genome_legend', function (layout) {
-            // Define a default layout for this DataLayer type and merge it with the passed argument
-            this.DefaultLayout = {
-                chromosome_fill_colors: {
-                    light: 'rgb(155, 155, 188)',
-                    dark: 'rgb(95, 95, 128)'
-                },
-                chromosome_label_colors: {
-                    light: 'rgb(120, 120, 186)',
-                    dark: 'rgb(0, 0, 66)'
-                }
-            };
-            layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-            // Apply the arguments to set LocusZoom.DataLayer as the prototype
-            LocusZoom.DataLayer.apply(this, arguments);
-            // Implement the main render function
-            this.render = function () {
-                // Iterate over data to generate genome-wide start/end values for each chromosome
-                var position = 0;
-                this.data.forEach(function (d, i) {
-                    this.data[i].genome_start = position;
-                    this.data[i].genome_end = position + d['genome:base_pairs'];
-                    position += d['genome:base_pairs'];
-                }.bind(this));
-                var chromosomes = this.svg.group.selectAll('rect.lz-data_layer-genome_legend').data(this.data, function (d) {
-                    return d['genome:chr'];
-                });
-                // Create chromosome elements, apply class
-                chromosomes.enter().append('rect').attr('class', 'lz-data_layer-genome_legend');
-                // Position and fill chromosome rects
-                var data_layer = this;
-                var panel = this.parent;
-                chromosomes.attr('fill', function (d) {
-                    return d['genome:chr'] % 2 ? data_layer.layout.chromosome_fill_colors.light : data_layer.layout.chromosome_fill_colors.dark;
-                }).attr('x', function (d) {
-                    return panel.x_scale(d.genome_start);
-                }).attr('y', 0).attr('width', function (d) {
-                    return panel.x_scale(d['genome:base_pairs']);
-                }).attr('height', panel.layout.cliparea.height);
-                // Remove old elements as needed
-                chromosomes.exit().remove();
-                // Parse current state variant into a position
-                // Assumes that variant string is of the format 10:123352136_C/T or 10:123352136
-                var variant_parts = /([^:]+):(\d+)(?:_.*)?/.exec(this.state.variant);
-                if (!variant_parts) {
-                    throw new Error('Genome legend cannot understand the specified variant position');
-                }
-                var chr = variant_parts[1];
-                var offset = variant_parts[2];
-                // TODO: How does this handle representation of X or Y chromosomes?
-                position = +this.data[chr - 1].genome_start + +offset;
-                // Render the position
-                var region = this.svg.group.selectAll('rect.lz-data_layer-genome_legend-marker').data([{
-                        start: position,
-                        end: position + 1
-                    }]);
-                region.enter().append('rect').attr('class', 'lz-data_layer-genome_legend-marker');
-                region.transition().duration(500).style({
-                    'fill': 'rgba(255, 250, 50, 0.8)',
-                    'stroke': 'rgba(255, 250, 50, 0.8)',
-                    'stroke-width': '3px'
-                }).attr('x', function (d) {
-                    return panel.x_scale(d.start);
-                }).attr('y', 0).attr('width', function (d) {
-                    return panel.x_scale(d.end - d.start);
-                }).attr('height', panel.layout.cliparea.height);
-                region.exit().remove();
-            };
-            return this;
-        });
-        'use strict';
-        /**
- * Intervals Data Layer
- * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
- * @class LocusZoom.DataLayers.intervals
- * @augments LocusZoom.DataLayer
- */
-        LocusZoom.DataLayers.add('intervals', function (layout) {
-            // Define a default layout for this DataLayer type and merge it with the passed argument
-            this.DefaultLayout = {
-                start_field: 'start',
-                end_field: 'end',
-                track_split_field: 'state_id',
-                track_split_order: 'DESC',
-                track_split_legend_to_y_axis: 2,
-                split_tracks: true,
-                track_height: 15,
-                track_vertical_spacing: 3,
-                bounding_box_padding: 2,
-                always_hide_legend: false,
-                color: '#B8B8B8',
-                fill_opacity: 1
-            };
-            layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-            // Apply the arguments to set LocusZoom.DataLayer as the prototype
-            LocusZoom.DataLayer.apply(this, arguments);
-            /**
-     * To define shared highlighting on the track split field define the status node id override
-     * to generate an ID common to the track when we're actively splitting data out to separate tracks
-     * @override
-     * @returns {String}
-     */
-            this.getElementStatusNodeId = function (element) {
-                if (this.layout.split_tracks) {
-                    return (this.getBaseId() + '-statusnode-' + element[this.layout.track_split_field]).replace(/[:.[\],]/g, '_');
-                }
-                return this.getElementId(element) + '-statusnode';
-            }.bind(this);
-            // Helper function to sum layout values to derive total height for a single interval track
-            this.getTrackHeight = function () {
-                return this.layout.track_height + this.layout.track_vertical_spacing + 2 * this.layout.bounding_box_padding;
-            };
-            this.tracks = 1;
-            this.previous_tracks = 1;
-            // track-number-indexed object with arrays of interval indexes in the dataset
-            this.interval_track_index = { 1: [] };
-            // After we've loaded interval data interpret it to assign
-            // each to a track so that they do not overlap in the view
-            this.assignTracks = function () {
-                // Reinitialize some metadata
-                this.previous_tracks = this.tracks;
-                this.tracks = 0;
-                this.interval_track_index = { 1: [] };
-                this.track_split_field_index = {};
-                // If splitting tracks by a field's value then do a first pass determine
-                // a value/track mapping that preserves the order of possible values
-                if (this.layout.track_split_field && this.layout.split_tracks) {
-                    this.data.map(function (d) {
-                        this.track_split_field_index[d[this.layout.track_split_field]] = null;
-                    }.bind(this));
-                    var index = Object.keys(this.track_split_field_index);
-                    if (this.layout.track_split_order === 'DESC') {
-                        index.reverse();
-                    }
-                    index.forEach(function (val) {
-                        this.track_split_field_index[val] = this.tracks + 1;
-                        this.interval_track_index[this.tracks + 1] = [];
-                        this.tracks++;
-                    }.bind(this));
-                }
-                this.data.map(function (d, i) {
-                    // Stash a parent reference on the interval
-                    this.data[i].parent = this;
-                    // Determine display range start and end, based on minimum allowable interval display width,
-                    // bounded by what we can see (range: values in terms of pixels on the screen)
-                    this.data[i].display_range = {
-                        start: this.parent.x_scale(Math.max(d[this.layout.start_field], this.state.start)),
-                        end: this.parent.x_scale(Math.min(d[this.layout.end_field], this.state.end))
-                    };
-                    this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
-                    // Convert and stash display range values into domain values
-                    // (domain: values in terms of the data set, e.g. megabases)
-                    this.data[i].display_domain = {
-                        start: this.parent.x_scale.invert(this.data[i].display_range.start),
-                        end: this.parent.x_scale.invert(this.data[i].display_range.end)
-                    };
-                    this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
-                    // If splitting to tracks based on the value of the designated track split field
-                    // then don't bother with collision detection (intervals will be grouped on tracks
-                    // solely by the value of track_split_field)
-                    if (this.layout.track_split_field && this.layout.split_tracks) {
-                        var val = this.data[i][this.layout.track_split_field];
-                        this.data[i].track = this.track_split_field_index[val];
-                        this.interval_track_index[this.data[i].track].push(i);
-                    } else {
-                        // If not splitting to tracks based on a field value then do so based on collision
-                        // detection (as how it's done for genes). Use display range/domain data generated
-                        // above and cast each interval to tracks such that none overlap
-                        this.tracks = 1;
-                        this.data[i].track = null;
-                        var potential_track = 1;
-                        while (this.data[i].track === null) {
-                            var collision_on_potential_track = false;
-                            this.interval_track_index[potential_track].map(function (placed_interval) {
-                                if (!collision_on_potential_track) {
-                                    var min_start = Math.min(placed_interval.display_range.start, this.display_range.start);
-                                    var max_end = Math.max(placed_interval.display_range.end, this.display_range.end);
-                                    if (max_end - min_start < placed_interval.display_range.width + this.display_range.width) {
-                                        collision_on_potential_track = true;
-                                    }
-                                }
-                            }.bind(this.data[i]));
-                            if (!collision_on_potential_track) {
-                                this.data[i].track = potential_track;
-                                this.interval_track_index[potential_track].push(this.data[i]);
-                            } else {
-                                potential_track++;
-                                if (potential_track > this.tracks) {
-                                    this.tracks = potential_track;
-                                    this.interval_track_index[potential_track] = [];
-                                }
-                            }
-                        }
-                    }
-                }.bind(this));
-                return this;
-            };
-            // Implement the main render function
-            this.render = function () {
-                this.assignTracks();
-                // Remove any shared highlight nodes and re-render them if we're splitting on tracks
-                // At most there will only be dozen or so nodes here (one per track) and each time
-                // we render data we may have new tracks, so wiping/redrawing all is reasonable.
-                this.svg.group.selectAll('.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared').remove();
-                Object.keys(this.track_split_field_index).forEach(function (key) {
-                    // Make a psuedo-element so that we can generate an id for the shared node
-                    var psuedoElement = {};
-                    psuedoElement[this.layout.track_split_field] = key;
-                    // Insert the shared node
-                    var sharedstatusnode_style = { display: this.layout.split_tracks ? null : 'none' };
-                    this.svg.group.insert('rect', ':first-child').attr('id', this.getElementStatusNodeId(psuedoElement)).attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared').attr('rx', this.layout.bounding_box_padding).attr('ry', this.layout.bounding_box_padding).attr('width', this.parent.layout.cliparea.width).attr('height', this.getTrackHeight() - this.layout.track_vertical_spacing).attr('x', 0).attr('y', (this.track_split_field_index[key] - 1) * this.getTrackHeight()).style(sharedstatusnode_style);
-                }.bind(this));
-                var width, height, x, y, fill, fill_opacity;
-                // Render interval groups
-                var selection = this.svg.group.selectAll('g.lz-data_layer-intervals').data(this.data, function (d) {
-                    return d[this.layout.id_field];
-                }.bind(this));
-                selection.enter().append('g').attr('class', 'lz-data_layer-intervals');
-                selection.attr('id', function (d) {
-                    return this.getElementId(d);
-                }.bind(this)).each(function (interval) {
-                    var data_layer = interval.parent;
-                    // Render interval status nodes (displayed behind intervals to show highlight
-                    // without needing to modify interval display element(s))
-                    var statusnode_style = { display: data_layer.layout.split_tracks ? 'none' : null };
-                    var statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete').data([interval], function (d) {
-                        return data_layer.getElementId(d) + '-statusnode';
-                    });
-                    statusnodes.enter().insert('rect', ':first-child').attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete');
-                    statusnodes.attr('id', function (d) {
-                        return data_layer.getElementId(d) + '-statusnode';
-                    }).attr('rx', function () {
-                        return data_layer.layout.bounding_box_padding;
-                    }).attr('ry', function () {
-                        return data_layer.layout.bounding_box_padding;
-                    }).style(statusnode_style);
-                    width = function (d) {
-                        return d.display_range.width + 2 * data_layer.layout.bounding_box_padding;
-                    };
-                    height = function () {
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    };
-                    x = function (d) {
-                        return d.display_range.start - data_layer.layout.bounding_box_padding;
-                    };
-                    y = function (d) {
-                        return (d.track - 1) * data_layer.getTrackHeight();
-                    };
-                    if (data_layer.canTransition()) {
-                        statusnodes.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        statusnodes.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
-                    statusnodes.exit().remove();
-                    // Render primary interval rects
-                    var rects = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-interval_rect').data([interval], function (d) {
-                        return d[data_layer.layout.id_field] + '_interval_rect';
-                    });
-                    rects.enter().append('rect').attr('class', 'lz-data_layer-intervals lz-interval_rect');
-                    height = data_layer.layout.track_height;
-                    width = function (d) {
-                        return d.display_range.width;
-                    };
-                    x = function (d) {
-                        return d.display_range.start;
-                    };
-                    y = function (d) {
-                        return (d.track - 1) * data_layer.getTrackHeight() + data_layer.layout.bounding_box_padding;
-                    };
-                    fill = function (d) {
-                        return data_layer.resolveScalableParameter(data_layer.layout.color, d);
-                    };
-                    fill_opacity = function (d) {
-                        return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d);
-                    };
-                    if (data_layer.canTransition()) {
-                        rects.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y).attr('fill', fill).attr('fill-opacity', fill_opacity);
-                    } else {
-                        rects.attr('width', width).attr('height', height).attr('x', x).attr('y', y).attr('fill', fill).attr('fill-opacity', fill_opacity);
-                    }
-                    rects.exit().remove();
-                    // Render interval click areas
-                    var clickareas = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-clickarea').data([interval], function (d) {
-                        return d.interval_name + '_clickarea';
-                    });
-                    clickareas.enter().append('rect').attr('class', 'lz-data_layer-intervals lz-clickarea');
-                    clickareas.attr('id', function (d) {
-                        return data_layer.getElementId(d) + '_clickarea';
-                    }).attr('rx', function () {
-                        return data_layer.layout.bounding_box_padding;
-                    }).attr('ry', function () {
-                        return data_layer.layout.bounding_box_padding;
-                    });
-                    width = function (d) {
-                        return d.display_range.width;
-                    };
-                    height = function () {
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    };
-                    x = function (d) {
-                        return d.display_range.start;
-                    };
-                    y = function (d) {
-                        return (d.track - 1) * data_layer.getTrackHeight();
-                    };
-                    if (data_layer.canTransition()) {
-                        clickareas.transition().duration(data_layer.layout.transition.duration || 0).ease(data_layer.layout.transition.ease || 'cubic-in-out').attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    } else {
-                        clickareas.attr('width', width).attr('height', height).attr('x', x).attr('y', y);
-                    }
-                    // Remove old clickareas as needed
-                    clickareas.exit().remove();
-                    // Apply default event emitters to clickareas
-                    clickareas.on('click', function (element_data) {
-                        element_data.parent.parent.emit('element_clicked', element_data, true);
-                    }.bind(this));
-                    // Apply mouse behaviors to clickareas
-                    data_layer.applyBehaviors(clickareas);
-                });
-                // Remove old elements as needed
-                selection.exit().remove();
-                // Update the legend axis if the number of ticks changed
-                if (this.previous_tracks !== this.tracks) {
-                    this.updateSplitTrackAxis();
-                }
-                return this;
-            };
-            // Reimplement the positionTooltip() method to be interval-specific
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var tooltip = this.tooltips[id];
-                var arrow_width = 7;
-                // as defined in the default stylesheet
-                var stroke_width = 1;
-                // as defined in the default stylesheet
-                var page_origin = this.getPageOrigin();
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-                var interval_bbox = d3.select('#' + this.getElementStatusNodeId(tooltip.data)).node().getBBox();
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-                // Position horizontally: attempt to center on the portion of the interval that's visible,
-                // pad to either side if bumping up against the edge of the data layer
-                var interval_center_x = (tooltip.data.display_range.start + tooltip.data.display_range.end) / 2 - this.layout.bounding_box_padding / 2;
-                var offset_right = Math.max(tooltip_box.width / 2 - interval_center_x, 0);
-                var offset_left = Math.max(tooltip_box.width / 2 + interval_center_x - data_layer_width, 0);
-                var left = page_origin.x + interval_center_x - tooltip_box.width / 2 - offset_left + offset_right;
-                var arrow_left = tooltip_box.width / 2 - arrow_width / 2 + offset_left - offset_right;
-                // Position vertically below the interval unless there's insufficient space
-                var top, arrow_type, arrow_top;
-                if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (interval_bbox.y + interval_bbox.height)) {
-                    top = page_origin.y + interval_bbox.y - (tooltip_box.height + stroke_width + arrow_width);
-                    arrow_type = 'down';
-                    arrow_top = tooltip_box.height - stroke_width;
-                } else {
-                    top = page_origin.y + interval_bbox.y + interval_bbox.height + stroke_width + arrow_width;
-                    arrow_type = 'up';
-                    arrow_top = 0 - stroke_width - arrow_width;
-                }
-                // Apply positions to the main div
-                tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
-            };
-            // Redraw split track axis or hide it, and show/hide the legend, as determined
-            // by current layout parameters and data
-            this.updateSplitTrackAxis = function () {
-                var legend_axis = this.layout.track_split_legend_to_y_axis ? 'y' + this.layout.track_split_legend_to_y_axis : false;
-                if (this.layout.split_tracks) {
-                    var tracks = +this.tracks || 0;
-                    var track_height = +this.layout.track_height || 0;
-                    var track_spacing = 2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
-                    var target_height = tracks * track_height + (tracks - 1) * track_spacing;
-                    this.parent.scaleHeightToData(target_height);
-                    if (legend_axis && this.parent.legend) {
-                        this.parent.legend.hide();
-                        this.parent.layout.axes[legend_axis] = {
-                            render: true,
-                            ticks: [],
-                            range: {
-                                start: target_height - this.layout.track_height / 2,
-                                end: this.layout.track_height / 2
-                            }
-                        };
-                        this.layout.legend.forEach(function (element) {
-                            var key = element[this.layout.track_split_field];
-                            var track = this.track_split_field_index[key];
-                            if (track) {
-                                if (this.layout.track_split_order === 'DESC') {
-                                    track = Math.abs(track - tracks - 1);
-                                }
-                                this.parent.layout.axes[legend_axis].ticks.push({
-                                    y: track,
-                                    text: element.label
-                                });
-                            }
-                        }.bind(this));
-                        this.layout.y_axis = {
-                            axis: this.layout.track_split_legend_to_y_axis,
-                            floor: 1,
-                            ceiling: tracks
-                        };
-                        this.parent.render();
-                    }
-                    this.parent_plot.positionPanels();
-                } else {
-                    if (legend_axis && this.parent.legend) {
-                        if (!this.layout.always_hide_legend) {
-                            this.parent.legend.show();
-                        }
-                        this.parent.layout.axes[legend_axis] = { render: false };
-                        this.parent.render();
-                    }
-                }
-                return this;
-            };
-            // Method to not only toggle the split tracks boolean but also update
-            // necessary display values to animate a complete merge/split
-            this.toggleSplitTracks = function () {
-                this.layout.split_tracks = !this.layout.split_tracks;
-                if (this.parent.legend && !this.layout.always_hide_legend) {
-                    this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
-                }
-                this.render();
-                this.updateSplitTrackAxis();
-                return this;
+                return {
+                    x_min: this.parent.x_scale(tooltip.data.start),
+                    x_max: this.parent.x_scale(tooltip.data.end),
+                    y_min: gene_bbox.y,
+                    y_max: gene_bbox.y + gene_bbox.height
+                };
             };
             return this;
         });
@@ -4879,152 +4258,16 @@
                 hitarea_width: 5
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-            // Var for storing mouse events for use in tool tip positioning
-            /** @member {String} */
-            this.mouse_event = null;
-            /**
-     * Var for storing the generated line function itself
-     * @member {d3.svg.line}
-     * */
-            this.line = null;
-            /**
-     * The timeout identifier returned by setTimeout
-     * @member {Number}
-     */
-            this.tooltip_timeout = null;
+            if (layout.tooltip) {
+                throw new Error('The line / filled curve layer does not support tooltips');
+            }
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
             LocusZoom.DataLayer.apply(this, arguments);
-            /**
-     * Helper function to get display and data objects representing
-     *   the x/y coordinates of the current mouse event with respect to the line in terms of the display
-     *   and the interpolated values of the x/y fields with respect to the line
-     * @returns {{display: {x: *, y: null}, data: {}, slope: null}}
-     */
-            this.getMouseDisplayAndData = function () {
-                var ret = {
-                    display: {
-                        x: d3.mouse(this.mouse_event)[0],
-                        y: null
-                    },
-                    data: {},
-                    slope: null
-                };
-                var x_field = this.layout.x_axis.field;
-                var y_field = this.layout.y_axis.field;
-                var x_scale = 'x_scale';
-                var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
-                ret.data[x_field] = this.parent[x_scale].invert(ret.display.x);
-                var bisect = d3.bisector(function (datum) {
-                    return +datum[x_field];
-                }).left;
-                var index = bisect(this.data, ret.data[x_field]) - 1;
-                var startDatum = this.data[index];
-                var endDatum = this.data[index + 1];
-                var interpolate = d3.interpolateNumber(+startDatum[y_field], +endDatum[y_field]);
-                var range = +endDatum[x_field] - +startDatum[x_field];
-                ret.data[y_field] = interpolate(ret.data[x_field] % range / range);
-                ret.display.y = this.parent[y_scale](ret.data[y_field]);
-                if (this.layout.tooltip.x_precision) {
-                    ret.data[x_field] = ret.data[x_field].toPrecision(this.layout.tooltip.x_precision);
-                }
-                if (this.layout.tooltip.y_precision) {
-                    ret.data[y_field] = ret.data[y_field].toPrecision(this.layout.tooltip.y_precision);
-                }
-                ret.slope = (this.parent[y_scale](endDatum[y_field]) - this.parent[y_scale](startDatum[y_field])) / (this.parent[x_scale](endDatum[x_field]) - this.parent[x_scale](startDatum[x_field]));
-                return ret;
-            };
-            /**
-     * Reimplement the positionTooltip() method to be line-specific
-     * @param {String} id Identify the tooltip to be positioned
-     */
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var tooltip = this.tooltips[id];
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-                var arrow_width = 7;
-                // as defined in the default stylesheet
-                var border_radius = 6;
-                // as defined in the default stylesheet
-                var stroke_width = parseFloat(this.layout.style['stroke-width']) || 1;
-                var page_origin = this.getPageOrigin();
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-                var top, left, arrow_top, arrow_left, arrow_type;
-                // Determine x/y coordinates for display and data
-                var dd = this.getMouseDisplayAndData();
-                // If the absolute value of the slope of the line at this point is above 1 (including Infinity)
-                // then position the tool tip left/right. Otherwise position top/bottom.
-                if (Math.abs(dd.slope) > 1) {
-                    // Position horizontally on the left or the right depending on which side of the plot the point is on
-                    if (dd.display.x <= this.parent.layout.width / 2) {
-                        left = page_origin.x + dd.display.x + stroke_width + arrow_width + stroke_width;
-                        arrow_type = 'left';
-                        arrow_left = -1 * (arrow_width + stroke_width);
-                    } else {
-                        left = page_origin.x + dd.display.x - tooltip_box.width - stroke_width - arrow_width - stroke_width;
-                        arrow_type = 'right';
-                        arrow_left = tooltip_box.width - stroke_width;
-                    }
-                    // Position vertically centered unless we're at the top or bottom of the plot
-                    if (dd.display.y - tooltip_box.height / 2 <= 0) {
-                        // Too close to the top, push it down
-                        top = page_origin.y + dd.display.y - 1.5 * arrow_width - border_radius;
-                        arrow_top = border_radius;
-                    } else if (dd.display.y + tooltip_box.height / 2 >= data_layer_height) {
-                        // Too close to the bottom, pull it up
-                        top = page_origin.y + dd.display.y + arrow_width + border_radius - tooltip_box.height;
-                        arrow_top = tooltip_box.height - 2 * arrow_width - border_radius;
-                    } else {
-                        // vertically centered
-                        top = page_origin.y + dd.display.y - tooltip_box.height / 2;
-                        arrow_top = tooltip_box.height / 2 - arrow_width;
-                    }
-                } else {
-                    // Position horizontally: attempt to center on the mouse's x coordinate
-                    // pad to either side if bumping up against the edge of the data layer
-                    var offset_right = Math.max(tooltip_box.width / 2 - dd.display.x, 0);
-                    var offset_left = Math.max(tooltip_box.width / 2 + dd.display.x - data_layer_width, 0);
-                    left = page_origin.x + dd.display.x - tooltip_box.width / 2 - offset_left + offset_right;
-                    var min_arrow_left = arrow_width / 2;
-                    var max_arrow_left = tooltip_box.width - 2.5 * arrow_width;
-                    arrow_left = tooltip_box.width / 2 - arrow_width + offset_left - offset_right;
-                    arrow_left = Math.min(Math.max(arrow_left, min_arrow_left), max_arrow_left);
-                    // Position vertically above the line unless there's insufficient space
-                    if (tooltip_box.height + stroke_width + arrow_width > dd.display.y) {
-                        top = page_origin.y + dd.display.y + stroke_width + arrow_width;
-                        arrow_type = 'up';
-                        arrow_top = 0 - stroke_width - arrow_width;
-                    } else {
-                        top = page_origin.y + dd.display.y - (tooltip_box.height + stroke_width + arrow_width);
-                        arrow_type = 'down';
-                        arrow_top = tooltip_box.height - stroke_width;
-                    }
-                }
-                // Apply positions to the main div
-                tooltip.selector.style({
-                    left: left + 'px',
-                    top: top + 'px'
-                });
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style({
-                    'left': arrow_left + 'px',
-                    top: arrow_top + 'px'
-                });
-            };
             /**
      * Implement the main render function
      */
             this.render = function () {
                 // Several vars needed to be in scope
-                var data_layer = this;
                 var panel = this.parent;
                 var x_field = this.layout.x_axis.field;
                 var y_field = this.layout.y_axis.field;
@@ -5035,9 +4278,10 @@
                 // Create path element, apply class
                 this.path = selection.enter().append('path').attr('class', 'lz-data_layer-line');
                 // Generate the line
+                var line;
                 if (this.layout.style.fill && this.layout.style.fill !== 'none') {
                     // Filled curve: define the line as a filled boundary
-                    this.line = d3.svg.area().x(function (d) {
+                    line = d3.svg.area().x(function (d) {
                         return parseFloat(panel[x_scale](d[x_field]));
                     }).y0(function (d) {
                         return parseFloat(panel[y_scale](0));
@@ -5046,48 +4290,14 @@
                     });
                 } else {
                     // Basic line
-                    this.line = d3.svg.line().x(function (d) {
+                    line = d3.svg.line().x(function (d) {
                         return parseFloat(panel[x_scale](d[x_field]));
                     }).y(function (d) {
                         return parseFloat(panel[y_scale](d[y_field]));
                     }).interpolate(this.layout.interpolate);
                 }
                 // Apply line and style
-                if (this.canTransition()) {
-                    selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('d', this.line).style(this.layout.style);
-                } else {
-                    selection.attr('d', this.line).style(this.layout.style);
-                }
-                // Apply tooltip, etc
-                if (this.layout.tooltip) {
-                    // Generate an overlaying transparent "hit area" line for more intuitive mouse events
-                    var hitarea_width = parseFloat(this.layout.hitarea_width).toString() + 'px';
-                    var hitarea = this.svg.group.selectAll('path.lz-data_layer-line-hitarea').data([this.data]);
-                    hitarea.enter().append('path').attr('class', 'lz-data_layer-line-hitarea').style('stroke-width', hitarea_width);
-                    var hitarea_line = d3.svg.line().x(function (d) {
-                        return parseFloat(panel[x_scale](d[x_field]));
-                    }).y(function (d) {
-                        return parseFloat(panel[y_scale](d[y_field]));
-                    }).interpolate(this.layout.interpolate);
-                    hitarea.attr('d', hitarea_line).on('mouseover', function () {
-                        clearTimeout(data_layer.tooltip_timeout);
-                        data_layer.mouse_event = this;
-                        var dd = data_layer.getMouseDisplayAndData();
-                        data_layer.createTooltip(dd.data);
-                    }).on('mousemove', function () {
-                        clearTimeout(data_layer.tooltip_timeout);
-                        data_layer.mouse_event = this;
-                        var dd = data_layer.getMouseDisplayAndData();
-                        data_layer.updateTooltip(dd.data);
-                        data_layer.positionTooltip(data_layer.getElementId());
-                    }).on('mouseout', function () {
-                        data_layer.tooltip_timeout = setTimeout(function () {
-                            data_layer.mouse_event = null;
-                            data_layer.destroyTooltip(data_layer.getElementId());
-                        }, 300);
-                    });
-                    hitarea.exit().remove();
-                }
+                selection.attr('d', line).style(this.layout.style);
                 // Remove old elements as needed
                 selection.exit().remove();
             };
@@ -5109,7 +4319,7 @@
                 if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
                     throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
                 }
-                if (typeof this.state[this.state_id][status] == 'undefined') {
+                if (typeof this.layer_state.status_flags[status] == 'undefined') {
                     return this;
                 }
                 if (typeof toggle == 'undefined') {
@@ -5155,6 +4365,7 @@
                     axis: 1,
                     decoupled: true
                 },
+                tooltip_positioning: 'vertical',
                 offset: 0
             };
             layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
@@ -5168,10 +4379,12 @@
             // Vars for storing the data generated line
             /** @member {Array} */
             this.data = [];
-            /** @member {d3.svg.line} */
-            this.line = null;
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
             LocusZoom.DataLayer.apply(this, arguments);
+            this.getElementId = function (element) {
+                // There is only one line per datalayer, so this is sufficient.
+                return this.getBaseId();
+            };
             /**
      * Implement the main render function
      */
@@ -5221,7 +4434,7 @@
                     0
                 ];
                 // Generate the line
-                this.line = d3.svg.line().x(function (d, i) {
+                var line = d3.svg.line().x(function (d, i) {
                     var x = parseFloat(panel[x_scale](d['x']));
                     return isNaN(x) ? panel[x_range][i] : x;
                 }).y(function (d, i) {
@@ -5229,13 +4442,27 @@
                     return isNaN(y) ? default_y[i] : y;
                 }).interpolate('linear');
                 // Apply line and style
-                if (this.canTransition()) {
-                    selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('d', this.line).style(this.layout.style);
-                } else {
-                    selection.attr('d', this.line).style(this.layout.style);
-                }
+                selection.attr('d', line).style(this.layout.style);
                 // Remove old elements as needed
                 selection.exit().remove();
+                // Allow the layer to respond to mouseover events and show a tooltip.
+                this.applyBehaviors(selection);
+            };
+            this._getTooltipPosition = function (tooltip) {
+                try {
+                    var coords = d3.mouse(this.svg.container.node());
+                    var x = coords[0];
+                    var y = coords[1];
+                    return {
+                        x_min: x - 1,
+                        x_max: x + 1,
+                        y_min: y - 1,
+                        y_max: y + 1
+                    };
+                } catch (e) {
+                    // On redraw, there won't be a mouse event, so skip tooltip repositioning.
+                    return null;
+                }
             };
             return this;
         });
@@ -5264,87 +4491,26 @@
             }
             // Apply the arguments to set LocusZoom.DataLayer as the prototype
             LocusZoom.DataLayer.apply(this, arguments);
-            // Reimplement the positionTooltip() method to be scatter-specific
-            this.positionTooltip = function (id) {
-                if (typeof id != 'string') {
-                    throw new Error('Unable to position tooltip: id is not a string');
-                }
-                if (!this.tooltips[id]) {
-                    throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-                }
-                var top, left, arrow_type, arrow_top, arrow_left;
-                var tooltip = this.tooltips[id];
-                var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-                var offset = Math.sqrt(point_size / Math.PI);
-                var arrow_width = 7;
-                // as defined in the default stylesheet
-                var stroke_width = 1;
-                // as defined in the default stylesheet
-                var border_radius = 6;
-                // as defined in the default stylesheet
-                var page_origin = this.getPageOrigin();
+            // Implement tooltip position to be layer-specific
+            this._getTooltipPosition = function (tooltip) {
                 var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
                 var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
                 var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-                var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-                var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-                if (this.layout.tooltip_positioning === 'vertical') {
-                    // Position horizontally centered above the point
-                    var offset_right = Math.max(tooltip_box.width / 2 - x_center, 0);
-                    var offset_left = Math.max(tooltip_box.width / 2 + x_center - data_layer_width, 0);
-                    left = page_origin.x + x_center - tooltip_box.width / 2 - offset_left + offset_right;
-                    arrow_left = tooltip_box.width / 2 - arrow_width / 2 + offset_left - offset_right - offset;
-                    // Position vertically above the point unless there's insufficient space, then go below
-                    if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)) {
-                        top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
-                        arrow_type = 'down';
-                        arrow_top = tooltip_box.height - stroke_width;
-                    } else {
-                        top = page_origin.y + y_center + offset + stroke_width + arrow_width;
-                        arrow_type = 'up';
-                        arrow_top = 0 - stroke_width - arrow_width;
-                    }
-                } else {
-                    // Position horizontally on the left or the right depending on which side of the plot the point is on
-                    if (x_center <= this.parent.layout.width / 2) {
-                        left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-                        arrow_type = 'left';
-                        arrow_left = -1 * (arrow_width + stroke_width);
-                    } else {
-                        left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-                        arrow_type = 'right';
-                        arrow_left = tooltip_box.width - stroke_width;
-                    }
-                    // Position vertically centered unless we're at the top or bottom of the plot
-                    data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-                    if (y_center - tooltip_box.height / 2 <= 0) {
-                        // Too close to the top, push it down
-                        top = page_origin.y + y_center - 1.5 * arrow_width - border_radius;
-                        arrow_top = border_radius;
-                    } else if (y_center + tooltip_box.height / 2 >= data_layer_height) {
-                        // Too close to the bottom, pull it up
-                        top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-                        arrow_top = tooltip_box.height - 2 * arrow_width - border_radius;
-                    } else {
-                        // vertically centered
-                        top = page_origin.y + y_center - tooltip_box.height / 2;
-                        arrow_top = tooltip_box.height / 2 - arrow_width;
-                    }
-                }
-                // Apply positions to the main div
-                tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-                // Create / update position on arrow connecting tooltip to data
-                if (!tooltip.arrow) {
-                    tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-                }
-                tooltip.arrow.attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type).style('left', arrow_left + 'px').style('top', arrow_top + 'px');
+                var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+                var offset = Math.sqrt(point_size / Math.PI);
+                return {
+                    x_min: x_center - offset,
+                    x_max: x_center + offset,
+                    y_min: y_center - offset,
+                    y_max: y_center + offset
+                };
             };
             // Function to flip labels from being anchored at the start of the text to the end
             // Both to keep labels from running outside the data layer and  also as a first
             // pass on recursive separation
             this.flip_labels = function () {
                 var data_layer = this;
+                // Base positions on the default point size (which is what resolve scalable param returns if no data provided)
                 var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
                 var spacing = data_layer.layout.label.spacing;
                 var handle_lines = Boolean(data_layer.layout.label.lines);
@@ -5499,19 +4665,24 @@
             };
             // Implement the main render function
             this.render = function () {
+                var self = this;
                 var data_layer = this;
                 var x_scale = 'x_scale';
                 var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
                 if (this.layout.label) {
                     // Apply filters to generate a filtered data set
-                    var filtered_data = this.data.filter(function (d) {
-                        if (!data_layer.layout.label.filters) {
-                            return true;
-                        } else {
-                            // Start by assuming a match, run through all filters to test if not a match on any one
+                    var filtered_data;
+                    var filters = data_layer.layout.label.filters || [];
+                    if (!filters.length) {
+                        filtered_data = this.data;
+                    } else {
+                        filtered_data = this.data.filter(function (d) {
+                            // Start by assuming a match (base case = no filters).
+                            // Test each filters: ALL must be satisfied for match to occur.
                             var match = true;
-                            data_layer.layout.label.filters.forEach(function (filter) {
-                                var field_value = new LocusZoom.Data.Field(filter.field).resolve(d);
+                            filters.forEach(function (filter) {
+                                var extra = self.layer_state.extra_fields[self.getElementId(d)];
+                                var field_value = new LocusZoom.Data.Field(filter.field).resolve(d, extra);
                                 if ([
                                         '!=',
                                         '='
@@ -5560,10 +4731,9 @@
                                 }
                             });
                             return match;
-                        }
-                    });
+                        });
+                    }
                     // Render label groups
-                    var self = this;
                     this.label_groups = this.svg.group.selectAll('g.lz-data_layer-' + this.layout.type + '-label').data(filtered_data, function (d) {
                         return d[self.layout.id_field] + '_label';
                     });
@@ -5644,17 +4814,17 @@
                 }
                 // Generate main scatter data elements
                 var selection = this.svg.group.selectAll('path.lz-data_layer-' + this.layout.type).data(this.data, function (d) {
-                    return d[this.layout.id_field];
-                }.bind(this));
+                    return d[self.layout.id_field];
+                });
                 // Create elements, apply class, ID, and initial position
                 var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
                 selection.enter().append('path').attr('class', 'lz-data_layer-' + this.layout.type).attr('id', function (d) {
-                    return this.getElementId(d);
-                }.bind(this)).attr('transform', 'translate(0,' + initial_y + ')');
+                    return self.getElementId(d);
+                }).attr('transform', 'translate(0,' + initial_y + ')');
                 // Generate new values (or functions for them) for position, color, size, and shape
                 var transform = function (d) {
-                    var x = this.parent[x_scale](d[this.layout.x_axis.field]);
-                    var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+                    var x = self.parent[x_scale](d[self.layout.x_axis.field]);
+                    var y = self.parent[y_scale](d[self.layout.y_axis.field]);
                     if (isNaN(x)) {
                         x = -1000;
                     }
@@ -5662,30 +4832,26 @@
                         y = -1000;
                     }
                     return 'translate(' + x + ',' + y + ')';
+                };
+                var fill = function (d, i) {
+                    return this.resolveScalableParameter(this.layout.color, d, i);
                 }.bind(this);
-                var fill = function (d) {
-                    return this.resolveScalableParameter(this.layout.color, d);
+                var fill_opacity = function (d, i) {
+                    return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
                 }.bind(this);
-                var fill_opacity = function (d) {
-                    return this.resolveScalableParameter(this.layout.fill_opacity, d);
-                }.bind(this);
-                var shape = d3.svg.symbol().size(function (d) {
-                    return this.resolveScalableParameter(this.layout.point_size, d);
-                }.bind(this)).type(function (d) {
-                    return this.resolveScalableParameter(this.layout.point_shape, d);
+                var shape = d3.svg.symbol().size(function (d, i) {
+                    return this.resolveScalableParameter(this.layout.point_size, d, i);
+                }.bind(this)).type(function (d, i) {
+                    return this.resolveScalableParameter(this.layout.point_shape, d, i);
                 }.bind(this));
-                // Apply position and color, using a transition if necessary
-                if (this.canTransition()) {
-                    selection.transition().duration(this.layout.transition.duration || 0).ease(this.layout.transition.ease || 'cubic-in-out').attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
-                } else {
-                    selection.attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
-                }
+                // Apply position and color
+                selection.attr('transform', transform).attr('fill', fill).attr('fill-opacity', fill_opacity).attr('d', shape);
                 // Remove old elements as needed
                 selection.exit().remove();
                 // Apply default event emitters to selection
                 selection.on('click.event_emitter', function (element) {
-                    this.parent.emit('element_clicked', element, true);
-                }.bind(this));
+                    self.parent.emit('element_clicked', element, true);
+                });
                 // Apply mouse behaviors
                 this.applyBehaviors(selection);
                 // Apply method to keep labels from overlapping each other
@@ -5695,8 +4861,8 @@
                     this.separate_labels();
                     // Apply default event emitters to selection
                     this.label_texts.on('click.event_emitter', function (element) {
-                        this.parent.emit('element_clicked', element, true);
-                    }.bind(this));
+                        self.parent.emit('element_clicked', element, true);
+                    });
                     // Extend mouse behaviors to labels
                     this.applyBehaviors(this.label_texts);
                 }
@@ -6290,16 +5456,17 @@
      * @param {String} name
      * @param {Object} [parameters] Configuration parameters specific to the specified scale function
      * @param {*} [value] The value to operate on
-     * @returns {*}
+     * @param {*} [value] The value to operate on
+     * @returns {Number} [index] The position of this element in the parent data array
      */
-            obj.get = function (name, parameters, value) {
+            obj.get = function (name, parameters, value, index) {
                 if (!name) {
                     return null;
                 } else if (functions[name]) {
-                    if (typeof parameters === 'undefined' && typeof value === 'undefined') {
+                    if (typeof parameters === 'undefined' && typeof value === 'undefined' && typeof index === 'undefined') {
                         return functions[name];
                     } else {
-                        return functions[name](parameters, value);
+                        return functions[name](parameters, value, index);
                     }
                 } else {
                     throw new Error('scale function [' + name + '] not found');
@@ -6408,6 +5575,17 @@
             } else {
                 return parameters.values[parameters.categories.indexOf(value)];
             }
+        });
+        /**
+ * Cycle through a set of options, so that the each element in a set of data receives a value different than the
+ *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+ *  @param {Object} parameters
+ *  @param {Array} parameters.values A list of option values
+ * @return {*}
+ */
+        LocusZoom.ScaleFunctions.add('ordinal_cycle', function (parameters, value, index) {
+            var options = parameters.values;
+            return options[index % options.length];
         });
         /**
  * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.
@@ -7676,172 +6854,6 @@
             };
         });
         /**
- * Special button/menu to allow model building by tracking individual covariants. Will track a list of covariate
- *   objects and store them in the special `model.covariates` field of plot `state`.
- * @class LocusZoom.Dashboard.Components.covariates_model
- * @augments LocusZoom.Dashboard.Component
- * @param {object} layout
- * @param {string} layout.button_html The HTML to render inside the button
- * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
- */
-        LocusZoom.Dashboard.Components.add('covariates_model', function (layout) {
-            LocusZoom.Dashboard.Component.apply(this, arguments);
-            this.initialize = function () {
-                // Initialize state.model.covariates
-                this.parent_plot.state.model = this.parent_plot.state.model || {};
-                this.parent_plot.state.model.covariates = this.parent_plot.state.model.covariates || [];
-                // Create an object at the plot level for easy access to interface methods in custom client-side JS
-                /**
-         * When a covariates model dashboard element is present, create (one) object at the plot level that exposes
-         *   component data and state for custom interactions with other plot elements.
-         * @class LocusZoom.Plot.CovariatesModel
-         */
-                this.parent_plot.CovariatesModel = {
-                    /** @member {LocusZoom.Dashboard.Component.Button} */
-                    button: this,
-                    /**
-             * Add an element to the model and show a representation of it in the dashboard component menu. If the
-             *   element is already part of the model, do nothing (to avoid adding duplicates).
-             * When plot state is changed, this will automatically trigger requests for new data accordingly.
-             * @param {string|object} element_reference Can be any value that can be put through JSON.stringify()
-             *   to create a serialized representation of itself.
-             */
-                    add: function (element_reference) {
-                        var element = JSON.parse(JSON.stringify(element_reference));
-                        if (typeof element_reference == 'object' && typeof element.html != 'string') {
-                            element.html = typeof element_reference.toHTML == 'function' ? element_reference.toHTML() : element_reference.toString();
-                        }
-                        // Check if the element is already in the model covariates array and return if it is.
-                        for (var i = 0; i < this.state.model.covariates.length; i++) {
-                            if (JSON.stringify(this.state.model.covariates[i]) === JSON.stringify(element)) {
-                                return this;
-                            }
-                        }
-                        this.state.model.covariates.push(element);
-                        this.applyState();
-                        this.CovariatesModel.updateComponent();
-                        return this;
-                    }.bind(this.parent_plot),
-                    /**
-             * Remove an element from `state.model.covariates` (and from the dashboard component menu's
-             *  representation of the state model). When plot state is changed, this will automatically trigger
-             *  requests for new data accordingly.
-             * @param {number} idx Array index of the element, in the `state.model.covariates array`.
-             */
-                    removeByIdx: function (idx) {
-                        if (typeof this.state.model.covariates[idx] == 'undefined') {
-                            throw new Error('Unable to remove model covariate, invalid index: ' + idx.toString());
-                        }
-                        this.state.model.covariates.splice(idx, 1);
-                        this.applyState();
-                        this.CovariatesModel.updateComponent();
-                        return this;
-                    }.bind(this.parent_plot),
-                    /**
-             * Empty the `state.model.covariates` array (and dashboard component menu representation thereof) of all
-             *  elements. When plot state is changed, this will automatically trigger requests for new data accordingly
-             */
-                    removeAll: function () {
-                        this.state.model.covariates = [];
-                        this.applyState();
-                        this.CovariatesModel.updateComponent();
-                        return this;
-                    }.bind(this.parent_plot),
-                    /**
-             * Manually trigger the update methods on the dashboard component's button and menu elements to force
-             *   display of most up-to-date content. Can be used to force the dashboard to reflect changes made, eg if
-             *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
-             */
-                    updateComponent: function () {
-                        this.button.update();
-                        this.button.menu.update();
-                    }.bind(this)
-                };
-            }.bind(this);
-            this.update = function () {
-                if (this.button) {
-                    return this;
-                }
-                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title).setOnclick(function () {
-                    this.button.menu.populate();
-                }.bind(this));
-                this.button.menu.setPopulate(function () {
-                    var selector = this.button.menu.inner_selector;
-                    selector.html('');
-                    // General model HTML representation
-                    if (typeof this.parent_plot.state.model.html != 'undefined') {
-                        selector.append('div').html(this.parent_plot.state.model.html);
-                    }
-                    // Model covariates table
-                    if (!this.parent_plot.state.model.covariates.length) {
-                        selector.append('i').html('no covariates in model');
-                    } else {
-                        selector.append('h5').html('Model Covariates (' + this.parent_plot.state.model.covariates.length + ')');
-                        var table = selector.append('table');
-                        this.parent_plot.state.model.covariates.forEach(function (covariate, idx) {
-                            var html = typeof covariate == 'object' && typeof covariate.html == 'string' ? covariate.html : covariate.toString();
-                            var row = table.append('tr');
-                            row.append('td').append('button').attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color).style({ 'margin-left': '0em' }).on('click', function () {
-                                this.parent_plot.CovariatesModel.removeByIdx(idx);
-                            }.bind(this)).html('\xD7');
-                            row.append('td').html(html);
-                        }.bind(this));
-                        selector.append('button').attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color).style({ 'margin-left': '4px' }).html('\xD7 Remove All Covariates').on('click', function () {
-                            this.parent_plot.CovariatesModel.removeAll();
-                        }.bind(this));
-                    }
-                }.bind(this));
-                this.button.preUpdate = function () {
-                    var html = 'Model';
-                    if (this.parent_plot.state.model.covariates.length) {
-                        var cov = this.parent_plot.state.model.covariates.length > 1 ? 'covariates' : 'covariate';
-                        html += ' (' + this.parent_plot.state.model.covariates.length + ' ' + cov + ')';
-                    }
-                    this.button.setHtml(html).disable(false);
-                }.bind(this);
-                this.button.show();
-                return this;
-            };
-        });
-        /**
- * Button to toggle split tracks
- * @class LocusZoom.Dashboard.Components.toggle_split_tracks
- * @augments LocusZoom.Dashboard.Component
- */
-        LocusZoom.Dashboard.Components.add('toggle_split_tracks', function (layout) {
-            LocusZoom.Dashboard.Component.apply(this, arguments);
-            if (!layout.data_layer_id) {
-                layout.data_layer_id = 'intervals';
-            }
-            if (!this.parent_panel.data_layers[layout.data_layer_id]) {
-                throw new Error('Dashboard toggle split tracks component missing valid data layer ID');
-            }
-            this.update = function () {
-                var data_layer = this.parent_panel.data_layers[layout.data_layer_id];
-                var html = data_layer.layout.split_tracks ? 'Merge Tracks' : 'Split Tracks';
-                if (this.button) {
-                    this.button.setHtml(html);
-                    this.button.show();
-                    this.parent.position();
-                    return this;
-                } else {
-                    this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml(html).setTitle('Toggle whether tracks are split apart or merged together').setOnclick(function () {
-                        data_layer.toggleSplitTracks();
-                        if (this.scale_timeout) {
-                            clearTimeout(this.scale_timeout);
-                        }
-                        var timeout = data_layer.layout.transition ? +data_layer.layout.transition.duration || 0 : 0;
-                        this.scale_timeout = setTimeout(function () {
-                            this.parent_panel.scaleHeightToData();
-                            this.parent_plot.positionPanels();
-                        }.bind(this), timeout);
-                        this.update();
-                    }.bind(this));
-                    return this.update();
-                }
-            };
-        });
-        /**
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
  * @class LocusZoom.Dashboard.Components.resize_to_data
  * @augments LocusZoom.Dashboard.Component
@@ -7882,79 +6894,6 @@
                     this.update();
                 }.bind(this));
                 return this.update();
-            };
-        });
-        /**
- * Menu for manipulating multiple data layers in a single panel: show/hide, change order, etc.
- * @class LocusZoom.Dashboard.Components.data_layers
- * @augments LocusZoom.Dashboard.Component
- */
-        LocusZoom.Dashboard.Components.add('data_layers', function (layout) {
-            LocusZoom.Dashboard.Component.apply(this, arguments);
-            this.update = function () {
-                if (typeof layout.button_html != 'string') {
-                    layout.button_html = 'Data Layers';
-                }
-                if (typeof layout.button_title != 'string') {
-                    layout.button_title = 'Manipulate Data Layers (sort, dim, show/hide, etc.)';
-                }
-                if (this.button) {
-                    return this;
-                }
-                this.button = new LocusZoom.Dashboard.Component.Button(this).setColor(layout.color).setHtml(layout.button_html).setTitle(layout.button_title).setOnclick(function () {
-                    this.button.menu.populate();
-                }.bind(this));
-                this.button.menu.setPopulate(function () {
-                    this.button.menu.inner_selector.html('');
-                    var table = this.button.menu.inner_selector.append('table');
-                    this.parent_panel.data_layer_ids_by_z_index.slice().reverse().forEach(function (id, idx) {
-                        var data_layer = this.parent_panel.data_layers[id];
-                        var name = typeof data_layer.layout.name != 'string' ? data_layer.id : data_layer.layout.name;
-                        var row = table.append('tr');
-                        // Layer name
-                        row.append('td').html(name);
-                        // Status toggle buttons
-                        layout.statuses.forEach(function (status_adj) {
-                            var status_idx = LocusZoom.DataLayer.Statuses.adjectives.indexOf(status_adj);
-                            var status_verb = LocusZoom.DataLayer.Statuses.verbs[status_idx];
-                            var html, onclick, highlight;
-                            if (data_layer.global_statuses[status_adj]) {
-                                html = LocusZoom.DataLayer.Statuses.menu_antiverbs[status_idx];
-                                onclick = 'un' + status_verb + 'AllElements';
-                                highlight = '-highlighted';
-                            } else {
-                                html = LocusZoom.DataLayer.Statuses.verbs[status_idx];
-                                onclick = status_verb + 'AllElements';
-                                highlight = '';
-                            }
-                            row.append('td').append('a').attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color + highlight).style({ 'margin-left': '0em' }).on('click', function () {
-                                data_layer[onclick]();
-                                this.button.menu.populate();
-                            }.bind(this)).html(html);
-                        }.bind(this));
-                        // Sort layer buttons
-                        var at_top = idx === 0;
-                        var at_bottom = idx === this.parent_panel.data_layer_ids_by_z_index.length - 1;
-                        var td = row.append('td');
-                        td.append('a').attr('class', 'lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-' + this.layout.color + (at_bottom ? '-disabled' : '')).style({ 'margin-left': '0em' }).on('click', function () {
-                            data_layer.moveDown();
-                            this.button.menu.populate();
-                        }.bind(this)).html('\u25BE').attr('title', 'Move layer down (further back)');
-                        td.append('a').attr('class', 'lz-dashboard-button lz-dashboard-button-group-middle lz-dashboard-button-' + this.layout.color + (at_top ? '-disabled' : '')).style({ 'margin-left': '0em' }).on('click', function () {
-                            data_layer.moveUp();
-                            this.button.menu.populate();
-                        }.bind(this)).html('\u25B4').attr('title', 'Move layer up (further front)');
-                        td.append('a').attr('class', 'lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-red').style({ 'margin-left': '0em' }).on('click', function () {
-                            if (confirm('Are you sure you want to remove the ' + name + ' layer? This cannot be undone!')) {
-                                data_layer.parent.removeDataLayer(id);
-                            }
-                            return this.button.menu.populate();
-                        }.bind(this)).html('\xD7').attr('title', 'Remove layer');
-                    }.bind(this));
-                    return this;
-                }.bind(this));
-                this.button.show();
-                return this;
             };
         });
         /**
@@ -8193,7 +7132,6 @@
      * @member {Boolean}
      */
             this.hidden = false;
-            // TODO Revisit constructor return value; see https://stackoverflow.com/a/3350364/1422268
             return this.render();
         };
         /**
@@ -8501,20 +7439,33 @@
                 });
                 return val;
             };
-            // Resolve the field for a given data element.
-            // First look for a full match with transformations already applied by the data requester.
-            // Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
-            this.resolve = function (d) {
-                if (typeof d[this.full_name] == 'undefined') {
+            /**
+     * Resolve the field for a given data element.
+     *   First look for a full match with transformations already applied by the data requester.
+     *   Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
+     * @param {Object} data Returned data/fields into for this element
+     * @param {Object} [extra] User-applied annotations for this point (info not provided by the server that we want
+     *  to preserve across re-renders). Example usage: "should_show_label"
+     * @returns {*}
+     */
+            this.resolve = function (data, extra) {
+                if (typeof data[this.full_name] == 'undefined') {
+                    // Check for cached result
                     var val = null;
-                    if (typeof d[this.namespace + ':' + this.name] != 'undefined') {
-                        val = d[this.namespace + ':' + this.name];
-                    } else if (typeof d[this.name] != 'undefined') {
-                        val = d[this.name];
+                    if (typeof data[this.namespace + ':' + this.name] != 'undefined') {
+                        // Fallback: value sans transforms
+                        val = data[this.namespace + ':' + this.name];
+                    } else if (typeof data[this.name] != 'undefined') {
+                        // Fallback: value present without namespace
+                        val = data[this.name];
+                    } else if (extra && typeof extra[this.full_name] != 'undefined') {
+                        // Fallback: check annotations
+                        val = extra[this.full_name];
                     }
-                    d[this.full_name] = this.applyTransformations(val);
+                    // We should really warn if no value found, but many bad layouts exist and this could break compatibility
+                    data[this.full_name] = this.applyTransformations(val);
                 }
-                return d[this.full_name];
+                return data[this.full_name];
             };
         };
         /**
@@ -9188,6 +8139,22 @@
                 validateBuildSource(this.constructor.SOURCE_NAME, build, null);
                 // LD doesn't need to validate `source` option
                 var refVar = this.getRefvar(state, chain, fields);
+                // Some datasets, notably the Portal, use a different marker format.
+                //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
+                var REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?):(\d+)[_:]?(\w+)?[/:|]?([^_]+)?_?(.*)?/;
+                var match = refVar && refVar.match(REGEX_MARKER);
+                if (!match) {
+                    throw new Error('Could not request LD for a missing or incomplete marker format');
+                }
+                refVar = [
+                    match[1],
+                    ':',
+                    match[2],
+                    '_',
+                    match[3],
+                    '/',
+                    match[4]
+                ].join('');
                 chain.header.ldrefvar = refVar;
                 return [
                     this.url,
@@ -9365,7 +8332,15 @@
             return data;
         };
         LocusZoom.Data.GeneConstraintSource.prototype.getCacheKey = function (state, chain, fields) {
-            return this.url + JSON.stringify(state);
+            var build = state.genome_build || this.params.build;
+            // Gather the state params that govern constraint query for a given region.
+            var query_for = [
+                state.chr,
+                state.start,
+                state.end,
+                build
+            ].join(' ');
+            return this.url + query_for;
         };
         LocusZoom.Data.GeneConstraintSource.prototype.fetchRequest = function (state, chain, fields) {
             var build = state.genome_build || this.params.build;
@@ -9443,19 +8418,6 @@
                 source = build === 'GRCh38' ? 16 : 15;
             }
             return this.url + '?filter=id in ' + source + ' and chromosome eq \'' + state.chr + '\'' + ' and position le ' + state.end + ' and position ge ' + state.start;
-        };
-        /**
- * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
- * @public
- * @class
- * @augments LocusZoom.Data.Source
- */
-        LocusZoom.Data.IntervalSource = LocusZoom.Data.Source.extend(function (init) {
-            this.parseInit(init);
-        }, 'IntervalLZ');
-        LocusZoom.Data.IntervalSource.prototype.getURL = function (state, chain, fields) {
-            var source = chain.header.bedtracksource || this.params.source;
-            return this.url + '?filter=id in ' + source + ' and chromosome eq \'' + state.chr + '\'' + ' and start le ' + state.end + ' and end ge ' + state.start;
         };
         /**
  * Data Source for static blobs of JSON Data. This does not perform additional parsing, and therefore it is the
@@ -9798,6 +8760,7 @@
             };
             /**
      * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
+     *  This returns a result with absolute position relative to the page, regardless of current scrolling
      * Necessary for positioning any HTML elements over the plot
      * @returns {{x: Number, y: Number, width: Number, height: Number}}
      */
@@ -9807,6 +8770,8 @@
                 var y_offset = document.documentElement.scrollTop || document.body.scrollTop;
                 var container = this.svg.node();
                 while (container.parentNode !== null) {
+                    // TODO: Recursively seeks offsets for highest non-static parent node. This can lead to incorrect
+                    //   calculations of, for example, x coordinate relative to the page. Revisit this logic.
                     container = container.parentNode;
                     if (container !== document && d3.select(container).style('position') !== 'static') {
                         x_offset = -1 * container.getBoundingClientRect().left;
@@ -10121,9 +9086,10 @@
                 self.panels[pid].data_layer_ids_by_z_index.forEach(function (dlid) {
                     var layer = self.panels[pid].data_layers[dlid];
                     layer.destroyAllTooltips();
-                    delete self.layout.state[pid + '.' + dlid];
+                    delete layer.layer_state;
+                    delete self.layout.state[layer.state_id];
                     if (mode === 'reset') {
-                        layer.setDefaultState();
+                        layer._setDefaultState();
                     }
                 });
             });
@@ -10516,17 +9482,19 @@
             if (typeof state_changes != 'object') {
                 throw new Error('LocusZoom.applyState only accepts an object; ' + typeof state_changes + ' given');
             }
-            // First make a copy of the current (old) state to work with
-            var new_state = JSON.parse(JSON.stringify(this.state));
-            // Apply changes by top-level property to the new state
+            // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
+            var mods = {
+                chr: this.state.chr,
+                start: this.state.start,
+                end: this.state.end
+            };
             for (var property in state_changes) {
-                new_state[property] = state_changes[property];
+                mods[property] = state_changes[property];
             }
-            // Validate the new state (may do nothing, may do a lot, depends on how the user has things set up)
-            new_state = LocusZoom.validateState(new_state, this.layout);
+            mods = LocusZoom._updateStatePosition(mods, this.layout);
             // Apply new state to the actual state
-            for (property in new_state) {
-                this.state[property] = new_state[property];
+            for (property in mods) {
+                this.state[property] = mods[property];
             }
             // Generate requests for all panels given new state
             this.emit('data_requested');
@@ -10548,23 +9516,7 @@
                     panel.dashboard.update();
                     // Apply data-layer-level state values
                     panel.data_layer_ids_by_z_index.forEach(function (data_layer_id) {
-                        var data_layer = this.data_layers[data_layer_id];
-                        var state_id = panel_id + '.' + data_layer_id;
-                        for (var property in this.state[state_id]) {
-                            if (!this.state[state_id].hasOwnProperty(property)) {
-                                continue;
-                            }
-                            if (Array.isArray(this.state[state_id][property])) {
-                                this.state[state_id][property].forEach(function (element_id) {
-                                    try {
-                                        this.setElementStatus(property, this.getElementById(element_id), true);
-                                    } catch (e) {
-                                        console.warn('Unable to apply state: ' + state_id + ', ' + property);
-                                        console.error(e);
-                                    }
-                                }.bind(data_layer));
-                            }
-                        }
+                        this.data_layers[data_layer_id].applyAllElementStatus();
                     }.bind(panel));
                 }.bind(this));
                 // Emit events

@@ -68,7 +68,7 @@
         // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
         var threshold = state.credible_set_threshold || this.params.threshold;
         // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-        if (!chain.body[0][self.params.fields.log_pvalue]) {
+        if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
             throw new Error('Credible set source could not locate the required fields from a previous request.');
         }
         var nlogpvals = chain.body.map(function (item) { return item[self.params.fields.log_pvalue]; });
