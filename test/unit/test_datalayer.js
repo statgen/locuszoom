@@ -970,13 +970,9 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('should have a method to list available data layers', function () {
             LocusZoom.DataLayers.should.have.property('list').which.is.a.Function;
-            LocusZoom.DataLayers.list().should.containEql('scatter');
-            LocusZoom.DataLayers.list().should.containEql('line');
-            LocusZoom.DataLayers.list().should.containEql('orthogonal_line');
-            LocusZoom.DataLayers.list().should.containEql('genes');
-            LocusZoom.DataLayers.list().should.containEql('intervals');
-            LocusZoom.DataLayers.list().should.containEql('genome_legend');
-            LocusZoom.DataLayers.list().should.containEql('forest');
+            var known_layers = LocusZoom.DataLayers.list();
+            assert.ok(Array.isArray(known_layers));
+            assert.ok(known_layers.length > 0);
         });
         it('should have a general method to get a data layer by name', function () {
             LocusZoom.DataLayers.should.have.property('get').which.is.a.Function;
@@ -994,13 +990,6 @@ describe('LocusZoom.DataLayer', function () {
                 return this;
             };
             LocusZoom.DataLayers.add('foo', foo);
-            LocusZoom.DataLayers.list().should.containEql('scatter');
-            LocusZoom.DataLayers.list().should.containEql('line');
-            LocusZoom.DataLayers.list().should.containEql('orthogonal_line');
-            LocusZoom.DataLayers.list().should.containEql('genes');
-            LocusZoom.DataLayers.list().should.containEql('intervals');
-            LocusZoom.DataLayers.list().should.containEql('genome_legend');
-            LocusZoom.DataLayers.list().should.containEql('forest');
             LocusZoom.DataLayers.list().should.containEql('foo');
             var returned_value = LocusZoom.DataLayers.get('foo', { id: 'bar' });
             var expected_value = new foo({ id: 'bar' });
@@ -1116,13 +1105,6 @@ describe('LocusZoom.DataLayer', function () {
                 return this;
             };
             LocusZoom.DataLayers.set('foo', foo_new);
-            LocusZoom.DataLayers.list().should.containEql('scatter');
-            LocusZoom.DataLayers.list().should.containEql('line');
-            LocusZoom.DataLayers.list().should.containEql('orthogonal_line');
-            LocusZoom.DataLayers.list().should.containEql('genes');
-            LocusZoom.DataLayers.list().should.containEql('intervals');
-            LocusZoom.DataLayers.list().should.containEql('genome_legend');
-            LocusZoom.DataLayers.list().should.containEql('forest');
             LocusZoom.DataLayers.list().should.containEql('foo');
             var returned_value = LocusZoom.DataLayers.get('foo', { id: 'baz' });
             var expected_value = new foo_new({ id: 'baz' });
@@ -1130,13 +1112,6 @@ describe('LocusZoom.DataLayer', function () {
             assert.deepEqual(returned_value.layout, expected_value.layout);
             assert.equal(returned_value.render(), expected_value.render());
             LocusZoom.DataLayers.set('foo');
-            LocusZoom.DataLayers.list().should.containEql('scatter');
-            LocusZoom.DataLayers.list().should.containEql('line');
-            LocusZoom.DataLayers.list().should.containEql('orthogonal_line');
-            LocusZoom.DataLayers.list().should.containEql('genes');
-            LocusZoom.DataLayers.list().should.containEql('intervals');
-            LocusZoom.DataLayers.list().should.containEql('genome_legend');
-            LocusZoom.DataLayers.list().should.containEql('forest');
             LocusZoom.DataLayers.list().should.not.containEql('foo');
         });
         it('should throw an exception if asked to get a function that has not been defined', function () {

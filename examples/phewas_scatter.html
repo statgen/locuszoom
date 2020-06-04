@@ -183,33 +183,6 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
         var variantGroups = VARIANT_PATTERN.exec(variantForPlot);
         var variantChrom = variantGroups[1];
         var variantPosition = +variantGroups[2];
-        var variantRefAlt = variantGroups[3];
-
-        // Genome base pairs static data
-        var genome_data =  [
-          { chr: 1, base_pairs: 249250621 },
-          { chr: 2, base_pairs: 243199373 },
-          { chr: 3, base_pairs: 198022430 },
-          { chr: 4, base_pairs: 191154276 },
-          { chr: 5, base_pairs: 180915260 },
-          { chr: 6, base_pairs: 171115067 },
-          { chr: 7, base_pairs: 159138663 },
-          { chr: 8, base_pairs: 146364022 },
-          { chr: 9, base_pairs: 141213431 },
-          { chr: 10, base_pairs: 135534747 },
-          { chr: 11, base_pairs: 135006516 },
-          { chr: 12, base_pairs: 133851895 },
-          { chr: 13, base_pairs: 115169878 },
-          { chr: 14, base_pairs: 107349540 },
-          { chr: 15, base_pairs: 102531392 },
-          { chr: 16, base_pairs: 90354753 },
-          { chr: 17, base_pairs: 81195210 },
-          { chr: 18, base_pairs: 78077248 },
-          { chr: 19, base_pairs: 59128983 },
-          { chr: 20, base_pairs: 63025520 },
-          { chr: 21, base_pairs: 48129895 },
-          { chr: 22, base_pairs: 51304566 }
-        ];
 
         // Define LocusZoom Data Sources object differently depending on online status
         var online = !(typeof navigator != "undefined" && !navigator.onLine);
@@ -236,10 +209,6 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
             .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114508349-115008349.json", params: { build: 'GRCh37' } }])
             .add("constraint", ["GeneConstraintLZ", { url: apiBase + "gene_constraints_10_114508349-115008349.json", params: { build: 'GRCh37' } }]);
         }
-        // Static blobs (independent of host)
-        dataSources
-          .add("variant", ["StaticJSON", [{ "x": variantPosition, "y": 0 }, { "x": variantPosition, "y": 1 }]])
-          .add("genome", ["StaticJSON", genome_data]);
 
         // Define the layout
         var mods = {
@@ -252,7 +221,7 @@ http://portaldev.sph.umich.edu/api/v1/statistic/phewas/?build=GRCh37&format=obje
         };
         var layout = LocusZoom.Layouts.get("plot", "standard_phewas", mods);
         layout.panels[0].margin.top = 32;
-        layout.panels[2].data_layers.push({
+        layout.panels[1].data_layers.push({
           id: "variant",
           type: "orthogonal_line",
           orientation: "vertical",

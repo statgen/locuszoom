@@ -68,18 +68,9 @@ LocusZoom.DataLayers.add('line', function(layout) {
         }
 
         // Apply line and style
-        if (this.canTransition()) {
-            selection
-                .transition()
-                .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || 'cubic-in-out')
-                .attr('d', line)
-                .style(this.layout.style);
-        } else {
-            selection
-                .attr('d', line)
-                .style(this.layout.style);
-        }
+        selection
+            .attr('d', line)
+            .style(this.layout.style);
 
         // Remove old elements as needed
         selection.exit().remove();
@@ -230,18 +221,9 @@ LocusZoom.DataLayers.add('orthogonal_line', function(layout) {
             .interpolate('linear');
 
         // Apply line and style
-        if (this.canTransition()) {
-            selection
-                .transition()
-                .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || 'cubic-in-out')
-                .attr('d', line)
-                .style(this.layout.style);
-        } else {
-            selection
-                .attr('d', line)
-                .style(this.layout.style);
-        }
+        selection
+            .attr('d', line)
+            .style(this.layout.style);
 
         // Remove old elements as needed
         selection.exit().remove();

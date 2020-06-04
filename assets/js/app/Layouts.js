@@ -226,12 +226,6 @@ LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
     return base;
 }());
 
-LocusZoom.Layouts.add('tooltip', 'covariates_model_association', function () {
-    var covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-    covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
-    return covariates_model_association;
-}());
-
 LocusZoom.Layouts.add('tooltip', 'standard_genes', {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
@@ -246,14 +240,6 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
         + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>'
         + '</table><br>{{/if}}'
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
-});
-
-LocusZoom.Layouts.add('tooltip', 'standard_intervals', {
-    namespace: { 'intervals': 'intervals' },
-    closable: false,
-    show: { or: ['highlighted', 'selected'] },
-    hide: { and: ['unhighlighted', 'unselected'] },
-    html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
 });
 
 LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
@@ -577,69 +563,6 @@ LocusZoom.Layouts.add('data_layer', 'genes', {
     tooltip: LocusZoom.Layouts.get('tooltip', 'standard_genes', { unnamespaced: true })
 });
 
-LocusZoom.Layouts.add('data_layer', 'genome_legend', {
-    namespace: { 'genome': 'genome' },
-    id: 'genome_legend',
-    type: 'genome_legend',
-    fields: ['{{namespace[genome]}}chr', '{{namespace[genome]}}base_pairs'],
-    x_axis: {
-        floor: 0,
-        ceiling: 2881033286
-    }
-});
-
-LocusZoom.Layouts.add('data_layer', 'intervals', {
-    namespace: { 'intervals': 'intervals' },
-    id: 'intervals',
-    type: 'intervals',
-    fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}state_id', '{{namespace[intervals]}}state_name'],
-    id_field: '{{namespace[intervals]}}start',
-    start_field: '{{namespace[intervals]}}start',
-    end_field: '{{namespace[intervals]}}end',
-    track_split_field: '{{namespace[intervals]}}state_id',
-    split_tracks: true,
-    always_hide_legend: false,
-    color: {
-        field: '{{namespace[intervals]}}state_id',
-        scale_function: 'categorical_bin',
-        parameters: {
-            categories: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
-            values: ['rgb(212,63,58)', 'rgb(250,120,105)', 'rgb(252,168,139)', 'rgb(240,189,66)', 'rgb(250,224,105)', 'rgb(240,238,84)', 'rgb(244,252,23)', 'rgb(23,232,252)', 'rgb(32,191,17)', 'rgb(23,166,77)', 'rgb(32,191,17)', 'rgb(162,133,166)', 'rgb(212,212,212)'],
-            null_value: '#B8B8B8'
-        }
-    },
-    legend: [
-        { shape: 'rect', color: 'rgb(212,63,58)', width: 9, label: 'Active Promoter', '{{namespace[intervals]}}state_id': 1 },
-        { shape: 'rect', color: 'rgb(250,120,105)', width: 9, label: 'Weak Promoter', '{{namespace[intervals]}}state_id': 2 },
-        { shape: 'rect', color: 'rgb(252,168,139)', width: 9, label: 'Poised Promoter', '{{namespace[intervals]}}state_id': 3 },
-        { shape: 'rect', color: 'rgb(240,189,66)', width: 9, label: 'Strong enhancer', '{{namespace[intervals]}}state_id': 4 },
-        { shape: 'rect', color: 'rgb(250,224,105)', width: 9, label: 'Strong enhancer', '{{namespace[intervals]}}state_id': 5 },
-        { shape: 'rect', color: 'rgb(240,238,84)', width: 9, label: 'Weak enhancer', '{{namespace[intervals]}}state_id': 6 },
-        { shape: 'rect', color: 'rgb(244,252,23)', width: 9, label: 'Weak enhancer', '{{namespace[intervals]}}state_id': 7 },
-        { shape: 'rect', color: 'rgb(23,232,252)', width: 9, label: 'Insulator', '{{namespace[intervals]}}state_id': 8 },
-        { shape: 'rect', color: 'rgb(32,191,17)', width: 9, label: 'Transcriptional transition', '{{namespace[intervals]}}state_id': 9 },
-        { shape: 'rect', color: 'rgb(23,166,77)', width: 9, label: 'Transcriptional elongation', '{{namespace[intervals]}}state_id': 10 },
-        { shape: 'rect', color: 'rgb(136,240,129)', width: 9, label: 'Weak transcribed', '{{namespace[intervals]}}state_id': 11 },
-        { shape: 'rect', color: 'rgb(162,133,166)', width: 9, label: 'Polycomb-repressed', '{{namespace[intervals]}}state_id': 12 },
-        { shape: 'rect', color: 'rgb(212,212,212)', width: 9, label: 'Heterochromatin / low signal', '{{namespace[intervals]}}state_id': 13 }
-    ],
-    behaviors: {
-        onmouseover: [
-            { action: 'set', status: 'highlighted' }
-        ],
-        onmouseout: [
-            { action: 'unset', status: 'highlighted' }
-        ],
-        onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
-    },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_intervals', { unnamespaced: true })
-});
-
 LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
@@ -745,17 +668,6 @@ LocusZoom.Layouts.add('dashboard', 'standard_plot', {
         }
     ]
 });
-
-LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', function () {
-    var covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
-    covariates_model_plot_dashboard.components.push({
-        type: 'covariates_model',
-        button_html: 'Model',
-        button_title: 'Show and edit covariates currently in model',
-        position: 'left'
-    });
-    return covariates_model_plot_dashboard;
-}());
 
 LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
     var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
@@ -1025,303 +937,6 @@ LocusZoom.Layouts.add('panel', 'phewas', {
     ]
 });
 
-LocusZoom.Layouts.add('panel', 'genome_legend', {
-    id: 'genome_legend',
-    width: 800,
-    height: 50,
-    origin: { x: 0, y: 300 },
-    min_width: 800,
-    min_height: 50,
-    proportional_width: 1,
-    margin: { top: 0, right: 50, bottom: 35, left: 50 },
-    axes: {
-        x: {
-            label: 'Genomic Position (number denotes chromosome)',
-            label_offset: 35,
-            ticks: [
-                {
-                    x: 124625310,
-                    text: '1',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 370850307,
-                    text: '2',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 591461209,
-                    text: '3',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 786049562,
-                    text: '4',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 972084330,
-                    text: '5',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1148099493,
-                    text: '6',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1313226358,
-                    text: '7',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1465977701,
-                    text: '8',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1609766427,
-                    text: '9',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1748140516,
-                    text: '10',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 1883411148,
-                    text: '11',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2017840353,
-                    text: '12',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2142351240,
-                    text: '13',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2253610949,
-                    text: '14',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2358551415,
-                    text: '15',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2454994487,
-                    text: '16',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2540769469,
-                    text: '17',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2620405698,
-                    text: '18',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2689008813,
-                    text: '19',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2750086065,
-                    text: '20',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2805663772,
-                    text: '21',
-                    style: {
-                        'fill': 'rgb(120, 120, 186)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                },
-                {
-                    x: 2855381003,
-                    text: '22',
-                    style: {
-                        'fill': 'rgb(0, 0, 66)',
-                        'text-anchor': 'center',
-                        'font-size': '13px',
-                        'font-weight': 'bold'
-                    },
-                    transform: 'translate(0, 2)'
-                }
-            ]
-        }
-    },
-    data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'genome_legend', { unnamespaced: true })
-    ]
-});
-
-LocusZoom.Layouts.add('panel', 'intervals', {
-    id: 'intervals',
-    width: 1000,
-    height: 50,
-    min_width: 500,
-    min_height: 50,
-    margin: { top: 25, right: 150, bottom: 5, left: 50 },
-    dashboard: (function () {
-        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        l.components.push({
-            type: 'toggle_split_tracks',
-            data_layer_id: 'intervals',
-            position: 'right'
-        });
-        return l;
-    })(),
-    axes: {},
-    interaction: {
-        drag_background_to_pan: true,
-        scroll_to_zoom: true,
-        x_linked: true
-    },
-    legend: {
-        hidden: true,
-        orientation: 'horizontal',
-        origin: { x: 50, y: 0 },
-        pad_from_bottom: 5
-    },
-    data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'intervals', { unnamespaced: true })
-    ]
-});
-
 LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     id: 'annotationcatalog',
     width: 800,
@@ -1386,10 +1001,10 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
     responsive_resize: 'both',
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'phewas', { unnamespaced: true, proportional_height: 0.45 }),
-        LocusZoom.Layouts.get('panel', 'genome_legend', { unnamespaced: true, proportional_height: 0.1 }),
+        LocusZoom.Layouts.get('panel', 'phewas', { unnamespaced: true, proportional_height: 0.5 }),
         LocusZoom.Layouts.get('panel', 'genes', {
-            unnamespaced: true, proportional_height: 0.45,
+            unnamespaced: true,
+            proportional_height: 0.5,
             margin: { bottom: 40 },
             axes: {
                 x: {
@@ -1402,25 +1017,6 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
         })
     ],
     mouse_guide: false
-});
-
-LocusZoom.Layouts.add('plot', 'interval_association', {
-    state: {},
-    width: 800,
-    height: 550,
-    responsive_resize: 'both',
-    min_region_scale: 20000,
-    max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
-    panels: [
-        LocusZoom.Layouts.get('panel', 'association', {
-            unnamespaced: true,
-            width: 800,
-            proportional_height: (225 / 570)
-        }),
-        LocusZoom.Layouts.get('panel', 'intervals', { unnamespaced: true, proportional_height: (120 / 570) }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
-    ]
 });
 
 LocusZoom.Layouts.add('plot', 'coaccessibility', {
