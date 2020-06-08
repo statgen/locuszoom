@@ -40,10 +40,11 @@
         "space-before-blocks": "error",
         "eol-last": "error"
     },
-    "globals": {
-        "XDomainRequest": false
-    },
     "env": {
-        "browser": true
+        "node": true
+    },
+    "parserOptions": {
+        "ecmaVersion": 2016,
+        "sourceType": "module"
     }
 }
