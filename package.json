@@ -32,6 +32,7 @@
   },
   "scripts": {
     "test": "mocha ./test2/**/*.js",
+    "test:coverage": "nyc --reporter=text mocha ./test2/**/*.js",
     "dev": "webpack --watch --config webpack.dev.cjs",
     "prod": "webpack --config webpack.prod.cjs"
   },
@@ -52,6 +53,7 @@
     "jsdom": "~9.12.0",
     "mocha": "~7.2.0",
     "mocha-jsdom": "~2.0.0",
+    "nyc": "^15.1.0",
     "should": "^13.2.3",
     "sinon": "^6.1.6",
     "source-map-loader": "^1.0.0",
