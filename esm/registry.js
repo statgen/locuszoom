@@ -6,7 +6,7 @@
  */
 class RegistryBase {
     constructor() {
-        this._sources = new Map();
+        this._items = new Map();
     }
 
     /**
@@ -15,10 +15,10 @@ class RegistryBase {
      * @returns {Function}
      */
     get(name) {
-        if (!(name in this._sources)) {
+        if (!(name in this._items)) {
             throw new Error(`Could not locate the requested registry item: ${name}`);
         }
-        return this._sources.get(name);
+        return this._items.get(name);
     }
 
     /**
@@ -32,15 +32,26 @@ class RegistryBase {
         return new base(...args);
     }
 
-    add(name, item) {}
+    /**
+     * Add a new item to the registry
+     * @param {String} name The name of the item to add to the registry
+     * @param {*} item The item to be added (constructor, value, etc)
+     * @param {boolean} override Allow redefining an existing item?
+     */
+    add(name, item, override = false) {
+        if (!override && this._items.has(name)) {
+            throw new Error(`Item ${name} is already defined`);
+        }
+        this._items.set(name, item);
+    }
 
     /**
      * Remove a datasource from the registry (if present)
      * @param {String} name
-     * @returns {boolean}
+     * @returns {boolean} True if item removed, false if item was never present
      */
     remove(name) {
-        return this._sources.delete(name);
+        return this._items.delete(name);
     }
 
     /**
@@ -49,7 +60,7 @@ class RegistryBase {
      * @returns {boolean}
      */
     has(name) {
-        return this._sources.has(name);
+        return this._items.has(name);
     }
 
     /**
@@ -57,7 +68,7 @@ class RegistryBase {
      * @returns {String[]}
      */
     list() {
-        return Array.from(this._sources.keys());
+        return Array.from(this._items.keys());
     }
 }
 
@@ -79,13 +90,13 @@ class DataSources extends RegistryBase {
     }
 
     /**
-     *
+     * For data sources, there is a special behavior of "create item from config, then add"
      * @param {String} namespace Uniquely identify this datasource
-     * @param {Source|Array} item An instantiated datasource, or an array of arguments that can be used to
+     * @param {BaseSource|Array} item An instantiated datasource, or an array of arguments that can be used to
      *   create a known datasource type.
      */
     add(namespace, item) {
-        if (this._sources.has(namespace)) {
+        if (this._items.has(namespace)) {
             throw new Error(`The namespace ${namespace} is already in use by another source`);
         }
 

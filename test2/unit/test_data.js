@@ -10,7 +10,7 @@ import {
     LDLZ,
     RecombLZ,
     StaticSource
-} from '../esm/data';
+} from '../../esm/data';
 
 /**
  LocusZoom.js Data Test Suite
