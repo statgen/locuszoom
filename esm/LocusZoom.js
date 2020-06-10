@@ -232,56 +232,6 @@ LocusZoom.prettyTicks = function(range, clip_range, target_tick_count) {
     return ticks;
 };
 
-/**
- * Make an AJAX request and return a promise.
- * From http://www.html5rocks.com/en/tutorials/cors/
- *   and with promises from https://gist.github.com/kriskowal/593076
- *
- * @param {String} method The HTTP verb
- * @param {String} url
- * @param {String} [body] The request body to send to the server
- * @param {Object} [headers] Object of custom request headers
- * @param {Number} [timeout] If provided, wait this long (in ms) before timing out
- * @returns {Promise}
- */
-LocusZoom.createCORSPromise = function (method, url, body, headers, timeout) {
-    return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        if ('withCredentials' in xhr) {
-            // Check if the XMLHttpRequest object has a "withCredentials" property.
-            // "withCredentials" only exists on XMLHTTPRequest2 objects.
-            xhr.open(method, url, true);
-        } else if (typeof XDomainRequest != 'undefined') {
-            // Otherwise, check if XDomainRequest.
-            // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
-            xhr = new XDomainRequest();
-            xhr.open(method, url);
-        } else {
-            // Otherwise, CORS is not supported by the browser.
-            xhr = null;
-        }
-        if (xhr) {
-            xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200 || xhr.status === 0 ) {
-                        resolve(xhr.response);
-                    } else {
-                        reject('HTTP ' + xhr.status + ' for ' + url);
-                    }
-                }
-            };
-            timeout && setTimeout(reject, timeout);
-            body = typeof body !== 'undefined' ? body : '';
-            if (typeof headers !== 'undefined') {
-                for (var header in headers) {
-                    xhr.setRequestHeader(header, headers[header]);
-                }
-            }
-            // Send the request
-            xhr.send(body);
-        }
-    });
-};
 
 /**
  * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within

@@ -1,11 +1,23 @@
-'use strict';
+import { assert } from 'chai';
+import sinon from 'sinon';
+
+import {
+    AssociationSourceLZ,
+    BaseSource,
+    ConnectorSource,
+    GeneLZ,
+    GwasCatalogLZ,
+    LDLZ,
+    RecombLZ,
+    RemoteSource, StaticSource
+} from '../esm/data';
 
 /**
   LocusZoom.js Data Test Suite
   Test LocusZoom Data access objects
 */
 describe('LocusZoom Data', function() {
-    describe('LocusZoom.Data.Field', function() {
+    describe.skip('LocusZoom.Data.Field', function() {
         beforeEach(function() {
             LocusZoom.TransformationFunctions.add('herp', function(x) { return x.toString() + 'herp'; });
             LocusZoom.TransformationFunctions.add('derp', function(x) { return x.toString() + 'derp'; });
@@ -84,7 +96,7 @@ describe('LocusZoom Data', function() {
         });
     });
 
-    describe('LocusZoom.DataSources', function() {
+    describe.skip('LocusZoom.DataSources', function() {
 
         var TestSource1, TestSource2;
         var originalKnownDataSources;
@@ -173,7 +185,7 @@ describe('LocusZoom Data', function() {
     });
 
     describe('LocusZoom Data.Source', function() {
-        describe('Source.extend()', function() {
+        describe.skip('Source.extend()', function() {
 
             //reset known data sources
             var originalKDS;
@@ -272,28 +284,28 @@ describe('LocusZoom Data', function() {
 
         describe('Source.getData', function() {
             it('dependentSource skips making a request if previous sources did not add data to chain.body', function() {
-                var source = new LocusZoom.Data.Source();
-                source.dependentSource = true;
-                var requestStub = sinon.stub(source, 'getRequest');
+                const source = new BaseSource({});
+                source.__dependentSource = true;
+                let requestStub = sinon.stub(source, 'getRequest');
 
-                var callable = source.getData();
-                var noRecordsChain = { body: [] };
+                const callable = source.getData();
+                const noRecordsChain = { body: [] };
                 callable(noRecordsChain);
 
                 assert.ok(requestStub.notCalled, 'Request should be skipped');
             });
 
             it('dependentSource makes a request if chain.body has data from previous sources', function(done) {
-                var source = new LocusZoom.Data.Source();
-                source.dependentSource = false;
-                var requestStub = sinon.stub(source, 'getRequest').callsFake(function() { return Promise.resolve(); });
+                var source = new BaseSource({});
+                source.__dependentSource = false;
+                const requestStub = sinon.stub(source, 'getRequest').callsFake(function() { return Promise.resolve(); });
                 sinon.stub(source, 'parseResponse').callsFake(function() {
                     // Because this is an async test, `done` will serve as proof that parseResponse was called
                     done();
                 });
 
-                var callable = source.getData();
-                var hasRecordsChain = { body: [{ some: 'data' }] };
+                const callable = source.getData();
+                const hasRecordsChain = { body: [{ some: 'data' }] };
                 callable(hasRecordsChain);
 
                 assert.ok(requestStub.called, 'Request was made');
@@ -310,43 +322,10 @@ describe('LocusZoom Data', function() {
                 sinon.restore();
             });
 
-            it('lets empty response edge cases pass with a warning', function () {
-                // This is a hack around a browser edge case, and intent may change later
-                var error_stub = sinon.stub(console, 'error');
-                var source = new LocusZoom.Data.Source();
-
-                var expected_chain = { dummy: true };
-                return source.parseResponse('', expected_chain, [], [], []).then(function(res) {
-                    assert.deepEqual(res, expected_chain);
-                    assert.ok(error_stub.called, 'An error message was logged');
-                });
-            });
-
-            describe('Source.parseArraysToObjects', function() {
-                it('should provide a legacy wrapper for completely deprecated method', function() {
-                    var source = new LocusZoom.Data.Source();
-                    var res = source.parseArraysToObjects(
-                        {a: [1], b: [1]},
-                        ['a', 'b'], ['namespace:a|add1', 'bork:bork'], [function(v) { return v + 1; }, null]
-                    );
-
-                    assert.deepEqual(res, [{'namespace:a|add1': 2, 'bork:bork': 1}], 'Transformations were applied');
-                });
-            });
-
-            describe('Source.parseObjectsToObjects', function () {
-                it('should provide a legacy wrapper for completely deprecated method', function() {
-                    var source = new LocusZoom.Data.Source();
-                    var stub = sinon.stub(source, 'extractFields');
-                    source.parseObjectsToObjects([], [], [], []);
-                    assert.ok(stub.called, 'extractFields was called');
-                });
-            });
-
             describe('Source.normalizeResponse', function () {
                 it('should create one object per piece of data', function() {
-                    var source = new LocusZoom.Data.Source();
-                    var res = source.normalizeResponse(
+                    const source = new BaseSource({});
+                    const res = source.normalizeResponse(
                         { a: [1, 2], b: [3, 4] } );
                     assert.deepEqual(
                         res,
@@ -356,7 +335,7 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('should require all columns of data to be of same length', function() {
-                    var source = new LocusZoom.Data.Source();
+                    const source = new BaseSource({});
                     assert.throws(
                         function() {
                             source.normalizeResponse( { a: [1], b: [1,2], c: [1,2,3] } );
@@ -366,27 +345,27 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('should return the data unchanged if it is already in the desired shape', function () {
-                    var source = new LocusZoom.Data.Source();
-                    var data = [ {a: 1, b: 3}, {a: 2, b: 4} ];
-                    var res = source.normalizeResponse( data );
+                    const source = new BaseSource({});
+                    const data = [ {a: 1, b: 3}, {a: 2, b: 4} ];
+                    const res = source.normalizeResponse( data );
                     assert.deepEqual(res, data);
                 });
             });
 
             describe('Source.annotateData', function() {
                 it('should be able to add fields to the returned records', function () {
-                    var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        annotateData: function (records) {
+                    const custom_class = class extends BaseSource {
+                        annotateData(records) {
                             // Custom hook that adds a field to every parsed record
                             return records.map(function(item) {
                                 item.force = true;
                                 return item;
                             });
                         }
-                    });
+                    };
 
                     // Async test depends on promise
-                    return new source().parseResponse([{a:1, b:1}, {a:2, b: 2}], {}, ['a', 'b', 'force'], ['a', 'b', 'force'], []).then(function(records) {
+                    return new custom_class({}).parseResponse([{a:1, b:1}, {a:2, b: 2}], {}, ['a', 'b', 'force'], ['a', 'b', 'force'], []).then(function(records) {
                         records.body.forEach(function(item) {
                             assert.ok(item.force, 'Record should have an additional key not in raw server payload');
                         });
@@ -394,10 +373,10 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('should be able to annotate based on info in the body and chain', function() {
-                    var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        annotateData: function (records, chain) { return records + chain.header.param; }
-                    });
-                    var result = new source().annotateData(
+                    var custom_class = class extends BaseSource {
+                        annotateData(records, chain) { return records + chain.header.param; }
+                    };
+                    var result = new custom_class({}).annotateData(
                         'some data',
                         { header: { param: ' up the chain' } }
                     );
@@ -406,18 +385,8 @@ describe('LocusZoom Data', function() {
             });
 
             describe('Source.extractFields', function () {
-                it('allows a legacy alias via parseArraysToObjects', function () {
-                    var source = new LocusZoom.Data.Source();
-                    var res = source.parseArraysToObjects(
-                        [ {'id':1, 'val':5}, {'id':2, 'val':10}],
-                        ['id'], ['namespace:id'], [null]
-                    );
-
-                    assert.deepEqual(res, [{'namespace:id': 1}, {'namespace:id': 2}]);
-                });
-
                 it('extracts the specified fields from each record', function () {
-                    var source = new LocusZoom.Data.Source();
+                    var source = new BaseSource({});
                     var res = source.extractFields(
                         [ {'id':1, 'val':5}, {'id':2, 'val':10}],
                         ['id'], ['namespace:id'], [null]
@@ -426,7 +395,7 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('applies value transformations where appropriate', function () {
-                    var source = new LocusZoom.Data.Source();
+                    var source = new BaseSource({});
                     var res = source.extractFields(
                         [ {'id':1, 'val':5}, {'id':2, 'val':10}],
                         ['id', 'val'], ['namespace:id|add1', 'bork:bork'], [function (val) { return val + 1; }, null]
@@ -436,8 +405,7 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('throws an error when requesting a field not present in at least one record', function () {
-                    var source = new LocusZoom.Data.Source();
-
+                    var source = new BaseSource({});
 
                     assert.throws(function() {
                         source.extractFields(
@@ -450,7 +418,7 @@ describe('LocusZoom Data', function() {
 
             describe('Source.combineChainBody', function () {
                 it('returns only the body by default', function() {
-                    var source = new LocusZoom.Data.Source();
+                    var source = new BaseSource({});
 
                     var expectedBody = [ { 'namespace:a': 1 } ];
                     var res = source.combineChainBody(expectedBody, {header: {}, body: [], discrete: {}});
@@ -459,14 +427,14 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('can build a body based on records from all sources in the chain', function() {
-                    var base_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        combineChainBody: function(records, chain) {
+                    var custom_class = class extends BaseSource {
+                        combineChainBody(records, chain) {
                             return records.map(function(item, index) {
                                 return Object.assign({}, item, chain.body[index]);
                             });
                         }
-                    });
-                    var source = new base_source();
+                    };
+                    var source = new custom_class({});
 
                     var records = [ { 'namespace:a': 1 } ];
                     var res = source.combineChainBody(records, {header: {}, body: [{'namespace:b': 2}], discrete: {}});
@@ -477,7 +445,7 @@ describe('LocusZoom Data', function() {
 
             describe('integration of steps', function () {
                 it('should interpret a string response as JSON', function () {
-                    var source = new LocusZoom.Data.Source();
+                    var source = new BaseSource({});
 
                     return source.parseResponse('{"a_field": ["val"]}', {}, ['a_field'], ['namespace:a_field'], [null])
                         .then(function (chain) {
@@ -486,40 +454,39 @@ describe('LocusZoom Data', function() {
                 });
 
                 it('should store annotations in body and chain.discrete where appropriate', function() {
-                    var source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        annotateData: function (data) { return data + ' with annotation'; },
-                        normalizeResponse: function (data) { return data; },
-                        extractFields: function (data) { return data; }
-                    });
-                    source.prototype.constructor.SOURCE_NAME = 'fake_source';
+                    var custom_class = class CustomClass extends BaseSource {
+                        annotateData(data) { return data + ' with annotation'; }
+                        normalizeResponse(data) { return data; }
+                        extractFields(data) { return data; }
+                    };
 
-                    var result = new source().parseResponse({data: 'a response'}, {});
+                    var result = new custom_class({}).parseResponse({data: 'a response'}, {});
                     return result.then(function(chain) {
-                        assert.deepEqual(chain.discrete, {fake_source: 'a response with annotation'}, 'Discrete response uses annotations');
+                        assert.deepEqual(chain.discrete, {CustomClass: 'a response with annotation'}, 'Discrete response uses annotations');
                         assert.deepEqual(chain.body, 'a response with annotation', 'Combined body uses annotations');
                     });
                 });
 
                 it('integrates all methods via promise semantics', function () {
                     // Returning a promise is optional, but should be supported if a custom subclass chooses to do so
-                    var basic_source = LocusZoom.subclass(LocusZoom.Data.Source, {
-                        normalizeResponse: function () { return Promise.resolve( [{a:1}] ); },
-                        annotateData: function (records) {
+                    var custom_class = class CustomClass extends BaseSource {
+                        normalizeResponse() { return Promise.resolve( [{a:1}] ); }
+                        annotateData(records) {
                             return Promise.resolve(records.map(function(item) {
                                 item.b = item.a + 1;
                                 return item;
                             }));
-                        },
-                        extractFields: function (data, fields, outnames, trans) {
+                        }
+                        extractFields(data, fields, outnames, trans) {
                             var rec = data.map(function(item) { return {'bfield': item.b}; });
-                            return Promise.resolve(rec); },
-                        combineChainBody: function (records) { return Promise.resolve(records); }
-                    });
-                    basic_source.prototype.constructor.SOURCE_NAME = 'fake_source';
+                            return Promise.resolve(rec);
+                        }
+                        combineChainBody(records) { return Promise.resolve(records); }
+                    };
 
-                    var result = new basic_source().parseResponse({}, {});
+                    var result = new custom_class({}).parseResponse({}, {});
                     var thisBody = [{bfield: 2}];
-                    var expected = { header: {}, discrete: { fake_source: thisBody }, body: thisBody};
+                    var expected = { header: {}, discrete: { CustomClass: thisBody }, body: thisBody};
                     return result.then(function (final) {
                         assert.deepEqual(final.body, expected.body, 'Chain produces expected result body');
                         assert.deepEqual(final.discrete, expected.discrete, 'The parsed results from this source are also stored in chain.discrete');
@@ -531,7 +498,7 @@ describe('LocusZoom Data', function() {
 
     describe('Association Data Source', function () {
         it('allows normalization + sorting of data', function () {
-            var source = new LocusZoom.Data.AssociationSource({
+            var source = new AssociationSourceLZ({
                 url: 'locuszoom.org', params: { sort: true }
             });
 
@@ -544,7 +511,7 @@ describe('LocusZoom Data', function() {
                 });
         });
         it('usually returns normalized data in the order the data was provided', function () {
-            var source = new LocusZoom.Data.AssociationSource({
+            var source = new AssociationSourceLZ({
                 url: 'locuszoom.org', params: {}
             });
             var sampleData = { position: [2, 1] };
@@ -559,12 +526,12 @@ describe('LocusZoom Data', function() {
 
     describe('Genome build support in annotations', function() {
         // Run the same tests on two sources
-        ['GeneSource', 'RecombinationRateSource'].forEach(function(source_name) {
-            it('accepts either build or source as config option, but not both', function () {
-                var source_type = LocusZoom.Data[source_name];  // Allows generating dynamic tests before LZ symbol is loaded
+        [GeneLZ, RecombLZ].forEach(function(source_type) {
+            const source_name = source_type.name;
 
+            it('accepts either build or source as config option, but not both', function () {
                 var source = new source_type({url: 'www.fake.test', params: { source: 'a', build: 'GRCh37' }});
-                assert.throws(function() { source.getURL({});  }, /must provide a parameter specifying either/, 'Bad configuration should raise an exception in ' + source_name);
+                assert.throws(function() { source.getURL({});  }, /must provide a parameter specifying either/, 'Bad configuration should raise an exception in ' + source_type);
 
                 source = new source_type({url: 'www.fake.test', params: { source: 'a' }});
                 assert.ok(source.getURL({}), 'Works when specifying source ID for ' + source_name);
@@ -574,14 +541,12 @@ describe('LocusZoom Data', function() {
             });
 
             it('gives precedence to state.genome_build over its own config', function () {
-                var source_type = LocusZoom.Data[source_name];
-
                 var source = new source_type({url: 'www.fake.test', params: { build: 'GRCh37' }});
                 var url = source.getURL({ genome_build: 'GRCh38' });
 
                 // HACK: This is the only part of these tests that differs between sources
                 var pattern;
-                if (source_name === 'GeneSource') {
+                if (source_name === 'GeneLZ') {
                     pattern = /source in 1/;
                 } else {
                     pattern = /id in 16/;
@@ -590,7 +555,6 @@ describe('LocusZoom Data', function() {
             });
 
             it('validates genome build', function () {
-                var source_type = LocusZoom.Data[source_name];
                 var source = new source_type({url: 'www.fake.test', params: { build: 99 }});
                 assert.throws(function () { source.getURL({}); }, /must specify a valid genome build number/, 'Should validate options for ' + source_name);
             });
@@ -615,13 +579,13 @@ describe('LocusZoom Data', function() {
         });
 
         it('will respect a specific source ID over the global build param', function() {
-            var source = new LocusZoom.Data.GwasCatalog({url: 'www.fake.test', params: { source: 'fjord' }});
+            var source = new GwasCatalogLZ({url: 'www.fake.test', params: { source: 'fjord' }});
             var url = source.getURL( { genome_build: 'GRCh37' } );
             assert.ok(url.match('fjord'));
         });
 
         it('aligns records based on loose position match', function () {
-            var source = new LocusZoom.Data.GwasCatalog({url: 'www.fake.test', params: {match_type: 'loose'}});
+            var source = new GwasCatalogLZ({url: 'www.fake.test', params: {match_type: 'loose'}});
             var res = source.combineChainBody(this.exampleData, this.sampleChain, ['rsid', 'trait'], ['catalog:rsid', 'catalog:trait']);
             assert.deepEqual(res, [
                 { 'assoc:chromosome': 1, 'assoc:position': 2 },  // No annotations available for this point
@@ -631,7 +595,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('handles the case where the same SNP has more than one catalog entry', function() {
-            var source = new LocusZoom.Data.GwasCatalog({url: 'www.fake.test' });
+            var source = new GwasCatalogLZ({url: 'www.fake.test' });
             var exampleData = [
                 { 'chrom': 1, 'pos': 4, 'log_pvalue': 1.40,  'rsid': 'rs4',  'trait': 'arithomania' },
                 { 'chrom': 1, 'pos': 4, 'log_pvalue': 1.41,  'rsid': 'rs4',  'trait': 'graphomania' },
@@ -647,7 +611,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('gracefully handles no catalog entries in region', function () {
-            var source = new LocusZoom.Data.GwasCatalog({url: 'www.fake.test', params: {match_type: 'loose'}});
+            var source = new GwasCatalogLZ({url: 'www.fake.test', params: {match_type: 'loose'}});
             var res = source.combineChainBody([], this.sampleChain, ['rsid', 'trait'], ['catalog:rsid', 'catalog:trait']);
             assert.deepEqual(res, [
                 { 'assoc:chromosome': 1, 'assoc:position': 2 },
@@ -659,12 +623,12 @@ describe('LocusZoom Data', function() {
 
     describe('LDLZ2 Source', function() {
         it('validates the selected build name', function () {
-            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 99 }});
+            var source = new LDLZ({url: 'www.fake.test', params: { build: 99 }});
             assert.throws(function () { source.getURL({}); }, /must specify a valid genome build number/);
         });
 
         it('will prefer a refvar in plot.state if one is provided', function () {
-            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var source = new LDLZ({url: 'www.fake.test', params: { build: 'GRCh37' }});
             var ref = source.getRefvar(
                 {ldrefvar: 'Something'},
                 {header: {}, body: [{id: 'a', pvalue: 0}]},
@@ -674,7 +638,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('auto-selects the best reference variant (lowest pvalue)', function () {
-            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var source = new LDLZ({url: 'www.fake.test', params: { build: 'GRCh37' }});
             var ref = source.getRefvar(
                 {},
                 {
@@ -691,7 +655,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('auto-selects the best reference variant (largest nlog_pvalue)', function () {
-            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var source = new LDLZ({url: 'www.fake.test', params: { build: 'GRCh37' }});
             var ref = source.getRefvar(
                 {},
                 {
@@ -709,7 +673,7 @@ describe('LocusZoom Data', function() {
 
         it('correctly identifies the variant-marker field', function() {
             //
-            var source_default = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var source_default = new LDLZ({url: 'www.fake.test', params: { build: 'GRCh37' }});
             var dataFields = source_default.findMergeFields(
                 { body: [{ 'assoc:id': 'a', log_pvalue: 10 }] }
             );
@@ -720,7 +684,7 @@ describe('LocusZoom Data', function() {
             );
             assert.equal(dataFields.id, 'assoc:variant', 'Uses a default option (variant name)');
 
-            var source_options = new LocusZoom.Data.LDSource2({url: 'www.fake.test',
+            var source_options = new LDLZ({url: 'www.fake.test',
                 params: { build: 'GRCh37', id_field: 'marker' }});
             dataFields = source_options.findMergeFields(
                 { body: [{ 'assoc:id': 'a', 'assoc:marker': 'b', log_pvalue: 10 }] }
@@ -734,7 +698,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('coerces variant formats to one expected by the LD server', function () {
-            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+            var source = new LDLZ({url: 'www.fake.test', params: { build: 'GRCh37' }});
 
             var portal_format = '8:117974679:G:A';
             var ldserver_format = '8:117974679_G/A';
@@ -747,69 +711,39 @@ describe('LocusZoom Data', function() {
         });
     });
 
-    describe('Static JSON Data Source', function() {
+    describe('Static Data Source', function() {
         beforeEach(function() {
-            this.datasources = new LocusZoom.DataSources();
-            this.namespace = 'test';
             this.data = [
                 { x: 0, y: 3, z: 8 },
                 { x: 2, y: 7, h: 5 },
                 { x: 8, y: 1, q: 6 }
             ];
-            this.datasources.add( this.namespace, [ 'StaticJSON', this.data ] );
-            this.layout = {
-                panels: [
-                    {
-                        id: 'foo',
-                        data_layers: [
-                            {
-                                id: 'bar',
-                                type: 'line',
-                                fields: ['test:x', 'test:y']
-                            }
-                        ]
-                    }
-                ]
-            };
-            d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', this.datasources, this.layout);
+            this.source = new StaticSource(this.data);
         });
-        afterEach(function() {
-            d3.select('#plot').remove();
-            delete this.plot;
+        it('should store data passed to the constructor', function() {
+            assert.deepEqual(this.source._data, this.data);
         });
-        it('should pass arbitrary static JSON through a get() request on the data sources object', function() {
-            var get = this.datasources.get(this.namespace);
-            assert.deepEqual(get._data, this.data);
+        it('should pass only specifically requested fields and respect namespacing', function() {
+            return this.source.getData({}, ['x'], ['test:x'], [null])({header: {}, body: [], discrete: {} }).then(data => {
+                const expected_data = [ { 'test:x': 0 }, { 'test:x': 2 }, { 'test:x': 8 } ];
+                assert.hasAllKeys(data, ['header', 'body', 'discrete']);
+                assert.deepEqual(data.body, expected_data);
+            });
         });
-        it('should pass only specifically requested fields on static JSON through a getData() request (1)', function(done) {
-            this.plot.lzd.getData({}, ['test:x'])
-                .then(function(data) {
-                    var expected_data = [ { 'test:x': 0 }, { 'test:x': 2 }, { 'test:x': 8 } ];
-                    data.should.have.property('header').which.is.an.Object;
-                    data.should.have.property('body').which.is.an.Object;
-                    assert.deepEqual(data.body, expected_data);
-                    done();
-                }).catch(done);
-        });
-        it('should pass only specifically requested fields on static JSON through a getData() request (2)', function(done) {
-            this.plot.lzd.getData({}, ['test:q'])
-                .then(function(data) {
-                    var expected_data = [ { 'test:q': undefined }, { 'test:q': undefined }, { 'test:q': 6 } ];
-                    data.should.have.property('header').which.is.an.Object;
-                    data.should.have.property('body').which.is.an.Object;
-                    assert.deepEqual(data.body, expected_data);
-                    done();
-                }).catch(done);
+        it('should pass only specifically requested ', function() {
+            return this.source.getData({}, ['q'], ['test:q'], [null])({header: {}, body: [], discrete: {} }).then(data => {
+                const expected_data = [ { 'test:q': undefined }, { 'test:q': undefined }, { 'test:q': 6 } ];
+                assert.deepEqual(data.body, expected_data);
+            });
         });
     });
 
-    describe('LocusZoom Data.ConnectorSource', function() {
+    describe.skip('LocusZoom Data.ConnectorSource', function() {
         beforeEach(function () {
             // Create a source that internally looks for data as "first" from the specified
             this.basic_config = { sources: { first: 'a_source', second: 'b_source' } };
-            this.basic_source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource, {
-                combineChainBody: function(records, chain) {
+            this.basic_source = class test_connector extends ConnectorSource {
+                combineChainBody(records, chain) {
                     // A sample method that uses 2 chain sources + an existing body to build an combined response
 
                     // Tell the internal method how to find the actual data it relies on internally, regardless of how
@@ -823,8 +757,7 @@ describe('LocusZoom Data', function() {
                     });
                     return records;
                 }
-            });
-            this.basic_source.prototype.constructor.SOURCE_NAME = 'test_connector';
+            };
         });
 
         afterEach(function() {
@@ -832,7 +765,7 @@ describe('LocusZoom Data', function() {
         });
 
         it('must specify the data it requires from other sources', function() {
-            var source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource);
+            var source = class extends ConnectorSource {};
             assert.throws(
                 function() { new source(); },
                 /Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs/
@@ -843,10 +776,9 @@ describe('LocusZoom Data', function() {
             );
         });
         it('must implement a combineChainBody method', function() {
-            var self = this;
-            var source = LocusZoom.subclass(LocusZoom.Data.ConnectorSource);
+            const source = class extends ConnectorSource {};
             assert.throws(
-                function() { new source(self.basic_config).combineChainBody(); },
+                () => { new source(this.basic_config).combineChainBody(); },
                 /This method must be implemented in a subclass/
             );
         });

@@ -41,6 +41,7 @@
         "eol-last": "error"
     },
     "env": {
+        "es6": true,
         "node": true
     },
     "parserOptions": {
