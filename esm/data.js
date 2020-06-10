@@ -264,7 +264,7 @@ class BaseSource {
      */
     getData(state, fields, outnames, trans) {
         if (this.preGetData) { // TODO try to remove this method if at all possible
-            var pre = this.preGetData(state, fields, outnames, trans);
+            const pre = this.preGetData(state, fields, outnames, trans);
             if(this.pre) {
                 state = pre.state || state;
                 fields = pre.fields || fields;
@@ -305,10 +305,10 @@ class BaseSource {
         }
         // Otherwise, assume the server response is an object representing columns of data.
         // Each array should have the same length (verify), and a given array index corresponds to a single row.
-        var keys = Object.keys(data);
-        var N = data[keys[0]].length;
-        var sameLength = keys.every(function(key) {
-            var item = data[key];
+        const keys = Object.keys(data);
+        const N = data[keys[0]].length;
+        const sameLength = keys.every(function (key) {
+            const item = data[key];
             return item.length === N;
         });
         if (!sameLength) {
@@ -316,11 +316,11 @@ class BaseSource {
         }
 
         // Go down the rows, and create an object for each record
-        var records = [];
-        var fields = Object.keys(data);
-        for(var i = 0; i < N; i++) {
-            var record = {};
-            for(var j = 0; j < fields.length; j++) {
+        const records = [];
+        const fields = Object.keys(data);
+        for(let i = 0; i < N; i++) {
+            const record = {};
+            for(let j = 0; j < fields.length; j++) {
                 record[fields[j]] = data[fields[j]][i];
             }
             records.push(record);
@@ -368,15 +368,15 @@ class BaseSource {
             return data;
         }
 
-        var fieldFound = [];
-        for (var k = 0; k < fields.length; k++) {
+        const fieldFound = [];
+        for (let k = 0; k < fields.length; k++) {
             fieldFound[k] = 0;
         }
 
-        var records = data.map(function (item) {
-            var output_record = {};
-            for (var j = 0; j < fields.length; j++) {
-                var val = item[fields[j]];
+        const records = data.map(function (item) {
+            const output_record = {};
+            for (let j = 0; j < fields.length; j++) {
+                let val = item[fields[j]];
                 if (typeof val != 'undefined') {
                     fieldFound[j] = 1;
                 }
@@ -426,12 +426,12 @@ class BaseSource {
      *   returned by each source in the chain in isolation (discrete)
      */
     parseResponse (resp, chain, fields, outnames, trans) {
-        var source_id = this.source_id || this.constructor.name;
+        const source_id = this.source_id || this.constructor.name;
         if (!chain.discrete) {
             chain.discrete = {};
         }
 
-        var json = typeof resp == 'string' ? JSON.parse(resp) : resp;
+        const json = typeof resp == 'string' ? JSON.parse(resp) : resp;
 
         // Perform the 4 steps of parsing the payload and return a combined chain object
         return Promise.resolve(this.normalizeResponse(json.data || json))
@@ -486,7 +486,7 @@ class AssociationSourceLZ extends RemoteSource {
     }
 
     getURL (state, chain, fields) {
-        var analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
+        const analysis = chain.header.analysis || this.params.source || this.params.analysis;  // Old usages called this param "analysis"
         if (typeof analysis == 'undefined') {
             throw new Error('Association source must specify an analysis ID to plot');
         }
@@ -536,17 +536,21 @@ class LDLZ extends RemoteSource {
 
         // Since LD information may be shared across multiple assoc sources with different namespaces,
         //   we use regex to find columns to join on, rather than requiring exact matches
-        var exactMatch = function(arr) {return function() {
-            const regexes = arguments;
-            for(let i = 0; i < regexes.length; i++) {
-                const regex = regexes[i];
-                const m = arr.filter(function(x) {return x.match(regex);});
-                if (m.length) {
-                    return m[0];
+        const exactMatch = function (arr) {
+            return function () {
+                const regexes = arguments;
+                for (let i = 0; i < regexes.length; i++) {
+                    const regex = regexes[i];
+                    const m = arr.filter(function (x) {
+                        return x.match(regex);
+                    });
+                    if (m.length) {
+                        return m[0];
+                    }
                 }
-            }
-            return null;
-        };};
+                return null;
+            };
+        };
         let dataFields = {
             id: this.params.id_field,
             position: this.params.position_field,
@@ -554,13 +558,13 @@ class LDLZ extends RemoteSource {
             _names_:null
         };
         if (chain && chain.body && chain.body.length > 0) {
-            var names = Object.keys(chain.body[0]);
-            var nameMatch = exactMatch(names);
+            const names = Object.keys(chain.body[0]);
+            const nameMatch = exactMatch(names);
             // Internally, fields are generally prefixed with the name of the source they come from.
             // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
             //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
             // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
-            var id_match = dataFields.id && nameMatch(new RegExp(dataFields.id + '\\b'));
+            const id_match = dataFields.id && nameMatch(new RegExp(dataFields.id + '\\b'));
             dataFields.id = id_match || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
             dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
             dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
@@ -678,8 +682,8 @@ class LDLZ extends RemoteSource {
         if (!keys.position) {
             throw new Error('Unable to find position field for merge: ' + keys._names_);
         }
-        var leftJoin = function(left, right, lfield, rfield) {
-            var i = 0, j = 0;
+        const leftJoin = function (left, right, lfield, rfield) {
+            let i = 0, j = 0;
             while (i < left.length && j < right.position2.length) {
                 if (left[i][keys.position] === right.position2[j]) {
                     left[i][lfield] = right[rfield][j];
@@ -692,8 +696,8 @@ class LDLZ extends RemoteSource {
                 }
             }
         };
-        var tagRefVariant = function(data, refvar, idfield, outrefname, outldname) {
-            for(var i = 0; i < data.length; i++) {
+        const tagRefVariant = function (data, refvar, idfield, outrefname, outldname) {
+            for (let i = 0; i < data.length; i++) {
                 if (data[i][idfield] && data[i][idfield] === refvar) {
                     data[i][outrefname] = 1;
                     data[i][outldname] = 1; // For label/filter purposes, implicitly mark the ref var as LD=1 to itself
@@ -755,15 +759,15 @@ class GwasCatalogLZ extends RemoteSource {
     getURL(state, chain, fields) {
         // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
         //  (regardless of the actual match field)
-        var build_option = state.genome_build || this.params.build;
+        const build_option = state.genome_build || this.params.build;
         validateBuildSource(this.constructor.name, build_option, null); // Source can override build- not mutually exclusive
 
         // Most of our annotations will respect genome build before any other option.
         //   But there can be more than one GWAS catalog version available in the same API, for the same build- an
         //   explicit config option will always take
         //   precedence.
-        var default_source = (build_option === 'GRCh38') ? 1 : 2;  // EBI GWAS catalog
-        var source = this.params.source || default_source;
+        const default_source = (build_option === 'GRCh38') ? 1 : 2;  // EBI GWAS catalog
+        const source = this.params.source || default_source;
         return this.url + '?format=objects&sort=pos&filter=id eq ' + source +
             " and chrom eq '" + state.chr + "'" +
             ' and pos ge ' + state.start +
@@ -772,9 +776,11 @@ class GwasCatalogLZ extends RemoteSource {
 
     findMergeFields(records) {
         // Data from previous sources is already namespaced. Find the alignment field by matching.
-        var knownFields = Object.keys(records);
+        const knownFields = Object.keys(records);
         // Note: All API endoints involved only give results for 1 chromosome at a time; match is implied
-        var posMatch = knownFields.find(function (item) { return item.match(/\b(position|pos)\b/i); });
+        const posMatch = knownFields.find(function (item) {
+            return item.match(/\b(position|pos)\b/i);
+        });
 
         if (!posMatch) {
             throw new Error('Could not find data to align with GWAS catalog results');
@@ -792,12 +798,12 @@ class GwasCatalogLZ extends RemoteSource {
             return chain.body;
         }
 
-        var decider = 'log_pvalue'; //  TODO: Better reuse options in the future
-        var decider_out = outnames[fields.indexOf(decider)];
+        const decider = 'log_pvalue'; //  TODO: Better reuse options in the future
+        const decider_out = outnames[fields.indexOf(decider)];
 
         function leftJoin(left, right, fields, outnames, trans) { // Add `fields` from `right` to `left`
             // Add a synthetic, un-namespaced field to all matching records
-            var n_matches = left['n_catalog_matches'] || 0;
+            const n_matches = left['n_catalog_matches'] || 0;
             left['n_catalog_matches'] = n_matches + 1;
             if (decider && left[decider_out] && left[decider_out] > right[decider]) {
                 // There may be more than one GWAS catalog entry for the same SNP. This source is intended for a 1:1
@@ -805,11 +811,11 @@ class GwasCatalogLZ extends RemoteSource {
                 return;
             }
 
-            for (var j = 0; j < fields.length; j++) {
-                var fn = fields[j];
-                var outn = outnames[j];
+            for (let j = 0; j < fields.length; j++) {
+                const fn = fields[j];
+                const outn = outnames[j];
 
-                var val = right[fn];
+                let val = right[fn];
                 if (trans && trans[j]) {
                     val = trans[j](val);
                 }
@@ -817,8 +823,8 @@ class GwasCatalogLZ extends RemoteSource {
             }
         }
 
-        var chainNames = this.findMergeFields(chain.body[0]);
-        var catNames = this.findMergeFields(data[0]);
+        const chainNames = this.findMergeFields(chain.body[0]);
+        const catNames = this.findMergeFields(data[0]);
 
         var i = 0, j = 0;
         while (i < chain.body.length && j < data.length) {
@@ -845,8 +851,8 @@ class GwasCatalogLZ extends RemoteSource {
  */
 class GeneLZ extends RemoteSource {
     getURL(state, chain, fields) {
-        var build = state.genome_build || this.params.build;
-        var source = this.params.source;
+        const build = state.genome_build || this.params.build;
+        let source = this.params.source;
         validateBuildSource(this.constructor.name, build, source);
 
         if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
@@ -883,7 +889,7 @@ class GeneConstraintSource extends RemoteSource {
         return this.url;
     }
     getCacheKey(state, chain, fields) {
-        var build = state.genome_build || this.params.build;
+        const build = state.genome_build || this.params.build;
         // GraphQL API: request not defined solely by the URL
         // Gather the state params that govern constraint query for a given region.
         return `${this.url} ${state.chr} ${state.start} ${state.end} ${build}`;
@@ -894,12 +900,12 @@ class GeneConstraintSource extends RemoteSource {
     }
 
     fetchRequest(state, chain, fields) {
-        var build = state.genome_build || this.params.build;
+        const build = state.genome_build || this.params.build;
         if (!build) {
             throw new Error(`Data source ${this.constructor.name} must specify a 'genome_build' option`);
         }
 
-        var unique_gene_names = chain.body.reduce(
+        const unique_gene_names = chain.body.reduce(
             // In rare cases, the same gene symbol may appear at multiple positions. (issue #179) We de-duplicate the
             //  gene names to avoid issuing a malformed GraphQL query.
             function (acc, gene) {
@@ -908,9 +914,9 @@ class GeneConstraintSource extends RemoteSource {
             },
             {}
         );
-        var query = Object.keys(unique_gene_names).map(function (gene_name) {
+        let query = Object.keys(unique_gene_names).map(function (gene_name) {
             // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
-            var alias = '_' + gene_name.replace(/[^A-Za-z0-9_]/g, '_');
+            const alias = '_' + gene_name.replace(/[^A-Za-z0-9_]/g, '_');
             // Each gene symbol is a separate graphQL query, grouped into one request using aliases
             return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } ';
         });
@@ -921,10 +927,10 @@ class GeneConstraintSource extends RemoteSource {
         }
 
         query = '{' + query.join(' ') + ' }'; // GraphQL isn't quite JSON; items are separated by spaces but not commas
-        var url = this.getURL(state, chain, fields);
+        const url = this.getURL(state, chain, fields);
         // See: https://graphql.org/learn/serving-over-http/
-        var body = JSON.stringify({ query: query });
-        var headers = { 'Content-Type': 'application/json' };
+        const body = JSON.stringify({ query: query });
+        const headers = { 'Content-Type': 'application/json' };
 
         return fetch(url, { method: 'POST', body, headers }).then(response => {
             if (!response.ok) {
@@ -941,12 +947,12 @@ class GeneConstraintSource extends RemoteSource {
 
         chain.body.forEach(function(gene) {
             // Find payload keys that match gene names in this response
-            var alias = '_' + gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');  // aliases are modified gene names
-            var constraint = data[alias] && data[alias]['gnomad_constraint']; // gnomad API has two ways of specifying missing data for a requested gene
+            const alias = '_' + gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');  // aliases are modified gene names
+            const constraint = data[alias] && data[alias]['gnomad_constraint']; // gnomad API has two ways of specifying missing data for a requested gene
             if (constraint) {
                 // Add all fields from constraint data- do not override fields present in the gene source
                 Object.keys(constraint).forEach(function (key) {
-                    var val = constraint[key];
+                    let val = constraint[key];
                     if (typeof gene[key] === 'undefined') {
                         if (typeof val == 'number' && val.toString().indexOf('.') !== -1) {
                             val = parseFloat(val.toFixed(2));
@@ -966,8 +972,8 @@ class GeneConstraintSource extends RemoteSource {
  */
 class RecombLZ extends RemoteSource {
     getURL(state, chain, fields) {
-        var build = state.genome_build || this.params.build;
-        var source = this.params.source;
+        const build = state.genome_build || this.params.build;
+        let source = this.params.source;
         validateBuildSource(this.constructor.SOURCE_NAME, build, source);
 
         if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
@@ -1008,14 +1014,16 @@ class StaticSource extends BaseSource {
  */
 class PheWASLZ extends RemoteSource {
     getURL(state, chain, fields) {
-        var build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
+        const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
         if (!build || !Array.isArray(build) || !build.length) {
             throw new Error(['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
         }
-        var url = [
+        const url = [
             this.url,
             "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
-            build.map(function(item) {return 'build=' + encodeURIComponent(item);}).join('&')
+            build.map(function (item) {
+                return 'build=' + encodeURIComponent(item);
+            }).join('&')
         ];
         return url.join('');
     }
@@ -1057,7 +1065,7 @@ class ConnectorSource extends BaseSource {
         this._source_name_mapping = config.sources;
 
         // Validate that this source has been told how to find the required information
-        var specified_ids = Object.keys(config.sources);
+        const specified_ids = Object.keys(config.sources);
         // FIXME: rework to set this in constructor for places that use this (eg aggtests)
         /** @property {String[]} Specifies the sources that must be provided in the original config object */
         this.REQUIRED_SOURCES = [];
@@ -1075,7 +1083,7 @@ class ConnectorSource extends BaseSource {
         // Connectors do not request their own data by definition, but they *do* depend on other sources having been loaded
         //  first. This method performs basic validation, and preserves the accumulated body from the chain so far.
         Object.keys(this._source_name_mapping).forEach((ns) => {
-            var chain_source_id = this._source_name_mapping[ns];
+            const chain_source_id = this._source_name_mapping[ns];
             if (chain.discrete && !chain.discrete[chain_source_id]) {
                 throw new Error(this.constructor.name + ' cannot be used before loading required data for: ' + chain_source_id);
             }
