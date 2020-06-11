@@ -7,18 +7,17 @@
  * Return the -log (base 10)
  * @function neglog10
  */
-// LocusZoom.TransformationFunctions.add('neglog10', function(x) {
 export const neglog10 = (value) => {
     if (isNaN(value) || value <= 0) {
         return null;
     }
     return -Math.log(value) / Math.LN10;
 };
+
 /**
  * Convert a number from logarithm to scientific notation. Useful for, eg, a datasource that returns -log(p) by default
  * @function logtoscinotation
  */
-// LocusZoom.TransformationFunctions.add('logtoscinotation', function(x) {
 export const logtoscinotation = (value) => {
     if (isNaN(value)) {
         return 'NaN';
@@ -26,9 +25,9 @@ export const logtoscinotation = (value) => {
     if (value === 0) {
         return '1';
     }
-    var exp = Math.ceil(value);
-    var diff = exp - value;
-    var base = Math.pow(10, diff);
+    const exp = Math.ceil(value);
+    const diff = exp - value;
+    const base = Math.pow(10, diff);
     if (exp === 1) {
         return (base / 10).toFixed(4);
     } else if (exp === 2) {
@@ -37,13 +36,13 @@ export const logtoscinotation = (value) => {
         return base.toFixed(2) + ' × 10^-' + exp;
     }
 };
+
 /**
  * Represent a number in scientific notation
  * @function scinotation
  * @param {Number} value
  * @returns {String}
  */
-// LocusZoom.TransformationFunctions.add('scinotation', function(x) {
 export const scinotation = (value) => {
     if (isNaN(value)) {
         return 'NaN';
@@ -52,8 +51,8 @@ export const scinotation = (value) => {
         return '0';
     }
 
-    var abs = Math.abs(value);
-    var log;
+    const abs = Math.abs(value);
+    let log;
     if (abs > 1) {
         log = Math.ceil(Math.log(abs) / Math.LN10);
     } else {  // 0...1
@@ -65,6 +64,7 @@ export const scinotation = (value) => {
         return value.toExponential(2).replace('+', '').replace('e', ' × 10^');
     }
 };
+
 /**
  * HTML-escape user entered values for use in constructed HTML fragments
  *
@@ -99,7 +99,7 @@ export const htmlescape = (value) => {
 /**
  * URL-encode the provided text, eg for constructing hyperlinks
  * @function urlencode
- * @param {String} str
+ * @param {String} value
  */
 export const urlencode = function(value) {
     return encodeURIComponent(value);

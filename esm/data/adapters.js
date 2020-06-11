@@ -13,140 +13,6 @@ function validateBuildSource(class_name, build, source) {
     }
 }
 
-// FIXME: Implement and expose requester/field logic
-// /**
-//  * Represents an addressable unit of data from a namespaced datasource, subject to specified value transformations.
-//  *
-//  * When used by a data layer, fields will automatically be re-fetched from the appropriate data source whenever the
-//  *   state of a plot fetches, eg pan or zoom operations that would affect what data is displayed.
-//  *
-//  * @public
-//  * @class
-//  * @param {String} field A string representing the namespace of the datasource, the name of the desired field to fetch
-//  *   from that datasource, and arbitrarily many transformations to apply to the value. The namespace and
-//  *   transformation(s) are optional and information is delimited according to the general syntax
-//  *   `[namespace:]name[|transformation][|transformation]`. For example, `association:pvalue|neglog10`
-//  */
-// class Field {
-//     constructor(field) {
-//         var parts = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/.exec(field);
-//         /** @member {String} */
-//         this.full_name = field;
-//         /** @member {String} */
-//         this.namespace = parts[1] || null;
-//         /** @member {String} */
-//         this.name = parts[2] || null;
-//         /** @member {Array} */
-//         this.transformations = [];
-//
-//         if (typeof parts[3] == 'string' && parts[3].length > 1) {
-//             this.transformations = parts[3].substring(1).split('|');
-//             this.transformations.forEach(function(transform, i) {
-//                 // FIXME: Depends on central registry
-//                 this.transformations[i] = LocusZoom.TransformationFunctions.get(transform);
-//             }.bind(this));
-//         }
-//     }
-//
-//     _applyTransformations(val) {
-//         this.transformations.forEach(function(transform) {
-//             val = transform(val);
-//         });
-//         return val;
-//     }
-//
-//     /**
-//      * Resolve the field for a given data element.
-//      *   First look for a full match with transformations already applied by the data requester.
-//      *   Otherwise prefer a namespace match and fall back to just a name match, applying transformations on the fly.
-//      * @param {Object} data Returned data/fields into for this element
-//      * @param {Object} [extra] User-applied annotations for this point (info not provided by the server that we want
-//      *  to preserve across re-renders). Example usage: "should_show_label"
-//      * @returns {*}
-//      */
-//     resolve(data, extra) {
-//         if (typeof data[this.full_name] == 'undefined') { // Check for cached result
-//             var val = null;
-//             if (typeof (data[this.namespace + ':' + this.name]) != 'undefined') { // Fallback: value sans transforms
-//                 val = data[this.namespace + ':' + this.name];
-//             } else if (typeof data[this.name] != 'undefined') { // Fallback: value present without namespace
-//                 val = data[this.name];
-//             } else if (extra && typeof extra[this.full_name] != 'undefined') { // Fallback: check annotations
-//                 val = extra[this.full_name];
-//             } // We should really warn if no value found, but many bad layouts exist and this could break compatibility
-//             data[this.full_name] = this._applyTransformations(val);
-//         }
-//         return data[this.full_name];
-//     }
-// }
-//
-// /**
-//  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
-//  *   It passes state information and ensures that data is formatted in the manner expected by the plot.
-//  *
-//  * It is also responsible for constructing a "chain" of dependent requests, by requesting each datasource
-//  *   sequentially in the order specified in the datalayer `fields` array. Data sources are only chained within a
-//  *   data layer, and only if that layer requests more than one kind of data source.
-//  * @param {LocusZoom.DataSources} sources An object of {ns: LocusZoom.Data.Source} instances
-//  * @protected
-//  */
-// class Requester {
-//     constructor(sources) {
-//         this._sources = sources;
-//     }
-//
-//     __split_requests(fields) {
-//         // Given a fields array, return an object specifying what datasource names the data layer should make requests
-//         //  to, and how to handle the returned data
-//         var requests = {};
-//         // Regular expression finds namespace:field|trans
-//         var re = /^(?:([^:]+):)?([^:|]*)(\|.+)*$/;
-//         fields.forEach(function(raw) {
-//             var parts = re.exec(raw);
-//             var ns = parts[1] || 'base';
-//             var field = parts[2];
-//             // FIXME: Uses registry
-//             var trans = LocusZoom.TransformationFunctions.get(parts[3]);
-//             if (typeof requests[ns] == 'undefined') {
-//                 requests[ns] = {outnames:[], fields:[], trans:[]};
-//             }
-//             requests[ns].outnames.push(raw);
-//             requests[ns].fields.push(field);
-//             requests[ns].trans.push(trans);
-//         });
-//         return requests;
-//     }
-//
-//     /**
-//      * Fetch data, and create a chain that only connects two data sources if they depend on each other
-//      * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-//      * @param {String[]} fields The list of data fields specified in the `layout` for a specific data layer
-//      * @returns {Promise}
-//      */
-//     getData(state, fields) {
-//         var requests = this.__split_requests(fields);
-//         // Create an array of functions that, when called, will trigger the request to the specified datasource
-//         var request_handles = Object.keys(requests).map(function(key) {
-//             if (!this._sources.get(key)) {
-//                 throw new Error('Datasource for namespace ' + key + ' not found');
-//             }
-//             return this._sources.get(key).getData(
-//                 state,
-//                 requests[key].fields,
-//                 requests[key].outnames,
-//                 requests[key].trans
-//             );
-//         });
-//         //assume the fields are requested in dependent order
-//         //TODO: better manage dependencies
-//         var ret = Promise.resolve({header:{}, body: [], discrete: {}});
-//         for(var i = 0; i < request_handles.length; i++) {
-//             // If a single datalayer uses multiple sources, perform the next request when the previous one completes
-//             ret = ret.then(request_handles[i]);
-//         }
-//         return ret;
-//     }
-// }
 
 /**
  * Base class for LocusZoom data sources (any). See also: RemoteSource
@@ -471,7 +337,7 @@ class RemoteSource extends BaseSource {
  * Data Source for Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a requesr
  * @public
  */
-class AssociationSourceLZ extends RemoteSource {
+class AssociationLZ extends RemoteSource {
     preGetData (state, fields, outnames, trans) {
         // TODO: Modify internals to see if we can go without this source
         const id_field = this.params.id_field || 'id';
@@ -878,14 +744,18 @@ class GeneLZ extends RemoteSource {
 /**
  * Data Source for Gene Constraint Data, as fetched from the gnomAD server (or compatible)
  *
+ * This is intended to be the second request in a chain, with special logic that connects it to Genes data
+ *  already fetched.
+ *
  * @public
 */
-class GeneConstraintSource extends RemoteSource {
+class GeneConstraintLz extends RemoteSource {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
     }
     getURL() {
+        // GraphQL API: request details are encoded in the body, not the URL
         return this.url;
     }
     getCacheKey(state, chain, fields) {
@@ -1109,16 +979,16 @@ class ConnectorSource extends BaseSource {
     }
 }
 
+export { BaseSource, RemoteSource };
+
 export {
-    BaseSource,
-    AssociationSourceLZ,
+    AssociationLZ,
     ConnectorSource,
-    GeneConstraintSource,
+    GeneConstraintLz,
     GeneLZ,
     GwasCatalogLZ,
     LDLZ,
     PheWASLZ,
     RecombLZ,
-    RemoteSource,
     StaticSource,
 };

@@ -1,5 +1,6 @@
 import {assert} from 'chai';
-import RegistryBase, {TransformationFunctions} from '../../esm/registry';
+import RegistryBase from '../../esm/registry/base';
+import { _TransformationFunctions } from '../../esm/registry/transforms';
 
 describe('Registries', function() {
     describe('Registry Base Behaviors', function () {
@@ -56,7 +57,7 @@ describe('Registries', function() {
 
     describe('Transformation registry special behaviors', function() {
         before(function() {
-            this.registry = new TransformationFunctions();
+            this.registry = new _TransformationFunctions();
             this.registry.add('func1', (v) => v + 1);
             this.registry.add('func2', (v) => v + 2);
         });

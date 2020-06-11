@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import sinon from 'sinon';
 
 import {
-    AssociationSourceLZ,
+    AssociationLZ,
     BaseSource,
     ConnectorSource,
     GeneLZ,
@@ -10,292 +10,14 @@ import {
     LDLZ,
     RecombLZ,
     StaticSource
-} from '../../esm/data';
+} from '../../../esm/data/adapters';
 
 /**
  LocusZoom.js Data Test Suite
  Test LocusZoom Data access objects
  */
-describe('LocusZoom Data', function () {
-    describe.skip('LocusZoom.Data.Field', function () {
-        beforeEach(function () {
-            LocusZoom.TransformationFunctions.add('herp', function (x) {
-                return x.toString() + 'herp';
-            });
-            LocusZoom.TransformationFunctions.add('derp', function (x) {
-                return x.toString() + 'derp';
-            });
-        });
-        afterEach(function () {
-            LocusZoom.TransformationFunctions.set('herp');
-            LocusZoom.TransformationFunctions.set('derp');
-        });
-        it('should have a Data Field object', function () {
-            LocusZoom.Data.should.have.property('Field').which.is.a.Function;
-        });
-        it('should correctly parse name-only field string into components', function () {
-            const f = new LocusZoom.Data.Field('foo');
-            f.should.be.an.Object;
-            f.should.have.property('full_name').which.is.exactly('foo');
-            f.should.have.property('name').which.is.exactly('foo');
-            f.should.have.property('namespace').which.is.exactly(null);
-            f.should.have.property('transformations').which.is.an.Array;
-            f.transformations.length.should.be.exactly(0);
-        });
-        it('should correctly parse namespaced field string into components', function () {
-            const f = new LocusZoom.Data.Field('foo:bar');
-            f.should.be.an.Object;
-            f.should.have.property('full_name').which.is.exactly('foo:bar');
-            f.should.have.property('name').which.is.exactly('bar');
-            f.should.have.property('namespace').which.is.exactly('foo');
-            f.should.have.property('transformations').which.is.an.Array;
-            f.transformations.length.should.be.exactly(0);
-        });
-        it('should correctly parse namespaced field string with single transformation into components', function () {
-            const f = new LocusZoom.Data.Field('foo:bar|herp');
-            f.should.be.an.Object;
-            f.should.have.property('full_name').which.is.exactly('foo:bar|herp');
-            f.should.have.property('name').which.is.exactly('bar');
-            f.should.have.property('namespace').which.is.exactly('foo');
-            f.should.have.property('transformations').which.is.an.Array;
-            f.transformations.length.should.be.exactly(1);
-            f.transformations[0].should.be.a.Function;
-        });
-        it('should correctly parse namespaced field string with multiple transformations into components', function () {
-            const f = new LocusZoom.Data.Field('foo:bar|herp|derp');
-            f.should.be.an.Object;
-            f.should.have.property('full_name').which.is.exactly('foo:bar|herp|derp');
-            f.should.have.property('name').which.is.exactly('bar');
-            f.should.have.property('namespace').which.is.exactly('foo');
-            f.should.have.property('transformations').which.is.an.Array;
-            f.transformations.length.should.be.exactly(2);
-            f.transformations[0].should.be.a.Function;
-            f.transformations[1].should.be.a.Function;
-        });
-        it('should resolve a value when passed a data object', function () {
-            const d = { 'foo:bar': 123 };
-            const f = new LocusZoom.Data.Field('foo:bar');
-            const v = f.resolve(d);
-            v.should.be.exactly(123);
-        });
-        it('should resolve to an unnamespaced value if its present and the explicitly namespaced value is not, and cache the value for future lookups', function () {
-            const d = { 'bar': 123 };
-            const f = new LocusZoom.Data.Field('foo:bar');
-            const v = f.resolve(d);
-            v.should.be.exactly(123);
-            d.should.have.property('foo:bar').which.is.exactly(123);
-        });
-        it('should use annotations (extra_fields) by exact field name, iff no value is present in point data', function () {
-            const d = { 'bar': 123, 'foo:my_annotation': 13 };
-            const f = new LocusZoom.Data.Field('my_annotation');
-            const v = f.resolve(d, { 'my_annotation': 12 });
-            assert.equal(v, 12);
-        });
-        it('should apply arbitrarily many transformations in the order defined', function () {
-            const d = { 'foo:bar': 123 };
-            const f = new LocusZoom.Data.Field('foo:bar|herp|derp|herp');
-            const v = f.resolve(d);
-            v.should.be.exactly('123herpderpherp');
-            d.should.have.property('foo:bar|herp|derp|herp').which.is.exactly('123herpderpherp');
-        });
-    });
-
-    describe.skip('LocusZoom.DataSources', function () {
-
-        let TestSource1, TestSource2;
-        let originalKnownDataSources;
-        beforeEach(function () {
-            originalKnownDataSources = LocusZoom.KnownDataSources.getAll().slice(0);
-            LocusZoom.KnownDataSources.clear();
-            TestSource1 = function (x) {
-                this.init = x;
-            };
-            TestSource1.SOURCE_NAME = 'test1';
-            TestSource2 = function (x) {
-                this.init = x;
-            };
-            TestSource2.SOURCE_NAME = 'test2';
-            LocusZoom.KnownDataSources.add(TestSource1);
-            LocusZoom.KnownDataSources.add(TestSource2);
-        });
-        afterEach(function () {
-            LocusZoom.KnownDataSources.setAll(originalKnownDataSources);
-        });
-
-        it('should have a DataSources object', function () {
-            LocusZoom.DataSources.should.be.a.Function;
-        });
-        it('should add source via .add() - object', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.add('t1', new TestSource1());
-            ds.keys().should.have.length(1);
-            should.exist(ds.get('t1'));
-        });
-        it('should add source via .add() - array', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.add('t1', ['test1']);
-            ds.keys().should.have.length(1);
-            should.exist(ds.get('t1'));
-        });
-        it('should allow chainable adding', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.add('t1', new TestSource1()).add('t2', new TestSource1());
-            ds.keys().should.have.length(2);
-        });
-        it('should add sources via fromJSON() - object', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.fromJSON({ t1: new TestSource1(), t2: new TestSource2() });
-            ds.keys().should.have.length(2);
-            should.exist(ds.get('t1'));
-            should.exist(ds.get('t2'));
-        });
-        it('should add sources via fromJSON() - array', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.fromJSON({ t1: ['test1'], t2: ['test2'] });
-            ds.keys().should.have.length(2);
-            should.exist(ds.get('t1'));
-            should.exist(ds.get('t2'));
-        });
-        it('should add sources via fromJSON() - string (JSON)', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.fromJSON('{"t1": ["test1"], "t2": ["test2"]}');
-            ds.keys().should.have.length(2);
-            should.exist(ds.get('t1'));
-            should.exist(ds.get('t2'));
-        });
-        it('should pass in initialization values as object', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.fromJSON({ 't1': ['test1', { a: 10 }], 't2': ['test2', { b: 20 }] });
-            ds.keys().should.have.length(2);
-            should.exist(ds.get('t1').init);
-            should.exist(ds.get('t1').init.a);
-            ds.get('t1').init.a.should.equal(10);
-            should.exist(ds.get('t2').init);
-            should.exist(ds.get('t2').init.b);
-            ds.get('t2').init.b.should.equal(20);
-        });
-        it('should remove sources via remove()', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.fromJSON({ t1: new TestSource1(), t2: new TestSource2() });
-            ds.remove('t1');
-            ds.keys().should.have.length(1);
-            should.not.exist(ds.get('t1'));
-            should.exist(ds.get('t2'));
-        });
-        it('should provide a source_id for all sources defined as part of a chain', function () {
-            const ds = new LocusZoom.DataSources();
-            ds.add('t1', new TestSource1());
-            ds.add('t2', ['test2', {}]);
-
-            assert.equal(ds.sources.t1.source_id, 't1', 'Directly added source is aware of chain namespace');
-            assert.equal(ds.sources.t2.source_id, 't2', 'Source created via options is aware of chain namespace');
-        });
-    });
-
-    describe('LocusZoom Data.Source', function () {
-        describe.skip('Source.extend()', function () {
-
-            //reset known data sources
-            let originalKDS;
-            beforeEach(function () {
-                originalKDS = LocusZoom.KnownDataSources.getAll().slice(0);
-            });
-            afterEach(function () {
-                LocusZoom.KnownDataSources.setAll(originalKDS);
-            });
-
-            it('should work with no parameters', function () {
-                const source = LocusZoom.Data.Source.extend();
-                //no changes to KDS
-                LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length);
-                //has inherited the get data method from base Data.Source
-                const obj = new source();
-                should.exist(obj.getData);
-            });
-
-            it('should respect a custom constructor', function () {
-                const source = LocusZoom.Data.Source.extend(function () {
-                    this.test = 5;
-                });
-                const obj = new source();
-                should.exist(obj.test);
-                obj.test.should.equal(5);
-            });
-
-            it('should register with KnownDataSources', function () {
-                LocusZoom.Data.Source.extend(function () {
-                    this.test = 11;
-                }, 'Happy');
-                LocusZoom.KnownDataSources.list().length.should.equal(originalKDS.length + 1);
-                LocusZoom.KnownDataSources.list().should.containEql('Happy');
-                const obj = LocusZoom.KnownDataSources.create('Happy');
-                should.exist(obj.test);
-                obj.test.should.equal(11);
-            });
-
-            it('should allow specific prototype', function () {
-                const source = LocusZoom.Data.Source.extend(function () {
-                    this.fromCon = 3;
-                }, null, { fromProto: 7 });
-                const obj = new source();
-                should.exist(obj.fromCon);
-                obj.fromCon.should.equal(3);
-                should.exist(obj.fromProto);
-                obj.fromProto.should.equal(7);
-            });
-
-            it('should easily inherit from known types (string)', function () {
-                const source1 = LocusZoom.Data.Source.extend(function () {
-                    this.name = 'Bob';
-                    this.initOnly = 'Boo';
-                }, 'BaseOne');
-                source1.prototype.greet = function () {
-                    return 'hello ' + this.name;
-                };
-                const source2 = LocusZoom.Data.Source.extend(function () {
-                    this.name = 'Brenda';
-                }, 'BaseTwo', 'BaseOne');
-                const obj = new source2();
-                should.exist(obj.name);
-                should.exist(obj.greet);
-                obj.name.should.equal('Brenda');
-                obj.greet().should.equal('hello Brenda');
-                should.not.exist(obj.initOnly);
-            });
-
-            it('should easily inherit from known types (function)', function () {
-                const source1 = LocusZoom.Data.Source.extend(function () {
-                    this.name = 'Bob';
-                }, 'BaseOne');
-                source1.prototype.greet = function () {
-                    return 'hello ' + this.name;
-                };
-                const source2 = LocusZoom.Data.Source.extend(function () {
-                    this.name = 'Brenda';
-                }, 'BaseTwo', source1);
-                const obj = new source2();
-                should.exist(obj.name);
-                should.exist(obj.greet);
-                obj.name.should.equal('Brenda');
-                obj.greet().should.equal('hello Brenda');
-            });
-
-            it('should easily inherit from known types (array)', function () {
-                const source1 = LocusZoom.Data.Source.extend(function () {
-                    this.name = 'Bob';
-                }, 'BaseOne');
-                source1.prototype.greet = function () {
-                    return 'hello ' + this.name;
-                };
-                const source = LocusZoom.Data.Source.extend(null, 'BaseTwo', ['BaseOne']);
-                const obj = new source();
-                should.exist(obj.name);
-                should.exist(obj.greet);
-                obj.name.should.equal('Bob');
-                obj.greet().should.equal('hello Bob');
-            });
-        });
-
+describe('Data adapters', function () {
+    describe('Base Source Behavior', function () {
         describe('Source.getData', function () {
             it('dependentSource skips making a request if previous sources did not add data to chain.body', function () {
                 const source = new BaseSource({});
@@ -545,7 +267,7 @@ describe('LocusZoom Data', function () {
 
     describe('Association Data Source', function () {
         it('allows normalization + sorting of data', function () {
-            const source = new AssociationSourceLZ({
+            const source = new AssociationLZ({
                 url: 'locuszoom.org', params: { sort: true }
             });
 
@@ -558,7 +280,7 @@ describe('LocusZoom Data', function () {
                 });
         });
         it('usually returns normalized data in the order the data was provided', function () {
-            const source = new AssociationSourceLZ({
+            const source = new AssociationLZ({
                 url: 'locuszoom.org', params: {}
             });
             const sampleData = { position: [2, 1] };
@@ -684,7 +406,7 @@ describe('LocusZoom Data', function () {
         });
     });
 
-    describe('LDLZ2 Source', function () {
+    describe('LDLZ Source', function () {
         it('validates the selected build name', function () {
             const source = new LDLZ({ url: 'www.fake.test', params: { build: 99 } });
             assert.throws(function () {
@@ -816,7 +538,7 @@ describe('LocusZoom Data', function () {
         });
     });
 
-    describe.skip('LocusZoom Data.ConnectorSource', function () {
+    describe.skip('ConnectorSource', function () {
         beforeEach(function () {
             // Create a source that internally looks for data as "first" from the specified
             this.basic_config = { sources: { first: 'a_source', second: 'b_source' } };

@@ -3,9 +3,7 @@
   "version": "0.11.0-beta.1",
   "main": "dist/locuszoom.app.min.js",
   "module": "esm/index.js",
-  "sideEffects": [
-    "esm/index.js"
-  ],
+  "sideEffects": true,
   "description": "Generate interactive visualizations of statistical genetic data",
   "keywords": [
     "visualization",
