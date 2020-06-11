@@ -3,6 +3,8 @@
  *
  * LocusZoom is plugin-extensible, and layouts are string-based and JSON serializable. This is achieved through the use
  *  of a central registry that holds a reference to each possible feature.
+ *
+ * Each registry has some syntactical sugar, with common elements are defined in a base class
  */
 class RegistryBase {
     constructor() {
@@ -15,8 +17,8 @@ class RegistryBase {
      * @returns {Function}
      */
     get(name) {
-        if (!(name in this._items)) {
-            throw new Error(`Could not locate the requested registry item: ${name}`);
+        if (!this._items.has(name)) {
+            throw new Error(`Item not found: ${name}`);
         }
         return this._items.get(name);
     }
@@ -28,6 +30,7 @@ class RegistryBase {
      * @returns {*}
      */
     create(name, ...args) {
+        // TODO: Some subclasses will use this, but for others it may not make sense or lead to undefined behavior
         const base = this.get(name);
         return new base(...args);
     }
@@ -37,12 +40,14 @@ class RegistryBase {
      * @param {String} name The name of the item to add to the registry
      * @param {*} item The item to be added (constructor, value, etc)
      * @param {boolean} override Allow redefining an existing item?
+     * @return {*} The actual object as added to the registry
      */
     add(name, item, override = false) {
         if (!override && this._items.has(name)) {
             throw new Error(`Item ${name} is already defined`);
         }
         this._items.set(name, item);
+        return item;
     }
 
     /**
@@ -76,7 +81,9 @@ class RegistryBase {
 /**
  * Create and coordinate an ensemble of (namespaced) data source instances
  * This is the mechanism by which users create data sources for a specific plot, and should be considered part of the
- *  public interface for LocusZoom
+ *  public interface for LocusZoom.
+ *
+ * This is a standard registry, with some minor syntactical sugar for creating objects from config.
  * @public
  */
 class DataSources extends RegistryBase {
@@ -86,7 +93,9 @@ class DataSources extends RegistryBase {
      */
     constructor(registry) {
         super();
-        this._registry = registry;
+        if (registry) {
+            this._items = registry();
+        }
     }
 
     /**
@@ -94,9 +103,10 @@ class DataSources extends RegistryBase {
      * @param {String} namespace Uniquely identify this datasource
      * @param {BaseSource|Array} item An instantiated datasource, or an array of arguments that can be used to
      *   create a known datasource type.
+     * @param [override=false] Whether to allow existing sources to be redefined
      */
-    add(namespace, item) {
-        if (this._items.has(namespace)) {
+    add(namespace, item, override = false) {
+        if (this._registry.has(namespace)) {
             throw new Error(`The namespace ${namespace} is already in use by another source`);
         }
 
@@ -105,13 +115,59 @@ class DataSources extends RegistryBase {
         }
         if (Array.isArray(item)) {
             const [type, options] = item;
+            // This *does* break the separation of concerns slightly, but we are explicitly retaining backwards
+            // compatibility with the old public interface of LocusZoom.DataSources.
             item = this._registry.create(type, options);
         }
         // Each datasource in the chain should be aware of its assigned namespace
         item.source_id = namespace;
 
-        super.add(name, item);
+        return super.add(name, item, override);
     }
 }
 
+/**
+ * Transformation functions that may be applied to template values
+ */
+class TransformationFunctions extends RegistryBase {
+    _collectTransforms(template_string) {
+        // Helper function that turns a sequence of function names into a single callable
+        const funcs = template_string
+            .match(/\|([^|]+)/g)
+            .map(item => super.get(item.substring(1)));
+
+        return (value) => {
+            return funcs.reduce(
+                (acc, func) => func(acc),
+                value
+            );
+        };
+    }
+
+    /**
+     * In templates, we often use a single concatenated string to ask for several transformation functions at once:
+     *  `value|func1|func2`
+     * This class offers syntactical sugar to retrieve the entire sequence of transformations as a single callable
+     * @param name
+     */
+    get(name) {
+        if (!name) {
+            // This function is sometimes called with no value, and the expected behavior is to return null instead of
+            //  a callable
+            return null;
+        }
+        if (name.substring(0,1) === '|') {
+            // Legacy artifact of how this function is called- if a pipe is present, this is the template string
+            //  (`|func1|func2...`), rather than any one single transformation function.
+            // A sequence of transformation functions is expected
+            return this._collectTransforms(name);
+        } else {
+            // If not a template string, then user is asking for an item by name directly
+            return super.get(name);
+        }
+    }
+}
+
+
 export default RegistryBase;
+export { DataSources, TransformationFunctions };
