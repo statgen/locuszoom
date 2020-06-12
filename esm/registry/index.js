@@ -1,8 +1,8 @@
 import adapters from './data';
-import dashboards from './dashboards';
+// import dashboards from './dashboards';
+import layouts from './layouts';
 import scalable from './scalable';
 import transforms from './transforms';
 
-// TODO: Add a registry for layouts
 
-export { adapters, dashboards, scalable, transforms };
+export { adapters /* , dashboards */, layouts, scalable, transforms };

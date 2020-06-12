@@ -1,213 +1,18 @@
-/* global LocusZoom */
-'use strict';
-
-var LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
-
 /**
- * Manage known layouts for all parts of the LocusZoom plot
- *
- * This registry allows for layouts to be reused and customized many times on a page, using a common base pattern.
- *   It handles the work of ensuring that each new instance of the layout has no shared state with other copies.
- *
- * @class
+ * Predefined base layouts used to populate the LZ registry
  */
-LocusZoom.Layouts = (function () {
-    var obj = {};
-    var layouts = {
-        'plot': {},
-        'panel': {},
-        'data_layer': {},
-        'dashboard': {},
-        'dashboard_components': {},
-        'tooltip': {}
-    };
+import d3 from 'd3';
 
-    /**
-     * Generate a layout configuration object
-     * @param {('plot'|'panel'|'data_layer'|'dashboard'|'tooltip')} type The type of layout to retrieve
-     * @param {string} name Identifier of the predefined layout within the specified type
-     * @param {object} [modifications] Custom properties that override default settings for this layout
-     * @returns {object} A JSON-serializable object representation
-     */
-    obj.get = function (type, name, modifications) {
-        if (typeof type != 'string' || typeof name != 'string') {
-            throw new Error('invalid arguments passed to LocusZoom.Layouts.get, requires string (layout type) and string (layout name)');
-        } else if (layouts[type][name]) {
-            // Get the base layout
-            var layout = LocusZoom.Layouts.merge(modifications || {}, layouts[type][name]);
-            // If "unnamespaced" is true then strike that from the layout and return the layout without namespacing
-            if (layout.unnamespaced) {
-                delete layout.unnamespaced;
-                return JSON.parse(JSON.stringify(layout));
-            }
-            // Determine the default namespace for namespaced values
-            var default_namespace = '';
-            if (typeof layout.namespace == 'string') {
-                default_namespace = layout.namespace;
-            } else if (typeof layout.namespace == 'object' && Object.keys(layout.namespace).length) {
-                if (typeof layout.namespace.default != 'undefined') {
-                    default_namespace = layout.namespace.default;
-                } else {
-                    default_namespace = layout.namespace[Object.keys(layout.namespace)[0]].toString();
-                }
-            }
-            default_namespace += default_namespace.length ? ':' : '';
-            // Apply namespaces to layout, recursively
-            var applyNamespaces = function (element, namespace) {
-                if (namespace) {
-                    if (typeof namespace == 'string') {
-                        namespace = { default: namespace };
-                    }
-                } else {
-                    namespace = { default: '' };
-                }
-                if (typeof element == 'string') {
-                    var re = /\{\{namespace(\[[A-Za-z_0-9]+\]|)\}\}/g;
-                    var match, base, key, resolved_namespace;
-                    var replace = [];
-                    while ((match = re.exec(element)) !== null) {
-                        base = match[0];
-                        key = match[1].length ? match[1].replace(/(\[|\])/g, '') : null;
-                        resolved_namespace = default_namespace;
-                        if (namespace != null && typeof namespace == 'object' && typeof namespace[key] != 'undefined') {
-                            resolved_namespace = namespace[key] + (namespace[key].length ? ':' : '');
-                        }
-                        replace.push({ base: base, namespace: resolved_namespace });
-                    }
-                    for (var r in replace) {
-                        element = element.replace(replace[r].base, replace[r].namespace);
-                    }
-                } else if (typeof element == 'object' && element != null) {
-                    if (typeof element.namespace != 'undefined') {
-                        var merge_namespace = (typeof element.namespace == 'string') ? { default: element.namespace } : element.namespace;
-                        namespace = LocusZoom.Layouts.merge(namespace, merge_namespace);
-                    }
-                    var namespaced_element, namespaced_property;
-                    for (var property in element) {
-                        if (property === 'namespace') {
-                            continue;
-                        }
-                        namespaced_element = applyNamespaces(element[property], namespace);
-                        namespaced_property = applyNamespaces(property, namespace);
-                        if (property !== namespaced_property) {
-                            delete element[property];
-                        }
-                        element[namespaced_property] = namespaced_element;
-                    }
-                }
-                return element;
-            };
-            layout = applyNamespaces(layout, layout.namespace);
-            // Return the layout as valid JSON only
-            return JSON.parse(JSON.stringify(layout));
-        } else {
-            throw new Error('layout type [' + type + '] name [' + name + '] not found');
-        }
-    };
+import { version } from '../../package.json';
+import {deepCopy, merge} from '../helpers/layouts';
 
-    /** @private */
-    obj.set = function (type, name, layout) {
-        if (typeof type != 'string' || typeof name != 'string' || typeof layout != 'object') {
-            throw new Error('unable to set new layout; bad arguments passed to set()');
-        }
-        if (!layouts[type]) {
-            layouts[type] = {};
-        }
-        if (layout) {
-            return (layouts[type][name] = JSON.parse(JSON.stringify(layout)));
-        } else {
-            delete layouts[type][name];
-            return null;
-        }
-    };
-
-    /**
-     * Register a new layout definition by name.
-     *
-     * @param {string} type The type of layout to add. Usually, this will be one of the predefined LocusZoom types,
-     *   but if you pass a different name, this method will automatically create the new `type` bucket
-     * @param {string} name The identifier of the newly added layout
-     * @param {object} [layout] A JSON-serializable object containing configuration properties for this layout
-     * @returns The JSON representation of the newly created layout
-     */
-    obj.add = function (type, name, layout) {
-        return obj.set(type, name, layout);
-    };
-
-    /**
-     * List all registered layouts
-     * @param [type] Optionally narrow the list to only layouts of a specific type; else return all known layouts
-     * @returns {*}
-     */
-    obj.list = function (type) {
-        if (!layouts[type]) {
-            var list = {};
-            Object.keys(layouts).forEach(function (type) {
-                list[type] = Object.keys(layouts[type]);
-            });
-            return list;
-        } else {
-            return Object.keys(layouts[type]);
-        }
-    };
-
-    /**
-     * A helper method used for merging two objects. If a key is present in both, takes the value from the first object
-     *   Values from `default_layout` will be cleanly copied over, ensuring no references or shared state.
-     *
-     * Frequently used for preparing custom layouts. Both objects should be JSON-serializable.
-     *
-     * @param {object} custom_layout An object containing configuration parameters that override or add to defaults
-     * @param {object} default_layout An object containing default settings.
-     * @returns {object} The custom layout is modified in place and also returned from this method.
-     */
-    obj.merge = function (custom_layout, default_layout) {
-        if (typeof custom_layout !== 'object' || typeof default_layout !== 'object') {
-            throw new Error('LocusZoom.Layouts.merge only accepts two layout objects; ' + (typeof custom_layout) + ', ' + (typeof default_layout) + ' given');
-        }
-        for (var property in default_layout) {
-            if (!default_layout.hasOwnProperty(property)) {
-                continue;
-            }
-            // Get types for comparison. Treat nulls in the custom layout as undefined for simplicity.
-            // (javascript treats nulls as "object" when we just want to overwrite them as if they're undefined)
-            // Also separate arrays from objects as a discrete type.
-            var custom_type = custom_layout[property] === null ? 'undefined' : typeof custom_layout[property];
-            var default_type = typeof default_layout[property];
-            if (custom_type === 'object' && Array.isArray(custom_layout[property])) {
-                custom_type = 'array';
-            }
-            if (default_type === 'object' && Array.isArray(default_layout[property])) {
-                default_type = 'array';
-            }
-            // Unsupported property types: throw an exception
-            if (custom_type === 'function' || default_type === 'function') {
-                throw new Error('LocusZoom.Layouts.merge encountered an unsupported property type');
-            }
-            // Undefined custom value: pull the default value
-            if (custom_type === 'undefined') {
-                custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
-                continue;
-            }
-            // Both values are objects: merge recursively
-            if (custom_type === 'object' && default_type === 'object') {
-                custom_layout[property] = LocusZoom.Layouts.merge(custom_layout[property], default_layout[property]);
-                continue;
-            }
-        }
-        return custom_layout;
-    };
-
-    return obj;
-})();
-
+const LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
 
 /**
  * Tooltip Layouts
  * @namespace LocusZoom.Layouts.tooltips
  */
-
-LocusZoom.Layouts.add('tooltip', 'standard_association', {
+const standard_association_tooltip = {
     namespace: { 'assoc': 'assoc' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
@@ -216,17 +21,17 @@ LocusZoom.Layouts.add('tooltip', 'standard_association', {
         + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>'
         + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>'
         + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
-});
+};
 
-LocusZoom.Layouts.add('tooltip', 'standard_association_with_label', function() {
+const standard_association_tooltip_with_label = function() {
     // Add a special "toggle label" button to the base tooltip. This must be used in tandem with a custom layout
     //   directive (label.filters should check a boolean annotation field called "lz_show_label").
-    var base = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+    const base = deepCopy(standard_association_tooltip);
     base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); layer.parent_plot.applyState();">Toggle label</a>';
     return base;
-}());
+}();
 
-LocusZoom.Layouts.add('tooltip', 'standard_genes', {
+const standard_genes_tooltip = {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
@@ -240,9 +45,9 @@ LocusZoom.Layouts.add('tooltip', 'standard_genes', {
         + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>'
         + '</table><br>{{/if}}'
         + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
-});
+};
 
-LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
+const catalog_variant_tooltip = {
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
@@ -253,9 +58,9 @@ LocusZoom.Layouts.add('tooltip', 'catalog_variant', {
         + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
         + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
-});
+};
 
-LocusZoom.Layouts.add('tooltip', 'coaccessibility', {
+const coaccessibility_tooltip = {
     namespace: { 'access': 'access' },
     closable: true,
     show: { or: ['highlighted', 'selected'] },
@@ -267,21 +72,21 @@ LocusZoom.Layouts.add('tooltip', 'coaccessibility', {
         '{{{{namespace[access]}}start2|htmlescape}}-{{{{namespace[access]}}end2|htmlescape}}<br>' +
         '{{#if {{namespace[access]}}target}}<strong>Target</strong>: {{{{namespace[access]}}target|htmlescape}}<br>{{/if}}' +
         '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}'
-});
+};
 
 /**
  * Data Layer Layouts: represent specific information from a data source
  * @namespace Layouts.data_layer
  */
 
-LocusZoom.Layouts.add('data_layer', 'significance', {
+const significance_layer = {
     id: 'significance',
     type: 'orthogonal_line',
     orientation: 'horizontal',
     offset: LZ_SIG_THRESHOLD_LOGP
-});
+};
 
-LocusZoom.Layouts.add('data_layer', 'recomb_rate', {
+const recomb_rate_layer = {
     namespace: { 'recomb': 'recomb' },
     id: 'recombrate',
     type: 'line',
@@ -300,9 +105,9 @@ LocusZoom.Layouts.add('data_layer', 'recomb_rate', {
         floor: 0,
         ceiling: 100
     }
-});
+};
 
-LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
+const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
@@ -380,10 +185,10 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
             { action: 'toggle', status: 'selected' }
         ]
     },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true })
-});
+    tooltip: deepCopy(standard_association_tooltip),
+};
 
-LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
+const coaccessibility_layer = {
     namespace: { 'access': 'access' },
     id: 'coaccessibility',
     type: 'arcs',
@@ -442,23 +247,20 @@ LocusZoom.Layouts.add('data_layer', 'coaccessibility', {
             { action: 'toggle', status: 'selected' }
         ]
     },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'coaccessibility', { unnamespaced: true })
-});
+    tooltip: deepCopy(coaccessibility_tooltip)
+};
 
-LocusZoom.Layouts.add('data_layer', 'association_pvalues_catalog', function () {
+const association_pvalues_catalog_layer = function () {
     // Slightly modify an existing layout
-    var l = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
-        unnamespaced: true,
-        id: 'associationpvaluescatalog',
-        fill_opacity: 0.7
-    });
-    l.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
-    l.namespace.catalog = 'catalog';
-    l.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
-    return l;
-}());
+    let base = deepCopy(association_pvalues_layer);
+    base = merge({ id: 'associationpvaluescatalog', fill_opacity: 0.7}, base);
+    base.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
+    base.namespace.catalog = 'catalog';
+    base.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
+    return base;
+}();
 
-LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
+const phewas_pvalues_layer = {
     namespace: { 'phewas': 'phewas' },
     id: 'phewaspvalues',
     type: 'category_scatter',
@@ -536,9 +338,9 @@ LocusZoom.Layouts.add('data_layer', 'phewas_pvalues', {
             'fill': '#333333'
         }
     }
-});
+};
 
-LocusZoom.Layouts.add('data_layer', 'genes', {
+const genes_layer = {
     namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
     type: 'genes',
@@ -558,10 +360,10 @@ LocusZoom.Layouts.add('data_layer', 'genes', {
             { action: 'toggle', status: 'selected' }
         ]
     },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'standard_genes', { unnamespaced: true })
-});
+    tooltip: deepCopy(standard_genes_tooltip),
+};
 
-LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
+const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
     id: 'annotation_catalog',
@@ -595,15 +397,15 @@ LocusZoom.Layouts.add('data_layer', 'annotation_catalog', {
             { action: 'toggle', status: 'selected' }
         ]
     },
-    tooltip: LocusZoom.Layouts.get('tooltip', 'catalog_variant', { unnamespaced: true }),
+    tooltip: deepCopy(catalog_variant_tooltip),
     tooltip_positioning: 'top'
-});
+};
 
 /**
  * Individual dashboard buttons
  * @namespace Layouts.dashboard_components
  */
-LocusZoom.Layouts.add('dashboard_components', 'ldlz2_pop_selector', {
+const ldlz2_pop_selector_menu = {
     // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
     //  (on the original LD data source) will not work with these population names.
     type: 'set_state',
@@ -624,13 +426,13 @@ LocusZoom.Layouts.add('dashboard_components', 'ldlz2_pop_selector', {
         { display_name: 'EUR', value: 'EUR' },
         { display_name: 'SAS', value: 'SAS' }
     ]
-});
+};
 
 /**
  * Dashboard Layouts: Collections of toolbar buttons etc
  * @namespace Layouts.dashboard
  */
-LocusZoom.Layouts.add('dashboard', 'standard_panel', {
+const standard_panel_dashboard = {
     components: [
         {
             type: 'remove_panel',
@@ -650,14 +452,14 @@ LocusZoom.Layouts.add('dashboard', 'standard_panel', {
             style: { 'margin-left': '0.75em' }
         }
     ]
-});
+};
 
-LocusZoom.Layouts.add('dashboard', 'standard_plot', {
+const standard_plot_dashboard = {
     components: [
         {
             type: 'title',
             title: 'LocusZoom',
-            subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v' + LocusZoom.version + '</a>',
+            subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v' + version + '</a>',
             position: 'left'
         },
         {
@@ -665,10 +467,10 @@ LocusZoom.Layouts.add('dashboard', 'standard_plot', {
             position: 'right'
         }
     ]
-});
+};
 
-LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
-    var region_nav_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
+const region_nav_plot_dashboard = function () {
+    const region_nav_plot_dashboard = deepCopy(standard_plot_dashboard);
     region_nav_plot_dashboard.components.push(
         {
             type: 'shift_region',
@@ -711,14 +513,14 @@ LocusZoom.Layouts.add('dashboard', 'region_nav_plot', function () {
         }
     );
     return region_nav_plot_dashboard;
-}());
+}();
 
 /**
  * Panel Layouts
  * @namespace Layouts.panel
  */
 
-LocusZoom.Layouts.add('panel', 'association', {
+const association_panel = {
     id: 'association',
     width: 800,
     height: 225,
@@ -728,12 +530,12 @@ LocusZoom.Layouts.add('panel', 'association', {
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     dashboard: (function () {
-        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        l.components.push({
+        const base = deepCopy(standard_panel_dashboard);
+        base.components.push({
             type: 'toggle_legend',
             position: 'right'
         });
-        return l;
+        return base;
     })(),
     axes: {
         x: {
@@ -765,13 +567,13 @@ LocusZoom.Layouts.add('panel', 'association', {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true })
+        deepCopy(significance_layer),
+        deepCopy(recomb_rate_layer),
+        deepCopy(association_pvalues_layer)
     ]
-});
+};
 
-LocusZoom.Layouts.add('panel', 'coaccessibility', {
+const coaccessibility_panel = {
     id: 'coaccessibility',
     width: 800,
     height: 225,
@@ -780,7 +582,7 @@ LocusZoom.Layouts.add('panel', 'coaccessibility', {
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
+    dashboard: deepCopy(standard_panel_dashboard),
     axes: {
         x: {
             label: 'Chromosome {{chr}} (Mb)',
@@ -802,17 +604,18 @@ LocusZoom.Layouts.add('panel', 'coaccessibility', {
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'coaccessibility', { unnamespaced: true })
+        deepCopy(coaccessibility_layer)
     ]
-});
+};
 
-LocusZoom.Layouts.add('panel', 'association_catalog', function () {
-    var l = LocusZoom.Layouts.get('panel', 'association', {
-        unnamespaced: true,
+const association_catalog_panel = function () {
+    let base = deepCopy(association_panel);
+    base = merge({
         id: 'associationcatalog',
         namespace: { 'assoc': 'assoc', 'ld': 'ld', 'catalog': 'catalog' } // Required to resolve display options
-    });
-    l.dashboard.components.push({
+    }, base);
+
+    base.dashboard.components.push({
         type: 'display_options',
         position: 'right',
         color: 'blue',
@@ -867,15 +670,15 @@ LocusZoom.Layouts.add('panel', 'association_catalog', function () {
             }
         ]
     });
-    l.data_layers = [
-        LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'association_pvalues_catalog', { unnamespaced: true })
+    base.data_layers = [
+        deepCopy(significance_layer),
+        deepCopy(recomb_rate_layer),
+        deepCopy(association_pvalues_catalog_layer)
     ];
-    return l;
-}());
+    return base;
+}();
 
-LocusZoom.Layouts.add('panel', 'genes', {
+const genes_panel = {
     id: 'genes',
     width: 800,
     height: 225,
@@ -890,20 +693,20 @@ LocusZoom.Layouts.add('panel', 'genes', {
         x_linked: true
     },
     dashboard: (function () {
-        var l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-        l.components.push({
+        const base = deepCopy(standard_panel_dashboard);
+        base.components.push({
             type: 'resize_to_data',
             position: 'right',
             button_html: 'Show all genes',
         });
-        return l;
+        return base;
     })(),
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'genes', { unnamespaced: true })
+        deepCopy(genes_layer)
     ]
-});
+};
 
-LocusZoom.Layouts.add('panel', 'phewas', {
+const phewas_panel = {
     id: 'phewas',
     width: 800,
     height: 300,
@@ -930,12 +733,12 @@ LocusZoom.Layouts.add('panel', 'phewas', {
         }
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
-        LocusZoom.Layouts.get('data_layer', 'phewas_pvalues', { unnamespaced: true })
+        deepCopy(significance_layer),
+        deepCopy(phewas_pvalues_layer)
     ]
-});
+};
 
-LocusZoom.Layouts.add('panel', 'annotation_catalog', {
+const annotation_catalog_panel = {
     id: 'annotationcatalog',
     width: 800,
     height: 50,
@@ -943,65 +746,61 @@ LocusZoom.Layouts.add('panel', 'annotation_catalog', {
     proportional_width: 1,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
+    dashboard: deepCopy(standard_panel_dashboard),
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
         x_linked: true
     },
     data_layers: [
-        LocusZoom.Layouts.get('data_layer', 'annotation_catalog', { unnamespaced: true })
+        deepCopy(annotation_catalog_layer)
     ]
-});
+};
 
 /**
  * Plot Layouts
  * @namespace Layouts.plot
  */
 
-LocusZoom.Layouts.add('plot', 'standard_association', {
+const standard_association_plot = {
     state: {},
     width: 800,
     height: 450,
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    dashboard: deepCopy(standard_plot_dashboard),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
+        merge({ proportional_height: 0.5}, deepCopy(association_panel)),
+        merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
     ]
-});
+};
 
-LocusZoom.Layouts.add('plot', 'association_catalog', {
+const association_catalog_plot = {
     state: {},
     width: 800,
     height: 500,
     responsive_resize: 'width_only',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    dashboard: deepCopy(standard_plot_dashboard),
     panels: [
-        LocusZoom.Layouts.get('panel', 'annotation_catalog', { unnamespaced: true }),
-        LocusZoom.Layouts.get('panel', 'association_catalog', { unnamespaced: true }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
+        deepCopy(annotation_catalog_panel),
+        deepCopy(association_catalog_panel),
+        deepCopy(genes_panel),
     ]
-});
+};
 
-// Shortcut to "StandardLayout" for backward compatibility
-LocusZoom.StandardLayout = LocusZoom.Layouts.get('plot', 'standard_association');
-
-LocusZoom.Layouts.add('plot', 'standard_phewas', {
+const standard_phewas_plot = {
     width: 800,
     height: 600,
     min_width: 800,
     min_height: 600,
     responsive_resize: 'both',
-    dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+    dashboard: deepCopy(standard_plot_dashboard),
     panels: [
-        LocusZoom.Layouts.get('panel', 'phewas', { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get('panel', 'genes', {
-            unnamespaced: true,
+        merge({proportional_height: 0.5}, deepCopy(phewas_panel)),
+        merge({
             proportional_height: 0.5,
             margin: { bottom: 40 },
             axes: {
@@ -1012,28 +811,34 @@ LocusZoom.Layouts.add('plot', 'standard_phewas', {
                     extent: 'state'
                 }
             }
-        })
+        }, deepCopy(genes_panel)),
     ],
     mouse_guide: false
-});
+};
 
-LocusZoom.Layouts.add('plot', 'coaccessibility', {
+const coaccessibility_plot = {
     state: {},
     width: 800,
     height: 450,
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: LocusZoom.Layouts.get('dashboard', 'region_nav_plot', { unnamespaced: true }),
+    dashboard: deepCopy(region_nav_plot_dashboard),
     panels: [
-        LocusZoom.Layouts.get('panel', 'coaccessibility', { unnamespaced: true, proportional_height: 0.4 }),
+        Object.assign(
+            { proportional_height: 0.4 },
+            deepCopy(coaccessibility_panel)
+        ),
         function () {
             // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
             // This is a companion to the "match" directive in the coaccessibility panel
-            var base = LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.6 });
-            var layer = base.data_layers[0];
+            const base = Object.assign(
+                { proportional_height: 0.6 },
+                deepCopy(genes_panel)
+            );
+            const layer = base.data_layers[0];
             layer.match = { send: 'gene_name', receive: 'gene_name' };
-            var color_config = [
+            const color_config = [
                 {
                     field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
                     scale_function: 'if',
@@ -1057,4 +862,49 @@ LocusZoom.Layouts.add('plot', 'coaccessibility', {
             return base;
         }(),
     ]
-});
+};
+
+export const tooltip = {
+    standard_asociation: standard_association_tooltip,
+    standard_association_with_label: standard_association_tooltip_with_label,
+    standard_genes: standard_genes_tooltip,
+    catalog_variant: catalog_variant_tooltip,
+    coaccessibility: coaccessibility_tooltip,
+};
+
+export const dashboard_components = {
+    ldlz2_pop_selector: ldlz2_pop_selector_menu,
+};
+
+export const dashboard = {
+    standard_panel: standard_panel_dashboard,
+    standard_plot: standard_plot_dashboard,
+    region_nav_plot: region_nav_plot_dashboard,
+};
+
+export const data_layer = {
+    significance: significance_layer,
+    recomb_rate: recomb_rate_layer,
+    association_pvalues: association_pvalues_layer,
+    coaccessibility: coaccessibility_layer,
+    association_pvalues_catalog: association_pvalues_catalog_layer,
+    phewas_pvalues: phewas_pvalues_layer,
+    genes: genes_layer,
+    annotation_catalog: annotation_catalog_layer,
+};
+
+export const panel = {
+    association: association_panel,
+    coaccessibility: coaccessibility_panel,
+    association_catalog: association_catalog_panel,
+    genes: genes_panel,
+    phewas: phewas_panel,
+    annotation_catalog: annotation_catalog_panel,
+};
+
+export const plot = {
+    standard_association: standard_association_plot,
+    association_catalog: association_catalog_plot,
+    standard_phewas: standard_phewas_plot,
+    coaccessibility: coaccessibility_plot,
+};
