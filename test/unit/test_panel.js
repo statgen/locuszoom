@@ -1,7 +1,7 @@
 'use strict';
 
 /**
-  Panel.js Tests
+  panel.js Tests
   Test composition of the LocusZoom.Panel object and its base classes
 */
 describe('LocusZoom.Panel', function() {

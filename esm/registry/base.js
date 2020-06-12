@@ -30,7 +30,7 @@ class RegistryBase {
      * @returns {*}
      */
     create(name, ...args) {
-        // TODO: Some subclasses will use this, but for others it may not make sense or lead to undefined behavior
+        // FIXME: Some subclasses will use this, but for others it may not make sense or lead to undefined behavior
         const base = this.get(name);
         return new base(...args);
     }

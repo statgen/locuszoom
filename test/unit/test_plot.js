@@ -1,7 +1,7 @@
 'use strict';
 
 /**
-  Plot.js Tests
+  plot.js Tests
   Test composition of the LocusZoom.Plot object and its base classes
 */
 describe('LocusZoom.Plot', function() {
