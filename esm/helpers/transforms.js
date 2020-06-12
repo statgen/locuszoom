@@ -7,18 +7,18 @@
  * Return the -log (base 10)
  * @function neglog10
  */
-export const neglog10 = (value) => {
+export function neglog10 (value) {
     if (isNaN(value) || value <= 0) {
         return null;
     }
     return -Math.log(value) / Math.LN10;
-};
+}
 
 /**
  * Convert a number from logarithm to scientific notation. Useful for, eg, a datasource that returns -log(p) by default
  * @function logtoscinotation
  */
-export const logtoscinotation = (value) => {
+export function logtoscinotation (value) {
     if (isNaN(value)) {
         return 'NaN';
     }
@@ -35,7 +35,7 @@ export const logtoscinotation = (value) => {
     } else {
         return base.toFixed(2) + ' × 10^-' + exp;
     }
-};
+}
 
 /**
  * Represent a number in scientific notation
@@ -43,7 +43,7 @@ export const logtoscinotation = (value) => {
  * @param {Number} value
  * @returns {String}
  */
-export const scinotation = (value) => {
+export function scinotation (value) {
     if (isNaN(value)) {
         return 'NaN';
     }
@@ -63,7 +63,7 @@ export const scinotation = (value) => {
     } else {
         return value.toExponential(2).replace('+', '').replace('e', ' × 10^');
     }
-};
+}
 
 /**
  * HTML-escape user entered values for use in constructed HTML fragments
@@ -72,7 +72,7 @@ export const scinotation = (value) => {
  * @function htmlescape
  * @param {String} value HTML-escape the provided value
  */
-export const htmlescape = (value) => {
+export function htmlescape (value) {
     if (!value) {
         return '';
     }
@@ -94,13 +94,13 @@ export const htmlescape = (value) => {
             return '&#x60;';
         }
     });
-};
+}
 
 /**
  * URL-encode the provided text, eg for constructing hyperlinks
  * @function urlencode
  * @param {String} value
  */
-export const urlencode = function(value) {
+export function urlencode (value) {
     return encodeURIComponent(value);
-};
+}
