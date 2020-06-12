@@ -353,7 +353,6 @@ class Menu extends Component {
     }
 }
 
-
 /**
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
  * @param {string} [layout.button_html="Resize to Data"]
@@ -517,7 +516,6 @@ class DisplayOptions extends Component {
         return this;
     }
 }
-
 
 /**
  * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state

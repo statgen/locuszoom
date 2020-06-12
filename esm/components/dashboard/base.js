@@ -1,5 +1,7 @@
 import d3 from 'd3';
 
+import {dashboards} from '../../registry';
+
 /**
  * A Dashboard is an HTML element used for presenting arbitrary user interface components. Dashboards are anchored
  *   to either the entire Plot or to individual Panels.
@@ -16,20 +18,20 @@ class Dashboard {
     constructor(parent) {
         // parent must be a locuszoom plot or panel
         if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)) {
-        throw new Error('Unable to create dashboard, parent must be a locuszoom plot or panel');
+            throw new Error('Unable to create dashboard, parent must be a locuszoom plot or panel');
         }
-        /** @member {LocusZoom.Plot|LocusZoom.Panel} */
+        /** @member {Plot|Panel} */
         this.parent = parent;
         /** @member {String} */
         this.id = this.parent.getBaseId() + '.dashboard';
         /** @member {('plot'|'panel')} */
         this.type = (this.parent instanceof LocusZoom.Plot) ? 'plot' : 'panel';
-        /** @member {LocusZoom.Plot} */
+        /** @member {Plot} */
         this.parent_plot = this.type === 'plot' ? this.parent : this.parent.parent;
 
         /** @member {d3.selection} */
         this.selector = null;
-        /** @member {LocusZoom.Dashboard.Component[]} */
+        /** @member {Component[]} */
         this.components = [];
         /**
         * The timer identifier as returned by setTimeout
@@ -50,14 +52,14 @@ class Dashboard {
     /**
      * Prepare the dashboard for first use: generate all component instances for this dashboard, based on the provided
      *   layout of the parent. Connects event listeners and shows/hides as appropriate.
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     initialize() {
         // Parse layout to generate component instances
         if (Array.isArray(this.parent.layout.dashboard.components)) {
             this.parent.layout.dashboard.components.forEach(function(layout) {
                 try {
-                    var component = LocusZoom.Dashboard.Components.get(layout.type, layout, this);
+                    const component = dashboards.get(layout.type, layout, this);
                     this.components.push(component);
                 } catch (e) {
                     console.warn(e);
@@ -78,7 +80,6 @@ class Dashboard {
         }
 
         return this;
-
     }
 
     /**
@@ -88,7 +89,7 @@ class Dashboard {
      */
     shouldPersist() {
         if (this.persist) { return true; }
-        var persist = false;
+        let persist = false;
         // Persist if at least one component should also persist
         this.components.forEach(function(component) {
             persist = persist || component.shouldPersist();
@@ -124,7 +125,7 @@ class Dashboard {
 
     /**
      * Update the dashboard and rerender all child components. This can be called whenever plot state changes.
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     update() {
         if (!this.selector) { return this; }
@@ -135,16 +136,16 @@ class Dashboard {
 
     /**
      * Position the dashboard (and child components) within the panel
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     position() {
         if (!this.selector) { return this; }
         // Position the dashboard itself (panel only)
         if (this.type === 'panel') {
-            var page_origin = this.parent.getPageOrigin();
-            var top = (page_origin.y + 3.5).toString() + 'px';
-            var left = page_origin.x.toString() + 'px';
-            var width = (this.parent.layout.width - 4).toString() + 'px';
+            const page_origin = this.parent.getPageOrigin();
+            const top = (page_origin.y + 3.5).toString() + 'px';
+            const left = page_origin.x.toString() + 'px';
+            const width = (this.parent.layout.width - 4).toString() + 'px';
             this.selector.style({ position: 'absolute', top: top, left: left, width: width });
         }
         // Recursively position components
@@ -155,7 +156,7 @@ class Dashboard {
     /**
      * Hide the dashboard (make invisible but do not destroy). Will do nothing if `shouldPersist` returns true.
      *
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     hide() {
         if (!this.selector || this.shouldPersist()) { return this; }
@@ -167,7 +168,7 @@ class Dashboard {
     /**
      * Completely remove dashboard and all child components. (may be overridden by persistence settings)
      * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the dashboard
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     destroy(force) {
         if (typeof force == 'undefined') { force = false; }
@@ -185,10 +186,7 @@ class Dashboard {
 /**
  *
  * A dashboard component is an empty div rendered on a dashboard that can display custom
- * html of user interface elements. LocusZoom.Dashboard.Components is a singleton used to
- * define and manage an extendable collection of dashboard components.
- * (e.g. by LocusZoom.Dashboard.Components.add())
- * @class
+ * html of user interface elements.
  * @param {Object} layout A JSON-serializable object of layout configuration parameters
  * @param {('left'|'right')} [layout.position='left']  Whether to float the component left or right.
  * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
@@ -197,7 +195,7 @@ class Dashboard {
  *  For example, the region_nav_plot dashboard is a defined as a group.
  * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple'} [layout.color='gray']  Color scheme for the
  *   component. Applies to buttons and menus.
- * @param {LocusZoom.Dashboard} parent The dashboard that contains this component
+ * @param {Dashboard} parent The dashboard that contains this component
 */
 class Component {
     constructor(layout, parent) {
@@ -205,19 +203,19 @@ class Component {
         this.layout = layout || {};
         if (!this.layout.color) { this.layout.color = 'gray'; }
 
-        /** @member {LocusZoom.Dashboard|*} */
+        /** @member {Dashboard|*} */
         this.parent = parent || null;
         /**
          * Some dashboards are attached to a panel, rather than directly to a plot
-         * @member {LocusZoom.Panel|null}
+         * @member {Panel|null}
          */
         this.parent_panel = null;
-        /** @member {LocusZoom.Plot} */
+        /** @member {Plot} */
         this.parent_plot = null;
         /**
          * This is a reference to either the panel or the plot, depending on what the dashboard is
          *   tied to. Useful when absolutely positioning dashboard components relative to their SVG anchor.
-         * @member {LocusZoom.Plot|LocusZoom.Panel}
+         * @member {Plot|Panel}
          */
         this.parent_svg = null;
         if (this.parent instanceof Dashboard) {
@@ -255,7 +253,7 @@ class Component {
     show() {
         if (!this.parent || !this.parent.selector) { return; }
         if (!this.selector) {
-            var group_position = (['start','middle','end'].indexOf(this.layout.group_position) !== -1 ? ' lz-dashboard-group-' + this.layout.group_position : '');
+            const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-dashboard-group-' + this.layout.group_position : '');
             this.selector = this.parent.selector.append('div')
                 .attr('class', 'lz-dashboard-' + this.layout.position + group_position);
             if (this.layout.style) { this.selector.style(this.layout.style); }
@@ -305,7 +303,7 @@ class Component {
     /**
      * Completely remove component and button. (may be overridden by persistence settings)
      * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the dashboard
-     * @returns {LocusZoom.Dashboard}
+     * @returns {Dashboard}
      */
     destroy (force) {
         if (typeof force == 'undefined') { force = false; }
@@ -334,14 +332,14 @@ class Button {
         }
         /** @member {Component} */
         this.parent = parent;
-        /** @member {LocusZoom.Dashboard.Panel} */
+        /** @member {Panel} */
         this.parent_panel = this.parent.parent_panel;
-        /** @member {LocusZoom.Dashboard.Plot} */
+        /** @member {Plot} */
         this.parent_plot = this.parent.parent_plot;
-        /** @member {LocusZoom.Plot|LocusZoom.Panel} */
+        /** @member {Plot|Panel} */
         this.parent_svg = this.parent.parent_svg;
 
-        /** @member {LocusZoom.Dashboard|null|*} */
+        /** @member {Dashboard|null|*} */
         this.parent_dashboard = this.parent.parent;
         /** @member {d3.selection} */
         this.selector = null;
@@ -369,10 +367,6 @@ class Button {
             if (typeof html != 'undefined') { this.html = html.toString(); }
             return this;
         };
-        /**
-         * @deprecated since 0.5.6; use setHtml instead
-         */
-        this.setText = this.setHtml;
 
         /**
          * Mouseover title text for the button to show
@@ -432,7 +426,7 @@ class Button {
          * @returns {string}
          */
         this.getClass = function() {
-            var group_position = (['start','middle','end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
+            const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
             return 'lz-dashboard-button lz-dashboard-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
         };
 
@@ -622,17 +616,18 @@ class Button {
                 if (!this.menu.outer_selector) { return this.menu; }
                 // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
                 this.menu.outer_selector.style({ height: null });
-                var padding = 3;
-                var scrollbar_padding = 20;
-                var menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
-                var page_origin = this.parent_svg.getPageOrigin();
-                var page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
-                var container_offset = this.parent_plot.getContainerOffset();
-                var dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
-                var button_client_rect = this.selector.node().getBoundingClientRect();
-                var menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
-                var total_content_height = this.menu.inner_selector.node().scrollHeight;
-                var top = 0; var left = 0;
+                const padding = 3;
+                const scrollbar_padding = 20;
+                const menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
+                const page_origin = this.parent_svg.getPageOrigin();
+                const page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
+                const container_offset = this.parent_plot.getContainerOffset();
+                const dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
+                const button_client_rect = this.selector.node().getBoundingClientRect();
+                const menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
+                const total_content_height = this.menu.inner_selector.node().scrollHeight;
+                let top ;
+                let left;
                 if (this.parent_dashboard.type === 'panel') {
                     top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
                     left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
@@ -640,11 +635,11 @@ class Button {
                     top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
                     left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
                 }
-                var base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
-                var container_max_width = base_max_width;
-                var content_max_width = (base_max_width - (4 * padding));
-                var base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
-                var height = Math.min(total_content_height, base_max_height);
+                const base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
+                const container_max_width = base_max_width;
+                const content_max_width = (base_max_width - (4 * padding));
+                const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
+                const height = Math.min(total_content_height, base_max_height);
                 this.menu.outer_selector.style({
                     'top': top.toString() + 'px',
                     'left': left.toString() + 'px',
