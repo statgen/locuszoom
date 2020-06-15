@@ -49,14 +49,18 @@ class BaseDataLayer {
         }
 
         /** @member {Object} */
-        this.layout =  merge(layout || {}, default_layout);
+        this.layout = merge(layout || {}, default_layout);
         if (this.layout.id) {
             this.id = this.layout.id;
         }
 
         // Ensure any axes defined in the layout have an explicit axis number (default: 1)
-        if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') { this.layout.x_axis.axis = 1; }
-        if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') { this.layout.y_axis.axis = 1; }
+        if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') {
+            this.layout.x_axis.axis = 1;
+        }
+        if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') {
+            this.layout.y_axis.axis = 1;
+        }
 
         /**
          * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state

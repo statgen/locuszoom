@@ -671,7 +671,7 @@ class Panel {
         }
 
         // Create the Data Layer
-        const data_layer = data_layers.get(layout.type, layout, this); // FIXME: Convert this to layer.create
+        const data_layer = data_layers.create(layout.type, layout, this);
 
         // Store the Data Layer on the Panel
         this.data_layers[data_layer.id] = data_layer;

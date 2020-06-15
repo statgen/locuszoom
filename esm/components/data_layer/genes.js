@@ -1,96 +1,91 @@
-'use strict';
+import d3 from 'd3';
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+
+const default_layout = {
+    // Optionally specify different fill and stroke properties
+    stroke: 'rgb(54, 54, 150)',
+    color: '#363696',
+    label_font_size: 12,
+    label_exon_spacing: 4,
+    exon_height: 16,
+    bounding_box_padding: 6,
+    track_vertical_spacing: 10,
+    tooltip_positioning: 'top',
+};
+
 
 /*********************
  * Genes Data Layer
  * Implements a data layer that will render gene tracks
- * @class
- * @augments LocusZoom.DataLayer
 */
-LocusZoom.DataLayers.add('genes', function(layout) {
-    /**
-     * Define a default layout for this DataLayer type and merge it with the passed argument
-     * @protected
-     * @member {Object}
-     * */
-    this.DefaultLayout = {
-        // Optionally specify different fill and stroke properties
-        stroke: 'rgb(54, 54, 150)',
-        color: '#363696',
-        label_font_size: 12,
-        label_exon_spacing: 4,
-        exon_height: 16,
-        bounding_box_padding: 6,
-        track_vertical_spacing: 10,
-        tooltip_positioning: 'top',
-    };
-    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+class Genes extends BaseDataLayer {
+    constructor(layout) {
+        layout = merge(layout, default_layout);
+        super(...arguments);
+        /**
+         * A gene may have arbitrarily many transcripts, but this data layer isn't set up to render them yet.
+         * Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
+         * @member {number}
+         * @type {number}
+         */
+        this.transcript_idx = 0;
 
-    // Apply the arguments to set LocusZoom.DataLayer as the prototype
-    LocusZoom.DataLayer.apply(this, arguments);
+        /**
+         * An internal counter for the number of tracks in the data layer. Used as an internal counter for looping
+         *   over positions / assignments
+         * @protected
+         * @member {number}
+         */
+        this.tracks = 1;
+
+        /**
+         * Store information about genes in dataset, in a hash indexed by track number: {track_number: [gene_indices]}
+         * @member {Object.<Number, Array>}
+         */
+        this.gene_track_index = { 1: [] };
+    }
 
     /**
      * Generate a statusnode ID for a given element
      * @override
      * @returns {String}
      */
-    this.getElementStatusNodeId = function(element) {
+    getElementStatusNodeId(element) {
         return this.getElementId(element) + '-statusnode';
-    };
+    }
 
     /**
      * Helper function to sum layout values to derive total height for a single gene track
      * @returns {number}
      */
-    this.getTrackHeight = function() {
+    getTrackHeight() {
         return 2 * this.layout.bounding_box_padding
             + this.layout.label_font_size
             + this.layout.label_exon_spacing
             + this.layout.exon_height
             + this.layout.track_vertical_spacing;
-    };
-
-    /**
-     * A gene may have arbitrarily many transcripts, but this data layer isn't set up to render them yet.
-     * Stash a transcript_idx to point to the first transcript and use that for all transcript refs.
-     * @member {number}
-     * @type {number}
-     */
-    this.transcript_idx = 0;
-
-    /**
-     * An internal counter for the number of tracks in the data layer. Used as an internal counter for looping
-     *   over positions / assignments
-     * @protected
-     * @member {number}
-     */
-    this.tracks = 1;
-
-    /**
-     * Store information about genes in dataset, in a hash indexed by track number: {track_number: [gene_indices]}
-     * @member {Object.<Number, Array>}
-     */
-    this.gene_track_index = { 1: [] };
+    }
 
     /**
      * Ensure that genes in overlapping chromosome regions are positioned so that parts of different genes do not
      *   overlap in the view. A track is a row used to vertically separate overlapping genes.
-     * @returns {LocusZoom.DataLayer}
+     * @returns {Genes}
      */
-    this.assignTracks = function() {
+    assignTracks() {
         /**
          * Function to get the width in pixels of a label given the text and layout attributes
-         *      TODO: Move to outer scope?
          * @param {String} gene_name
          * @param {number|string} font_size
          * @returns {number}
          */
         this.getLabelWidth = function(gene_name, font_size) {
             try {
-                var temp_text = this.svg.group.append('text')
+                const temp_text = this.svg.group.append('text')
                     .attr('x', 0).attr('y', 0).attr('class', 'lz-data_layer-genes lz-label')
                     .style('font-size', font_size)
                     .text(gene_name + '→');
-                var label_width = temp_text.node().getBBox().width;
+                const label_width = temp_text.node().getBBox().width;
                 temp_text.remove();
                 return label_width;
             } catch (e) {
@@ -107,7 +102,7 @@ LocusZoom.DataLayers.add('genes', function(layout) {
             // If necessary, split combined gene id / version fields into discrete fields.
             // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
             if (this.data[g].gene_id && this.data[g].gene_id.indexOf('.')) {
-                var split = this.data[g].gene_id.split('.');
+                const split = this.data[g].gene_id.split('.');
                 this.data[g].gene_id = split[0];
                 this.data[g].gene_version = split[1];
             }
@@ -137,7 +132,7 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                         - this.layout.label_font_size;
                     this.data[g].display_range.text_anchor = 'end';
                 } else {
-                    var centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
+                    const centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
                         + this.layout.label_font_size;
                     if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.state.start)) {
                         this.data[g].display_range.start = this.parent.x_scale(this.state.start);
@@ -168,13 +163,13 @@ LocusZoom.DataLayers.add('genes', function(layout) {
 
             // Using display range/domain data generated above cast each gene to tracks such that none overlap
             this.data[g].track = null;
-            var potential_track = 1;
+            let potential_track = 1;
             while (this.data[g].track === null) {
-                var collision_on_potential_track = false;
+                let collision_on_potential_track = false;
                 this.gene_track_index[potential_track].map(function(placed_gene) {
                     if (!collision_on_potential_track) {
-                        var min_start = Math.min(placed_gene.display_range.start, this.display_range.start);
-                        var max_end = Math.max(placed_gene.display_range.end, this.display_range.end);
+                        const min_start = Math.min(placed_gene.display_range.start, this.display_range.start);
+                        const max_end = Math.max(placed_gene.display_range.end, this.display_range.end);
                         if ((max_end - min_start) < (placed_gene.display_range.width + this.display_range.width)) {
                             collision_on_potential_track = true;
                         }
@@ -203,21 +198,23 @@ LocusZoom.DataLayers.add('genes', function(layout) {
 
         }.bind(this));
         return this;
-    };
+    }
 
     /**
      * Main render function
      */
-    this.render = function() {
+    render() {
 
-        var self = this;
+        const self = this;
         this.assignTracks();
 
-        var width, height, x, y;
+        let width, height, x, y;
 
         // Render gene groups
-        var selection = this.svg.group.selectAll('g.lz-data_layer-genes')
-            .data(this.data, function(d) { return d.gene_name; });
+        const selection = this.svg.group.selectAll('g.lz-data_layer-genes')
+            .data(this.data, function (d) {
+                return d.gene_name;
+            });
 
         selection.enter().append('g')
             .attr('class', 'lz-data_layer-genes');
@@ -225,11 +222,13 @@ LocusZoom.DataLayers.add('genes', function(layout) {
         selection.attr('id', function(d) { return this.getElementId(d); }.bind(this))
             .each(function(gene) {
 
-                var data_layer = gene.parent;
+                const data_layer = gene.parent;
 
                 // Render gene bounding boxes (status nodes to show selected/highlighted)
-                var bboxes = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-data_layer-genes-statusnode')
-                    .data([gene], function(d) { return data_layer.getElementStatusNodeId(d); });
+                const bboxes = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-data_layer-genes-statusnode')
+                    .data([gene], function (d) {
+                        return data_layer.getElementStatusNodeId(d);
+                    });
 
                 bboxes.enter().append('rect')
                     .attr('class', 'lz-data_layer-genes lz-data_layer-genes-statusnode');
@@ -263,10 +262,16 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 bboxes.exit().remove();
 
                 // Render gene boundaries
-                var boundary_fill = function(d, i) { return self.resolveScalableParameter(self.layout.color, d, i); };
-                var boundary_stroke = function(d, i) { return self.resolveScalableParameter(self.layout.stroke, d, i); };
-                var boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
-                    .data([gene], function(d) { return d.gene_name + '_boundary'; })
+                const boundary_fill = function (d, i) {
+                    return self.resolveScalableParameter(self.layout.color, d, i);
+                };
+                const boundary_stroke = function (d, i) {
+                    return self.resolveScalableParameter(self.layout.stroke, d, i);
+                };
+                const boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
+                    .data([gene], function (d) {
+                        return d.gene_name + '_boundary';
+                    })
                     .style({ fill: boundary_fill, stroke: boundary_stroke });
 
                 boundaries.enter().append('rect')
@@ -294,8 +299,10 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 boundaries.exit().remove();
 
                 // Render gene labels
-                var labels = d3.select(this).selectAll('text.lz-data_layer-genes.lz-label')
-                    .data([gene], function(d) { return d.gene_name + '_label'; });
+                const labels = d3.select(this).selectAll('text.lz-data_layer-genes.lz-label')
+                    .data([gene], function (d) {
+                        return d.gene_name + '_label';
+                    });
 
                 labels.enter().append('text')
                     .attr('class', 'lz-data_layer-genes lz-label');
@@ -330,11 +337,17 @@ LocusZoom.DataLayers.add('genes', function(layout) {
 
                 // Render exon rects (first transcript only, for now)
                 // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
-                var exon_fill = function(d, i) { return self.resolveScalableParameter(self.layout.color, d.parent.parent, i); };
-                var exon_stroke = function(d, i) { return self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i); };
+                const exon_fill = function (d, i) {
+                    return self.resolveScalableParameter(self.layout.color, d.parent.parent, i);
+                };
+                const exon_stroke = function (d, i) {
+                    return self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i);
+                };
 
-                var exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon')
-                    .data(gene.transcripts[gene.parent.transcript_idx].exons, function(d) { return d.exon_id; });
+                const exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon')
+                    .data(gene.transcripts[gene.parent.transcript_idx].exons, function (d) {
+                        return d.exon_id;
+                    });
 
                 exons.enter().append('rect')
                     .attr('class', 'lz-data_layer-genes lz-exon');
@@ -364,8 +377,10 @@ LocusZoom.DataLayers.add('genes', function(layout) {
                 exons.exit().remove();
 
                 // Render gene click area
-                var clickareas = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-clickarea')
-                    .data([gene], function(d) { return d.gene_name + '_clickarea'; });
+                const clickareas = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-clickarea')
+                    .data([gene], function (d) {
+                        return d.gene_name + '_clickarea';
+                    });
 
                 clickareas.enter().append('rect')
                     .attr('class', 'lz-data_layer-genes lz-clickarea');
@@ -412,19 +427,19 @@ LocusZoom.DataLayers.add('genes', function(layout) {
         // Remove old elements as needed
         selection.exit().remove();
 
-    };
+    }
 
-    this._getTooltipPosition = function(tooltip) {
+    _getTooltipPosition(tooltip) {
 
-        var gene_bbox_id = this.getElementStatusNodeId(tooltip.data);
-        var gene_bbox = d3.select('#' + gene_bbox_id).node().getBBox();
+        const gene_bbox_id = this.getElementStatusNodeId(tooltip.data);
+        const gene_bbox = d3.select('#' + gene_bbox_id).node().getBBox();
         return {
             x_min: this.parent.x_scale(tooltip.data.start),
             x_max: this.parent.x_scale(tooltip.data.end),
             y_min: gene_bbox.y,
             y_max: gene_bbox.y + gene_bbox.height,
         };
-    };
-    return this;
+    }
+}
 
-});
+export default Genes;

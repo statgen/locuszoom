@@ -1,4 +1,7 @@
+import d3 from 'd3';
+
 import Field from '../data/field';
+import Plot from '../components/plot';
 
 /**
  * Convert an integer chromosome position to an SI string representation (e.g. 23423456 => "23.42" (Mb))
@@ -8,7 +11,7 @@ import Field from '../data/field';
  * @param {Boolean} [suffix=false] Whether or not to append a suffix (e.g. "Mb") to the end of the returned string
  * @returns {string}
  */
-export function positionIntToString(pos, exp, suffix) {
+function positionIntToString(pos, exp, suffix) {
     const exp_symbols = { 0: '', 3: 'K', 6: 'M', 9: 'G' };
     suffix = suffix || false;
     if (isNaN(exp) || exp === null) {
@@ -30,7 +33,7 @@ export function positionIntToString(pos, exp, suffix) {
  * @param {String} p The chromosome position
  * @returns {Number}
  */
-export function positionStringToInt(p) {
+function positionStringToInt(p) {
     let val = p.toUpperCase();
     val = val.replace(/,/g, '');
     const suffixre = /([KMG])[B]*$/;
@@ -62,11 +65,11 @@ export function positionStringToInt(p) {
  * @param {Number} [target_tick_count=5] The approximate number of ticks you would like to be returned; may not be exact
  * @returns {Number[]}
  */
-export function prettyTicks(range, clip_range, target_tick_count) {
+function prettyTicks(range, clip_range, target_tick_count) {
     if (typeof target_tick_count == 'undefined' || isNaN(parseInt(target_tick_count))) {
         target_tick_count = 5;
     }
-    target_tick_count = parseInt(target_tick_count);
+    target_tick_count = +target_tick_count;
 
     const min_n = target_tick_count / 3;
     const shrink_sml = 0.75;
@@ -134,7 +137,7 @@ export function prettyTicks(range, clip_range, target_tick_count) {
  *     layout is first retrieved.
  * @returns {string}
  */
-export function parseFields(data, html) {
+function parseFields(data, html) {
     if (typeof data != 'object') {
         throw new Error('LocusZoom.parseFields invalid arguments: data is not an object');
     }
@@ -224,3 +227,95 @@ export function parseFields(data, html) {
     };
     return ast.map(render_node).join('');
 }
+
+/**
+ * Populate a single element with a LocusZoom plot. This is the primary means of generating a new plot, and is part
+ *  of the public interface for LocusZoom.
+ * @public
+ * @param {String|d3.selection} selector CSS selector for the container element where the plot will be mounted. Any pre-existing
+ *   content in the container will be completely replaced.
+ * @param {DataSources} datasource Ensemble of data providers used by the plot
+ * @param {Object} layout A JSON-serializable object of layout configuration parameters
+ * @returns {Plot} The newly created plot instance
+ */
+function populate(selector, datasource, layout) {
+    if (typeof selector == 'undefined') {
+        throw new Error('LocusZoom.populate selector not defined');
+    }
+    // Empty the selector of any existing content
+    d3.select(selector).html('');
+    let plot;
+    d3.select(selector).call(function() {
+        // Require each containing element have an ID. If one isn't present, create one.
+        if (typeof this.node().id == 'undefined') {
+            let iterator = 0;
+            while (!d3.select('#lz-' + iterator).empty()) { iterator++; }
+            this.attr('id', '#lz-' + iterator);
+        }
+        // Create the plot
+        plot = new Plot(this.node().id, datasource, layout);
+        plot.container = this.node();
+        // Detect data-region and fill in state values if present
+        if (typeof this.node().dataset !== 'undefined' && typeof this.node().dataset.region !== 'undefined') {
+            const parsed_state = parsePositionQuery(this.node().dataset.region);
+            Object.keys(parsed_state).forEach(function(key) {
+                plot.state[key] = parsed_state[key];
+            });
+        }
+        // Add an SVG to the div and set its dimensions
+        plot.svg = d3.select('div#' + plot.id)
+            .append('svg')
+            .attr('version', '1.1')
+            .attr('xmlns', 'http://www.w3.org/2000/svg')
+            .attr('id', plot.id + '_svg').attr('class', 'lz-locuszoom')
+            .style(plot.layout.style);
+        plot.setDimensions();
+        plot.positionPanels();
+        // Initialize the plot
+        plot.initialize();
+        // If the plot has defined data sources then trigger its first mapping based on state values
+        if (datasource && datasource.list().length) {
+            plot.refresh();
+        }
+    });
+    return plot;
+}
+
+/**
+ * Parse region queries into their constituent parts
+ * @param {String} x A chromosome position query. May be any of the forms `chr:start-end`, `chr:center+offset`,
+ *   or `chr:pos`
+ * @returns {{chr:*, start: *, end:*} | {chr:*, position:*}}
+ */
+function parsePositionQuery(x) {
+    const chrposoff = /^(\w+):([\d,.]+[kmgbKMGB]*)([-+])([\d,.]+[kmgbKMGB]*)$/;
+    const chrpos = /^(\w+):([\d,.]+[kmgbKMGB]*)$/;
+    let match = chrposoff.exec(x);
+    if (match) {
+        if (match[3] === '+') {
+            const center = positionStringToInt(match[2]);
+            const offset = positionStringToInt(match[4]);
+            return {
+                chr:match[1],
+                start: center - offset,
+                end: center + offset
+            };
+        } else {
+            return {
+                chr: match[1],
+                start: positionStringToInt(match[2]),
+                end: positionStringToInt(match[4])
+            };
+        }
+    }
+    match = chrpos.exec(x);
+    if (match) {
+        return {
+            chr:match[1],
+            position: positionStringToInt(match[2])
+        };
+    }
+    return null;
+}
+
+export { parseFields, populate, positionIntToString, positionStringToInt, prettyTicks };

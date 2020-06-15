@@ -1,103 +1,112 @@
-'use strict';
+import d3 from 'd3';
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+import Field from '../../data/field';
+import {parseFields} from '../../helpers/display';
 
+const default_layout = {
+    point_size: 40,
+    point_shape: 'circle',
+    tooltip_positioning: 'horizontal',
+    color: '#888888',
+    fill_opacity: 1,
+    y_axis: {
+        axis: 1
+    },
+    id_field: 'id'
+};
 /**
  * Scatter Data Layer
  * Implements a standard scatter plot
- * @class LocusZoom.DataLayers.scatter
  */
-LocusZoom.DataLayers.add('scatter', function(layout) {
-    // Define a default layout for this DataLayer type and merge it with the passed argument
-    this.DefaultLayout = {
-        point_size: 40,
-        point_shape: 'circle',
-        tooltip_positioning: 'horizontal',
-        color: '#888888',
-        fill_opacity: 1,
-        y_axis: {
-            axis: 1
-        },
-        id_field: 'id'
-    };
-    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
+class Scatter extends BaseDataLayer {
+    constructor(layout) {
+        layout = merge(layout, default_layout);
 
-    // Extra default for layout spacing
-    // Not in default layout since that would make the label attribute always present
-    if (layout.label && isNaN(layout.label.spacing)) {
-        layout.label.spacing = 4;
+        // Extra default for layout spacing
+        // Not in default layout since that would make the label attribute always present
+        if (layout.label && isNaN(layout.label.spacing)) {
+            layout.label.spacing = 4;
+        }
+        super(...arguments);
     }
 
-    // Apply the arguments to set LocusZoom.DataLayer as the prototype
-    LocusZoom.DataLayer.apply(this, arguments);
 
     // Implement tooltip position to be layer-specific
-    this._getTooltipPosition = function (tooltip) {
-        var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
-        var y_scale  = 'y' + this.layout.y_axis.axis + '_scale';
-        var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-        var offset = Math.sqrt(point_size / Math.PI);
+    _getTooltipPosition(tooltip) {
+        const x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
+        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
+        const point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        const offset = Math.sqrt(point_size / Math.PI);
 
         return {
             x_min: x_center - offset, x_max: x_center + offset,
             y_min: y_center - offset, y_max: y_center + offset,
         };
-    };
+    }
 
     // Function to flip labels from being anchored at the start of the text to the end
     // Both to keep labels from running outside the data layer and  also as a first
     // pass on recursive separation
-    this.flip_labels = function() {
-        var data_layer = this;
+    flip_labels() {
+        const data_layer = this;
         // Base positions on the default point size (which is what resolve scalable param returns if no data provided)
-        var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
-        var spacing = data_layer.layout.label.spacing;
-        var handle_lines = Boolean(data_layer.layout.label.lines);
-        var min_x = 2 * spacing;
-        var max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
-        var flip = function(dn, dnl) {
-            var dnx = +dn.attr('x');
-            var text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
+        const point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
+        const spacing = data_layer.layout.label.spacing;
+        const handle_lines = Boolean(data_layer.layout.label.lines);
+        const min_x = 2 * spacing;
+        const max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
+        const flip = function (dn, dnl) {
+            const dnx = +dn.attr('x');
+            const text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
+            let dnlx2;
+            let line_swing;
             if (handle_lines) {
-                var dnlx2 = +dnl.attr('x2');
-                var line_swing = spacing + (2 * Math.sqrt(point_size));
+                dnlx2 = +dnl.attr('x2');
+                line_swing = spacing + (2 * Math.sqrt(point_size));
             }
             if (dn.style('text-anchor') === 'start') {
                 dn.style('text-anchor', 'end');
                 dn.attr('x', dnx - text_swing);
-                if (handle_lines) { dnl.attr('x2', dnlx2 - line_swing); }
+                if (handle_lines) {
+                    dnl.attr('x2', dnlx2 - line_swing);
+                }
             } else {
                 dn.style('text-anchor', 'start');
                 dn.attr('x', dnx + text_swing);
-                if (handle_lines) { dnl.attr('x2', dnlx2 + line_swing); }
+                if (handle_lines) {
+                    dnl.attr('x2', dnlx2 + line_swing);
+                }
             }
         };
         // Flip any going over the right edge from the right side to the left side
         // (all labels start on the right side)
         data_layer.label_texts.each(function (d, i) {
-            var a = this;
-            var da = d3.select(a);
-            var dax = +da.attr('x');
-            var abound = da.node().getBoundingClientRect();
+            const a = this;
+            const da = d3.select(a);
+            const dax = +da.attr('x');
+            const abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x) {
-                var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
                 flip(da, dal);
             }
         });
         // Second pass to flip any others that haven't flipped yet if they collide with another label
         data_layer.label_texts.each(function (d, i) {
-            var a = this;
-            var da = d3.select(a);
+            const a = this;
+            const da = d3.select(a);
             if (da.style('text-anchor') === 'end') {
                 return;
             }
-            var dax = +da.attr('x');
-            var abound = da.node().getBoundingClientRect();
-            var dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            let dax = +da.attr('x');
+            const abound = da.node().getBoundingClientRect();
+            const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
             data_layer.label_texts.each(function () {
-                var b = this;
-                var db = d3.select(b);
-                var bbound = db.node().getBoundingClientRect();
-                var collision = abound.left < bbound.left + bbound.width + (2 * spacing) &&
+                const b = this;
+                const db = d3.select(b);
+                const bbound = db.node().getBoundingClientRect();
+                const collision = abound.left < bbound.left + bbound.width + (2 * spacing) &&
                     abound.left + abound.width + (2 * spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2 * spacing) &&
                     abound.height + abound.top + (2 * spacing) > bbound.top;
@@ -109,44 +118,43 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                         flip(da, dal);
                     }
                 }
-                return;
             });
         });
-    };
+    }
 
     // Recursive function to space labels apart immediately after initial render
     // Adapted from thudfactor's fiddle here: https://jsfiddle.net/thudfactor/HdwTH/
     // TODO: Make labels also aware of data elements
-    this.separate_labels = function() {
+    separate_labels() {
         this.seperate_iterations++;
-        var data_layer = this;
-        var alpha = 0.5;
+        const data_layer = this;
+        const alpha = 0.5;
         if (!this.layout.label) {
             // Guard against layout changing in the midst of iterative rerender
             return;
         }
-        var spacing = this.layout.label.spacing;
-        var again = false;
+        const spacing = this.layout.label.spacing;
+        let again = false;
         data_layer.label_texts.each(function () {
-            var a = this;
-            var da = d3.select(a);
-            var y1 = da.attr('y');
+            const a = this;
+            const da = d3.select(a);
+            const y1 = da.attr('y');
             data_layer.label_texts.each(function () {
-                var b = this;
+                const b = this;
                 // a & b are the same element and don't collide.
                 if (a === b) {
                     return;
                 }
-                var db = d3.select(b);
+                const db = d3.select(b);
                 // a & b are on opposite sides of the chart and
                 // don't collide
                 if (da.attr('text-anchor') !== db.attr('text-anchor')) {
                     return;
                 }
                 // Determine if the  bounding rects for the two text elements collide
-                var abound = da.node().getBoundingClientRect();
-                var bbound = db.node().getBoundingClientRect();
-                var collision = abound.left < bbound.left + bbound.width + (2 * spacing) &&
+                const abound = da.node().getBoundingClientRect();
+                const bbound = db.node().getBoundingClientRect();
+                const collision = abound.left < bbound.left + bbound.width + (2 * spacing) &&
                     abound.left + abound.width + (2 * spacing) > bbound.left &&
                     abound.top < bbound.top + bbound.height + (2 * spacing) &&
                     abound.height + abound.top + (2 * spacing) > bbound.top;
@@ -156,15 +164,15 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                 again = true;
                 // If the labels collide, we'll push each
                 // of the two labels up and down a little bit.
-                var y2 = db.attr('y');
-                var sign = abound.top < bbound.top ? 1 : -1;
-                var adjust = sign * alpha;
-                var new_a_y = +y1 - adjust;
-                var new_b_y = +y2 + adjust;
+                const y2 = db.attr('y');
+                const sign = abound.top < bbound.top ? 1 : -1;
+                const adjust = sign * alpha;
+                let new_a_y = +y1 - adjust;
+                let new_b_y = +y2 + adjust;
                 // Keep new values from extending outside the data layer
-                var min_y = 2 * spacing;
-                var max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
-                var delta;
+                const min_y = 2 * spacing;
+                const max_y = data_layer.parent.layout.height - data_layer.parent.layout.margin.top - data_layer.parent.layout.margin.bottom - (2 * spacing);
+                let delta;
                 if (new_a_y - (abound.height / 2) < min_y) {
                     delta = +y1 - new_a_y;
                     new_a_y = +y1;
@@ -190,9 +198,9 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
         if (again) {
             // Adjust lines to follow the labels
             if (data_layer.layout.label.lines) {
-                var label_elements = data_layer.label_texts[0];
+                const label_elements = data_layer.label_texts[0];
                 data_layer.label_lines.attr('y2',function(d,i) {
-                    var label_line = d3.select(label_elements[i]);
+                    const label_line = d3.select(label_elements[i]);
                     return label_line.attr('y');
                 });
             }
@@ -203,29 +211,29 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                 }.bind(this), 1);
             }
         }
-    };
+    }
 
     // Implement the main render function
-    this.render = function() {
-        var self = this;
-        var data_layer = this;
-        var x_scale = 'x_scale';
-        var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+    render() {
+        const self = this;
+        const data_layer = this;
+        const x_scale = 'x_scale';
+        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
 
         if (this.layout.label) {
             // Apply filters to generate a filtered data set
-            var filtered_data;
-            var filters = data_layer.layout.label.filters || [];
+            let filtered_data;
+            const filters = data_layer.layout.label.filters || [];
             if (!filters.length) {
                 filtered_data = this.data;
             } else {
                 filtered_data = this.data.filter(function(d) {
                     // Start by assuming a match (base case = no filters).
                     // Test each filters: ALL must be satisfied for match to occur.
-                    var match = true;
+                    let match = true;
                     filters.forEach(function(filter) {
-                        var extra = self.layer_state.extra_fields[self.getElementId(d)];
-                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d, extra);
+                        const extra = self.layer_state.extra_fields[self.getElementId(d)];
+                        const field_value = (new Field(filter.field)).resolve(d, extra);
 
                         if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
@@ -276,19 +284,19 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                 .attr('class', 'lz-data_layer-' + this.layout.type + '-label');
             this.label_texts
                 .text(function(d) {
-                    return LocusZoom.parseFields(d, data_layer.layout.label.text || '');
+                    return parseFields(d, data_layer.layout.label.text || '');
                 })
                 .style(data_layer.layout.label.style || {})
                 .attr({
                     'x': function(d) {
-                        var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                              + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
-                              + data_layer.layout.label.spacing;
+                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                            + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                            + data_layer.layout.label.spacing;
                         if (isNaN(x)) { x = -1000; }
                         return x;
                     },
                     'y': function(d) {
-                        var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
                         if (isNaN(y)) { y = -1000; }
                         return y;
                     },
@@ -305,24 +313,24 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                     .style(data_layer.layout.label.lines.style || {})
                     .attr({
                         'x1': function(d) {
-                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                            let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
                             if (isNaN(x)) { x = -1000; }
                             return x;
                         },
                         'y1': function(d) {
-                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
                             if (isNaN(y)) { y = -1000; }
                             return y;
                         },
                         'x2': function(d) {
-                            var x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                  + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
-                                  + (data_layer.layout.label.spacing / 2);
+                            let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                                + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                                + (data_layer.layout.label.spacing / 2);
                             if (isNaN(x)) { x = -1000; }
                             return x;
                         },
                         'y2': function(d) {
-                            var y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                            let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
                             if (isNaN(y)) { y = -1000; }
                             return y;
                         }
@@ -337,12 +345,14 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
         }
 
         // Generate main scatter data elements
-        var selection = this.svg.group
+        const selection = this.svg.group
             .selectAll('path.lz-data_layer-' + this.layout.type)
-            .data(this.data, function(d) { return d[self.layout.id_field]; });
+            .data(this.data, function (d) {
+                return d[self.layout.id_field];
+            });
 
         // Create elements, apply class, ID, and initial position
-        var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
+        const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append('path')
             .attr('class', 'lz-data_layer-' + this.layout.type)
@@ -350,20 +360,32 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             .attr('transform', 'translate(0,' + initial_y + ')');
 
         // Generate new values (or functions for them) for position, color, size, and shape
-        var transform = function(d) {
-            var x = self.parent[x_scale](d[self.layout.x_axis.field]);
-            var y = self.parent[y_scale](d[self.layout.y_axis.field]);
-            if (isNaN(x)) { x = -1000; }
-            if (isNaN(y)) { y = -1000; }
+        const transform = function (d) {
+            let x = self.parent[x_scale](d[self.layout.x_axis.field]);
+            let y = self.parent[y_scale](d[self.layout.y_axis.field]);
+            if (isNaN(x)) {
+                x = -1000;
+            }
+            if (isNaN(y)) {
+                y = -1000;
+            }
             return 'translate(' + x + ',' + y + ')';
         };
 
-        var fill = function(d, i) { return this.resolveScalableParameter(this.layout.color, d, i); }.bind(this);
-        var fill_opacity = function(d, i) { return this.resolveScalableParameter(this.layout.fill_opacity, d, i); }.bind(this);
+        const fill = function (d, i) {
+            return this.resolveScalableParameter(this.layout.color, d, i);
+        }.bind(this);
+        const fill_opacity = function (d, i) {
+            return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
+        }.bind(this);
 
-        var shape = d3.svg.symbol()
-            .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
-            .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
+        const shape = d3.svg.symbol()
+            .size(function (d, i) {
+                return this.resolveScalableParameter(this.layout.point_size, d, i);
+            }.bind(this))
+            .type(function (d, i) {
+                return this.resolveScalableParameter(this.layout.point_shape, d, i);
+            }.bind(this));
 
         // Apply position and color
         selection
@@ -396,11 +418,11 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             this.applyBehaviors(this.label_texts);
         }
 
-    };
+    }
 
     // Method to set a passed element as the LD reference in the plot-level state
-    this.makeLDReference = function(element) {
-        var ref = null;
+    makeLDReference(element) {
+        let ref = null;
         if (typeof element == 'undefined') {
             throw new Error('makeLDReference requires one argument of any type');
         } else if (typeof element == 'object') {
@@ -415,21 +437,17 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             ref = element.toString();
         }
         this.parent_plot.applyState({ ldrefvar: ref });
-    };
+    }
 
-    return this;
-
-});
+}
 
 /**
  * A scatter plot in which the x-axis represents categories, rather than individual positions.
  * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories to be
  *   determined dynamically when data is first loaded.
  *
- * @class LocusZoom.DataLayers.category_scatter
- * @augments LocusZoom.DataLayers.scatter
  */
-LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
+class CategoryScatter extends Scatter {
     /**
      * This plot layer makes certain assumptions about the data passed in. Transform the raw array of records from
      *   the datasource to prepare it for plotting, as follows:
@@ -437,28 +455,29 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * 2. It assumes that all records have an x coordinate for individual plotting
      * @private
      */
-    _prepareData: function() {
-        var xField = this.layout.x_axis.field || 'x';
+    _prepareData() {
+        const xField = this.layout.x_axis.field || 'x';
         // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
-        var category_field = this.layout.x_axis.category_field;
+        const category_field = this.layout.x_axis.category_field;
         if (!category_field) {
             throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
         }
         // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
-        var sourceData = this.data
-            .sort(function(a, b) {
-                var ak = a[category_field];
-                var bk = b[category_field];
-                var av = (typeof ak === 'string') ? ak.toLowerCase() : ak;
-                var bv = (typeof bk === 'string') ? bk.toLowerCase() : bk;
-                return (av === bv) ? 0 : (av < bv ? -1 : 1);});
+        const sourceData = this.data
+            .sort(function (a, b) {
+                const ak = a[category_field];
+                const bk = b[category_field];
+                const av = (typeof ak === 'string') ? ak.toLowerCase() : ak;
+                const bv = (typeof bk === 'string') ? bk.toLowerCase() : bk;
+                return (av === bv) ? 0 : (av < bv ? -1 : 1);
+            });
         sourceData.forEach(function(d, i) {
             // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
             //   specify plotting positions. If a point is missing this field, fill in a synthetic value.
             d[xField] = d[xField] || i;
         });
         return sourceData;
-    },
+    }
 
     /**
      * Identify the unique categories on the plot, and update the layout with an appropriate color scheme.
@@ -466,24 +485,24 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * @private
      * @returns {Object.<String, Number[]>} Series of entries used to build category name ticks {category_name: [min_x, max_x]}
      */
-    _generateCategoryBounds: function() {
+    _generateCategoryBounds() {
         // TODO: API may return null values in category_field; should we add placeholder category label?
         // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
-        var category_field = this.layout.x_axis.category_field;
-        var xField = this.layout.x_axis.field || 'x';
-        var uniqueCategories = {};
+        const category_field = this.layout.x_axis.category_field;
+        const xField = this.layout.x_axis.field || 'x';
+        const uniqueCategories = {};
         this.data.forEach(function(item) {
-            var category = item[category_field];
-            var x = item[xField];
-            var bounds = uniqueCategories[category] || [x, x];
+            const category = item[category_field];
+            const x = item[xField];
+            const bounds = uniqueCategories[category] || [x, x];
             uniqueCategories[category] = [Math.min(bounds[0], x), Math.max(bounds[1], x)];
         });
 
-        var categoryNames = Object.keys(uniqueCategories);
+        const categoryNames = Object.keys(uniqueCategories);
         this._setDynamicColorScheme(categoryNames);
 
         return uniqueCategories;
-    },
+    }
 
     /**
      * This layer relies on defining its own category-based color scheme. Find the correct color config object to
@@ -492,13 +511,13 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * @returns {Object} A mutable reference to the layout configuration object
      * @private
      */
-    _getColorScale: function(from_source) {
+    _getColorScale(from_source) {
         from_source = from_source || this.layout;
         // If the layout does not use a supported coloring scheme, or is already complete, this method should do nothing
 
         // For legacy reasons, layouts can specify color as an object (only one way to set color), as opposed to the
         //  preferred mechanism of array (multiple coloring options)
-        var color_params = from_source.color || []; // Object or scalar, no other options allowed
+        let color_params = from_source.color || []; // Object or scalar, no other options allowed
         if (Array.isArray(color_params)) {
             color_params = color_params.find(function(item) { return item.scale_function === 'categorical_bin'; });
         }
@@ -506,7 +525,7 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
             throw new Error('This layer requires that color options be provided as a `categorical_bin`');
         }
         return color_params;
-    },
+    }
 
     /**
      * Automatically define a color scheme for the layer based on data returned from the server.
@@ -529,15 +548,17 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * @param {String[]} categoryNames
      * @private
      */
-    _setDynamicColorScheme: function(categoryNames) {
-        var colorParams = this._getColorScale(this.layout).parameters;
-        var baseParams = this._getColorScale(this._base_layout).parameters;
+    _setDynamicColorScheme(categoryNames) {
+        const colorParams = this._getColorScale(this.layout).parameters;
+        const baseParams = this._getColorScale(this._base_layout).parameters;
 
         if (baseParams.categories.length && baseParams.values.length) {
             // If there are preset category/color combos, make sure that they apply to the actual dataset
-            var parameters_categories_hash = {};
+            const parameters_categories_hash = {};
             baseParams.categories.forEach(function (category) { parameters_categories_hash[category] = 1; });
-            if (categoryNames.every(function (name) { return parameters_categories_hash.hasOwnProperty(name); })) {
+            if (categoryNames.every(function (name) {
+                return Object.prototype.hasOwnProperty.call(parameters_categories_hash, name);
+            })) {
                 // The layout doesn't have to specify categories in order, but make sure they are all there
                 colorParams.categories = baseParams.categories;
             } else {
@@ -547,17 +568,17 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
             colorParams.categories = categoryNames;
         }
         // Prefer user-specified colors if provided. Make sure that there are enough colors for all the categories.
-        var colors;
+        let colors;
         if (baseParams.values.length) {
             colors = baseParams.values;
         } else {
-            var color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+            const color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
             colors = color_scale().range();
         }
         while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
         colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
         colorParams.values = colors;
-    },
+    }
 
     /**
      *
@@ -566,16 +587,16 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
      * @param {('left'|'center'|'right')} [config.position='left'] Align ticks with the center or edge of category
      * @returns {Array}
      */
-    getTicks: function(dimension, config) { // Overrides parent method
+    getTicks(dimension, config) { // Overrides parent method
         if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
             throw new Error('Invalid dimension identifier');
         }
-        var position = config.position || 'left';
+        const position = config.position || 'left';
         if (['left', 'center', 'right'].indexOf(position) === -1) {
             throw new Error('Invalid tick position');
         }
 
-        var categoryBounds = this._categories;
+        const categoryBounds = this._categories;
         if (!categoryBounds || !Object.keys(categoryBounds).length) {
             return [];
         }
@@ -586,13 +607,13 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
 
         if (dimension === 'x') {
             // If colors have been defined by this layer, use them to make tick colors match scatterplot point colors
-            var colors = this._getColorScale(this.layout);
-            var knownCategories = colors.parameters.categories || [];
-            var knownColors = colors.parameters.values || [];
+            const colors = this._getColorScale(this.layout);
+            const knownCategories = colors.parameters.categories || [];
+            const knownColors = colors.parameters.values || [];
 
             return Object.keys(categoryBounds).map(function (category, index) {
-                var bounds = categoryBounds[category];
-                var xPos;
+                const bounds = categoryBounds[category];
+                let xPos;
 
                 switch(position) {
                 case 'left':
@@ -600,7 +621,8 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
                     break;
                 case 'center':
                     // Center tick under one or many elements as appropriate
-                    var diff = bounds[1] - bounds[0];
+                    // eslint-disable-next-line no-case-declarations
+                    const diff = bounds[1] - bounds[0];
                     xPos = bounds[0] + (diff !== 0 ? diff : bounds[0]) / 2;
                     break;
                 case 'right':
@@ -616,9 +638,9 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
                 };
             });
         }
-    },
+    }
 
-    applyCustomDataMethods: function() {
+    applyCustomDataMethods() {
         this.data = this._prepareData();
         /**
          * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
@@ -627,4 +649,6 @@ LocusZoom.DataLayers.extend('scatter', 'category_scatter', {
         this._categories = this._generateCategoryBounds();
         return this;
     }
-});
+}
+
+export { Scatter as scatter, CategoryScatter as category_scatter };

@@ -1,34 +1,10 @@
-'use strict';
+import { assert } from 'chai';
+import d3 from 'd3';
 
-/**
-  plot.js Tests
-  Test composition of the LocusZoom.Plot object and its base classes
-*/
-describe('LocusZoom.Plot', function() {
+import { layouts } from '../../../esm/registry';
+
+describe.skip('LocusZoom.Plot', function() {
     // Tests
-    it('creates an object for its name space', function() {
-        should.exist(LocusZoom.Plot);
-    });
-
-    it('defines its layout defaults', function() {
-        LocusZoom.Plot.should.have.property('DefaultLayout').which.is.an.Object;
-    });
-
-    describe('Constructor', function() {
-        beforeEach(function() {
-            this.plot = new LocusZoom.Plot('plot');
-        });
-        it('returns an object', function() {
-            this.plot.should.be.an.Object;
-        });
-        it('should have an id', function() {
-            this.plot.should.have.property('id').which.is.a.String;
-        });
-        it('should have a layout which is (superficially) a copy of StandardLayout', function() {
-            assert.equal(this.plot.layout.width, LocusZoom.StandardLayout.width);
-            assert.equal(this.plot.layout.height, LocusZoom.StandardLayout.height);
-        });
-    });
 
     describe('Geometry and Panels', function() {
         beforeEach(function() {
@@ -109,7 +85,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.layout.height.should.be.exactly(this.plot.layout.min_height);
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function() {
-            var responsive_layout = LocusZoom.Layouts.get('plot', 'standard_association', {
+            var responsive_layout = layouts.get('plot', 'standard_association', {
                 responsive_resize: true,
                 aspect_ratio: 2,
                 panels: [
@@ -136,8 +112,8 @@ describe('LocusZoom.Plot', function() {
                 height: 500,
                 aspect_ratio: 2,
                 panels: [
-                    LocusZoom.Layouts.get('panel', 'association', { margin: { left: 200 } }),
-                    LocusZoom.Layouts.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
+                    layouts.get('panel', 'association', { margin: { left: 200 } }),
+                    layouts.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
                 ]
             };
             this.plot = LocusZoom.populate('#plot', {}, layout);

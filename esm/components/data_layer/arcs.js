@@ -1,31 +1,34 @@
-'use strict';
 /**
  * Loop Data Layer
  * Implements a data layer that will render chromatin accessibility tracks.
  * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
  *  with a height determined by y.field.
  *
- * @class LocusZoom.DataLayers.arcs
- * @augments LocusZoom.DataLayer
  */
-LocusZoom.DataLayers.add('arcs', function(layout) {
-    // Define a default layout for this DataLayer type and merge it with the passed argument
-    this.DefaultLayout = {
-        color: 'seagreen',
-        hitarea_width: '10px',
-        style: {
-            fill: 'none',
-            'stroke-width': '1px',
-            'stroke-opacity': '100%',
-        },
-        tooltip_positioning: 'top',
-    };
-    layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-    // Apply the arguments to set LocusZoom.DataLayer as the prototype
-    LocusZoom.DataLayer.apply(this, arguments);
+import d3 from 'd3';
+
+import BaseDataLayer from './base';
+import {merge} from '../../helpers/layouts';
+
+const default_layout = {
+    color: 'seagreen',
+    hitarea_width: '10px',
+    style: {
+        fill: 'none',
+        'stroke-width': '1px',
+        'stroke-opacity': '100%',
+    },
+    tooltip_positioning: 'top',
+};
+
+class Arcs extends BaseDataLayer {
+    constructor(layout) {
+        layout = merge(layout, default_layout);
+        super(...arguments);
+    }
 
     // Implement the main render function
-    this.render = function() {
+    render() {
         var self = this;
         var layout = self.layout;
         var x_scale = self.parent['x_scale'];
@@ -106,9 +109,9 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
         // Apply mouse behaviors to hitareas
         this.applyBehaviors(hitareas);
         return this;
-    };
+    }
 
-    this._getTooltipPosition = function (tooltip) {
+    _getTooltipPosition(tooltip) {
         // Center the tooltip arrow at the apex of the arc. Sometimes, only part of an arc shows on the screen, so we
         //  clean up these values to ensure that the tooltip will appear within the window.
         var panel = this.parent;
@@ -125,8 +128,8 @@ LocusZoom.DataLayers.add('arcs', function(layout) {
             y_min: y_scale(tooltip.data[layout.y_axis.field]),
             y_max: y_scale(0),
         };
-    };
+    }
 
-    // End constructor
-    return this;
-});
+}
+
+export default Arcs;
