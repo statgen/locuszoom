@@ -1,4 +1,5 @@
 {
+  "file": "./test2/setup.js",
   "require": ["chai", "@babel/register"],
   "ui": "bdd",
   "reporter": "spec",

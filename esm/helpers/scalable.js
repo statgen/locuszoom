@@ -16,7 +16,7 @@ import d3 from 'd3';
  *   to match field_value.
  * @param {*} input value
  */
-export const if_value = (parameters, input) => {
+const if_value = (parameters, input) => {
     if (typeof input == 'undefined' || parameters.field_value !== input) {
         if (typeof parameters.else != 'undefined') {
             return parameters.else;
@@ -43,7 +43,7 @@ export const if_value = (parameters, input) => {
  * @param {*} input value
  * @returns
  */
-export const numerical_bin = (parameters, input) => {
+const numerical_bin = (parameters, input) => {
     const breaks = parameters.breaks || [];
     const values = parameters.values || [];
     if (typeof input == 'undefined' || input === null || isNaN(+input)) {
@@ -72,7 +72,7 @@ export const numerical_bin = (parameters, input) => {
  *   value in the categories parameter.
  * @param {*} parameters.null_value  Value to return if the input value fails to match to any categories. Optional.
  */
-export const categorical_bin = (parameters, value) => {
+const categorical_bin = (parameters, value) => {
     if (typeof value == 'undefined' || parameters.categories.indexOf(value) === -1) {
         return (parameters.null_value ? parameters.null_value : null);
     } else {
@@ -86,7 +86,7 @@ export const categorical_bin = (parameters, value) => {
  *  @param {Array} parameters.values A list of option values
  * @return {*}
  */
-export const ordinal_cycle = (parameters, value, index) => {
+const ordinal_cycle = (parameters, value, index) => {
     var options = parameters.values;
     return options[index % options.length];
 };
@@ -105,7 +105,7 @@ export const ordinal_cycle = (parameters, value, index) => {
  *   colors, shapes, etc.
  * @parameters {*} parameters.null_value
  */
-export const interpolate = (parameters, input) => {
+const interpolate = (parameters, input) => {
     var breaks = parameters.breaks || [];
     var values = parameters.values || [];
     var nullval = (parameters.null_value ? parameters.null_value : null);
@@ -139,3 +139,6 @@ export const interpolate = (parameters, input) => {
         return d3.interpolate(values[upper_idx - 1], values[upper_idx])(normalized_input);
     }
 };
+
+
+export { categorical_bin, if_value, interpolate, numerical_bin, ordinal_cycle };

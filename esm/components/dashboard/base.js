@@ -1,5 +1,4 @@
 import d3 from 'd3';
-import {Dashboard} from './index';
 
 /**
  *
@@ -36,7 +35,7 @@ class Component {
          * @member {Plot|Panel}
          */
         this.parent_svg = null;
-        if (this.parent instanceof Dashboard) {
+        if (this.parent) {
             if (this.parent.type === 'panel') {
                 this.parent_panel = this.parent.parent;
                 this.parent_plot = this.parent.parent.parent;

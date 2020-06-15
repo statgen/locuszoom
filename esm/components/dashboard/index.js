@@ -58,7 +58,7 @@ class Dashboard {
         if (Array.isArray(this.parent.layout.dashboard.components)) {
             this.parent.layout.dashboard.components.forEach(function (layout) {
                 try {
-                    const component = dashboards.get(layout.type, layout, this);
+                    const component = dashboards.create(layout.type, layout, this);
                     this.components.push(component);
                 } catch (e) {
                     console.warn(e);

@@ -1,43 +1,15 @@
-'use strict';
+import {assert} from 'chai';
+
+import { scalable } from '../../../esm/registry';
+import BaseDataLayer from '../../../esm/components/data_layer/base';
 
 /**
  DataLayer.js Tests
  Test composition of the LocusZoom.Panel object and its base classes
  */
 describe('LocusZoom.DataLayer', function () {
-    it('creates an object for its name space', function () {
-        should.exist(LocusZoom.DataLayer);
-    });
 
-    it('defines its layout defaults', function () {
-        LocusZoom.DataLayer.should.have.property('DefaultLayout').which.is.an.Object;
-    });
-
-    describe('Constructor', function () {
-        beforeEach(function () {
-            this.datalayer = new LocusZoom.DataLayer();
-        });
-        it('returns an object', function () {
-            this.datalayer.should.be.an.Object;
-        });
-        it('should have an id', function () {
-            this.datalayer.should.have.property('id');
-        });
-        it('should have an array for caching data', function () {
-            this.datalayer.should.have.property('data').which.is.an.Array;
-        });
-        it('should have an svg object', function () {
-            this.datalayer.should.have.property('svg').which.is.an.Object;
-        });
-        it('should have a layout object', function () {
-            this.datalayer.should.have.property('layout').which.is.an.Object;
-        });
-        it('should have a state object', function () {
-            this.datalayer.should.have.property('state').which.is.an.Object;
-        });
-    });
-
-    describe('Z-index sorting', function () {
+    describe.skip('Z-index sorting', function () {
         beforeEach(function () {
             var layout = {
                 width: 800,
@@ -108,22 +80,18 @@ describe('LocusZoom.DataLayer', function () {
     });
 
     describe('Scalable parameter resolution', function () {
-        it('has a method to resolve scalable parameters into discrete values', function () {
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
-            this.datalayer.resolveScalableParameter.should.be.a.Function;
-        });
         it('passes numbers and strings directly through regardless of data', function () {
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
+            const datalayer = new BaseDataLayer({ id: 'test' });
             this.layout = { scale: 'foo' };
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 'foo');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: 'bar' }), 'foo');
+            assert.equal(datalayer.resolveScalableParameter(this.layout.scale, {}), 'foo');
+            assert.equal(datalayer.resolveScalableParameter(this.layout.scale, { foo: 'bar' }), 'foo');
             this.layout = { scale: 17 };
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 17);
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { foo: 'bar' }), 17);
+            assert.equal(datalayer.resolveScalableParameter(this.layout.scale, {}), 17);
+            assert.equal(datalayer.resolveScalableParameter(this.layout.scale, { foo: 'bar' }), 17);
         });
         it('executes a scale function for the data provided', function () {
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
-            this.layout = {
+            const datalayer = new BaseDataLayer({ id: 'test' });
+            const layout = {
                 scale: {
                     scale_function: 'categorical_bin',
                     field: 'test',
@@ -133,23 +101,23 @@ describe('LocusZoom.DataLayer', function () {
                     }
                 }
             };
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'lion' }), 'dorothy');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'manatee' }), null);
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), null);
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'lion' }), 'dorothy');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'manatee' }), null);
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, {}), null);
         });
         it('can operate in a state-aware manner based on index in data[]', function () {
-            LocusZoom.ScaleFunctions.add('fake', function (parameters, input, index) { return index; });
-            var datalayer = new LocusZoom.DataLayer({ id: 'test' });
+            scalable.add('fake', (parameters, input, index) => index);
+            var datalayer = new BaseDataLayer({ id: 'test' });
             var config = { scale_function: 'fake' };
             // The same input value will yield a different scaling function result, because position in data matters.
             assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 0), 0);
             assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 1), 1);
 
             // Clean up/ deregister scale function when done
-            LocusZoom.ScaleFunctions.set('fake');
+            scalable.remove('fake');
         });
         it('supports operating on an entire data element in the absence of a specified field', function () {
-            LocusZoom.ScaleFunctions.add('test_effect_direction', function (parameters, input) {
+            scalable.add('test_effect_direction', function (parameters, input) {
                 if (typeof input == 'undefined') {
                     return null;
                 } else if ((input.beta && input.beta > 0) || (input.or && input.or > 0)) {
@@ -159,8 +127,8 @@ describe('LocusZoom.DataLayer', function () {
                 }
                 return null;
             });
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
-            this.layout = {
+            const datalayer = new BaseDataLayer({ id: 'test' });
+            const layout = {
                 scale: {
                     scale_function: 'test_effect_direction',
                     parameters: {
@@ -170,18 +138,18 @@ describe('LocusZoom.DataLayer', function () {
                 }
             };
             var variants = [{ beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: 'bar' }];
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[0]), 'triangle-up');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[1]), 'triangle-down');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[2]), 'triangle-down');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[3]), 'triangle-up');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, variants[4]), null);
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[0]), 'triangle-up');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[1]), 'triangle-down');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[2]), 'triangle-down');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[3]), 'triangle-up');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[4]), null);
 
             // Clean up/ deregister scale function when done
-            LocusZoom.ScaleFunctions.set('test_effect_direction');
+            scalable.remove('test_effect_direction');
         });
         it('iterates over an array of options until exhausted or a non-null value is found', function () {
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
-            this.layout = {
+            const datalayer = new BaseDataLayer({ id: 'test' });
+            const layout = {
                 scale: [
                     {
                         scale_function: 'if',
@@ -202,13 +170,13 @@ describe('LocusZoom.DataLayer', function () {
                     'munchkin'
                 ]
             };
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'wizard' }), 'oz');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'tiger' }), 'toto');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, { test: 'witch' }), 'munchkin');
-            assert.equal(this.datalayer.resolveScalableParameter(this.layout.scale, {}), 'munchkin');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'wizard' }), 'oz');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'tiger' }), 'toto');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'witch' }), 'munchkin');
+            assert.equal(datalayer.resolveScalableParameter(layout.scale, {}), 'munchkin');
         });
         it('can resolve based on an annotation field, even when no point data field by that name is present', function () {
-            var layout = {
+            const layout = {
                 id: 'somelayer',
                 id_field: 'id',
                 scale: [
@@ -219,80 +187,76 @@ describe('LocusZoom.DataLayer', function () {
                     }
                 ]
             };
-            var datalayer = new LocusZoom.DataLayer(layout);
+            const datalayer = new BaseDataLayer(layout);
             datalayer.setElementAnnotation('toto', 'custom_field', 'little_dog');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { id: 'toto' }), 'too');
         });
     });
 
     describe('Extent generation', function () {
-        it('has a method to generate an extent function for any axis', function () {
-            this.datalayer = new LocusZoom.DataLayer({ id: 'test' });
-            this.datalayer.getAxisExtent.should.be.a.Function;
-        });
         it('throws an error on invalid axis identifiers', function () {
-            var datalayer = new LocusZoom.DataLayer({ id: 'test' });
+            var datalayer = new BaseDataLayer({ id: 'test' });
             assert.throws(function() { datalayer.getAxisExtent(); });
             assert.throws(function() { datalayer.getAxisExtent('foo'); });
             assert.throws(function() { datalayer.getAxisExtent(1); });
             assert.throws(function() { datalayer.getAxisExtent('y1'); });
         });
         it('generates an accurate extent array for arbitrary data sets', function () {
-            this.layout = {
+            const layout = {
                 id: 'test',
                 x_axis: { field: 'x' }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
+            const datalayer = new BaseDataLayer(layout);
 
-            this.datalayer.data = [];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [], 'No extent is returned if basic criteria cannot be met');
+            datalayer.data = [];
+            assert.deepEqual(datalayer.getAxisExtent('x'), [], 'No extent is returned if basic criteria cannot be met');
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [1, 4]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [1, 4]);
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 200 }, { x: -73 }, { x: 0 }, { x: 38 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [-73, 200]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [-73, 200]);
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 6 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [6, 6]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [6, 6]);
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 'apple' }, { x: 'pear' }, { x: 'orange' }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [undefined, undefined]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [undefined, undefined]);
         });
         it('applies upper and lower buffers to extents as defined in the layout', function () {
-            this.layout = {
+            let layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
                     lower_buffer: 0.05
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            let datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0.85, 4]);
-            this.layout = {
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0.85, 4]);
+            layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
                     upper_buffer: 0.2
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 62 }, { x: 7 }, { x: -18 }, { x: 106 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [-18, 130.8]);
-            this.layout = {
+            assert.deepEqual(datalayer.getAxisExtent('x'), [-18, 130.8]);
+            layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
@@ -300,30 +264,30 @@ describe('LocusZoom.DataLayer', function () {
                     upper_buffer: 0.6
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 95 }, { x: 0 }, { x: -4 }, { x: 256 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [-95, 412]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [-95, 412]);
         });
         it('applies a minimum extent as defined in the layout', function () {
-            this.layout = {
+            let layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
                     min_extent: [0, 3]
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            let datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0, 4], 'Increase extent exactly to the boundaries when no padding is specified');
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0, 4], 'Increase extent exactly to the boundaries when no padding is specified');
 
-            this.datalayer.data = [];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0, 3], 'If there is no data, use the specified min_extent as given');
+            datalayer.data = [];
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0, 3], 'If there is no data, use the specified min_extent as given');
 
-            this.layout = {
+            layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
@@ -332,25 +296,25 @@ describe('LocusZoom.DataLayer', function () {
                     min_extent: [0, 10]
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0, 10], 'Extent is enforced but no padding applied when data is far from boundary');
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0, 10], 'Extent is enforced but no padding applied when data is far from boundary');
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 0.6 }, { x: 4 }, { x: 5 }, { x: 9 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [-1.08, 10], 'Extent is is enforced and padding is applied when data is close to the lower boundary');
+            assert.deepEqual(datalayer.getAxisExtent('x'), [-1.08, 10], 'Extent is is enforced and padding is applied when data is close to the lower boundary');
 
-            this.datalayer.data = [
+            datalayer.data = [
                 { x: 0.4 }, { x: 4 }, { x: 5 }, { x: 9.8 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [-1.48, 10.74], 'Padding is enforced on both sides when data is close to both boundaries');
+            assert.deepEqual(datalayer.getAxisExtent('x'), [-1.48, 10.74], 'Padding is enforced on both sides when data is close to both boundaries');
 
         });
         it('applies hard floor and ceiling as defined in the layout', function () {
-            this.layout = {
+            let layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
@@ -359,12 +323,12 @@ describe('LocusZoom.DataLayer', function () {
                     floor: 0
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            let datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 8 }, { x: 9 }, { x: 8 }, { x: 8.5 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0, 10]);
-            this.layout = {
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0, 10]);
+            layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
@@ -373,12 +337,12 @@ describe('LocusZoom.DataLayer', function () {
                     ceiling: 5
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [0, 5]);
-            this.layout = {
+            assert.deepEqual(datalayer.getAxisExtent('x'), [0, 5]);
+            layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
@@ -389,16 +353,16 @@ describe('LocusZoom.DataLayer', function () {
                     ceiling: 6
                 }
             };
-            this.datalayer = new LocusZoom.DataLayer(this.layout);
-            this.datalayer.data = [
+            datalayer = new BaseDataLayer(layout);
+            datalayer.data = [
                 { x: 2 }, { x: 4 }, { x: 5 }, { x: 17 }
             ];
-            assert.deepEqual(this.datalayer.getAxisExtent('x'), [4, 6]);
+            assert.deepEqual(datalayer.getAxisExtent('x'), [4, 6]);
         });
 
     });
 
-    describe('Layout Parameters', function () {
+    describe.skip('Layout Parameters', function () {
         beforeEach(function () {
             this.plot = null;
             this.layout = {
@@ -444,7 +408,7 @@ describe('LocusZoom.DataLayer', function () {
     describe('Layout mutation helpers (public interface)', function () {
         describe('addField', function () {
             beforeEach(function () {
-                this.layer = new LocusZoom.DataLayer();
+                this.layer = new BaseDataLayer();
             });
             afterEach(function () {
                 this.layer = null;
@@ -507,7 +471,7 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Data Access', function () {
+    describe.skip('Data Access', function () {
         beforeEach(function () {
             this.plot = null;
             this.ds1_src_data = [
@@ -622,7 +586,7 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Highlight functions', function () {
+    describe.skip('Highlight functions', function () {
         beforeEach(function () {
             this.plot = null;
             var data_sources = new LocusZoom.DataSources()
@@ -697,7 +661,7 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Select functions', function () {
+    describe.skip('Select functions', function () {
         beforeEach(function () {
             this.plot = null;
             var data_sources = new LocusZoom.DataSources()
@@ -772,7 +736,7 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Tool tip functions', function () {
+    describe.skip('Tool tip functions', function () {
         beforeEach(function () {
             this.plot = null;
             this.layout = {
@@ -886,7 +850,7 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Persistent annotations', function () {
+    describe.skip('Persistent annotations', function () {
         beforeEach(function () {
             this.plot = null;
             var data_sources = new LocusZoom.DataSources()
@@ -963,214 +927,4 @@ describe('LocusZoom.DataLayer', function () {
             });
         });
     });
-
-    describe('Data Layers collection object', function () {
-        it('LocusZoom should have a DataLayers collection object', function () {
-            LocusZoom.should.have.property('DataLayers').which.is.an.Object;
-        });
-        it('should have a method to list available data layers', function () {
-            LocusZoom.DataLayers.should.have.property('list').which.is.a.Function;
-            var known_layers = LocusZoom.DataLayers.list();
-            assert.ok(Array.isArray(known_layers));
-            assert.ok(known_layers.length > 0);
-        });
-        it('should have a general method to get a data layer by name', function () {
-            LocusZoom.DataLayers.should.have.property('get').which.is.a.Function;
-        });
-        it('should have a method to add a data layer', function () {
-            LocusZoom.DataLayers.should.have.property('add').which.is.a.Function;
-            LocusZoom.DataLayers.list().should.not.containEql('foo');
-            var foo = function (layout) {
-                LocusZoom.DataLayer.apply(this, arguments);
-                this.DefaultLayout = {};
-                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-                this.render = function () {
-                    return 'foo';
-                };
-                return this;
-            };
-            LocusZoom.DataLayers.add('foo', foo);
-            LocusZoom.DataLayers.list().should.containEql('foo');
-            var returned_value = LocusZoom.DataLayers.get('foo', { id: 'bar' });
-            var expected_value = new foo({ id: 'bar' });
-            assert.equal(returned_value.id, expected_value.id);
-            assert.deepEqual(returned_value.layout, expected_value.layout);
-            assert.equal(returned_value.render(), expected_value.render());
-        });
-        describe('Extension/subclassing mechanism', function () {
-            it('exists', function () {
-                LocusZoom.DataLayers.should.have.property('extend').which.is.a.Function;
-            });
-            it('should validate arguments', function () {
-                assert.throws(
-                    LocusZoom.DataLayers.extend.bind(null, 'nonexistent-parent', 'whatever', {}),
-                    /Attempted to subclass an unknown or unregistered datalayer type/
-                );
-                assert.throws(
-                    LocusZoom.DataLayers.extend.bind(null, 'scatter', 'newchild', 'wrongkindofoverride'),
-                    /Must specify an object of properties and methods/
-                );
-            });
-            it('should extend a known datalayer with custom behavior', function () {
-                LocusZoom.DataLayers.add('testparent', function (layout) {
-                    LocusZoom.DataLayer.apply(this, arguments);
-                    this.DefaultLayout = {};
-                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-                    this.render = function () {
-                        return 'foo';
-                    };
-                    this.classname = 'parent';
-                });
-                var Child = LocusZoom.DataLayers.extend('testparent', 'testchild', {
-                    childMethod: function () {
-                        return true;
-                    },
-                    isChild: true,
-                    applyCustomDataMethods: function () {
-                        return 12;
-                    }  // this one overrides parent behavior!
-                });
-                var instance = new Child({});
-
-                // Child class is added to the registry
-                LocusZoom.DataLayers.list().should.containEql('testparent');
-                LocusZoom.DataLayers.list().should.containEql('testchild');
-
-                // Sets custom properties and methods correctly
-                assert.equal(instance.classname, 'parent');
-                assert.ok(instance.childMethod());
-                assert.ok(instance.isChild);
-
-                // Inherits and overrides where appropriate
-                assert.ok(instance instanceof LocusZoom.DataLayer);
-                assert.equal(instance.applyCustomDataMethods(), 12);
-                instance.should.have.property('moveUp').which.is.a.Function;
-
-                // Clean up when done.
-                LocusZoom.DataLayers.set('testchild');
-                LocusZoom.DataLayers.set('testparent');
-            });
-
-            it('should be able to create subclasses several levels deep', function () {
-                LocusZoom.DataLayers.add('testparent', function (layout) {
-                    LocusZoom.DataLayer.apply(this, arguments);
-                    this.DefaultLayout = {};
-                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-                    this.render = function () {
-                        return 'foo';
-                    };
-                    this.classname = 'parent';
-                });
-                LocusZoom.DataLayers.extend('testparent', 'testchild', {
-                    childMethod: function () {
-                        return true;
-                    },
-                    isChild: true,
-                    applyCustomDataMethods: function () {
-                        return 12;
-                    }  // this one overrides parent behavior!
-                });
-                var GrandChild = LocusZoom.DataLayers.extend('testchild', 'testgrandchild', {
-                    applyCustomDataMethods: function () {
-                        return 14;
-                    }  // this one overrides parent behavior!
-                });
-
-                var instance = new GrandChild({});
-
-                // Child class is added to the registry
-                LocusZoom.DataLayers.list().should.containEql('testgrandchild');
-
-                assert.ok(instance.isChild);
-
-                // Inherits and overrides where appropriate
-                assert.ok(instance instanceof LocusZoom.DataLayer);
-                assert.equal(instance.applyCustomDataMethods(), 14);
-
-                // Clean up when done.
-                LocusZoom.DataLayers.set('testgrandchild');
-                LocusZoom.DataLayers.set('testchild');
-                LocusZoom.DataLayers.set('testparent');
-            });
-        });
-        it('should have a method to change or delete existing data layers', function () {
-            LocusZoom.DataLayers.should.have.property('set').which.is.a.Function;
-            var foo_new = function (layout) {
-                LocusZoom.DataLayer.apply(this, arguments);
-                this.DefaultLayout = { foo: 'bar' };
-                this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-                this.render = function () {
-                    return 'bar';
-                };
-                return this;
-            };
-            LocusZoom.DataLayers.set('foo', foo_new);
-            LocusZoom.DataLayers.list().should.containEql('foo');
-            var returned_value = LocusZoom.DataLayers.get('foo', { id: 'baz' });
-            var expected_value = new foo_new({ id: 'baz' });
-            assert.equal(returned_value.id, expected_value.id);
-            assert.deepEqual(returned_value.layout, expected_value.layout);
-            assert.equal(returned_value.render(), expected_value.render());
-            LocusZoom.DataLayers.set('foo');
-            LocusZoom.DataLayers.list().should.not.containEql('foo');
-        });
-        it('should throw an exception if asked to get a function that has not been defined', function () {
-            assert.throws(function () {
-                LocusZoom.DataLayers.get('nonexistent', this.plot.state);
-            });
-        });
-        it('should throw an exception when trying to add a new data layer that is not a function', function () {
-            assert.throws(function () {
-                LocusZoom.DataLayers.add('nonfunction', 'foo');
-            });
-        });
-        it('should throw an exception when adding a new data layer with an already in use name', function () {
-            assert.throws(function () {
-                var foo = function (layout) {
-                    LocusZoom.DataLayer.apply(this, arguments);
-                    this.DefaultLayout = {};
-                    this.layout = LocusZoom.Layouts.merge(layout, this.DefaultLayout);
-                    this.render = function () {
-                        return 'foo';
-                    };
-                    return this;
-                };
-                LocusZoom.DataLayers.add('scatter', foo);
-            });
-        });
-        it('should throw an exception if asked to get a data layer without passing both an ID and a layout', function () {
-            assert.throws(function () {
-                LocusZoom.DataLayers.get('scatter');
-            });
-            assert.throws(function () {
-                LocusZoom.DataLayers.get('scatter', 'foo');
-            });
-        });
-        describe('predefined data layers', function () {
-            beforeEach(function () {
-                this.list = LocusZoom.DataLayers.list();
-            });
-            it('should each take its ID from the arguments provided', function () {
-                this.list.forEach(function (name) {
-                    var foo = new LocusZoom.DataLayers.get(name, { id: 'foo' });
-                    assert.equal(foo.id, 'foo');
-                });
-            });
-            it('should each take its layout from the arguments provided and merge it with a built-in DefaultLayout', function () {
-                this.list.forEach(function (name) {
-                    var layout = { id: 'foo', test: 123 };
-                    var foo = new LocusZoom.DataLayers.get(name, layout);
-                    var expected_layout = LocusZoom.Layouts.merge(layout, foo.DefaultLayout);
-                    assert.deepEqual(foo.layout, expected_layout);
-                });
-            });
-            it('should each implement a render function', function () {
-                this.list.forEach(function (name) {
-                    var foo = new LocusZoom.DataLayers.get(name, { id: 'foo' });
-                    foo.should.have.property('render').which.is.a.Function;
-                });
-            });
-        });
-    });
-
 });
