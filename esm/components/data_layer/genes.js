@@ -97,87 +97,87 @@ class Genes extends BaseDataLayer {
         this.tracks = 1;
         this.gene_track_index = { 1: [] };
 
-        this.data.map((d, g) => {
+        this.data.map((item) => {
 
             // If necessary, split combined gene id / version fields into discrete fields.
             // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
-            if (this.data[g].gene_id && this.data[g].gene_id.indexOf('.')) {
-                const split = this.data[g].gene_id.split('.');
-                this.data[g].gene_id = split[0];
-                this.data[g].gene_version = split[1];
+            if (item.gene_id && item.gene_id.indexOf('.')) {
+                const split = item.gene_id.split('.');
+                item.gene_id = split[0];
+                item.gene_version = split[1];
             }
 
             // Stash the transcript ID on the parent gene
-            this.data[g].transcript_id = this.data[g].transcripts[this.transcript_idx].transcript_id;
+            item.transcript_id = item.transcripts[this.transcript_idx].transcript_id;
 
             // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
             // (range: values in terms of pixels on the screen)
-            this.data[g].display_range = {
-                start: this.parent.x_scale(Math.max(d.start, this.state.start)),
-                end:   this.parent.x_scale(Math.min(d.end, this.state.end))
+            item.display_range = {
+                start: this.parent.x_scale(Math.max(item.start, this.state.start)),
+                end:   this.parent.x_scale(Math.min(item.end, this.state.end))
             };
-            this.data[g].display_range.label_width = this.getLabelWidth(this.data[g].gene_name, this.layout.label_font_size);
-            this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
+            item.display_range.label_width = this.getLabelWidth(item.gene_name, this.layout.label_font_size);
+            item.display_range.width = item.display_range.end - item.display_range.start;
             // Determine label text anchor (default to middle)
-            this.data[g].display_range.text_anchor = 'middle';
-            if (this.data[g].display_range.width < this.data[g].display_range.label_width) {
-                if (d.start < this.state.start) {
-                    this.data[g].display_range.end = this.data[g].display_range.start
-                        + this.data[g].display_range.label_width
+            item.display_range.text_anchor = 'middle';
+            if (item.display_range.width < item.display_range.label_width) {
+                if (item.start < this.state.start) {
+                    item.display_range.end = item.display_range.start
+                        + item.display_range.label_width
                         + this.layout.label_font_size;
-                    this.data[g].display_range.text_anchor = 'start';
-                } else if (d.end > this.state.end) {
-                    this.data[g].display_range.start = this.data[g].display_range.end
-                        - this.data[g].display_range.label_width
+                    item.display_range.text_anchor = 'start';
+                } else if (item.end > this.state.end) {
+                    item.display_range.start = item.display_range.end
+                        - item.display_range.label_width
                         - this.layout.label_font_size;
-                    this.data[g].display_range.text_anchor = 'end';
+                    item.display_range.text_anchor = 'end';
                 } else {
-                    const centered_margin = ((this.data[g].display_range.label_width - this.data[g].display_range.width) / 2)
+                    const centered_margin = ((item.display_range.label_width - item.display_range.width) / 2)
                         + this.layout.label_font_size;
-                    if ((this.data[g].display_range.start - centered_margin) < this.parent.x_scale(this.state.start)) {
-                        this.data[g].display_range.start = this.parent.x_scale(this.state.start);
-                        this.data[g].display_range.end = this.data[g].display_range.start + this.data[g].display_range.label_width;
-                        this.data[g].display_range.text_anchor = 'start';
-                    } else if ((this.data[g].display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
-                        this.data[g].display_range.end = this.parent.x_scale(this.state.end);
-                        this.data[g].display_range.start = this.data[g].display_range.end - this.data[g].display_range.label_width;
-                        this.data[g].display_range.text_anchor = 'end';
+                    if ((item.display_range.start - centered_margin) < this.parent.x_scale(this.state.start)) {
+                        item.display_range.start = this.parent.x_scale(this.state.start);
+                        item.display_range.end = item.display_range.start + item.display_range.label_width;
+                        item.display_range.text_anchor = 'start';
+                    } else if ((item.display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
+                        item.display_range.end = this.parent.x_scale(this.state.end);
+                        item.display_range.start = item.display_range.end - item.display_range.label_width;
+                        item.display_range.text_anchor = 'end';
                     } else {
-                        this.data[g].display_range.start -= centered_margin;
-                        this.data[g].display_range.end += centered_margin;
+                        item.display_range.start -= centered_margin;
+                        item.display_range.end += centered_margin;
                     }
                 }
-                this.data[g].display_range.width = this.data[g].display_range.end - this.data[g].display_range.start;
+                item.display_range.width = item.display_range.end - item.display_range.start;
             }
             // Add bounding box padding to the calculated display range start, end, and width
-            this.data[g].display_range.start -= this.layout.bounding_box_padding;
-            this.data[g].display_range.end   += this.layout.bounding_box_padding;
-            this.data[g].display_range.width += 2 * this.layout.bounding_box_padding;
+            item.display_range.start -= this.layout.bounding_box_padding;
+            item.display_range.end   += this.layout.bounding_box_padding;
+            item.display_range.width += 2 * this.layout.bounding_box_padding;
             // Convert and stash display range values into domain values
             // (domain: values in terms of the data set, e.g. megabases)
-            this.data[g].display_domain = {
-                start: this.parent.x_scale.invert(this.data[g].display_range.start),
-                end:   this.parent.x_scale.invert(this.data[g].display_range.end)
+            item.display_domain = {
+                start: this.parent.x_scale.invert(item.display_range.start),
+                end:   this.parent.x_scale.invert(item.display_range.end)
             };
-            this.data[g].display_domain.width = this.data[g].display_domain.end - this.data[g].display_domain.start;
+            item.display_domain.width = item.display_domain.end - item.display_domain.start;
 
             // Using display range/domain data generated above cast each gene to tracks such that none overlap
-            this.data[g].track = null;
+            item.track = null;
             let potential_track = 1;
-            while (this.data[g].track === null) {
+            while (item.track === null) {
                 let collision_on_potential_track = false;
                 this.gene_track_index[potential_track].map(function(placed_gene) {
                     if (!collision_on_potential_track) {
-                        const min_start = Math.min(placed_gene.display_range.start, this.display_range.start);
-                        const max_end = Math.max(placed_gene.display_range.end, this.display_range.end);
-                        if ((max_end - min_start) < (placed_gene.display_range.width + this.display_range.width)) {
+                        const min_start = Math.min(placed_gene.display_range.start, item.display_range.start);
+                        const max_end = Math.max(placed_gene.display_range.end, item.display_range.end);
+                        if ((max_end - min_start) < (placed_gene.display_range.width + item.display_range.width)) {
                             collision_on_potential_track = true;
                         }
                     }
-                }.bind(this.data[g]));
+                });
                 if (!collision_on_potential_track) {
-                    this.data[g].track = potential_track;
-                    this.gene_track_index[potential_track].push(this.data[g]);
+                    item.track = potential_track;
+                    this.gene_track_index[potential_track].push(item);
                 } else {
                     potential_track++;
                     if (potential_track > this.tracks) {
@@ -188,12 +188,10 @@ class Genes extends BaseDataLayer {
             }
 
             // Stash parent references on all genes, trascripts, and exons
-            this.data[g].parent = this;
-            this.data[g].transcripts.map((d, t) => {
-                this.data[g].transcripts[t].parent = this.data[g];
-                this.data[g].transcripts[t].exons.map((d, e) => {
-                    this.data[g].transcripts[t].exons[e].parent = this.data[g].transcripts[t];
-                });
+            item.parent = this;
+            item.transcripts.map((d, t) => {
+                item.transcripts[t].parent = item;
+                item.transcripts[t].exons.map((d, e) => item.transcripts[t].exons[e].parent = item.transcripts[t]);
             });
 
         });
