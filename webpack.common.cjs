@@ -3,6 +3,7 @@ const path = require('path');
 const webpack = require('webpack');
 const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const PACKAGE = require('./package.json');
 
@@ -19,6 +20,10 @@ module.exports = {
         new CleanWebpackPlugin(),
         new webpack.BannerPlugin(`Locuszoom ${PACKAGE.version}`), // add after uglify step
         new FriendlyErrorsWebpackPlugin(),
+        new MiniCssExtractPlugin({
+            filename: 'locuszoom.css',
+            chunkFilename: 'locuszoom.css',
+        }),
     ],
     resolve: {
         modules: [
@@ -37,6 +42,14 @@ module.exports = {
                 use: ['source-map-loader'],
                 enforce: 'pre',
             },
+            {
+                test: /\.s[ac]ss$/i,
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
+                    'sass-loader',
+                ],
+            }
         ]
     },
     output: {

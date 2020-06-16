@@ -13,4 +13,4 @@ plugins.add('layouts', layouts);
 plugins.add('scalable', scalable);
 plugins.add('transforms', transforms);
 
-export { adapters, dashboards, data_layers, layouts, scalable, transforms };
+export { adapters, dashboards, data_layers, layouts, plugins, scalable, transforms };

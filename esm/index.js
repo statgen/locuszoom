@@ -1,11 +1,10 @@
 /**
  * Compatibility layer: expose symbols via UMD module to match the old LocusZoom API
  */
-
+import '../css/locuszoom.scss'; // Trigger CSS to be automatically built to the dist folder
 import {plugins} from './registry';
 
 // TODO: Package existing extensions
-// TODO: Handle SCSS build step
 export {version} from '../package.json';
 
 export {default as DataSources} from './data';

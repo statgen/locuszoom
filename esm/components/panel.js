@@ -1156,7 +1156,10 @@ class Panel {
         })(this[axis + '_ticks']);
 
         // Initialize the axis; set scale and orientation
-        this[axis + '_axis'] = d3.svg.axis().scale(this[axis + '_scale']).orient(axis_params[axis].orientation).tickPadding(3);
+        this[axis + '_axis'] = d3.svg.axis()
+            .scale(this[axis + '_scale'])
+            .orient(axis_params[axis].orientation)
+            .tickPadding(3);
 
         // Set tick values and format
         if (ticksAreAllNumbers) {
@@ -1224,7 +1227,7 @@ class Panel {
                 this.svg.container.selectAll('.lz-axis.lz-' + axis + ' .tick text')
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
                     .on('mouseover' + namespace, tick_mouseover)
-                    .on('mouseout' + namespace,  function() {
+                    .on('mouseout' + namespace, () => {
                         d3.select(this).style({'font-weight': 'normal'});
                         d3.select(this).on('keydown' + namespace, null).on('keyup' + namespace, null);
                     })
