@@ -366,9 +366,9 @@ class Plot {
      * Notify each child panel of the plot of changes in panel ordering/ arrangement
      */
     applyPanelYIndexesToPanelLayouts () {
-        this.panel_ids_by_y_index.forEach(function(pid, idx) {
+        this.panel_ids_by_y_index.forEach((pid, idx) => {
             this.panels[pid].layout.y_index = idx;
-        }.bind(this));
+        });
     }
 
     /**
@@ -437,20 +437,20 @@ class Plot {
 
         // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
         if (this.layout.responsive_resize) {
-            this.window_onresize = d3.select(window).on('resize.lz-' + this.id, function() {
+            this.window_onresize = d3.select(window).on('resize.lz-' + this.id, () => {
                 this.rescaleSVG();
-            }.bind(this));
+            });
             // Forcing one additional setDimensions() call after the page is loaded clears up
             // any disagreements between the initial layout and the loaded responsive container's size
-            d3.select(window).on('load.lz-' + this.id, function() {
+            d3.select(window).on('load.lz-' + this.id, () => {
                 this.setDimensions();
-            }.bind(this));
+            });
         }
 
         // Add panels
-        this.layout.panels.forEach(function(panel_layout) {
+        this.layout.panels.forEach((panel_layout) => {
             this.addPanel(panel_layout);
-        }.bind(this));
+        });
 
         return this;
     }
@@ -507,7 +507,7 @@ class Plot {
             }
             // Resize/reposition panels to fit, update proportional origins if necessary
             let y_offset = 0;
-            this.panel_ids_by_y_index.forEach(function(panel_id) {
+            this.panel_ids_by_y_index.forEach((panel_id) => {
                 const panel_width = this.layout.width;
                 const panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
                 this.panels[panel_id].setDimensions(panel_width, panel_height);
@@ -516,7 +516,7 @@ class Plot {
                 this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
                 y_offset += panel_height;
                 this.panels[panel_id].dashboard.update();
-            }.bind(this));
+            });
         }
 
         // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
@@ -683,9 +683,9 @@ class Plot {
         delete this.layout.state[id];
 
         // Update layout_idx values for all remaining panels
-        this.layout.panels.forEach(function(panel_layout, idx) {
+        this.layout.panels.forEach((panel_layout, idx) => {
             this.panels[panel_layout.id].layout_idx = idx;
-        }.bind(this));
+        });
 
         // Remove the panel id from the y_index array
         this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
@@ -756,7 +756,7 @@ class Plot {
         // Update origins on all panels without changing plot-level dimensions yet
         // Also apply x-linked margins to x-linked panels, updating widths as needed
         let y_offset = 0;
-        this.panel_ids_by_y_index.forEach(function(panel_id) {
+        this.panel_ids_by_y_index.forEach((panel_id) => {
             this.panels[panel_id].setOrigin(0, y_offset);
             this.panels[panel_id].layout.proportional_origin.x = 0;
             y_offset += this.panels[panel_id].layout.height;
@@ -768,20 +768,20 @@ class Plot {
                 this.panels[panel_id].layout.margin.right = x_linked_margins.right;
                 this.panels[panel_id].layout.cliparea.origin.x = x_linked_margins.left;
             }
-        }.bind(this));
+        });
         const calculated_plot_height = y_offset;
-        this.panel_ids_by_y_index.forEach(function(panel_id) {
+        this.panel_ids_by_y_index.forEach((panel_id) => {
             this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
-        }.bind(this));
+        });
 
         // Update dimensions on the plot to accommodate repositioned panels
         this.setDimensions();
 
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
-        this.panel_ids_by_y_index.forEach(function(panel_id) {
+        this.panel_ids_by_y_index.forEach((panel_id) => {
             this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
                                                 this.layout.height * this.panels[panel_id].layout.proportional_height);
-        }.bind(this));
+        });
 
         return this;
 
@@ -882,9 +882,9 @@ class Plot {
                     corner_drag.on('dragend', () => {
                         this.dragging = false;
                     });
-                    corner_drag.on('drag', function() {
-                        this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
-                    }.bind(this.parent));
+                    corner_drag.on('drag', () => {
+                        this.parent.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
+                    });
                     corner_selector.call(corner_drag);
                     this.parent.panel_boundaries.corner_selector = corner_selector;
                 }
@@ -894,7 +894,7 @@ class Plot {
                 if (!this.showing) { return this; }
                 // Position panel boundaries
                 const plot_page_origin = this.parent.getPageOrigin();
-                this.selectors.forEach(function(selector, panel_idx) {
+                this.selectors.forEach((selector, panel_idx) => {
                     const panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
                     const left = plot_page_origin.x;
                     const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
@@ -907,7 +907,7 @@ class Plot {
                     selector.select('span').style({
                         width: width + 'px'
                     });
-                }.bind(this));
+                });
                 // Position corner selector
                 const corner_padding = 10;
                 const corner_size = 16;
@@ -932,15 +932,15 @@ class Plot {
 
         // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
         if (this.layout.panel_boundaries) {
-            d3.select(this.svg.node().parentNode).on('mouseover.' + this.id + '.panel_boundaries', function() {
+            d3.select(this.svg.node().parentNode).on('mouseover.' + this.id + '.panel_boundaries', () => {
                 clearTimeout(this.panel_boundaries.hide_timeout);
                 this.panel_boundaries.show();
-            }.bind(this));
-            d3.select(this.svg.node().parentNode).on('mouseout.' + this.id + '.panel_boundaries', function() {
-                this.panel_boundaries.hide_timeout = setTimeout(function() {
+            });
+            d3.select(this.svg.node().parentNode).on('mouseout.' + this.id + '.panel_boundaries', () => {
+                this.panel_boundaries.hide_timeout = setTimeout(() => {
                     this.panel_boundaries.hide();
-                }.bind(this), 300);
-            }.bind(this));
+                }, 300);
+            });
         }
 
         // Create the dashboard object and immediately show it
@@ -954,24 +954,24 @@ class Plot {
         // Define plot-level mouse events
         const namespace = '.' + this.id;
         if (this.layout.mouse_guide) {
-            const mouseout_mouse_guide = function () {
+            const mouseout_mouse_guide = () => {
                 this.mouse_guide.vertical.attr('x', -1);
                 this.mouse_guide.horizontal.attr('y', -1);
-            }.bind(this);
-            const mousemove_mouse_guide = function () {
+            };
+            const mousemove_mouse_guide = () => {
                 const coords = d3.mouse(this.svg.node());
                 this.mouse_guide.vertical.attr('x', coords[0]);
                 this.mouse_guide.horizontal.attr('y', coords[1]);
-            }.bind(this);
+            };
             this.svg
                 .on('mouseout' + namespace + '-mouse_guide', mouseout_mouse_guide)
                 .on('touchleave' + namespace + '-mouse_guide', mouseout_mouse_guide)
                 .on('mousemove' + namespace + '-mouse_guide', mousemove_mouse_guide);
         }
-        const mouseup = function () {
+        const mouseup = () => {
             this.stopDrag();
-        }.bind(this);
-        const mousemove = function () {
+        };
+        const mousemove = () => {
             if (this.interaction.dragging) {
                 const coords = d3.mouse(this.svg.node());
                 if (d3.event) {
@@ -980,11 +980,11 @@ class Plot {
                 this.interaction.dragging.dragged_x = coords[0] - this.interaction.dragging.start_x;
                 this.interaction.dragging.dragged_y = coords[1] - this.interaction.dragging.start_y;
                 this.panels[this.interaction.panel_id].render();
-                this.interaction.linked_panel_ids.forEach(function (panel_id) {
+                this.interaction.linked_panel_ids.forEach((panel_id) => {
                     this.panels[panel_id].render();
-                }.bind(this));
+                });
             }
-        }.bind(this);
+        };
         this.svg
             .on('mouseup' + namespace, mouseup)
             .on('touchend' + namespace, mouseup)
@@ -999,13 +999,13 @@ class Plot {
                 .on('touchend' + namespace, mouseup);
         }
 
-        this.on('match_requested', function(eventData) {
+        this.on('match_requested', (eventData) => {
             // Layers can broadcast that a specific point has been selected, and the plot will tell every other layer
             //  to look for that value. Whenever a point is de-selected, it clears the match.
             const data = eventData.data;
             const to_send = (data.active ? data.value : null);
             this.applyState({ lz_match_value: to_send });
-        }.bind(this));
+        });
 
         this.initialized = true;
 
@@ -1117,24 +1117,24 @@ class Plot {
         }
 
         return Promise.all(this.remap_promises)
-            .catch(function(error) {
+            .catch((error) => {
                 console.error(error);
                 this.curtain.show(error.message || error);
                 this.loading_data = false;
-            }.bind(this))
-            .then(function() {
+            })
+            .then(() => {
                 // Update dashboard / components
                 this.dashboard.update();
 
                 // Apply panel-level state values
-                this.panel_ids_by_y_index.forEach(function(panel_id) {
+                this.panel_ids_by_y_index.forEach((panel_id) => {
                     const panel = this.panels[panel_id];
                     panel.dashboard.update();
                     // Apply data-layer-level state values
-                    panel.data_layer_ids_by_z_index.forEach(function(data_layer_id) {
-                        this.data_layers[data_layer_id].applyAllElementStatus();
-                    }.bind(panel));
-                }.bind(this));
+                    panel.data_layer_ids_by_z_index.forEach((data_layer_id) => {
+                        panel.data_layers[data_layer_id].applyAllElementStatus();
+                    });
+                });
 
                 // Emit events
                 this.emit('layout_changed');
@@ -1143,7 +1143,7 @@ class Plot {
 
                 this.loading_data = false;
 
-            }.bind(this));
+            });
     }
 
     /**

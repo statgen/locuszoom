@@ -206,9 +206,9 @@ class Scatter extends BaseDataLayer {
             }
             // After ~150 iterations we're probably beyond diminising returns, so stop recursing
             if (this.seperate_iterations < 150) {
-                setTimeout(function() {
+                setTimeout(() => {
                     this.separate_labels();
-                }.bind(this), 1);
+                }, 1);
             }
         }
     }
@@ -372,20 +372,16 @@ class Scatter extends BaseDataLayer {
             return 'translate(' + x + ',' + y + ')';
         };
 
-        const fill = function (d, i) {
+        const fill = (d, i) => {
             return this.resolveScalableParameter(this.layout.color, d, i);
-        }.bind(this);
-        const fill_opacity = function (d, i) {
+        };
+        const fill_opacity = (d, i) => {
             return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
-        }.bind(this);
+        };
 
         const shape = d3.svg.symbol()
-            .size(function (d, i) {
-                return this.resolveScalableParameter(this.layout.point_size, d, i);
-            }.bind(this))
-            .type(function (d, i) {
-                return this.resolveScalableParameter(this.layout.point_shape, d, i);
-            }.bind(this));
+            .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
+            .type((d, i) => this.resolveScalableParameter(this.layout.point_shape, d, i));
 
         // Apply position and color
         selection

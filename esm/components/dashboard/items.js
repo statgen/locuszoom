@@ -100,11 +100,11 @@ class Download extends Component {
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html || 'Download Image')
             .setTitle(this.layout.button_title || 'Download image of the current plot as locuszoom.svg')
-            .setOnMouseover(function() {
+            .setOnMouseover(() => {
                 this.button.selector
                     .classed('lz-dashboard-button-gray-disabled', true)
                     .html('Preparing Image');
-                this.generateBase64SVG().then(function(url) {
+                this.generateBase64SVG().then((url) => {
                     const old = this.button.selector.attr('href');
                     if (old) { URL.revokeObjectURL(old); }  // Clean up old url instance to prevent memory leaks
                     this.button.selector
@@ -112,11 +112,11 @@ class Download extends Component {
                         .classed('lz-dashboard-button-gray-disabled', false)
                         .classed('lz-dashboard-button-gray-highlighted', true)
                         .html(this.layout.button_html || 'Download Image');
-                }.bind(this));
-            }.bind(this))
-            .setOnMouseout(function() {
+                });
+            })
+            .setOnMouseout(() => {
                 this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
-            }.bind(this));
+            });
         this.button.show();
         this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', this.layout.filename || 'locuszoom.svg');
         return this;
@@ -162,7 +162,7 @@ class RemovePanel extends Component {
             .setColor(this.layout.color)
             .setHtml('×')
             .setTitle('Remove panel')
-            .setOnclick(function() {
+            .setOnclick(() => {
                 if (!this.layout.suppress_confirm && !confirm('Are you sure you want to remove this panel? This cannot be undone!')) {
                     return false;
                 }
@@ -171,7 +171,7 @@ class RemovePanel extends Component {
                 d3.select(panel.parent.svg.node().parentNode).on('mouseover.' + panel.getBaseId() + '.dashboard', null);
                 d3.select(panel.parent.svg.node().parentNode).on('mouseout.' + panel.getBaseId() + '.dashboard', null);
                 return panel.parent.removePanel(panel.id);
-            }.bind(this));
+            });
         this.button.show();
         return this;
     }

@@ -477,26 +477,6 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     width: 100%;
   }
 
-  .#{$namespace}-loader-cancel {
-    position: absolute;
-    top: -1px;
-    right: -1px;
-    padding: 2px 4px;
-    font-size: 9px;
-    font-weight: 300;
-    background-color: #D8D8D8;
-    color: #333333;
-    border: 1px solid #333333;
-    border-radius: 0px 4px 0px 4px;
-    pointer-events: auto;
-    cursor: pointer;
-  }
-
-  .#{$namespace}-loader-cancel:hover {
-    background-color: #333333;
-    color: #D8D8D8;
-  }
-
   .#{$namespace}-loader-progress-container {
     position: relative;
     display: block;

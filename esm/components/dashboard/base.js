@@ -407,31 +407,31 @@ class Button {
             /**
              * Show the button menu, including setting up any DOM elements needed for first rendering
              */
-            show: function() {
+            show: () => {
                 if (!this.menu.outer_selector) {
                     this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append('div')
                         .attr('class', 'lz-dashboard-menu lz-dashboard-menu-' + this.color)
                         .attr('id', this.parent_svg.getBaseId() + '.dashboard.menu');
                     this.menu.inner_selector = this.menu.outer_selector.append('div')
                         .attr('class', 'lz-dashboard-menu-content');
-                    this.menu.inner_selector.on('scroll', function() {
+                    this.menu.inner_selector.on('scroll', () => {
                         this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
-                    }.bind(this));
+                    });
                 }
                 this.menu.outer_selector.style({ visibility: 'visible' });
                 this.menu.hidden = false;
                 return this.menu.update();
-            }.bind(this),
+            },
             /**
              * Update the rendering of the menu
              */
-            update: function() {
+            update: () => {
                 if (!this.menu.outer_selector) { return this.menu; }
                 this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
                 if (this.menu.inner_selector) { this.menu.inner_selector.node().scrollTop = this.menu.scroll_position; }
                 return this.menu.position();
-            }.bind(this),
-            position: function() {
+            },
+            position: () => {
                 if (!this.menu.outer_selector) { return this.menu; }
                 // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
                 this.menu.outer_selector.style({ height: null });
@@ -469,21 +469,21 @@ class Button {
                 this.menu.inner_selector.style({ 'max-width': content_max_width.toString() + 'px' });
                 this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 return this.menu;
-            }.bind(this),
-            hide: function() {
+            },
+            hide: () => {
                 if (!this.menu.outer_selector) { return this.menu; }
                 this.menu.outer_selector.style({ visibility: 'hidden' });
                 this.menu.hidden = true;
                 return this.menu;
-            }.bind(this),
-            destroy: function() {
+            },
+            destroy: () => {
                 if (!this.menu.outer_selector) { return this.menu; }
                 this.menu.inner_selector.remove();
                 this.menu.outer_selector.remove();
                 this.menu.inner_selector = null;
                 this.menu.outer_selector = null;
                 return this.menu;
-            }.bind(this),
+            },
             /**
              * Internal method definition
              * By convention populate() does nothing and should be reimplemented with each dashboard button definition
@@ -491,15 +491,15 @@ class Button {
              *   up standard menu click-toggle behavior prototype.
              * @protected
              */
-            populate: function() { /* stub */ }.bind(this),
+            populate: () => { throw new Error('Method must be implemented'); },
             /**
              * Define how the menu is populated with items, and set up click and display properties as appropriate
              * @public
              */
-            setPopulate: function(menu_populate_function) {
+            setPopulate: (menu_populate_function) => {
                 if (typeof menu_populate_function == 'function') {
                     this.menu.populate = menu_populate_function;
-                    this.setOnclick(function() {
+                    this.setOnclick(() => {
                         if (this.menu.hidden) {
                             this.menu.show();
                             this.highlight().update();
@@ -509,12 +509,12 @@ class Button {
                             this.highlight(false).update();
                             if (!this.permanent) { this.persist = false; }
                         }
-                    }.bind(this));
+                    });
                 } else {
                     this.setOnclick();
                 }
                 return this;
-            }.bind(this)
+            }
         };
 
     }

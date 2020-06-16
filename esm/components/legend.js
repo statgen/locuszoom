@@ -93,9 +93,9 @@ class Legend {
         let x = padding;
         let y = padding;
         let line_height = 0;
-        this.parent.data_layer_ids_by_z_index.slice().reverse().forEach(function(id) {
+        this.parent.data_layer_ids_by_z_index.slice().reverse().forEach((id) => {
             if (Array.isArray(this.parent.data_layers[id].layout.legend)) {
-                this.parent.data_layers[id].layout.legend.forEach(function(element) {
+                this.parent.data_layers[id].layout.legend.forEach((element) => {
                     const selector = this.elements_group.append('g')
                         .attr('transform', 'translate(' + x + ',' + y + ')');
                     const label_size = +element.label_size || +this.layout.label_size || 12;
@@ -155,9 +155,9 @@ class Legend {
                     }
                     // Store the element
                     this.elements.push(selector);
-                }.bind(this));
+                });
             }
-        }.bind(this));
+        });
 
         // Scale the background rect to the elements in the legend
         const bcr = this.elements_group.node().getBoundingClientRect();

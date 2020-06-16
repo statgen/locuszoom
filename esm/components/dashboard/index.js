@@ -57,30 +57,30 @@ class Dashboard {
     initialize() {
         // Parse layout to generate component instances
         if (Array.isArray(this.parent.layout.dashboard.components)) {
-            this.parent.layout.dashboard.components.forEach(function (layout) {
+            this.parent.layout.dashboard.components.forEach((layout) => {
                 try {
                     const component = dashboards.create(layout.type, layout, this);
                     this.components.push(component);
                 } catch (e) {
                     console.warn(e);
                 }
-            }.bind(this));
+            });
         }
 
         // Add mouseover event handlers to show/hide panel dashboard
         if (this.type === 'panel') {
-            d3.select(this.parent.parent.svg.node().parentNode).on('mouseover.' + this.id, function () {
+            d3.select(this.parent.parent.svg.node().parentNode).on('mouseover.' + this.id, () => {
                 clearTimeout(this.hide_timeout);
                 if (!this.selector || this.selector.style('visibility') === 'hidden') {
                     this.show();
                 }
-            }.bind(this));
-            d3.select(this.parent.parent.svg.node().parentNode).on('mouseout.' + this.id, function () {
+            });
+            d3.select(this.parent.parent.svg.node().parentNode).on('mouseout.' + this.id, () => {
                 clearTimeout(this.hide_timeout);
-                this.hide_timeout = setTimeout(function () {
+                this.hide_timeout = setTimeout(() => {
                     this.hide();
-                }.bind(this), 300);
-            }.bind(this));
+                }, 300);
+            });
         }
 
         return this;

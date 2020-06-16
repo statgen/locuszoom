@@ -61,17 +61,17 @@ class Forest extends BaseDataLayer {
             // Generate a selection for all forest plot confidence intervals
             const ci_selection = this.svg.group
                 .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')
-                .data(this.data, function (d) {
+                .data(this.data, (d) => {
                     return d[this.layout.id_field];
-                }.bind(this));
+                });
             // Create confidence interval rect elements
             ci_selection.enter()
                 .append('rect')
                 .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
-                .attr('id', function(d) { return this.getElementId(d) + '_ci'; }.bind(this))
+                .attr('id', (d) => this.getElementId(d) + '_ci')
                 .attr('transform', 'translate(0,' + (isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height) + ')');
             // Apply position and size parameters
-            const ci_transform = function (d) {
+            const ci_transform = (d) => {
                 let x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
                 let y = this.parent[y_scale](d[this.layout.y_axis.field]);
                 if (isNaN(x)) {
@@ -81,11 +81,11 @@ class Forest extends BaseDataLayer {
                     y = -1000;
                 }
                 return 'translate(' + x + ',' + y + ')';
-            }.bind(this);
-            const ci_width = function (d) {
+            };
+            const ci_width = (d) => {
                 return this.parent[x_scale](d[this.layout.confidence_intervals.end_field])
                     - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
-            }.bind(this);
+            };
             const ci_height = 1;
 
             ci_selection
@@ -99,20 +99,20 @@ class Forest extends BaseDataLayer {
         // Generate a selection for all forest plot points
         const points_selection = this.svg.group
             .selectAll('path.lz-data_layer-forest.lz-data_layer-forest-point')
-            .data(this.data, function (d) {
+            .data(this.data, (d) => {
                 return d[this.layout.id_field];
-            }.bind(this));
+            });
 
         // Create elements, apply class, ID, and initial position
         const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         points_selection.enter()
             .append('path')
             .attr('class', 'lz-data_layer-forest lz-data_layer-forest-point')
-            .attr('id', function(d) { return this.getElementId(d); }.bind(this))
+            .attr('id', (d) => this.getElementId(d))
             .attr('transform', 'translate(0,' + initial_y + ')');
 
         // Generate new values (or functions for them) for position, color, size, and shape
-        const transform = function (d) {
+        const transform = (d) => {
             let x = this.parent[x_scale](d[this.layout.x_axis.field]);
             let y = this.parent[y_scale](d[this.layout.y_axis.field]);
             if (isNaN(x)) {
@@ -122,22 +122,18 @@ class Forest extends BaseDataLayer {
                 y = -1000;
             }
             return 'translate(' + x + ',' + y + ')';
-        }.bind(this);
+        };
 
-        const fill = function (d, i) {
+        const fill = (d, i) => {
             return this.resolveScalableParameter(this.layout.color, d, i);
-        }.bind(this);
-        const fill_opacity = function (d, i) {
+        };
+        const fill_opacity = (d, i) => {
             return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
-        }.bind(this);
+        };
 
         const shape = d3.svg.symbol()
-            .size(function (d, i) {
-                return this.resolveScalableParameter(this.layout.point_size, d, i);
-            }.bind(this))
-            .type(function (d, i) {
-                return this.resolveScalableParameter(this.layout.point_shape, d, i);
-            }.bind(this));
+            .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
+            .type((d, i) => this.resolveScalableParameter(this.layout.point_shape, d, i));
 
         // Apply position and color
         points_selection
@@ -150,9 +146,9 @@ class Forest extends BaseDataLayer {
         points_selection.exit().remove();
 
         // Apply default event emitters to selection
-        points_selection.on('click.event_emitter', function(element_data) {
+        points_selection.on('click.event_emitter', (element_data) => {
             this.parent.emit('element_clicked', element_data, true);
-        }.bind(this));
+        });
 
         // Apply behaviors to points
         this.applyBehaviors(points_selection);

@@ -105,9 +105,9 @@ class Line extends BaseDataLayer {
 
         // Apply class to path based on global status flags
         let path_class = 'lz-data_layer-line';
-        Object.keys(this.global_statuses).forEach(function(global_status) {
+        Object.keys(this.global_statuses).forEach((global_status) => {
             if (this.global_statuses[global_status]) { path_class += ' lz-data_layer-line-' + global_status; }
-        }.bind(this));
+        });
         this.path.attr('class', path_class);
 
         // Trigger layout changed event hook

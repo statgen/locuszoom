@@ -97,7 +97,7 @@ class Genes extends BaseDataLayer {
         this.tracks = 1;
         this.gene_track_index = { 1: [] };
 
-        this.data.map(function(d, g) {
+        this.data.map((d, g) => {
 
             // If necessary, split combined gene id / version fields into discrete fields.
             // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
@@ -189,14 +189,14 @@ class Genes extends BaseDataLayer {
 
             // Stash parent references on all genes, trascripts, and exons
             this.data[g].parent = this;
-            this.data[g].transcripts.map(function(d, t) {
+            this.data[g].transcripts.map((d, t) => {
                 this.data[g].transcripts[t].parent = this.data[g];
-                this.data[g].transcripts[t].exons.map(function(d, e) {
+                this.data[g].transcripts[t].exons.map((d, e) => {
                     this.data[g].transcripts[t].exons[e].parent = this.data[g].transcripts[t];
-                }.bind(this));
-            }.bind(this));
+                });
+            });
 
-        }.bind(this));
+        });
         return this;
     }
 
@@ -219,7 +219,7 @@ class Genes extends BaseDataLayer {
         selection.enter().append('g')
             .attr('class', 'lz-data_layer-genes');
 
-        selection.attr('id', function(d) { return this.getElementId(d); }.bind(this))
+        selection.attr('id', (d) => this.getElementId(d))
             .each(function(gene) {
 
                 const data_layer = gene.parent;

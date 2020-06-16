@@ -533,9 +533,9 @@ class BaseDataLayer {
                 .attr('class', 'lz-tooltip-close-button')
                 .attr('title', 'Close')
                 .text('×')
-                .on('click', function() {
+                .on('click', () => {
                     this.destroyTooltip(id);
-                }.bind(this));
+                });
         }
         // Apply data directly to the tool tip for easier retrieval by custom UI elements inside the tool tip
         this.tooltips[id].selector.data([d]);
@@ -1028,9 +1028,9 @@ class BaseDataLayer {
         }
 
         // Apply statuses
-        this.filterElements(filters).forEach(function(element) {
+        this.filterElements(filters).forEach((element) => {
             this.setElementStatus(status, element, toggle);
-        }.bind(this));
+        });
 
         return this;
     }
@@ -1239,11 +1239,11 @@ class BaseDataLayer {
 
         // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
         const promise = this.parent_plot.lzd.getData(this.state, this.layout.fields);
-        promise.then(function(new_data) {
+        promise.then((new_data) => {
             this.data = new_data.body;
             this.applyDataMethods();
             this.initialized = true;
-        }.bind(this));
+        });
 
         return promise;
     }

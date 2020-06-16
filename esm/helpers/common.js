@@ -25,19 +25,17 @@ function generateCurtain() {
          * @param {string} content Content to be displayed on the curtain (as raw HTML)
          * @param {object} css Apply the specified styles to the curtain and its contents
          */
-        show: function (content, css) {
+        show: (content, css) => {
             if (!this.curtain.showing) {
                 this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
                     .attr('class', 'lz-curtain').attr('id', this.id + '.curtain');
                 this.curtain.content_selector = this.curtain.selector.append('div').attr('class', 'lz-curtain-content');
                 this.curtain.selector.append('div').attr('class', 'lz-curtain-dismiss').html('Dismiss')
-                    .on('click', function () {
-                        this.curtain.hide();
-                    }.bind(this));
+                    .on('click', () => this.curtain.hide());
                 this.curtain.showing = true;
             }
             return this.curtain.update(content, css);
-        }.bind(this),
+        },
 
         /**
          * Update the content and css of the curtain that's currently being shown. This method also adjusts the size
@@ -45,7 +43,7 @@ function generateCurtain() {
          * @param {string} content Content to be displayed on the curtain (as raw HTML)
          * @param {object} css Apply the specified styles to the curtain and its contents
          */
-        update: function (content, css) {
+        update: (content, css) => {
             if (!this.curtain.showing) {
                 return this.curtain;
             }
@@ -71,13 +69,13 @@ function generateCurtain() {
                 this.curtain.content_selector.html(content);
             }
             return this.curtain;
-        }.bind(this),
+        },
 
         /**
          * Remove the curtain
          * @param {number} delay Time to wait (in ms)
          */
-        hide: function (delay) {
+        hide: (delay) => {
             if (!this.curtain.showing) {
                 return this.curtain;
             }
@@ -93,7 +91,7 @@ function generateCurtain() {
             this.curtain.content_selector = null;
             this.curtain.showing = false;
             return this.curtain;
-        }.bind(this)
+        }
     };
     return curtain;
 }
@@ -119,7 +117,7 @@ function generateLoader() {
          * Show a loading indicator
          * @param {string} [content='Loading...'] Loading message (displayed as raw HTML)
          */
-        show: function (content) {
+        show: (content) => {
             // Generate loader
             if (!this.loader.showing) {
                 this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
@@ -129,20 +127,14 @@ function generateLoader() {
                 this.loader.progress_selector = this.loader.selector
                     .append('div').attr('class', 'lz-loader-progress-container')
                     .append('div').attr('class', 'lz-loader-progress');
-                /* TODO: figure out how to make this cancel button work
-                this.loader.cancel_selector = this.loader.selector.append("div")
-                    .attr("class", "lz-loader-cancel").html("Cancel")
-                    .on("click", function(){
-                        this.loader.hide();
-                    }.bind(this));
-                */
+
                 this.loader.showing = true;
                 if (typeof content == 'undefined') {
                     content = 'Loading...';
                 }
             }
             return this.loader.update(content);
-        }.bind(this),
+        },
 
         /**
          * Update the currently displayed loader and ensure the new content is positioned correctly.
@@ -150,7 +142,7 @@ function generateLoader() {
          * @param {number} [percent] A number from 1-100. If a value is specified, it will stop all animations
          *   in progress.
          */
-        update: function (content, percent) {
+        update: (content, percent) => {
             if (!this.loader.showing) {
                 return this.loader;
             }
@@ -180,31 +172,31 @@ function generateLoader() {
                 });
             }
             return this.loader;
-        }.bind(this),
+        },
 
         /**
          * Adds a class to the loading bar that makes it loop infinitely in a loading animation. Useful when exact
          *   percent progress is not available.
          */
-        animate: function () {
+        animate: () => {
             this.loader.progress_selector.classed('lz-loader-progress-animated', true);
             return this.loader;
-        }.bind(this),
+        },
 
         /**
          *  Sets the loading bar in the loader to percentage width equal to the percent (number) value passed. Percents
          *    will automatically be limited to a range of 1 to 100. Will stop all animations in progress.
          */
-        setPercentCompleted: function (percent) {
+        setPercentCompleted: (percent) => {
             this.loader.progress_selector.classed('lz-loader-progress-animated', false);
             return this.loader.update(null, percent);
-        }.bind(this),
+        },
 
         /**
          * Remove the loader
          * @param {number} delay Time to wait (in ms)
          */
-        hide: function (delay) {
+        hide: (delay) => {
             if (!this.loader.showing) {
                 return this.loader;
             }
@@ -222,7 +214,7 @@ function generateLoader() {
             this.loader.cancel_selector = null;
             this.loader.showing = false;
             return this.loader;
-        }.bind(this)
+        }
     };
 }
 

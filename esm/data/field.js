@@ -27,10 +27,7 @@ class Field {
 
         if (typeof parts[3] == 'string' && parts[3].length > 1) {
             this.transformations = parts[3].substring(1).split('|');
-            this.transformations.forEach(function(transform, i) {
-                // FIXME: Depends on central registry
-                this.transformations[i] = transforms.get(transform);
-            }.bind(this));
+            this.transformations.forEach((transform, i) => this.transformations[i] = transforms.get(transform));
         }
     }
 
