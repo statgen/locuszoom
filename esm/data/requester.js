@@ -47,7 +47,7 @@ class Requester {
     getData(state, fields) {
         var requests = this.__split_requests(fields);
         // Create an array of functions that, when called, will trigger the request to the specified datasource
-        var request_handles = Object.keys(requests).map(function(key) {
+        var request_handles = Object.keys(requests).map((key) => {
             if (!this._sources.get(key)) {
                 throw new Error('Datasource for namespace ' + key + ' not found');
             }

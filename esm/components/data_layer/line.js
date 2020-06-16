@@ -2,7 +2,7 @@ import d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
-import {statuses} from '../constants';
+import {STATUSES} from '../constants';
 
 const default_layout = {
     style: {
@@ -92,7 +92,7 @@ class Line extends BaseDataLayer {
 
     setAllElementStatus(status, toggle) {
         // Sanity check
-        if (typeof status == 'undefined' || statuses.adjectives.indexOf(status) === -1) {
+        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
             throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
         }
         if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }

@@ -2,7 +2,7 @@ import d3 from 'd3';
 
 import {merge} from '../helpers/layouts';
 import Requester from '../data/requester';
-import {Dashboard} from './dashboard';
+import Dashboard from './dashboard';
 import Panel from './panel';
 import {generateCurtain, generateLoader} from '../helpers/common';
 
@@ -201,140 +201,6 @@ class Plot {
          *   associated with a clicked plot element
          */
 
-        /**
-         * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
-         *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
-         *
-         * The following plot-level events are currently supported:
-         *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
-         *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
-         *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-         *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
-         *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
-         *        whether the element is being selected or deselected.
-         *
-         * To register a hook for any of these events use `plot.on('event_name', function() {})`.
-         *
-         * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
-         *   were registered. The this context bound to each event hook function is dependent on the type of event, as
-         *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
-         *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
-         *   that was clicked.
-         *
-         * @param {String} event The name of an event (as defined in `event_hooks`)
-         * @param {eventCallback} hook
-         * @returns {function} The registered event listener
-         */
-        this.on = function(event, hook) {
-            if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                throw new Error('Unable to register event hook, invalid event: ' + event.toString());
-            }
-            if (typeof hook != 'function') {
-                throw new Error('Unable to register event hook, invalid hook function passed');
-            }
-            this.event_hooks[event].push(hook);
-            return hook;
-        };
-        /**
-         * Remove one or more previously defined event listeners
-         * @param {String} event The name of an event (as defined in `event_hooks`)
-         * @param {eventCallback} [hook] The callback to deregister
-         * @returns {Plot}
-         */
-        this.off = function(event, hook) {
-            const theseHooks = this.event_hooks[event];
-            if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-                throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
-            }
-            if (hook === undefined) {
-                // Deregistering all hooks for this event may break basic functionality, and should only be used during
-                //  cleanup operations (eg to prevent memory leaks)
-                this.event_hooks[event] = [];
-            } else {
-                const hookMatch = theseHooks.indexOf(hook);
-                if (hookMatch !== -1) {
-                    theseHooks.splice(hookMatch, 1);
-                } else {
-                    throw new Error('The specified event listener is not registered and therefore cannot be removed');
-                }
-            }
-            return this;
-        };
-        /**
-         * Handle running of event hooks when an event is emitted
-         * @param {string} event A known event name
-         * @param {*} eventData Data or event description that will be passed to the event listener
-         * @returns {Plot}
-         */
-        this.emit = function(event, eventData) {
-            // TODO: there are small differences between the emit implementation between plots and panels. In the future,
-            //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
-            if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-                throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
-            }
-            const sourceID = this.getBaseId();
-            const self = this;
-            this.event_hooks[event].forEach(function(hookToRun) {
-                let eventContext;
-                if (eventData && eventData.sourceID) {
-                    // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
-                    //  when re-emitting the event to plot-level listeners
-                    eventContext = eventData;
-                } else {
-                    eventContext = {sourceID: sourceID, data: eventData || null};
-                }
-                // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
-                //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
-                //  override anything provided to `call` below.
-                hookToRun.call(self, eventContext);
-            });
-            return this;
-        };
-
-        /**
-         * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
-         *  This returns a result with absolute position relative to the page, regardless of current scrolling
-         * Necessary for positioning any HTML elements over the plot
-         * @returns {{x: Number, y: Number, width: Number, height: Number}}
-         */
-        this.getPageOrigin = function() {
-            const bounding_client_rect = this.svg.node().getBoundingClientRect();
-            let x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
-            let y_offset = document.documentElement.scrollTop || document.body.scrollTop;
-            let container = this.svg.node();
-            while (container.parentNode !== null) {
-                // TODO: Recursively seeks offsets for highest non-static parent node. This can lead to incorrect
-                //   calculations of, for example, x coordinate relative to the page. Revisit this logic.
-                container = container.parentNode;
-                if (container !== document && d3.select(container).style('position') !== 'static') {
-                    x_offset = -1 * container.getBoundingClientRect().left;
-                    y_offset = -1 * container.getBoundingClientRect().top;
-                    break;
-                }
-            }
-            return {
-                x: x_offset + bounding_client_rect.left,
-                y: y_offset + bounding_client_rect.top,
-                width: bounding_client_rect.width,
-                height: bounding_client_rect.height
-            };
-        };
-
-        /**
-         * Get the top and left offset values for the plot's container element (the div that was populated)
-         * @returns {{top: number, left: number}}
-         */
-        this.getContainerOffset = function() {
-            const offset = { top: 0, left: 0 };
-            let container = this.container.offsetParent || null;
-            while (container !== null) {
-                offset.top += container.offsetTop;
-                offset.left += container.offsetLeft;
-                container = container.offsetParent || null;
-            }
-            return offset;
-        };
-
         //
         /**
          * Event information describing interaction (e.g. panning and zooming) is stored on the plot
@@ -344,22 +210,156 @@ class Plot {
          */
         this.interaction = {};
 
-        /**
-         * Track whether the target panel can respond to mouse interaction events
-         * @param {String} panel_id
-         * @returns {boolean}
-         */
-        this.canInteract = function(panel_id) {
-            panel_id = panel_id || null;
-            if (panel_id) {
-                return ((typeof this.interaction.panel_id == 'undefined' || this.interaction.panel_id === panel_id) && !this.loading_data);
-            } else {
-                return !(this.interaction.dragging || this.interaction.zooming || this.loading_data);
-            }
-        };
-
         // Initialize the layout
         this.initializeLayout();
+    }
+
+    /**
+     * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
+     *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
+     *
+     * The following plot-level events are currently supported:
+     *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
+     *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
+     *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
+     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
+     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
+     *        whether the element is being selected or deselected.
+     *
+     * To register a hook for any of these events use `plot.on('event_name', function() {})`.
+     *
+     * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
+     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
+     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
+     *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
+     *   that was clicked.
+     *
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} hook
+     * @returns {function} The registered event listener
+     */
+    on(event, hook) {
+        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+            throw new Error('Unable to register event hook, invalid event: ' + event.toString());
+        }
+        if (typeof hook != 'function') {
+            throw new Error('Unable to register event hook, invalid hook function passed');
+        }
+        this.event_hooks[event].push(hook);
+        return hook;
+    }
+    /**
+     * Remove one or more previously defined event listeners
+     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @param {eventCallback} [hook] The callback to deregister
+     * @returns {Plot}
+     */
+    off(event, hook) {
+        const theseHooks = this.event_hooks[event];
+        if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+            throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
+        }
+        if (hook === undefined) {
+            // Deregistering all hooks for this event may break basic functionality, and should only be used during
+            //  cleanup operations (eg to prevent memory leaks)
+            this.event_hooks[event] = [];
+        } else {
+            const hookMatch = theseHooks.indexOf(hook);
+            if (hookMatch !== -1) {
+                theseHooks.splice(hookMatch, 1);
+            } else {
+                throw new Error('The specified event listener is not registered and therefore cannot be removed');
+            }
+        }
+        return this;
+    }
+    /**
+     * Handle running of event hooks when an event is emitted
+     * @param {string} event A known event name
+     * @param {*} eventData Data or event description that will be passed to the event listener
+     * @returns {Plot}
+     */
+    emit(event, eventData) {
+        // TODO: there are small differences between the emit implementation between plots and panels. In the future,
+        //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
+        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+            throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
+        }
+        const sourceID = this.getBaseId();
+        const self = this;
+        this.event_hooks[event].forEach(function(hookToRun) {
+            let eventContext;
+            if (eventData && eventData.sourceID) {
+                // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
+                //  when re-emitting the event to plot-level listeners
+                eventContext = eventData;
+            } else {
+                eventContext = {sourceID: sourceID, data: eventData || null};
+            }
+            // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+            //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+            //  override anything provided to `call` below.
+            hookToRun.call(self, eventContext);
+        });
+        return this;
+    }
+
+    /**
+     * Track whether the target panel can respond to mouse interaction events
+     * @param {String} panel_id
+     * @returns {boolean}
+     */
+    canInteract(panel_id) {
+        panel_id = panel_id || null;
+        if (panel_id) {
+            return ((typeof this.interaction.panel_id == 'undefined' || this.interaction.panel_id === panel_id) && !this.loading_data);
+        } else {
+            return !(this.interaction.dragging || this.interaction.zooming || this.loading_data);
+        }
+    }
+
+    /**
+     * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
+     *  This returns a result with absolute position relative to the page, regardless of current scrolling
+     * Necessary for positioning any HTML elements over the plot
+     * @returns {{x: Number, y: Number, width: Number, height: Number}}
+     */
+    getPageOrigin() {
+        const bounding_client_rect = this.svg.node().getBoundingClientRect();
+        let x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
+        let y_offset = document.documentElement.scrollTop || document.body.scrollTop;
+        let container = this.svg.node();
+        while (container.parentNode !== null) {
+            // TODO: Recursively seeks offsets for highest non-static parent node. This can lead to incorrect
+            //   calculations of, for example, x coordinate relative to the page. Revisit this logic.
+            container = container.parentNode;
+            if (container !== document && d3.select(container).style('position') !== 'static') {
+                x_offset = -1 * container.getBoundingClientRect().left;
+                y_offset = -1 * container.getBoundingClientRect().top;
+                break;
+            }
+        }
+        return {
+            x: x_offset + bounding_client_rect.left,
+            y: y_offset + bounding_client_rect.top,
+            width: bounding_client_rect.width,
+            height: bounding_client_rect.height
+        };
+    }
+
+    /**
+     * Get the top and left offset values for the plot's container element (the div that was populated)
+     * @returns {{top: number, left: number}}
+     */
+    getContainerOffset() {
+        const offset = { top: 0, left: 0 };
+        let container = this.container.offsetParent || null;
+        while (container !== null) {
+            offset.top += container.offsetTop;
+            offset.left += container.offsetLeft;
+            container = container.offsetParent || null;
+        }
+        return offset;
     }
 
     /**
@@ -832,15 +832,19 @@ class Plot {
                 if (!this.showing && !this.parent.curtain.showing) {
                     this.showing = true;
                     // Loop through all panels to create a horizontal boundary for each
-                    this.parent.panel_ids_by_y_index.forEach(function(panel_id, panel_idx) {
+                    this.parent.panel_ids_by_y_index.forEach((panel_id, panel_idx) => {
                         const selector = d3.select(this.parent.svg.node().parentNode).insert('div', '.lz-data_layer-tooltip')
                             .attr('class', 'lz-panel-boundary')
                             .attr('title', 'Resize panel');
                         selector.append('span');
                         const panel_resize_drag = d3.behavior.drag();
-                        panel_resize_drag.on('dragstart', function() { this.dragging = true; }.bind(this));
-                        panel_resize_drag.on('dragend', function() { this.dragging = false; }.bind(this));
-                        panel_resize_drag.on('drag', function() {
+                        panel_resize_drag.on('dragstart', () => {
+                            this.dragging = true;
+                        });
+                        panel_resize_drag.on('dragend', () => {
+                            this.dragging = false;
+                        });
+                        panel_resize_drag.on('drag', () => {
                             // First set the dimensions on the panel we're resizing
                             const this_panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
                             const original_panel_height = this_panel.layout.height;
@@ -850,21 +854,21 @@ class Plot {
                             // Next loop through all panels.
                             // Update proportional dimensions for all panels including the one we've resized using discrete heights.
                             // Reposition panels with a greater y-index than this panel to their appropriate new origin.
-                            this.parent.panel_ids_by_y_index.forEach(function(loop_panel_id, loop_panel_idx) {
+                            this.parent.panel_ids_by_y_index.forEach((loop_panel_id, loop_panel_idx) => {
                                 const loop_panel = this.parent.panels[this.parent.panel_ids_by_y_index[loop_panel_idx]];
                                 loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                                 if (loop_panel_idx > panel_idx) {
                                     loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
                                     loop_panel.dashboard.position();
                                 }
-                            }.bind(this));
+                            });
                             // Reset dimensions on the entire plot and reposition panel boundaries
                             this.parent.positionPanels();
                             this.position();
-                        }.bind(this));
+                        });
                         selector.call(panel_resize_drag);
                         this.parent.panel_boundaries.selectors.push(selector);
-                    }.bind(this));
+                    });
                     // Create a corner boundary / resize element on the bottom-most panel that resizes the entire plot
                     const corner_selector = d3.select(this.parent.svg.node().parentNode).insert('div', '.lz-data_layer-tooltip')
                         .attr('class', 'lz-panel-corner-boundary')
@@ -872,8 +876,12 @@ class Plot {
                     corner_selector.append('span').attr('class', 'lz-panel-corner-boundary-outer');
                     corner_selector.append('span').attr('class', 'lz-panel-corner-boundary-inner');
                     const corner_drag = d3.behavior.drag();
-                    corner_drag.on('dragstart', function() { this.dragging = true; }.bind(this));
-                    corner_drag.on('dragend', function() { this.dragging = false; }.bind(this));
+                    corner_drag.on('dragstart', () => {
+                        this.dragging = true;
+                    });
+                    corner_drag.on('dragend', () => {
+                        this.dragging = false;
+                    });
                     corner_drag.on('drag', function() {
                         this.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
                     }.bind(this.parent));

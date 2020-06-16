@@ -1,7 +1,7 @@
 import d3 from 'd3';
 
-import {statuses} from './constants';
-import {Dashboard} from './dashboard';
+import {STATUSES} from './constants';
+import Dashboard from './dashboard';
 import {generateCurtain, generateLoader} from '../helpers/common';
 import {merge} from '../helpers/layouts';
 import Legend from './legend';
@@ -576,9 +576,9 @@ class Panel {
         // Establish panel background drag interaction mousedown event handler (on the panel background)
         if (this.layout.interaction.drag_background_to_pan) {
             const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
-            const mousedown = function () {
+            const mousedown = () => {
                 this.parent.startDrag(this, 'background');
-            }.bind(this);
+            };
             this.svg.container.select('.lz-panel-background')
                 .on('mousedown' + namespace + '.background', mousedown)
                 .on('touchstart' + namespace + '.background', mousedown);
@@ -1207,7 +1207,7 @@ class Panel {
         }
 
         // Attach interactive handlers to ticks as needed
-        ['x', 'y1', 'y2'].forEach(function(axis) {
+        ['x', 'y1', 'y2'].forEach((axis) => {
             if (this.layout.interaction['drag_' + axis + '_ticks_to_scale']) {
                 const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
                 const tick_mouseover = function () {
@@ -1230,14 +1230,13 @@ class Panel {
                         d3.select(this).style({'font-weight': 'normal'});
                         d3.select(this).on('keydown' + namespace, null).on('keyup' + namespace, null);
                     })
-                    .on('mousedown' + namespace, function() {
+                    .on('mousedown' + namespace, () => {
                         this.parent.startDrag(this, axis + '_tick');
-                    }.bind(this));
+                    });
             }
-        }.bind(this));
+        });
 
         return this;
-
     }
 
     /**
@@ -1320,8 +1319,8 @@ class Panel {
     }
 }
 // TODO: Capture documentation for dynamically generated methods
-statuses.verbs.forEach(function(verb, idx) {
-    const adjective = statuses.adjectives[idx];
+STATUSES.verbs.forEach(function(verb, idx) {
+    const adjective = STATUSES.adjectives[idx];
     const antiverb = 'un' + verb;
     // Set/unset status for arbitrarily many elements given a set of filters
     Panel.prototype[verb + 'ElementsByFilters'] = function(filters, exclusive) {

@@ -255,7 +255,7 @@ function populate(selector, datasource, layout) {
         // Create the plot
         plot = new Plot(this.node().id, datasource, layout);
         plot.container = this.node();
-        // Detect data-region and fill in state values if present
+        // Detect HTML `data-region` attribute, and use it to fill in state values if present
         if (typeof this.node().dataset !== 'undefined' && typeof this.node().dataset.region !== 'undefined') {
             const parsed_state = parsePositionQuery(this.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key) {
@@ -274,7 +274,7 @@ function populate(selector, datasource, layout) {
         // Initialize the plot
         plot.initialize();
         // If the plot has defined data sources then trigger its first mapping based on state values
-        if (datasource && datasource.list().length) {
+        if (datasource) {
             plot.refresh();
         }
     });

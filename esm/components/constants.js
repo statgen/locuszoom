@@ -7,7 +7,7 @@
  * @static
  * @type {{verbs: String[], adjectives: String[], menu_antiverbs: String[]}}
  */
-export const statuses = {
+export const STATUSES = {
     verbs: ['highlight', 'select', 'fade', 'hide'],
     adjectives: ['highlighted', 'selected', 'faded', 'hidden'],
     menu_antiverbs: ['unhighlight', 'deselect', 'unfade', 'show']

@@ -3,7 +3,7 @@ import {parseFields} from '../../helpers/display';
 import Field from '../../data/field';
 import {scalable} from '../../registry';
 import {merge} from '../../helpers/layouts';
-import {statuses} from '../constants';
+import {STATUSES} from '../constants';
 
 /**
  * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
@@ -141,7 +141,7 @@ class BaseDataLayer {
         //  persist across re-render)
         const layer_state = { status_flags: {}, extra_fields: {} };
         const status_flags = layer_state.status_flags;
-        statuses.adjectives.forEach(function(status) {
+        STATUSES.adjectives.forEach(function(status) {
             status_flags[status] = status_flags[status] || [];
         });
         // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
@@ -844,16 +844,16 @@ class BaseDataLayer {
 
         // Find all the statuses that apply to just this single element
         const layer_state = this.layer_state;
-        var statuses = {};  // {status_name: bool}
-        statuses.adjectives.forEach(function(status) {
+        var status_flags = {};  // {status_name: bool}
+        STATUSES.adjectives.forEach(function(status) {
             const antistatus = 'un' + status;
-            statuses[status] = (layer_state.status_flags[status].indexOf(id) !== -1);
-            statuses[antistatus] = !statuses[status];
+            status_flags[status] = (layer_state.status_flags[status].indexOf(id) !== -1);
+            status_flags[antistatus] = !status_flags[status];
         });
 
         // Decide whether to show/hide the tooltip based solely on the underlying element
-        const show_resolved = resolveStatus(statuses, show_directive);
-        const hide_resolved = resolveStatus(statuses, hide_directive);
+        const show_resolved = resolveStatus(status_flags, show_directive);
+        const hide_resolved = resolveStatus(status_flags, hide_directive);
 
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
@@ -1014,7 +1014,7 @@ class BaseDataLayer {
     setElementStatusByFilters(status, toggle, filters, exclusive) {
 
         // Sanity check
-        if (typeof status == 'undefined' || statuses.adjectives.indexOf(status) === -1) {
+        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
             throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
         }
         if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
@@ -1044,7 +1044,7 @@ class BaseDataLayer {
     setAllElementStatus(status, toggle) {
 
         // Sanity check
-        if (typeof status == 'undefined' || statuses.adjectives.indexOf(status) === -1) {
+        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
             throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
         }
         if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
@@ -1194,61 +1194,6 @@ class BaseDataLayer {
     }
 
     /**
-     * Get a data layer's current underlying data in a standard format (e.g. JSON or CSV)
-     * @param {('csv'|'tsv'|'json')} format How to export the data
-     * @returns {*}
-     */
-    exportData(format) {
-        const default_format = 'json';
-        format = format || default_format;
-        format = (typeof format == 'string' ? format.toLowerCase() : default_format);
-        if (['json','csv','tsv'].indexOf(format) === -1) { format = default_format; }
-        let ret;
-        switch (format) {
-        case 'json':
-            try {
-                ret = JSON.stringify(this.data);
-            } catch (e) {
-                ret = null;
-                console.warn('Unable to export JSON data from data layer: ' + this.getBaseId());
-                console.error(e);
-            }
-            break;
-        case 'tsv':
-        case 'csv':
-            try {
-                const jsonified = JSON.parse(JSON.stringify(this.data));
-                if (typeof jsonified != 'object') {
-                    ret = jsonified.toString();
-                } else if (!Array.isArray(jsonified)) {
-                    ret = 'Object';
-                } else {
-                    const delimiter = (format === 'tsv') ? '\t' : ',';
-                    const header = this.layout.fields.map(function (header) {
-                        return JSON.stringify(header);
-                    }).join(delimiter) + '\n';
-                    ret = header + jsonified.map(function(record) {
-                        return this.layout.fields.map(function(field) {
-                            if (typeof record[field] == 'undefined') {
-                                return JSON.stringify(null);
-                            } else if (typeof record[field] == 'object' && record[field] !== null) {
-                                return Array.isArray(record[field]) ? '"[Array(' + record[field].length + ')]"' : '"[Object]"';
-                            } else {
-                                return JSON.stringify(record[field]);
-                            }
-                        }).join(delimiter);
-                    }.bind(this)).join('\n');
-                }
-            } catch (e) {
-                ret = null;
-                console.error('Unable to export CSV data from data layer: ' + this.getBaseId() + ';', e);
-            }
-            break;
-        }
-        return ret;
-    }
-
-    /**
      * Apply all tracked element statuses. This is primarily intended for re-rendering the plot, in order to preserve
      *  behaviors when items are updated.
      */
@@ -1305,35 +1250,69 @@ class BaseDataLayer {
 }
 
 // TODO: Add stub documentation for dynamically generated methods
-statuses.verbs.forEach(function(verb, idx) {
-    const adjective = statuses.adjectives[idx];
+STATUSES.verbs.forEach(function(verb, idx) {
+    const adjective = STATUSES.adjectives[idx];
     const antiverb = 'un' + verb;
     // Set/unset a single element's status
-    // TODO: Improve documentation for dynamically generated methods/properties
+
+    /** @function highlightElement */
+    /** @function selectElement */
+    /** @function fadeElement */
+    /** @function hideElement */
     BaseDataLayer.prototype[verb + 'Element'] = function(element, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         this.setElementStatus(adjective, element, true, exclusive);
         return this;
     };
+
+    /** @function unhighlightElement */
+    /** @function unselectElement */
+    /** @function unfadeElement */
+    /** @function unhideElement */
     BaseDataLayer.prototype[antiverb + 'Element'] = function(element, exclusive) {
         if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         this.setElementStatus(adjective, element, false, exclusive);
         return this;
     };
+
+
+    /** @function highlightElementsByFilters */
+    /** @function selectElementsByFilters */
+    /** @function fadeElementsByFilters */
+    /** @function hideElementsByFilters */
     // Set/unset status for arbitrarily many elements given a set of filters
     BaseDataLayer.prototype[verb + 'ElementsByFilters'] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
+
+    /** @function unhighlightElementsByFilters */
+    /** @function unselectElementsByFilters */
+    /** @function unfadeElementsByFilters */
+    /** @function unhideElementsByFilters */
     BaseDataLayer.prototype[antiverb + 'ElementsByFilters'] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
+
+    /** @function highlightAllElements */
+    /** @function selectAllElements */
+    /** @function fadeAllElements */
+    /** @function hideAllElements */
     // Set/unset status for all elements
     BaseDataLayer.prototype[verb + 'AllElements'] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
+
+    /** @function unhighlightAllElements */
+    /** @function unselectAllElements */
+    /** @function unfadeAllElements */
+    /** @function unhideAllElements */
     BaseDataLayer.prototype[antiverb + 'AllElements'] = function() {
         this.setAllElementStatus(adjective, false);
         return this;

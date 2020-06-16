@@ -1,10 +1,11 @@
 import {assert} from 'chai';
 import d3 from 'd3';
 
-import {Dashboard} from '../../../esm/components/dashboard/base';
+import Dashboard from '../../../esm/components/dashboard';
 import DataSources from '../../../esm/data';
+import {populate} from '../../../esm/helpers/display';
 
-describe.skip('LocusZoom.Dashboard', function() {
+describe('LocusZoom.Dashboard', function() {
     describe('Dashboard Composition and Methods', function() {
         beforeEach(function() {
             var datasources = new DataSources();
@@ -26,7 +27,7 @@ describe.skip('LocusZoom.Dashboard', function() {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', datasources, layout);
+            this.plot = populate('#plot', datasources, layout);
         });
         afterEach(function() {
             d3.select('body').selectAll('*').remove();
@@ -41,12 +42,12 @@ describe.skip('LocusZoom.Dashboard', function() {
         });
         it('should generate a selector for its DOM element when shown', function() {
             this.plot.dashboard.show();
-            this.plot.dashboard.selector.should.be.an.Object;
+            assert.isArray(this.plot.dashboard.selector);
             assert.instanceOf(this.plot.dashboard.selector, d3.selection);
             assert.equal(this.plot.dashboard.selector.empty(), false);
             assert.equal(this.plot.dashboard.selector.attr('id'), d3.select('#plot\\.dashboard').attr('id'));
             this.plot.panels.test.dashboard.show();
-            this.plot.panels.test.dashboard.selector.should.be.an.Object;
+            assert.isArray(this.plot.panels.test.dashboard.selector);
             assert.ok(this.plot.panels.test.dashboard.selector instanceof d3.selection);
             assert.equal(this.plot.panels.test.dashboard.selector.empty(), false);
             assert.equal(this.plot.panels.test.dashboard.selector.attr('id'), d3.select('#plot\\.test\\.dashboard').attr('id'));
@@ -90,7 +91,7 @@ describe.skip('LocusZoom.Dashboard', function() {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', datasources, layout);
+            this.plot = populate('#plot', datasources, layout);
             assert.equal(d3.select('#plot').empty(), false);
             assert.equal(d3.select('#plot.dashboard').empty(), true);
         });
@@ -107,7 +108,7 @@ describe.skip('LocusZoom.Dashboard', function() {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', datasources, layout);
+            this.plot = populate('#plot', datasources, layout);
             assert.equal(d3.select('#plot').empty(), false);
             assert.equal(d3.select('#plot\\.dashboard').empty(), false);
         });
@@ -127,18 +128,18 @@ describe.skip('LocusZoom.Dashboard', function() {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', datasources, layout);
+            this.plot = populate('#plot', datasources, layout);
         });
         afterEach(function() {
             d3.select('#plot').remove();
             this.plot = null;
         });
         it('Should show initial plot dimensions', function() {
-            this.plot.dashboard.components[0].selector.html().should.be.exactly('100px × 100px');
+            assert.equal(this.plot.dashboard.components[0].selector.html(), '100px × 100px');
         });
         it('Should show updated plot dimensions automatically as dimensions change', function() {
             this.plot.setDimensions(220,330);
-            this.plot.dashboard.components[0].selector.html().should.be.exactly('220px × 330px');
+            assert.equal(this.plot.dashboard.components[0].selector.html(), '220px × 330px');
         });
     });
 
@@ -158,20 +159,19 @@ describe.skip('LocusZoom.Dashboard', function() {
                 }
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', datasources, layout);
+            this.plot = populate('#plot', datasources, layout);
         });
         afterEach(function() {
             d3.select('#plot').remove();
             this.plot = null;
         });
         it('Should show initial region scale from state', function() {
-            this.plot.dashboard.components[0].selector.html().should.be.exactly('300.00 Kb');
+            assert.equal(this.plot.dashboard.components[0].selector.html(), '300.00 Kb');
         });
-        it('Should show updated region scale from state as state region boundaries change', function(done) {
-            this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(function() {
-                this.plot.dashboard.components[0].selector.html().should.be.exactly('400.00 Kb');
-                done();
-            }.bind(this)).catch(done);
+        it('Should show updated region scale from state as state region boundaries change', function() {
+            return this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(() => {
+                assert.equal(this.plot.dashboard.components[0].selector.html(), '400.00 Kb');
+            });
         });
     });
 });

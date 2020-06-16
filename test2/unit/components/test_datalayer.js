@@ -1,7 +1,10 @@
 import {assert} from 'chai';
+import d3 from 'd3';
 
 import { scalable } from '../../../esm/registry';
 import BaseDataLayer from '../../../esm/components/data_layer/base';
+import {populate} from '../../../esm/helpers/display';
+import DataSources from '../../../esm/data';
 
 /**
  DataLayer.js Tests
@@ -9,9 +12,9 @@ import BaseDataLayer from '../../../esm/components/data_layer/base';
  */
 describe('LocusZoom.DataLayer', function () {
 
-    describe.skip('Z-index sorting', function () {
+    describe('Z-index sorting', function () {
         beforeEach(function () {
-            var layout = {
+            const layout = {
                 width: 800,
                 height: 400,
                 panels: [
@@ -27,55 +30,59 @@ describe('LocusZoom.DataLayer', function () {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', {}, layout);
+            this.plot = populate('#plot', null, layout);
         });
         afterEach(function () {
             d3.select('#plot').remove();
             this.plot = null;
         });
         it('should have a chainable method for moving layers up that stops at the top', function () {
-            this.plot.panels.panel0.data_layers.layerB.moveUp.should.be.a.Function;
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+
             this.plot.panels.panel0.data_layers.layerB.moveUp();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
+
             this.plot.panels.panel0.data_layers.layerB.moveUp();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
+
             this.plot.panels.panel0.data_layers.layerB.moveUp().moveUp();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(3);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
         });
         it('should have a chainable method for moving layers down that stops at the bottom', function () {
-            this.plot.panels.panel0.data_layers.layerC.moveDown.should.be.a.Function;
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
+
             this.plot.panels.panel0.data_layers.layerC.moveDown();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
+
             this.plot.panels.panel0.data_layers.layerC.moveDown();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
+
             this.plot.panels.panel0.data_layers.layerC.moveDown().moveDown();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
-            this.plot.panels.panel0.data_layers.layerA.layout.z_index.should.be.exactly(1);
-            this.plot.panels.panel0.data_layers.layerB.layout.z_index.should.be.exactly(2);
-            this.plot.panels.panel0.data_layers.layerC.layout.z_index.should.be.exactly(0);
-            this.plot.panels.panel0.data_layers.layerD.layout.z_index.should.be.exactly(3);
+            assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
+            assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
+            assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
+            assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
         });
     });
 
@@ -107,8 +114,8 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('can operate in a state-aware manner based on index in data[]', function () {
             scalable.add('fake', (parameters, input, index) => index);
-            var datalayer = new BaseDataLayer({ id: 'test' });
-            var config = { scale_function: 'fake' };
+            const datalayer = new BaseDataLayer({ id: 'test' });
+            const config = { scale_function: 'fake' };
             // The same input value will yield a different scaling function result, because position in data matters.
             assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 0), 0);
             assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 1), 1);
@@ -137,7 +144,7 @@ describe('LocusZoom.DataLayer', function () {
                     }
                 }
             };
-            var variants = [{ beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: 'bar' }];
+            const variants = [{ beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: 'bar' }];
             assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[0]), 'triangle-up');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[1]), 'triangle-down');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[2]), 'triangle-down');
@@ -195,7 +202,7 @@ describe('LocusZoom.DataLayer', function () {
 
     describe('Extent generation', function () {
         it('throws an error on invalid axis identifiers', function () {
-            var datalayer = new BaseDataLayer({ id: 'test' });
+            const datalayer = new BaseDataLayer({ id: 'test' });
             assert.throws(function() { datalayer.getAxisExtent(); });
             assert.throws(function() { datalayer.getAxisExtent('foo'); });
             assert.throws(function() { datalayer.getAxisExtent(1); });
@@ -362,7 +369,7 @@ describe('LocusZoom.DataLayer', function () {
 
     });
 
-    describe.skip('Layout Parameters', function () {
+    describe('Layout Parameters', function () {
         beforeEach(function () {
             this.plot = null;
             this.layout = {
@@ -384,10 +391,10 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd1', type: 'line', z_index: 1 },
                 { id: 'd2', type: 'line', z_index: 0 }
             ];
-            this.plot = LocusZoom.populate('#plot', {}, this.layout);
+            this.plot = populate('#plot', null, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d2', 'd1']);
-            this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(1);
-            this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(0);
+            assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 1);
+            assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 0);
         });
         it('should allow for explicitly setting data layer z_index with a negative value', function () {
             this.layout.panels[0].data_layers = [
@@ -396,12 +403,12 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd3', type: 'line' },
                 { id: 'd4', type: 'line', z_index: -1 }
             ];
-            this.plot = LocusZoom.populate('#plot', {}, this.layout);
+            this.plot = populate('#plot', null, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
-            this.plot.panels.p1.data_layers.d1.layout.z_index.should.be.exactly(0);
-            this.plot.panels.p1.data_layers.d2.layout.z_index.should.be.exactly(1);
-            this.plot.panels.p1.data_layers.d3.layout.z_index.should.be.exactly(3);
-            this.plot.panels.p1.data_layers.d4.layout.z_index.should.be.exactly(2);
+            assert.equal(this.plot.panels.p1.data_layers.d1.layout.z_index, 0);
+            assert.equal(this.plot.panels.p1.data_layers.d2.layout.z_index, 1);
+            assert.equal(this.plot.panels.p1.data_layers.d3.layout.z_index, 3);
+            assert.equal(this.plot.panels.p1.data_layers.d4.layout.z_index, 2);
         });
     });
 
@@ -416,7 +423,7 @@ describe('LocusZoom.DataLayer', function () {
 
             it('should require field and namespace to be specified', function () {
                 // TODO: Should there be validation to ensure this is a known namespace?
-                var self = this;
+                const self = this;
                 assert.throws(function () {
                     self.layer.addField();
                 }, /Must specify field name and namespace to use when adding field/);
@@ -427,7 +434,7 @@ describe('LocusZoom.DataLayer', function () {
             });
 
             it('should check type of the transformations argument', function () {
-                var self = this;
+                const self = this;
                 assert.ok(
                     this.layer.addField('aman', 'aplan'),
                     'Transformations are optional'
@@ -445,25 +452,25 @@ describe('LocusZoom.DataLayer', function () {
                 }, /Must provide transformations as either a string or array of strings/);
             });
             it('should construct an appropriate field name and add it to the internal fields array', function () {
-                var e1 = 'namespace:field';
+                const e1 = 'namespace:field';
                 assert.equal(
                     this.layer.addField('field', 'namespace'),
                     e1
                 );
 
-                var e2 = 'namespace:field|transformation';
+                const e2 = 'namespace:field|transformation';
                 assert.equal(
                     this.layer.addField('field', 'namespace', 'transformation'),
                     e2
                 );
 
-                var e3 = 'namespace:field|t1|t2';
+                const e3 = 'namespace:field|t1|t2';
                 assert.equal(
                     this.layer.addField('field', 'namespace', ['t1', 't2']),
                     e3
                 );
 
-                var fields = this.layer.layout.fields;
+                const fields = this.layer.layout.fields;
                 assert.ok(fields.indexOf(e1) !== -1);
                 assert.ok(fields.indexOf(e2) !== -1);
                 assert.ok(fields.indexOf(e3) !== -1);
@@ -471,127 +478,12 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe.skip('Data Access', function () {
+    describe('Highlight functions', function () {
         beforeEach(function () {
             this.plot = null;
-            this.ds1_src_data = [
-                { id: 2, pvalue: 32.7, ref_allele: 'G' },
-                { id: 5, pvalue: 0.53, ref_allele: null },
-                { id: 21, pvalue: 412.5, ref_allele: NaN }
-            ];
-            this.ds1_expected_json_data = JSON.stringify([
-                {
-                    'ds1:id': 2,
-                    'ds1:pvalue': 32.7,
-                    'ds1:pvalue|logtoscinotation': '2.00 × 10^-33',
-                    'ds1:ref_allele': 'G'
-                },
-                { 'ds1:id': 5, 'ds1:pvalue': 0.53, 'ds1:pvalue|logtoscinotation': '0.2951', 'ds1:ref_allele': null },
-                {
-                    'ds1:id': 21,
-                    'ds1:pvalue': 412.5,
-                    'ds1:pvalue|logtoscinotation': '3.16 × 10^-413',
-                    'ds1:ref_allele': NaN
-                }
-            ]);
-            this.ds1_expected_csv_data = '"ds1:id","ds1:pvalue","ds1:pvalue|logtoscinotation","ds1:ref_allele"\n'
-                + '2,32.7,"2.00 × 10^-33","G"\n'
-                + '5,0.53,"0.2951",null\n'
-                + '21,412.5,"3.16 × 10^-413",null';
-            this.ds2_src_data = [
-                { id: 3, bp: 1234, exons: [{ start: 603, strand: '+' }, { start: 4, strand: '+' }] },
-                { id: 35, bp: { a: 1, b: 2 }, exons: [{ start: 34, strand: '+', bar: true }] },
-                { id: 64, bp: false, exons: [], other: true }
-            ];
-            this.ds2_expected_json_data = JSON.stringify([
-                { 'ds2:id': 3, 'ds2:bp': 1234, 'ds2:exons': [{ start: 603, strand: '+' }, { start: 4, strand: '+' }] },
-                { 'ds2:id': 35, 'ds2:bp': { a: 1, b: 2 }, 'ds2:exons': [{ start: 34, strand: '+', bar: true }] },
-                { 'ds2:id': 64, 'ds2:bp': false, 'ds2:exons': [], 'ds2:other': true }
-            ]);
-            this.ds2_expected_csv_data = '"ds2:id","ds2:bp","ds2:exons","ds2:other"\n'
-                + '3,1234,"[Array(2)]",null\n'
-                + '35,"[Object]","[Array(1)]",null\n'
-                + '64,false,"[Array(0)]",true';
-            var data_sources = new LocusZoom.DataSources()
-                .add('ds1', ['StaticJSON', this.ds1_src_data])
-                .add('ds2', ['StaticJSON', this.ds2_src_data]);
-            var layout = {
-                panels: [
-                    {
-                        id: 'p',
-                        data_layers: [
-                            {
-                                id: 'dl1',
-                                fields: ['ds1:id', 'ds1:pvalue', 'ds1:pvalue|logtoscinotation', 'ds1:ref_allele'],
-                                id_field: 'ds1:id',
-                                type: 'scatter'
-                            },
-                            {
-                                id: 'dl2',
-                                fields: ['ds2:id', 'ds2:bp', 'ds2:exons', 'ds2:other'],
-                                id_field: 'ds2:id',
-                                type: 'scatter'
-                            }
-                        ]
-                    }
-                ]
-            };
-            d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', data_sources, layout);
-        });
-        afterEach(function () {
-            d3.select('#plot').remove();
-            delete this.plot;
-        });
-        it('should create a exportData() function on the data layer prototype', function () {
-            assert.equal(true, true);
-            should.exist(LocusZoom.DataLayer.prototype.exportData);
-            LocusZoom.DataLayer.prototype.exportData.should.be.a.Function;
-            should.exist(this.plot.panels.p.data_layers.dl1.exportData);
-            this.plot.panels.p.data_layers.dl1.exportData.should.be.a.Function;
-            should.exist(this.plot.panels.p.data_layers.dl2.exportData);
-            this.plot.panels.p.data_layers.dl2.exportData.should.be.a.Function;
-        });
-        it("exportData() should export clean JSON of a data layer's underlying data by default", function () {
-            var self = this;
-            return this.plot.applyState({ start: 0, end: 100 })
-                .then(function () {
-                    var json0 = self.plot.panels.p.data_layers.dl1.exportData();
-                    var json1 = self.plot.panels.p.data_layers.dl1.exportData('json');
-                    var json2 = self.plot.panels.p.data_layers.dl2.exportData('json');
-                    assert.deepEqual(json0, self.ds1_expected_json_data);
-                    assert.deepEqual(json1, self.ds1_expected_json_data);
-                    assert.deepEqual(json2, self.ds2_expected_json_data);
-                });
-        });
-        it("exportData() should export clean CSV of a data layer's underlying data when CSV is specified as the format", function () {
-            var self = this;
-            return this.plot.applyState({ start: 0, end: 100 })
-                .then(function () {
-                    var csv1 = self.plot.panels.p.data_layers.dl1.exportData('csv');
-                    var csv2 = self.plot.panels.p.data_layers.dl2.exportData('csv');
-                    assert.deepEqual(csv1, self.ds1_expected_csv_data);
-                    assert.deepEqual(csv2, self.ds2_expected_csv_data);
-                });
-        });
-        it("exportData() should export clean TSV of a data layer's underlying data when TSV is specified as the format", function () {
-            var self = this;
-            return this.plot.applyState({ start: 0, end: 100 })
-                .then(function () {
-                    var tsv1 = self.plot.panels.p.data_layers.dl1.exportData('tsv');
-                    var tsv2 = self.plot.panels.p.data_layers.dl2.exportData('tsv');
-                    assert.deepEqual(tsv1, self.ds1_expected_csv_data.replace(/,/g, '\t'));
-                    assert.deepEqual(tsv2, self.ds2_expected_csv_data.replace(/,/g, '\t'));
-                });
-        });
-    });
-
-    describe.skip('Highlight functions', function () {
-        beforeEach(function () {
-            this.plot = null;
-            var data_sources = new LocusZoom.DataSources()
+            const data_sources = new DataSources()
                 .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
-            var layout = {
+            const layout = {
                 panels: [
                     {
                         id: 'p',
@@ -608,7 +500,7 @@ describe('LocusZoom.DataLayer', function () {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', data_sources, layout);
+            this.plot = populate('#plot', data_sources, layout);
         });
         afterEach(function () {
             d3.select('#plot').remove();
@@ -616,57 +508,64 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('should allow for highlighting and unhighlighting a single element', function () {
             return this.plot.lzd.getData({}, ['d:id'])
-                .then(function () {
-                    var state_id = this.plot.panels.p.data_layers.d.state_id;
-                    var layer_state = this.plot.state[state_id];
-                    var d = this.plot.panels.p.data_layers.d;
-                    var a = d.data[0];
-                    var a_id = d.getElementId(a);
-                    var b = d.data[1];
-                    var c = d.data[2];
-                    var c_id = d.getElementId(c);
-                    layer_state.status_flags.highlighted.should.be.an.Array;
-                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                .then(() => {
+                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const d = this.plot.panels.p.data_layers.d;
+                    const a = d.data[0];
+                    const a_id = d.getElementId(a);
+                    const b = d.data[1];
+                    const c = d.data[2];
+                    const c_id = d.getElementId(c);
+                    assert.isArray(layer_state.status_flags.highlighted);
+                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+
                     this.plot.panels.p.data_layers.d.highlightElement(a);
-                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
-                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
+                    assert.equal(layer_state.status_flags.highlighted.length, 1);
+                    assert.equal(layer_state.status_flags.highlighted[0], a_id);
+
                     this.plot.panels.p.data_layers.d.unhighlightElement(a);
-                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
+                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+
                     this.plot.panels.p.data_layers.d.highlightElement(c);
-                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
-                    layer_state.status_flags.highlighted[0].should.be.exactly(c_id);
+                    assert.equal(layer_state.status_flags.highlighted.length, 1);
+                    assert.equal(layer_state.status_flags.highlighted[0], c_id);
+
                     this.plot.panels.p.data_layers.d.unhighlightElement(b);
-                    layer_state.status_flags.highlighted.length.should.be.exactly(1);
+                    assert.equal(layer_state.status_flags.highlighted.length, 1);
+
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
-                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
-                }.bind(this));
+                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+                });
         });
         it('should allow for highlighting and unhighlighting all elements', function () {
             return this.plot.lzd.getData({}, ['d:id'])
-                .then(function () {
-                    var state_id = this.plot.panels.p.data_layers.d.state_id;
-                    var layer_state = this.plot.state[state_id];
-                    var d = this.plot.panels.p.data_layers.d;
-                    var a_id = d.getElementId(d.data[0]);
-                    var b_id = d.getElementId(d.data[1]);
-                    var c_id = d.getElementId(d.data[2]);
+                .then(() => {
+                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const d = this.plot.panels.p.data_layers.d;
+                    const a_id = d.getElementId(d.data[0]);
+                    const b_id = d.getElementId(d.data[1]);
+                    const c_id = d.getElementId(d.data[2]);
+
                     this.plot.panels.p.data_layers.d.highlightAllElements();
-                    layer_state.status_flags.highlighted.length.should.be.exactly(3);
-                    layer_state.status_flags.highlighted[0].should.be.exactly(a_id);
-                    layer_state.status_flags.highlighted[1].should.be.exactly(b_id);
-                    layer_state.status_flags.highlighted[2].should.be.exactly(c_id);
+                    assert.equal(layer_state.status_flags.highlighted.length, 3);
+                    assert.equal(layer_state.status_flags.highlighted[0], a_id);
+                    assert.equal(layer_state.status_flags.highlighted[1], b_id);
+                    assert.equal(layer_state.status_flags.highlighted[2], c_id);
+
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
-                    layer_state.status_flags.highlighted.length.should.be.exactly(0);
-                }.bind(this));
+                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+                });
         });
     });
 
-    describe.skip('Select functions', function () {
+    describe('Select functions', function () {
         beforeEach(function () {
             this.plot = null;
-            var data_sources = new LocusZoom.DataSources()
+            const data_sources = new DataSources()
                 .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b' }, { id: 'c' }]]);
-            var layout = {
+            const layout = {
                 panels: [
                     {
                         id: 'p',
@@ -683,7 +582,7 @@ describe('LocusZoom.DataLayer', function () {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', data_sources, layout);
+            this.plot = populate('#plot', data_sources, layout);
         });
         afterEach(function () {
             d3.select('#plot').remove();
@@ -691,52 +590,59 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('should allow for selecting and unselecting a single element', function () {
             return this.plot.lzd.getData({}, ['d:id'])
-                .then(function () {
-                    var state_id = this.plot.panels.p.data_layers.d.state_id;
-                    var layer_state = this.plot.state[state_id];
-                    var d = this.plot.panels.p.data_layers.d;
-                    var a = d.data[0];
-                    var a_id = d.getElementId(a);
-                    var b = d.data[1];
-                    var c = d.data[2];
-                    var c_id = d.getElementId(c);
-                    layer_state.status_flags.selected.should.be.an.Array;
-                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                .then(() => {
+                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const d = this.plot.panels.p.data_layers.d;
+                    const a = d.data[0];
+                    const a_id = d.getElementId(a);
+                    const b = d.data[1];
+                    const c = d.data[2];
+                    const c_id = d.getElementId(c);
+                    assert.isArray(layer_state.status_flags.selected);
+                    assert.equal(layer_state.status_flags.selected.length, 0);
+
                     this.plot.panels.p.data_layers.d.selectElement(a);
-                    layer_state.status_flags.selected.length.should.be.exactly(1);
-                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
+                    assert.equal(layer_state.status_flags.selected.length, 1);
+                    assert.equal(layer_state.status_flags.selected[0], a_id);
+
                     this.plot.panels.p.data_layers.d.unselectElement(a);
-                    layer_state.status_flags.selected.length.should.be.exactly(0);
+                    assert.equal(layer_state.status_flags.selected.length, 0);
+
                     this.plot.panels.p.data_layers.d.selectElement(c);
-                    layer_state.status_flags.selected.length.should.be.exactly(1);
-                    layer_state.status_flags.selected[0].should.be.exactly(c_id);
+                    assert.equal(layer_state.status_flags.selected.length, 1);
+                    assert.equal(layer_state.status_flags.selected[0], c_id);
+
                     this.plot.panels.p.data_layers.d.unselectElement(b);
-                    layer_state.status_flags.selected.length.should.be.exactly(1);
+                    assert.equal(layer_state.status_flags.selected.length, 1);
+
                     this.plot.panels.p.data_layers.d.unselectElement(c);
-                    layer_state.status_flags.selected.length.should.be.exactly(0);
-                }.bind(this));
+                    assert.equal(layer_state.status_flags.selected.length, 0);
+                });
         });
         it('should allow for selecting and unselecting all elements', function () {
             return this.plot.lzd.getData({}, ['d:id'])
-                .then(function () {
-                    var state_id = this.plot.panels.p.data_layers.d.state_id;
-                    var layer_state = this.plot.state[state_id];
-                    var d = this.plot.panels.p.data_layers.d;
-                    var a_id = d.getElementId(d.data[0]);
-                    var b_id = d.getElementId(d.data[1]);
-                    var c_id = d.getElementId(d.data[2]);
+                .then(() => {
+                    const state_id = this.plot.panels.p.data_layers.d.state_id;
+                    const layer_state = this.plot.state[state_id];
+                    const d = this.plot.panels.p.data_layers.d;
+                    const a_id = d.getElementId(d.data[0]);
+                    const b_id = d.getElementId(d.data[1]);
+                    const c_id = d.getElementId(d.data[2]);
+
                     this.plot.panels.p.data_layers.d.selectAllElements();
-                    layer_state.status_flags.selected.length.should.be.exactly(3);
-                    layer_state.status_flags.selected[0].should.be.exactly(a_id);
-                    layer_state.status_flags.selected[1].should.be.exactly(b_id);
-                    layer_state.status_flags.selected[2].should.be.exactly(c_id);
+                    assert.equal(layer_state.status_flags.selected.length, 3);
+                    assert.equal(layer_state.status_flags.selected[0], a_id);
+                    assert.equal(layer_state.status_flags.selected[1], b_id);
+                    assert.equal(layer_state.status_flags.selected[2], c_id);
+
                     this.plot.panels.p.data_layers.d.unselectAllElements();
-                    layer_state.status_flags.selected.length.should.be.exactly(0);
-                }.bind(this));
+                    assert.equal(layer_state.status_flags.selected.length, 0);
+                });
         });
     });
 
-    describe.skip('Tool tip functions', function () {
+    describe('Tool tip functions', function () {
         beforeEach(function () {
             this.plot = null;
             this.layout = {
@@ -760,7 +666,7 @@ describe('LocusZoom.DataLayer', function () {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', {}, this.layout);
+            this.plot = populate('#plot', null, this.layout);
         });
         afterEach(function () {
             d3.select('#plot').remove();
@@ -769,57 +675,64 @@ describe('LocusZoom.DataLayer', function () {
         it('should allow for creating and destroying tool tips', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
             this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
-            var a = this.plot.panels.p.data_layers.d.data[0];
-            var a_id = this.plot.panels.p.data_layers.d.getElementId(a);
-            var a_id_q = '#' + (a_id + '-tooltip').replace(/(:|\.|\[|\]|,)/g, '\\$1');
-            this.plot.panels.p.data_layers.d.tooltips.should.be.an.Object;
-            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(0);
+            const a = this.plot.panels.p.data_layers.d.data[0];
+            const a_id = this.plot.panels.p.data_layers.d.getElementId(a);
+            const a_id_q = '#' + (a_id + '-tooltip').replace(/(:|\.|\[|\]|,)/g, '\\$1');
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
+
             this.plot.panels.p.data_layers.d.createTooltip(a);
-            this.plot.panels.p.data_layers.d.tooltips[a_id].should.be.an.Object;
-            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(1);
+            assert.isObject(this.plot.panels.p.data_layers.d.tooltips[a_id]);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 1);
             assert.equal(d3.select(a_id_q).empty(), false);
+
             this.plot.panels.p.data_layers.d.destroyTooltip(a_id);
-            Object.keys(this.plot.panels.p.data_layers.d.tooltips).length.should.be.exactly(0);
+            assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
             assert.equal(typeof this.plot.panels.p.data_layers.d.tooltips[a_id], 'undefined');
             assert.equal(d3.select(a_id_q).empty(), true);
         });
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
             this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
-            var d = this.plot.panels.p.data_layers.d;
-            var a = d.data[0];
-            var a_id = d.getElementId(a);
-            var b = d.data[1];
-            var b_id = d.getElementId(b);
+            const d = this.plot.panels.p.data_layers.d;
+            const a = d.data[0];
+            const a_id = d.getElementId(a);
+            const b = d.data[1];
+            const b_id = d.getElementId(b);
             // Make sure the tooltips object is there
-            d.should.have.property('tooltips').which.is.an.Object;
+            assert.isObject(d.tooltips);
             // Test highlighted OR selected
-            should(d.tooltips[a_id]).be.type('undefined');
+            assert.isUndefined(d.tooltips[a_id]);
+
             d.highlightElement(a);
-            should(d.tooltips[a_id]).be.an.Object;
+            assert.isObject(d.tooltips[a_id]);
+
             d.unhighlightElement(a);
-            should(d.tooltips[a_id]).be.type('undefined');
+            assert.isUndefined(d.tooltips[a_id]);
+
             d.selectElement(a);
-            should(d.tooltips[a_id]).be.an.Object;
+            assert.isObject(d.tooltips[a_id]);
+
             d.unselectElement(a);
-            should(d.tooltips[a_id]).be.type('undefined');
+            assert.isUndefined(d.tooltips[a_id]);
             // Test highlight AND selected
-            should(d.tooltips[b_id]).be.type('undefined');
+            assert.isUndefined(d.tooltips[b_id]);
+
             d.highlightElement(b);
             d.selectElement(b);
-            should(d.tooltips[a_id]).be.an.Object;
+            assert.isObject(d.tooltips[b_id]);
+
             d.unhighlightElement(b);
             d.unselectElement(b);
-            should(d.tooltips[b_id]).be.type('undefined');
+            assert.isUndefined(d.tooltips[b_id]);
         });
 
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
-            var layer = this.plot.panels.p.data_layers.d;
-            var status_flags = layer.layer_state.status_flags;
+            const layer = this.plot.panels.p.data_layers.d;
+            const status_flags = layer.layer_state.status_flags;
 
-            var item_a = { id: 'a' };
-            var internal_id = layer.getElementId(item_a);
+            const item_a = { id: 'a' };
+            const internal_id = layer.getElementId(item_a);
 
             layer.data = [item_a, { id: 'b' }, { id: 'c' }];
             layer.positionTooltip = function () {
@@ -828,10 +741,10 @@ describe('LocusZoom.DataLayer', function () {
 
             // Select a point (which will create a tooltip due to element status). Then close tooltip and re-render.
             //  Confirm state is tracked and tooltip does not magically return.
-            var self = this;
+            const self = this;
             return self.plot.applyState().then(function () { // Render initially so that plot is set up right
                 layer.setElementStatus('selected', item_a, true, true);
-                var internal_id = layer.getElementId(item_a);
+                const internal_id = layer.getElementId(item_a);
 
                 assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
                 assert.ok(status_flags['selected'].includes(internal_id), 'Item was initially selected');
@@ -850,12 +763,12 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe.skip('Persistent annotations', function () {
+    describe('Persistent annotations', function () {
         beforeEach(function () {
             this.plot = null;
-            var data_sources = new LocusZoom.DataSources()
+            const data_sources = new DataSources()
                 .add('d', ['StaticJSON', [{ id: 'a' }, { id: 'b', some_field: true }, { id: 'c' }]]);
-            var layout = {
+            const layout = {
                 panels: [
                     {
                         id: 'p',
@@ -868,7 +781,7 @@ describe('LocusZoom.DataLayer', function () {
                                 selected: { onclick: 'toggle' },
                                 label: {
                                     text: 'd:id',
-                                    filters: [ { field: 'custom_field', operator: '=', value: true } ],
+                                    filters: [{ field: 'custom_field', operator: '=', value: true }],
                                 }
                             }
                         ]
@@ -876,11 +789,11 @@ describe('LocusZoom.DataLayer', function () {
                 ]
             };
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = LocusZoom.populate('#plot', data_sources, layout);
+            this.plot = populate('#plot', data_sources, layout);
         });
 
         it('can store user-defined marks for points that persist across re-renders', function () {
-            var data_layer = this.plot.panels.p.data_layers.d;
+            const data_layer = this.plot.panels.p.data_layers.d;
             // Set the annotation for a point with id value of "a"
             data_layer.setElementAnnotation('a', 'custom_field', 'some_value');
 
@@ -896,8 +809,8 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('can use custom markings in layout directives', function () {
-            var self = this;
-            var data_layer = this.plot.panels.p.data_layers.d;
+            const self = this;
+            const data_layer = this.plot.panels.p.data_layers.d;
             assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
             data_layer.setElementAnnotation('a', 'custom_field', true);
 
@@ -912,8 +825,8 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('gives precedence to real data fields when an annotation exists with the same name', function () {
-            var self = this;
-            var data_layer = this.plot.panels.p.data_layers.d;
+            const self = this;
+            const data_layer = this.plot.panels.p.data_layers.d;
             data_layer.layout.label.filters[0].field = 'd:some_field';
 
             // Rerender once so the modified layout takes effect
