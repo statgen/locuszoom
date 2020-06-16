@@ -1184,7 +1184,7 @@ class Panel {
         if (!ticksAreAllNumbers) {
             const tick_selector = d3.selectAll('g#' + this.getBaseId().replace('.', '\\.') + '\\.' + axis + '_axis g.tick');
             const panel = this;
-            tick_selector.each((d, i) => {
+            tick_selector.each(function (d, i) {
                 const selector = d3.select(this).select('text');
                 if (panel[axis + '_ticks'][i].style) {
                     selector.style(panel[axis + '_ticks'][i].style);
@@ -1211,7 +1211,7 @@ class Panel {
         ['x', 'y1', 'y2'].forEach((axis) => {
             if (this.layout.interaction['drag_' + axis + '_ticks_to_scale']) {
                 const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
-                const tick_mouseover = () => {
+                const tick_mouseover = function() {
                     if (typeof d3.select(this).node().focus == 'function') {
                         d3.select(this).node().focus();
                     }
@@ -1227,7 +1227,7 @@ class Panel {
                 this.svg.container.selectAll('.lz-axis.lz-' + axis + ' .tick text')
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
                     .on('mouseover' + namespace, tick_mouseover)
-                    .on('mouseout' + namespace, () => {
+                    .on('mouseout' + namespace, function() {
                         d3.select(this).style({'font-weight': 'normal'});
                         d3.select(this).on('keydown' + namespace, null).on('keyup' + namespace, null);
                     })

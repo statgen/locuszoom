@@ -393,113 +393,106 @@ describe('Panel', function() {
             assert.isUndefined(this.plot.panels.p.svg.container.node()['__onwheel.zoom']);
         });
         it('should establish background drag interaction handlers when the layout directive is present', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_background_to_pan = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
-                assert.equal(typeof self.plot.panels.p.svg.container.select('.lz-panel-background').node()['__onmousedown.plot.p.interaction.drag.background'], 'function');
-                assert.equal(typeof self.plot.svg.node()['__onmouseup.plot'], 'function');
-                assert.equal(typeof self.plot.svg.node()['__onmousemove.plot'], 'function');
+            this.layout.panels[0].interaction.drag_background_to_pan = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
+                assert.equal(typeof this.plot.panels.p.svg.container.select('.lz-panel-background').node()['__onmousedown.plot.p.interaction.drag.background'], 'function');
+                assert.equal(typeof this.plot.svg.node()['__onmouseup.plot'], 'function');
+                assert.equal(typeof this.plot.svg.node()['__onmousemove.plot'], 'function');
 
             });
         });
         it('should establish x tick drag interaction handlers when the layout directives are present', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
-                assert.equal(typeof self.plot.svg.node()['__onmouseup.plot'], 'function');
-                assert.equal(typeof self.plot.svg.node()['__onmousemove.plot'], 'function');
-                assert.equal(typeof self.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'], 'function');
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
+                assert.equal(typeof this.plot.svg.node()['__onmouseup.plot'], 'function');
+                assert.equal(typeof this.plot.svg.node()['__onmousemove.plot'], 'function');
+                assert.equal(typeof this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'], 'function');
             });
         });
         it('should establish y1 tick drag interaction handlers when the layout directives are present', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
-                assert.equal(typeof self.plot.svg.node()['__onmouseup.plot'], 'function');
-                assert.equal(typeof self.plot.svg.node()['__onmousemove.plot'], 'function');
-                assert.equal(typeof self.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'], 'function');
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
+                assert.equal(typeof this.plot.svg.node()['__onmouseup.plot'], 'function');
+                assert.equal(typeof this.plot.svg.node()['__onmousemove.plot'], 'function');
+                assert.equal(typeof this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'], 'function');
             });
         });
         it('should establish a zoom interaction handler on the panel when the layout directive is present', function() {
-            const self = this;
-            self.layout.panels[0].interaction.scroll_to_zoom = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
-                assert.equal(typeof self.plot.panels.p.svg.container.node()['__onmousedown.zoom'], 'function');
+            this.layout.panels[0].interaction.scroll_to_zoom = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
+                assert.equal(typeof this.plot.panels.p.svg.container.node()['__onmousedown.zoom'], 'function');
             });
         });
         it ('should pan along the x axis when dragging the background', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_background_to_pan = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function () {
+            this.layout.panels[0].interaction.drag_background_to_pan = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 50 ]
                 d3.mouse = function() { return [ 50, 50 ]; };
-                self.plot.panels.p.svg.container.select('.lz-panel-background').node()['__onmousedown.plot.p.interaction.drag.background']();
-                assert.isObject(self.plot.interaction);
-                assert.equal(self.plot.interaction.panel_id, self.plot.panels.p.id);
-                assert.isObject(self.plot.interaction.dragging);
-                assert.equal(self.plot.interaction.dragging.method, 'background');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 50);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
+                this.plot.panels.p.svg.container.select('.lz-panel-background').node()['__onmousedown.plot.p.interaction.drag.background']();
+                assert.isObject(this.plot.interaction);
+                assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
+                assert.isObject(this.plot.interaction.dragging);
+                assert.equal(this.plot.interaction.dragging.method, 'background');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 50);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 25, 50 ] (x -25)
                 d3.mouse = function() { return [ 25, 50 ]; };
-                self.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(self.plot.interaction.panel_id, self.plot.panels.p.id);
-                assert.equal(self.plot.interaction.dragging.method, 'background');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 50);
-                assert.equal(self.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(self.plot.panels.p.x_extent, [2,6]);
+                this.plot.svg.node()['__onmousemove.plot']();
+                assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
+                assert.equal(this.plot.interaction.dragging.method, 'background');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 50);
+                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
                 // Simulate mouseup at new location
-                self.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(self.plot.interaction, {});
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
+                this.plot.svg.node()['__onmouseup.plot']();
+                assert.deepEqual(this.plot.interaction, {});
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
             });
         });
         it ('should scale along the x axis when dragging an x tick', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function() { return [ 50, 0 ]; };
-                self.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag']();
-                assert.isObject(self.plot.interaction);
-                assert.isObject(self.plot.interaction.dragging);
-                assert.equal(self.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
+                this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag']();
+                assert.isObject(this.plot.interaction);
+                assert.isObject(this.plot.interaction.dragging);
+                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
                 d3.mouse = function() { return [ 25, 0 ]; };
-                self.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(self.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(self.plot.panels.p.x_extent, [1,9]);
+                this.plot.svg.node()['__onmousemove.plot']();
+                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1,9]);
                 // Simulate mouseup at new location
-                self.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(self.plot.interaction, {});
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.floor, 1);
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 9);
+                this.plot.svg.node()['__onmouseup.plot']();
+                assert.deepEqual(this.plot.interaction, {});
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 1);
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 9);
             });
         });
         it ('should pan along the x axis when shift+dragging an x tick', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
+            this.layout.panels[0].interaction.drag_x_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
@@ -508,68 +501,66 @@ describe('Panel', function() {
 
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
                 d3.mouse = function() { return [ 50, 0 ]; };
-                self.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
-                assert.isObject(self.plot.interaction);
-                assert.isObject(self.plot.interaction.dragging);
-                assert.equal(self.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
+                this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
+                assert.isObject(this.plot.interaction);
+                assert.isObject(this.plot.interaction.dragging);
+                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
 
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
                 d3.mouse = function() { return [ 25, 0 ]; };
-                self.plot.svg.node()['__onmousemove.plot'](event);
-                assert.equal(self.plot.interaction.dragging.method, 'x_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 50);
-                assert.equal(self.plot.interaction.dragging.start_y, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_x, -25);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(self.plot.panels.p.x_extent, [2,6]);
+                this.plot.svg.node()['__onmousemove.plot'](event);
+                assert.equal(this.plot.interaction.dragging.method, 'x_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 50);
+                assert.equal(this.plot.interaction.dragging.start_y, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_x, -25);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
 
                 // Simulate mouseup at new location
-                self.plot.svg.node()['__onmouseup.plot'](event);
-                assert.deepEqual(self.plot.interaction, {});
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
-                assert.equal(self.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
+                this.plot.svg.node()['__onmouseup.plot'](event);
+                assert.deepEqual(this.plot.interaction, {});
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.floor, 2);
+                assert.equal(this.plot.panels.p.data_layers.d.layout.x_axis.ceiling, 6);
             });
         });
         it ('should scale along the y1 axis when dragging a y1 tick', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function() { return [ 0, 25 ]; };
-                self.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag']();
-                assert.isObject(self.plot.interaction);
-                assert.isObject(self.plot.interaction.dragging);
-                assert.equal(self.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 0);
-                assert.equal(self.plot.interaction.dragging.start_y, 25);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
+                this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag']();
+                assert.isObject(this.plot.interaction);
+                assert.isObject(this.plot.interaction.dragging);
+                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 0);
+                assert.equal(this.plot.interaction.dragging.start_y, 25);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
                 d3.mouse = function() { return [ 0, 75 ]; };
-                self.plot.svg.node()['__onmousemove.plot']();
-                assert.equal(self.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 0);
-                assert.equal(self.plot.interaction.dragging.start_y, 25);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 50);
-                assert.deepEqual(self.plot.panels.p.y1_extent, [2,14.000000000000004]);
+                this.plot.svg.node()['__onmousemove.plot']();
+                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 0);
+                assert.equal(this.plot.interaction.dragging.start_y, 25);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 50);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2,14.000000000000004]);
                 // Simulate mouseup at new location
-                self.plot.svg.node()['__onmouseup.plot']();
-                assert.deepEqual(self.plot.interaction, {});
-                assert.equal(self.plot.panels.p.data_layers.d.layout.y_axis.floor, 2);
-                assert.equal(self.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 14.000000000000004);
+                this.plot.svg.node()['__onmouseup.plot']();
+                assert.deepEqual(this.plot.interaction, {});
+                assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.floor, 2);
+                assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 14.000000000000004);
             });
         });
         it ('should pan along the y axis when shift+dragging a y tick', function() {
-            const self = this;
-            self.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
-            self.plot = populate('#plot', self.datasources, self.layout);
-            return Promise.all(self.plot.remap_promises).then(function() {
+            this.layout.panels[0].interaction.drag_y1_ticks_to_scale = true;
+            this.plot = populate('#plot', this.datasources, this.layout);
+            return Promise.all(this.plot.remap_promises).then(() => {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
@@ -577,28 +568,28 @@ describe('Panel', function() {
                 };
                 // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 d3.mouse = function() { return [ 0, 25 ]; };
-                self.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
-                assert.isObject(self.plot.interaction);
-                assert.isObject(self.plot.interaction.dragging);
-                assert.equal(self.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 0);
-                assert.equal(self.plot.interaction.dragging.start_y, 25);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 0);
+                this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
+                assert.isObject(this.plot.interaction);
+                assert.isObject(this.plot.interaction.dragging);
+                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 0);
+                assert.equal(this.plot.interaction.dragging.start_y, 25);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
                 d3.mouse = function() { return [ 0, 75 ]; };
-                self.plot.svg.node()['__onmousemove.plot'](event);
-                assert.equal(self.plot.interaction.dragging.method, 'y1_tick');
-                assert.equal(self.plot.interaction.dragging.start_x, 0);
-                assert.equal(self.plot.interaction.dragging.start_y, 25);
-                assert.equal(self.plot.interaction.dragging.dragged_x, 0);
-                assert.equal(self.plot.interaction.dragging.dragged_y, 50);
-                assert.deepEqual(self.plot.panels.p.y1_extent, [4,8]);
+                this.plot.svg.node()['__onmousemove.plot'](event);
+                assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
+                assert.equal(this.plot.interaction.dragging.start_x, 0);
+                assert.equal(this.plot.interaction.dragging.start_y, 25);
+                assert.equal(this.plot.interaction.dragging.dragged_x, 0);
+                assert.equal(this.plot.interaction.dragging.dragged_y, 50);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [4,8]);
                 // Simulate mouseup at new location
-                self.plot.svg.node()['__onmouseup.plot'](event);
-                assert.deepEqual(self.plot.interaction, {});
-                assert.equal(self.plot.panels.p.data_layers.d.layout.y_axis.floor, 4);
-                assert.equal(self.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 8);
+                this.plot.svg.node()['__onmouseup.plot'](event);
+                assert.deepEqual(this.plot.interaction, {});
+                assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.floor, 4);
+                assert.equal(this.plot.panels.p.data_layers.d.layout.y_axis.ceiling, 8);
             });
         });
     });
