@@ -1,4 +1,4 @@
-import RegistryBase from './base';
+import {RegistryBase} from './base';
 import {applyNamespaces, merge} from '../helpers/layouts';
 import * as layouts from '../layouts';
 

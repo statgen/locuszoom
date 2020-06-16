@@ -1,4 +1,4 @@
-import RegistryBase from './base';
+import {RegistryBase} from './base';
 import * as scalable from '../helpers/scalable';
 
 const registry = new RegistryBase();

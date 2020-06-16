@@ -2,9 +2,10 @@
  * Compatibility layer: expose symbols via UMD module to match the old LocusZoom API
  */
 
-// TODO: expose registries + plugin system, and implement a subclass function that works in Es5.
+import {plugins} from './registry';
+
+// TODO: Package existing extensions
 // TODO: Handle SCSS build step
-// TODO: Package extensions
 export {version} from '../package.json';
 
 export {default as DataSources} from './data';
@@ -16,3 +17,5 @@ export {
     scalable as ScaleFunctions,
     transforms as TransformationFunctions,
 } from './registry';
+
+export const use = (extension) => plugins.use(extension);

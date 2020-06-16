@@ -24,18 +24,6 @@ class RegistryBase {
     }
 
     /**
-     * Create an instance of the specified class from the registry
-     * @param {String} name
-     * @param {*} args Any additional arguments to be passed to the constructor
-     * @returns {*}
-     */
-    create(name, ...args) {
-        // FIXME: Some subclasses will use this, but for others it may not make sense or lead to undefined behavior
-        const base = this.get(name);
-        return new base(...args);
-    }
-
-    /**
      * Add a new item to the registry
      * @param {String} name The name of the item to add to the registry
      * @param {*} item The item to be added (constructor, value, etc)
@@ -77,5 +65,22 @@ class RegistryBase {
     }
 }
 
+/**
+ * A specialized registry whose members are class constructors. Contains helper methods for creating instances
+ *  and subclasses.
+ */
+class ClassRegistry extends RegistryBase {
+    /**
+     * Create an instance of the specified class from the registry
+     * @param {String} name
+     * @param {*} args Any additional arguments to be passed to the constructor
+     * @returns {*}
+     */
+    create(name, ...args) {
+        const base = this.get(name);
+        return new base(...args);
+    }
+}
 
 export default RegistryBase;
+export {RegistryBase, ClassRegistry};

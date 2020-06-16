@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import RegistryBase from '../../../esm/registry/base';
+import {RegistryBase} from '../../../esm/registry/base';
 import {AssociationLZ} from '../../../esm/data/adapters';
 import DataSources from '../../../esm/data/sources';
 

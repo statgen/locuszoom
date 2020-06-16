@@ -1,6 +1,10 @@
 import {assert} from 'chai';
-import RegistryBase from '../../esm/registry/base';
+import {ClassRegistry, RegistryBase} from '../../esm/registry/base';
 import { _TransformationFunctions } from '../../esm/registry/transforms';
+import {_PluginRegistry} from '../../esm/registry/plugins';
+import {_LayoutRegistry} from '../../esm/registry/layouts';
+import {BaseSource} from '../../esm/data';
+import {AssociationLZ} from '../../esm/data/adapters';
 
 describe('Registries', function() {
     describe('Registry Base Behaviors', function () {
@@ -19,14 +23,6 @@ describe('Registries', function() {
             assert.throws(() => {
                 this.registry.get('fourth');
             }, /not found/);
-        });
-
-        it('can create an instance of a class from the registry', function() {
-            const registry = new RegistryBase();
-            const fake = class { constructor(a) { this.a = a; } };
-            registry.add('fake', fake);
-            const instance = registry.create('fake', 12);
-            assert.equal(instance.a, 12);
         });
 
         it('fails to add an item if the name is already used', function () {
@@ -52,6 +48,54 @@ describe('Registries', function() {
         it('lists the names of available items', function() {
             const items = this.registry.list();
             assert.sameMembers(items, ['first', 'second', 'third']);
+        });
+    });
+
+    describe('ClassRegistry special behaviors', function () {
+        it('can create an instance of a class from the registry', function() {
+            const registry = new ClassRegistry();
+            const fake = class { constructor(a) { this.a = a; } };
+            registry.add('fake', fake);
+            const instance = registry.create('fake', 12);
+            assert.equal(instance.a, 12);
+        });
+    });
+
+    describe('Plugin registry can bulk-add features', function () {
+        beforeEach(function () {
+            // The plugin registry proxies to several subtypes with special behavior. Ensure that individual semantics
+            //  are obeyed.
+            const fixture = new _PluginRegistry();
+            fixture.add('layouts', new _LayoutRegistry());
+            fixture.add('adapters', new ClassRegistry());
+            fixture.add('scalable', new RegistryBase());
+
+            this.fixture = fixture;
+        });
+        it('throws an error if adding an unexpected feature type', function () {
+            assert.throws(() => this.fixture.use({ squids: ['giant', 'cuttlefish'] }), /Item not found/);
+        });
+        it('allows bulk registering extension types', function () {
+            const additions = {
+                layouts: [ ['plot', 'myplot', { foo: 12 }] ],
+                adapters: [
+                    ['a1', BaseSource],
+                    ['a2', AssociationLZ]
+                ],
+                scalable: [
+                    ['scalename', (v) => 12],
+                    ['a2', (v) => v], // names must only be unique per registry
+                ],
+            };
+            this.fixture.use(additions);
+
+            // Inspect the internal members to ensure that all plugin members were added correctly
+            assert.equal(
+                this.fixture.get('layouts').get('plot', 'myplot').foo,
+                12
+            );
+            assert.equal(this.fixture.get('adapters').get('a2'), AssociationLZ);
+            assert.equal(this.fixture.get('scalable').get('a2')(1), 1);
         });
     });
 

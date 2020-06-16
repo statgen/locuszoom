@@ -1,4 +1,4 @@
-import RegistryBase from './base';
+import {RegistryBase} from './base';
 import * as transforms from '../helpers/transforms';
 
 /**

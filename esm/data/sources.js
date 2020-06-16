@@ -1,4 +1,4 @@
-import RegistryBase from '../registry/base';
+import {RegistryBase} from '../registry/base';
 import { adapters } from '../registry';
 
 /**

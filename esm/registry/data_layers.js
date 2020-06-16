@@ -1,8 +1,7 @@
-import RegistryBase from './base';
+import {ClassRegistry} from './base';
 import * as layers from '../components/data_layer';
 
-// FIXME: Convert usages of registry.get(...args) to registry.create()
-const registry = new RegistryBase();
+const registry = new ClassRegistry();
 for (let [name, type] of Object.entries(layers)) {
     registry.add(name, type);
 }
