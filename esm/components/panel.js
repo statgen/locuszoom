@@ -77,14 +77,14 @@ class Panel {
             if (!this.parent) {
                 layout.id = 'p' + Math.floor(Math.random() * Math.pow(10,8));
             } else {
-                let id = null;
-                const generateID = function () {
-                    id = 'p' + Math.floor(Math.random() * Math.pow(10, 8));
-                    if (id == null || typeof this.parent.panels[id] != 'undefined') {
+                const generateID = () => {
+                    let id = 'p' + Math.floor(Math.random() * Math.pow(10, 8));
+                    if (id === null || typeof this.parent.panels[id] != 'undefined') {
                         id = generateID();
                     }
-                }.bind(this);
-                layout.id = id;
+                    return id;
+                };
+                layout.id = generateID();
             }
         } else if (this.parent) {
             if (typeof this.parent.panels[layout.id] !== 'undefined') {
@@ -183,9 +183,9 @@ class Panel {
 
     /** @protected */
     applyDataLayerZIndexesToDataLayerLayouts () {
-        this.data_layer_ids_by_z_index.forEach(function(dlid, idx) {
+        this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
             this.data_layers[dlid].layout.z_index = idx;
-        }.bind(this));
+        });
     }
 
     /** @returns {string} */
@@ -278,12 +278,11 @@ class Panel {
             eventData = null;
         }
         const sourceID = this.getBaseId();
-        const self = this;
         const eventContext = { sourceID: sourceID, data: eventData || null };
-        this.event_hooks[event].forEach(function(hookToRun) {
+        this.event_hooks[event].forEach((hookToRun) => {
             // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
             // registered as a handler, the previously bound `this` will override anything provided to `call` below.
-            hookToRun.call(self, eventContext);
+            hookToRun.call(this, eventContext);
         });
         if (bubble && this.parent) {
             this.parent.emit(event, eventContext);
@@ -341,7 +340,7 @@ class Panel {
         this.y2_range = [this.layout.cliparea.height, 0];
 
         // Initialize panel axes
-        ['x', 'y1', 'y2'].forEach(function(axis) {
+        ['x', 'y1', 'y2'].forEach((axis) => {
             if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false) {
                 // The default layout sets the axis to an empty object, so set its render boolean here
                 this.layout.axes[axis].render = false;
@@ -350,15 +349,14 @@ class Panel {
                 this.layout.axes[axis].label = this.layout.axes[axis].label || null;
                 this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
             }
-        }.bind(this));
+        });
 
         // Add data layers (which define x and y extents)
-        this.layout.data_layers.forEach(function(data_layer_layout) {
+        this.layout.data_layers.forEach((data_layer_layout) => {
             this.addDataLayer(data_layer_layout);
-        }.bind(this));
+        });
 
         return this;
-
     }
 
     /**
@@ -440,9 +438,9 @@ class Panel {
             this.layout.margin.left -= extra;
             this.layout.margin.right -= extra;
         }
-        ['top', 'right', 'bottom', 'left'].forEach(function(m) {
+        ['top', 'right', 'bottom', 'left'].forEach((m) => {
             this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
-        }.bind(this));
+        });
         this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         this.layout.cliparea.origin.x = this.layout.margin.left;
@@ -527,9 +525,9 @@ class Panel {
         // Inner border
         this.inner_border = this.svg.group.append('rect')
             .attr('class', 'lz-panel-background')
-            .on('click', function() {
+            .on('click', () => {
                 if (this.layout.background_click === 'clear_selections') { this.clearSelections(); }
-            }.bind(this));
+            });
 
         // Add the title
         /** @member {Element} */
@@ -560,9 +558,9 @@ class Panel {
         }
 
         // Initialize child Data Layers
-        this.data_layer_ids_by_z_index.forEach(function(id) {
+        this.data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].initialize();
-        }.bind(this));
+        });
 
         /**
          * Legend object, as defined by panel layout and child data layer layouts
@@ -592,9 +590,9 @@ class Panel {
      */
     resortDataLayers() {
         const sort = [];
-        this.data_layer_ids_by_z_index.forEach(function(id) {
+        this.data_layer_ids_by_z_index.forEach((id) => {
             sort.push(this.data_layers[id].layout.z_index);
-        }.bind(this));
+        });
         this.svg.group.selectAll('g.lz-data_layer-container').data(sort).sort(d3.ascending);
         this.applyDataLayerZIndexesToDataLayerLayouts();
     }
@@ -609,11 +607,11 @@ class Panel {
         const linked_panel_ids = [];
         if (['x','y1','y2'].indexOf(axis) === -1) { return linked_panel_ids; }
         if (!this.layout.interaction[axis + '_linked']) { return linked_panel_ids; }
-        this.parent.panel_ids_by_y_index.forEach(function(panel_id) {
+        this.parent.panel_ids_by_y_index.forEach((panel_id) => {
             if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[axis + '_linked']) {
                 linked_panel_ids.push(panel_id);
             }
-        }.bind(this));
+        });
         return linked_panel_ids;
     }
 
@@ -684,9 +682,9 @@ class Panel {
                 data_layer.layout.z_index = Math.max(this.data_layer_ids_by_z_index.length + data_layer.layout.z_index, 0);
             }
             this.data_layer_ids_by_z_index.splice(data_layer.layout.z_index, 0, data_layer.id);
-            this.data_layer_ids_by_z_index.forEach(function(dlid, idx) {
+            this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
                 this.data_layers[dlid].layout.z_index = idx;
-            }.bind(this));
+            });
         } else {
             const length = this.data_layer_ids_by_z_index.push(data_layer.id);
             this.data_layers[data_layer.id].layout.z_index = length - 1;
@@ -695,7 +693,7 @@ class Panel {
         // Determine if this data layer was already in the layout.data_layers array.
         // If it wasn't, add it. Either way store the layout.data_layers array index on the data_layer.
         let layout_idx = null;
-        this.layout.data_layers.forEach(function(data_layer_layout, idx) {
+        this.layout.data_layers.forEach((data_layer_layout, idx) => {
             if (data_layer_layout.id === data_layer.id) { layout_idx = idx; }
         });
         if (layout_idx === null) {
@@ -734,9 +732,9 @@ class Panel {
 
         // Update layout_idx and layout.z_index values for all remaining data_layers
         this.applyDataLayerZIndexesToDataLayerLayouts();
-        this.layout.data_layers.forEach(function(data_layer_layout, idx) {
+        this.layout.data_layers.forEach((data_layer_layout, idx) => {
             this.data_layers[data_layer_layout.id].layout_idx = idx;
-        }.bind(this));
+        });
 
         return this;
     }
@@ -746,9 +744,9 @@ class Panel {
      * @returns {Panel}
      */
     clearSelections() {
-        this.data_layer_ids_by_z_index.forEach(function(id) {
+        this.data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].setAllElementStatus('selected', false);
-        }.bind(this));
+        });
         return this;
     }
 
@@ -774,16 +772,16 @@ class Panel {
         }
         // When all finished trigger a render
         return Promise.all(this.data_promises)
-            .then(function() {
+            .then(() => {
                 this.initialized = true;
                 this.render();
                 this.emit('layout_changed', true);
                 this.emit('data_rendered');
-            }.bind(this))
-            .catch(function(error) {
+            })
+            .catch((error) => {
                 console.error(error);
                 this.curtain.show(error.message || error);
-            }.bind(this));
+            });
     }
 
     /**
@@ -793,9 +791,9 @@ class Panel {
     generateExtents() {
 
         // Reset extents
-        ['x', 'y1', 'y2'].forEach(function(axis) {
+        ['x', 'y1', 'y2'].forEach((axis) => {
             this[axis + '_extent'] = null;
-        }.bind(this));
+        });
 
         // Loop through the data layers
         for (let id in this.data_layers) {
@@ -861,12 +859,12 @@ class Panel {
                 // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
                 const config = { position: baseTickConfig.position };
 
-                const combinedTicks = this.data_layer_ids_by_z_index.reduce(function (acc, data_layer_id) {
+                const combinedTicks = this.data_layer_ids_by_z_index.reduce((acc, data_layer_id) => {
                     const nextLayer = self.data_layers[data_layer_id];
                     return acc.concat(nextLayer.getTicks(axis, config));
                 }, []);
 
-                return combinedTicks.map(function(item) {
+                return combinedTicks.map((item) => {
                     // The layer makes suggestions, but tick configuration params specified on the panel take precedence
                     let itemConfig = {};
                     itemConfig = merge(itemConfig, baseTickConfig);
@@ -1018,7 +1016,7 @@ class Panel {
         }
 
         // Generate scales and ticks for all axes, then render them
-        ['x', 'y1', 'y2'].forEach(function(axis) {
+        ['x', 'y1', 'y2'].forEach((axis) => {
             if (!this[axis + '_extent']) { return; }
 
             // Base Scale
@@ -1038,11 +1036,11 @@ class Panel {
 
             // Render axis (and generate ticks as needed)
             this.renderAxis(axis);
-        }.bind(this));
+        });
 
         // Establish mousewheel zoom event handers on the panel (namespacing not passed through by d3, so not used here)
         if (this.layout.interaction.scroll_to_zoom) {
-            const zoom_handler = function () {
+            const zoom_handler = () => {
                 // Look for a shift key press while scrolling to execute.
                 // If not present, gracefully raise a notification and allow conventional scrolling
                 if (!d3.event.shiftKey) {
@@ -1069,17 +1067,17 @@ class Panel {
                     }
                 };
                 this.render();
-                this.parent.interaction.linked_panel_ids.forEach(function (panel_id) {
+                this.parent.interaction.linked_panel_ids.forEach((panel_id) => {
                     this.parent.panels[panel_id].render();
-                }.bind(this));
+                });
                 if (this.zoom_timeout !== null) {
                     clearTimeout(this.zoom_timeout);
                 }
-                this.zoom_timeout = setTimeout(function () {
+                this.zoom_timeout = setTimeout(() => {
                     this.parent.interaction = {};
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
-                }.bind(this), 500);
-            }.bind(this);
+                }, 500);
+            };
             this.zoom_listener = d3.behavior.zoom();
             this.svg.container.call(this.zoom_listener)
                 .on('wheel.zoom', zoom_handler)
@@ -1088,9 +1086,9 @@ class Panel {
         }
 
         // Render data layers in order by z-index
-        this.data_layer_ids_by_z_index.forEach(function(data_layer_id) {
+        this.data_layer_ids_by_z_index.forEach((data_layer_id) => {
             this.data_layers[data_layer_id].draw().render();
-        }.bind(this));
+        });
 
         return this;
     }
@@ -1148,7 +1146,7 @@ class Panel {
         this[axis + '_ticks'] = this.generateTicks(axis);
 
         // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
-        const ticksAreAllNumbers = (function (ticks) {
+        const ticksAreAllNumbers = ((ticks) => {
             for (let i = 0; i < ticks.length; i++) {
                 if (isNaN(ticks[i])) {
                     return false;
@@ -1167,11 +1165,11 @@ class Panel {
                 this[axis + '_axis'].tickFormat((d) => positionIntToString(d, 6));
             }
         } else {
-            let ticks = this[axis + '_ticks'].map(function(t) {
+            let ticks = this[axis + '_ticks'].map((t) => {
                 return(t[axis.substr(0,1)]);
             });
             this[axis + '_axis'].tickValues(ticks)
-                .tickFormat(function(t, i) { return this[axis + '_ticks'][i].text; }.bind(this));
+                .tickFormat((t, i) => { return this[axis + '_ticks'][i].text; });
         }
 
         // Position the axis in the SVG and apply the axis construct
@@ -1183,7 +1181,7 @@ class Panel {
         if (!ticksAreAllNumbers) {
             const tick_selector = d3.selectAll('g#' + this.getBaseId().replace('.', '\\.') + '\\.' + axis + '_axis g.tick');
             const panel = this;
-            tick_selector.each(function(d, i) {
+            tick_selector.each((d, i) => {
                 const selector = d3.select(this).select('text');
                 if (panel[axis + '_ticks'][i].style) {
                     selector.style(panel[axis + '_ticks'][i].style);
@@ -1210,7 +1208,7 @@ class Panel {
         ['x', 'y1', 'y2'].forEach((axis) => {
             if (this.layout.interaction['drag_' + axis + '_ticks_to_scale']) {
                 const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
-                const tick_mouseover = function () {
+                const tick_mouseover = () => {
                     if (typeof d3.select(this).node().focus == 'function') {
                         d3.select(this).node().focus();
                     }
@@ -1248,7 +1246,7 @@ class Panel {
     scaleHeightToData(target_height) {
         target_height = +target_height || null;
         if (target_height === null) {
-            this.data_layer_ids_by_z_index.forEach(function(id) {
+            this.data_layer_ids_by_z_index.forEach((id) => {
                 const dh = this.data_layers[id].getAbsoluteDataHeight();
                 if (+dh) {
                     if (target_height === null) {
@@ -1258,15 +1256,15 @@ class Panel {
                         target_height = Math.max(target_height, +dh);
                     }
                 }
-            }.bind(this));
+            });
         }
         if (+target_height) {
             target_height += +this.layout.margin.top + +this.layout.margin.bottom;
             this.setDimensions(this.layout.width, target_height);
             this.parent.setDimensions();
-            this.parent.panel_ids_by_y_index.forEach(function(id) {
+            this.parent.panel_ids_by_y_index.forEach((id) => {
                 this.parent.panels[id].layout.proportional_height = null;
-            }.bind(this));
+            });
             this.parent.positionPanels();
         }
     }
@@ -1279,9 +1277,9 @@ class Panel {
      * @param {Boolean} exclusive
      */
     setElementStatusByFilters(status, toggle, filters, exclusive) {
-        this.data_layer_ids_by_z_index.forEach(function(id) {
+        this.data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
-        }.bind(this));
+        });
     }
     /**
      * Set/unset element statuses across all data layers
@@ -1289,9 +1287,9 @@ class Panel {
      * @param {Boolean} toggle
      */
     setAllElementStatus(status, toggle) {
-        this.data_layer_ids_by_z_index.forEach(function(id) {
+        this.data_layer_ids_by_z_index.forEach((id) => {
             this.data_layers[id].setAllElementStatus(status, toggle);
-        }.bind(this));
+        });
     }
 
     /**
@@ -1309,17 +1307,17 @@ class Panel {
         if (show_immediately) {
             this.loader.show('Loading...').animate();
         }
-        this.on('data_requested', function() {
+        this.on('data_requested', () => {
             this.loader.show('Loading...').animate();
-        }.bind(this));
-        this.on('data_rendered', function() {
+        });
+        this.on('data_rendered', () => {
             this.loader.hide();
-        }.bind(this));
+        });
         return this;
     }
 }
 // TODO: Capture documentation for dynamically generated methods
-STATUSES.verbs.forEach(function(verb, idx) {
+STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
     const antiverb = 'un' + verb;
     // Set/unset status for arbitrarily many elements given a set of filters

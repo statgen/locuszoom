@@ -34,7 +34,7 @@ describe('Panel', function() {
             assert.ok(panel_layout.id, 'A panel ID was created');
 
             const panel_instance = this.plot.panels[panel_layout.id];
-            assert.equal(panel_instance.layout, 'bar', 'Panel instance can access fields on layout object');
+            assert.equal(panel_instance.layout.foo, 'bar', 'Panel instance can access fields on layout object');
         });
 
         it('should throw an error if adding a panel with an ID that is already used', function() {

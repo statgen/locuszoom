@@ -749,7 +749,7 @@ class GeneLZ extends RemoteSource {
  *
  * @public
 */
-class GeneConstraintLz extends RemoteSource {
+class GeneConstraintLZ extends RemoteSource {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -984,7 +984,7 @@ export { BaseSource, RemoteSource };
 export {
     AssociationLZ,
     ConnectorSource,
-    GeneConstraintLz,
+    GeneConstraintLZ,
     GeneLZ,
     GwasCatalogLZ,
     LDLZ,

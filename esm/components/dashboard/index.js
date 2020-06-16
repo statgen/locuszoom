@@ -24,7 +24,8 @@ class Dashboard {
         /** @member {String} */
         this.id = this.parent.getBaseId() + '.dashboard';
         /** @member {('plot'|'panel')} */
-        this.type = this.parent.constructor.name.toLowerCase(); // TODO: use instanceof Plot/Panel once circular dependencies resolved
+        // FIXME: checking constructor name fails, because minified file renames constructor (sigh)
+        this.type = this.parent.constructor.name.toLowerCase();
         /** @member {Plot} */
         this.parent_plot = this.type === 'plot' ? this.parent : this.parent.parent;
 
@@ -119,7 +120,10 @@ class Dashboard {
                 this.selector = d3.select(this.parent.parent.svg.node().parentNode)
                     .insert('div', '.lz-data_layer-tooltip, .lz-dashboard-menu, .lz-curtain').classed('lz-panel-dashboard', true);
                 break;
+            default:
+                throw new Error(`Dashboard cannot be a child of ${this.type}`);
             }
+
             this.selector.classed('lz-dashboard', true).classed('lz-' + this.type + '-dashboard', true).attr('id', this.id);
         }
         this.components.forEach(function (component) {

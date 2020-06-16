@@ -42,5 +42,7 @@ module.exports = {
     output: {
         path: outputPath,
         filename: '[name].min.js',
+        library: 'LocusZoom'
     },
+    externals: ['d3']
 };

@@ -73,7 +73,9 @@ class Component {
             const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-dashboard-group-' + this.layout.group_position : '');
             this.selector = this.parent.selector.append('div')
                 .attr('class', 'lz-dashboard-' + this.layout.position + group_position);
-            if (this.layout.style) { this.selector.style(this.layout.style); }
+            if (this.layout.style) {
+                this.selector.style(this.layout.style);
+            }
             if (typeof this.initialize == 'function') { this.initialize(); }
         }
         if (this.button && this.button.status === 'highlighted') { this.button.menu.show(); }
