@@ -3,7 +3,6 @@
  */
 import '../css/locuszoom.scss'; // Trigger CSS to be automatically built to the dist folder
 import {plugins} from './registry';
-
 // TODO: Package existing extensions
 export {version} from '../package.json';
 
