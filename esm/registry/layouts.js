@@ -1,5 +1,5 @@
 import {RegistryBase} from './base';
-import {applyNamespaces, merge} from '../helpers/layouts';
+import {applyNamespaces, deepCopy, merge} from '../helpers/layouts';
 import * as layouts from '../layouts';
 
 /**
@@ -37,7 +37,7 @@ class LayoutRegistry extends RegistryBase {
         default_namespace += default_namespace.length ? ':' : '';
         const result = applyNamespaces(base, base.namespace, default_namespace);
 
-        return JSON.parse(JSON.stringify(result));
+        return deepCopy(result);
     }
 
     /**

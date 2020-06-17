@@ -865,7 +865,7 @@ const coaccessibility_plot = {
 };
 
 export const tooltip = {
-    standard_asociation: standard_association_tooltip,
+    standard_association: standard_association_tooltip,
     standard_association_with_label: standard_association_tooltip_with_label,
     standard_genes: standard_genes_tooltip,
     catalog_variant: catalog_variant_tooltip,

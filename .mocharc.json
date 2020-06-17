@@ -1,6 +1,6 @@
 {
   "file": "./test2/setup.js",
-  "require": ["chai", "@babel/register"],
+  "require": ["chai", "@babel/register", "ignore-styles"],
   "ui": "bdd",
   "reporter": "spec",
   "growl": false,

@@ -12,7 +12,8 @@ const outputPath = path.resolve(__dirname, 'dist');
 
 const FILENAMES = { // For legacy reasons, the filenames must be different than the chunk names
     LocusZoom: 'locuszoom.app.min.js',
-    LzDynamicUrls: 'ext/lz-dynamic-urls.min.js'
+    LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
+    LzDashboardAddons: 'ext/lz-dashboard-addons.min.js',
 };
 
 module.exports = {
@@ -20,6 +21,7 @@ module.exports = {
     entry: {
         'LocusZoom': path.resolve(srcPath, 'index.js'),
         'LzDynamicUrls': path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
+        'LzDashboardAddons': path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -74,5 +76,5 @@ module.exports = {
         },
         library: '[name]'
     },
-    externals: ['d3', 'LocusZoom']
+    externals: ['d3', 'locuszoom']
 };

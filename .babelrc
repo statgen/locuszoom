@@ -3,5 +3,14 @@
     [
       "@babel/preset-env"
     ]
+  ],
+  "plugins": [
+    [
+      "module-resolver", {
+         "alias": {
+           "locuszoom": "./esm/index.js"
+         }
+      }
+    ]
   ]
 }
