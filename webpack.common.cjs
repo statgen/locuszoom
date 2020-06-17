@@ -10,11 +10,16 @@ const PACKAGE = require('./package.json');
 const srcPath = path.resolve(__dirname, 'esm');
 const outputPath = path.resolve(__dirname, 'dist');
 
+const FILENAMES = { // For legacy reasons, the filenames must be different than the chunk names
+    LocusZoom: 'locuszoom.app.min.js',
+    LzDynamicUrls: 'ext/lz-dynamic-urls.min.js'
+};
 
 module.exports = {
     context: __dirname,
     entry: {
-        'locuszoom.app': path.resolve(srcPath, 'index.js'),
+        'LocusZoom': path.resolve(srcPath, 'index.js'),
+        'LzDynamicUrls': path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -57,8 +62,17 @@ module.exports = {
     },
     output: {
         path: outputPath,
-        filename: '[name].min.js',
-        library: 'LocusZoom'
+        filename: (data) => {
+            // For backwards compatibility, the filename must be different than the chunk name.
+            const match = FILENAMES[data.chunk.name];
+            if(!match) {
+                const msg = `Must provide a filename for this chunk: ${data.chunk.name}`;
+                console.error(msg);
+                throw new Error(msg);
+            }
+            return match;
+        },
+        library: '[name]'
     },
-    externals: ['d3']
+    externals: ['d3', 'LocusZoom']
 };
