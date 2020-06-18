@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import {
     AssociationLZ,
-    BaseSource,
+    BaseAdapter,
     ConnectorSource,
     GeneLZ,
     GwasCatalogLZ,
@@ -20,7 +20,7 @@ describe('Data adapters', function () {
     describe('Base Source Behavior', function () {
         describe('Source.getData', function () {
             it('dependentSource skips making a request if previous sources did not add data to chain.body', function () {
-                const source = new BaseSource({});
+                const source = new BaseAdapter({});
                 source.__dependentSource = true;
                 let requestStub = sinon.stub(source, 'getRequest');
 
@@ -32,7 +32,7 @@ describe('Data adapters', function () {
             });
 
             it('dependentSource makes a request if chain.body has data from previous sources', function (done) {
-                const source = new BaseSource({});
+                const source = new BaseAdapter({});
                 source.__dependentSource = false;
                 const requestStub = sinon.stub(source, 'getRequest').callsFake(function () {
                     return Promise.resolve();
@@ -62,7 +62,7 @@ describe('Data adapters', function () {
 
             describe('Source.normalizeResponse', function () {
                 it('should create one object per piece of data', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
                     const res = source.normalizeResponse(
                         { a: [1, 2], b: [3, 4] });
                     assert.deepEqual(
@@ -73,7 +73,7 @@ describe('Data adapters', function () {
                 });
 
                 it('should require all columns of data to be of same length', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
                     assert.throws(
                         function () {
                             source.normalizeResponse({ a: [1], b: [1, 2], c: [1, 2, 3] });
@@ -83,7 +83,7 @@ describe('Data adapters', function () {
                 });
 
                 it('should return the data unchanged if it is already in the desired shape', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
                     const data = [{ a: 1, b: 3 }, { a: 2, b: 4 }];
                     const res = source.normalizeResponse(data);
                     assert.deepEqual(res, data);
@@ -92,7 +92,7 @@ describe('Data adapters', function () {
 
             describe('Source.annotateData', function () {
                 it('should be able to add fields to the returned records', function () {
-                    const custom_class = class extends BaseSource {
+                    const custom_class = class extends BaseAdapter {
                         annotateData(records) {
                             // Custom hook that adds a field to every parsed record
                             return records.map(function (item) {
@@ -114,7 +114,7 @@ describe('Data adapters', function () {
                 });
 
                 it('should be able to annotate based on info in the body and chain', function () {
-                    const custom_class = class extends BaseSource {
+                    const custom_class = class extends BaseAdapter {
                         annotateData(records, chain) {
                             return records + chain.header.param;
                         }
@@ -129,7 +129,7 @@ describe('Data adapters', function () {
 
             describe('Source.extractFields', function () {
                 it('extracts the specified fields from each record', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
                     const res = source.extractFields(
                         [{ 'id': 1, 'val': 5 }, { 'id': 2, 'val': 10 }],
                         ['id'], ['namespace:id'], [null]
@@ -138,7 +138,7 @@ describe('Data adapters', function () {
                 });
 
                 it('applies value transformations where appropriate', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
                     const res = source.extractFields(
                         [{ 'id': 1, 'val': 5 }, { 'id': 2, 'val': 10 }],
                         ['id', 'val'], ['namespace:id|add1', 'bork:bork'], [function (val) {
@@ -153,7 +153,7 @@ describe('Data adapters', function () {
                 });
 
                 it('throws an error when requesting a field not present in at least one record', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
 
                     assert.throws(function () {
                         source.extractFields(
@@ -166,7 +166,7 @@ describe('Data adapters', function () {
 
             describe('Source.combineChainBody', function () {
                 it('returns only the body by default', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
 
                     const expectedBody = [{ 'namespace:a': 1 }];
                     const res = source.combineChainBody(expectedBody, { header: {}, body: [], discrete: {} });
@@ -175,7 +175,7 @@ describe('Data adapters', function () {
                 });
 
                 it('can build a body based on records from all sources in the chain', function () {
-                    const custom_class = class extends BaseSource {
+                    const custom_class = class extends BaseAdapter {
                         combineChainBody(records, chain) {
                             return records.map(function (item, index) {
                                 return Object.assign({}, item, chain.body[index]);
@@ -197,7 +197,7 @@ describe('Data adapters', function () {
 
             describe('integration of steps', function () {
                 it('should interpret a string response as JSON', function () {
-                    const source = new BaseSource({});
+                    const source = new BaseAdapter({});
 
                     return source.parseResponse('{"a_field": ["val"]}', {}, ['a_field'], ['namespace:a_field'], [null])
                         .then(function (chain) {
@@ -206,7 +206,7 @@ describe('Data adapters', function () {
                 });
 
                 it('should store annotations in body and chain.discrete where appropriate', function () {
-                    const custom_class = class CustomClass extends BaseSource {
+                    const custom_class = class CustomClass extends BaseAdapter {
                         annotateData(data) {
                             return data + ' with annotation';
                         }
@@ -229,7 +229,7 @@ describe('Data adapters', function () {
 
                 it('integrates all methods via promise semantics', function () {
                     // Returning a promise is optional, but should be supported if a custom subclass chooses to do so
-                    const custom_class = class CustomClass extends BaseSource {
+                    const custom_class = class CustomClass extends BaseAdapter {
                         normalizeResponse() {
                             return Promise.resolve([{ a: 1 }]);
                         }

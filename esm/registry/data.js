@@ -6,6 +6,7 @@ import {ClassRegistry} from './base';
 
 import * as adapters from '../data/adapters';
 
+
 // KnownDataSources is a basic registry with no special behavior.
 const registry = new ClassRegistry();
 
@@ -16,5 +17,6 @@ for (let [name, type] of Object.entries(adapters)) {
 // Add some hard-coded aliases for backwards compatibility
 registry.add('StaticJSON', adapters.StaticSource);
 registry.add('LDLZ2', adapters.LDLZ);
+
 
 export default registry;

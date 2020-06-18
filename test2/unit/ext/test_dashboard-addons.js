@@ -9,7 +9,7 @@ import * as dashboard_addons from '../../../esm/ext/lz-dashboard-addons';
 // Register the plugin
 plugins.use(dashboard_addons);
 
-describe('Dashboard addons', function () {
+describe('Toolbar addons', function () {
     describe('Covariates Model Component', function () {
         beforeEach(function () {
             const datasources = new DataSources();

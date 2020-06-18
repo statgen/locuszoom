@@ -1,4 +1,5 @@
 import d3 from 'd3';
+
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 

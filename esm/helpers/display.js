@@ -3,6 +3,7 @@ import d3 from 'd3';
 import Field from '../data/field';
 import Plot from '../components/plot';
 
+
 /**
  * Convert an integer chromosome position to an SI string representation (e.g. 23423456 => "23.42" (Mb))
  * @param {Number} pos Position

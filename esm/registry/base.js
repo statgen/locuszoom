@@ -82,5 +82,6 @@ class ClassRegistry extends RegistryBase {
     }
 }
 
+
 export default RegistryBase;
 export {RegistryBase, ClassRegistry};

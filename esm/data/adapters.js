@@ -15,10 +15,10 @@ function validateBuildSource(class_name, build, source) {
 
 
 /**
- * Base class for LocusZoom data sources (any). See also: RemoteSource
+ * Base class for LocusZoom data sources (any). See also: RemoteAdapter
  * @public
  */
-class BaseSource {
+class BaseAdapter {
     constructor(config) {
         /**
          * Whether this source should enable caching
@@ -321,7 +321,7 @@ class BaseSource {
  * Base source for LocusZoom data sources that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
  */
-class RemoteSource extends BaseSource {
+class RemoteAdapter extends BaseAdapter {
     parseInit(config) {
         super.parseInit(config);
 
@@ -337,7 +337,7 @@ class RemoteSource extends BaseSource {
  * Data Source for Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a requesr
  * @public
  */
-class AssociationLZ extends RemoteSource {
+class AssociationLZ extends RemoteAdapter {
     preGetData (state, fields, outnames, trans) {
         // TODO: Modify internals to see if we can go without this source
         const id_field = this.params.id_field || 'id';
@@ -382,7 +382,7 @@ class AssociationLZ extends RemoteSource {
  *
  * In older versions of LocusZoom, this was known as "LDLZ2". A prior source (targeted at older APIs) has been removed.
  */
-class LDLZ extends RemoteSource {
+class LDLZ extends RemoteAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -616,7 +616,7 @@ class LDLZ extends RemoteSource {
  * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
  * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
  */
-class GwasCatalogLZ extends RemoteSource {
+class GwasCatalogLZ extends RemoteAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -715,7 +715,7 @@ class GwasCatalogLZ extends RemoteSource {
  * Data Source for Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
  */
-class GeneLZ extends RemoteSource {
+class GeneLZ extends RemoteAdapter {
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
@@ -749,7 +749,7 @@ class GeneLZ extends RemoteSource {
  *
  * @public
 */
-class GeneConstraintLZ extends RemoteSource {
+class GeneConstraintLZ extends RemoteAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -840,7 +840,7 @@ class GeneConstraintLZ extends RemoteSource {
  * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
  */
-class RecombLZ extends RemoteSource {
+class RecombLZ extends RemoteAdapter {
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
@@ -865,7 +865,7 @@ class RecombLZ extends RemoteSource {
  *  JSON files to an existing source (with the JSON url in place of an API).
  * @public
  */
-class StaticSource extends BaseSource {
+class StaticSource extends BaseAdapter {
     parseInit(data) {
         // Does not receive any config; the only argument is the raw data, embedded when source is created
         this._data = data;
@@ -882,7 +882,7 @@ class StaticSource extends BaseSource {
  * @param {String[]} init.params.build This datasource expects to be provided the name of the genome build that will
  *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
-class PheWASLZ extends RemoteSource {
+class PheWASLZ extends RemoteAdapter {
     getURL(state, chain, fields) {
         const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
         if (!build || !Array.isArray(build) || !build.length) {
@@ -916,7 +916,7 @@ class PheWASLZ extends RemoteSource {
  *  assumptions about what namespaces a source is using.
  * @type {*|Function}
  */
-class ConnectorSource extends BaseSource {
+class ConnectorSource extends BaseAdapter {
     constructor(config) {
         super(config);
 
@@ -979,7 +979,7 @@ class ConnectorSource extends BaseSource {
     }
 }
 
-export { BaseSource, RemoteSource };
+export { BaseAdapter, RemoteAdapter };
 
 export {
     AssociationLZ,

@@ -401,7 +401,7 @@ const annotation_catalog_layer = {
 };
 
 /**
- * Individual dashboard buttons
+ * Individual toolbar buttons
  * @namespace dashboard_components
  */
 const ldlz2_pop_selector_menu = {
@@ -428,7 +428,7 @@ const ldlz2_pop_selector_menu = {
 };
 
 /**
- * Dashboard Layouts: Collections of toolbar buttons etc
+ * Toolbar Layouts: Collections of toolbar buttons etc
  */
 const standard_panel_dashboard = {
     components: [
@@ -859,6 +859,7 @@ const coaccessibility_plot = {
         }(),
     ]
 };
+
 
 export const tooltip = {
     standard_association: standard_association_tooltip,

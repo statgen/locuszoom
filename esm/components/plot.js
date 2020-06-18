@@ -2,7 +2,7 @@ import d3 from 'd3';
 
 import {merge} from '../helpers/layouts';
 import Requester from '../data/requester';
-import Dashboard from './dashboard';
+import Toolbar from './toolbar';
 import Panel from './panel';
 import {generateCurtain, generateLoader} from '../helpers/common';
 
@@ -943,8 +943,8 @@ class Plot {
             });
         }
 
-        // Create the dashboard object and immediately show it
-        this.dashboard = new Dashboard(this).show();
+        // Create the toolbar object and immediately show it
+        this.dashboard = new Toolbar(this).show();
 
         // Initialize all panels
         for (let id in this.panels) {
@@ -1123,7 +1123,7 @@ class Plot {
                 this.loading_data = false;
             })
             .then(() => {
-                // Update dashboard / components
+                // Update toolbar / components
                 this.dashboard.update();
 
                 // Apply panel-level state values

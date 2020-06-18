@@ -1,26 +1,30 @@
 import {assert} from 'chai';
 
-import {layouts} from '../../../esm/registry';
-
+import {data_layers, layouts, plugins} from '../../../esm/registry';
+import * as intervals_plugin from '../../../esm/ext/lz-intervals-track';
 
 /**
  * Interval annotation track
  */
 describe('Interval annotation track', function () {
+    before(function() {
+        plugins.use(intervals_plugin);
+    });
+
     describe('Auto-create legend from best available data', function () {
-        var find_color_options = function (layout) {
-            return layout.color.find(function(item) {
+        const find_color_options = function (layout) {
+            return layout.color.find(function (item) {
                 return item.scale_function === 'categorical_bin';
             });
         };
 
         beforeEach(function () {
-            var layout = layouts.get('data_layer', 'intervals', {
+            const layout = layouts.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
                 track_split_field: '{{namespace[intervals]}}state_id'
             });
-            var instance = LocusZoom.DataLayers.get('intervals', layout);
+            const instance = data_layers.create('intervals', layout);
             this.instance = instance;
             this.color_config = find_color_options(instance._base_layout);
             this.color_config.field = '{{namespace[intervals]}}state_id';
@@ -49,10 +53,9 @@ describe('Interval annotation track', function () {
         });
 
         it('throws an error when legend (but not color) options are specified', function () {
-            var self = this;
             this.instance._base_layout.legend = [{filler: 'Hi'}];
-            assert.throws(function () {
-                self.instance._applyLayoutOptions();
+            assert.throws(() => {
+                this.instance._applyLayoutOptions();
             }, /must be set/);
         });
 
@@ -70,8 +73,8 @@ describe('Interval annotation track', function () {
             assert.equal(this.color_config.parameters.categories.length, 0, 'Initial color configuration is left unchanged');
             assert.equal(this.legend_config.length, 0, 'Initial legend configuration is left unchanged');
 
-            var final_legend = this.instance.layout.legend;
-            var final_colors = find_color_options(this.instance.layout);
+            const final_legend = this.instance.layout.legend;
+            const final_colors = find_color_options(this.instance.layout);
             assert.deepEqual(final_colors.parameters.categories, [1, 2, 3], 'Unique categories are generated');
             assert.deepEqual(final_colors.parameters.values, ['#FF0000', '#00FF00', '#0000FF'], 'Unique color options are tracked');
             assert.deepEqual(
@@ -99,8 +102,8 @@ describe('Interval annotation track', function () {
             assert.equal(this.color_config.parameters.categories.length, 0, 'Initial color configuration is left unchanged');
             assert.equal(this.legend_config.length, 0, 'Initial legend configuration is left unchanged');
 
-            var final_legend = this.instance.layout.legend;
-            var final_colors = find_color_options(this.instance.layout);
+            const final_legend = this.instance.layout.legend;
+            const final_colors = find_color_options(this.instance.layout);
             assert.deepEqual(final_colors.parameters.categories, [1, 2, 3], 'Unique categories are generated');
             assert.deepEqual(
                 final_colors.parameters.values,

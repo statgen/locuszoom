@@ -1,5 +1,5 @@
 /**
- * Loop Data Layer
+ * Arc Data Layer
  * Implements a data layer that will render chromatin accessibility tracks.
  * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
  *  with a height determined by y.field.

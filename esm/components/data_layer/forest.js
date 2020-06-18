@@ -1,7 +1,9 @@
 import d3 from 'd3';
+
 import BaseDataLayer from './base';
-import {merge} from '../../helpers/layouts';
 import Field from '../../data/field';
+import {merge} from '../../helpers/layouts';
+
 
 const default_layout = {
     point_size: 40,

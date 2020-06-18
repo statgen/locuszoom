@@ -2,7 +2,7 @@
  * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
  *
  * This contains (reusable) code to power some (rarely used) demo features:
- *  - The "covariates model" demo, in which an LZ dashboard widget is populated
+ *  - The "covariates model" demo, in which an LZ toolbar widget is populated
  *    with information by selecting points on the plot (see "covariates model" demo)
  *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
  *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
@@ -10,32 +10,35 @@
  */
 
 // In order to work in a UMD context, this module imports the top-level LocusZoom symbol
-import {BaseClasses, CONSTANTS, Layouts} from 'locuszoom';
+import {BaseClasses, Layouts} from 'locuszoom';
+
+const STATUS_VERBS = ['highlight', 'select', 'fade', 'hide'];
+const STATUS_ADJECTIVES = ['highlighted', 'selected', 'faded', 'hidden'];
+const STATUS_ANTIVERBS = ['unhighlight', 'deselect', 'unfade', 'show'];
 
 /**
  * Special button/menu to allow model building by tracking individual covariants. Will track a list of covariate
  *   objects and store them in the special `model.covariates` field of plot `state`.
- * @augments Component
  * @param {object} layout
  * @param {string} layout.button_html The HTML to render inside the button
  * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
  */
-class CovariatesModel extends BaseClasses.Component {
+class CovariatesModel extends BaseClasses.BaseWidget {
     initialize() {
         // Initialize state.model.covariates
         this.parent_plot.state.model = this.parent_plot.state.model || {};
         this.parent_plot.state.model.covariates = this.parent_plot.state.model.covariates || [];
         // Create an object at the plot level for easy access to interface methods in custom client-side JS
         /**
-         * When a covariates model dashboard element is present, create (one) object at the plot level that exposes
+         * When a covariates model toolbar element is present, create (one) object at the plot level that exposes
          *   component data and state for custom interactions with other plot elements.
          * @class LocusZoom.Plot.CovariatesModel
          */
         this.parent_plot.CovariatesModel = {
-            /** @member {LocusZoom.Dashboard.Component.Button} */
+            /** @member {Button} */
             button: this,
             /**
-             * Add an element to the model and show a representation of it in the dashboard component menu. If the
+             * Add an element to the model and show a representation of it in the toolbar component menu. If the
              *   element is already part of the model, do nothing (to avoid adding duplicates).
              * When plot state is changed, this will automatically trigger requests for new data accordingly.
              * @param {string|object} element_reference Can be any value that can be put through JSON.stringify()
@@ -59,7 +62,7 @@ class CovariatesModel extends BaseClasses.Component {
                 return plot;
             },
             /**
-             * Remove an element from `state.model.covariates` (and from the dashboard component menu's
+             * Remove an element from `state.model.covariates` (and from the toolbar component menu's
              *  representation of the state model). When plot state is changed, this will automatically trigger
              *  requests for new data accordingly.
              * @param {number} idx Array index of the element, in the `state.model.covariates array`.
@@ -75,7 +78,7 @@ class CovariatesModel extends BaseClasses.Component {
                 return plot;
             },
             /**
-             * Empty the `state.model.covariates` array (and dashboard component menu representation thereof) of all
+             * Empty the `state.model.covariates` array (and toolbar component menu representation thereof) of all
              *  elements. When plot state is changed, this will automatically trigger requests for new data accordingly
              */
             removeAll: () => {
@@ -86,8 +89,8 @@ class CovariatesModel extends BaseClasses.Component {
                 return plot;
             },
             /**
-             * Manually trigger the update methods on the dashboard component's button and menu elements to force
-             *   display of most up-to-date content. Can be used to force the dashboard to reflect changes made, eg if
+             * Manually trigger the update methods on the toolbar component's button and menu elements to force
+             *   display of most up-to-date content. Can be used to force the toolbar to reflect changes made, eg if
              *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
              */
             updateComponent: () => {
@@ -101,7 +104,7 @@ class CovariatesModel extends BaseClasses.Component {
 
         if (this.button) { return this; }
 
-        this.button = new BaseClasses.Button(this)
+        this.button = new BaseClasses._Button(this)
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html)
             .setTitle(this.layout.button_title)
@@ -163,7 +166,7 @@ class CovariatesModel extends BaseClasses.Component {
 /**
  * Menu for manipulating multiple data layers in a single panel: show/hide, change order, etc.
  */
-class DataLayersWidget extends BaseClasses.Component {
+class DataLayersWidget extends BaseClasses.BaseWidget {
     update() {
 
         if (typeof this.layout.button_html != 'string') {
@@ -196,15 +199,15 @@ class DataLayersWidget extends BaseClasses.Component {
                 row.append('td').html(name);
                 // Status toggle buttons
                 this.layout.statuses.forEach((status_adj) => {
-                    const status_idx = CONSTANTS.STATUSES.adjectives.indexOf(status_adj);
-                    const status_verb = CONSTANTS.STATUSES.verbs[status_idx];
+                    const status_idx = STATUS_ADJECTIVES.indexOf(status_adj);
+                    const status_verb = STATUS_VERBS[status_idx];
                     let html, onclick, highlight;
                     if (data_layer.global_statuses[status_adj]) {
-                        html = CONSTANTS.STATUSES.menu_antiverbs[status_idx];
+                        html = STATUS_ANTIVERBS[status_idx];
                         onclick = 'un' + status_verb + 'AllElements';
                         highlight = '-highlighted';
                     } else {
-                        html = CONSTANTS.STATUSES.verbs[status_idx];
+                        html = STATUS_VERBS[status_idx];
                         onclick = status_verb + 'AllElements';
                         highlight = '';
                     }
@@ -271,7 +274,8 @@ const covariates_model_plot = function () {
     return covariates_model_plot_dashboard;
 }();
 
-export const dashboards = [
+
+export const widgets = [
     ['covariates_model', CovariatesModel],
     ['data_layers', DataLayersWidget],
 ];

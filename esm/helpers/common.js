@@ -13,7 +13,7 @@ import d3 from 'd3';
  * @returns {object}
  */
 function generateCurtain() {
-    const curtain = {
+    return {
         showing: false,
         selector: null,
         content_selector: null,
@@ -93,7 +93,6 @@ function generateCurtain() {
             return this.curtain;
         }
     };
-    return curtain;
 }
 
 /**
@@ -218,34 +217,5 @@ function generateLoader() {
     };
 }
 
-/**
- * Create a new subclass following classical inheritance patterns.
- *
- * ES6 users should prefer an explicit `class ... extends` syntax. This exists to allow users without special tooling
- *   to generate custom data sources and layers.
- *
- * @param {Function} parent A parent class constructor that will be extended by the child class
- * @param {Object} extra An object of additional properties and methods to add/override behavior for the child class.
- *   The special "constructor" property can be used to specify a custom constructor, or it will call parent by default.
- *   Implementer must manage super calls when overriding the constructor.
- * @returns {Function} The constructor for the new child class
- */
-function subclass(parent, extra) {
-    if (typeof parent !== 'function' ) {
-        throw new Error('Parent must be a callable constructor');
-    }
 
-    extra = extra || {};
-
-    const Sub = Object.prototype.hasOwnProperty.call(extra, 'constructor') ? extra.constructor : function () {
-        parent.apply(this, arguments);
-    };
-
-    Sub.prototype = Object.create(parent.prototype);
-    Object.keys(extra).forEach(function(k) {
-        Sub.prototype[k] = extra[k];
-    });
-    return Sub;
-}
-
-export { generateCurtain, generateLoader, subclass };
+export { generateCurtain, generateLoader };

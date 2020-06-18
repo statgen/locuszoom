@@ -23,7 +23,7 @@ class DataSources extends RegistryBase {
     /**
      * For data sources, there is a special behavior of "create item from config, then add"
      * @param {String} namespace Uniquely identify this datasource
-     * @param {BaseSource|Array} item An instantiated datasource, or an array of arguments that can be used to
+     * @param {BaseAdapter|Array} item An instantiated datasource, or an array of arguments that can be used to
      *   create a known datasource type.
      * @param [override=false] Whether to allow existing sources to be redefined
      * @return {DataSources} Most registries return the created instance, but this registry returns a reference to
@@ -48,5 +48,6 @@ class DataSources extends RegistryBase {
         return this;
     }
 }
+
 
 export default DataSources;

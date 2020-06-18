@@ -1,4 +1,4 @@
-import { transforms } from '../registry';
+import transforms from '../registry/transforms';
 
 /**
  * Represents an addressable unit of data from a namespaced datasource, subject to specified value transformations.

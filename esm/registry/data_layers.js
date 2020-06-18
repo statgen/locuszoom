@@ -6,4 +6,5 @@ for (let [name, type] of Object.entries(layers)) {
     registry.add(name, type);
 }
 
+
 export default registry;

@@ -3,7 +3,7 @@ import {ClassRegistry, RegistryBase} from '../../esm/registry/base';
 import { _TransformationFunctions } from '../../esm/registry/transforms';
 import {_PluginRegistry} from '../../esm/registry/plugins';
 import {_LayoutRegistry} from '../../esm/registry/layouts';
-import {BaseSource} from '../../esm/data';
+import {BaseAdapter} from '../../esm/data';
 import {AssociationLZ} from '../../esm/data/adapters';
 
 describe('Registries', function() {
@@ -79,7 +79,7 @@ describe('Registries', function() {
             const additions = {
                 layouts: [ ['plot', 'myplot', { foo: 12 }] ],
                 adapters: [
-                    ['a1', BaseSource],
+                    ['a1', BaseAdapter],
                     ['a2', AssociationLZ]
                 ],
                 scalable: [

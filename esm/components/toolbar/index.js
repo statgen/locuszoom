@@ -1,11 +1,11 @@
-import {dashboards} from '../../registry';
+import widgets from '../../registry/widgets';
 import d3 from 'd3';
 
 /**
- * A Dashboard is an HTML element used for presenting arbitrary user interface components. Dashboards are anchored
+ * A Toolbar is an HTML element used for presenting arbitrary user interface components. Toolbars are anchored
  *   to either the entire Plot or to individual Panels.
  *
- * Each dashboard is an HTML-based (read: not SVG) collection of components used to display information or provide
+ * Each toolbar is an HTML-based (read: not SVG) collection of components used to display information or provide
  *   user interface. Dashboards can exist on entire plots, where their visibility is permanent and vertically adjacent
  *   to the plot, or on individual panels, where their visibility is tied to a behavior (e.g. a mouseover) and is as
  *   an overlay.
@@ -13,11 +13,11 @@ import d3 from 'd3';
  * This class is used internally for rendering, and is not part of the public interface
  * @private
  */
-class Dashboard {
+class Toolbar {
     constructor(parent) {
         // parent must be a locuszoom plot or panel
         // if (!(parent instanceof LocusZoom.Plot) && !(parent instanceof LocusZoom.Panel)) {
-        //     throw new Error('Unable to create dashboard, parent must be a locuszoom plot or panel');
+        //     throw new Error('Unable to create toolbar, parent must be a locuszoom plot or panel');
         // }
         /** @member {Plot|Panel} */
         this.parent = parent;
@@ -39,7 +39,7 @@ class Dashboard {
          */
         this.hide_timeout = null;
         /**
-         * Whether to hide the dashboard. Can be overridden by a child component. Check via `shouldPersist`
+         * Whether to hide the toolbar. Can be overridden by a child component. Check via `shouldPersist`
          * @protected
          * @member {Boolean}
          */
@@ -50,16 +50,16 @@ class Dashboard {
     }
 
     /**
-     * Prepare the dashboard for first use: generate all component instances for this dashboard, based on the provided
+     * Prepare the toolbar for first use: generate all component instances for this toolbar, based on the provided
      *   layout of the parent. Connects event listeners and shows/hides as appropriate.
-     * @returns {Dashboard}
+     * @returns {Toolbar}
      */
     initialize() {
         // Parse layout to generate component instances
         if (Array.isArray(this.parent.layout.dashboard.components)) {
             this.parent.layout.dashboard.components.forEach((layout) => {
                 try {
-                    const component = dashboards.create(layout.type, layout, this);
+                    const component = widgets.create(layout.type, layout, this);
                     this.components.push(component);
                 } catch (e) {
                     console.warn(e);
@@ -67,7 +67,7 @@ class Dashboard {
             });
         }
 
-        // Add mouseover event handlers to show/hide panel dashboard
+        // Add mouseover event handlers to show/hide panel toolbar
         if (this.type === 'panel') {
             d3.select(this.parent.parent.svg.node().parentNode).on('mouseover.' + this.id, () => {
                 clearTimeout(this.hide_timeout);
@@ -87,7 +87,7 @@ class Dashboard {
     }
 
     /**
-     * Whether to persist the dashboard. Returns true if at least one component should persist, or if the panel is engaged
+     * Whether to persist the toolbar. Returns true if at least one component should persist, or if the panel is engaged
      *   in an active drag event.
      * @returns {boolean}
      */
@@ -106,7 +106,7 @@ class Dashboard {
     }
 
     /**
-     * Make the dashboard appear. If it doesn't exist yet create it, including creating/positioning all components within,
+     * Make the toolbar appear. If it doesn't exist yet create it, including creating/positioning all components within,
      *   and make sure it is set to be visible.
      */
     show() {
@@ -135,8 +135,8 @@ class Dashboard {
 
 
     /**
-     * Update the dashboard and rerender all child components. This can be called whenever plot state changes.
-     * @returns {Dashboard}
+     * Update the toolbar and rerender all child components. This can be called whenever plot state changes.
+     * @returns {Toolbar}
      */
     update() {
         if (!this.selector) {
@@ -150,14 +150,14 @@ class Dashboard {
 
 
     /**
-     * Position the dashboard (and child components) within the panel
-     * @returns {Dashboard}
+     * Position the toolbar (and child components) within the panel
+     * @returns {Toolbar}
      */
     position() {
         if (!this.selector) {
             return this;
         }
-        // Position the dashboard itself (panel only)
+        // Position the toolbar itself (panel only)
         if (this.type === 'panel') {
             const page_origin = this.parent.getPageOrigin();
             const top = (page_origin.y + 3.5).toString() + 'px';
@@ -173,9 +173,9 @@ class Dashboard {
     }
 
     /**
-     * Hide the dashboard (make invisible but do not destroy). Will do nothing if `shouldPersist` returns true.
+     * Hide the toolbar (make invisible but do not destroy). Will do nothing if `shouldPersist` returns true.
      *
-     * @returns {Dashboard}
+     * @returns {Toolbar}
      */
     hide() {
         if (!this.selector || this.shouldPersist()) {
@@ -189,9 +189,9 @@ class Dashboard {
     }
 
     /**
-     * Completely remove dashboard and all child components. (may be overridden by persistence settings)
-     * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the dashboard
-     * @returns {Dashboard}
+     * Completely remove toolbar and all child components. (may be overridden by persistence settings)
+     * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the toolbar
+     * @returns {Toolbar}
      */
     destroy(force) {
         if (typeof force == 'undefined') {
@@ -213,4 +213,4 @@ class Dashboard {
     }
 }
 
-export default Dashboard;
+export default Toolbar;

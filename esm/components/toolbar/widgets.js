@@ -1,16 +1,629 @@
 import d3 from 'd3';
 
-import { Component, Button } from './base';
-import { positionIntToString } from '../../helpers/display';
+import {positionIntToString} from '../../helpers/display';
 
 // FIXME: Button creation should occur in the constructors, not in update functions
+
+/**
+ *
+ * A widget is an empty div rendered on a toolbar that can display custom
+ * html of user interface elements.
+ * @param {Object} layout A JSON-serializable object of layout configuration parameters
+ * @param {('left'|'right')} [layout.position='left']  Whether to float the component left or right.
+ * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
+ *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
+ *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
+ *  For example, the region_nav_plot toolbar is a defined as a group.
+ * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple'} [layout.color='gray']  Color scheme for the
+ *   component. Applies to buttons and menus.
+ * @param {Toolbar} parent The toolbar that contains this component
+ */
+class BaseWidget {
+    constructor(layout, parent) {
+        /** @member {Object} */
+        this.layout = layout || {};
+        if (!this.layout.color) {
+            this.layout.color = 'gray';
+        }
+
+        /** @member {Toolbar|*} */
+        this.parent = parent || null;
+        /**
+         * Some widgets are attached to a panel, rather than directly to a plot
+         * @member {Panel|null}
+         */
+        this.parent_panel = null;
+        /** @member {Plot} */
+        this.parent_plot = null;
+        /**
+         * This is a reference to either the panel or the plot, depending on what the toolbar is
+         *   tied to. Useful when absolutely positioning toolbar components relative to their SVG anchor.
+         * @member {Plot|Panel}
+         */
+        this.parent_svg = null;
+        if (this.parent) {
+            if (this.parent.type === 'panel') {
+                this.parent_panel = this.parent.parent;
+                this.parent_plot = this.parent.parent.parent;
+                this.parent_svg = this.parent_panel;
+            } else {
+                this.parent_plot = this.parent.parent;
+                this.parent_svg = this.parent_plot;
+            }
+        }
+        /** @member {d3.selection} */
+        this.selector = null;
+        /**
+         * If this is an interactive component, it will contain a button or menu instance that handles the interactivity.
+         *   There is a 1-to-1 relationship of toolbar component to button
+         * @member {null|Button}
+         */
+        this.button = null;
+        /**
+         * If any single component is marked persistent, it will bubble up to prevent automatic hide behavior on a
+         *   component's parent toolbar. Check via `shouldPersist`
+         * @protected
+         * @member {Boolean}
+         */
+        this.persist = false;
+        if (!this.layout.position) {
+            this.layout.position = 'left';
+        }
+    }
+
+    /**
+     * Perform all rendering of component, including toggling visibility to true. Will initialize and create SVG element
+     *   if necessary, as well as updating with new data and performing layout actions.
+     */
+    show() {
+        if (!this.parent || !this.parent.selector) {
+            return;
+        }
+        if (!this.selector) {
+            const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-dashboard-group-' + this.layout.group_position : '');
+            this.selector = this.parent.selector.append('div')
+                .attr('class', 'lz-dashboard-' + this.layout.position + group_position);
+            if (this.layout.style) {
+                this.selector.style(this.layout.style);
+            }
+            if (typeof this.initialize == 'function') {
+                this.initialize();
+            }
+        }
+        if (this.button && this.button.status === 'highlighted') {
+            this.button.menu.show();
+        }
+        this.selector.style({ visibility: 'visible' });
+        this.update();
+        return this.position();
+    }
+
+    /**
+     * Update the toolbar component with any new data or plot state as appropriate. This method performs all
+     *  necessary rendering steps.
+     */
+    update() { /* stub */
+    }
+
+    /**
+     * Place the component correctly in the plot
+     * @returns {BaseWidget}
+     */
+    position() {
+        if (this.button) {
+            this.button.menu.position();
+        }
+        return this;
+    }
+
+    /**
+     * Determine whether the component should persist (will bubble up to parent toolbar)
+     * @returns {boolean}
+     */
+    shouldPersist() {
+        if (this.persist) {
+            return true;
+        }
+        return !!(this.button && this.button.persist);
+    }
+
+    /**
+     * Toggle visibility to hidden, unless marked as persistent
+     * @returns {BaseWidget}
+     */
+    hide() {
+        if (!this.selector || this.shouldPersist()) {
+            return this;
+        }
+        if (this.button) {
+            this.button.menu.hide();
+        }
+        this.selector.style({ visibility: 'hidden' });
+        return this;
+    }
+
+    /**
+     * Completely remove component and button. (may be overridden by persistence settings)
+     * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the toolbar
+     * @returns {Toolbar}
+     */
+    destroy(force) {
+        if (typeof force == 'undefined') {
+            force = false;
+        }
+        if (!this.selector) {
+            return this;
+        }
+        if (this.shouldPersist() && !force) {
+            return this;
+        }
+        if (this.button && this.button.menu) {
+            this.button.menu.destroy();
+        }
+        this.selector.remove();
+        this.selector = null;
+        this.button = null;
+        return this;
+    }
+}
+
+/**
+ * Plots and panels may have a "toolbar" element suited for showing HTML components that may be interactive.
+ *   When components need to incorporate a generic button, or additionally a button that generates a menu, this
+ *   class provides much of the necessary framework.
+ * @param {BaseWidget} parent
+ */
+class Button {
+    constructor(parent) {
+        if (!(parent instanceof BaseWidget)) {
+            throw new Error('Unable to create dashboard component button, invalid parent');
+        }
+        /** @member {BaseWidget} */
+        this.parent = parent;
+        /** @member {Panel} */
+        this.parent_panel = this.parent.parent_panel;
+        /** @member {Plot} */
+        this.parent_plot = this.parent.parent_plot;
+        /** @member {Plot|Panel} */
+        this.parent_svg = this.parent.parent_svg;
+
+        /** @member {Toolbar|null|*} */
+        this.parent_dashboard = this.parent.parent;
+        /** @member {d3.selection} */
+        this.selector = null;
+
+        /**
+         * Tag to use for the button (default: a)
+         * @member {String}
+         */
+        this.tag = 'a';
+
+        /**
+         * HTML for the button to show.
+         * @protected
+         * @member {String}
+         */
+        this.html = '';
+        /**
+         * Specify the HTML content of this button.
+         * WARNING: The string provided will be inserted into the document as raw markup; XSS mitigation is the
+         *   responsibility of each button implementation.
+         * @param {String} html
+         * @returns {Button}
+         */
+        this.setHtml = function (html) {
+            if (typeof html != 'undefined') {
+                this.html = html.toString();
+            }
+            return this;
+        };
+
+        /**
+         * Mouseover title text for the button to show
+         * @protected
+         * @member {String}
+         */
+        this.title = '';
+        /**
+         * Set the mouseover title text for the button (if any)
+         * @param {String} title Simple text to display
+         * @returns {Button}
+         */
+        this.setTitle = function (title) {
+            if (typeof title != 'undefined') {
+                this.title = title.toString();
+            }
+            return this;
+        };
+
+        /**
+         * Color of the button
+         * @member {String}
+         */
+        this.color = 'gray';
+
+        /**
+         * Set the color associated with this button
+         * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} color Any selection not in the preset list
+         *   will be replaced with gray.
+         * @returns {Button}
+         */
+        this.setColor = function (color) {
+            if (typeof color != 'undefined') {
+                if (['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'].indexOf(color) !== -1) {
+                    this.color = color;
+                } else {
+                    this.color = 'gray';
+                }
+            }
+            return this;
+        };
+
+        /**
+         * Hash of arbitrary button styles to apply as {name: value} entries
+         * @protected
+         * @member {Object}
+         */
+        this.style = {};
+        /**
+         * Set a collection of custom styles to be used by the button
+         * @param {Object} style Hash of {name:value} entries
+         * @returns {Button}
+         */
+        this.setStyle = function (style) {
+            if (typeof style != 'undefined') {
+                this.style = style;
+            }
+            return this;
+        };
+
+        //
+        /**
+         * Method to generate a CSS class string
+         * @returns {string}
+         */
+        this.getClass = function () {
+            const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
+            return 'lz-dashboard-button lz-dashboard-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
+        };
+
+        // Permanence
+        /**
+         * Track internal state on whether to keep showing the button/ menu contents at the moment
+         * @protected
+         * @member {Boolean}
+         */
+        this.persist = false;
+        /**
+         * Configuration when defining a button: track whether this component should be allowed to keep open
+         *   menu/button contents in response to certain events
+         * @protected
+         * @member {Boolean}
+         */
+        this.permanent = false;
+        /**
+         * Allow code to change whether the button is allowed to be `permanent`
+         * @param {boolean} bool
+         * @returns {Button}
+         */
+        this.setPermanent = function (bool) {
+            if (typeof bool == 'undefined') {
+                bool = true;
+            } else {
+                bool = Boolean(bool);
+            }
+            this.permanent = bool;
+            if (this.permanent) {
+                this.persist = true;
+            }
+            return this;
+        };
+        /**
+         * Determine whether the button/menu contents should persist in response to a specific event
+         * @returns {Boolean}
+         */
+        this.shouldPersist = function () {
+            return this.permanent || this.persist;
+        };
+
+        /**
+         * Button status (highlighted / disabled/ etc)
+         * @protected
+         * @member {String}
+         */
+        this.status = '';
+        /**
+         * Change button state
+         * @param {('highlighted'|'disabled'|'')} status
+         */
+        this.setStatus = function (status) {
+            if (typeof status != 'undefined' && ['', 'highlighted', 'disabled'].indexOf(status) !== -1) {
+                this.status = status;
+            }
+            return this.update();
+        };
+        /**
+         * Toggle whether the button is highlighted
+         * @param {boolean} bool If provided, explicitly set highlighted state
+         * @returns {Button}
+         */
+        this.highlight = function (bool) {
+            if (typeof bool == 'undefined') {
+                bool = true;
+            } else {
+                bool = Boolean(bool);
+            }
+            if (bool) {
+                return this.setStatus('highlighted');
+            } else if (this.status === 'highlighted') {
+                return this.setStatus('');
+            }
+            return this;
+        };
+        /**
+         * Toggle whether the button is disabled
+         * @param {boolean} bool If provided, explicitly set disabled state
+         * @returns {Button}
+         */
+        this.disable = function (bool) {
+            if (typeof bool == 'undefined') {
+                bool = true;
+            } else {
+                bool = Boolean(bool);
+            }
+            if (bool) {
+                return this.setStatus('disabled');
+            } else if (this.status === 'disabled') {
+                return this.setStatus('');
+            }
+            return this;
+        };
+
+        // Mouse events
+        /** @member {function} */
+        this.onmouseover = function () {
+        };
+        this.setOnMouseover = function (onmouseover) {
+            if (typeof onmouseover == 'function') {
+                this.onmouseover = onmouseover;
+            } else {
+                this.onmouseover = function () {
+                };
+            }
+            return this;
+        };
+        /** @member {function} */
+        this.onmouseout = function () {
+        };
+        this.setOnMouseout = function (onmouseout) {
+            if (typeof onmouseout == 'function') {
+                this.onmouseout = onmouseout;
+            } else {
+                this.onmouseout = function () {
+                };
+            }
+            return this;
+        };
+        /** @member {function} */
+        this.onclick = function () {
+        };
+        this.setOnclick = function (onclick) {
+            if (typeof onclick == 'function') {
+                this.onclick = onclick;
+            } else {
+                this.onclick = function () {
+                };
+            }
+            return this;
+        };
+
+        // Primary behavior functions
+        /**
+         * Show the button, including creating DOM elements if necessary for first render
+         */
+        this.show = function () {
+            if (!this.parent) {
+                return;
+            }
+            if (!this.selector) {
+                this.selector = this.parent.selector.append(this.tag).attr('class', this.getClass());
+            }
+            return this.update();
+        };
+        /**
+         * Hook for any actions or state cleanup to be performed before rerendering
+         * @returns {Button}
+         */
+        this.preUpdate = function () {
+            return this;
+        };
+        /**
+         * Update button state and contents, and fully rerender
+         * @returns {Button}
+         */
+        this.update = function () {
+            if (!this.selector) {
+                return this;
+            }
+            this.preUpdate();
+            this.selector
+                .attr('class', this.getClass())
+                .attr('title', this.title).style(this.style)
+                .on('mouseover', (this.status === 'disabled') ? null : this.onmouseover)
+                .on('mouseout', (this.status === 'disabled') ? null : this.onmouseout)
+                .on('click', (this.status === 'disabled') ? null : this.onclick)
+                .html(this.html);
+            this.menu.update();
+            this.postUpdate();
+            return this;
+        };
+        /**
+         * Hook for any behavior to be added/changed after the button has been re-rendered
+         * @returns {Button}
+         */
+        this.postUpdate = function () {
+            return this;
+        };
+        /**
+         * Hide the button by removing it from the DOM (may be overridden by current persistence setting)
+         * @returns {Button}
+         */
+        this.hide = function () {
+            if (this.selector && !this.shouldPersist()) {
+                this.selector.remove();
+                this.selector = null;
+            }
+            return this;
+        };
+
+        /**
+         * Button Menu Object
+         * The menu is an HTML overlay that can appear below a button. It can contain arbitrary HTML and
+         *   has logic to be automatically positioned and sized to behave more or less like a dropdown menu.
+         * @member {Object}
+         */
+        this.menu = {
+            outer_selector: null,
+            inner_selector: null,
+            scroll_position: 0,
+            hidden: true,
+            /**
+             * Show the button menu, including setting up any DOM elements needed for first rendering
+             */
+            show: () => {
+                if (!this.menu.outer_selector) {
+                    this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append('div')
+                        .attr('class', 'lz-dashboard-menu lz-dashboard-menu-' + this.color)
+                        .attr('id', this.parent_svg.getBaseId() + '.dashboard.menu');
+                    this.menu.inner_selector = this.menu.outer_selector.append('div')
+                        .attr('class', 'lz-dashboard-menu-content');
+                    this.menu.inner_selector.on('scroll', () => {
+                        this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
+                    });
+                }
+                this.menu.outer_selector.style({ visibility: 'visible' });
+                this.menu.hidden = false;
+                return this.menu.update();
+            },
+            /**
+             * Update the rendering of the menu
+             */
+            update: () => {
+                if (!this.menu.outer_selector) {
+                    return this.menu;
+                }
+                this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+                if (this.menu.inner_selector) {
+                    this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
+                }
+                return this.menu.position();
+            },
+            position: () => {
+                if (!this.menu.outer_selector) {
+                    return this.menu;
+                }
+                // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
+                this.menu.outer_selector.style({ height: null });
+                const padding = 3;
+                const scrollbar_padding = 20;
+                const menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
+                const page_origin = this.parent_svg.getPageOrigin();
+                const page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
+                const container_offset = this.parent_plot.getContainerOffset();
+                const dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
+                const button_client_rect = this.selector.node().getBoundingClientRect();
+                const menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
+                const total_content_height = this.menu.inner_selector.node().scrollHeight;
+                let top;
+                let left;
+                if (this.parent_dashboard.type === 'panel') {
+                    top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
+                    left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
+                } else {
+                    top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
+                    left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
+                }
+                const base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
+                const container_max_width = base_max_width;
+                const content_max_width = (base_max_width - (4 * padding));
+                const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
+                const height = Math.min(total_content_height, base_max_height);
+                this.menu.outer_selector.style({
+                    'top': top.toString() + 'px',
+                    'left': left.toString() + 'px',
+                    'max-width': container_max_width.toString() + 'px',
+                    'max-height': base_max_height.toString() + 'px',
+                    'height': height.toString() + 'px'
+                });
+                this.menu.inner_selector.style({ 'max-width': content_max_width.toString() + 'px' });
+                this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
+                return this.menu;
+            },
+            hide: () => {
+                if (!this.menu.outer_selector) {
+                    return this.menu;
+                }
+                this.menu.outer_selector.style({ visibility: 'hidden' });
+                this.menu.hidden = true;
+                return this.menu;
+            },
+            destroy: () => {
+                if (!this.menu.outer_selector) {
+                    return this.menu;
+                }
+                this.menu.inner_selector.remove();
+                this.menu.outer_selector.remove();
+                this.menu.inner_selector = null;
+                this.menu.outer_selector = null;
+                return this.menu;
+            },
+            /**
+             * Internal method definition
+             * By convention populate() does nothing and should be reimplemented with each toolbar button definition
+             *   Reimplement by way of Toolbar.BaseWidget.Button.menu.setPopulate to define the populate method and hook
+             *   up standard menu click-toggle behavior prototype.
+             * @protected
+             */
+            populate: () => {
+                throw new Error('Method must be implemented');
+            },
+            /**
+             * Define how the menu is populated with items, and set up click and display properties as appropriate
+             * @public
+             */
+            setPopulate: (menu_populate_function) => {
+                if (typeof menu_populate_function == 'function') {
+                    this.menu.populate = menu_populate_function;
+                    this.setOnclick(() => {
+                        if (this.menu.hidden) {
+                            this.menu.show();
+                            this.highlight().update();
+                            this.persist = true;
+                        } else {
+                            this.menu.hide();
+                            this.highlight(false).update();
+                            if (!this.permanent) {
+                                this.persist = false;
+                            }
+                        }
+                    });
+                } else {
+                    this.setOnclick();
+                }
+                return this;
+            }
+        };
+
+    }
+
+}
 
 /**
  * Renders arbitrary text with title formatting
  * @param {object} layout
  * @param {string} layout.title Text to render
  */
-class Title extends Component {
+class Title extends BaseWidget {
     show() {
         if (!this.div_selector) {
             this.div_selector = this.parent.selector.append('div')
@@ -33,7 +646,7 @@ class Title extends Component {
 /**
  * Renders text to display the current dimensions of the plot. Automatically updated as plot dimensions change
  */
-class Dimensions extends Component {
+class Dimensions extends BaseWidget {
     update() {
         const display_width = this.parent_plot.layout.width.toString().indexOf('.') === -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
         const display_height = this.parent_plot.layout.height.toString().indexOf('.') === -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
@@ -48,7 +661,7 @@ class Dimensions extends Component {
  * Display the current scale of the genome region displayed in the plot, as defined by the difference between
  *  `state.end` and `state.start`.
  */
-class RegionScale extends Component {
+class RegionScale extends BaseWidget {
     update() {
         if (!isNaN(this.parent_plot.state.start) && !isNaN(this.parent_plot.state.end)
             && this.parent_plot.state.start !== null && this.parent_plot.state.end !== null) {
@@ -69,7 +682,7 @@ class RegionScale extends Component {
  * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
  * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
  */
-class Download extends Component {
+class Download extends BaseWidget {
     constructor(layout, parent) {
         super(layout, parent);
         this.css_string = '';
@@ -152,10 +765,10 @@ class Download extends Component {
 
 /**
  * Button to remove panel from plot.
- *   NOTE: Will only work on panel dashboards.
+ *   NOTE: Will only work on panel widgets.
  * @param {Boolean} [layout.suppress_confirm=false] If true, removes the panel without prompting user for confirmation
  */
-class RemovePanel extends Component {
+class RemovePanel extends BaseWidget {
     update() {
         if (this.button) { return this; }
         this.button = new Button(this)
@@ -179,9 +792,9 @@ class RemovePanel extends Component {
 
 /**
  * Button to move panel up relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel dashboards.
+ *   NOTE: Will only work on panel widgets.
  */
-class MovePanelUp extends Component {
+class MovePanelUp extends BaseWidget {
     update () {
         if (this.button) {
             const is_at_top = (this.parent_panel.layout.y_index === 0);
@@ -203,9 +816,9 @@ class MovePanelUp extends Component {
 
 /**
  * Button to move panel down relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel dashboards.
+ *   NOTE: Will only work on panel widgets.
  */
-class MovePanelDown extends Component {
+class MovePanelDown extends BaseWidget {
     update () {
         if (this.button) {
             const is_at_bottom = (this.parent_panel.layout.y_index === this.parent_plot.panel_ids_by_y_index.length - 1);
@@ -232,7 +845,7 @@ class MovePanelDown extends Component {
  * @param {string} [layout.button_html]
  * @param {string} [layout.button_title]
  */
-class ShiftRegion extends Component {
+class ShiftRegion extends BaseWidget {
     constructor(layout, parent) {
         if (isNaN(layout.step) || layout.step === 0) {
             layout.step = 50000;
@@ -274,7 +887,7 @@ class ShiftRegion extends Component {
  * @param {object} layout
  * @param {number} [layout.step=0.2] The amount to zoom in by (where 1 indicates 100%)
  */
-class ZoomRegion extends Component {
+class ZoomRegion extends BaseWidget {
     constructor(layout, parent) {
         if (isNaN(layout.step) || layout.step === 0) {
             layout.step = 0.2;
@@ -338,7 +951,7 @@ class ZoomRegion extends Component {
  * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
  * @param {string} layout.menu_html The HTML content of the dropdown menu
  */
-class Menu extends Component {
+class Menu extends BaseWidget {
     update() {
         if (this.button) { return this; }
         this.button = new Button(this)
@@ -358,7 +971,7 @@ class Menu extends Component {
  * @param {string} [layout.button_html="Resize to Data"]
  * @param {string} [layout.button_title]
  */
-class ResizeToData extends Component {
+class ResizeToData extends BaseWidget {
     update() {
         if (this.button) { return this; }
         this.button = new Button(this)
@@ -377,7 +990,7 @@ class ResizeToData extends Component {
 /**
  * Button to toggle legend
  */
-class ToggleLegend extends Component {
+class ToggleLegend extends BaseWidget {
     update() {
         const html = this.parent_panel.legend.layout.hidden ? 'Show Legend' : 'Hide Legend';
         if (this.button) {
@@ -420,7 +1033,7 @@ class ToggleLegend extends Component {
  * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
  *  with this `display` option. Display field should include all changes to datalayer presentation options.
  */
-class DisplayOptions extends Component {
+class DisplayOptions extends BaseWidget {
     constructor(layout, parent) {
         if (typeof layout.button_html != 'string') {
             layout.button_html = 'Display options...';
@@ -457,7 +1070,7 @@ class DisplayOptions extends Component {
          */
         this._selected_item = 'default';
 
-        // Define the button + menu that provides the real functionality for this dashboard component
+        // Define the button + menu that provides the real functionality for this toolbar component
 
         this.button = new Button(this)
             .setColor(layout.color)
@@ -531,7 +1144,7 @@ class DisplayOptions extends Component {
  * @typedef {{display_name: string, value: *}} SetStateOptionsConfigField
  * @param {SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
  */
-class SetState extends Component {
+class SetState extends BaseWidget {
     constructor(layout, parent) {
         if (typeof layout.button_html != 'string') {
             layout.button_html = 'Set option...';
@@ -561,7 +1174,7 @@ class SetState extends Component {
             throw new Error('There is an existing state value that does not match the known values in this widget');
         }
 
-        // Define the button + menu that provides the real functionality for this dashboard component
+        // Define the button + menu that provides the real functionality for this toolbar component
         this.button = new Button(this)
             .setColor(layout.color)
             .setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''))
@@ -609,8 +1222,10 @@ class SetState extends Component {
     }
 }
 
+
 export {
-    Component as BaseComponent,
+    BaseWidget as BaseWidget,  // This is used to create subclasses
+    Button as _Button, // This is used to create Widgets that contain a button. It actually shouldn't be in the registry because it's not usable directly..
     Dimensions as dimensions,
     DisplayOptions as display_options,
     Download as download,

@@ -14,7 +14,7 @@ import {BaseClasses, DataLayers, Layouts} from 'locuszoom';
  * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
  * @public
  */
-class IntervalLZ extends BaseClasses.RemoteSource {
+class IntervalLZ extends BaseClasses.RemoteAdapter {
     getURL(state, chain, fields) {
         const source = chain.header.bedtracksource || this.params.source;
         const query = `?filter=id in ${source} and chromosome eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
@@ -27,7 +27,7 @@ class IntervalLZ extends BaseClasses.RemoteSource {
  * @class LocusZoom.Dashboard.Components.toggle_split_tracks
  * @augments LocusZoom.Dashboard.Component
  */
-class ToggleSplitTracks extends BaseClasses.Component {
+class ToggleSplitTracks extends BaseClasses.BaseWidget {
     constructor(layout) {
         super(...arguments);
         if (!layout.data_layer_id) { layout.data_layer_id = 'intervals'; }
@@ -45,7 +45,7 @@ class ToggleSplitTracks extends BaseClasses.Component {
             this.parent.position();
             return this;
         } else {
-            this.button = new BaseClasses.Button(this)
+            this.button = new BaseClasses._Button(this)
                 .setColor(this.layout.color)
                 .setHtml(html)
                 .setTitle('Toggle whether tracks are split apart or merged together')
@@ -709,7 +709,7 @@ export const adapters = [
     ['IntervalLZ', IntervalLZ]
 ];
 
-export const dashboards = [
+export const widgets = [
     ['toggle_split_tracks', ToggleSplitTracks],
 ];
 

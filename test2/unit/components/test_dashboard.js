@@ -1,12 +1,12 @@
 import {assert} from 'chai';
 import d3 from 'd3';
 
-import Dashboard from '../../../esm/components/dashboard';
+import Toolbar from '../../../esm/components/toolbar';
 import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
 
-describe('LocusZoom.Dashboard', function() {
-    describe('Dashboard Composition and Methods', function() {
+describe('LocusZoom.Toolbar', function() {
+    describe('Toolbar Composition and Methods', function() {
         beforeEach(function() {
             var datasources = new DataSources();
             var layout = {
@@ -35,10 +35,10 @@ describe('LocusZoom.Dashboard', function() {
         });
         it('should be accessible as an attribute of the plot or panel that created it', function() {
             assert.isObject(this.plot.dashboard);
-            assert.instanceOf(this.plot.dashboard, Dashboard);
+            assert.instanceOf(this.plot.dashboard, Toolbar);
 
             assert.isObject(this.plot.panels.test.dashboard);
-            assert.instanceOf(this.plot.panels.test.dashboard, Dashboard);
+            assert.instanceOf(this.plot.panels.test.dashboard, Toolbar);
         });
         it('should generate a selector for its DOM element when shown', function() {
             this.plot.dashboard.show();
@@ -82,7 +82,7 @@ describe('LocusZoom.Dashboard', function() {
         });
     });
 
-    describe('Plot-Level Dashboard Rendering Behavior', function() {
+    describe('Plot-Level Toolbar Rendering Behavior', function() {
         it('should not render a plot-level dashboard DOM element if void of any components', function() {
             var datasources = new DataSources();
             var layout = {

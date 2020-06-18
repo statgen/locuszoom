@@ -65,9 +65,9 @@ class LayoutRegistry extends RegistryBase {
     }
 
     /**
-     * List all available types of layout (eg dashboard, panel, etc). If a specific type name is provided, list the
+     * List all available types of layout (eg toolbar, panel, etc). If a specific type name is provided, list the
      *  layouts for that component type.
-     * @param {String} [type] The type of layout (eg dashboard, panel, etc)
+     * @param {String} [type] The type of layout (eg toolbar, panel, etc)
      * @return {String[]|Object}
      */
     list(type) {
@@ -97,6 +97,7 @@ for (let [type, entries] of Object.entries(layouts)) {
         registry.add(type, name, config);
     }
 }
+
 
 export default registry;
 

@@ -45,11 +45,11 @@ class TransformationFunctions extends RegistryBase {
     }
 }
 
-
 const registry = new TransformationFunctions();
 for (let [name, type] of Object.entries(transforms)) {
     registry.add(name, type);
 }
+
 
 export default registry;
 // Export helper class for unit testing

@@ -1,11 +1,11 @@
 import d3 from 'd3';
 
 import {STATUSES} from './constants';
-import Dashboard from './dashboard';
+import Toolbar from './toolbar';
 import {generateCurtain, generateLoader} from '../helpers/common';
+import {parseFields, positionIntToString, prettyTicks} from '../helpers/display';
 import {merge} from '../helpers/layouts';
 import Legend from './legend';
-import {parseFields, positionIntToString, prettyTicks} from '../helpers/display';
 import { data_layers } from '../registry';
 
 
@@ -517,10 +517,10 @@ class Panel {
         this.loader = generateLoader.call(this);
 
         /**
-         * Create the dashboard object and hang components on it as defined by panel layout
-         * @member {Dashboard}
+         * Create the toolbar object and hang components on it as defined by panel layout
+         * @member {Toolbar}
          */
-        this.dashboard = new Dashboard(this);
+        this.dashboard = new Toolbar(this);
 
         // Inner border
         this.inner_border = this.svg.group.append('rect')

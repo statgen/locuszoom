@@ -1,9 +1,11 @@
 import d3 from 'd3';
-import {parseFields} from '../../helpers/display';
-import Field from '../../data/field';
-import {scalable} from '../../registry';
-import {merge} from '../../helpers/layouts';
+
 import {STATUSES} from '../constants';
+import Field from '../../data/field';
+import {parseFields} from '../../helpers/display';
+import {merge} from '../../helpers/layouts';
+import scalable from '../../registry/scalable';
+
 
 /**
  * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
