@@ -80,6 +80,14 @@ class LayoutRegistry extends RegistryBase {
         }
         return super.get(type).list();
     }
+
+    /**
+     * Static alias to a helper method. Preserved for backwards compatibility, so that UMD users can access this method.
+     * @static
+     */
+    merge(custom_layout, default_layout) {
+        return merge(custom_layout, default_layout);
+    }
 }
 
 const registry = new LayoutRegistry();

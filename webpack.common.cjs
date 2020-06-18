@@ -10,18 +10,22 @@ const PACKAGE = require('./package.json');
 const srcPath = path.resolve(__dirname, 'esm');
 const outputPath = path.resolve(__dirname, 'dist');
 
-const FILENAMES = { // For legacy reasons, the filenames must be different than the chunk names
+const FILENAMES = {
+    // For legacy reasons, the filenames that people expect are different than the "library" name
     LocusZoom: 'locuszoom.app.min.js',
     LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
     LzDashboardAddons: 'ext/lz-dashboard-addons.min.js',
+    LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
 };
 
 module.exports = {
     context: __dirname,
     entry: {
-        'LocusZoom': path.resolve(srcPath, 'index.js'),
-        'LzDynamicUrls': path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
-        'LzDashboardAddons': path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
+        // When a <script> is included in the page, entrypoint name = variable with content
+        LocusZoom: path.resolve(srcPath, 'index.js'),
+        LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
+        LzDashboardAddons: path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
+        LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -65,7 +69,7 @@ module.exports = {
     output: {
         path: outputPath,
         filename: (data) => {
-            // For backwards compatibility, the filename must be different than the chunk name.
+            // For backwards compatibility, the filename is different than the chunk name.
             const match = FILENAMES[data.chunk.name];
             if(!match) {
                 const msg = `Must provide a filename for this chunk: ${data.chunk.name}`;

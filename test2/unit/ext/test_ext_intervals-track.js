@@ -1,4 +1,7 @@
-'use strict';
+import {assert} from 'chai';
+
+import {layouts} from '../../../esm/registry';
+
 
 /**
  * Interval annotation track
@@ -12,7 +15,7 @@ describe('Interval annotation track', function () {
         };
 
         beforeEach(function () {
-            var layout = LocusZoom.Layouts.get('data_layer', 'intervals', {
+            var layout = layouts.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
                 track_split_field: '{{namespace[intervals]}}state_id'

@@ -2,6 +2,7 @@
  * Rollup module that defines all known datalayers. Used to create the registry.
  */
 
+export { default as BaseDataLayer } from './base';
 export { default as annotation_track } from './annotation_track';
 export { default as arcs } from './arcs';
 export * from './forest';

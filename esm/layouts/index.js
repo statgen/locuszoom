@@ -10,7 +10,6 @@ const LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
 
 /**
  * Tooltip Layouts
- * @namespace LocusZoom.Layouts.tooltips
  */
 const standard_association_tooltip = {
     namespace: { 'assoc': 'assoc' },
@@ -76,7 +75,7 @@ const coaccessibility_tooltip = {
 
 /**
  * Data Layer Layouts: represent specific information from a data source
- * @namespace Layouts.data_layer
+ * @namespace data_layer
  */
 
 const significance_layer = {
@@ -403,7 +402,7 @@ const annotation_catalog_layer = {
 
 /**
  * Individual dashboard buttons
- * @namespace Layouts.dashboard_components
+ * @namespace dashboard_components
  */
 const ldlz2_pop_selector_menu = {
     // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
@@ -430,7 +429,6 @@ const ldlz2_pop_selector_menu = {
 
 /**
  * Dashboard Layouts: Collections of toolbar buttons etc
- * @namespace Layouts.dashboard
  */
 const standard_panel_dashboard = {
     components: [
@@ -517,7 +515,6 @@ const region_nav_plot_dashboard = function () {
 
 /**
  * Panel Layouts
- * @namespace Layouts.panel
  */
 
 const association_panel = {
@@ -759,7 +756,6 @@ const annotation_catalog_panel = {
 
 /**
  * Plot Layouts
- * @namespace Layouts.plot
  */
 
 const standard_association_plot = {

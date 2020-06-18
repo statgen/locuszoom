@@ -610,6 +610,7 @@ class SetState extends Component {
 }
 
 export {
+    Component as BaseComponent,
     Dimensions as dimensions,
     DisplayOptions as display_options,
     Download as download,

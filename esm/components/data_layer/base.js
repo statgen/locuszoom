@@ -357,7 +357,8 @@ class BaseDataLayer {
                 break;
             case 'object':
                 if (layout.scale_function) {
-                    if(layout.field) {
+                    const func = scalable.get(layout.scale_function);
+                    if (layout.field) {
                         const f = new Field(layout.field);
                         let extra;
                         try {
@@ -365,10 +366,9 @@ class BaseDataLayer {
                         } catch (e) {
                             extra = null;
                         }
-
-                        ret = scalable.get(layout.scale_function)(layout.parameters || {}, f.resolve(element_data, extra), data_index);
+                        ret = func(layout.parameters || {}, f.resolve(element_data, extra), data_index);
                     } else {
-                        ret = scalable.get(layout.scale_function)(layout.parameters || {}, element_data, data_index);
+                        ret = func(layout.parameters || {}, element_data, data_index);
                     }
                 }
                 break;
