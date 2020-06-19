@@ -23,5 +23,6 @@ class Plugins extends RegistryBase {
 
 const registry = new Plugins();
 
+
 export default registry;
 export { Plugins as _PluginRegistry };
