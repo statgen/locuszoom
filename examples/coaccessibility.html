@@ -109,7 +109,7 @@
     // Get the standard association plot layout from LocusZoom's built-in layouts
     var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
     // Fetch initial position from the URL, or use some defaults
-    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
         initialState = { chr: 11, start: 2182049, end: 2904920 };
     }
@@ -122,8 +122,8 @@
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)
-    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function (panel) {

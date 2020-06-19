@@ -17,6 +17,7 @@ const FILENAMES = {
     LzDashboardAddons: 'ext/lz-dashboard-addons.min.js',
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
     LzCredibleSets: 'ext/lz-credible-sets.min.js',
+    LzTabix: 'ext/lz-tabix-source.min.js',
 };
 
 module.exports = {
@@ -28,6 +29,7 @@ module.exports = {
         LzDashboardAddons: path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
         LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
+        LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -86,6 +88,7 @@ module.exports = {
     externals: {
         d3: 'd3' ,
         locuszoom: 'LocusZoom',
-        'gwas-credible-sets': 'gwasCredibleSets'
+        'gwas-credible-sets': 'gwasCredibleSets',
+        'tabix-reader': 'tabix',
     }
 };
