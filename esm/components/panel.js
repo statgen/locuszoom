@@ -6,7 +6,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
 import {parseFields, positionIntToString, prettyTicks} from '../helpers/display';
 import {merge} from '../helpers/layouts';
 import Legend from './legend';
-import { data_layers } from '../registry';
+import data_layers from '../registry/data_layers';
 
 
 /**
@@ -1319,7 +1319,6 @@ class Panel {
         return this;
     }
 }
-// TODO: Capture documentation for dynamically generated methods
 STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
     const antiverb = 'un' + verb;
@@ -1343,4 +1342,4 @@ STATUSES.verbs.forEach((verb, idx) => {
     };
 });
 
-export default Panel;
+export {Panel as default};

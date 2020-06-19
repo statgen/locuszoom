@@ -78,7 +78,8 @@ module.exports = {
             }
             return match;
         },
-        library: '[name]'
+        library: '[name]',
+        libraryExport: 'default',
     },
     externals: ['d3', 'locuszoom']
 };

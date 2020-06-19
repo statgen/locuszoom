@@ -1,14 +1,15 @@
 import {assert} from 'chai';
 
-import {data_layers, layouts, plugins} from '../../../esm/registry';
-import * as intervals_plugin from '../../../esm/ext/lz-intervals-track';
+import LocusZoom from 'locuszoom';
+import {data_layers, layouts} from '../../../esm/registry';
+import intervals_plugin from '../../../esm/ext/lz-intervals-track';
 
 /**
  * Interval annotation track
  */
 describe('Interval annotation track', function () {
     before(function() {
-        plugins.use(intervals_plugin);
+        LocusZoom.use(intervals_plugin);
     });
 
     describe('Auto-create legend from best available data', function () {

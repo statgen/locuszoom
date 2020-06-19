@@ -211,4 +211,4 @@ class Legend {
     }
 }
 
-export default Legend;
+export {Legend as default};

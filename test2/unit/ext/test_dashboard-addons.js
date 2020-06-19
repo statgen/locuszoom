@@ -1,15 +1,19 @@
 import {assert} from 'chai';
 import d3 from 'd3';
 
+import LocusZoom from 'locuszoom';
 import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
-import {plugins} from '../../../esm/registry';
-import * as dashboard_addons from '../../../esm/ext/lz-dashboard-addons';
 
-// Register the plugin
-plugins.use(dashboard_addons);
+import dashboard_addons from '../../../esm/ext/lz-dashboard-addons';
+
 
 describe('Toolbar addons', function () {
+    before(function () {
+        // Register the plugin
+        LocusZoom.use(dashboard_addons);
+    });
+
     describe('Covariates Model Component', function () {
         beforeEach(function () {
             const datasources = new DataSources();

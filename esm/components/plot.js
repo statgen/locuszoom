@@ -1251,4 +1251,4 @@ class Plot {
     }
 }
 
-export default Plot;
+export {Plot as default};

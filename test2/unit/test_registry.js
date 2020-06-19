@@ -1,10 +1,7 @@
 import {assert} from 'chai';
 import {ClassRegistry, RegistryBase} from '../../esm/registry/base';
 import { _TransformationFunctions } from '../../esm/registry/transforms';
-import {_PluginRegistry} from '../../esm/registry/plugins';
-import {_LayoutRegistry} from '../../esm/registry/layouts';
-import {BaseAdapter} from '../../esm/data';
-import {AssociationLZ} from '../../esm/data/adapters';
+
 
 describe('Registries', function() {
     describe('Registry Base Behaviors', function () {
@@ -58,44 +55,6 @@ describe('Registries', function() {
             registry.add('fake', fake);
             const instance = registry.create('fake', 12);
             assert.equal(instance.a, 12);
-        });
-    });
-
-    describe('Plugin registry can bulk-add features', function () {
-        beforeEach(function () {
-            // The plugin registry proxies to several subtypes with special behavior. Ensure that individual semantics
-            //  are obeyed.
-            const fixture = new _PluginRegistry();
-            fixture.add('layouts', new _LayoutRegistry());
-            fixture.add('adapters', new ClassRegistry());
-            fixture.add('scalable', new RegistryBase());
-
-            this.fixture = fixture;
-        });
-        it('throws an error if adding an unexpected feature type', function () {
-            assert.throws(() => this.fixture.use({ squids: ['giant', 'cuttlefish'] }), /Item not found/);
-        });
-        it('allows bulk registering extension types', function () {
-            const additions = {
-                layouts: [ ['plot', 'myplot', { foo: 12 }] ],
-                adapters: [
-                    ['a1', BaseAdapter],
-                    ['a2', AssociationLZ]
-                ],
-                scalable: [
-                    ['scalename', (v) => 12],
-                    ['a2', (v) => v], // names must only be unique per registry
-                ],
-            };
-            this.fixture.use(additions);
-
-            // Inspect the internal members to ensure that all plugin members were added correctly
-            assert.equal(
-                this.fixture.get('layouts').get('plot', 'myplot').foo,
-                12
-            );
-            assert.equal(this.fixture.get('adapters').get('a2'), AssociationLZ);
-            assert.equal(this.fixture.get('scalable').get('a2')(1), 1);
         });
     });
 

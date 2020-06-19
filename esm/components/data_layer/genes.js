@@ -441,4 +441,4 @@ class Genes extends BaseDataLayer {
     }
 }
 
-export default Genes;
+export {Genes as default};

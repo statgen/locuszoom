@@ -155,4 +155,14 @@ function plotUpdatesUrl(plot, mapping, callback) {
     return listener;
 }
 
+// Slight build quirk: we use a single webpack file for all modules, but `libraryTarget` expects the entire
+//  module to be exported as `default` in <script> tag mode.
+const all = {
+    paramsFromUrl,
+    extractValues: _extractValues,
+    plotUpdatesUrl,
+    plotWatchesUrl,
+};
+
+export default all;
 export { paramsFromUrl, _extractValues as extractValues, plotUpdatesUrl, plotWatchesUrl };

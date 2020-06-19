@@ -647,4 +647,5 @@ class CategoryScatter extends Scatter {
     }
 }
 
+
 export { Scatter as scatter, CategoryScatter as category_scatter };

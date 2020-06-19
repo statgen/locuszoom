@@ -132,4 +132,4 @@ class Arcs extends BaseDataLayer {
 
 }
 
-export default Arcs;
+export {Arcs as default};

@@ -122,4 +122,4 @@ class AnnotationTrack extends BaseDataLayer {
     }
 }
 
-export default AnnotationTrack;
+export {AnnotationTrack as default};

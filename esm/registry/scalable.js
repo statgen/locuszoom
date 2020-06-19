@@ -9,4 +9,5 @@ for (let [name, type] of Object.entries(scalable)) {
 // Alias for the "if_value" function (can't export reserved language keywords directly)
 registry.add('if', scalable.if_value);
 
+
 export default registry;

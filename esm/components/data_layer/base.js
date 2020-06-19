@@ -1321,4 +1321,4 @@ STATUSES.verbs.forEach(function(verb, idx) {
     };
 });
 
-export default BaseDataLayer;
+export {BaseDataLayer as default};
