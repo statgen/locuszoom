@@ -16,6 +16,7 @@ const FILENAMES = {
     LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
     LzDashboardAddons: 'ext/lz-dashboard-addons.min.js',
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
+    LzCredibleSets: 'ext/lz-credible-sets.min.js',
 };
 
 module.exports = {
@@ -26,6 +27,7 @@ module.exports = {
         LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
         LzDashboardAddons: path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
+        LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -81,5 +83,9 @@ module.exports = {
         library: '[name]',
         libraryExport: 'default',
     },
-    externals: ['d3', 'locuszoom']
+    externals: {
+        d3: 'd3' ,
+        locuszoom: 'LocusZoom',
+        'gwas-credible-sets': 'gwasCredibleSets'
+    }
 };

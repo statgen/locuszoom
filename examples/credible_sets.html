@@ -103,7 +103,7 @@
       // Fetch custom layout defined for usage with credible sets
       var stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
       // Fetch initial position from the URL, or use some defaults
-      var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+      var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
       if (!Object.keys(initialState).length) {
         initialState = {chr: 16, start: 74947245, end: 75547245};
       }
@@ -117,8 +117,8 @@
 
       // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
       //   a previously viewed region)
-      LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-      LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+      LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+      LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
 
       /*

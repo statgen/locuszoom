@@ -7,27 +7,11 @@
      - LocusZoom
      - gwas-credible-sets (available via NPM or a related CDN)
 */
-'use strict';
 
-// This is defined as a UMD module, to work with multiple different module systems / bundlers
-// Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
-//  systems may require being told that this file has side effects.
-/* global define, module, require, Promise */
+import {marking, scoring} from 'gwas-credible-sets';
 
-(function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-        define(['locuszoom', 'gwas-credible-sets'] , function(LocusZoom, gwasCredibleSets) {  // amd
-            return factory(LocusZoom, gwasCredibleSets);
-        });
-    } else if(typeof module === 'object' && module.exports) {  // commonJS
-        module.exports = factory(require('locuszoom'), require('gwas-credible-sets'));
-    } else {  // globals
-        if (!root.LocusZoom.ext.Data) {
-            root.LocusZoom.ext.Data = {};
-        }
-        root.LocusZoom.ext.Data.CredibleSetLZ = factory(root.LocusZoom, root.gwasCredibleSets);
-    }
-}(this, function(LocusZoom, gwasCredibleSets) {
+function install (LocusZoom) {
+    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
     /**
      * Custom data source that calculates the 95% credible set based on provided data.
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
@@ -38,80 +22,85 @@
      * @param {String} init.params.fields.log_pvalue The name of the field containing pvalue information
      * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%)
      *
-     * @class
-     * @public
-     * @augments LocusZoom.Data.Source
      */
-    var CredibleSetLZ = LocusZoom.Data.Source.extend(function(init) {
-        this.parseInit(init);
-        this.enableCache = true;
-        this.dependentSource = true; // Don't do calcs for a region with no assoc data
-    }, 'CredibleSetLZ');
-
-    CredibleSetLZ.prototype.parseInit = function (init) {
-        this.params = init.params;
-        if (!(this.params.fields && this.params.fields.log_pvalue)) {
-            throw new Error('Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'");
+    class CredibleSetLZ extends BaseAdapter {
+        constructor(config) {
+            super(...arguments);
+            this.dependentSource = true; // Don't do calcs for a region with no assoc data
         }
-        if (!this.params.threshold) {
-            this.params.threshold = 0.95;
+
+        parseInit(config) {
+            super.parseInit(...arguments);
+            if (!(this.params.fields && this.params.fields.log_pvalue)) {
+                throw new Error('Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'");
+            }
+            if (!this.params.threshold) {
+                this.params.threshold = 0.95;
+            }
         }
-    };
 
-    CredibleSetLZ.prototype.getCacheKey = function(state, chain, fields) {
-        var threshold = state.credible_set_threshold || this.params.threshold;
-        return [ threshold, state.chr, state.start, state.end ].join('_');
-    };
-
-    CredibleSetLZ.prototype.fetchRequest = function (state, chain) {
-        var self = this;
-        // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
-        var threshold = state.credible_set_threshold || this.params.threshold;
-        // Calculate raw bayes factors and posterior probabilities based on information returned from the API
-        if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
-            throw new Error('Credible set source could not locate the required fields from a previous request.');
+        getCacheKey (state, chain, fields) {
+            const threshold = state.credible_set_threshold || this.params.threshold;
+            return [threshold, state.chr, state.start, state.end].join('_');
         }
-        var nlogpvals = chain.body.map(function (item) { return item[self.params.fields.log_pvalue]; });
-        var credset_data = [];
-        try {
-            var scores = gwasCredibleSets.scoring.bayesFactors(nlogpvals);
-            var posteriorProbabilities = gwasCredibleSets.scoring.normalizeProbabilities(scores);
 
-            // Use scores to mark the credible set in various ways (depending on your visualization preferences,
-            //   some of these may not be needed)
-            var credibleSet = gwasCredibleSets.marking.findCredibleSet(scores, threshold);
-            var credSetScaled = gwasCredibleSets.marking.rescaleCredibleSet(credibleSet);
-            var credSetBool = gwasCredibleSets.marking.markBoolean(credibleSet);
+        fetchRequest(state, chain) {
+            const self = this;
+            // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
+            const threshold = state.credible_set_threshold || this.params.threshold;
+            // Calculate raw bayes factors and posterior probabilities based on information returned from the API
+            if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
+                throw new Error('Credible set source could not locate the required fields from a previous request.');
+            }
+            const nlogpvals = chain.body.map(function (item) {
+                return item[self.params.fields.log_pvalue];
+            });
+            const credset_data = [];
+            try {
+                const scores = scoring.bayesFactors(nlogpvals);
+                const posteriorProbabilities = scoring.normalizeProbabilities(scores);
 
-            // Annotate each response record based on credible set membership
-            for (var i = 0; i < chain.body.length; i++) {
-                credset_data.push({
-                    posterior_prob: posteriorProbabilities[i],
-                    contrib_fraction: credSetScaled[i],
-                    is_member: credSetBool[i]
+                // Use scores to mark the credible set in various ways (depending on your visualization preferences,
+                //   some of these may not be needed)
+                const credibleSet = marking.findCredibleSet(scores, threshold);
+                const credSetScaled = marking.rescaleCredibleSet(credibleSet);
+                const credSetBool = marking.markBoolean(credibleSet);
+
+                // Annotate each response record based on credible set membership
+                for (let i = 0; i < chain.body.length; i++) {
+                    credset_data.push({
+                        posterior_prob: posteriorProbabilities[i],
+                        contrib_fraction: credSetScaled[i],
+                        is_member: credSetBool[i]
+                    });
+                }
+            } catch (e) {
+                // If the calculation cannot be completed, return the data without annotation fields
+                console.error(e);
+            }
+            return Promise.resolve(credset_data);
+        }
+
+        combineChainBody(data, chain, fields, outnames, trans) {
+            // At this point namespacing has been applied; add the calculated fields for this source to the chain
+            for (let i = 0; i < data.length; i++) {
+                const src = data[i];
+                const dest = chain.body[i];
+                Object.keys(src).forEach(function (attr) {
+                    dest[attr] = src[attr];
                 });
             }
-        } catch (e) {
-            // If the calculation cannot be completed, return the data without annotation fields
-            console.error(e);
+            return chain.body;
         }
-        return Promise.resolve(credset_data);
-    };
+    }
 
-    CredibleSetLZ.prototype.combineChainBody = function (data, chain, fields, outnames, trans) {
-        // At this point namespacing has been applied; add the calculated fields for this source to the chain
-        for (var i = 0; i < data.length ; i++) {
-            var src = data[i];
-            var dest = chain.body[i];
-            Object.keys(src).forEach(function(attr) { dest[attr] = src[attr]; });
-        }
-        return chain.body;
-    };
+
+    LocusZoom.Adapters.add('CredibleSetLZ', CredibleSetLZ);
 
     // Add related layouts to the central global registry
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
-        var l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
+        const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
         l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>';
         return l;
     }());
@@ -119,15 +108,15 @@
     LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', {
         namespace: { 'assoc': 'assoc', 'credset': 'credset' },
         closable: true,
-        show: {or: ['highlighted', 'selected']},
-        hide: {and: ['unhighlighted', 'unselected']},
+        show: { or: ['highlighted', 'selected'] },
+        hide: { and: ['unhighlighted', 'unselected'] },
         html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
-        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
-        '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>'
+            + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
+            '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>'
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
-        var base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
+        const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
             unnamespaced: true,
             id: 'associationcredibleset',
             namespace: { 'assoc': 'assoc', 'credset': 'credset', 'ld': 'ld' },
@@ -181,16 +170,16 @@
         ],
         behaviors: {
             onmouseover: [
-                {action: 'set', status: 'highlighted'}
+                { action: 'set', status: 'highlighted' }
             ],
             onmouseout: [
-                {action: 'unset', status: 'highlighted'}
+                { action: 'unset', status: 'highlighted' }
             ],
             onclick: [
-                {action: 'toggle', status: 'selected', exclusive: true}
+                { action: 'toggle', status: 'selected', exclusive: true }
             ],
             onshiftclick: [
-                {action: 'toggle', status: 'selected'}
+                { action: 'toggle', status: 'selected' }
             ]
         },
         tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
@@ -199,12 +188,12 @@
 
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
         id: 'annotationcredibleset',
-        title: { text: 'SNPs in 95% credible set', x:50, style: { 'font-size': '14px' } },
+        title: { text: 'SNPs in 95% credible set', x: 50, style: { 'font-size': '14px' } },
         width: 800,
         height: 100,
         min_height: 100,
         proportional_width: 1,
-        margin: {top: 35, right: 50, bottom: 40, left: 50},
+        margin: { top: 35, right: 50, bottom: 40, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
         dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
         interaction: {
@@ -213,12 +202,12 @@
             x_linked: true
         },
         data_layers: [
-            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', {unnamespaced: true})
+            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true })
         ]
     });
 
-    LocusZoom.Layouts.add('panel', 'association_credible_set', function() {
-        var l = LocusZoom.Layouts.get('panel', 'association', {
+    LocusZoom.Layouts.add('panel', 'association_credible_set', function () {
+        const l = LocusZoom.Layouts.get('panel', 'association', {
             unnamespaced: true,
             id: 'associationcrediblesets',
             namespace: { 'assoc': 'assoc', 'credset': 'credset' },
@@ -257,8 +246,20 @@
                                 }
                             },
                             legend: [ // Tells the legend how to represent this display option
-                                { shape: 'circle', color: '#00CC00', size: 40, label: 'In credible set', class: 'lz-data_layer-scatter' },
-                                { shape: 'circle', color: '#CCCCCC', size: 40, label: 'Not in credible set', class: 'lz-data_layer-scatter' }
+                                {
+                                    shape: 'circle',
+                                    color: '#00CC00',
+                                    size: 40,
+                                    label: 'In credible set',
+                                    class: 'lz-data_layer-scatter'
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#CCCCCC',
+                                    size: 40,
+                                    label: 'Not in credible set',
+                                    class: 'lz-data_layer-scatter'
+                                }
                             ]
                         }
                     },
@@ -287,9 +288,27 @@
                                 }
                             ],
                             legend: [
-                                { shape: 'circle', color: '#777777', size: 40, label: 'No contribution', class: 'lz-data_layer-scatter' },
-                                { shape: 'circle', color: '#fafe87', size: 40, label: 'Some contribution', class: 'lz-data_layer-scatter' },
-                                { shape: 'circle', color: '#9c0000', size: 40, label: 'Most contribution', class: 'lz-data_layer-scatter' }
+                                {
+                                    shape: 'circle',
+                                    color: '#777777',
+                                    size: 40,
+                                    label: 'No contribution',
+                                    class: 'lz-data_layer-scatter'
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#fafe87',
+                                    size: 40,
+                                    label: 'Some contribution',
+                                    class: 'lz-data_layer-scatter'
+                                },
+                                {
+                                    shape: 'circle',
+                                    color: '#9c0000',
+                                    size: 40,
+                                    label: 'Most contribution',
+                                    class: 'lz-data_layer-scatter'
+                                }
                             ]
                         }
                     }
@@ -297,7 +316,7 @@
             }
         );
         return l;
-    } ());
+    }());
 
     LocusZoom.Layouts.add('plot', 'association_credible_set', {
         state: {},
@@ -306,15 +325,22 @@
         responsive_resize: 'both',
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', {unnamespaced: true}),
+        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association_credible_set', {unnamespaced: true}),
-            LocusZoom.Layouts.get('panel', 'annotation_credible_set', {unnamespaced: true}),
+            LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
+            LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),
             LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
         ]
     });
 
-    // Public interface for this extension; since everything is registered w/LocusZoom, this is rarely used directly.
-    return { CredibleSetLZ: CredibleSetLZ };
-}));
+}
 
+
+if (typeof LocusZoom !== 'undefined') {
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
+    // eslint-disable-next-line no-undef
+    LocusZoom.use(install);
+}
+
+
+export default install;

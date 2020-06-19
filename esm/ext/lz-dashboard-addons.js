@@ -289,7 +289,7 @@ function install(LocusZoom) {
 }
 
 if (typeof LocusZoom !== 'undefined') {
-    // Auto-register the plugin when included as a script tag
+    // Auto-register the plugin when included as a script tag. ES6 module users must register via LocusZoom.use()
     // eslint-disable-next-line no-undef
     LocusZoom.use(install);
 }
