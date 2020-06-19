@@ -1,5 +1,8 @@
 {
   "globals": {
     "LocusZoom": false
+  },
+  "env": {
+    "browser": true
   }
 }

@@ -3,15 +3,15 @@
  */
 'use strict';
 
-/* global $, raremetal, Vue */
+/* global $, raremetal, Vue, LzDynamicUrls */
 /* eslint-disable no-unused-vars */
 
 
-var Observable = function () { // Allow UI elements to monitor changes in a variable
+const Observable = function () { // Allow UI elements to monitor changes in a variable
     // Very simplified observable: a() to get value, a(val) to set, a.subscribe(fn) to add handlers
-    var _subscribers = [];
-    var current_value;
-    var handle_value = function (value) {
+    const _subscribers = [];
+    let current_value;
+    const handle_value = function (value) {
         if (value === undefined) {
             return current_value;
         }
@@ -44,14 +44,14 @@ function customizePlotLayout(layout) {
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
     layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
-    var assocLayout = layout.panels[0].data_layers[2];
+    const assocLayout = layout.panels[0].data_layers[2];
     assocLayout.fields.unshift('aggregation: all');
 
-    var genesLayout = layout.panels[1].data_layers[0];
+    const genesLayout = layout.panels[1].data_layers[0];
     genesLayout.namespace['aggregation'] = 'aggregation';
     genesLayout.namespace['aggregation_genes'] = 'aggregation_genes';
     genesLayout.fields.push('aggregation:all', 'aggregation_genes:all');
-    var colorConfig = [
+    const colorConfig = [
         {
             scale_function: 'if',
             field: 'aggregation_best_pvalue',
@@ -77,17 +77,17 @@ function customizePlotLayout(layout) {
 
 function _formatSciNotation(cell, params) {
     // Tabulator cell formatter using sci notation
-    var value = cell.getValue();
+    const value = cell.getValue();
     return LocusZoom.TransformationFunctions.get('scinotation')(value);
 }
 
 function jumpToRegion(plot, input_selector, error_selector) {
-    var input = document.getElementById(input_selector);
-    var error = document.getElementById(error_selector);
+    const input = document.getElementById(input_selector);
+    const error = document.getElementById(error_selector);
     error.style.display = 'none';
-    var target = input.value || input.placeholder || '';
+    const target = input.value || input.placeholder || '';
 
-    var match = target.match(/^([0-9XY]+):(\d+)-(\d+)/);
+    const match = target.match(/^([0-9XY]+):(\d+)-(\d+)/);
     if (!match) {
         error.style.display = '';
     } else {
@@ -105,14 +105,13 @@ function jumpToRegion(plot, input_selector, error_selector) {
  *  table library
  * @class
  */
-var GenericTabulatorTableController = LocusZoom.subclass(function () {
-}, {
+class GenericTabulatorTableController {
     /**
      *
      * @param {string|Object} selector A selector string for the table container
      * @param {object} table_config An object specifying the tabulator layout for this table
      */
-    constructor: function (selector, table_config) {
+    constructor(selector, table_config) {
         if (typeof selector === 'string') {
             selector = $(selector);
         }
@@ -120,56 +119,59 @@ var GenericTabulatorTableController = LocusZoom.subclass(function () {
         this._table_config = table_config;
 
         this.selector.tabulator(this._table_config);
-    },
+    }
 
     /**
      * Callback that takes in data and renders an HTML table to a hardcoded document location
      * @param {object} data
      */
-    _tableUpdateData: function (data) {
+    _tableUpdateData(data) {
         this.selector.tabulator('setData', data);
-    },
+    }
 
     /**
      * Stub. Override this method to transform the data in ways specific to this table.
      * @param data
      * @returns {*}
      */
-    prepareData: function (data) {
+    prepareData(data) {
         return data;
-    },
+    }
 
-    renderData: function (data) {
+    renderData(data) {
         data = this.prepareData(data);
         this._tableUpdateData(data);
-    },
+    }
 
-    tableSetFilter: function (column, value) {
+    tableSetFilter(column, value) {
         this.selector.tabulator('setFilter', column, '=', value);
-    },
+    }
 
-    tableClearFilter: function (column, value) {
+    tableClearFilter(column, value) {
         if (typeof value !== 'undefined') {
             this.selector.tabulator('removeFilter', column, '=', value);
         } else {
             this.selector.tabulator('clearFilter');
         }
 
-    },
+    }
 
-    tableDownloadData: function (filename, format) {
+    tableDownloadData(filename, format) {
         format = format || 'csv';
         this.selector.tabulator('download', format, filename);
     }
-});
+}
 
-var AggregationTableController = LocusZoom.subclass(GenericTabulatorTableController, {
-    prepareData: function (data) {
+
+class AggregationTableController extends GenericTabulatorTableController {
+    prepareData(data) {
         return data.groups.data; // Render function only needs a part of the "computed results" JSON it is given
     }
-});
+}
 
-var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController, {});
+
+class VariantsTableController extends GenericTabulatorTableController {}
+
 
 /**
  * Creates the plot and tables. This function contains references to specific DOM elements on one HTML page.
@@ -178,17 +180,20 @@ var VariantsTableController = LocusZoom.subclass(GenericTabulatorTableController
  *  outside the function later (eg for debugging purposes)
  */
 function createDisplayWidgets(label_store, context) {
+    // eslint-disable-next-line no-undef
     context = context || window;
 
     // Determine if we're online, based on browser state or presence of an optional query parameter
-    var online = !(typeof navigator !== 'undefined' && !navigator.onLine);
+    // eslint-disable-next-line no-undef
+    let online = !(typeof navigator !== 'undefined' && !navigator.onLine);
+    // eslint-disable-next-line no-undef
     if (window.location.search.indexOf('offline') !== -1) {
         online = false;
     }
 
     // Specify the data sources to use, then build the plot
-    var apiBase = '//portaldev.sph.umich.edu/api/v1/';
-    var data_sources = new LocusZoom.DataSources()
+    const apiBase = '//portaldev.sph.umich.edu/api/v1/';
+    const data_sources = new LocusZoom.DataSources()
         .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/v1/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
@@ -206,18 +211,21 @@ function createDisplayWidgets(label_store, context) {
             }
         }])
         .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
-        .add('constraint', ['GeneConstraintLZ', { url: 'https://gnomad.broadinstitute.org/api', params: { build: 'GRCh37' } }]);
+        .add('constraint', ['GeneConstraintLZ', {
+            url: 'https://gnomad.broadinstitute.org/api',
+            params: { build: 'GRCh37' }
+        }]);
 
-    var stateUrlMapping = {chr: 'chrom', start: 'start', end: 'end'};
-    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
+    let initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
         initialState = { chr: '19', start: 45312079, end: 45512079 };
     }
 
-    var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: initialState });
+    let layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: initialState });
     layout = customizePlotLayout(layout);
 
-    var plot = LocusZoom.populate('#lz-plot', data_sources, layout);
+    const plot = LocusZoom.populate('#lz-plot', data_sources, layout);
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function(panel) {
         plot.panels[panel.id].addBasicLoader();
@@ -225,13 +233,13 @@ function createDisplayWidgets(label_store, context) {
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)
-    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
-    var TABLE_SELECTOR_AGGREGATION = '#results-table-aggregation';
-    var TABLE_SELECTOR_VARIANTS = '#results-table-variants';
+    const TABLE_SELECTOR_AGGREGATION = '#results-table-aggregation';
+    const TABLE_SELECTOR_VARIANTS = '#results-table-variants';
 
-    var aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
+    const aggregationTable = new AggregationTableController(TABLE_SELECTOR_AGGREGATION, {
         index: 'id',
         height: 300,
         layout: 'fitColumns',
@@ -252,7 +260,14 @@ function createDisplayWidgets(label_store, context) {
             { title: '# Variants', field: 'variant_count', widthGrow: 2 },
             { title: 'Test type', field: 'test', headerFilter: true, widthGrow: 2 },
             { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number', widthGrow: 2 },
-            { title: 'Statistic', field: 'stat', formatter: _formatSciNotation, sorter: 'number', visible: false, widthGrow: 2 }
+            {
+                title: 'Statistic',
+                field: 'stat',
+                formatter: _formatSciNotation,
+                sorter: 'number',
+                visible: false,
+                widthGrow: 2
+            }
         ],
         placeholder: 'No Data Available',
         initialSort: [
@@ -262,7 +277,7 @@ function createDisplayWidgets(label_store, context) {
         selectablePersistence: false
     });
 
-    var variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
+    const variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
         height: 300,
         layout: 'fitColumns',
         layoutColumnsOnNewData: true,
@@ -308,8 +323,8 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
             return;
         }
 
-        var gene_column_name = 'group';
-        var selected_gene = eventData['data']['element']['gene_name'];
+        const gene_column_name = 'group';
+        const selected_gene = eventData['data']['element']['gene_name'];
 
         if (eventData['data']['active']) {
             aggregationTable.tableSetFilter(gene_column_name, selected_gene);
@@ -326,28 +341,28 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
         ['aggregation:all', 'gene:all'],
         function (data) {
             // chain.discrete provides distinct data from each source
-            var gene_source_data = data.gene;
-            var agg_source_data = data.aggregation;
+            const gene_source_data = data.gene;
+            const agg_source_data = data.aggregation;
 
-            var results = agg_source_data.results;
+            const results = agg_source_data.results;
 
             // Aggregation calcs return very complex data. Parse it here, once, into reusable helper objects.
-            var parsed = raremetal.helpers.parsePortalJSON(agg_source_data);
-            var groups = parsed[0];
-            var variants = parsed[1];
+            const parsed = raremetal.helpers.parsePortalJSON(agg_source_data);
+            const groups = parsed[0];
+            const variants = parsed[1];
 
             /////////
             // Post-process this data with any annotations required by data tables on this page
 
             // The aggregation results use the unique ENSEMBL ID for a gene. The gene source tells us how to connect
             //  that to a human-friendly gene name (as displayed in the LZ plot)
-            var _genes_lookup = {};
+            const _genes_lookup = {};
             gene_source_data.forEach(function (gene) {
-                var gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
+                const gene_id = gene.gene_id.split('.')[0]; // Ignore ensembl version on gene ids
                 _genes_lookup[gene_id] = gene.gene_name;
             });
             groups.data.forEach(function (one_result) {
-                var this_group = groups.getOne(one_result.mask, one_result.group);
+                const this_group = groups.getOne(one_result.mask, one_result.group);
                 // Add synthetic fields that are not part of the raw calculation results
                 one_result.group_display_name = _genes_lookup[one_result.group] || one_result.group;
                 one_result.variant_count = this_group.variants.length;
@@ -369,21 +384,21 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
 
     // The UI is based on "drilling down" to explore results. If a user selects a group, display stuff
     labelStorage.subscribe(function (data) {  // User-friendly label
-        var text = '';
+        let text = '';
         if (data) {
             text = data.mask_name + ' / ' + data.group_display_name;
         }
         $('#label-mask-selected').text(text);
     });
     labelStorage.subscribe(function (data) { // Update the "show me what variants are in a selected group" table
-        var calcs = resultStorage();
+        const calcs = resultStorage();
         if (!data || !calcs) { // If no analysis is selected, no analysis should be shown
             variantsTable.renderData([]);
             return;
         }
         // When a group is selected, draw a variants table with information about that group.
-        var one_group = calcs.groups.getOne(data.mask, data.group);
-        var variant_data = calcs.variants.getGroupVariants(one_group.variants);
+        const one_group = calcs.groups.getOne(data.mask, data.group);
+        const variant_data = calcs.variants.getGroupVariants(one_group.variants);
         variantsTable.renderData(variant_data);
     });
 
@@ -437,19 +452,19 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                 return this.selected_phenotype && this.selected_masks.length && this.selected_tests.length;
             },
             runTests: function () {
-                var status = this.isValid();
+                const status = this.isValid();
                 this.setStatus(status ? '' : 'Please select at least one option from each category', status);
-                var by_cat = this.phenotypes;
-                var selected = this.selected_phenotype;
+                const by_cat = this.phenotypes;
+                const selected = this.selected_phenotype;
 
                 if (status) {
                     // Slightly inelegant demo UI : assumes phenonames are globally unique and we find the first match
-                    var phenosetId;
-                    for (var pId in by_cat) {
-                        if (!by_cat.hasOwnProperty(pId)) {
+                    let phenosetId;
+                    for (let pId in by_cat) {
+                        if (!Object.prototype.hasOwnProperty.call(by_cat, pId)) {
                             continue;
                         }
-                        var pheno_list = this.phenotypes[pId].phenotypes;
+                        const pheno_list = this.phenotypes[pId].phenotypes;
                         if (pheno_list.find(function (element) {
                             return element.name === selected;
                         })) {

@@ -18,6 +18,7 @@ const FILENAMES = {
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
     LzCredibleSets: 'ext/lz-credible-sets.min.js',
     LzTabix: 'ext/lz-tabix-source.min.js',
+    LzAggregationTests: 'ext/lz-aggregation-tests.min.js',
 };
 
 module.exports = {
@@ -30,6 +31,7 @@ module.exports = {
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
         LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
         LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
+        LzAggregationTests: path.resolve(srcPath, 'ext', 'lz-aggregation-tests.js'),
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -90,5 +92,6 @@ module.exports = {
         locuszoom: 'LocusZoom',
         'gwas-credible-sets': 'gwasCredibleSets',
         'tabix-reader': 'tabix',
+        'raremetal.js': 'raremetal',
     }
 };

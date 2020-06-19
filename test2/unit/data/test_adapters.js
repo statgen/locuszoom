@@ -538,7 +538,7 @@ describe('Data adapters', function () {
         });
     });
 
-    describe.skip('ConnectorSource', function () {
+    describe('ConnectorSource', function () {
         beforeEach(function () {
             // Create a source that internally looks for data as "first" from the specified
             this.basic_config = { sources: { first: 'a_source', second: 'b_source' } };
@@ -557,6 +557,10 @@ describe('Data adapters', function () {
                     });
                     return records;
                 }
+
+                _getRequiredSources() {
+                    return ['first', 'second'];
+                }
             };
         });
 
@@ -566,6 +570,9 @@ describe('Data adapters', function () {
 
         it('must specify the data it requires from other sources', function () {
             const source = class extends ConnectorSource {
+                _getRequiredSources() {
+                    return [];
+                }
             };
             assert.throws(
                 function () {
@@ -580,6 +587,7 @@ describe('Data adapters', function () {
         });
         it('must implement a combineChainBody method', function () {
             const source = class extends ConnectorSource {
+                _getRequiredSources() { return []; }
             };
             assert.throws(
                 () => {

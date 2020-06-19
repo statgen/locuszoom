@@ -936,12 +936,12 @@ class ConnectorSource extends BaseAdapter {
 
         // Validate that this source has been told how to find the required information
         const specified_ids = Object.keys(config.sources);
-        // FIXME: rework to set this in constructor for places that use this (eg aggtests)
         /** @property {String[]} Specifies the sources that must be provided in the original config object */
-        this.REQUIRED_SOURCES = [];
-        this.REQUIRED_SOURCES.forEach((k) => {
+
+        this._getRequiredSources().forEach((k) => {
             if (specified_ids.indexOf(k) === -1) {
-                throw new Error('Configuration for ' + this.constructor.name + ' must specify a source ID corresponding to ' + k);
+                // TODO: Fix constructor.name usage in minified bundles
+                throw new Error(`Configuration for ${this.constructor.name} must specify a source ID corresponding to ${k}`);
             }
         });
     }
@@ -976,6 +976,14 @@ class ConnectorSource extends BaseAdapter {
     combineChainBody(records, chain) {
         // Stub method: specifies how to combine the data
         throw new Error('This method must be implemented in a subclass');
+    }
+
+    /**
+     * Helper method since ES6 doesn't support class fields
+     * @private
+     */
+    _getRequiredSources() {
+        throw new Error('Must specify an array that identifes the kind of data required by this source');
     }
 }
 

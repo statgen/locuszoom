@@ -8,7 +8,7 @@ import Plot from '../../../esm/components/plot';
 /**
  * LzDynamicUrls : Extension functionality
  */
-describe('LocusZoom.ext.DynamicUrls', function() {
+describe('LzDynamicUrls', function() {
     // Tests
     describe('paramsFromUrl', function() {
         it('can use different names in the query string vs output', function() {
