@@ -204,19 +204,6 @@ class Button {
          * @member {String}
          */
         this.html = '';
-        /**
-         * Specify the HTML content of this button.
-         * WARNING: The string provided will be inserted into the document as raw markup; XSS mitigation is the
-         *   responsibility of each button implementation.
-         * @param {String} html
-         * @returns {Button}
-         */
-        this.setHtml = function (html) {
-            if (typeof html != 'undefined') {
-                this.html = html.toString();
-            }
-            return this;
-        };
 
         /**
          * Mouseover title text for the button to show
@@ -224,17 +211,6 @@ class Button {
          * @member {String}
          */
         this.title = '';
-        /**
-         * Set the mouseover title text for the button (if any)
-         * @param {String} title Simple text to display
-         * @returns {Button}
-         */
-        this.setTitle = function (title) {
-            if (typeof title != 'undefined') {
-                this.title = title.toString();
-            }
-            return this;
-        };
 
         /**
          * Color of the button
@@ -243,49 +219,11 @@ class Button {
         this.color = 'gray';
 
         /**
-         * Set the color associated with this button
-         * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} color Any selection not in the preset list
-         *   will be replaced with gray.
-         * @returns {Button}
-         */
-        this.setColor = function (color) {
-            if (typeof color != 'undefined') {
-                if (['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'].indexOf(color) !== -1) {
-                    this.color = color;
-                } else {
-                    this.color = 'gray';
-                }
-            }
-            return this;
-        };
-
-        /**
          * Hash of arbitrary button styles to apply as {name: value} entries
          * @protected
          * @member {Object}
          */
         this.style = {};
-        /**
-         * Set a collection of custom styles to be used by the button
-         * @param {Object} style Hash of {name:value} entries
-         * @returns {Button}
-         */
-        this.setStyle = function (style) {
-            if (typeof style != 'undefined') {
-                this.style = style;
-            }
-            return this;
-        };
-
-        //
-        /**
-         * Method to generate a CSS class string
-         * @returns {string}
-         */
-        this.getClass = function () {
-            const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
-            return 'lz-dashboard-button lz-dashboard-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
-        };
 
         // Permanence
         /**
@@ -301,30 +239,6 @@ class Button {
          * @member {Boolean}
          */
         this.permanent = false;
-        /**
-         * Allow code to change whether the button is allowed to be `permanent`
-         * @param {boolean} bool
-         * @returns {Button}
-         */
-        this.setPermanent = function (bool) {
-            if (typeof bool == 'undefined') {
-                bool = true;
-            } else {
-                bool = Boolean(bool);
-            }
-            this.permanent = bool;
-            if (this.permanent) {
-                this.persist = true;
-            }
-            return this;
-        };
-        /**
-         * Determine whether the button/menu contents should persist in response to a specific event
-         * @returns {Boolean}
-         */
-        this.shouldPersist = function () {
-            return this.permanent || this.persist;
-        };
 
         /**
          * Button status (highlighted / disabled/ etc)
@@ -332,149 +246,6 @@ class Button {
          * @member {String}
          */
         this.status = '';
-        /**
-         * Change button state
-         * @param {('highlighted'|'disabled'|'')} status
-         */
-        this.setStatus = function (status) {
-            if (typeof status != 'undefined' && ['', 'highlighted', 'disabled'].indexOf(status) !== -1) {
-                this.status = status;
-            }
-            return this.update();
-        };
-        /**
-         * Toggle whether the button is highlighted
-         * @param {boolean} bool If provided, explicitly set highlighted state
-         * @returns {Button}
-         */
-        this.highlight = function (bool) {
-            if (typeof bool == 'undefined') {
-                bool = true;
-            } else {
-                bool = Boolean(bool);
-            }
-            if (bool) {
-                return this.setStatus('highlighted');
-            } else if (this.status === 'highlighted') {
-                return this.setStatus('');
-            }
-            return this;
-        };
-        /**
-         * Toggle whether the button is disabled
-         * @param {boolean} bool If provided, explicitly set disabled state
-         * @returns {Button}
-         */
-        this.disable = function (bool) {
-            if (typeof bool == 'undefined') {
-                bool = true;
-            } else {
-                bool = Boolean(bool);
-            }
-            if (bool) {
-                return this.setStatus('disabled');
-            } else if (this.status === 'disabled') {
-                return this.setStatus('');
-            }
-            return this;
-        };
-
-        // Mouse events
-        /** @member {function} */
-        this.onmouseover = function () {
-        };
-        this.setOnMouseover = function (onmouseover) {
-            if (typeof onmouseover == 'function') {
-                this.onmouseover = onmouseover;
-            } else {
-                this.onmouseover = function () {
-                };
-            }
-            return this;
-        };
-        /** @member {function} */
-        this.onmouseout = function () {
-        };
-        this.setOnMouseout = function (onmouseout) {
-            if (typeof onmouseout == 'function') {
-                this.onmouseout = onmouseout;
-            } else {
-                this.onmouseout = function () {
-                };
-            }
-            return this;
-        };
-        /** @member {function} */
-        this.onclick = function () {
-        };
-        this.setOnclick = function (onclick) {
-            if (typeof onclick == 'function') {
-                this.onclick = onclick;
-            } else {
-                this.onclick = function () {
-                };
-            }
-            return this;
-        };
-
-        // Primary behavior functions
-        /**
-         * Show the button, including creating DOM elements if necessary for first render
-         */
-        this.show = function () {
-            if (!this.parent) {
-                return;
-            }
-            if (!this.selector) {
-                this.selector = this.parent.selector.append(this.tag).attr('class', this.getClass());
-            }
-            return this.update();
-        };
-        /**
-         * Hook for any actions or state cleanup to be performed before rerendering
-         * @returns {Button}
-         */
-        this.preUpdate = function () {
-            return this;
-        };
-        /**
-         * Update button state and contents, and fully rerender
-         * @returns {Button}
-         */
-        this.update = function () {
-            if (!this.selector) {
-                return this;
-            }
-            this.preUpdate();
-            this.selector
-                .attr('class', this.getClass())
-                .attr('title', this.title).style(this.style)
-                .on('mouseover', (this.status === 'disabled') ? null : this.onmouseover)
-                .on('mouseout', (this.status === 'disabled') ? null : this.onmouseout)
-                .on('click', (this.status === 'disabled') ? null : this.onclick)
-                .html(this.html);
-            this.menu.update();
-            this.postUpdate();
-            return this;
-        };
-        /**
-         * Hook for any behavior to be added/changed after the button has been re-rendered
-         * @returns {Button}
-         */
-        this.postUpdate = function () {
-            return this;
-        };
-        /**
-         * Hide the button by removing it from the DOM (may be overridden by current persistence setting)
-         * @returns {Button}
-         */
-        this.hide = function () {
-            if (this.selector && !this.shouldPersist()) {
-                this.selector.remove();
-                this.selector = null;
-            }
-            return this;
-        };
 
         /**
          * Button Menu Object
@@ -613,7 +384,248 @@ class Button {
                 return this;
             }
         };
+    }
 
+    /**
+     * Set the color associated with this button
+     * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} color Any selection not in the preset list
+     *   will be replaced with gray.
+     * @returns {Button}
+     */
+    setColor (color) {
+        if (typeof color != 'undefined') {
+            if (['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'].indexOf(color) !== -1) {
+                this.color = color;
+            } else {
+                this.color = 'gray';
+            }
+        }
+        return this;
+    }
+
+
+    /**
+     * Allow code to change whether the button is allowed to be `permanent`
+     * @param {boolean} bool
+     * @returns {Button}
+     */
+    setPermanent (bool) {
+        if (typeof bool == 'undefined') {
+            bool = true;
+        } else {
+            bool = Boolean(bool);
+        }
+        this.permanent = bool;
+        if (this.permanent) {
+            this.persist = true;
+        }
+        return this;
+    }
+    /**
+     * Determine whether the button/menu contents should persist in response to a specific event
+     * @returns {Boolean}
+     */
+    shouldPersist () {
+        return this.permanent || this.persist;
+    }
+
+    /**
+ * Set a collection of custom styles to be used by the button
+ * @param {Object} style Hash of {name:value} entries
+ * @returns {Button}
+ */
+    setStyle (style) {
+        if (typeof style != 'undefined') {
+            this.style = style;
+        }
+        return this;
+    }
+
+    //
+    /**
+     * Method to generate a CSS class string
+     * @returns {string}
+     */
+    getClass () {
+        const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
+        return 'lz-dashboard-button lz-dashboard-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
+    }
+
+
+    /**
+     * Change button state
+     * @param {('highlighted'|'disabled'|'')} status
+     */
+    setStatus  (status) {
+        if (typeof status != 'undefined' && ['', 'highlighted', 'disabled'].indexOf(status) !== -1) {
+            this.status = status;
+        }
+        return this.update();
+    }
+
+    /**
+     * Toggle whether the button is highlighted
+     * @param {boolean} bool If provided, explicitly set highlighted state
+     * @returns {Button}
+     */
+    highlight (bool) {
+        if (typeof bool == 'undefined') {
+            bool = true;
+        } else {
+            bool = Boolean(bool);
+        }
+        if (bool) {
+            return this.setStatus('highlighted');
+        } else if (this.status === 'highlighted') {
+            return this.setStatus('');
+        }
+        return this;
+    }
+
+    /**
+     * Toggle whether the button is disabled
+     * @param {boolean} bool If provided, explicitly set disabled state
+     * @returns {Button}
+     */
+    disable (bool) {
+        if (typeof bool == 'undefined') {
+            bool = true;
+        } else {
+            bool = Boolean(bool);
+        }
+        if (bool) {
+            return this.setStatus('disabled');
+        } else if (this.status === 'disabled') {
+            return this.setStatus('');
+        }
+        return this;
+    }
+
+    // Mouse events
+    /** @member {function} */
+    onmouseover () {
+    }
+    setOnMouseover (onmouseover) {
+        if (typeof onmouseover == 'function') {
+            this.onmouseover = onmouseover;
+        } else {
+            this.onmouseover = function () {
+            };
+        }
+        return this;
+    }
+    /** @member {function} */
+    onmouseout () {
+    }
+    setOnMouseout (onmouseout) {
+        if (typeof onmouseout == 'function') {
+            this.onmouseout = onmouseout;
+        } else {
+            this.onmouseout = function () {
+            };
+        }
+        return this;
+    }
+    /** @member {function} */
+    onclick () {
+    }
+    setOnclick (onclick) {
+        if (typeof onclick == 'function') {
+            this.onclick = onclick;
+        } else {
+            this.onclick = function () {
+            };
+        }
+        return this;
+    }
+
+    /**
+     * Set the mouseover title text for the button (if any)
+     * @param {String} title Simple text to display
+     * @returns {Button}
+     */
+    setTitle(title) {
+        if (typeof title != 'undefined') {
+            this.title = title.toString();
+        }
+        return this;
+    }
+
+    /**
+     * Specify the HTML content of this button.
+     * WARNING: The string provided will be inserted into the document as raw markup; XSS mitigation is the
+     *   responsibility of each button implementation.
+     * @param {String} html
+     * @returns {Button}
+     */
+    setHtml(html) {
+        if (typeof html != 'undefined') {
+            this.html = html.toString();
+        }
+        return this;
+    }
+
+    // Primary behavior functions
+    /**
+     * Show the button, including creating DOM elements if necessary for first render
+     */
+    show () {
+        if (!this.parent) {
+            return;
+        }
+        if (!this.selector) {
+            this.selector = this.parent.selector.append(this.tag).attr('class', this.getClass());
+        }
+        return this.update();
+    }
+
+    /**
+     * Hook for any actions or state cleanup to be performed before rerendering
+     * @returns {Button}
+     */
+    preUpdate () {
+        return this;
+    }
+
+    /**
+     * Update button state and contents, and fully rerender
+     * @returns {Button}
+     */
+    update () {
+        if (!this.selector) {
+            return this;
+        }
+        this.preUpdate();
+        this.selector
+            .attr('class', this.getClass())
+            .attr('title', this.title).style(this.style)
+            .on('mouseover', (this.status === 'disabled') ? null : this.onmouseover)
+            .on('mouseout', (this.status === 'disabled') ? null : this.onmouseout)
+            .on('click', (this.status === 'disabled') ? null : this.onclick)
+            .html(this.html);
+        this.menu.update();
+        this.postUpdate();
+        return this;
+    }
+
+    /**
+     * Hook for any behavior to be added/changed after the button has been re-rendered
+     * @returns {Button}
+     */
+    postUpdate () {
+        return this;
+    }
+
+    /**
+     * Hide the button by removing it from the DOM (may be overridden by current persistence setting)
+     * @returns {Button}
+     */
+    hide() {
+        if (this.selector && !this.shouldPersist()) {
+            this.selector.remove();
+            this.selector = null;
+        }
+        return this;
     }
 
 }
@@ -1041,7 +1053,7 @@ class DisplayOptions extends BaseWidget {
         if (typeof layout.button_title != 'string') {
             layout.button_title = 'Control how plot items are displayed';
         }
-        super(layout, parent);
+        super(...arguments);
 
         // List of layout fields that this button is allowed to control. This ensures that we don't override any other
         //  information (like plot height etc) while changing point rendering
@@ -1076,7 +1088,7 @@ class DisplayOptions extends BaseWidget {
             .setColor(layout.color)
             .setHtml(layout.button_html)
             .setTitle(layout.button_title)
-            .setOnclick(function () {
+            .setOnclick(() => {
                 this.button.menu.populate();
             });
         this.button.menu.setPopulate(() => {
@@ -1088,7 +1100,7 @@ class DisplayOptions extends BaseWidget {
 
             const menuLayout = this.layout;
 
-            const renderRow = function (display_name, display_options, row_id) { // Helper method
+            const renderRow = (display_name, display_options, row_id) => { // Helper method
                 const row = table.append('tr');
                 const radioId = '' + uniqueID + row_id;
                 row.append('td')
@@ -1224,7 +1236,7 @@ class SetState extends BaseWidget {
 
 
 export {
-    BaseWidget as BaseWidget,  // This is used to create subclasses
+    BaseWidget,  // This is used to create subclasses
     Button as _Button, // This is used to create Widgets that contain a button. It actually shouldn't be in the registry because it's not usable directly..
     Dimensions as dimensions,
     DisplayOptions as display_options,

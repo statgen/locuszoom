@@ -13,7 +13,7 @@ import d3 from 'd3';
 function install (LocusZoom) {
     const RemoteAdapter = LocusZoom.Adapters.get('RemoteAdapter');
     const _Button = LocusZoom.Widgets.get('_Button');
-    const _BaseWidget = LocusZoom.Widgets.get('_Button');
+    const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
     /**
      * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
@@ -33,7 +33,9 @@ function install (LocusZoom) {
     class ToggleSplitTracks extends _BaseWidget {
         constructor(layout) {
             super(...arguments);
-            if (!layout.data_layer_id) { layout.data_layer_id = 'intervals'; }
+            if (!layout.data_layer_id) {
+                layout.data_layer_id = 'intervals';
+            }
             if (!this.parent_panel.data_layers[layout.data_layer_id]) {
                 throw new Error('Toggle split tracks widget specifies an invalid data layer ID');
             }

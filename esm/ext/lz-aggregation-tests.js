@@ -25,7 +25,6 @@ function install (LocusZoom) {
      * @public
      */
     const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
-    const AssociationLZ = LocusZoom.Adapters.get('AssociationLZ');
     const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
 
     class AggregationTestSource extends RemoteAdapter {
