@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import { layouts } from '../../../esm/registry';
 import {populate} from '../../../esm/helpers/display';
 import DataSources from '../../../esm/data';
+import {_updateStatePosition} from '../../../esm/components/plot';
 
 describe('LocusZoom.Plot', function() {
     // Tests
@@ -632,6 +633,58 @@ describe('LocusZoom.Plot', function() {
                 assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
                 assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
             });
+        });
+    });
+
+    describe('Update State Positions', function() {
+        it('should do nothing if passed a state with no predicted rules / structure', function() {
+            let state = { foo: 'bar' };
+            state = _updateStatePosition(state);
+            assert.equal(state.foo, 'bar');
+            let stateB = { start: 'foo', end: 'bar' };
+            stateB = _updateStatePosition(stateB);
+            assert.equal(stateB.start, 'foo');
+            assert.equal(stateB.end, 'bar');
+        });
+        it('should enforce no zeros for start and end (if present with chr)', function() {
+            let stateA = { chr: 1, start: 0, end: 123 };
+            stateA = _updateStatePosition(stateA);
+            assert.equal(stateA.start, 1);
+            assert.equal(stateA.end, 123);
+            let stateB = { chr: 1, start: 1, end: 0 };
+            stateB = _updateStatePosition(stateB);
+            assert.equal(stateB.start, 1);
+            assert.equal(stateB.end, 1);
+        });
+        it('should enforce no negative values for start and end (if present with chr)', function() {
+            let stateA = { chr: 1, start: -235, end: 123 };
+            stateA = _updateStatePosition(stateA);
+            assert.equal(stateA.start, 1);
+            assert.equal(stateA.end, 123);
+            let stateB = { chr: 1, start: 1, end: -436 };
+            stateB = _updateStatePosition(stateB);
+            assert.equal(stateB.start, 1);
+            assert.equal(stateB.end, 1);
+        });
+        it('should enforce no non-integer values for start and end (if present with chr)', function() {
+            let stateA = { chr: 1, start: 1234.4, end: 4567.8 };
+            stateA = _updateStatePosition(stateA);
+            assert.equal(stateA.start, 1234);
+            assert.equal(stateA.end, 4567);
+        });
+        it('should enforce no non-numeric values for start and end (if present with chr)', function() {
+            let stateA = { chr: 1, start: 'foo', end: 324523 };
+            stateA = _updateStatePosition(stateA);
+            assert.equal(stateA.start, 324523);
+            assert.equal(stateA.end, 324523);
+            let stateB = { chr: 1, start: 68756, end: 'foo' };
+            stateB = _updateStatePosition(stateB);
+            assert.equal(stateB.start, 68756);
+            assert.equal(stateB.end, 68756);
+            let stateC = { chr: 1, start: 'foo', end: 'bar' };
+            stateC = _updateStatePosition(stateC);
+            assert.equal(stateC.start, 1);
+            assert.equal(stateC.end, 1);
         });
     });
 });

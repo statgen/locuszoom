@@ -16,17 +16,24 @@ const standard_association_tooltip = {
     closable: true,
     show: { or: ['highlighted', 'selected'] },
     hide: { and: ['unhighlighted', 'unselected'] },
-    html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
-        + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>'
-        + 'Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>'
-        + '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipDataLayer(this).makeLDReference(LocusZoom.getToolTipData(this));">Make LD Reference</a><br>'
+    html: `<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>
+        P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>
+        Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>
+        <a href="javascript:void(0);" 
+        onclick="var data = this.parentNode.__data__;
+                 data.getDataLayer().makeLDReference(data);"
+                 >Make LD Reference</a><br>`
 };
 
 const standard_association_tooltip_with_label = function() {
     // Add a special "toggle label" button to the base tooltip. This must be used in tandem with a custom layout
     //   directive (label.filters should check a boolean annotation field called "lz_show_label").
     const base = deepCopy(standard_association_tooltip);
-    base.html += '<a href="javascript:void(0);" onclick="var item = LocusZoom.getToolTipData(this), layer = LocusZoom.getToolTipDataLayer(this); var current = layer.getElementAnnotation(item, \'lz_show_label\'); layer.setElementAnnotation(item, \'lz_show_label\', !current ); layer.parent_plot.applyState();">Toggle label</a>';
+    base.html += `<a href="javascript:void(0);" 
+                  onclick="var item = this.parentNode.__data__, layer = item.getDataLayer(); 
+                  var current = layer.getElementAnnotation(item, 'lz_show_label'); 
+                  layer.setElementAnnotation(item, 'lz_show_label', !current );
+                  layer.parent_plot.applyState();">Toggle label</a>`;
     return base;
 }();
 

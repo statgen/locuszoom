@@ -242,30 +242,35 @@ class BaseDataLayer {
         const field_to_match = (this.layout.match && this.layout.match.receive);
         const broadcast_value = this.parent_plot.state.lz_match_value;
 
-        const self = this;
-        this.data.forEach(function(d, i) {
+        this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                d.lz_highlight_match = (d[field_to_match] === broadcast_value);
+                item.lz_highlight_match = (item[field_to_match] === broadcast_value);
             }
 
-            self.data[i].toHTML = function() {
-                const id_field = self.layout.id_field || 'id';
+            item.toHTML = () => {
+                const id_field = this.layout.id_field || 'id';
                 let html = '';
-                if (self.data[i][id_field]) { html = self.data[i][id_field].toString(); }
+                if (item[id_field]) {
+                    html = item[id_field].toString();
+                }
                 return html;
             };
-            // getDataLayer() method - return a reference to the data layer
-            self.data[i].getDataLayer = function() {
-                return self;
+            // Helper methods - return a reference to various plot levels. Useful for interactive tooltips.
+            item.getDataLayer = () => this;
+            item.getPanel = () => this.parent || null;
+            item.getPlot = () => {
+                // For unit testing etc, this layer may be created without a parent.
+                const panel = this.parent;
+                return panel ? panel.parent : null;
             };
             // deselect() method - shortcut method to deselect the element
-            self.data[i].deselect = function() {
-                const data_layer = self.getDataLayer();
-                data_layer.unselectElement(self); // dynamically generated method name. It exists, honest.
+            item.deselect = () => {
+                const data_layer = this.getDataLayer();
+                data_layer.unselectElement(this); // dynamically generated method name. It exists, honest.
             };
         });
         this.applyCustomDataMethods();

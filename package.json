@@ -29,8 +29,8 @@
     "url": "https://github.com/statgen/locuszoom.git"
   },
   "scripts": {
-    "test": "mocha --recursive ./test2/**/*.js",
-    "test:coverage": "nyc --reporter=text mocha --recursive ./test2/**/*.js",
+    "test": "mocha --recursive test/**/*.js",
+    "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "dev": "webpack --watch --config webpack.dev.cjs",
     "prod": "webpack --config webpack.prod.cjs"
   },

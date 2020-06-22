@@ -319,4 +319,4 @@ function parsePositionQuery(x) {
     return null;
 }
 
-export { parseFields, populate, positionIntToString, positionStringToInt, prettyTicks };
+export { parseFields, parsePositionQuery, populate, positionIntToString, positionStringToInt, prettyTicks };

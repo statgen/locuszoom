@@ -1252,3 +1252,6 @@ class Plot {
 }
 
 export {Plot as default};
+
+// Only for testing
+export { _updateStatePosition };
