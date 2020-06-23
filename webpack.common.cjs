@@ -34,7 +34,10 @@ module.exports = {
         LzAggregationTests: path.resolve(srcPath, 'ext', 'lz-aggregation-tests.js'),
     },
     plugins: [
-        new CleanWebpackPlugin(),
+        new CleanWebpackPlugin({
+            // To simplify tooling, we will assume that (S)CSS changes rarely, and build it outside of webpack
+            cleanOnceBeforeBuildPatterns: ['**/*', '!locuszoom.css*'],
+        }),
         new webpack.BannerPlugin(`Locuszoom ${PACKAGE.version}`), // add after uglify step
         new FriendlyErrorsWebpackPlugin(),
         new MiniCssExtractPlugin({
