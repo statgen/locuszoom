@@ -27,8 +27,8 @@ const default_layout = {
     proportional_origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
-    dashboard: {
-        components: []
+    toolbar: {
+        widgets: []
     },
     cliparea: {
         height: 0,
@@ -392,7 +392,7 @@ class Panel {
             this.render();
             this.curtain.update();
             this.loader.update();
-            this.dashboard.update();
+            this.toolbar.update();
             if (this.legend) { this.legend.position(); }
         }
         return this;
@@ -517,10 +517,10 @@ class Panel {
         this.loader = generateLoader.call(this);
 
         /**
-         * Create the toolbar object and hang components on it as defined by panel layout
+         * Create the toolbar object and hang widgets on it as defined by panel layout
          * @member {Toolbar}
          */
-        this.dashboard = new Toolbar(this);
+        this.toolbar = new Toolbar(this);
 
         // Inner border
         this.inner_border = this.svg.group.append('rect')

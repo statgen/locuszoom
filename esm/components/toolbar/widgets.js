@@ -9,14 +9,14 @@ import {positionIntToString} from '../../helpers/display';
  * A widget is an empty div rendered on a toolbar that can display custom
  * html of user interface elements.
  * @param {Object} layout A JSON-serializable object of layout configuration parameters
- * @param {('left'|'right')} [layout.position='left']  Whether to float the component left or right.
+ * @param {('left'|'right')} [layout.position='left']  Whether to float the widget left or right.
  * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
  *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
  *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
  *  For example, the region_nav_plot toolbar is a defined as a group.
  * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple'} [layout.color='gray']  Color scheme for the
- *   component. Applies to buttons and menus.
- * @param {Toolbar} parent The toolbar that contains this component
+ *   widget. Applies to buttons and menus.
+ * @param {Toolbar} parent The toolbar that contains this widget
  */
 class BaseWidget {
     constructor(layout, parent) {
@@ -37,7 +37,7 @@ class BaseWidget {
         this.parent_plot = null;
         /**
          * This is a reference to either the panel or the plot, depending on what the toolbar is
-         *   tied to. Useful when absolutely positioning toolbar components relative to their SVG anchor.
+         *   tied to. Useful when absolutely positioning toolbar widgets relative to their SVG anchor.
          * @member {Plot|Panel}
          */
         this.parent_svg = null;
@@ -54,14 +54,14 @@ class BaseWidget {
         /** @member {d3.selection} */
         this.selector = null;
         /**
-         * If this is an interactive component, it will contain a button or menu instance that handles the interactivity.
-         *   There is a 1-to-1 relationship of toolbar component to button
+         * If this is an interactive widget, it will contain a button or menu instance that handles the interactivity.
+         *   There is a 1-to-1 relationship of toolbar widget to button
          * @member {null|Button}
          */
         this.button = null;
         /**
-         * If any single component is marked persistent, it will bubble up to prevent automatic hide behavior on a
-         *   component's parent toolbar. Check via `shouldPersist`
+         * If any single widget is marked persistent, it will bubble up to prevent automatic hide behavior on a
+         *   widget's parent toolbar. Check via `shouldPersist`
          * @protected
          * @member {Boolean}
          */
@@ -72,7 +72,7 @@ class BaseWidget {
     }
 
     /**
-     * Perform all rendering of component, including toggling visibility to true. Will initialize and create SVG element
+     * Perform all rendering of widget, including toggling visibility to true. Will initialize and create SVG element
      *   if necessary, as well as updating with new data and performing layout actions.
      */
     show() {
@@ -80,9 +80,9 @@ class BaseWidget {
             return;
         }
         if (!this.selector) {
-            const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-dashboard-group-' + this.layout.group_position : '');
+            const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-toolbar-group-' + this.layout.group_position : '');
             this.selector = this.parent.selector.append('div')
-                .attr('class', 'lz-dashboard-' + this.layout.position + group_position);
+                .attr('class', 'lz-toolbar-' + this.layout.position + group_position);
             if (this.layout.style) {
                 this.selector.style(this.layout.style);
             }
@@ -99,14 +99,14 @@ class BaseWidget {
     }
 
     /**
-     * Update the toolbar component with any new data or plot state as appropriate. This method performs all
+     * Update the toolbar widget with any new data or plot state as appropriate. This method performs all
      *  necessary rendering steps.
      */
     update() { /* stub */
     }
 
     /**
-     * Place the component correctly in the plot
+     * Place the widget correctly in the plot
      * @returns {BaseWidget}
      */
     position() {
@@ -117,7 +117,7 @@ class BaseWidget {
     }
 
     /**
-     * Determine whether the component should persist (will bubble up to parent toolbar)
+     * Determine whether the widget should persist (will bubble up to parent toolbar)
      * @returns {boolean}
      */
     shouldPersist() {
@@ -143,7 +143,7 @@ class BaseWidget {
     }
 
     /**
-     * Completely remove component and button. (may be overridden by persistence settings)
+     * Completely remove widget and button. (may be overridden by persistence settings)
      * @param {Boolean} [force=false] If true, will ignore persistence settings and always destroy the toolbar
      * @returns {Toolbar}
      */
@@ -168,15 +168,15 @@ class BaseWidget {
 }
 
 /**
- * Plots and panels may have a "toolbar" element suited for showing HTML components that may be interactive.
- *   When components need to incorporate a generic button, or additionally a button that generates a menu, this
+ * Plots and panels may have a "toolbar" element suited for showing HTML widgets that may be interactive.
+ *   When widgets need to incorporate a generic button, or additionally a button that generates a menu, this
  *   class provides much of the necessary framework.
  * @param {BaseWidget} parent
  */
 class Button {
     constructor(parent) {
         if (!(parent instanceof BaseWidget)) {
-            throw new Error('Unable to create dashboard component button, invalid parent');
+            throw new Error('Unable to create toolbar widget button, invalid parent');
         }
         /** @member {BaseWidget} */
         this.parent = parent;
@@ -188,7 +188,7 @@ class Button {
         this.parent_svg = this.parent.parent_svg;
 
         /** @member {Toolbar|null|*} */
-        this.parent_dashboard = this.parent.parent;
+        this.parent_toolbar = this.parent.parent;
         /** @member {d3.selection} */
         this.selector = null;
 
@@ -233,7 +233,7 @@ class Button {
          */
         this.persist = false;
         /**
-         * Configuration when defining a button: track whether this component should be allowed to keep open
+         * Configuration when defining a button: track whether this widget should be allowed to keep open
          *   menu/button contents in response to certain events
          * @protected
          * @member {Boolean}
@@ -264,10 +264,10 @@ class Button {
             show: () => {
                 if (!this.menu.outer_selector) {
                     this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append('div')
-                        .attr('class', 'lz-dashboard-menu lz-dashboard-menu-' + this.color)
-                        .attr('id', this.parent_svg.getBaseId() + '.dashboard.menu');
+                        .attr('class', 'lz-toolbar-menu lz-toolbar-menu-' + this.color)
+                        .attr('id', this.parent_svg.getBaseId() + '.toolbar.menu');
                     this.menu.inner_selector = this.menu.outer_selector.append('div')
-                        .attr('class', 'lz-dashboard-menu-content');
+                        .attr('class', 'lz-toolbar-menu-content');
                     this.menu.inner_selector.on('scroll', () => {
                         this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
                     });
@@ -283,7 +283,7 @@ class Button {
                 if (!this.menu.outer_selector) {
                     return this.menu;
                 }
-                this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in component definition
+                this.menu.populate(); // This function is stubbed for all buttons by default and custom implemented in widget definition
                 if (this.menu.inner_selector) {
                     this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 }
@@ -301,14 +301,14 @@ class Button {
                 const page_origin = this.parent_svg.getPageOrigin();
                 const page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
                 const container_offset = this.parent_plot.getContainerOffset();
-                const dashboard_client_rect = this.parent_dashboard.selector.node().getBoundingClientRect();
+                const toolbar_client_rect = this.parent_toolbar.selector.node().getBoundingClientRect();
                 const button_client_rect = this.selector.node().getBoundingClientRect();
                 const menu_client_rect = this.menu.outer_selector.node().getBoundingClientRect();
                 const total_content_height = this.menu.inner_selector.node().scrollHeight;
                 let top;
                 let left;
-                if (this.parent_dashboard.type === 'panel') {
-                    top = (page_origin.y + dashboard_client_rect.height + (2 * padding));
+                if (this.parent_toolbar.type === 'panel') {
+                    top = (page_origin.y + toolbar_client_rect.height + (2 * padding));
                     left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
                 } else {
                     top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
@@ -447,8 +447,8 @@ class Button {
      * @returns {string}
      */
     getClass () {
-        const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-dashboard-button-group-' + this.parent.layout.group_position : '');
-        return 'lz-dashboard-button lz-dashboard-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
+        const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-toolbar-button-group-' + this.parent.layout.group_position : '');
+        return 'lz-toolbar-button lz-toolbar-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
     }
 
 
@@ -639,7 +639,7 @@ class Title extends BaseWidget {
     show() {
         if (!this.div_selector) {
             this.div_selector = this.parent.selector.append('div')
-                .attr('class', 'lz-dashboard-title lz-dashboard-' + this.layout.position);
+                .attr('class', 'lz-toolbar-title lz-toolbar-' + this.layout.position);
             this.title_selector = this.div_selector.append('h3');
         }
         return this.update();
@@ -727,20 +727,20 @@ class Download extends BaseWidget {
             .setTitle(this.layout.button_title || 'Download image of the current plot as locuszoom.svg')
             .setOnMouseover(() => {
                 this.button.selector
-                    .classed('lz-dashboard-button-gray-disabled', true)
+                    .classed('lz-toolbar-button-gray-disabled', true)
                     .html('Preparing Image');
                 this.generateBase64SVG().then((url) => {
                     const old = this.button.selector.attr('href');
                     if (old) { URL.revokeObjectURL(old); }  // Clean up old url instance to prevent memory leaks
                     this.button.selector
                         .attr('href', url)
-                        .classed('lz-dashboard-button-gray-disabled', false)
-                        .classed('lz-dashboard-button-gray-highlighted', true)
+                        .classed('lz-toolbar-button-gray-disabled', false)
+                        .classed('lz-toolbar-button-gray-highlighted', true)
                         .html(this.layout.button_html || 'Download Image');
                 });
             })
             .setOnMouseout(() => {
-                this.button.selector.classed('lz-dashboard-button-gray-highlighted', false);
+                this.button.selector.classed('lz-toolbar-button-gray-highlighted', false);
             });
         this.button.show();
         this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', this.layout.filename || 'locuszoom.svg');
@@ -792,9 +792,9 @@ class RemovePanel extends BaseWidget {
                     return false;
                 }
                 const panel = this.parent_panel;
-                panel.dashboard.hide(true);
-                d3.select(panel.parent.svg.node().parentNode).on('mouseover.' + panel.getBaseId() + '.dashboard', null);
-                d3.select(panel.parent.svg.node().parentNode).on('mouseout.' + panel.getBaseId() + '.dashboard', null);
+                panel.toolbar.hide(true);
+                d3.select(panel.parent.svg.node().parentNode).on('mouseover.' + panel.getBaseId() + '.toolbar', null);
+                d3.select(panel.parent.svg.node().parentNode).on('mouseout.' + panel.getBaseId() + '.toolbar', null);
                 return panel.parent.removePanel(panel.id);
             });
         this.button.show();
@@ -871,7 +871,7 @@ class ShiftRegion extends BaseWidget {
         }
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
-            throw new Error('Unable to add shift_region dashboard component: plot state does not have region bounds');
+            throw new Error('Unable to add shift_region toolbar widget: plot state does not have region bounds');
         }
 
 
@@ -913,7 +913,7 @@ class ZoomRegion extends BaseWidget {
 
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
-            throw new Error('Unable to add zoom_region dashboard component: plot state does not have region bounds');
+            throw new Error('Unable to add zoom_region toolbar widget: plot state does not have region bounds');
         }
     }
 
@@ -1082,7 +1082,7 @@ class DisplayOptions extends BaseWidget {
          */
         this._selected_item = 'default';
 
-        // Define the button + menu that provides the real functionality for this toolbar component
+        // Define the button + menu that provides the real functionality for this toolbar widget
 
         this.button = new Button(this)
             .setColor(layout.color)
@@ -1186,7 +1186,7 @@ class SetState extends BaseWidget {
             throw new Error('There is an existing state value that does not match the known values in this widget');
         }
 
-        // Define the button + menu that provides the real functionality for this toolbar component
+        // Define the button + menu that provides the real functionality for this toolbar widget
         this.button = new Button(this)
             .setColor(layout.color)
             .setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''))

@@ -664,9 +664,9 @@ function install (LocusZoom) {
         min_width: 500,
         min_height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
-        dashboard: (function () {
-            const l = LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true });
-            l.components.push({
+        toolbar: (function () {
+            const l = LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true });
+            l.widgets.push({
                 type: 'toggle_split_tracks',
                 data_layer_id: 'intervals',
                 position: 'right'
@@ -695,7 +695,7 @@ function install (LocusZoom) {
         responsive_resize: 'both',
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_plot', { unnamespaced: true }),
         panels: [
             LocusZoom.Layouts.get('panel', 'association', {
                 unnamespaced: true,

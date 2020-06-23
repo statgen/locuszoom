@@ -42,7 +42,7 @@ function customizePlotLayout(layout) {
 
     // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+    layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
     const assocLayout = layout.panels[0].data_layers[2];
     assocLayout.fields.unshift('aggregation: all');

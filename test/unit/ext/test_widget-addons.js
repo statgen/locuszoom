@@ -5,21 +5,21 @@ import LocusZoom from 'locuszoom';
 import DataSources from '../../../esm/data';
 import {populate} from '../../../esm/helpers/display';
 
-import dashboard_addons from '../../../esm/ext/lz-dashboard-addons';
+import toolbar_addons from '../../../esm/ext/lz-widget-addons';
 
 
 describe('Toolbar addons', function () {
     before(function () {
         // Register the plugin
-        LocusZoom.use(dashboard_addons);
+        LocusZoom.use(toolbar_addons);
     });
 
-    describe('Covariates Model Component', function () {
+    describe('Covariates Model Widget', function () {
         beforeEach(function () {
             const datasources = new DataSources();
             const layout = {
-                dashboard: {
-                    components: [
+                toolbar: {
+                    widgets: [
                         { type: 'covariates_model' }
                     ]
                 }

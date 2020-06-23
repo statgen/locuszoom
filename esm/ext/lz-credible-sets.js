@@ -195,7 +195,7 @@ function install (LocusZoom) {
         proportional_width: 1,
         margin: { top: 35, right: 50, bottom: 40, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
-        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_panel', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
         interaction: {
             drag_background_to_pan: true,
             scroll_to_zoom: true,
@@ -218,7 +218,7 @@ function install (LocusZoom) {
             ]
         });
         // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
-        l.dashboard.components.push(
+        l.toolbar.widgets.push(
             {
                 type: 'display_options',
                 position: 'right',
@@ -325,7 +325,7 @@ function install (LocusZoom) {
         responsive_resize: 'both',
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_plot', { unnamespaced: true }),
         panels: [
             LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
             LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),

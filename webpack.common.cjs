@@ -14,7 +14,7 @@ const FILENAMES = {
     // For legacy reasons, the filenames that people expect are different than the "library" name
     LocusZoom: 'locuszoom.app.min.js',
     LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
-    LzDashboardAddons: 'ext/lz-dashboard-addons.min.js',
+    LzWidgetAddons: 'ext/lz-widget-addons.min.js',
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
     LzCredibleSets: 'ext/lz-credible-sets.min.js',
     LzTabix: 'ext/lz-tabix-source.min.js',
@@ -27,7 +27,7 @@ module.exports = {
         // When a <script> is included in the page, entrypoint name = variable with content
         LocusZoom: path.resolve(srcPath, 'index.js'),
         LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
-        LzDashboardAddons: path.resolve(srcPath, 'ext', 'lz-dashboard-addons.js'),
+        LzWidgetAddons: path.resolve(srcPath, 'ext', 'lz-widget-addons.js'),
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
         LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
         LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),

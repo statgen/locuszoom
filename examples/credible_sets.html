@@ -109,8 +109,8 @@
       }
 
       layout = LocusZoom.Layouts.get("plot", "association_credible_set", {state: initialState});
-      layout.dashboard = LocusZoom.Layouts.get("dashboard", "region_nav_plot");
-      layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+      layout.toolbar = LocusZoom.Layouts.get("toolbar", "region_nav_plot");
+      layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
       // Generate the LocusZoom plot
       window.plot = LocusZoom.populate("#plot", data_sources, layout);

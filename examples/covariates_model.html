@@ -12,7 +12,7 @@
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
 
     <!-- Helpers that use the external library to add functionality to LocusZoom -->
-    <script src="../dist/ext/lz-dashboard-addons.min.js" type="application/javascript"></script>
+    <script src="../dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Covariates Model Example</title>
 
@@ -88,15 +88,15 @@
     layout.panels[0].data_layers[2].tooltip.html = "<strong>{{assoc:variant|htmlescape}}</strong><br>"
                                                  + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
                                                  + "Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>"
-                                                 + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Add to Model</a><br>";
+                                                 + "<a href=\"javascript:void(0);\" onclick=\"this.parentNode.__data__.getPlot().CovariatesModel.add(this.parentNode.__data__);\">Add to Model</a><br>";
 
     // Add covariates model button/menu to the plot-level toolbar
-    layout.dashboard.components.push({
+    layout.toolbar.widgets.push({
         type: "covariates_model",
         button_html: "Model",
         button_title: "Use this feature to interactively build a model using variants from the data set",
         position: "left"
-    }, LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+    }, LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
     // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);

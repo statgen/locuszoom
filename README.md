@@ -140,7 +140,7 @@ A basic example may then look like this:
 #### Use a Predefined Layout
 
 The core LocusZoom library comes equipped with several predefined layouts, organized by type ("plot", "panel", 
-"data_layer", and "dashboard"). You can see what layouts are predefined by reading the contents of 
+"data_layer", and "toolbar"). You can see what layouts are predefined by reading the contents of 
 `assets/js/app/Layouts.js` or in the browser by entering `LocusZoom.Layouts.list()` (or to list one specific type: 
 `LocusZoom.Layouts.list(type)`).
 
@@ -152,7 +152,7 @@ sources to be configured).
 #### Build a Layout Using Some Predefined Pieces
 
 `LocusZoom.Layouts.get(type, name)` can also be used to pull predefined layouts of smaller pieces, like data layers or 
-dashboards, into a custom layout:
+toolbars, into a custom layout:
 
 ```javascript
 var layout = {

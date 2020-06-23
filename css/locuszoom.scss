@@ -260,7 +260,7 @@ svg.#{$namespace}-locuszoom  {
 
 }
 
-// The following comment is used by the download dashboard component when generating a CSS string.
+// The following comment is used by the download toolbar widget when generating a CSS string.
 // Since no HTML elements will be in the exported SVG element there's no need to include their styles.
 /* ! LocusZoom HTML Styles */
 
@@ -508,13 +508,13 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   100% { width: 0%;   left: 100%; }
 }
 
-.#{$namespace}-plot-dashboard {
+.#{$namespace}-plot-toolbar {
   padding-left: 0px;
   padding-right: 0px;
   padding-top: 4px;
   padding-bottom: 3px;
 
-  .#{$namespace}-dashboard-button {
+  .#{$namespace}-toolbar-button {
     text-decoration: none;
     padding: 3px 7px 3px 7px;
     height: auto;
@@ -529,42 +529,42 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     text-align: center;
   }
 
-  .#{$namespace}-dashboard-button-group-start { border-radius: 4px 0px 0px 4px !important; }
-  .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
-  .#{$namespace}-dashboard-button-group-end { border-radius: 0px 4px 4px 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-start { border-radius: 4px 0px 0px 4px !important; }
+  .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-end { border-radius: 0px 4px 4px 0px !important; border-left-width: 0px !important; }
 
 }
 
-.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-left {
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-left {
   float: left;
   margin-right: 1.5em;
 }
 
-.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-right {
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-right {
   float: right;
   margin-left: 1.5em;
 }
 
-.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-start {
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-start {
   margin-right: 0em !important;
 }
 
-.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-middle {
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-middle {
   margin-left: 0em !important;
   margin-right: 0em !important;
 }
 
-.#{$namespace}-plot-dashboard > .#{$namespace}-dashboard-group-end {
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-end {
   margin-left: 0em !important;
 }
 
-.#{$namespace}-panel-dashboard {
+.#{$namespace}-panel-toolbar {
   padding-left: 2px;
   padding-right: 2px;
   padding-top: 2px;
   padding-bottom: 0px;
 
-  .#{$namespace}-dashboard-button {
+  .#{$namespace}-toolbar-button {
     text-decoration: none;
     padding: 2px 6px 2px 6px;
     height: auto;
@@ -579,28 +579,28 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
     text-align: center;
   }
 
-  .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
-  .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
-  .#{$namespace}-dashboard-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+  .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
 
 }
 
-.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-left {
+.#{$namespace}-panel-toolbar > .#{$namespace}-toolbar-left {
   float: left;
   margin-right: 0px;
 }
 
-.#{$namespace}-panel-dashboard > .#{$namespace}-dashboard-right {
+.#{$namespace}-panel-toolbar > .#{$namespace}-toolbar-right {
   float: right;
   margin-left: 0px;
 }
 
-.#{$namespace}-dashboard {
+.#{$namespace}-toolbar {
 
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 80%;
 
-  .#{$namespace}-dashboard-title {
+  .#{$namespace}-toolbar-title {
     margin-bottom: 0.3em;
     h3 {
       font-size: 150%;
@@ -615,7 +615,7 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
 
 }
 
-div.#{$namespace}-dashboard-menu {
+div.#{$namespace}-toolbar-menu {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
   position: absolute;
@@ -624,7 +624,7 @@ div.#{$namespace}-dashboard-menu {
   box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
   overflow: hidden;
 
-  .#{$namespace}-dashboard-menu-content {
+  .#{$namespace}-toolbar-menu-content {
     display: block;
     width: 100%;
     height: 100%;
@@ -643,7 +643,7 @@ div.#{$namespace}-dashboard-menu {
     h5 { font-size: 125%; }
     h6 { font-size: 110%; }
 
-    .#{$namespace}-dashboard-button {
+    .#{$namespace}-toolbar-button {
       text-decoration: none;
       padding: 2px 6px 2px 6px;
       height: auto;
@@ -662,9 +662,9 @@ div.#{$namespace}-dashboard-menu {
       margin: 0;
     }
 
-    .#{$namespace}-dashboard-button-group-start { border-radius: 3px 0px 0px 3px !important; }
-    .#{$namespace}-dashboard-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
-    .#{$namespace}-dashboard-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+    .#{$namespace}-toolbar-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+    .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+    .#{$namespace}-toolbar-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
 
   }
 
@@ -690,22 +690,22 @@ div.#{$namespace}-dashboard-menu {
   }
 }
 
-.#{$namespace}-dashboard-button-gray {
+.#{$namespace}-toolbar-button-gray {
   background-color: rgba(216,216,216,0.6);
   border: 1px solid rgba(51,51,51,0.6);
   color: rgba(51,51,51,0.6);
 }
-.#{$namespace}-dashboard-button-gray:not(.#{$namespace}-dashboard-button-gray-disabled):not(.#{$namespace}-dashboard-button-gray-highlighted):hover {
+.#{$namespace}-toolbar-button-gray:not(.#{$namespace}-toolbar-button-gray-disabled):not(.#{$namespace}-toolbar-button-gray-highlighted):hover {
   background-color: rgba(216,216,216,1);
   border: 1px solid rgba(51,51,51,1);
   color: rgba(51,51,51,1);
 }
-.#{$namespace}-dashboard-button-gray-highlighted {
+.#{$namespace}-toolbar-button-gray-highlighted {
   border: 1px solid rgba(51,51,51,1);
   background-color: rgba(51,51,51,1);
   color: rgba(216,216,216,1);
 }
-.#{$namespace}-dashboard-button-gray-disabled {
+.#{$namespace}-toolbar-button-gray-disabled {
   background-color: rgba(216,216,216,0.6);
   border: 1px solid rgba(153,153,153,0.6);
   color: rgba(153,153,153,0.6);
@@ -713,22 +713,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-red {
+.#{$namespace}-toolbar-button-red {
   background-color: rgba(230,195,195,0.6);
   border: 1px solid rgba(89,49,49,0.6);
   color: rgba(89,49,49,0.6);
 }
-.#{$namespace}-dashboard-button-red:not(.#{$namespace}-dashboard-button-red-disabled):not(.#{$namespace}-dashboard-button-red-highlighted):hover {
+.#{$namespace}-toolbar-button-red:not(.#{$namespace}-toolbar-button-red-disabled):not(.#{$namespace}-toolbar-button-red-highlighted):hover {
   background-color: rgba(230,195,195,1);
   border: 1px solid rgba(89,49,49,1);
   color: rgba(89,49,49,1);
 }
-.#{$namespace}-dashboard-button-red-highlighted {
+.#{$namespace}-toolbar-button-red-highlighted {
   border: 1px solid rgba(89,49,49,1);
   background-color: rgba(89,49,49,1);
   color: rgba(230,195,195,1);
 }
-.#{$namespace}-dashboard-button-red-disabled {
+.#{$namespace}-toolbar-button-red-disabled {
   background-color: rgba(230,195,195,0.6);
   border: 1px solid rgba(179,134,134,0.6);
   color: rgba(179,134,134,0.6);
@@ -736,22 +736,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-orange {
+.#{$namespace}-toolbar-button-orange {
   background-color: rgba(230,213,195,0.6);
   border: 1px solid rgba(89,69,49,0.6);
   color: rgba(89,69,49,0.6);
 }
-.#{$namespace}-dashboard-button-orange:not(.#{$namespace}-dashboard-button-orange-disabled):not(.#{$namespace}-dashboard-button-orange-highlighted):hover {
+.#{$namespace}-toolbar-button-orange:not(.#{$namespace}-toolbar-button-orange-disabled):not(.#{$namespace}-toolbar-button-orange-highlighted):hover {
   background-color: rgba(230,213,195,1);
   border: 1px solid rgba(89,69,49,1);
   color: rgba(89,69,49,1);
 }
-.#{$namespace}-dashboard-button-orange-highlighted {
+.#{$namespace}-toolbar-button-orange-highlighted {
   border: 1px solid rgba(89,69,49,1);
   background-color: rgba(89,69,49,1);
   color: rgba(230,213,195,1);
 }
-.#{$namespace}-dashboard-button-orange-disabled {
+.#{$namespace}-toolbar-button-orange-disabled {
   background-color: rgba(230,213,195,0.6);
   border: 1px solid rgba(179,156,134,0.6);
   color: rgba(179,156,134,0.6);
@@ -759,22 +759,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-yellow {
+.#{$namespace}-toolbar-button-yellow {
   background-color: rgba(230,230,195,0.6);
   border: 1px solid rgba(89,89,49,0.6);
   color: rgba(89,89,49,0.6);
 }
-.#{$namespace}-dashboard-button-yellow:not(.#{$namespace}-dashboard-button-yellow-disabled):not(.#{$namespace}-dashboard-button-yellow-highlighted):hover {
+.#{$namespace}-toolbar-button-yellow:not(.#{$namespace}-toolbar-button-yellow-disabled):not(.#{$namespace}-toolbar-button-yellow-highlighted):hover {
   background-color: rgba(230,230,195,1);
   border: 1px solid rgba(89,89,49,1);
   color: rgba(89,89,49,1);
 }
-.#{$namespace}-dashboard-button-yellow-highlighted {
+.#{$namespace}-toolbar-button-yellow-highlighted {
   border: 1px solid rgba(89,89,49,1);
   background-color: rgba(89,89,49,1);
   color: rgba(230,230,195,1);
 }
-.#{$namespace}-dashboard-button-yellow-disabled {
+.#{$namespace}-toolbar-button-yellow-disabled {
   background-color: rgba(230,230,195,0.6);
   border: 1px solid rgba(179,179,134,0.6);
   color: rgba(179,179,134,0.6);
@@ -782,22 +782,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-green {
+.#{$namespace}-toolbar-button-green {
   background-color: rgba(204,230,195,0.6);
   border: 1px solid rgba(59,89,49,0.6);
   color: rgba(59,89,49,0.6);
 }
-.#{$namespace}-dashboard-button-green:not(.#{$namespace}-dashboard-button-green-disabled):not(.#{$namespace}-dashboard-button-green-highlighted):hover {
+.#{$namespace}-toolbar-button-green:not(.#{$namespace}-toolbar-button-green-disabled):not(.#{$namespace}-toolbar-button-green-highlighted):hover {
   background-color: rgba(204,230,195,1);
   border: 1px solid rgba(59,89,49,1);
   color: rgba(59,89,49,1);
 }
-.#{$namespace}-dashboard-button-green-highlighted {
+.#{$namespace}-toolbar-button-green-highlighted {
   border: 1px solid rgba(59,89,49,1);
   background-color: rgba(59,89,49,1);
   color: rgba(204,230,195,1);
 }
-.#{$namespace}-dashboard-button-green-disabled {
+.#{$namespace}-toolbar-button-green-disabled {
   background-color: rgba(204,230,195,0.6);
   border: 1px solid rgba(145,179,134,0.6);
   color: rgba(145,179,134,0.6);
@@ -805,22 +805,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-blue {
+.#{$namespace}-toolbar-button-blue {
   background-color: rgba(195,210,230,0.6);
   border: 1px solid rgba(49,66,89,0.6);
   color: rgba(49,66,89,0.6);
 }
-.#{$namespace}-dashboard-button-blue:not(.#{$namespace}-dashboard-button-blue-disabled):not(.#{$namespace}-dashboard-button-blue-highlighted):hover {
+.#{$namespace}-toolbar-button-blue:not(.#{$namespace}-toolbar-button-blue-disabled):not(.#{$namespace}-toolbar-button-blue-highlighted):hover {
   background-color: rgba(195,210,230,1);
   border: 1px solid rgba(49,66,89,1);
   color: rgba(49,66,89,1);
 }
-.#{$namespace}-dashboard-button-blue-highlighted {
+.#{$namespace}-toolbar-button-blue-highlighted {
   border: 1px solid rgba(49,66,89,1);
   background-color: rgba(49,66,89,1);
   color: rgba(195,210,230,1);
 }
-.#{$namespace}-dashboard-button-blue-disabled {
+.#{$namespace}-toolbar-button-blue-disabled {
   background-color: rgba(195,210,230,0.6);
   border: 1px solid rgba(134,153,179,0.6);
   color: rgba(134,153,179,0.6);
@@ -828,22 +828,22 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-button-purple {
+.#{$namespace}-toolbar-button-purple {
   background-color: rgba(221,195,230,0.6);
   border: 1px solid rgba(80,49,89,0.6);
   color: rgba(80,49,89,0.6);
 }
-.#{$namespace}-dashboard-button-purple:not(.#{$namespace}-dashboard-button-purple-disabled):not(.#{$namespace}-dashboard-button-purple-highlighted):hover {
+.#{$namespace}-toolbar-button-purple:not(.#{$namespace}-toolbar-button-purple-disabled):not(.#{$namespace}-toolbar-button-purple-highlighted):hover {
   background-color: rgba(221,195,230,1);
   border: 1px solid rgba(80,49,89,1);
   color: rgba(80,49,89,1);
 }
-.#{$namespace}-dashboard-button-purple-highlighted {
+.#{$namespace}-toolbar-button-purple-highlighted {
   border: 1px solid rgba(80,49,89,1);
   background-color: rgba(80,49,89,1);
   color: rgba(221,195,230,1);
 }
-.#{$namespace}-dashboard-button-purple-disabled {
+.#{$namespace}-toolbar-button-purple-disabled {
   background-color: rgba(221,195,230,0.6);
   border: 1px solid rgba(167,134,179,0.6);
   color: rgba(167,134,179,0.6);
@@ -851,37 +851,37 @@ div.#{$namespace}-dashboard-menu {
   cursor: wait;
 }
 
-.#{$namespace}-dashboard-menu-gray {
+.#{$namespace}-toolbar-menu-gray {
   background-color: rgba(232,232,232,1);
   border: 1px solid rgba(51,51,51,1);
 }
 
-.#{$namespace}-dashboard-menu-red {
+.#{$namespace}-toolbar-menu-red {
   background: rgba(240,228,228,1);
   border: 1px solid rgba(89,49,49,1);
 }
 
-.#{$namespace}-dashboard-menu-orange {
+.#{$namespace}-toolbar-menu-orange {
   background: rgba(240,234,228,1);
   border: 1px solid rgba(89,69,49,1);
 }
 
-.#{$namespace}-dashboard-menu-yellow {
+.#{$namespace}-toolbar-menu-yellow {
   background: rgba(240,240,228,1);
   border: 1px solid rgba(89,89,49,1);
 }
 
-.#{$namespace}-dashboard-menu-green {
+.#{$namespace}-toolbar-menu-green {
   background: rgba(231,240,228,1);
   border: 1px solid rgba(59,89,49,1);
 }
 
-.#{$namespace}-dashboard-menu-blue {
+.#{$namespace}-toolbar-menu-blue {
   background: rgba(228,233,240,1);
   border: 1px solid rgba(49,66,89,1);
 }
 
-.#{$namespace}-dashboard-menu-purple {
+.#{$namespace}-toolbar-menu-purple {
   background: rgba(237,228,240,1);
   border: 1px solid rgba(80,49,89,1);
 }

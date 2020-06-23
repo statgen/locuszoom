@@ -22,8 +22,8 @@ const default_layout = {
     responsive_resize: false, // Allowed values: false, "width_only", "both" (synonym for true)
     aspect_ratio: 1,
     panels: [],
-    dashboard: {
-        components: []
+    toolbar: {
+        widgets: []
     },
     panel_boundaries: true,
     mouse_guide: true
@@ -515,7 +515,7 @@ class Plot {
                 this.panels[panel_id].layout.proportional_origin.x = 0;
                 this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
                 y_offset += panel_height;
-                this.panels[panel_id].dashboard.update();
+                this.panels[panel_id].toolbar.update();
             });
         }
 
@@ -549,7 +549,7 @@ class Plot {
         // If the plot has been initialized then trigger some necessary render functions
         if (this.initialized) {
             this.panel_boundaries.position();
-            this.dashboard.update();
+            this.toolbar.update();
             this.curtain.update();
             this.loader.update();
         }
@@ -669,7 +669,7 @@ class Plot {
 
         // Remove all panel-level HTML overlay elements
         this.panels[id].loader.hide();
-        this.panels[id].dashboard.destroy(true);
+        this.panels[id].toolbar.destroy(true);
         this.panels[id].curtain.hide();
 
         // Remove the svg container for the panel if it exists
@@ -859,7 +859,7 @@ class Plot {
                                 loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                                 if (loop_panel_idx > panel_idx) {
                                     loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
-                                    loop_panel.dashboard.position();
+                                    loop_panel.toolbar.position();
                                 }
                             });
                             // Reset dimensions on the entire plot and reposition panel boundaries
@@ -944,7 +944,7 @@ class Plot {
         }
 
         // Create the toolbar object and immediately show it
-        this.dashboard = new Toolbar(this).show();
+        this.toolbar = new Toolbar(this).show();
 
         // Initialize all panels
         for (let id in this.panels) {
@@ -1123,13 +1123,13 @@ class Plot {
                 this.loading_data = false;
             })
             .then(() => {
-                // Update toolbar / components
-                this.dashboard.update();
+                // Update toolbar / widgets
+                this.toolbar.update();
 
                 // Apply panel-level state values
                 this.panel_ids_by_y_index.forEach((panel_id) => {
                     const panel = this.panels[panel_id];
-                    panel.dashboard.update();
+                    panel.toolbar.update();
                     // Apply data-layer-level state values
                     panel.data_layer_ids_by_z_index.forEach((data_layer_id) => {
                         panel.data_layers[data_layer_id].applyAllElementStatus();

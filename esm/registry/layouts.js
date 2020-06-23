@@ -66,7 +66,7 @@ class LayoutRegistry extends RegistryBase {
 
     /**
      * List all available types of layout (eg toolbar, panel, etc). If a specific type name is provided, list the
-     *  layouts for that component type.
+     *  layouts for that widget type.
      * @param {String} [type] The type of layout (eg toolbar, panel, etc)
      * @return {String[]|Object}
      */

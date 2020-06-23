@@ -38,14 +38,14 @@ function install(LocusZoom) {
             // Create an object at the plot level for easy access to interface methods in custom client-side JS
             /**
              * When a covariates model toolbar element is present, create (one) object at the plot level that exposes
-             *   component data and state for custom interactions with other plot elements.
+             *   widget data and state for custom interactions with other plot elements.
              * @class CovariatesModel
              */
             this.parent_plot.CovariatesModel = {
                 /** @member {Button} */
                 button: this,
                 /**
-                 * Add an element to the model and show a representation of it in the toolbar component menu. If the
+                 * Add an element to the model and show a representation of it in the toolbar widget menu. If the
                  *   element is already part of the model, do nothing (to avoid adding duplicates).
                  * When plot state is changed, this will automatically trigger requests for new data accordingly.
                  * @param {string|object} element_reference Can be any value that can be put through JSON.stringify()
@@ -65,11 +65,11 @@ function install(LocusZoom) {
                     }
                     plot.state.model.covariates.push(element);
                     plot.applyState();
-                    plot.CovariatesModel.updateComponent();
+                    plot.CovariatesModel.updateWidget();
                     return plot;
                 },
                 /**
-                 * Remove an element from `state.model.covariates` (and from the toolbar component menu's
+                 * Remove an element from `state.model.covariates` (and from the toolbar widget menu's
                  *  representation of the state model). When plot state is changed, this will automatically trigger
                  *  requests for new data accordingly.
                  * @param {number} idx Array index of the element, in the `state.model.covariates array`.
@@ -81,7 +81,7 @@ function install(LocusZoom) {
                     }
                     plot.state.model.covariates.splice(idx, 1);
                     plot.applyState();
-                    plot.CovariatesModel.updateComponent();
+                    plot.CovariatesModel.updateWidget();
                     return plot;
                 },
                 /**
@@ -92,7 +92,7 @@ function install(LocusZoom) {
                     const plot = this.parent_plot;
                     plot.state.model.covariates = [];
                     plot.applyState();
-                    plot.CovariatesModel.updateComponent();
+                    plot.CovariatesModel.updateWidget();
                     return plot;
                 },
                 /**
@@ -100,7 +100,7 @@ function install(LocusZoom) {
                  *   display of most up-to-date content. Can be used to force the toolbar to reflect changes made, eg if
                  *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
                  */
-                updateComponent: () => {
+                updateWidget: () => {
                     this.button.update();
                     this.button.menu.update();
                 }
@@ -136,7 +136,7 @@ function install(LocusZoom) {
                         const html = ((typeof covariate == 'object' && typeof covariate.html == 'string') ? covariate.html : covariate.toString());
                         const row = table.append('tr');
                         row.append('td').append('button')
-                            .attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color)
+                            .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
                             .style({ 'margin-left': '0em' })
                             .on('click', () => {
                                 this.parent_plot.CovariatesModel.removeByIdx(idx);
@@ -145,7 +145,7 @@ function install(LocusZoom) {
                         row.append('td').html(html);
                     });
                     selector.append('button')
-                        .attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color)
+                        .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
                         .style({ 'margin-left': '4px' }).html('× Remove All Covariates')
                         .on('click', () => {
                             this.parent_plot.CovariatesModel.removeAll();
@@ -219,7 +219,7 @@ function install(LocusZoom) {
                             highlight = '';
                         }
                         row.append('td').append('a')
-                            .attr('class', 'lz-dashboard-button lz-dashboard-button-' + this.layout.color + highlight)
+                            .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color + highlight)
                             .style({ 'margin-left': '0em' })
                             .on('click', () => {
                                 data_layer[onclick](); this.button.menu.populate();
@@ -231,21 +231,21 @@ function install(LocusZoom) {
                     const at_bottom = (idx === (this.parent_panel.data_layer_ids_by_z_index.length - 1));
                     const td = row.append('td');
                     td.append('a')
-                        .attr('class', 'lz-dashboard-button lz-dashboard-button-group-start lz-dashboard-button-' + this.layout.color + (at_bottom ? '-disabled' : ''))
+                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-' + this.layout.color + (at_bottom ? '-disabled' : ''))
                         .style({ 'margin-left': '0em' })
                         .on('click', () => {
                             data_layer.moveDown(); this.button.menu.populate();
                         })
                         .html('▾').attr('title', 'Move layer down (further back)');
                     td.append('a')
-                        .attr('class', 'lz-dashboard-button lz-dashboard-button-group-middle lz-dashboard-button-' + this.layout.color + (at_top ? '-disabled' : ''))
+                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-' + this.layout.color + (at_top ? '-disabled' : ''))
                         .style({ 'margin-left': '0em' })
                         .on('click', () => {
                             data_layer.moveUp(); this.button.menu.populate();
                         })
                         .html('▴').attr('title', 'Move layer up (further front)');
                     td.append('a')
-                        .attr('class', 'lz-dashboard-button lz-dashboard-button-group-end lz-dashboard-button-red')
+                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-end lz-toolbar-button-red')
                         .style({ 'margin-left': '0em' })
                         .on('click', () => {
                             if (confirm('Are you sure you want to remove the ' + name + ' layer? This cannot be undone!')) {
@@ -271,21 +271,21 @@ function install(LocusZoom) {
     }();
 
     const covariates_model_plot = function () {
-        const covariates_model_plot_dashboard = LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true });
-        covariates_model_plot_dashboard.components.push({
+        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_plot', { unnamespaced: true });
+        covariates_model_plot_toolbar.widgets.push({
             type: 'covariates_model',
             button_html: 'Model',
             button_title: 'Show and edit covariates currently in model',
             position: 'left'
         });
-        return covariates_model_plot_dashboard;
+        return covariates_model_plot_toolbar;
     }();
 
     LocusZoom.Widgets.add('covariates_model', CovariatesModel);
     LocusZoom.Widgets.add('data_layers', DataLayersWidget);
 
     LocusZoom.Layouts.add('tooltip', 'covariates_model_association', covariates_model_tooltip);
-    LocusZoom.Layouts.add('dashboard', 'covariates_model_plot', covariates_model_plot);
+    LocusZoom.Layouts.add('toolbar', 'covariates_model_plot', covariates_model_plot);
 }
 
 if (typeof LocusZoom !== 'undefined') {

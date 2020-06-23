@@ -7,7 +7,7 @@ describe('_LayoutRegistry', function() {
         it ('No argument: returns an object, keys are layout types and values are arrays of layout names', function() {
             const list = registry.list();
             assert.isObject(list);
-            assert.hasAllKeys(list, ['plot', 'panel', 'data_layer', 'dashboard', 'dashboard_components', 'tooltip']);
+            assert.hasAllKeys(list, ['plot', 'panel', 'data_layer', 'toolbar', 'toolbar_widgets', 'tooltip']);
             Object.values(list).forEach(listing => {
                 assert.isString(listing[0]);
             });

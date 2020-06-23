@@ -10,16 +10,16 @@ describe('LocusZoom.Toolbar', function() {
         beforeEach(function() {
             var datasources = new DataSources();
             var layout = {
-                dashboard: {
-                    components: [
+                toolbar: {
+                    widgets: [
                         { type: 'dimensions' }
                     ]
                 },
                 panels: [
                     {
                         id: 'test', width: 100, height: 100,
-                        dashboard: {
-                            components: [
+                        toolbar: {
+                            widgets: [
                                 { type: 'remove_panel' }
                             ]
                         }
@@ -34,56 +34,56 @@ describe('LocusZoom.Toolbar', function() {
             this.plot = null;
         });
         it('should be accessible as an attribute of the plot or panel that created it', function() {
-            assert.isObject(this.plot.dashboard);
-            assert.instanceOf(this.plot.dashboard, Toolbar);
+            assert.isObject(this.plot.toolbar);
+            assert.instanceOf(this.plot.toolbar, Toolbar);
 
-            assert.isObject(this.plot.panels.test.dashboard);
-            assert.instanceOf(this.plot.panels.test.dashboard, Toolbar);
+            assert.isObject(this.plot.panels.test.toolbar);
+            assert.instanceOf(this.plot.panels.test.toolbar, Toolbar);
         });
         it('should generate a selector for its DOM element when shown', function() {
-            this.plot.dashboard.show();
-            assert.isArray(this.plot.dashboard.selector);
-            assert.instanceOf(this.plot.dashboard.selector, d3.selection);
-            assert.equal(this.plot.dashboard.selector.empty(), false);
-            assert.equal(this.plot.dashboard.selector.attr('id'), d3.select('#plot\\.dashboard').attr('id'));
-            this.plot.panels.test.dashboard.show();
-            assert.isArray(this.plot.panels.test.dashboard.selector);
-            assert.ok(this.plot.panels.test.dashboard.selector instanceof d3.selection);
-            assert.equal(this.plot.panels.test.dashboard.selector.empty(), false);
-            assert.equal(this.plot.panels.test.dashboard.selector.attr('id'), d3.select('#plot\\.test\\.dashboard').attr('id'));
+            this.plot.toolbar.show();
+            assert.isArray(this.plot.toolbar.selector);
+            assert.instanceOf(this.plot.toolbar.selector, d3.selection);
+            assert.equal(this.plot.toolbar.selector.empty(), false);
+            assert.equal(this.plot.toolbar.selector.attr('id'), d3.select('#plot\\.toolbar').attr('id'));
+            this.plot.panels.test.toolbar.show();
+            assert.isArray(this.plot.panels.test.toolbar.selector);
+            assert.ok(this.plot.panels.test.toolbar.selector instanceof d3.selection);
+            assert.equal(this.plot.panels.test.toolbar.selector.empty(), false);
+            assert.equal(this.plot.panels.test.toolbar.selector.attr('id'), d3.select('#plot\\.test\\.toolbar').attr('id'));
         });
         it('should preserve its DOM element and make it invisible when hidden', function() {
-            this.plot.dashboard.show();
-            this.plot.dashboard.hide();
-            assert.notEqual(this.plot.dashboard.selector, null);
-            assert.equal(d3.select('#plot\\.dashboard').empty(), false);
-            assert.equal(d3.select('#plot\\.dashboard').style('visibility'), 'hidden');
-            this.plot.dashboard.show();
-            assert.equal(d3.select('#plot\\.dashboard').style('visibility'), 'visible');
-            this.plot.panels.test.dashboard.show();
-            this.plot.panels.test.dashboard.hide();
-            assert.notEqual(this.plot.panels.test.dashboard.selector, null);
-            assert.equal(d3.select('#plot\\.test\\.dashboard').empty(), false);
-            assert.equal(d3.select('#plot\\.test\\.dashboard').style('visibility'), 'hidden');
-            this.plot.panels.test.dashboard.show();
-            assert.equal(d3.select('#plot\\.test\\.dashboard').style('visibility'), 'visible');
+            this.plot.toolbar.show();
+            this.plot.toolbar.hide();
+            assert.notEqual(this.plot.toolbar.selector, null);
+            assert.equal(d3.select('#plot\\.toolbar').empty(), false);
+            assert.equal(d3.select('#plot\\.toolbar').style('visibility'), 'hidden');
+            this.plot.toolbar.show();
+            assert.equal(d3.select('#plot\\.toolbar').style('visibility'), 'visible');
+            this.plot.panels.test.toolbar.show();
+            this.plot.panels.test.toolbar.hide();
+            assert.notEqual(this.plot.panels.test.toolbar.selector, null);
+            assert.equal(d3.select('#plot\\.test\\.toolbar').empty(), false);
+            assert.equal(d3.select('#plot\\.test\\.toolbar').style('visibility'), 'hidden');
+            this.plot.panels.test.toolbar.show();
+            assert.equal(d3.select('#plot\\.test\\.toolbar').style('visibility'), 'visible');
         });
-        it('should remove its DOM element, null out its selector, and reset its components when destroyed', function() {
-            this.plot.dashboard.show();
-            this.plot.dashboard.destroy();
-            assert.equal(this.plot.dashboard.selector, null);
-            assert.ok(d3.select('#plot\\.dashboard').empty());
-            assert.deepEqual(this.plot.dashboard.components, []);
-            this.plot.panels.test.dashboard.show();
-            this.plot.panels.test.dashboard.destroy();
-            assert.equal(this.plot.panels.test.dashboard.selector, null);
-            assert.ok(d3.select('#plot\\.test\\.dashboard').empty());
-            assert.deepEqual(this.plot.panels.test.dashboard.components, []);
+        it('should remove its DOM element, null out its selector, and reset its widgets when destroyed', function() {
+            this.plot.toolbar.show();
+            this.plot.toolbar.destroy();
+            assert.equal(this.plot.toolbar.selector, null);
+            assert.ok(d3.select('#plot\\.toolbar').empty());
+            assert.deepEqual(this.plot.toolbar.widgets, []);
+            this.plot.panels.test.toolbar.show();
+            this.plot.panels.test.toolbar.destroy();
+            assert.equal(this.plot.panels.test.toolbar.selector, null);
+            assert.ok(d3.select('#plot\\.test\\.toolbar').empty());
+            assert.deepEqual(this.plot.panels.test.toolbar.widgets, []);
         });
     });
 
     describe('Plot-Level Toolbar Rendering Behavior', function() {
-        it('should not render a plot-level dashboard DOM element if void of any components', function() {
+        it('should not render a plot-level toolbar DOM element if void of any widgets', function() {
             var datasources = new DataSources();
             var layout = {
                 panels: [
@@ -93,13 +93,13 @@ describe('LocusZoom.Toolbar', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
             assert.equal(d3.select('#plot').empty(), false);
-            assert.equal(d3.select('#plot.dashboard').empty(), true);
+            assert.equal(d3.select('#plot.toolbar').empty(), true);
         });
-        it('should render a plot-level dashboard DOM element at least one component is defined', function() {
+        it('should render a plot-level toolbar DOM element at least one widget is defined', function() {
             var datasources = new DataSources();
             var layout = {
-                dashboard: {
-                    components: [
+                toolbar: {
+                    widgets: [
                         { type: 'dimensions' }
                     ]
                 },
@@ -110,16 +110,16 @@ describe('LocusZoom.Toolbar', function() {
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
             assert.equal(d3.select('#plot').empty(), false);
-            assert.equal(d3.select('#plot\\.dashboard').empty(), false);
+            assert.equal(d3.select('#plot\\.toolbar').empty(), false);
         });
     });
 
-    describe('Dimensions Component', function() {
+    describe('Dimensions Widget', function() {
         beforeEach(function() {
             var datasources = new DataSources();
             var layout = {
-                dashboard: {
-                    components: [
+                toolbar: {
+                    widgets: [
                         { type: 'dimensions' }
                     ]
                 },
@@ -135,15 +135,15 @@ describe('LocusZoom.Toolbar', function() {
             this.plot = null;
         });
         it('Should show initial plot dimensions', function() {
-            assert.equal(this.plot.dashboard.components[0].selector.html(), '100px × 100px');
+            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '100px × 100px');
         });
         it('Should show updated plot dimensions automatically as dimensions change', function() {
             this.plot.setDimensions(220,330);
-            assert.equal(this.plot.dashboard.components[0].selector.html(), '220px × 330px');
+            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '220px × 330px');
         });
     });
 
-    describe('Region Scale Component', function() {
+    describe('Region Scale Widget', function() {
         beforeEach(function() {
             var datasources = new DataSources();
             var layout = {
@@ -152,8 +152,8 @@ describe('LocusZoom.Toolbar', function() {
                     start: 126547453,
                     end: 126847453
                 },
-                dashboard: {
-                    components: [
+                toolbar: {
+                    widgets: [
                         { type: 'region_scale' }
                     ]
                 }
@@ -166,11 +166,11 @@ describe('LocusZoom.Toolbar', function() {
             this.plot = null;
         });
         it('Should show initial region scale from state', function() {
-            assert.equal(this.plot.dashboard.components[0].selector.html(), '300.00 Kb');
+            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '300.00 Kb');
         });
         it('Should show updated region scale from state as state region boundaries change', function() {
             return this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(() => {
-                assert.equal(this.plot.dashboard.components[0].selector.html(), '400.00 Kb');
+                assert.equal(this.plot.toolbar.widgets[0].selector.html(), '400.00 Kb');
             });
         });
     });

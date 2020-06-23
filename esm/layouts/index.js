@@ -409,7 +409,6 @@ const annotation_catalog_layer = {
 
 /**
  * Individual toolbar buttons
- * @namespace dashboard_components
  */
 const ldlz2_pop_selector_menu = {
     // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
@@ -437,8 +436,8 @@ const ldlz2_pop_selector_menu = {
 /**
  * Toolbar Layouts: Collections of toolbar buttons etc
  */
-const standard_panel_dashboard = {
-    components: [
+const standard_panel_toolbar = {
+    widgets: [
         {
             type: 'remove_panel',
             position: 'right',
@@ -459,8 +458,8 @@ const standard_panel_dashboard = {
     ]
 };
 
-const standard_plot_dashboard = {
-    components: [
+const standard_plot_toolbar = {
+    widgets: [
         {
             type: 'title',
             title: 'LocusZoom',
@@ -474,9 +473,9 @@ const standard_plot_dashboard = {
     ]
 };
 
-const region_nav_plot_dashboard = function () {
-    const region_nav_plot_dashboard = deepCopy(standard_plot_dashboard);
-    region_nav_plot_dashboard.components.push(
+const region_nav_plot_toolbar = function () {
+    const region_nav_plot_toolbar = deepCopy(standard_plot_toolbar);
+    region_nav_plot_toolbar.widgets.push(
         {
             type: 'shift_region',
             step: 500000,
@@ -517,7 +516,7 @@ const region_nav_plot_dashboard = function () {
             group_position: 'start'
         }
     );
-    return region_nav_plot_dashboard;
+    return region_nav_plot_toolbar;
 }();
 
 /**
@@ -533,9 +532,9 @@ const association_panel = {
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: (function () {
-        const base = deepCopy(standard_panel_dashboard);
-        base.components.push({
+    toolbar: (function () {
+        const base = deepCopy(standard_panel_toolbar);
+        base.widgets.push({
             type: 'toggle_legend',
             position: 'right'
         });
@@ -586,7 +585,7 @@ const coaccessibility_panel = {
     proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: deepCopy(standard_panel_dashboard),
+    toolbar: deepCopy(standard_panel_toolbar),
     axes: {
         x: {
             label: 'Chromosome {{chr}} (Mb)',
@@ -619,7 +618,7 @@ const association_catalog_panel = function () {
         namespace: { 'assoc': 'assoc', 'ld': 'ld', 'catalog': 'catalog' } // Required to resolve display options
     }, base);
 
-    base.dashboard.components.push({
+    base.toolbar.widgets.push({
         type: 'display_options',
         position: 'right',
         color: 'blue',
@@ -696,9 +695,9 @@ const genes_panel = {
         scroll_to_zoom: true,
         x_linked: true
     },
-    dashboard: (function () {
-        const base = deepCopy(standard_panel_dashboard);
-        base.components.push({
+    toolbar: (function () {
+        const base = deepCopy(standard_panel_toolbar);
+        base.widgets.push({
             type: 'resize_to_data',
             position: 'right',
             button_html: 'Show all genes',
@@ -750,7 +749,7 @@ const annotation_catalog_panel = {
     proportional_width: 1,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
-    dashboard: deepCopy(standard_panel_dashboard),
+    toolbar: deepCopy(standard_panel_toolbar),
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
@@ -772,7 +771,7 @@ const standard_association_plot = {
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: deepCopy(standard_plot_dashboard),
+    toolbar: deepCopy(standard_plot_toolbar),
     panels: [
         merge({ proportional_height: 0.5}, deepCopy(association_panel)),
         merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
@@ -786,7 +785,7 @@ const association_catalog_plot = {
     responsive_resize: 'width_only',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: deepCopy(standard_plot_dashboard),
+    toolbar: deepCopy(standard_plot_toolbar),
     panels: [
         deepCopy(annotation_catalog_panel),
         deepCopy(association_catalog_panel),
@@ -800,7 +799,7 @@ const standard_phewas_plot = {
     min_width: 800,
     min_height: 600,
     responsive_resize: 'both',
-    dashboard: deepCopy(standard_plot_dashboard),
+    toolbar: deepCopy(standard_plot_toolbar),
     panels: [
         merge({proportional_height: 0.5}, deepCopy(phewas_panel)),
         merge({
@@ -826,7 +825,7 @@ const coaccessibility_plot = {
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    dashboard: deepCopy(region_nav_plot_dashboard),
+    toolbar: deepCopy(region_nav_plot_toolbar),
     panels: [
         Object.assign(
             { proportional_height: 0.4 },
@@ -876,14 +875,14 @@ export const tooltip = {
     coaccessibility: coaccessibility_tooltip,
 };
 
-export const dashboard_components = {
+export const toolbar_widgets = {
     ldlz2_pop_selector: ldlz2_pop_selector_menu,
 };
 
-export const dashboard = {
-    standard_panel: standard_panel_dashboard,
-    standard_plot: standard_plot_dashboard,
-    region_nav_plot: region_nav_plot_dashboard,
+export const toolbar = {
+    standard_panel: standard_panel_toolbar,
+    standard_plot: standard_plot_toolbar,
+    region_nav_plot: region_nav_plot_toolbar,
 };
 
 export const data_layer = {

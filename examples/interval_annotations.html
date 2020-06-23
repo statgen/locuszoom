@@ -77,7 +77,7 @@
     layout = LocusZoom.Layouts.get("plot", "interval_association");
     // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+    layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
     // Modify the association panel: custom "label point" tooltip option + add the required filters directive
     var assoc_layer = layout.panels[0].data_layers[2];
@@ -111,7 +111,7 @@
     intervals_layout.always_hide_legend = false;
 
     // Add a track information button to the intervals panel
-    intervals_panel.dashboard.components.push({
+    intervals_panel.toolbar.widgets.push({
         type: "menu",
         color: "yellow",
         position: "right",
