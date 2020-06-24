@@ -7,7 +7,7 @@ The page must incorporate and load all libraries before this file can be used, i
  - LocusZoom
 */
 
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 
 function install (LocusZoom) {
@@ -294,22 +294,22 @@ function install (LocusZoom) {
             // At most there will only be dozen or so nodes here (one per track) and each time
             // we render data we may have new tracks, so wiping/redrawing all is reasonable.
             this.svg.group.selectAll('.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared').remove();
-            Object.keys(this.track_split_field_index).forEach(function(key) {
+            Object.keys(this.track_split_field_index).forEach((key) => {
                 // Make a psuedo-element so that we can generate an id for the shared node
                 const pseudoElement = {};
                 pseudoElement[this.layout.track_split_field] = key;
                 // Insert the shared node
-                const sharedstatusnode_style = { display: (this.layout.split_tracks ? null : 'none') };
                 this.svg.group.insert('rect', ':first-child')
                     .attr('id', this.getElementStatusNodeId(pseudoElement))
                     .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared')
-                    .attr('rx', this.layout.bounding_box_padding).attr('ry', this.layout.bounding_box_padding)
+                    .attr('rx', this.layout.bounding_box_padding)
+                    .attr('ry', this.layout.bounding_box_padding)
                     .attr('width', this.parent.layout.cliparea.width)
                     .attr('height', this.getTrackHeight() - this.layout.track_vertical_spacing)
                     .attr('x', 0)
                     .attr('y', (this.track_split_field_index[key] - 1) * this.getTrackHeight())
-                    .style(sharedstatusnode_style);
-            }.bind(this));
+                    .style('display', (this.layout.split_tracks ? null : 'none'));
+            });
 
             let width, height, x, y, fill, fill_opacity;
 
@@ -322,14 +322,13 @@ function install (LocusZoom) {
             selection.enter().append('g')
                 .attr('class', 'lz-data_layer-intervals');
 
-            selection.attr('id', function(d) { return this.getElementId(d); }.bind(this))
+            selection.attr('id', (d) => this.getElementId(d))
                 .each(function(interval) {
 
                     const data_layer = interval.parent;
 
                     // Render interval status nodes (displayed behind intervals to show highlight
                     // without needing to modify interval display element(s))
-                    const statusnode_style = { display: (data_layer.layout.split_tracks ? 'none' : null) };
                     const statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete')
                         .data([interval], function (d) {
                             return data_layer.getElementId(d) + '-statusnode';
@@ -346,7 +345,7 @@ function install (LocusZoom) {
                         .attr('ry', function() {
                             return data_layer.layout.bounding_box_padding;
                         })
-                        .style(statusnode_style);
+                        .style('display', data_layer.layout.split_tracks ? 'none' : null);
                     width = function(d) {
                         return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
                     };
@@ -361,9 +360,13 @@ function install (LocusZoom) {
                     };
 
                     statusnodes
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
+                        .attr('width', width)
+                        .attr('height', height)
+                        .attr('x', x)
+                        .attr('y', y);
 
-                    statusnodes.exit().remove();
+                    statusnodes.exit()
+                        .remove();
 
                     // Render primary interval rects
                     const rects = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-interval_rect')
@@ -393,8 +396,10 @@ function install (LocusZoom) {
                     };
 
                     rects
-                        .attr('width', width).attr('height', height)
-                        .attr('x', x).attr('y', y)
+                        .attr('width', width)
+                        .attr('height', height)
+                        .attr('x', x)
+                        .attr('y', y)
                         .attr('fill', fill)
                         .attr('fill-opacity', fill_opacity);
 
@@ -434,10 +439,14 @@ function install (LocusZoom) {
                     };
 
                     clickareas
-                        .attr('width', width).attr('height', height).attr('x', x).attr('y', y);
+                        .attr('width', width)
+                        .attr('height', height)
+                        .attr('x', x)
+                        .attr('y', y);
 
                     // Remove old clickareas as needed
-                    clickareas.exit().remove();
+                    clickareas.exit()
+                        .remove();
 
                     // Apply default event emitters to clickareas
                     clickareas.on('click', (element_data) => {

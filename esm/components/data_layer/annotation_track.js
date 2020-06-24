@@ -47,14 +47,14 @@ class AnnotationTrack extends BaseDataLayer {
         selection.enter()
             .append('rect')
             .attr('class', 'lz-data_layer-' + this.layout.type)
-            .attr('id', function (d) { return self.getElementId(d); });
+            .attr('id', (d) => this.getElementId(d));
 
         const width = 1;
         selection
-            .attr('x', function (d) {return self.parent['x_scale'](d[self.layout.x_axis.field]) - width / 2; })
+            .attr('x', (d) => this.parent['x_scale'](d[this.layout.x_axis.field]) - width / 2)
             .attr('width', width)
-            .attr('height', self.parent.layout.height)
-            .attr('fill', function(d, i) { return self.resolveScalableParameter(self.layout.color, d, i); });
+            .attr('height', this.parent.layout.height)
+            .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i));
 
         // Remove unused elements
         selection.exit()
@@ -73,7 +73,7 @@ class AnnotationTrack extends BaseDataLayer {
         hit_areas_selection.enter()
             .append('rect')
             .attr('class', 'lz-data_layer-' + this.layout.type)
-            .attr('id', function (d) { return self.getElementId(d); });
+            .attr('id', (d) => this.getElementId(d));
 
         // Update the set of elements to reflect new data
 

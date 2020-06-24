@@ -1,7 +1,7 @@
 /**
  * Predefined base layouts used to populate the LZ registry
  */
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import { version } from '../../package.json';
 import {deepCopy, merge} from '../helpers/layouts';
@@ -225,7 +225,7 @@ const coaccessibility_layer = {
         {
             scale_function: 'ordinal_cycle',
             parameters: {
-                values: d3.scale.category20().range(), // Array of colors that work well together
+                values: d3.schemeSet3, // Array of 12 colors that work well together
             }
         }
     ],

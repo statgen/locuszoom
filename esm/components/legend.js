@@ -1,5 +1,6 @@
-import d3 from 'd3';
-import {merge} from '../helpers/layouts';
+import * as d3 from 'd3';
+import {applyStyles} from '../helpers/common';
+import {merge, nameToSymbol} from '../helpers/layouts';
 
 /**
  * The default layout used by legends (used internally)
@@ -74,7 +75,9 @@ class Legend {
         // Get a legend background rect selector if not yet defined
         if (!this.background_rect) {
             this.background_rect = this.selector.append('rect')
-                .attr('width', 100).attr('height', 100).attr('class', 'lz-legend-background');
+                .attr('width', 100)
+                .attr('height', 100)
+                .attr('class', 'lz-legend-background');
         }
 
         // Get a legend elements group selector if not yet defined
@@ -103,40 +106,56 @@ class Legend {
                     let label_y = (label_size / 2) + (padding / 2);
                     line_height = Math.max(line_height, label_size + padding);
                     // Draw the legend element symbol (line, rect, shape, etc)
-                    if (element.shape === 'line') {
+                    const shape = element.shape;
+                    const shape_factory = nameToSymbol(shape);
+                    if (shape === 'line') {
                         // Line symbol
                         const length = +element.length || 16;
                         const path_y = (label_size / 4) + (padding / 2);
-                        selector.append('path').attr('class', element.class || '')
-                            .attr('d', 'M0,' + path_y + 'L' + length + ',' + path_y)
-                            .style(element.style || {});
+                        selector
+                            .append('path')
+                            .attr('class', element.class || '')
+                            .attr('d', 'M0,' + path_y + 'L' + length + ',' + path_y);
+                        applyStyles(selector, element.style || {});
                         label_x = length + padding;
-                    } else if (element.shape === 'rect') {
+                    } else if (shape === 'rect') {
                         // Rect symbol
                         const width = +element.width || 16;
                         const height = +element.height || width;
-                        selector.append('rect').attr('class', element.class || '')
-                            .attr('width', width).attr('height', height)
-                            .attr('fill', element.color || {})
-                            .style(element.style || {});
+                        selector
+                            .append('rect')
+                            .attr('class', element.class || '')
+                            .attr('width', width)
+                            .attr('height', height)
+                            .attr('fill', element.color || {});
+                        applyStyles(selector, element.style || {});
                         label_x = width + padding;
                         line_height = Math.max(line_height, height + padding);
-                    } else if (d3.svg.symbolTypes.indexOf(element.shape) !== -1) {
-                        // Shape symbol (circle, diamond, etc.)
+                    } else if (shape_factory) {
+                        // Shape symbol is a recognized d3 type, so we can draw it in the legend (circle, diamond, etc.)
                         const size = +element.size || 40;
                         const radius = Math.ceil(Math.sqrt(size / Math.PI));
-                        selector.append('path').attr('class', element.class || '')
-                            .attr('d', d3.svg.symbol().size(size).type(element.shape))
+                        selector
+                            .append('path')
+                            .attr('class', element.class || '')
+                            .attr('d', d3.symbol().size(size).type(shape_factory))
                             .attr('transform', 'translate(' + radius + ',' + (radius + (padding / 2)) + ')')
-                            .attr('fill', element.color || {})
-                            .style(element.style || {});
+                            .attr('fill', element.color || {});
+
+                        applyStyles(selector, element.style || {});
                         label_x = (2 * radius) + padding;
                         label_y = Math.max((2 * radius) + (padding / 2), label_y);
                         line_height = Math.max(line_height, (2 * radius) + padding);
                     }
                     // Draw the legend element label
-                    selector.append('text').attr('text-anchor', 'left').attr('class', 'lz-label')
-                        .attr('x', label_x).attr('y', label_y).style({'font-size': label_size}).text(element.label);
+                    selector
+                        .append('text')
+                        .attr('text-anchor', 'left')
+                        .attr('class', 'lz-label')
+                        .attr('x', label_x)
+                        .attr('y', label_y)
+                        .style('font-size', label_size)
+                        .text(element.label);
                     // Position the legend element group based on legend layout orientation
                     const bcr = selector.node().getBoundingClientRect();
                     if (this.layout.orientation === 'vertical') {
@@ -149,7 +168,7 @@ class Legend {
                         if (x > padding && right_x > this.parent.layout.width) {
                             y += line_height;
                             x = padding;
-                            selector.attr('transform', 'translate(' + x + ',' + y + ')');
+                            selector.attr('transform', `translate(${x}, ${y})`);
                         }
                         x += bcr.width + (3 * padding);
                     }
@@ -169,7 +188,8 @@ class Legend {
 
         // Set the visibility on the legend from the "hidden" flag
         // TODO: `show()` and `hide()` call a full rerender; might be able to make this more lightweight?
-        this.selector.style({ visibility: this.layout.hidden ? 'hidden' : 'visible' });
+        this.selector
+            .style('visibility', this.layout.hidden ? 'hidden' : 'visible');
 
         // TODO: Annotate return type and make consistent
         return this.position();
@@ -189,7 +209,7 @@ class Legend {
         if (!isNaN(+this.layout.pad_from_right)) {
             this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
         }
-        this.selector.attr('transform', 'translate(' + this.layout.origin.x + ',' + this.layout.origin.y + ')');
+        this.selector.attr('transform', `translate(${this.layout.origin.x}, ${this.layout.origin.y})`);
     }
 
     /**

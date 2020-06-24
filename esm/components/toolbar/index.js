@@ -1,5 +1,5 @@
 import widgets from '../../registry/widgets';
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 /**
  * A Toolbar is an HTML element used for presenting arbitrary user interface widgets. Toolbars are anchored
@@ -126,12 +126,15 @@ class Toolbar {
                 throw new Error(`Toolbar cannot be a child of ${this.type}`);
             }
 
-            this.selector.classed('lz-toolbar', true).classed('lz-' + this.type + '-toolbar', true).attr('id', this.id);
+            this.selector
+                .classed('lz-toolbar', true)
+                .classed('lz-' + this.type + '-toolbar', true)
+                .attr('id', this.id);
         }
         this.widgets.forEach(function (widget) {
             widget.show();
         });
-        this.selector.style({ visibility: 'visible' });
+        this.selector.style('visibility', 'visible');
         return this.update();
     }
 
@@ -165,7 +168,11 @@ class Toolbar {
             const top = (page_origin.y + 3.5).toString() + 'px';
             const left = page_origin.x.toString() + 'px';
             const width = (this.parent.layout.width - 4).toString() + 'px';
-            this.selector.style({ position: 'absolute', top: top, left: left, width: width });
+            this.selector
+                .style('position', 'absolute')
+                .style('top', top)
+                .style('left', left)
+                .style('width', width);
         }
         // Recursively position widgets
         this.widgets.forEach(function (widget) {
@@ -186,7 +193,8 @@ class Toolbar {
         this.widgets.forEach(function (widget) {
             widget.hide();
         });
-        this.selector.style({ visibility: 'hidden' });
+        this.selector
+            .style('visibility', 'hidden');
         return this;
     }
 

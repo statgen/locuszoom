@@ -1,15 +1,16 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 import {STATUSES} from '../constants';
+import {applyStyles} from '../../helpers/common';
 
 const default_layout = {
     style: {
         fill: 'none',
         'stroke-width': '2px'
     },
-    interpolate: 'linear',
+    interpolate: 'curveLinear',
     x_axis: { field: 'x' },
     y_axis: { field: 'y', axis: 1 },
     hitarea_width: 5,
@@ -53,25 +54,27 @@ class Line extends BaseDataLayer {
         let line;
         if (this.layout.style.fill && this.layout.style.fill !== 'none') {
             // Filled curve: define the line as a filled boundary
-            line = d3.svg.area()
+            line = d3.area()
                 .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
                 .y0(function() {return parseFloat(panel[y_scale](0));})
                 .y1(function(d) { return parseFloat(panel[y_scale](d[y_field])); });
         } else {
             // Basic line
-            line = d3.svg.line()
+            line = d3.line()
                 .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
                 .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
-                .interpolate(this.layout.interpolate);
+                .curve(d3[this.layout.interpolate]);
         }
 
         // Apply line and style
         selection
-            .attr('d', line)
-            .style(this.layout.style);
+            .attr('d', line);
+
+        applyStyles(selection, this.layout.style);
 
         // Remove old elements as needed
-        selection.exit().remove();
+        selection.exit()
+            .remove();
 
     }
 
@@ -204,7 +207,7 @@ class OrthogonalLine extends BaseDataLayer {
         const default_y = [panel.layout.cliparea.height, 0];
 
         // Generate the line
-        const line = d3.svg.line()
+        const line = d3.line()
             .x(function (d, i) {
                 const x = parseFloat(panel[x_scale](d['x']));
                 return isNaN(x) ? panel[x_range][i] : x;
@@ -212,16 +215,18 @@ class OrthogonalLine extends BaseDataLayer {
             .y(function (d, i) {
                 const y = parseFloat(panel[y_scale](d['y']));
                 return isNaN(y) ? default_y[i] : y;
-            })
-            .interpolate('linear');
+            });
 
         // Apply line and style
         selection
-            .attr('d', line)
-            .style(this.layout.style);
+            .attr('d', line);
+
+        applyStyles(selection, this.layout.style);
 
         // Remove old elements as needed
-        selection.exit().remove();
+        selection
+            .exit()
+            .remove();
 
         // Allow the layer to respond to mouseover events and show a tooltip.
         this.applyBehaviors(selection);

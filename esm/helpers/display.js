@@ -1,7 +1,8 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import Field from '../data/field';
 import Plot from '../components/plot';
+import {applyStyles} from './common';
 
 
 /**
@@ -246,19 +247,19 @@ function populate(selector, datasource, layout) {
     // Empty the selector of any existing content
     d3.select(selector).html('');
     let plot;
-    d3.select(selector).call(function() {
+    d3.select(selector).call(function(target) {
         // Require each containing element have an ID. If one isn't present, create one.
-        if (typeof this.node().id == 'undefined') {
+        if (typeof target.node().id == 'undefined') {
             let iterator = 0;
             while (!d3.select('#lz-' + iterator).empty()) { iterator++; }
-            this.attr('id', '#lz-' + iterator);
+            target.attr('id', '#lz-' + iterator);
         }
         // Create the plot
-        plot = new Plot(this.node().id, datasource, layout);
-        plot.container = this.node();
+        plot = new Plot(target.node().id, datasource, layout);
+        plot.container = target.node();
         // Detect HTML `data-region` attribute, and use it to fill in state values if present
-        if (typeof this.node().dataset !== 'undefined' && typeof this.node().dataset.region !== 'undefined') {
-            const parsed_state = parsePositionQuery(this.node().dataset.region);
+        if (typeof target.node().dataset !== 'undefined' && typeof target.node().dataset.region !== 'undefined') {
+            const parsed_state = parsePositionQuery(target.node().dataset.region);
             Object.keys(parsed_state).forEach(function(key) {
                 plot.state[key] = parsed_state[key];
             });
@@ -268,8 +269,9 @@ function populate(selector, datasource, layout) {
             .append('svg')
             .attr('version', '1.1')
             .attr('xmlns', 'http://www.w3.org/2000/svg')
-            .attr('id', plot.id + '_svg').attr('class', 'lz-locuszoom')
-            .style(plot.layout.style);
+            .attr('id', plot.id + '_svg')
+            .attr('class', 'lz-locuszoom');
+        applyStyles(plot.svg, plot.layout.style);
         plot.setDimensions();
         plot.positionPanels();
         // Initialize the plot

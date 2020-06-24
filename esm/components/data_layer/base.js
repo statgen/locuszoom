@@ -1,4 +1,4 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import {STATUSES} from '../constants';
 import Field from '../../data/field';
@@ -1227,7 +1227,8 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     draw() {
-        this.svg.container.attr('transform', 'translate(' + this.parent.layout.cliparea.origin.x +  ',' + this.parent.layout.cliparea.origin.y + ')');
+        this.svg.container
+            .attr('transform', `translate(${this.parent.layout.cliparea.origin.x}, ${this.parent.layout.cliparea.origin.y})`);
         this.svg.clipRect
             .attr('width', this.parent.layout.cliparea.width)
             .attr('height', this.parent.layout.cliparea.height);

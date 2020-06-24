@@ -1,8 +1,8 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import Field from '../../data/field';
-import {merge} from '../../helpers/layouts';
+import {merge, nameToSymbol} from '../../helpers/layouts';
 
 
 const default_layout = {
@@ -92,7 +92,8 @@ class Forest extends BaseDataLayer {
 
             ci_selection
                 .attr('transform', ci_transform)
-                .attr('width', ci_width).attr('height', ci_height);
+                .attr('width', ci_width)
+                .attr('height', ci_height);
 
             // Remove old elements as needed
             ci_selection.exit().remove();
@@ -111,7 +112,7 @@ class Forest extends BaseDataLayer {
             .append('path')
             .attr('class', 'lz-data_layer-forest lz-data_layer-forest-point')
             .attr('id', (d) => this.getElementId(d))
-            .attr('transform', 'translate(0,' + initial_y + ')');
+            .attr('transform', `translate(0, ${initial_y})`);
 
         // Generate new values (or functions for them) for position, color, size, and shape
         const transform = (d) => {
@@ -135,7 +136,7 @@ class Forest extends BaseDataLayer {
 
         const shape = d3.svg.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
-            .type((d, i) => this.resolveScalableParameter(this.layout.point_shape, d, i));
+            .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
         // Apply position and color
         points_selection
@@ -185,7 +186,7 @@ class CategoryForest extends Forest {
         }
 
         // If there are no confidence intervals set, then range must depend only on a single field
-        return super._getDataExtent.call(this, data, axis_config);
+        return super._getDataExtent(data, axis_config);
     }
 
     getTicks(dimension, config) { // Overrides parent method

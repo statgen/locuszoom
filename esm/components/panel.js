@@ -1,8 +1,8 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import {STATUSES} from './constants';
 import Toolbar from './toolbar';
-import {generateCurtain, generateLoader} from '../helpers/common';
+import {applyStyles, generateCurtain, generateLoader} from '../helpers/common';
 import {parseFields, positionIntToString, prettyTicks} from '../helpers/display';
 import {merge} from '../helpers/layouts';
 import Legend from './legend';
@@ -386,7 +386,9 @@ class Panel {
         this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         if (this.svg.clipRect) {
-            this.svg.clipRect.attr('width', this.layout.width).attr('height', this.layout.height);
+            this.svg.clipRect
+                .attr('width', this.layout.width)
+                .attr('height', this.layout.height);
         }
         if (this.initialized) {
             this.render();
@@ -474,11 +476,12 @@ class Panel {
             this.layout.title = merge(title, this.layout.title);
         }
         if (this.layout.title.text.length) {
-            this.title.attr('display', null)
+            this.title
+                .attr('display', null)
                 .attr('x', parseFloat(this.layout.title.x))
                 .attr('y', parseFloat(this.layout.title.y))
-                .style(this.layout.title.style)
                 .text(this.layout.title.text);
+            applyStyles(this.title, this.layout.title.style);
         } else {
             this.title.attr('display', 'none');
         }
@@ -497,18 +500,19 @@ class Panel {
         // Position with initial layout parameters
         this.svg.container = this.parent.svg.append('g')
             .attr('id', this.getBaseId() + '.panel_container')
-            .attr('transform', 'translate(' + (this.layout.origin.x || 0) + ',' + (this.layout.origin.y || 0) + ')');
+            .attr('transform', `translate(${this.layout.origin.x || 0}, ${this.layout.origin.y || 0})`);
 
         // Append clip path to the parent svg element, size with initial layout parameters
         const clipPath = this.svg.container.append('clipPath')
             .attr('id', this.getBaseId() + '.clip');
         this.svg.clipRect = clipPath.append('rect')
-            .attr('width', this.layout.width).attr('height', this.layout.height);
+            .attr('width', this.layout.width)
+            .attr('height', this.layout.height);
 
         // Append svg group for rendering all panel child elements, clipped by the clip path
         this.svg.group = this.svg.container.append('g')
             .attr('id', this.getBaseId() + '.panel')
-            .attr('clip-path', 'url(#' + this.getBaseId() + '.clip)');
+            .attr('clip-path', `url(#${this.getBaseId()}.clip)`);
 
         // Add curtain and loader prototypes to the panel
         /** @member {Object} */
@@ -532,11 +536,14 @@ class Panel {
         // Add the title
         /** @member {Element} */
         this.title = this.svg.group.append('text').attr('class', 'lz-panel-title');
-        if (typeof this.layout.title != 'undefined') { this.setTitle(); }
+        if (typeof this.layout.title != 'undefined') {
+            this.setTitle();
+        }
 
         // Initialize Axes
         this.svg.x_axis = this.svg.group.append('g')
-            .attr('id', this.getBaseId() + '.x_axis').attr('class', 'lz-x lz-axis');
+            .attr('id', this.getBaseId() + '.x_axis')
+            .attr('class', 'lz-x lz-axis');
         if (this.layout.axes.x.render) {
             this.svg.x_axis_label = this.svg.x_axis.append('text')
                 .attr('class', 'lz-x lz-axis lz-label')
@@ -593,7 +600,10 @@ class Panel {
         this.data_layer_ids_by_z_index.forEach((id) => {
             sort.push(this.data_layers[id].layout.z_index);
         });
-        this.svg.group.selectAll('g.lz-data_layer-container').data(sort).sort(d3.ascending);
+        this.svg.group
+            .selectAll('g.lz-data_layer-container')
+            .data(sort)
+            .sort(d3.ascending);
         this.applyDataLayerZIndexesToDataLayerLayouts();
     }
 
@@ -888,18 +898,23 @@ class Panel {
     render() {
 
         // Position the panel container
-        this.svg.container.attr('transform', 'translate(' + this.layout.origin.x +  ',' + this.layout.origin.y + ')');
+        this.svg.container.attr('transform', `translate(${this.layout.origin.x}, ${this.layout.origin.y})`);
 
         // Set size on the clip rect
-        this.svg.clipRect.attr('width', this.layout.width).attr('height', this.layout.height);
+        this.svg.clipRect
+            .attr('width', this.layout.width)
+            .attr('height', this.layout.height);
 
         // Set and position the inner border, style if necessary
         this.inner_border
-            .attr('x', this.layout.margin.left).attr('y', this.layout.margin.top)
+            .attr('x', this.layout.margin.left)
+            .attr('y', this.layout.margin.top)
             .attr('width', this.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr('height', this.layout.height - (this.layout.margin.top + this.layout.margin.bottom));
         if (this.layout.inner_border) {
-            this.inner_border.style({ 'stroke-width': 1, 'stroke': this.layout.inner_border });
+            this.inner_border
+                .style('stroke-width', 1)
+                .style('stroke', this.layout.inner_border);
         }
 
         // Set/update panel title if necessary
@@ -1020,7 +1035,7 @@ class Panel {
             if (!this[axis + '_extent']) { return; }
 
             // Base Scale
-            this[axis + '_scale'] = d3.scale.linear()
+            this[axis + '_scale'] = d3.scaleLinear()
                 .domain(this[axis + '_extent'])
                 .range(ranges[axis + '_shifted']);
 
@@ -1031,7 +1046,7 @@ class Panel {
             ];
 
             // Finalize Scale
-            this[axis + '_scale'] = d3.scale.linear()
+            this[axis + '_scale'] = d3.scaleLinear()
                 .domain(this[axis + '_extent']).range(ranges[axis]);
 
             // Render axis (and generate ticks as needed)
@@ -1078,7 +1093,7 @@ class Panel {
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }, 500);
             };
-            this.zoom_listener = d3.behavior.zoom();
+            this.zoom_listener = d3.zoom();
             this.svg.container.call(this.zoom_listener)
                 .on('wheel.zoom', zoom_handler)
                 .on('mousewheel.zoom', zoom_handler)
@@ -1112,7 +1127,8 @@ class Panel {
         // If the axis has already been rendered then check if we can/can't render it
         // Make sure the axis element is shown/hidden to suit
         if (this[axis + '_axis']) {
-            this.svg.container.select('g.lz-axis.lz-' + axis).style('display', canRender ? null : 'none');
+            this.svg.container.select('g.lz-axis.lz-' + axis)
+                .style('display', canRender ? null : 'none');
         }
 
         if (!canRender) { return this; }
@@ -1134,7 +1150,7 @@ class Panel {
                 label_rotate: -90
             },
             y2: {
-                position: 'translate(' + (this.layout.width - this.layout.margin.right) + ',' + this.layout.margin.top + ')',
+                position: `translate(${this.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
                 orientation: 'right',
                 label_x: (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
@@ -1156,9 +1172,22 @@ class Panel {
         })(this[axis + '_ticks']);
 
         // Initialize the axis; set scale and orientation
-        this[axis + '_axis'] = d3.svg.axis()
-            .scale(this[axis + '_scale'])
-            .orient(axis_params[axis].orientation)
+        let axis_factory;
+        switch(axis_params[axis].orientation) {
+        case 'right':
+            axis_factory = d3.axisRight;
+            break;
+        case 'left':
+            axis_factory = d3.axisLeft;
+            break;
+        case 'bottom':
+            axis_factory = d3.axisBottom;
+            break;
+        default:
+            throw new Error('Unrecognized axis orientation');
+        }
+
+        this[axis + '_axis'] = axis_factory(this[axis + '_scale'])
             .tickPadding(3);
 
         // Set tick values and format
@@ -1187,7 +1216,7 @@ class Panel {
             tick_selector.each(function (d, i) {
                 const selector = d3.select(this).select('text');
                 if (panel[axis + '_ticks'][i].style) {
-                    selector.style(panel[axis + '_ticks'][i].style);
+                    applyStyles(selector, panel[axis + '_ticks'][i].style);
                 }
                 if (panel[axis + '_ticks'][i].transform) {
                     selector.attr('transform', panel[axis + '_ticks'][i].transform);
@@ -1199,11 +1228,12 @@ class Panel {
         const label = this.layout.axes[axis].label || null;
         if (label !== null) {
             this.svg[axis + '_axis_label']
-                .attr('x', axis_params[axis].label_x).attr('y', axis_params[axis].label_y)
+                .attr('x', axis_params[axis].label_x)
+                .attr('y', axis_params[axis].label_y)
                 .text(parseFields(this.state, label));
             if (axis_params[axis].label_rotate !== null) {
                 this.svg[axis + '_axis_label']
-                    .attr('transform', 'rotate(' + axis_params[axis].label_rotate + ' ' + axis_params[axis].label_x + ',' + axis_params[axis].label_y + ')');
+                    .attr('transform', `rotate(${axis_params[axis].label_rotate} ${axis_params[axis].label_x}, ${axis_params[axis].label_y})`);
             }
         }
 
@@ -1220,7 +1250,8 @@ class Panel {
                         cursor = 'move';
                     }
                     d3.select(this)
-                        .style({ 'font-weight': 'bold', 'cursor': cursor })
+                        .style('font-weight', 'bold')
+                        .style('cursor', cursor )
                         .on('keydown' + namespace, tick_mouseover)
                         .on('keyup' + namespace, tick_mouseover);
                 };
@@ -1228,7 +1259,7 @@ class Panel {
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
                     .on('mouseover' + namespace, tick_mouseover)
                     .on('mouseout' + namespace, function() {
-                        d3.select(this).style({'font-weight': 'normal'});
+                        d3.select(this).style('font-weight', 'normal');
                         d3.select(this).on('keydown' + namespace, null).on('keyup' + namespace, null);
                     })
                     .on('mousedown' + namespace, () => {

@@ -2,7 +2,7 @@
 // Eventually this should be moved into classes or some other mechanism for code sharing. No external uses should
 //  depend on any items in this module.
 
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 /**
  * Generate a curtain object for a plot, panel, or any other subdivision of a layout
@@ -28,9 +28,12 @@ function generateCurtain() {
         show: (content, css) => {
             if (!this.curtain.showing) {
                 this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
-                    .attr('class', 'lz-curtain').attr('id', this.id + '.curtain');
-                this.curtain.content_selector = this.curtain.selector.append('div').attr('class', 'lz-curtain-content');
-                this.curtain.selector.append('div').attr('class', 'lz-curtain-dismiss').html('Dismiss')
+                    .attr('class', 'lz-curtain')
+                    .attr('id', this.id + '.curtain');
+                this.curtain.content_selector = this.curtain.selector.append('div')
+                    .attr('class', 'lz-curtain-content');
+                this.curtain.selector.append('div')
+                    .attr('class', 'lz-curtain-dismiss').html('Dismiss')
                     .on('click', () => this.curtain.hide());
                 this.curtain.showing = true;
             }
@@ -50,20 +53,18 @@ function generateCurtain() {
             clearTimeout(this.curtain.hide_delay);
             // Apply CSS if provided
             if (typeof css == 'object') {
-                this.curtain.selector.style(css);
+                applyStyles(this.curtain.selector, css);
             }
             // Update size and position
             const page_origin = this.getPageOrigin();
-            this.curtain.selector.style({
-                top: page_origin.y + 'px',
-                left: page_origin.x + 'px',
-                width: this.layout.width + 'px',
-                height: this.layout.height + 'px'
-            });
-            this.curtain.content_selector.style({
-                'max-width': (this.layout.width - 40) + 'px',
-                'max-height': (this.layout.height - 40) + 'px'
-            });
+            this.curtain.selector
+                .style('top', page_origin.y + 'px')
+                .style('left', page_origin.x + 'px')
+                .style('width', this.layout.width + 'px')
+                .style('height', this.layout.height + 'px');
+            this.curtain.content_selector
+                .style('max-width', (this.layout.width - 40) + 'px')
+                .style('max-height', (this.layout.height - 40) + 'px');
             // Apply content if provided
             if (typeof content == 'string') {
                 this.curtain.content_selector.html(content);
@@ -120,12 +121,15 @@ function generateLoader() {
             // Generate loader
             if (!this.loader.showing) {
                 this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
-                    .attr('class', 'lz-loader').attr('id', this.id + '.loader');
+                    .attr('class', 'lz-loader')
+                    .attr('id', this.id + '.loader');
                 this.loader.content_selector = this.loader.selector.append('div')
                     .attr('class', 'lz-loader-content');
                 this.loader.progress_selector = this.loader.selector
-                    .append('div').attr('class', 'lz-loader-progress-container')
-                    .append('div').attr('class', 'lz-loader-progress');
+                    .append('div')
+                    .attr('class', 'lz-loader-progress-container')
+                    .append('div')
+                    .attr('class', 'lz-loader-progress');
 
                 this.loader.showing = true;
                 if (typeof content == 'undefined') {
@@ -154,10 +158,9 @@ function generateLoader() {
             const padding = 6; // is there a better place to store/define this?
             const page_origin = this.getPageOrigin();
             const loader_boundrect = this.loader.selector.node().getBoundingClientRect();
-            this.loader.selector.style({
-                top: (page_origin.y + this.layout.height - loader_boundrect.height - padding) + 'px',
-                left: (page_origin.x + padding) + 'px'
-            });
+            this.loader.selector
+                .style('top', (page_origin.y + this.layout.height - loader_boundrect.height - padding) + 'px')
+                .style('left', (page_origin.x + padding) + 'px');
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
             this.loader.content_selector.style({
@@ -166,9 +169,8 @@ function generateLoader() {
             */
             // Apply percent if provided
             if (typeof percent == 'number') {
-                this.loader.progress_selector.style({
-                    width: (Math.min(Math.max(percent, 1), 100)) + '%'
-                });
+                this.loader.progress_selector
+                    .style('width', (Math.min(Math.max(percent, 1), 100)) + '%');
             }
             return this.loader;
         },
@@ -217,5 +219,19 @@ function generateLoader() {
     };
 }
 
+/**
+ * Modern d3 removed the ability to set many styles at once (object syntax). This is a helper so that layouts with
+ *  config-objects can set styles all at once
+ * @private
+ * @param {d3.selection} selection
+ * @param {Object} styles
+ */
+function applyStyles(selection, styles) {
+    styles = styles || {};
+    for (let [prop, value] of Object.entries(styles)) {
+        selection.style(prop, value);
+    }
+}
 
-export { generateCurtain, generateLoader };
+
+export { applyStyles, generateCurtain, generateLoader };

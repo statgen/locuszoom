@@ -1,5 +1,5 @@
 import {assert} from 'chai';
-import d3 from 'd3';
+import * as d3 from 'd3';
 import sinon from 'sinon';
 
 import {paramsFromUrl, plotUpdatesUrl, plotWatchesUrl} from '../../../esm/ext/lz-dynamic-urls';

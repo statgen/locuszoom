@@ -1,3 +1,5 @@
+import * as d3 from 'd3';
+
 /**
 * Utilities for modifying or working with layout objects
 */
@@ -51,7 +53,6 @@ function applyNamespaces(element, namespace, default_namespace) {
     return element;
 }
 
-
 /**
  * A helper method used for merging two objects. If a key is present in both, takes the value from the first object
  *   Values from `default_layout` will be cleanly copied over, ensuring no references or shared state.
@@ -103,4 +104,15 @@ function deepCopy(item) {
     return JSON.parse(JSON.stringify(item));
 }
 
-export { applyNamespaces, deepCopy, merge };
+/**
+ * Convert name to symbol
+ * Layout objects accept symbol names as strings (circle, triangle, etc). Convert to symbol objects.
+ * @return {d3.symbol|null}
+ */
+function nameToSymbol(shape) {
+    // Legend shape names are strings; need to connect this to factory. Eg circle --> d3.symbolCircle
+    const factory_name = `symbol${shape.charAt(0).toUpperCase() + shape.slice(1)}`;
+    return d3[factory_name];
+}
+
+export { applyNamespaces, deepCopy, merge, nameToSymbol };

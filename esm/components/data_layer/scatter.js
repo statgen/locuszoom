@@ -1,8 +1,10 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 import BaseDataLayer from './base';
-import {merge} from '../../helpers/layouts';
 import Field from '../../data/field';
+import {applyStyles} from '../../helpers/common';
 import {parseFields} from '../../helpers/display';
+import {merge, nameToSymbol} from '../../helpers/layouts';
+
 
 const default_layout = {
     point_size: 40,
@@ -191,8 +193,8 @@ class Scatter extends BaseDataLayer {
                     new_b_y = +y2;
                     new_a_y -= delta;
                 }
-                da.attr('y',new_a_y);
-                db.attr('y',new_b_y);
+                da.attr('y', new_a_y);
+                db.attr('y', new_b_y);
             });
         });
         if (again) {
@@ -286,62 +288,65 @@ class Scatter extends BaseDataLayer {
                 .text(function(d) {
                     return parseFields(d, data_layer.layout.label.text || '');
                 })
-                .style(data_layer.layout.label.style || {})
-                .attr({
-                    'x': function(d) {
-                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                            + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
-                            + data_layer.layout.label.spacing;
-                        if (isNaN(x)) { x = -1000; }
-                        return x;
-                    },
-                    'y': function(d) {
-                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) { y = -1000; }
-                        return y;
-                    },
-                    'text-anchor': function() {
-                        return 'start';
-                    }
+                .attr('x', function(d) {
+                    let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                        + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                        + data_layer.layout.label.spacing;
+                    if (isNaN(x)) { x = -1000; }
+                    return x;
+                })
+                .attr('y', function(d) {
+                    let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                    if (isNaN(y)) { y = -1000; }
+                    return y;
+                })
+                .attr('text-anchor', function() {
+                    return 'start';
                 });
+            applyStyles(this.label_texts, data_layer.layout.label.style || {});
+
             // Render label lines
             if (data_layer.layout.label.lines) {
                 if (this.label_lines) { this.label_lines.remove(); }
                 this.label_lines = this.label_groups.append('line')
                     .attr('class', 'lz-data_layer-' + this.layout.type + '-label');
                 this.label_lines
-                    .style(data_layer.layout.label.lines.style || {})
-                    .attr({
-                        'x1': function(d) {
-                            let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                            if (isNaN(x)) { x = -1000; }
-                            return x;
-                        },
-                        'y1': function(d) {
-                            let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                            if (isNaN(y)) { y = -1000; }
-                            return y;
-                        },
-                        'x2': function(d) {
-                            let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
-                                + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
-                                + (data_layer.layout.label.spacing / 2);
-                            if (isNaN(x)) { x = -1000; }
-                            return x;
-                        },
-                        'y2': function(d) {
-                            let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                            if (isNaN(y)) { y = -1000; }
-                            return y;
-                        }
+                    .attr('x1', function(d) {
+                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
+                        if (isNaN(x)) { x = -1000; }
+                        return x;
+                    })
+                    .attr('y1', function(d) {
+                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)) { y = -1000; }
+                        return y;
+                    })
+                    .attr('x2', function(d) {
+                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                            + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
+                            + (data_layer.layout.label.spacing / 2);
+                        if (isNaN(x)) { x = -1000; }
+                        return x;
+                    })
+                    .attr('y2', function(d) {
+                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
+                        if (isNaN(y)) { y = -1000; }
+                        return y;
                     });
+
+                applyStyles(this.label_lines, data_layer.layout.label.lines.style || {});
             }
             // Remove labels when they're no longer in the filtered data set
-            this.label_groups.exit().remove();
+            this.label_groups.exit()
+                .remove();
         } else {
             // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
-            if (this.label_groups) { this.label_groups.remove(); }
-            if (this.label_lines) { this.label_lines.remove(); }
+            if (this.label_groups) {
+                this.label_groups.remove();
+            }
+            if (this.label_lines) {
+                this.label_lines.remove();
+            }
         }
 
         // Generate main scatter data elements
@@ -379,9 +384,9 @@ class Scatter extends BaseDataLayer {
             return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
         };
 
-        const shape = d3.svg.symbol()
+        const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
-            .type((d, i) => this.resolveScalableParameter(this.layout.point_shape, d, i));
+            .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
         // Apply position and color
         selection
@@ -568,7 +573,7 @@ class CategoryScatter extends Scatter {
         if (baseParams.values.length) {
             colors = baseParams.values;
         } else {
-            const color_scale = categoryNames.length <= 10 ? d3.scale.category10 : d3.scale.category20;
+            const color_scale = d3.schemeSet3; // max default: up to 12 items
             colors = color_scale().range();
         }
         while (colors.length < categoryNames.length) { colors = colors.concat(colors); }

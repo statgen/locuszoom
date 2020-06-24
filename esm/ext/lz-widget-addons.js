@@ -137,19 +137,17 @@ function install(LocusZoom) {
                         const row = table.append('tr');
                         row.append('td').append('button')
                             .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
-                            .style({ 'margin-left': '0em' })
-                            .on('click', () => {
-                                this.parent_plot.CovariatesModel.removeByIdx(idx);
-                            })
+                            .style('margin-left', '0em')
+                            .on('click', () => this.parent_plot.CovariatesModel.removeByIdx(idx))
                             .html('×');
-                        row.append('td').html(html);
+                        row.append('td')
+                            .html(html);
                     });
                     selector.append('button')
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
-                        .style({ 'margin-left': '4px' }).html('× Remove All Covariates')
-                        .on('click', () => {
-                            this.parent_plot.CovariatesModel.removeAll();
-                        });
+                        .style('margin-left', '4px')
+                        .html('× Remove All Covariates')
+                        .on('click', () => this.parent_plot.CovariatesModel.removeAll());
                 }
             });
 
@@ -220,9 +218,10 @@ function install(LocusZoom) {
                         }
                         row.append('td').append('a')
                             .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color + highlight)
-                            .style({ 'margin-left': '0em' })
+                            .style('margin-left', '0em')
                             .on('click', () => {
-                                data_layer[onclick](); this.button.menu.populate();
+                                data_layer[onclick]();
+                                this.button.menu.populate();
                             })
                             .html(html);
                     });
@@ -232,28 +231,31 @@ function install(LocusZoom) {
                     const td = row.append('td');
                     td.append('a')
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-' + this.layout.color + (at_bottom ? '-disabled' : ''))
-                        .style({ 'margin-left': '0em' })
+                        .style('margin-left', '0em')
                         .on('click', () => {
                             data_layer.moveDown(); this.button.menu.populate();
                         })
-                        .html('▾').attr('title', 'Move layer down (further back)');
+                        .html('▾')
+                        .attr('title', 'Move layer down (further back)');
                     td.append('a')
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-' + this.layout.color + (at_top ? '-disabled' : ''))
-                        .style({ 'margin-left': '0em' })
+                        .style('margin-left', '0em')
                         .on('click', () => {
                             data_layer.moveUp(); this.button.menu.populate();
                         })
-                        .html('▴').attr('title', 'Move layer up (further front)');
+                        .html('▴')
+                        .attr('title', 'Move layer up (further front)');
                     td.append('a')
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-group-end lz-toolbar-button-red')
-                        .style({ 'margin-left': '0em' })
+                        .style('margin-left', '0em')
                         .on('click', () => {
                             if (confirm('Are you sure you want to remove the ' + name + ' layer? This cannot be undone!')) {
                                 data_layer.parent.removeDataLayer(id);
                             }
                             return this.button.menu.populate();
                         })
-                        .html('×').attr('title', 'Remove layer');
+                        .html('×')
+                        .attr('title', 'Remove layer');
                 });
                 return this;
             });

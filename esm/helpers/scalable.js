@@ -4,7 +4,7 @@
  * These "scaling functions" are used during rendering to return output (eg color) based on input value
  */
 
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 /**
  * Basic conditional function to evaluate the value of the input field and return based on equality.

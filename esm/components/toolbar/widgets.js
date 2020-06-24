@@ -1,6 +1,7 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
+import {applyStyles} from '../../helpers/common';
 
 // FIXME: Button creation should occur in the constructors, not in update functions
 
@@ -84,7 +85,7 @@ class BaseWidget {
             this.selector = this.parent.selector.append('div')
                 .attr('class', 'lz-toolbar-' + this.layout.position + group_position);
             if (this.layout.style) {
-                this.selector.style(this.layout.style);
+                applyStyles(this.selector, this.layout.style);
             }
             if (typeof this.initialize == 'function') {
                 this.initialize();
@@ -93,7 +94,7 @@ class BaseWidget {
         if (this.button && this.button.status === 'highlighted') {
             this.button.menu.show();
         }
-        this.selector.style({ visibility: 'visible' });
+        this.selector.style('visibility', 'visible');
         this.update();
         return this.position();
     }
@@ -138,7 +139,7 @@ class BaseWidget {
         if (this.button) {
             this.button.menu.hide();
         }
-        this.selector.style({ visibility: 'hidden' });
+        this.selector.style('visibility', 'hidden');
         return this;
     }
 
@@ -272,7 +273,7 @@ class Button {
                         this.menu.scroll_position = this.menu.inner_selector.node().scrollTop;
                     });
                 }
-                this.menu.outer_selector.style({ visibility: 'visible' });
+                this.menu.outer_selector.style('visibility', 'visible');
                 this.menu.hidden = false;
                 return this.menu.update();
             },
@@ -294,7 +295,7 @@ class Button {
                     return this.menu;
                 }
                 // Unset any explicitly defined outer selector height so that menus dynamically shrink if content is removed
-                this.menu.outer_selector.style({ height: null });
+                this.menu.outer_selector.style('height', null);
                 const padding = 3;
                 const scrollbar_padding = 20;
                 const menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
@@ -319,14 +320,14 @@ class Button {
                 const content_max_width = (base_max_width - (4 * padding));
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
                 const height = Math.min(total_content_height, base_max_height);
-                this.menu.outer_selector.style({
-                    'top': top.toString() + 'px',
-                    'left': left.toString() + 'px',
-                    'max-width': container_max_width.toString() + 'px',
-                    'max-height': base_max_height.toString() + 'px',
-                    'height': height.toString() + 'px'
-                });
-                this.menu.inner_selector.style({ 'max-width': content_max_width.toString() + 'px' });
+                this.menu.outer_selector
+                    .style('top', top.toString() + 'px')
+                    .style('left', left.toString() + 'px')
+                    .style('max-width', container_max_width.toString() + 'px')
+                    .style('max-height', base_max_height.toString() + 'px')
+                    .style('height', height.toString() + 'px');
+                this.menu.inner_selector
+                    .style('max-width', content_max_width.toString() + 'px');
                 this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 return this.menu;
             },
@@ -334,7 +335,7 @@ class Button {
                 if (!this.menu.outer_selector) {
                     return this.menu;
                 }
-                this.menu.outer_selector.style({ visibility: 'hidden' });
+                this.menu.outer_selector.style('visibility', 'hidden');
                 this.menu.hidden = true;
                 return this.menu;
             },
@@ -574,7 +575,8 @@ class Button {
             return;
         }
         if (!this.selector) {
-            this.selector = this.parent.selector.append(this.tag).attr('class', this.getClass());
+            this.selector = this.parent.selector.append(this.tag)
+                .attr('class', this.getClass());
         }
         return this.update();
     }
@@ -598,11 +600,13 @@ class Button {
         this.preUpdate();
         this.selector
             .attr('class', this.getClass())
-            .attr('title', this.title).style(this.style)
+            .attr('title', this.title)
             .on('mouseover', (this.status === 'disabled') ? null : this.onmouseover)
             .on('mouseout', (this.status === 'disabled') ? null : this.onmouseout)
             .on('click', (this.status === 'disabled') ? null : this.onclick)
             .html(this.html);
+        applyStyles(this.selector, this.style);
+
         this.menu.update();
         this.postUpdate();
         return this;
@@ -663,8 +667,12 @@ class Dimensions extends BaseWidget {
         const display_width = this.parent_plot.layout.width.toString().indexOf('.') === -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
         const display_height = this.parent_plot.layout.height.toString().indexOf('.') === -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
         this.selector.html(display_width + 'px × ' + display_height + 'px');
-        if (this.layout.class) { this.selector.attr('class', this.layout.class); }
-        if (this.layout.style) { this.selector.style(this.layout.style); }
+        if (this.layout.class) {
+            this.selector.attr('class', this.layout.class);
+        }
+        if (this.layout.style) {
+            applyStyles(this.selector, this.layout.style);
+        }
         return this;
     }
 }
@@ -682,8 +690,12 @@ class RegionScale extends BaseWidget {
         } else {
             this.selector.style('display', 'none');
         }
-        if (this.layout.class) { this.selector.attr('class', this.layout.class); }
-        if (this.layout.style) { this.selector.style(this.layout.style); }
+        if (this.layout.class) {
+            this.selector.attr('class', this.layout.class);
+        }
+        if (this.layout.style) {
+            applyStyles(this.selector, this.layout.style);
+        }
         return this;
     }
 }
@@ -743,14 +755,17 @@ class Download extends BaseWidget {
                 this.button.selector.classed('lz-toolbar-button-gray-highlighted', false);
             });
         this.button.show();
-        this.button.selector.attr('href-lang', 'image/svg+xml').attr('download', this.layout.filename || 'locuszoom.svg');
+        this.button.selector
+            .attr('href-lang', 'image/svg+xml')
+            .attr('download', this.layout.filename || 'locuszoom.svg');
         return this;
     }
 
     generateBase64SVG () {
         return new Promise((resolve) => {
             // Insert a hidden div, clone the node into that so we can modify it with d3
-            const container = this.parent.selector.append('div').style('display', 'none')
+            const container = this.parent.selector.append('div')
+                .style('display', 'none')
                 .html(this.parent_plot.svg.node().outerHTML);
             // Remove unnecessary elements
             container.selectAll('g.lz-curtain').remove();
@@ -1105,7 +1120,10 @@ class DisplayOptions extends BaseWidget {
                 const radioId = '' + uniqueID + row_id;
                 row.append('td')
                     .append('input')
-                    .attr({ id: radioId, type: 'radio', name: 'display-option-' + uniqueID, value: row_id })
+                    .attr('id', radioId)
+                    .attr('type', 'radio')
+                    .attr('name', 'display-option-' + uniqueID)
+                    .attr('value', row_id)
                     .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
                     .property('checked', (row_id === this._selected_item))
                     .on('click', () => {
@@ -1206,7 +1224,10 @@ class SetState extends BaseWidget {
                 const radioId = '' + uniqueID + row_id;
                 row.append('td')
                     .append('input')
-                    .attr({ id: radioId, type: 'radio', name: 'set-state-' + uniqueID, value: row_id })
+                    .attr('id', radioId)
+                    .attr('type', 'radio')
+                    .attr('name', 'set-state-' + uniqueID)
+                    .attr('value', row_id)
                     .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
                     .property('checked', (value === this._selected_item))
                     .on('click', () => {

@@ -5,10 +5,11 @@
  *  with a height determined by y.field.
  *
  */
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
+import {applyStyles} from '../../helpers/common';
 
 const default_layout = {
     color: 'seagreen',
@@ -29,43 +30,47 @@ class Arcs extends BaseDataLayer {
 
     // Implement the main render function
     render() {
-        var self = this;
-        var layout = self.layout;
-        var x_scale = self.parent['x_scale'];
-        var y_scale = self.parent['y' + layout.y_axis.axis + '_scale'];
+        const self = this;
+        const layout = self.layout;
+        const x_scale = self.parent['x_scale'];
+        const y_scale = self.parent['y' + layout.y_axis.axis + '_scale'];
 
         // Optionally restrict the data to a specific set of filters
-        var filters = layout.filters || [];
-        var trackData = this.filter(filters, 'elements');
+        const filters = layout.filters || [];
+        const trackData = this.filter(filters, 'elements');
 
         // Helper: Each individual data point describes a path composed of 3 points, with a spline to smooth the line
         function _make_line(d) {
-            var x1 = d[layout.x_axis.field1];
-            var x2 = d[layout.x_axis.field2];
-            var xmid = (x1 + x2) / 2;
-            var coords = [
+            const x1 = d[layout.x_axis.field1];
+            const x2 = d[layout.x_axis.field2];
+            const xmid = (x1 + x2) / 2;
+            const coords = [
                 [x_scale(x1), y_scale(0)],
                 [x_scale(xmid), y_scale(d[layout.y_axis.field])],
                 [x_scale(x2), y_scale(0)]
             ];
             // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
-            var line = d3.svg.line()
-                .interpolate('monotone')
-                .x(function (d) {return d[0];})
-                .y(function (d) {return d[1];});
+            const line = d3.line()
+                .curve('curveNatural')
+                .x(function (d) {
+                    return d[0];
+                })
+                .y(function (d) {
+                    return d[1];
+                });
             return line(coords);
         }
 
         // Draw real lines, and also invisible hitareas for easier mouse events
-        var selection = this.svg.group
+        const selection = this.svg.group
             .selectAll('path.lz-data_layer-arcs')
-            .data(trackData, function(d) {
+            .data(trackData, function (d) {
                 return self.getElementId(d);
             });
 
-        var hitareas = this.svg.group
+        const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
-            .data(trackData, function(d) {
+            .data(trackData, function (d) {
                 return self.getElementId(d);
             });
         // Add new points as necessary
@@ -73,38 +78,34 @@ class Arcs extends BaseDataLayer {
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs')
-            .attr('id', function(d) { return self.getElementId(d); });
+            .attr('id', (d) => this.getElementId(d));
 
         hitareas
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs-hitarea')
-            .attr('id', function(d) { return self.getElementId(d); });
+            .attr('id', (d) => this.getElementId(d));
 
         // Update selection/set coordinates
         selection
-            .style(layout.style)
-            .attr('stroke', function(d, i) {
-                return self.resolveScalableParameter(self.layout.color, d, i);
-            })
-            .attr('d', function (d, i) {
-                return _make_line(d);
-            });
+            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('d', (d, i) => _make_line(d));
+        applyStyles(selection, layout.style);
 
         hitareas
-            .style({
-                fill: 'none',
-                'stroke-width': layout.hitarea_width,
-                'stroke-opacity': 0,
-                stroke: 'transparent',
-            })
-            .attr('d', function (d, i) {
-                return _make_line(d);
-            });
+            .style('fill', 'none')
+            .style('stroke-width', layout.hitarea_width)
+            .style('stroke-opacity', 0)
+            .style('stroke', 'transparent')
+            .attr('d', (d) => _make_line(d));
 
         // Remove old elements as needed
-        selection.exit().remove();
-        hitareas.exit().remove();
+        selection
+            .exit()
+            .remove();
+        hitareas
+            .exit()
+            .remove();
 
         // Apply mouse behaviors to hitareas
         this.applyBehaviors(hitareas);
@@ -114,13 +115,13 @@ class Arcs extends BaseDataLayer {
     _getTooltipPosition(tooltip) {
         // Center the tooltip arrow at the apex of the arc. Sometimes, only part of an arc shows on the screen, so we
         //  clean up these values to ensure that the tooltip will appear within the window.
-        var panel = this.parent;
-        var layout = this.layout;
+        const panel = this.parent;
+        const layout = this.layout;
 
-        var x1 = tooltip.data[layout.x_axis.field1];
-        var x2 = tooltip.data[layout.x_axis.field2];
+        const x1 = tooltip.data[layout.x_axis.field1];
+        const x2 = tooltip.data[layout.x_axis.field2];
 
-        var y_scale = panel['y' + layout.y_axis.axis + '_scale'];
+        const y_scale = panel['y' + layout.y_axis.axis + '_scale'];
 
         return {
             x_min: panel.x_scale(Math.min(x1, x2)),

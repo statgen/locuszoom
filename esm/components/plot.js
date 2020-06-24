@@ -1,4 +1,4 @@
-import d3 from 'd3';
+import * as d3 from 'd3';
 
 import {merge} from '../helpers/layouts';
 import Requester from '../data/requester';
@@ -479,10 +479,9 @@ class Plot {
         }
         this.layout.min_width = Math.max(min_width, 1);
         this.layout.min_height = Math.max(min_height, 1);
-        d3.select(this.svg.node().parentNode).style({
-            'min-width': this.layout.min_width + 'px',
-            'min-height': this.layout.min_height + 'px'
-        });
+        d3.select(this.svg.node().parentNode)
+            .style('min-width', this.layout.min_width + 'px')
+            .style('min-height', this.layout.min_height + 'px');
 
         // If width and height arguments were passed then adjust them against plot minimums if necessary.
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
@@ -539,10 +538,12 @@ class Plot {
         if (this.svg !== null) {
             if (this.layout.responsive_resize === 'both') {
                 this.svg
-                    .attr('viewBox', '0 0 ' + this.layout.width + ' ' + this.layout.height)
+                    .attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`)
                     .attr('preserveAspectRatio', 'xMinYMin meet');
             } else {
-                this.svg.attr('width', this.layout.width).attr('height', this.layout.height);
+                this.svg
+                    .attr('width', this.layout.width)
+                    .attr('height', this.layout.height);
             }
         }
 
@@ -803,11 +804,14 @@ class Plot {
         // Create an element/layer for containing mouse guides
         if (this.layout.mouse_guide) {
             const mouse_guide_svg = this.svg.append('g')
-                .attr('class', 'lz-mouse_guide').attr('id', this.id + '.mouse_guide');
+                .attr('class', 'lz-mouse_guide')
+                .attr('id', this.id + '.mouse_guide');
             const mouse_guide_vertical_svg = mouse_guide_svg.append('rect')
-                .attr('class', 'lz-mouse_guide-vertical').attr('x', -1);
+                .attr('class', 'lz-mouse_guide-vertical')
+                .attr('x', -1);
             const mouse_guide_horizontal_svg = mouse_guide_svg.append('rect')
-                .attr('class', 'lz-mouse_guide-horizontal').attr('y', -1);
+                .attr('class', 'lz-mouse_guide-horizontal')
+                .attr('y', -1);
             this.mouse_guide = {
                 svg: mouse_guide_svg,
                 vertical: mouse_guide_vertical_svg,
@@ -837,11 +841,11 @@ class Plot {
                             .attr('class', 'lz-panel-boundary')
                             .attr('title', 'Resize panel');
                         selector.append('span');
-                        const panel_resize_drag = d3.behavior.drag();
-                        panel_resize_drag.on('dragstart', () => {
+                        const panel_resize_drag = d3.drag();
+                        panel_resize_drag.on('start', () => {
                             this.dragging = true;
                         });
-                        panel_resize_drag.on('dragend', () => {
+                        panel_resize_drag.on('end', () => {
                             this.dragging = false;
                         });
                         panel_resize_drag.on('drag', () => {
@@ -870,16 +874,20 @@ class Plot {
                         this.parent.panel_boundaries.selectors.push(selector);
                     });
                     // Create a corner boundary / resize element on the bottom-most panel that resizes the entire plot
-                    const corner_selector = d3.select(this.parent.svg.node().parentNode).insert('div', '.lz-data_layer-tooltip')
+                    const corner_selector = d3.select(this.parent.svg.node().parentNode)
+                        .insert('div', '.lz-data_layer-tooltip')
                         .attr('class', 'lz-panel-corner-boundary')
                         .attr('title', 'Resize plot');
-                    corner_selector.append('span').attr('class', 'lz-panel-corner-boundary-outer');
-                    corner_selector.append('span').attr('class', 'lz-panel-corner-boundary-inner');
-                    const corner_drag = d3.behavior.drag();
-                    corner_drag.on('dragstart', () => {
+
+                    corner_selector.append('span')
+                        .attr('class', 'lz-panel-corner-boundary-outer');
+                    corner_selector.append('span')
+                        .attr('class', 'lz-panel-corner-boundary-inner');
+                    const corner_drag = d3.drag();
+                    corner_drag.on('start', () => {
                         this.dragging = true;
                     });
-                    corner_drag.on('dragend', () => {
+                    corner_drag.on('end', () => {
                         this.dragging = false;
                     });
                     corner_drag.on('drag', () => {
@@ -899,22 +907,19 @@ class Plot {
                     const left = plot_page_origin.x;
                     const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
                     const width = this.parent.layout.width - 1;
-                    selector.style({
-                        top: top + 'px',
-                        left: left + 'px',
-                        width: width + 'px'
-                    });
-                    selector.select('span').style({
-                        width: width + 'px'
-                    });
+                    selector
+                        .style('top', top + 'px')
+                        .style('left', left + 'px')
+                        .style('width', width + 'px');
+                    selector.select('span')
+                        .style('width', width + 'px');
                 });
                 // Position corner selector
                 const corner_padding = 10;
                 const corner_size = 16;
-                this.corner_selector.style({
-                    top: (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + 'px',
-                    left: (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + 'px'
-                });
+                this.corner_selector
+                    .style('top', (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + 'px')
+                    .style('left', (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + 'px');
                 return this;
             },
             hide: function() {
