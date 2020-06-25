@@ -1,3 +1,4 @@
+/** @module */
 import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
@@ -16,7 +17,7 @@ import {deepCopy} from '../../helpers/layouts';
  *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
  *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
  *  For example, the region_nav_plot toolbar is a defined as a group.
- * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple'} [layout.color='gray']  Color scheme for the
+ * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} [layout.color='gray']  Color scheme for the
  *   widget. Applies to buttons and menus.
  * @param {Toolbar} parent The toolbar that contains this widget
  */

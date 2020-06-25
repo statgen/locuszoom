@@ -1,3 +1,4 @@
+/** @module */
 import * as d3 from 'd3';
 import {applyStyles} from '../helpers/common';
 import {merge, nameToSymbol} from '../helpers/layouts';

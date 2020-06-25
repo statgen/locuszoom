@@ -1,8 +1,9 @@
+/**
+ * Utilities for modifying or working with layout objects
+ *  @module
+ */
 import * as d3 from 'd3';
 
-/**
-* Utilities for modifying or working with layout objects
-*/
 
 /**
  * Apply namespaces to layout, recursively

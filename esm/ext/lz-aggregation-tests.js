@@ -1,4 +1,4 @@
-'use strict';
+/** @module */
 /*
  * LocusZoom extensions used to calculate and render aggregation test results. Because these calculations depend on an
  *   external library, the special data sources are defined here, rather than in LocusZoom core code.

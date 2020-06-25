@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @private
+ */
 import {RegistryBase} from './base';
 import {applyNamespaces, deepCopy, merge} from '../helpers/layouts';
 import * as layouts from '../layouts';

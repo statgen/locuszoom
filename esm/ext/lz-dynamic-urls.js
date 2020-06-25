@@ -1,13 +1,14 @@
 /**
-* Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
-*
-* Demonstrates a mechanism by which the plot can be loaded to a specific initial state based on the URL query string
-*  (and, optionally, to update the URL bar when the plot state changes, with back button support)
-*
-* This makes it possible to create "direct links" to a particular plot of interest (and go back to a previous state
-*  as the user interacts with the page). Optionally, there is support for custom callbacks to connect the URL to
-*  arbitrarily complex plot behaviors.
-*/
+ * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
+ *
+ * Demonstrates a mechanism by which the plot can be loaded to a specific initial state based on the URL query string
+ *  (and, optionally, to update the URL bar when the plot state changes, with back button support)
+ *
+ * This makes it possible to create "direct links" to a particular plot of interest (and go back to a previous state
+ *  as the user interacts with the page). Optionally, there is support for custom callbacks to connect the URL to
+ *  arbitrarily complex plot behaviors.
+ *  @module
+ */
 
 function _serializeQueryParams(paramsObj) {
     // Serialize an object of parameter values into a query string

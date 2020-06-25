@@ -1,10 +1,11 @@
-/*
+/**
 Interval annotation track (for chromatin state, etc). Useful for BED file data with non-overlapping intervals.
 This is not part of the core LocusZoom library, but can be included as a standalone file.
 
 The page must incorporate and load all libraries before this file can be used, including:
  - Vendor assets
  - LocusZoom
+ @module
 */
 
 import * as d3 from 'd3';

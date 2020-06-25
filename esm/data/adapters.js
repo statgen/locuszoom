@@ -1,5 +1,6 @@
-/*
- * Define standard data sources used to retrieve data
+/**
+ * Define standard data adapters used to retrieve data (usually from REST APIs)
+ * @module
  */
 
 function validateBuildSource(class_name, build, source) {
@@ -289,9 +290,9 @@ class BaseAdapter {
      *  including the namespace. This must be an array with the same length as `fields`
      * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
      *     This must be an array with the same length as `fields`
-     * @returns {Promise|{header: ({}|*), discrete: {}, body: []}} A promise that resolves to an object containing
-     *   request metadata (headers), the consolidated data for plotting (body), and the individual responses that would be
-     *   returned by each source in the chain in isolation (discrete)
+     * @returns {Promise} A promise that resolves to an object containing
+     *   request metadata (`headers: {}`), the consolidated data for plotting (`body: []`), and the individual responses that would be
+     *   returned by each source in the chain in isolation (`discrete: {}`)
      */
     parseResponse (resp, chain, fields, outnames, trans) {
         const source_id = this.source_id || this.constructor.name;

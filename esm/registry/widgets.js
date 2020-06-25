@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @private
+ */
 import {ClassRegistry} from './base';
 import * as widgets from '../components/toolbar/widgets';
 

@@ -1,6 +1,8 @@
-/*
+/**
  * A registry of known data sources. Can be used to find sources by name, either from predefined
  *  classes, or plugins.
+ *  @module
+ *  @private
  */
 import {ClassRegistry} from './base';
 

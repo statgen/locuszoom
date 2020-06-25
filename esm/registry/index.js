@@ -1,3 +1,8 @@
+/**
+ * Registries that track all registered features available to LocusZoom (including active plugins)
+ * @module
+ * @public
+ */
 import adapters from './adapters';
 import data_layers from './data_layers';
 import layouts from './layouts';

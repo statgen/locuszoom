@@ -6,6 +6,7 @@
  *   as well as used as keys in the state for tracking which elements are in which status(es)
  * @static
  * @type {{verbs: String[], adjectives: String[]}}
+ * @private
  */
 export const STATUSES = {
     verbs: ['highlight', 'select', 'fade', 'hide'],

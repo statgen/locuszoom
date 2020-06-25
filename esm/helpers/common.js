@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @private
+ */
 // FIXME: A place for code that used to live under the `LocusZoom` namespace
 // Eventually this should be moved into classes or some other mechanism for code sharing. No external uses should
 //  depend on any items in this module.

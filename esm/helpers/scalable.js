@@ -1,7 +1,8 @@
-/*
+/**
  * Define functions used by Scalable Layout Directives.
  *
  * These "scaling functions" are used during rendering to return output (eg color) based on input value
+ * @module
  */
 
 import * as d3 from 'd3';
@@ -41,7 +42,7 @@ const if_value = (parameters, input) => {
  *   or equal to break n and less than or equal to break n+1 (or break n+1 doesn't exist).
  * @param {*} parameters.null_value
  * @param {*} input value
- * @returns
+ * @returns {*}
  */
 const numerical_bin = (parameters, input) => {
     const breaks = parameters.breaks || [];

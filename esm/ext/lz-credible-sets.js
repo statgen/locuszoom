@@ -1,4 +1,4 @@
-/*
+/**
     Custom code used to power credible sets demonstration example. This is not part of the core LocusZoom library,
     but can be included as a standalone file.
 
@@ -6,6 +6,7 @@
      - Vendor assets
      - LocusZoom
      - gwas-credible-sets (available via NPM or a related CDN)
+ @module
 */
 
 import {marking, scoring} from 'gwas-credible-sets';

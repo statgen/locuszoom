@@ -1,4 +1,4 @@
-/*
+/**
 A datasource that fetches data from a remote Tabix file, instead of a RESTful API.
 Requires a generic user-specified parser.
 
@@ -6,6 +6,8 @@ The page must incorporate and load all libraries before this file can be used, i
  - Vendor assets
  - LocusZoom
  - tabix-reader (available via NPM or a related CDN)
+
+ @module
 */
 import tabix from 'tabix-reader';
 

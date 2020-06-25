@@ -1,3 +1,4 @@
+/** @module */
 import * as d3 from 'd3';
 
 import {STATUSES} from './constants';
@@ -54,11 +55,12 @@ const default_layout = {
     data_layers: []
 };
 
-
+/**
+ * A panel is an abstract class representing a subdivision of the LocusZoom stage
+ *   to display a distinct data representation as a collection of data layers.
+ */
 class Panel {
     /**
-     * A panel is an abstract class representing a subdivision of the LocusZoom stage
-     *   to display a distinct data representation as a collection of data layers.
      * @param {Object} layout
      * @param {Plot|null} parent
     */

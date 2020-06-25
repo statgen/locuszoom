@@ -7,6 +7,7 @@
  *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
  *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
  *    space is hard to read. (see "multiple phenotypes layered" demo)
+ * @module
  */
 
 // In order to work in a UMD context, this module imports the top-level LocusZoom symbol

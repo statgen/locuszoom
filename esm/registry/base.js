@@ -1,4 +1,6 @@
-/*
+/** @module */
+
+/**
  * Base class for all registries
  *
  * LocusZoom is plugin-extensible, and layouts are string-based and JSON serializable. This is achieved through the use

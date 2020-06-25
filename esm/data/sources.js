@@ -1,3 +1,4 @@
+/** @module */
 import {RegistryBase} from '../registry/base';
 import { adapters } from '../registry';
 

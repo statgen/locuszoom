@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @private
+ */
 import {RegistryBase} from './base';
 
 /**

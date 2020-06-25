@@ -1,6 +1,9 @@
 /**
  * Predefined base layouts used to populate the LZ registry
+ * @module
+ * @private
  */
+
 import * as d3 from 'd3';
 
 import { version } from '../../package.json';
@@ -82,7 +85,6 @@ const coaccessibility_tooltip = {
 
 /**
  * Data Layer Layouts: represent specific information from a data source
- * @namespace data_layer
  */
 
 const significance_layer = {

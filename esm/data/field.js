@@ -1,3 +1,4 @@
+/** @module */
 import transforms from '../registry/transforms';
 
 /**

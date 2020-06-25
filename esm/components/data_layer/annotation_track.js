@@ -1,3 +1,4 @@
+/** @module */
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 
