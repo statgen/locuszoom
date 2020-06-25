@@ -56,7 +56,9 @@ function install (LocusZoom) {
                     .setTitle('Toggle whether tracks are split apart or merged together')
                     .setOnclick(() => {
                         data_layer.toggleSplitTracks();
-                        if (this.scale_timeout) { clearTimeout(this.scale_timeout); }
+                        if (this.scale_timeout) {
+                            clearTimeout(this.scale_timeout);
+                        }
                         this.scale_timeout = setTimeout(() => {
                             this.parent_panel.scaleHeightToData();
                             this.parent_plot.positionPanels();
@@ -126,9 +128,9 @@ function install (LocusZoom) {
          */
         getElementStatusNodeId(element) {
             if (this.layout.split_tracks) {
-                return (this.getBaseId() + '-statusnode-' + element[this.layout.track_split_field]).replace(/[^\w]/g, '_');
+                return (`${this.getBaseId()}-statusnode-${element[this.layout.track_split_field]}`).replace(/[^\w]/g, '_');
             }
-            return this.getElementId(element) + '-statusnode';
+            return `${this.getElementId(element)}-statusnode`;
         }
 
         // Helper function to sum layout values to derive total height for a single interval track
@@ -177,7 +179,9 @@ function install (LocusZoom) {
                 // The legend must match the color scheme. If we generate one, then we must generate both.
 
                 const colors = this._makeColorScheme(known_categories);
-                color_scale.parameters.categories = known_categories.map(function (item) { return item[0]; });
+                color_scale.parameters.categories = known_categories.map(function (item) {
+                    return item[0];
+                });
                 color_scale.parameters.values = colors;
 
                 this.layout.legend = known_categories.map(function (pair, index) {
@@ -213,7 +217,9 @@ function install (LocusZoom) {
                     this.track_split_field_index[d[this.layout.track_split_field]] = null;
                 }.bind(this));
                 const index = Object.keys(this.track_split_field_index);
-                if (this.layout.track_split_order === 'DESC') { index.reverse(); }
+                if (this.layout.track_split_order === 'DESC') {
+                    index.reverse();
+                }
                 index.forEach(function(val) {
                     this.track_split_field_index[val] = this.tracks + 1;
                     this.interval_track_index[this.tracks + 1] = [];
@@ -331,13 +337,13 @@ function install (LocusZoom) {
                     // without needing to modify interval display element(s))
                     const statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete')
                         .data([interval], function (d) {
-                            return data_layer.getElementId(d) + '-statusnode';
+                            return `${data_layer.getElementId(d)}-statusnode`;
                         });
                     statusnodes.enter().insert('rect', ':first-child')
                         .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete');
                     statusnodes
                         .attr('id', function(d) {
-                            return data_layer.getElementId(d) + '-statusnode';
+                            return `${data_layer.getElementId(d)}-statusnode`;
                         })
                         .attr('rx', function() {
                             return data_layer.layout.bounding_box_padding;
@@ -371,7 +377,7 @@ function install (LocusZoom) {
                     // Render primary interval rects
                     const rects = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-interval_rect')
                         .data([interval], function (d) {
-                            return d[data_layer.layout.id_field] + '_interval_rect';
+                            return `${d[data_layer.layout.id_field]}_interval_rect`;
                         });
 
                     rects.enter().append('rect')
@@ -408,7 +414,7 @@ function install (LocusZoom) {
                     // Render interval click areas
                     const clickareas = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-clickarea')
                         .data([interval], function (d) {
-                            return d.interval_name + '_clickarea';
+                            return `${d.interval_name}_clickarea`;
                         });
 
                     clickareas.enter().append('rect')
@@ -416,7 +422,7 @@ function install (LocusZoom) {
 
                     clickareas
                         .attr('id', function(d) {
-                            return data_layer.getElementId(d) + '_clickarea';
+                            return `${data_layer.getElementId(d)}_clickarea`;
                         })
                         .attr('rx', function() {
                             return data_layer.layout.bounding_box_padding;
@@ -476,7 +482,7 @@ function install (LocusZoom) {
         }
 
         _getTooltipPosition(tooltip) {
-            const interval_bbox = d3.select('#' + this.getElementStatusNodeId(tooltip.data)).node().getBBox();
+            const interval_bbox = d3.select(`#${this.getElementStatusNodeId(tooltip.data)}`).node().getBBox();
             return {
                 x_min: tooltip.data.display_range.start,
                 x_max: tooltip.data.display_range.end,
@@ -488,7 +494,7 @@ function install (LocusZoom) {
         // Redraw split track axis or hide it, and show/hide the legend, as determined
         // by current layout parameters and data
         updateSplitTrackAxis() {
-            const legend_axis = this.layout.track_split_legend_to_y_axis ? 'y' + this.layout.track_split_legend_to_y_axis : false;
+            const legend_axis = this.layout.track_split_legend_to_y_axis ? `y${this.layout.track_split_legend_to_y_axis}` : false;
             if (this.layout.split_tracks) {
                 const tracks = +this.tracks || 0;
                 const track_height = +this.layout.track_height || 0;
@@ -531,7 +537,9 @@ function install (LocusZoom) {
                 this.parent_plot.positionPanels();
             } else {
                 if (legend_axis && this.parent.legend) {
-                    if (!this.layout.always_hide_legend) { this.parent.legend.show(); }
+                    if (!this.layout.always_hide_legend) {
+                        this.parent.legend.show();
+                    }
                     this.parent.layout.axes[legend_axis] = { render: false };
                     this.parent.render();
                 }
@@ -559,7 +567,9 @@ function install (LocusZoom) {
                 return item[2];
             });
             if (has_explicit_colors) {
-                return category_info.map(function (item) { return item[2]; });
+                return category_info.map(function (item) {
+                    return item[2];
+                });
             }
 
             // Use a set of color schemes for common 15, 18, or 25 state models, as specified from:

@@ -169,7 +169,7 @@ function install (LocusZoom) {
         getRequest(state, chain, fields) {
             // Does not actually make a request. Just pick off the specific bundle of data from a known payload structure.
             if (chain.discrete && !chain.discrete[this._from]) {
-                throw this.constructor.SOURCE_NAME + ' cannot be used before loading required data for: ' + this._from;
+                throw `${this.constructor.SOURCE_NAME} cannot be used before loading required data for: ${this._from}`;
             }
             // Copy the data so that mutations (like sorting) don't affect the original
             return Promise.resolve(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));

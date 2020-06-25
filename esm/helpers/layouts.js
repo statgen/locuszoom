@@ -65,7 +65,7 @@ function applyNamespaces(element, namespace, default_namespace) {
  */
 function merge(custom_layout, default_layout) {
     if (typeof custom_layout !== 'object' || typeof default_layout !== 'object') {
-        throw new Error('LocusZoom.Layouts.merge only accepts two layout objects; ' + (typeof custom_layout) + ', ' + (typeof default_layout) + ' given');
+        throw new Error(`LocusZoom.Layouts.merge only accepts two layout objects; ${typeof custom_layout}, ${typeof default_layout} given`);
     }
     for (let property in default_layout) {
         if (!Object.prototype.hasOwnProperty.call(default_layout, property)) {
@@ -111,8 +111,11 @@ function deepCopy(item) {
  */
 function nameToSymbol(shape) {
     // Legend shape names are strings; need to connect this to factory. Eg circle --> d3.symbolCircle
+    if (!shape) {
+        return null;
+    }
     const factory_name = `symbol${shape.charAt(0).toUpperCase() + shape.slice(1)}`;
-    return d3[factory_name];
+    return d3[factory_name] || null;
 }
 
 export { applyNamespaces, deepCopy, merge, nameToSymbol };

@@ -42,7 +42,7 @@ function install(LocusZoom) {
             // TODO: In the future, accept a pre-configured reader instance (as an alternative to the URL). Most useful
             //   for UIs that want to validate the tabix file before adding it to the plot, like LocalZoom.
             this.url_data = init.url_data;
-            this.url_tbi = init.url_tbi || this.url_data + '.tbi';
+            this.url_tbi = init.url_tbi || `${this.url_data}.tbi`;
 
             // In tabix mode, sometimes we want to fetch a slightly larger region than is displayed, in case a
             //    feature is on the edge of what the tabix query would return.

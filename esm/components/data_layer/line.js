@@ -37,8 +37,6 @@ class Line extends BaseDataLayer {
         const panel = this.parent;
         const x_field = this.layout.x_axis.field;
         const y_field = this.layout.y_axis.field;
-        const x_scale = 'x_scale';
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
 
         // Join data to the line selection
         const selection = this.svg.group
@@ -52,17 +50,19 @@ class Line extends BaseDataLayer {
 
         // Generate the line
         let line;
+        const x_scale = panel['x_scale'];
+        const y_scale = panel[`y${this.layout.y_axis.axis}_scale`];
         if (this.layout.style.fill && this.layout.style.fill !== 'none') {
             // Filled curve: define the line as a filled boundary
             line = d3.area()
-                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
-                .y0(function() {return parseFloat(panel[y_scale](0));})
-                .y1(function(d) { return parseFloat(panel[y_scale](d[y_field])); });
+                .x((d) => +x_scale(d[x_field]))
+                .y0(+y_scale(0))
+                .y1((d) => +y_scale(d[y_field]));
         } else {
             // Basic line
             line = d3.line()
-                .x(function(d) { return parseFloat(panel[x_scale](d[x_field])); })
-                .y(function(d) { return parseFloat(panel[y_scale](d[y_field])); })
+                .x((d) => +x_scale(d[x_field]))
+                .y((d) => +y_scale(d[y_field]))
                 .curve(d3[this.layout.interpolate]);
         }
 
@@ -95,10 +95,12 @@ class Line extends BaseDataLayer {
 
     setAllElementStatus(status, toggle) {
         // Sanity check
-        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
-            throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
+        if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
+            throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
+        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+            return this;
+        }
         if (typeof toggle == 'undefined') {
             toggle = true;
         }
@@ -109,7 +111,9 @@ class Line extends BaseDataLayer {
         // Apply class to path based on global status flags
         let path_class = 'lz-data_layer-line';
         Object.keys(this.global_statuses).forEach((global_status) => {
-            if (this.global_statuses[global_status]) { path_class += ' lz-data_layer-line-' + global_status; }
+            if (this.global_statuses[global_status]) {
+                path_class += ` lz-data_layer-line-${global_status}`;
+            }
         });
         this.path.attr('class', path_class);
 
@@ -148,7 +152,7 @@ class OrthogonalLine extends BaseDataLayer {
     constructor(layout) {
         layout = merge(layout, default_orthogonal_layout);
         // Require that orientation be "horizontal" or "vertical" only
-        if (['horizontal','vertical'].indexOf(layout.orientation) === -1) {
+        if (!['horizontal','vertical'].includes(layout.orientation)) {
             layout.orientation = 'horizontal';
         }
         super(...arguments);
@@ -171,9 +175,9 @@ class OrthogonalLine extends BaseDataLayer {
         // Several vars needed to be in scope
         const panel = this.parent;
         const x_scale = 'x_scale';
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
         const x_extent = 'x_extent';
-        const y_extent = 'y' + this.layout.y_axis.axis + '_extent';
+        const y_extent = `y${this.layout.y_axis.axis}_extent`;
         const x_range = 'x_range';
 
         // Generate data using extents depending on orientation
@@ -208,12 +212,12 @@ class OrthogonalLine extends BaseDataLayer {
 
         // Generate the line
         const line = d3.line()
-            .x(function (d, i) {
-                const x = parseFloat(panel[x_scale](d['x']));
+            .x((d, i) => {
+                const x = +panel[x_scale](d['x']);
                 return isNaN(x) ? panel[x_range][i] : x;
             })
-            .y(function (d, i) {
-                const y = parseFloat(panel[y_scale](d['y']));
+            .y((d, i) => {
+                const y = +panel[y_scale](d['y']);
                 return isNaN(y) ? default_y[i] : y;
             });
 

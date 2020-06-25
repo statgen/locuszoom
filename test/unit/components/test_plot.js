@@ -135,10 +135,18 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
         });
         it('should not allow for a non-numerical / non-positive predefined dimensions', function() {
-            assert.throws(function() { this.plot = populate('#plot', null, { width: 0, height: 0 }); });
-            assert.throws(function() { this.plot = populate('#plot', null, { width: 20, height: -20 }); });
-            assert.throws(function() { this.plot = populate('#plot', null, { width: 'foo', height: 40 }); });
-            assert.throws(function() { this.plot = populate('#plot', null, { width: 60, height: [1,2] }); });
+            assert.throws(function() {
+                this.plot = populate('#plot', null, { width: 0, height: 0 });
+            });
+            assert.throws(function() {
+                this.plot = populate('#plot', null, { width: 20, height: -20 });
+            });
+            assert.throws(function() {
+                this.plot = populate('#plot', null, { width: 'foo', height: 40 });
+            });
+            assert.throws(function() {
+                this.plot = populate('#plot', null, { width: 60, height: [1,2] });
+            });
         });
         it('should not allow for a non-numerical / non-positive predefined aspect ratio', function() {
             assert.throws(function() {

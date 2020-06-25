@@ -33,7 +33,7 @@ export function logtoscinotation (value) {
     } else if (exp === 2) {
         return (base / 100).toFixed(3);
     } else {
-        return base.toFixed(2) + ' × 10^-' + exp;
+        return `${base.toFixed(2)} × 10^-${exp}`;
     }
 }
 
@@ -76,7 +76,7 @@ export function htmlescape (value) {
     if (!value) {
         return '';
     }
-    value = value + '';
+    value = `${value}`;
 
     return value.replace(/['"<>&`]/g, function (s) {
         switch (s) {

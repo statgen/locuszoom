@@ -463,7 +463,7 @@ const standard_plot_toolbar = {
         {
             type: 'title',
             title: 'LocusZoom',
-            subtitle: '<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v' + version + '</a>',
+            subtitle: `<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v${version}</a>`,
             position: 'left'
         },
         {

@@ -49,7 +49,7 @@ class Requester {
         // Create an array of functions that, when called, will trigger the request to the specified datasource
         var request_handles = Object.keys(requests).map((key) => {
             if (!this._sources.get(key)) {
-                throw new Error('Datasource for namespace ' + key + ' not found');
+                throw new Error(`Datasource for namespace ${key} not found`);
             }
             return this._sources.get(key).getData(
                 state,

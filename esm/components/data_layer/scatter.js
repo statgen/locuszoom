@@ -37,7 +37,7 @@ class Scatter extends BaseDataLayer {
     // Implement tooltip position to be layer-specific
     _getTooltipPosition(tooltip) {
         const x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
         const y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
         const point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
         const offset = Math.sqrt(point_size / Math.PI);
@@ -58,8 +58,8 @@ class Scatter extends BaseDataLayer {
         const spacing = data_layer.layout.label.spacing;
         const handle_lines = Boolean(data_layer.layout.label.lines);
         const min_x = 2 * spacing;
-        const max_x = data_layer.parent.layout.width - data_layer.parent.layout.margin.left - data_layer.parent.layout.margin.right - (2 * spacing);
-        const flip = function (dn, dnl) {
+        const max_x = this.parent.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
+        const flip = (dn, dnl) => {
             const dnx = +dn.attr('x');
             const text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
             let dnlx2;
@@ -138,6 +138,7 @@ class Scatter extends BaseDataLayer {
         const spacing = this.layout.label.spacing;
         let again = false;
         data_layer.label_texts.each(function () {
+            // TODO: O(n2) algorithm; revisit performance?
             const a = this;
             const da = d3.select(a);
             const y1 = da.attr('y');
@@ -201,7 +202,7 @@ class Scatter extends BaseDataLayer {
             // Adjust lines to follow the labels
             if (data_layer.layout.label.lines) {
                 const label_elements = data_layer.label_texts[0];
-                data_layer.label_lines.attr('y2',function(d,i) {
+                data_layer.label_lines.attr('y2', (d, i) => {
                     const label_line = d3.select(label_elements[i]);
                     return label_line.attr('y');
                 });
@@ -217,10 +218,9 @@ class Scatter extends BaseDataLayer {
 
     // Implement the main render function
     render() {
-        const self = this;
         const data_layer = this;
         const x_scale = 'x_scale';
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
         if (this.layout.label) {
             // Apply filters to generate a filtered data set
@@ -229,38 +229,50 @@ class Scatter extends BaseDataLayer {
             if (!filters.length) {
                 filtered_data = this.data;
             } else {
-                filtered_data = this.data.filter(function(d) {
+                filtered_data = this.data.filter((d) => {
                     // Start by assuming a match (base case = no filters).
                     // Test each filters: ALL must be satisfied for match to occur.
                     let match = true;
-                    filters.forEach(function(filter) {
-                        const extra = self.layer_state.extra_fields[self.getElementId(d)];
+                    filters.forEach((filter) => {
+                        const extra = this.layer_state.extra_fields[this.getElementId(d)];
                         const field_value = (new Field(filter.field)).resolve(d, extra);
 
-                        if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
+                        if (!['!=', '='].includes(filter.operator) && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
                         } else {
                             switch (filter.operator) {
                             case '<':
-                                if (!(field_value < filter.value)) { match = false; }
+                                if (!(field_value < filter.value)) {
+                                    match = false;
+                                }
                                 break;
                             case '<=':
-                                if (!(field_value <= filter.value)) { match = false; }
+                                if (!(field_value <= filter.value)) {
+                                    match = false;
+                                }
                                 break;
                             case '>':
-                                if (!(field_value > filter.value)) { match = false; }
+                                if (!(field_value > filter.value)) {
+                                    match = false;
+                                }
                                 break;
                             case '>=':
-                                if (!(field_value >= filter.value)) { match = false; }
+                                if (!(field_value >= filter.value)) {
+                                    match = false;
+                                }
                                 break;
                             case '=':
-                                if (!(field_value === filter.value)) { match = false; }
+                                if (!(field_value === filter.value)) {
+                                    match = false;
+                                }
                                 break;
                             case '!=':
                                 // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
                                 // eslint-disable-next-line eqeqeq
-                                if (field_value == filter.value) { match = false; }
+                                if (field_value == filter.value) {
+                                    match = false;
+                                }
                                 break;
                             default:
                                 // If we got here the operator is not valid, so the filter should fail
@@ -275,62 +287,77 @@ class Scatter extends BaseDataLayer {
 
             // Render label groups
             this.label_groups = this.svg.group
-                .selectAll('g.lz-data_layer-' + this.layout.type + '-label')
-                .data(filtered_data, function(d) { return d[self.layout.id_field]  + '_label'; });
+                .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
+                .data(filtered_data, (d) => `${d[this.layout.id_field]}_label`);
+
             this.label_groups.enter()
                 .append('g')
-                .attr('class', 'lz-data_layer-' + this.layout.type + '-label');
+                .attr('class', `lz-data_layer-${this.layout.type}-label`);
+
             // Render label texts
-            if (this.label_texts) { this.label_texts.remove(); }
-            this.label_texts = this.label_groups.append('text')
-                .attr('class', 'lz-data_layer-' + this.layout.type + '-label');
+            if (this.label_texts) {
+                this.label_texts.remove();
+            }
+            this.label_texts = this.label_groups
+                .append('text')
+                .attr('class', `lz-data_layer-${this.layout.type}-label`);
             this.label_texts
-                .text(function(d) {
-                    return parseFields(d, data_layer.layout.label.text || '');
-                })
-                .attr('x', function(d) {
+                .text((d) => parseFields(d, data_layer.layout.label.text || ''))
+                .attr('x', (d) => {
                     let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
                         + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                         + data_layer.layout.label.spacing;
-                    if (isNaN(x)) { x = -1000; }
+                    if (isNaN(x)) {
+                        x = -1000;
+                    }
                     return x;
                 })
-                .attr('y', function(d) {
+                .attr('y', (d) => {
                     let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                    if (isNaN(y)) { y = -1000; }
+                    if (isNaN(y)) {
+                        y = -1000;
+                    }
                     return y;
                 })
-                .attr('text-anchor', function() {
-                    return 'start';
-                });
+                .attr('text-anchor', 'start');
             applyStyles(this.label_texts, data_layer.layout.label.style || {});
 
             // Render label lines
             if (data_layer.layout.label.lines) {
-                if (this.label_lines) { this.label_lines.remove(); }
+                if (this.label_lines) {
+                    this.label_lines.remove();
+                }
                 this.label_lines = this.label_groups.append('line')
-                    .attr('class', 'lz-data_layer-' + this.layout.type + '-label');
+                    .attr('class', `lz-data_layer-${this.layout.type}-label`);
                 this.label_lines
-                    .attr('x1', function(d) {
+                    .attr('x1', (d) => {
                         let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                        if (isNaN(x)) { x = -1000; }
+                        if (isNaN(x)) {
+                            x = -1000;
+                        }
                         return x;
                     })
-                    .attr('y1', function(d) {
+                    .attr('y1', (d) => {
                         let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) { y = -1000; }
+                        if (isNaN(y)) {
+                            y = -1000;
+                        }
                         return y;
                     })
-                    .attr('x2', function(d) {
+                    .attr('x2', (d) => {
                         let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
                             + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                             + (data_layer.layout.label.spacing / 2);
-                        if (isNaN(x)) { x = -1000; }
+                        if (isNaN(x)) {
+                            x = -1000;
+                        }
                         return x;
                     })
-                    .attr('y2', function(d) {
+                    .attr('y2', (d) => {
                         let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) { y = -1000; }
+                        if (isNaN(y)) {
+                            y = -1000;
+                        }
                         return y;
                     });
 
@@ -351,38 +378,32 @@ class Scatter extends BaseDataLayer {
 
         // Generate main scatter data elements
         const selection = this.svg.group
-            .selectAll('path.lz-data_layer-' + this.layout.type)
-            .data(this.data, function (d) {
-                return d[self.layout.id_field];
-            });
+            .selectAll(`path.lz-data_layer-${this.layout.type}`)
+            .data(this.data, (d) => d[this.layout.id_field]);
 
         // Create elements, apply class, ID, and initial position
         const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append('path')
-            .attr('class', 'lz-data_layer-' + this.layout.type)
-            .attr('id', function(d) { return self.getElementId(d); })
-            .attr('transform', 'translate(0,' + initial_y + ')');
+            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .attr('id', (d) => this.getElementId(d))
+            .attr('transform', `translate(0, ${initial_y})`);
 
         // Generate new values (or functions for them) for position, color, size, and shape
-        const transform = function (d) {
-            let x = self.parent[x_scale](d[self.layout.x_axis.field]);
-            let y = self.parent[y_scale](d[self.layout.y_axis.field]);
+        const transform = (d) => {
+            let x = this.parent[x_scale](d[this.layout.x_axis.field]);
+            let y = this.parent[y_scale](d[this.layout.y_axis.field]);
             if (isNaN(x)) {
                 x = -1000;
             }
             if (isNaN(y)) {
                 y = -1000;
             }
-            return 'translate(' + x + ',' + y + ')';
+            return `translate(${x}, ${y})`;
         };
 
-        const fill = (d, i) => {
-            return this.resolveScalableParameter(this.layout.color, d, i);
-        };
-        const fill_opacity = (d, i) => {
-            return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
-        };
+        const fill = (d, i) => this.resolveScalableParameter(this.layout.color, d, i);
+        const fill_opacity = (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i);
 
         const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
@@ -396,12 +417,11 @@ class Scatter extends BaseDataLayer {
             .attr('d', shape);
 
         // Remove old elements as needed
-        selection.exit().remove();
+        selection.exit()
+            .remove();
 
         // Apply default event emitters to selection
-        selection.on('click.event_emitter', function(element) {
-            self.parent.emit('element_clicked', element, true);
-        });
+        selection.on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true));
 
         // Apply mouse behaviors
         this.applyBehaviors(selection);
@@ -412,13 +432,10 @@ class Scatter extends BaseDataLayer {
             this.seperate_iterations = 0;
             this.separate_labels();
             // Apply default event emitters to selection
-            this.label_texts.on('click.event_emitter', function(element) {
-                self.parent.emit('element_clicked', element, true);
-            });
+            this.label_texts.on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true));
             // Extend mouse behaviors to labels
             this.applyBehaviors(this.label_texts);
         }
-
     }
 
     // Method to set a passed element as the LD reference in the plot-level state
@@ -439,7 +456,6 @@ class Scatter extends BaseDataLayer {
         }
         this.parent_plot.applyState({ ldrefvar: ref });
     }
-
 }
 
 /**
@@ -461,18 +477,18 @@ class CategoryScatter extends Scatter {
         // The (namespaced) field from `this.data` that will be used to assign datapoints to a given category & color
         const category_field = this.layout.x_axis.category_field;
         if (!category_field) {
-            throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
+            throw new Error(`Layout for ${this.layout.id} must specify category_field`);
         }
         // Sort the data so that things in the same category are adjacent (case-insensitive by specified field)
         const sourceData = this.data
-            .sort(function (a, b) {
+            .sort((a, b) => {
                 const ak = a[category_field];
                 const bk = b[category_field];
                 const av = (typeof ak === 'string') ? ak.toLowerCase() : ak;
                 const bv = (typeof bk === 'string') ? bk.toLowerCase() : bk;
                 return (av === bv) ? 0 : (av < bv ? -1 : 1);
             });
-        sourceData.forEach(function(d, i) {
+        sourceData.forEach((d, i) => {
             // Implementation detail: Scatter plot requires specifying an x-axis value, and most datasources do not
             //   specify plotting positions. If a point is missing this field, fill in a synthetic value.
             d[xField] = d[xField] || i;
@@ -492,7 +508,7 @@ class CategoryScatter extends Scatter {
         const category_field = this.layout.x_axis.category_field;
         const xField = this.layout.x_axis.field || 'x';
         const uniqueCategories = {};
-        this.data.forEach(function(item) {
+        this.data.forEach((item) => {
             const category = item[category_field];
             const x = item[xField];
             const bounds = uniqueCategories[category] || [x, x];
@@ -520,7 +536,7 @@ class CategoryScatter extends Scatter {
         //  preferred mechanism of array (multiple coloring options)
         let color_params = from_source.color || []; // Object or scalar, no other options allowed
         if (Array.isArray(color_params)) {
-            color_params = color_params.find(function(item) { return item.scale_function === 'categorical_bin'; });
+            color_params = color_params.find((item) => item.scale_function === 'categorical_bin');
         }
         if (!color_params || color_params.scale_function !== 'categorical_bin') {
             throw new Error('This layer requires that color options be provided as a `categorical_bin`');
@@ -556,10 +572,10 @@ class CategoryScatter extends Scatter {
         if (baseParams.categories.length && baseParams.values.length) {
             // If there are preset category/color combos, make sure that they apply to the actual dataset
             const parameters_categories_hash = {};
-            baseParams.categories.forEach(function (category) { parameters_categories_hash[category] = 1; });
-            if (categoryNames.every(function (name) {
-                return Object.prototype.hasOwnProperty.call(parameters_categories_hash, name);
-            })) {
+            baseParams.categories.forEach((category) => {
+                parameters_categories_hash[category] = 1;
+            });
+            if (categoryNames.every((name) => Object.prototype.hasOwnProperty.call(parameters_categories_hash, name))) {
                 // The layout doesn't have to specify categories in order, but make sure they are all there
                 colorParams.categories = baseParams.categories;
             } else {
@@ -573,10 +589,11 @@ class CategoryScatter extends Scatter {
         if (baseParams.values.length) {
             colors = baseParams.values;
         } else {
-            const color_scale = d3.schemeSet3; // max default: up to 12 items
-            colors = color_scale().range();
+            colors = d3.schemeSet3; // max default: up to 12 items
         }
-        while (colors.length < categoryNames.length) { colors = colors.concat(colors); }
+        while (colors.length < categoryNames.length) {
+            colors = colors.concat(colors);
+        }
         colors = colors.slice(0, categoryNames.length);  // List of hex values, should be of same length as categories array
         colorParams.values = colors;
     }
@@ -589,11 +606,11 @@ class CategoryScatter extends Scatter {
      * @returns {Array}
      */
     getTicks(dimension, config) { // Overrides parent method
-        if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
+        if (!['x', 'y1', 'y2'].includes(dimension)) {
             throw new Error('Invalid dimension identifier');
         }
         const position = config.position || 'left';
-        if (['left', 'center', 'right'].indexOf(position) === -1) {
+        if (!['left', 'center', 'right'].includes(position)) {
             throw new Error('Invalid tick position');
         }
 
@@ -612,7 +629,7 @@ class CategoryScatter extends Scatter {
             const knownCategories = colors.parameters.categories || [];
             const knownColors = colors.parameters.values || [];
 
-            return Object.keys(categoryBounds).map(function (category, index) {
+            return Object.keys(categoryBounds).map((category, index) => {
                 const bounds = categoryBounds[category];
                 let xPos;
 

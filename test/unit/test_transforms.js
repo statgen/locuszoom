@@ -14,7 +14,7 @@ describe('Transformation Functions', function() {
             { arg: 0.0000324, expected: 4.489454989793387 }
         ];
         tests.forEach(function(test) {
-            it('should return correct negative log 10 for ' + test.arg, function() {
+            it(`should return correct negative log 10 for ${  test.arg}`, function() {
                 assert.equal(neglog10(test.arg), test.expected);
             });
         });
@@ -32,7 +32,7 @@ describe('Transformation Functions', function() {
             { arg: 'foo',           expected: 'NaN' }
         ];
         tests.forEach(function(test) {
-            it('should return correct scientific notation for ' + test.arg, function() {
+            it(`should return correct scientific notation for ${  test.arg}`, function() {
                 assert.equal(scinotation(test.arg), test.expected);
             });
         });

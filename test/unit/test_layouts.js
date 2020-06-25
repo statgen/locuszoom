@@ -8,7 +8,7 @@ describe('_LayoutRegistry', function() {
             const list = registry.list();
             assert.isObject(list);
             assert.hasAllKeys(list, ['plot', 'panel', 'data_layer', 'toolbar', 'toolbar_widgets', 'tooltip']);
-            Object.values(list).forEach(listing => {
+            Object.values(list).forEach((listing) => {
                 assert.isString(listing[0]);
             });
         });

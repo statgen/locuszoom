@@ -75,10 +75,10 @@ class Panel {
         // Ensure a valid ID is present. If there is no valid ID then generate one
         if (typeof layout.id !== 'string' || !layout.id.length) {
             if (!this.parent) {
-                layout.id = 'p' + Math.floor(Math.random() * Math.pow(10,8));
+                layout.id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
             } else {
                 const generateID = () => {
-                    let id = 'p' + Math.floor(Math.random() * Math.pow(10, 8));
+                    let id = `p${Math.floor(Math.random() * Math.pow(10, 8))}`;
                     if (id === null || typeof this.parent.panels[id] != 'undefined') {
                         id = generateID();
                     }
@@ -88,7 +88,7 @@ class Panel {
             }
         } else if (this.parent) {
             if (typeof this.parent.panels[layout.id] !== 'undefined') {
-                throw new Error('Cannot create panel with id [' + layout.id + ']; panel with that id already exists');
+                throw new Error(`Cannot create panel with id [${layout.id}]; panel with that id already exists`);
             }
         }
         /** @member {String} */
@@ -190,7 +190,7 @@ class Panel {
 
     /** @returns {string} */
     getBaseId () {
-        return this.parent.id + '.' + this.id;
+        return `${this.parent.id}.${this.id}`;
     }
 
     /**
@@ -220,7 +220,7 @@ class Panel {
     on(event, hook) {
         // TODO: Dry plot and panel event code into a shared mixin
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error('Unable to register event hook, invalid event: ' + event.toString());
+            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
@@ -237,7 +237,7 @@ class Panel {
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
         if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-            throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
+            throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
             // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -270,7 +270,7 @@ class Panel {
         // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
         // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
+            throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
         }
         if (typeof eventData === 'boolean' && arguments.length === 2) {
             // Overloaded method signature: emit(event, bubble)
@@ -395,7 +395,9 @@ class Panel {
             this.curtain.update();
             this.loader.update();
             this.toolbar.update();
-            if (this.legend) { this.legend.position(); }
+            if (this.legend) {
+                this.legend.position();
+            }
         }
         return this;
     }
@@ -409,9 +411,15 @@ class Panel {
      * @returns {Panel}
      */
     setOrigin(x, y) {
-        if (!isNaN(x) && x >= 0) { this.layout.origin.x = Math.max(Math.round(+x), 0); }
-        if (!isNaN(y) && y >= 0) { this.layout.origin.y = Math.max(Math.round(+y), 0); }
-        if (this.initialized) { this.render(); }
+        if (!isNaN(x) && x >= 0) {
+            this.layout.origin.x = Math.max(Math.round(+x), 0);
+        }
+        if (!isNaN(y) && y >= 0) {
+            this.layout.origin.y = Math.max(Math.round(+y), 0);
+        }
+        if (this.initialized) {
+            this.render();
+        }
         return this;
     }
 
@@ -426,10 +434,18 @@ class Panel {
      */
     setMargin(top, right, bottom, left) {
         let extra;
-        if (!isNaN(top)    && top    >= 0) { this.layout.margin.top    = Math.max(Math.round(+top),    0); }
-        if (!isNaN(right)  && right  >= 0) { this.layout.margin.right  = Math.max(Math.round(+right),  0); }
-        if (!isNaN(bottom) && bottom >= 0) { this.layout.margin.bottom = Math.max(Math.round(+bottom), 0); }
-        if (!isNaN(left)   && left   >= 0) { this.layout.margin.left   = Math.max(Math.round(+left),   0); }
+        if (!isNaN(top)    && top    >= 0) {
+            this.layout.margin.top = Math.max(Math.round(+top), 0);
+        }
+        if (!isNaN(right)  && right  >= 0) {
+            this.layout.margin.right = Math.max(Math.round(+right), 0);
+        }
+        if (!isNaN(bottom) && bottom >= 0) {
+            this.layout.margin.bottom = Math.max(Math.round(+bottom), 0);
+        }
+        if (!isNaN(left)   && left   >= 0) {
+            this.layout.margin.left = Math.max(Math.round(+left), 0);
+        }
         if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
             extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
             this.layout.margin.top -= extra;
@@ -448,7 +464,9 @@ class Panel {
         this.layout.cliparea.origin.x = this.layout.margin.left;
         this.layout.cliparea.origin.y = this.layout.margin.top;
 
-        if (this.initialized) { this.render(); }
+        if (this.initialized) {
+            this.render();
+        }
         return this;
     }
 
@@ -498,21 +516,22 @@ class Panel {
 
         // Append a container group element to house the main panel group element and the clip path
         // Position with initial layout parameters
+        const base_id = this.getBaseId();
         this.svg.container = this.parent.svg.append('g')
-            .attr('id', this.getBaseId() + '.panel_container')
+            .attr('id', `${base_id}.panel_container`)
             .attr('transform', `translate(${this.layout.origin.x || 0}, ${this.layout.origin.y || 0})`);
 
         // Append clip path to the parent svg element, size with initial layout parameters
         const clipPath = this.svg.container.append('clipPath')
-            .attr('id', this.getBaseId() + '.clip');
+            .attr('id', `${base_id}.clip`);
         this.svg.clipRect = clipPath.append('rect')
             .attr('width', this.layout.width)
             .attr('height', this.layout.height);
 
         // Append svg group for rendering all panel child elements, clipped by the clip path
         this.svg.group = this.svg.container.append('g')
-            .attr('id', this.getBaseId() + '.panel')
-            .attr('clip-path', `url(#${this.getBaseId()}.clip)`);
+            .attr('id', `${base_id}.panel`)
+            .attr('clip-path', `url(#${base_id}.clip)`);
 
         // Add curtain and loader prototypes to the panel
         /** @member {Object} */
@@ -530,7 +549,9 @@ class Panel {
         this.inner_border = this.svg.group.append('rect')
             .attr('class', 'lz-panel-background')
             .on('click', () => {
-                if (this.layout.background_click === 'clear_selections') { this.clearSelections(); }
+                if (this.layout.background_click === 'clear_selections') {
+                    this.clearSelections();
+                }
             });
 
         // Add the title
@@ -542,7 +563,7 @@ class Panel {
 
         // Initialize Axes
         this.svg.x_axis = this.svg.group.append('g')
-            .attr('id', this.getBaseId() + '.x_axis')
+            .attr('id', `${base_id}.x_axis`)
             .attr('class', 'lz-x lz-axis');
         if (this.layout.axes.x.render) {
             this.svg.x_axis_label = this.svg.x_axis.append('text')
@@ -550,14 +571,15 @@ class Panel {
                 .attr('text-anchor', 'middle');
         }
         this.svg.y1_axis = this.svg.group.append('g')
-            .attr('id', this.getBaseId() + '.y1_axis').attr('class', 'lz-y lz-y1 lz-axis');
+            .attr('id', `${base_id}.y1_axis`).attr('class', 'lz-y lz-y1 lz-axis');
         if (this.layout.axes.y1.render) {
             this.svg.y1_axis_label = this.svg.y1_axis.append('text')
                 .attr('class', 'lz-y1 lz-axis lz-label')
                 .attr('text-anchor', 'middle');
         }
         this.svg.y2_axis = this.svg.group.append('g')
-            .attr('id', this.getBaseId() + '.y2_axis').attr('class', 'lz-y lz-y2 lz-axis');
+            .attr('id', `${base_id}.y2_axis`)
+            .attr('class', 'lz-y lz-y2 lz-axis');
         if (this.layout.axes.y2.render) {
             this.svg.y2_axis_label = this.svg.y2_axis.append('text')
                 .attr('class', 'lz-y2 lz-axis lz-label')
@@ -580,13 +602,13 @@ class Panel {
 
         // Establish panel background drag interaction mousedown event handler (on the panel background)
         if (this.layout.interaction.drag_background_to_pan) {
-            const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
+            const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
             const mousedown = () => {
                 this.parent.startDrag(this, 'background');
             };
             this.svg.container.select('.lz-panel-background')
-                .on('mousedown' + namespace + '.background', mousedown)
-                .on('touchstart' + namespace + '.background', mousedown);
+                .on(`mousedown${namespace}.background`, mousedown)
+                .on(`touchstart${namespace}.background`, mousedown);
         }
 
         return this;
@@ -615,10 +637,14 @@ class Panel {
     getLinkedPanelIds(axis) {
         axis = axis || null;
         const linked_panel_ids = [];
-        if (['x','y1','y2'].indexOf(axis) === -1) { return linked_panel_ids; }
-        if (!this.layout.interaction[axis + '_linked']) { return linked_panel_ids; }
+        if (!['x','y1','y2'].includes(axis)) {
+            return linked_panel_ids;
+        }
+        if (!this.layout.interaction[`${axis}_linked`]) {
+            return linked_panel_ids;
+        }
         this.parent.panel_ids_by_y_index.forEach((panel_id) => {
-            if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[axis + '_linked']) {
+            if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[`${axis}_linked`]) {
                 linked_panel_ids.push(panel_id);
             }
         });
@@ -664,17 +690,17 @@ class Panel {
 
         // Sanity checks
         if (typeof layout !== 'object' || typeof layout.id !== 'string' || !layout.id.length) {
-            throw new Error('Invalid data layer layout passed to addDataLayer()');
+            throw new Error('Invalid data layer layout');
         }
         if (typeof this.data_layers[layout.id] !== 'undefined') {
-            throw new Error('Cannot create data_layer with id [' + layout.id + ']; data layer with that id already exists in the panel');
+            throw new Error(`Cannot create data_layer with id [${layout.id}]; data layer with that id already exists in the panel`);
         }
         if (typeof layout.type !== 'string') {
-            throw new Error('Invalid data layer type in layout passed to addDataLayer()');
+            throw new Error('Invalid data layer type');
         }
 
         // If the layout defines a y axis make sure the axis number is set and is 1 or 2 (default to 1)
-        if (typeof layout.y_axis == 'object' && (typeof layout.y_axis.axis == 'undefined' || [1,2].indexOf(layout.y_axis.axis) === -1)) {
+        if (typeof layout.y_axis == 'object' && (typeof layout.y_axis.axis == 'undefined' || ![1, 2].includes(layout.y_axis.axis))) {
             layout.y_axis.axis = 1;
         }
 
@@ -704,7 +730,9 @@ class Panel {
         // If it wasn't, add it. Either way store the layout.data_layers array index on the data_layer.
         let layout_idx = null;
         this.layout.data_layers.forEach((data_layer_layout, idx) => {
-            if (data_layer_layout.id === data_layer.id) { layout_idx = idx; }
+            if (data_layer_layout.id === data_layer.id) {
+                layout_idx = idx;
+            }
         });
         if (layout_idx === null) {
             layout_idx = this.layout.data_layers.push(this.data_layers[data_layer.id].layout) - 1;
@@ -721,7 +749,7 @@ class Panel {
      */
     removeDataLayer(id) {
         if (!this.data_layers[id]) {
-            throw new Error('Unable to remove data layer, ID not found: ' + id);
+            throw new Error(`Unable to remove data layer, ID not found: ${id}`);
         }
 
         // Destroy all tooltips for the data layer
@@ -802,7 +830,7 @@ class Panel {
 
         // Reset extents
         ['x', 'y1', 'y2'].forEach((axis) => {
-            this[axis + '_extent'] = null;
+            this[`${axis}_extent`] = null;
         });
 
         // Loop through the data layers
@@ -817,8 +845,8 @@ class Panel {
 
             // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
             if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled) {
-                const y_axis = 'y' + data_layer.layout.y_axis.axis;
-                this[y_axis + '_extent'] = d3.extent((this[y_axis + '_extent'] || []).concat(data_layer.getAxisExtent('y')));
+                const y_axis = `y${data_layer.layout.y_axis.axis}`;
+                this[`${y_axis}_extent`] = d3.extent((this[`${y_axis}_extent`] || []).concat(data_layer.getAxisExtent('y')));
             }
 
         }
@@ -884,8 +912,8 @@ class Panel {
         }
 
         // If no other configuration is provided, attempt to generate ticks from the extent
-        if (this[axis + '_extent']) {
-            return prettyTicks(this[axis + '_extent'], 'both');
+        if (this[`${axis}_extent`]) {
+            return prettyTicks(this[`${axis}_extent`], 'both');
         }
         return [];
     }
@@ -979,7 +1007,7 @@ class Panel {
         }
 
         // Shift ranges based on any drag or zoom interactions currently underway
-        if (this.parent.interaction.panel_id && (this.parent.interaction.panel_id === this.id || this.parent.interaction.linked_panel_ids.indexOf(this.id) !== -1)) {
+        if (this.parent.interaction.panel_id && (this.parent.interaction.panel_id === this.id || this.parent.interaction.linked_panel_ids.includes(this.id))) {
             let anchor, scalar = null;
             if (this.parent.interaction.zooming && typeof this.x_scale == 'function') {
                 const current_extent_size = Math.abs(this.x_extent[1] - this.x_extent[0]);
@@ -1015,7 +1043,7 @@ class Panel {
                     break;
                 case 'y1_tick':
                 case 'y2_tick': {
-                    const y_shifted = 'y' + this.parent.interaction.dragging.method[1] + '_shifted';
+                    const y_shifted = `y${this.parent.interaction.dragging.method[1]}_shifted`;
                     if (d3.event && d3.event.shiftKey) {
                         ranges[y_shifted][0] = this.layout.cliparea.height + this.parent.interaction.dragging.dragged_y;
                         ranges[y_shifted][1] = +this.parent.interaction.dragging.dragged_y;
@@ -1032,22 +1060,24 @@ class Panel {
 
         // Generate scales and ticks for all axes, then render them
         ['x', 'y1', 'y2'].forEach((axis) => {
-            if (!this[axis + '_extent']) { return; }
+            if (!this[`${axis}_extent`]) {
+                return;
+            }
 
             // Base Scale
-            this[axis + '_scale'] = d3.scaleLinear()
-                .domain(this[axis + '_extent'])
-                .range(ranges[axis + '_shifted']);
+            this[`${axis}_scale`] = d3.scaleLinear()
+                .domain(this[`${axis}_extent`])
+                .range(ranges[`${axis}_shifted`]);
 
             // Shift the extent
-            this[axis + '_extent'] = [
-                this[axis + '_scale'].invert(ranges[axis][0]),
-                this[axis + '_scale'].invert(ranges[axis][1])
+            this[`${axis}_extent`] = [
+                this[`${axis}_scale`].invert(ranges[axis][0]),
+                this[`${axis}_scale`].invert(ranges[axis][1])
             ];
 
             // Finalize Scale
-            this[axis + '_scale'] = d3.scaleLinear()
-                .domain(this[axis + '_extent']).range(ranges[axis]);
+            this[`${axis}_scale`] = d3.scaleLinear()
+                .domain(this[`${axis}_extent`]).range(ranges[axis]);
 
             // Render axis (and generate ticks as needed)
             this.renderAxis(axis);
@@ -1116,34 +1146,36 @@ class Panel {
      */
     renderAxis(axis) {
 
-        if (['x', 'y1', 'y2'].indexOf(axis) === -1) {
-            throw new Error('Unable to render axis; invalid axis identifier: ' + axis);
+        if (!['x', 'y1', 'y2'].includes(axis)) {
+            throw new Error(`Unable to render axis; invalid axis identifier: ${axis}`);
         }
 
         const canRender = this.layout.axes[axis].render
-            && typeof this[axis + '_scale'] == 'function'
-            && !isNaN(this[axis + '_scale'](0));
+            && typeof this[`${axis}_scale`] == 'function'
+            && !isNaN(this[`${axis}_scale`](0));
 
         // If the axis has already been rendered then check if we can/can't render it
         // Make sure the axis element is shown/hidden to suit
-        if (this[axis + '_axis']) {
-            this.svg.container.select('g.lz-axis.lz-' + axis)
+        if (this[`${axis}_axis`]) {
+            this.svg.container.select(`g.lz-axis.lz-${axis}`)
                 .style('display', canRender ? null : 'none');
         }
 
-        if (!canRender) { return this; }
+        if (!canRender) {
+            return this;
+        }
 
         // Axis-specific values to plug in where needed
         const axis_params = {
             x: {
-                position: 'translate(' + this.layout.margin.left + ',' + (this.layout.height - this.layout.margin.bottom) + ')',
+                position: `translate(${this.layout.margin.left}, ${this.layout.height - this.layout.margin.bottom})`,
                 orientation: 'bottom',
                 label_x: this.layout.cliparea.width / 2,
                 label_y: (this.layout.axes[axis].label_offset || 0),
                 label_rotate: null
             },
             y1: {
-                position: 'translate(' + this.layout.margin.left + ',' + this.layout.margin.top + ')',
+                position: `translate(${this.layout.margin.left}, ${this.layout.margin.top})`,
                 orientation: 'left',
                 label_x: -1 * (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
@@ -1159,7 +1191,7 @@ class Panel {
         };
 
         // Generate Ticks
-        this[axis + '_ticks'] = this.generateTicks(axis);
+        this[`${axis}_ticks`] = this.generateTicks(axis);
 
         // Determine if the ticks are all numbers (d3-automated tick rendering) or not (manual tick rendering)
         const ticksAreAllNumbers = ((ticks) => {
@@ -1169,7 +1201,7 @@ class Panel {
                 }
             }
             return true;
-        })(this[axis + '_ticks']);
+        })(this[`${axis}_ticks`]);
 
         // Initialize the axis; set scale and orientation
         let axis_factory;
@@ -1187,39 +1219,41 @@ class Panel {
             throw new Error('Unrecognized axis orientation');
         }
 
-        this[axis + '_axis'] = axis_factory(this[axis + '_scale'])
+        this[`${axis}_axis`] = axis_factory(this[`${axis}_scale`])
             .tickPadding(3);
 
         // Set tick values and format
         if (ticksAreAllNumbers) {
-            this[axis + '_axis'].tickValues(this[axis + '_ticks']);
+            this[`${axis}_axis`].tickValues(this[`${axis}_ticks`]);
             if (this.layout.axes[axis].tick_format === 'region') {
-                this[axis + '_axis'].tickFormat((d) => positionIntToString(d, 6));
+                this[`${axis}_axis`].tickFormat((d) => positionIntToString(d, 6));
             }
         } else {
-            let ticks = this[axis + '_ticks'].map((t) => {
+            let ticks = this[`${axis}_ticks`].map((t) => {
                 return(t[axis.substr(0,1)]);
             });
-            this[axis + '_axis'].tickValues(ticks)
-                .tickFormat((t, i) => { return this[axis + '_ticks'][i].text; });
+            this[`${axis}_axis`].tickValues(ticks)
+                .tickFormat((t, i) => {
+                    return this[`${axis}_ticks`][i].text;
+                });
         }
 
         // Position the axis in the SVG and apply the axis construct
-        this.svg[axis + '_axis']
+        this.svg[`${axis}_axis`]
             .attr('transform', axis_params[axis].position)
-            .call(this[axis + '_axis']);
+            .call(this[`${axis}_axis`]);
 
         // If necessary manually apply styles and transforms to ticks as specified by the layout
         if (!ticksAreAllNumbers) {
-            const tick_selector = d3.selectAll('g#' + this.getBaseId().replace('.', '\\.') + '\\.' + axis + '_axis g.tick');
+            const tick_selector = d3.selectAll(`g#${this.getBaseId().replace('.', '\\.')}\\.${axis}_axis g.tick`);
             const panel = this;
             tick_selector.each(function (d, i) {
                 const selector = d3.select(this).select('text');
-                if (panel[axis + '_ticks'][i].style) {
-                    applyStyles(selector, panel[axis + '_ticks'][i].style);
+                if (panel[`${axis}_ticks`][i].style) {
+                    applyStyles(selector, panel[`${axis}_ticks`][i].style);
                 }
-                if (panel[axis + '_ticks'][i].transform) {
-                    selector.attr('transform', panel[axis + '_ticks'][i].transform);
+                if (panel[`${axis}_ticks`][i].transform) {
+                    selector.attr('transform', panel[`${axis}_ticks`][i].transform);
                 }
             });
         }
@@ -1227,20 +1261,20 @@ class Panel {
         // Render the axis label if necessary
         const label = this.layout.axes[axis].label || null;
         if (label !== null) {
-            this.svg[axis + '_axis_label']
+            this.svg[`${axis}_axis_label`]
                 .attr('x', axis_params[axis].label_x)
                 .attr('y', axis_params[axis].label_y)
                 .text(parseFields(this.state, label));
             if (axis_params[axis].label_rotate !== null) {
-                this.svg[axis + '_axis_label']
+                this.svg[`${axis  }_axis_label`]
                     .attr('transform', `rotate(${axis_params[axis].label_rotate} ${axis_params[axis].label_x}, ${axis_params[axis].label_y})`);
             }
         }
 
         // Attach interactive handlers to ticks as needed
         ['x', 'y1', 'y2'].forEach((axis) => {
-            if (this.layout.interaction['drag_' + axis + '_ticks_to_scale']) {
-                const namespace = '.' + this.parent.id + '.' + this.id + '.interaction.drag';
+            if (this.layout.interaction[`drag_${axis}_ticks_to_scale`]) {
+                const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
                 const tick_mouseover = function() {
                     if (typeof d3.select(this).node().focus == 'function') {
                         d3.select(this).node().focus();
@@ -1252,18 +1286,18 @@ class Panel {
                     d3.select(this)
                         .style('font-weight', 'bold')
                         .style('cursor', cursor )
-                        .on('keydown' + namespace, tick_mouseover)
-                        .on('keyup' + namespace, tick_mouseover);
+                        .on(`keydown${namespace}`, tick_mouseover)
+                        .on(`keyup${namespace}`, tick_mouseover);
                 };
-                this.svg.container.selectAll('.lz-axis.lz-' + axis + ' .tick text')
+                this.svg.container.selectAll(`.lz-axis.lz-${axis} .tick text`)
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
-                    .on('mouseover' + namespace, tick_mouseover)
-                    .on('mouseout' + namespace, function() {
+                    .on(`mouseover${namespace}`, tick_mouseover)
+                    .on(`mouseout${namespace}`, function() {
                         d3.select(this).style('font-weight', 'normal');
-                        d3.select(this).on('keydown' + namespace, null).on('keyup' + namespace, null);
+                        d3.select(this).on(`keydown${namespace}`, null).on(`keyup${namespace}`, null);
                     })
-                    .on('mousedown' + namespace, () => {
-                        this.parent.startDrag(this, axis + '_tick');
+                    .on(`mousedown${namespace}`, () => {
+                        this.parent.startDrag(this, `${axis}_tick`);
                     });
             }
         });
@@ -1285,8 +1319,7 @@ class Panel {
                 if (+dh) {
                     if (target_height === null) {
                         target_height = +dh;
-                    }
-                    else {
+                    } else {
                         target_height = Math.max(target_height, +dh);
                     }
                 }
@@ -1337,7 +1370,9 @@ class Panel {
      * @returns {Panel}
      */
     addBasicLoader(show_immediately) {
-        if (typeof show_immediately != 'undefined') { show_immediately = true; }
+        if (typeof show_immediately != 'undefined') {
+            show_immediately = true;
+        }
         if (show_immediately) {
             this.loader.show('Loading...').animate();
         }
@@ -1352,22 +1387,30 @@ class Panel {
 }
 STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
-    const antiverb = 'un' + verb;
+    const antiverb = `un${verb}`;
     // Set/unset status for arbitrarily many elements given a set of filters
-    Panel.prototype[verb + 'ElementsByFilters'] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    Panel.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
-    Panel.prototype[antiverb + 'ElementsByFilters'] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    Panel.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
     // Set/unset status for all elements
-    Panel.prototype[verb + 'AllElements'] = function() {
+    Panel.prototype[`${verb}AllElements`] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
-    Panel.prototype[antiverb + 'AllElements'] = function() {
+    Panel.prototype[`${antiverb}AllElements`] = function() {
         this.setAllElementStatus(adjective, false);
         return this;
     };

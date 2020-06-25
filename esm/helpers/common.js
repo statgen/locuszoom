@@ -29,7 +29,7 @@ function generateCurtain() {
             if (!this.curtain.showing) {
                 this.curtain.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
                     .attr('class', 'lz-curtain')
-                    .attr('id', this.id + '.curtain');
+                    .attr('id', `${this.id}.curtain`);
                 this.curtain.content_selector = this.curtain.selector.append('div')
                     .attr('class', 'lz-curtain-content');
                 this.curtain.selector.append('div')
@@ -58,13 +58,13 @@ function generateCurtain() {
             // Update size and position
             const page_origin = this.getPageOrigin();
             this.curtain.selector
-                .style('top', page_origin.y + 'px')
-                .style('left', page_origin.x + 'px')
-                .style('width', this.layout.width + 'px')
-                .style('height', this.layout.height + 'px');
+                .style('top', `${page_origin.y}px`)
+                .style('left', `${page_origin.x}px`)
+                .style('width', `${this.layout.width}px`)
+                .style('height', `${this.layout.height}px`);
             this.curtain.content_selector
-                .style('max-width', (this.layout.width - 40) + 'px')
-                .style('max-height', (this.layout.height - 40) + 'px');
+                .style('max-width', `${this.layout.width - 40}px`)
+                .style('max-height', `${this.layout.height - 40}px`);
             // Apply content if provided
             if (typeof content == 'string') {
                 this.curtain.content_selector.html(content);
@@ -122,7 +122,7 @@ function generateLoader() {
             if (!this.loader.showing) {
                 this.loader.selector = d3.select(this.parent_plot.svg.node().parentNode).insert('div')
                     .attr('class', 'lz-loader')
-                    .attr('id', this.id + '.loader');
+                    .attr('id', `${this.id}.loader`);
                 this.loader.content_selector = this.loader.selector.append('div')
                     .attr('class', 'lz-loader-content');
                 this.loader.progress_selector = this.loader.selector
@@ -159,8 +159,8 @@ function generateLoader() {
             const page_origin = this.getPageOrigin();
             const loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector
-                .style('top', (page_origin.y + this.layout.height - loader_boundrect.height - padding) + 'px')
-                .style('left', (page_origin.x + padding) + 'px');
+                .style('top', `${page_origin.y + this.layout.height - loader_boundrect.height - padding}px`)
+                .style('left', `${page_origin.x + padding  }px`);
             /* Uncomment this code when a functional cancel button can be shown
             var cancel_boundrect = this.loader.cancel_selector.node().getBoundingClientRect();
             this.loader.content_selector.style({
@@ -170,7 +170,7 @@ function generateLoader() {
             // Apply percent if provided
             if (typeof percent == 'number') {
                 this.loader.progress_selector
-                    .style('width', (Math.min(Math.max(percent, 1), 100)) + '%');
+                    .style('width', `${Math.min(Math.max(percent, 1), 100)}%`);
             }
             return this.loader;
         },

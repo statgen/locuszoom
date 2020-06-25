@@ -51,7 +51,11 @@ describe('Registries', function() {
     describe('ClassRegistry special behaviors', function () {
         it('can create an instance of a class from the registry', function() {
             const registry = new ClassRegistry();
-            const fake = class { constructor(a) { this.a = a; } };
+            const fake = class {
+                constructor(a) {
+                    this.a = a;
+                }
+            };
             registry.add('fake', fake);
             const instance = registry.create('fake', 12);
             assert.equal(instance.a, 12);

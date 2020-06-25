@@ -32,7 +32,7 @@ function install (LocusZoom) {
         parseInit(config) {
             super.parseInit(...arguments);
             if (!(this.params.fields && this.params.fields.log_pvalue)) {
-                throw new Error('Source config for ' + this.constructor.SOURCE_NAME + " must specify how to find 'fields.log_pvalue'");
+                throw new Error(`Source config for ${this.constructor.SOURCE_NAME} must specify how to find 'fields.log_pvalue'`);
             }
             if (!this.params.threshold) {
                 this.params.threshold = 0.95;

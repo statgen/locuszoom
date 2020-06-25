@@ -455,7 +455,9 @@ describe('Panel', function() {
             this.plot = populate('#plot', this.datasources, this.layout);
             return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 50 ]
-                d3.mouse = function() { return [ 50, 50 ]; };
+                d3.mouse = function() {
+                    return [ 50, 50 ];
+                };
                 this.plot.panels.p.svg.container.select('.lz-panel-background').node()['__onmousedown.plot.p.interaction.drag.background']();
                 assert.isObject(this.plot.interaction);
                 assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
@@ -466,7 +468,9 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 25, 50 ] (x -25)
-                d3.mouse = function() { return [ 25, 50 ]; };
+                d3.mouse = function() {
+                    return [ 25, 50 ];
+                };
                 this.plot.svg.node()['__onmousemove.plot']();
                 assert.equal(this.plot.interaction.panel_id, this.plot.panels.p.id);
                 assert.equal(this.plot.interaction.dragging.method, 'background');
@@ -488,7 +492,9 @@ describe('Panel', function() {
             this.plot = populate('#plot', this.datasources, this.layout);
             return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
-                d3.mouse = function() { return [ 50, 0 ]; };
+                d3.mouse = function() {
+                    return [ 50, 0 ];
+                };
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag']();
                 assert.isObject(this.plot.interaction);
                 assert.isObject(this.plot.interaction.dragging);
@@ -498,7 +504,9 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
-                d3.mouse = function() { return [ 25, 0 ]; };
+                d3.mouse = function() {
+                    return [ 25, 0 ];
+                };
                 this.plot.svg.node()['__onmousemove.plot']();
                 assert.equal(this.plot.interaction.dragging.method, 'x_tick');
                 assert.equal(this.plot.interaction.dragging.start_x, 50);
@@ -525,7 +533,9 @@ describe('Panel', function() {
                 };
 
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
-                d3.mouse = function() { return [ 50, 0 ]; };
+                d3.mouse = function() {
+                    return [ 50, 0 ];
+                };
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-x .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
                 assert.isObject(this.plot.interaction);
                 assert.isObject(this.plot.interaction.dragging);
@@ -536,7 +546,9 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
 
                 // Simulate drag (mousemove) to [ 25, 0 ] (x -25)
-                d3.mouse = function() { return [ 25, 0 ]; };
+                d3.mouse = function() {
+                    return [ 25, 0 ];
+                };
                 this.plot.svg.node()['__onmousemove.plot'](event);
                 assert.equal(this.plot.interaction.dragging.method, 'x_tick');
                 assert.equal(this.plot.interaction.dragging.start_x, 50);
@@ -558,7 +570,9 @@ describe('Panel', function() {
             this.plot = populate('#plot', this.datasources, this.layout);
             return Promise.all(this.plot.remap_promises).then(() => {
                 // Simulate click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
-                d3.mouse = function() { return [ 0, 25 ]; };
+                d3.mouse = function() {
+                    return [ 0, 25 ];
+                };
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag']();
                 assert.isObject(this.plot.interaction);
                 assert.isObject(this.plot.interaction.dragging);
@@ -568,7 +582,9 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
-                d3.mouse = function() { return [ 0, 75 ]; };
+                d3.mouse = function() {
+                    return [ 0, 75 ];
+                };
                 this.plot.svg.node()['__onmousemove.plot']();
                 assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
                 assert.equal(this.plot.interaction.dragging.start_x, 0);
@@ -594,7 +610,9 @@ describe('Panel', function() {
                     }
                 };
                 // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
-                d3.mouse = function() { return [ 0, 25 ]; };
+                d3.mouse = function() {
+                    return [ 0, 25 ];
+                };
                 this.plot.panels.p.svg.container.select('.lz-axis.lz-y1 .tick text').node()['__onmousedown.plot.p.interaction.drag'](event);
                 assert.isObject(this.plot.interaction);
                 assert.isObject(this.plot.interaction.dragging);
@@ -604,7 +622,9 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
                 // Simulate drag (mousemove) to [ 0, 75 ] (x +50)
-                d3.mouse = function() { return [ 0, 75 ]; };
+                d3.mouse = function() {
+                    return [ 0, 75 ];
+                };
                 this.plot.svg.node()['__onmousemove.plot'](event);
                 assert.equal(this.plot.interaction.dragging.method, 'y1_tick');
                 assert.equal(this.plot.interaction.dragging.start_x, 0);

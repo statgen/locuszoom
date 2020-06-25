@@ -208,7 +208,7 @@ describe('Data adapters', function () {
                 it('should store annotations in body and chain.discrete where appropriate', function () {
                     const custom_class = class CustomClass extends BaseAdapter {
                         annotateData(data) {
-                            return data + ' with annotation';
+                            return `${data} with annotation`;
                         }
 
                         normalizeResponse(data) {
@@ -302,13 +302,13 @@ describe('Data adapters', function () {
                 let source = new source_type({ url: 'www.fake.test', params: { source: 'a', build: 'GRCh37' } });
                 assert.throws(function () {
                     source.getURL({});
-                }, /must provide a parameter specifying either/, 'Bad configuration should raise an exception in ' + source_type);
+                }, /must provide a parameter specifying either/, `Bad configuration should raise an exception in ${source_type}`);
 
                 source = new source_type({ url: 'www.fake.test', params: { source: 'a' } });
-                assert.ok(source.getURL({}), 'Works when specifying source ID for ' + source_name);
+                assert.ok(source.getURL({}), `Works when specifying source ID for ${source_name}`);
 
                 source = new source_type({ url: 'www.fake.test' });
-                assert.ok(source.getURL({ genome_build: 'GRCh37' }), 'Works when specifying build name for ' + source_name);
+                assert.ok(source.getURL({ genome_build: 'GRCh37' }), `Works when specifying build name for ${source_name}`);
             });
 
             it('gives precedence to state.genome_build over its own config', function () {
@@ -322,14 +322,14 @@ describe('Data adapters', function () {
                 } else {
                     pattern = /id in 16/;
                 }
-                assert.ok(url.match(pattern), source_name + ' produced formed URL: ' + url);
+                assert.ok(url.match(pattern), `${source_name} produced formed URL: ${url}`);
             });
 
             it('validates genome build', function () {
                 const source = new source_type({ url: 'www.fake.test', params: { build: 99 } });
                 assert.throws(function () {
                     source.getURL({});
-                }, /must specify a valid genome build number/, 'Should validate options for ' + source_name);
+                }, /must specify a valid genome build number/, `Should validate options for ${source_name}`);
             });
         });
     });
@@ -520,7 +520,7 @@ describe('Data adapters', function () {
                 header: {},
                 body: [],
                 discrete: {}
-            }).then(data => {
+            }).then((data) => {
                 const expected_data = [{ 'test:x': 0 }, { 'test:x': 2 }, { 'test:x': 8 }];
                 assert.hasAllKeys(data, ['header', 'body', 'discrete']);
                 assert.deepEqual(data.body, expected_data);
@@ -531,7 +531,7 @@ describe('Data adapters', function () {
                 header: {},
                 body: [],
                 discrete: {}
-            }).then(data => {
+            }).then((data) => {
                 const expected_data = [{ 'test:q': undefined }, { 'test:q': undefined }, { 'test:q': 6 }];
                 assert.deepEqual(data.body, expected_data);
             });
@@ -587,7 +587,9 @@ describe('Data adapters', function () {
         });
         it('must implement a combineChainBody method', function () {
             const source = class extends ConnectorSource {
-                _getRequiredSources() { return []; }
+                _getRequiredSources() {
+                    return [];
+                }
             };
             assert.throws(
                 () => {

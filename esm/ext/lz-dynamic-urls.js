@@ -12,11 +12,10 @@
 function _serializeQueryParams(paramsObj) {
     // Serialize an object of parameter values into a query string
     // TODO: Improve support for array values v[]=1&v[]=2
-    return '?' +
+    return `?${
         Object.keys(paramsObj).map(function(key) {
-            return encodeURIComponent(key) + '=' +
-                encodeURIComponent(paramsObj[key]);
-        }).join('&');
+            return `${encodeURIComponent(key)}=${encodeURIComponent(paramsObj[key])}`;
+        }).join('&')}`;
 }
 
 function _parseQueryParams(queryString) {
@@ -45,7 +44,9 @@ function _extractValues(data, mapping, reverse) {
     let newMapping = mapping;
     if (reverse) {
         newMapping = {};
-        Object.keys(mapping).forEach(function(k) { newMapping[mapping[k]] = k; });
+        Object.keys(mapping).forEach(function(k) {
+            newMapping[mapping[k]] = k;
+        });
     }
 
     Object.keys(newMapping).forEach(function(k) {

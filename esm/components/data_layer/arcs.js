@@ -33,7 +33,7 @@ class Arcs extends BaseDataLayer {
         const self = this;
         const layout = self.layout;
         const x_scale = self.parent['x_scale'];
-        const y_scale = self.parent['y' + layout.y_axis.axis + '_scale'];
+        const y_scale = self.parent[`y${layout.y_axis.axis}_scale`];
 
         // Optionally restrict the data to a specific set of filters
         const filters = layout.filters || [];
@@ -52,27 +52,19 @@ class Arcs extends BaseDataLayer {
             // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
             const line = d3.line()
                 .curve('curveNatural')
-                .x(function (d) {
-                    return d[0];
-                })
-                .y(function (d) {
-                    return d[1];
-                });
+                .x((d) => d[0])
+                .y((d) => d[1]);
             return line(coords);
         }
 
         // Draw real lines, and also invisible hitareas for easier mouse events
         const selection = this.svg.group
             .selectAll('path.lz-data_layer-arcs')
-            .data(trackData, function (d) {
-                return self.getElementId(d);
-            });
+            .data(trackData, (d) => this.getElementId(d));
 
         const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
-            .data(trackData, function (d) {
-                return self.getElementId(d);
-            });
+            .data(trackData, (d) => this.getElementId(d));
         // Add new points as necessary
         selection
             .enter()
@@ -100,11 +92,10 @@ class Arcs extends BaseDataLayer {
             .attr('d', (d) => _make_line(d));
 
         // Remove old elements as needed
-        selection
-            .exit()
+        selection.exit()
             .remove();
-        hitareas
-            .exit()
+
+        hitareas.exit()
             .remove();
 
         // Apply mouse behaviors to hitareas
@@ -121,7 +112,7 @@ class Arcs extends BaseDataLayer {
         const x1 = tooltip.data[layout.x_axis.field1];
         const x2 = tooltip.data[layout.x_axis.field2];
 
-        const y_scale = panel['y' + layout.y_axis.axis + '_scale'];
+        const y_scale = panel[`y${layout.y_axis.axis}_scale`];
 
         return {
             x_min: panel.x_scale(Math.min(x1, x2)),

@@ -116,10 +116,10 @@ describe('Scale Functions', function() {
                 values: ['#a6611a', '#dfc27d', '#f5f5f5', '#80cdc1', '#018571'],
                 null_value: '#333333'
             };
-            assert.equal(interpolate(parameters, 0), '#f5f5f5');
-            assert.equal(interpolate(parameters, -12), '#f0e9d8');
-            assert.equal(interpolate(parameters, 0.97), '#f3f4f4');
-            assert.equal(interpolate(parameters, 74.1), '#43aa9a');
+            assert.equal(interpolate(parameters, 0), 'rgb(245, 245, 245)');
+            assert.equal(interpolate(parameters, -12), 'rgb(240, 233, 216)');
+            assert.equal(interpolate(parameters, 0.97), 'rgb(243, 244, 244)');
+            assert.equal(interpolate(parameters, 74.1), 'rgb(67, 170, 154)');
             assert.equal(interpolate(parameters, 3246), '#018571');
             assert.equal(interpolate(parameters, 'foo'), '#333333');
             assert.equal(interpolate(parameters), '#333333');

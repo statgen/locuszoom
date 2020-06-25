@@ -52,7 +52,7 @@ describe('DataSources object', function() {
 
     it('should ensure that all sources are aware of their namespace', function () {
         const data_sources = new DataSources();
-        const instance = new AssociationLZ({ url: 1, params: {}})
+        const instance = new AssociationLZ({ url: 1, params: {}});
         data_sources
             .add('assoc', ['AssociationLZ', { url: 1, params: {}}])
             .add('assoc2', instance);

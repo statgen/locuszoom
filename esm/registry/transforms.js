@@ -11,7 +11,7 @@ class TransformationFunctions extends RegistryBase {
         // Helper function that turns a sequence of function names into a single callable
         const funcs = template_string
             .match(/\|([^|]+)/g)
-            .map(item => super.get(item.substring(1)));
+            .map((item) => super.get(item.substring(1)));
 
         return (value) => {
             return funcs.reduce(

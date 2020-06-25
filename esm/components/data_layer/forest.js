@@ -37,7 +37,7 @@ class Forest extends BaseDataLayer {
 
     _getTooltipPosition(tooltip) {
         const x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
         const y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
 
         const point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
@@ -54,12 +54,12 @@ class Forest extends BaseDataLayer {
     render() {
 
         const x_scale = 'x_scale';
-        const y_scale = 'y' + this.layout.y_axis.axis + '_scale';
+        const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
         // Generate confidence interval paths if fields are defined
         if (this.layout.confidence_intervals
-            && this.layout.fields.indexOf(this.layout.confidence_intervals.start_field) !== -1
-            && this.layout.fields.indexOf(this.layout.confidence_intervals.end_field) !== -1) {
+            && this.layout.fields.includes(this.layout.confidence_intervals.start_field)
+            && this.layout.fields.includes(this.layout.confidence_intervals.end_field)) {
             // Generate a selection for all forest plot confidence intervals
             const ci_selection = this.svg.group
                 .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')
@@ -70,8 +70,8 @@ class Forest extends BaseDataLayer {
             ci_selection.enter()
                 .append('rect')
                 .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
-                .attr('id', (d) => this.getElementId(d) + '_ci')
-                .attr('transform', 'translate(0,' + (isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height) + ')');
+                .attr('id', (d) => `${this.getElementId(d)}_ci`)
+                .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`);
             // Apply position and size parameters
             const ci_transform = (d) => {
                 let x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
@@ -82,7 +82,7 @@ class Forest extends BaseDataLayer {
                 if (isNaN(y)) {
                     y = -1000;
                 }
-                return 'translate(' + x + ',' + y + ')';
+                return `translate(${x}, ${y})`;
             };
             const ci_width = (d) => {
                 return this.parent[x_scale](d[this.layout.confidence_intervals.end_field])
@@ -96,7 +96,8 @@ class Forest extends BaseDataLayer {
                 .attr('height', ci_height);
 
             // Remove old elements as needed
-            ci_selection.exit().remove();
+            ci_selection.exit()
+                .remove();
         }
 
         // Generate a selection for all forest plot points
@@ -124,7 +125,7 @@ class Forest extends BaseDataLayer {
             if (isNaN(y)) {
                 y = -1000;
             }
-            return 'translate(' + x + ',' + y + ')';
+            return `translate(${x}, ${y})`;
         };
 
         const fill = (d, i) => {
@@ -134,7 +135,7 @@ class Forest extends BaseDataLayer {
             return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
         };
 
-        const shape = d3.svg.symbol()
+        const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
@@ -146,7 +147,8 @@ class Forest extends BaseDataLayer {
             .attr('d', shape);
 
         // Remove old elements as needed
-        points_selection.exit().remove();
+        points_selection.exit()
+            .remove();
 
         // Apply default event emitters to selection
         points_selection.on('click.event_emitter', (element_data) => {
@@ -170,14 +172,14 @@ class CategoryForest extends Forest {
         // In a forest plot, the data range is determined by *three* fields (beta + CI start/end)
         const ci_config = this.layout.confidence_intervals;
         if (ci_config
-            && this.layout.fields.indexOf(ci_config.start_field) !== -1
-            && this.layout.fields.indexOf(ci_config.end_field) !== -1) {
-            const min = function (d) {
+            && this.layout.fields.includes(ci_config.start_field)
+            && this.layout.fields.includes(ci_config.end_field)) {
+            const min = (d) => {
                 const f = new Field(ci_config.start_field);
                 return +f.resolve(d);
             };
 
-            const max = function (d) {
+            const max = (d) => {
                 const f = new Field(ci_config.end_field);
                 return +f.resolve(d);
             };
@@ -190,25 +192,20 @@ class CategoryForest extends Forest {
     }
 
     getTicks(dimension, config) { // Overrides parent method
-        if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
-            throw new Error('Invalid dimension identifier' + dimension);
+        if (!['x', 'y1', 'y2'].includes(dimension)) {
+            throw new Error(`Invalid dimension identifier ${dimension}`);
         }
 
         // Design assumption: one axis (y1 or y2) has the ticks, and the layout says which to use
         // Also assumes that every tick gets assigned a unique matching label
         const axis_num = this.layout.y_axis.axis;
-        if (dimension === ('y' + axis_num)) {
+        if (dimension === (`y${axis_num}`)) {
             const category_field = this.layout.y_axis.category_field;
             if (!category_field) {
-                throw new Error('Layout for ' + this.layout.id + ' must specify category_field');
+                throw new Error(`Layout for ${this.layout.id} must specify category_field`);
             }
 
-            return this.data.map(function (item, index) {
-                return {
-                    y: index + 1,
-                    text: item[category_field]
-                };
-            });
+            return this.data.map((item, index) => ({ y: index + 1, text: item[category_field] }));
         } else {
             return [];
         }
@@ -219,10 +216,10 @@ class CategoryForest extends Forest {
         //  correct extents.
         const field_to_add = this.layout.y_axis.field;
         if (!field_to_add) {
-            throw new Error('Layout for ' + this.layout.id + ' must specify yaxis.field');
+            throw new Error(`Layout for ${this.layout.id} must specify yaxis.field`);
         }
 
-        this.data = this.data.map(function (item, index) {
+        this.data = this.data.map((item, index) => {
             item[field_to_add] = index + 1;
             return item;
         });

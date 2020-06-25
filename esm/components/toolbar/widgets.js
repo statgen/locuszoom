@@ -2,6 +2,7 @@ import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
 import {applyStyles} from '../../helpers/common';
+import {deepCopy} from '../../helpers/layouts';
 
 // FIXME: Button creation should occur in the constructors, not in update functions
 
@@ -81,9 +82,9 @@ class BaseWidget {
             return;
         }
         if (!this.selector) {
-            const group_position = (['start', 'middle', 'end'].indexOf(this.layout.group_position) !== -1 ? ' lz-toolbar-group-' + this.layout.group_position : '');
+            const group_position = (['start', 'middle', 'end'].includes(this.layout.group_position) ? ` lz-toolbar-group-${this.layout.group_position}` : '');
             this.selector = this.parent.selector.append('div')
-                .attr('class', 'lz-toolbar-' + this.layout.position + group_position);
+                .attr('class', `lz-toolbar-${this.layout.position}${group_position}`);
             if (this.layout.style) {
                 applyStyles(this.selector, this.layout.style);
             }
@@ -265,8 +266,8 @@ class Button {
             show: () => {
                 if (!this.menu.outer_selector) {
                     this.menu.outer_selector = d3.select(this.parent_plot.svg.node().parentNode).append('div')
-                        .attr('class', 'lz-toolbar-menu lz-toolbar-menu-' + this.color)
-                        .attr('id', this.parent_svg.getBaseId() + '.toolbar.menu');
+                        .attr('class', `lz-toolbar-menu lz-toolbar-menu-${this.color}`)
+                        .attr('id', `${this.parent_svg.getBaseId()}.toolbar.menu`);
                     this.menu.inner_selector = this.menu.outer_selector.append('div')
                         .attr('class', 'lz-toolbar-menu-content');
                     this.menu.inner_selector.on('scroll', () => {
@@ -321,13 +322,13 @@ class Button {
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
                 const height = Math.min(total_content_height, base_max_height);
                 this.menu.outer_selector
-                    .style('top', top.toString() + 'px')
-                    .style('left', left.toString() + 'px')
-                    .style('max-width', container_max_width.toString() + 'px')
-                    .style('max-height', base_max_height.toString() + 'px')
-                    .style('height', height.toString() + 'px');
+                    .style('top', `${top.toString()}px`)
+                    .style('left', `${left.toString()}px`)
+                    .style('max-width', `${container_max_width.toString()}px`)
+                    .style('max-height', `${base_max_height.toString()}px`)
+                    .style('height', `${height.toString()}px`);
                 this.menu.inner_selector
-                    .style('max-width', content_max_width.toString() + 'px');
+                    .style('max-width', `${content_max_width.toString()}px`);
                 this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 return this.menu;
             },
@@ -395,7 +396,7 @@ class Button {
      */
     setColor (color) {
         if (typeof color != 'undefined') {
-            if (['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'].indexOf(color) !== -1) {
+            if (['gray', 'red', 'orange', 'yellow', 'green', 'blue', 'purple'].includes(color)) {
                 this.color = color;
             } else {
                 this.color = 'gray';
@@ -448,8 +449,8 @@ class Button {
      * @returns {string}
      */
     getClass () {
-        const group_position = (['start', 'middle', 'end'].indexOf(this.parent.layout.group_position) !== -1 ? ' lz-toolbar-button-group-' + this.parent.layout.group_position : '');
-        return 'lz-toolbar-button lz-toolbar-button-' + this.color + (this.status ? '-' + this.status : '') + group_position;
+        const group_position = (['start', 'middle', 'end'].includes(this.parent.layout.group_position) ? ` lz-toolbar-button-group-${this.parent.layout.group_position}` : '');
+        return `lz-toolbar-button lz-toolbar-button-${this.color}${this.status ? `-${this.status}` : ''}${group_position}`;
     }
 
 
@@ -458,7 +459,7 @@ class Button {
      * @param {('highlighted'|'disabled'|'')} status
      */
     setStatus  (status) {
-        if (typeof status != 'undefined' && ['', 'highlighted', 'disabled'].indexOf(status) !== -1) {
+        if (typeof status != 'undefined' && ['', 'highlighted', 'disabled'].includes(status)) {
             this.status = status;
         }
         return this.update();
@@ -510,8 +511,7 @@ class Button {
         if (typeof onmouseover == 'function') {
             this.onmouseover = onmouseover;
         } else {
-            this.onmouseover = function () {
-            };
+            this.onmouseover = function () {};
         }
         return this;
     }
@@ -522,8 +522,7 @@ class Button {
         if (typeof onmouseout == 'function') {
             this.onmouseout = onmouseout;
         } else {
-            this.onmouseout = function () {
-            };
+            this.onmouseout = function () {};
         }
         return this;
     }
@@ -534,8 +533,7 @@ class Button {
         if (typeof onclick == 'function') {
             this.onclick = onclick;
         } else {
-            this.onclick = function () {
-            };
+            this.onclick = function () {};
         }
         return this;
     }
@@ -643,7 +641,7 @@ class Title extends BaseWidget {
     show() {
         if (!this.div_selector) {
             this.div_selector = this.parent.selector.append('div')
-                .attr('class', 'lz-toolbar-title lz-toolbar-' + this.layout.position);
+                .attr('class', `lz-toolbar-title lz-toolbar-${this.layout.position}`);
             this.title_selector = this.div_selector.append('h3');
         }
         return this.update();
@@ -652,7 +650,7 @@ class Title extends BaseWidget {
     update() {
         let title = this.layout.title.toString();
         if (this.layout.subtitle) {
-            title += ' <small>' + this.layout.subtitle + '</small>';
+            title += ` <small>${this.layout.subtitle}</small>`;
         }
         this.title_selector.html(title);
         return this;
@@ -664,9 +662,9 @@ class Title extends BaseWidget {
  */
 class Dimensions extends BaseWidget {
     update() {
-        const display_width = this.parent_plot.layout.width.toString().indexOf('.') === -1 ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
-        const display_height = this.parent_plot.layout.height.toString().indexOf('.') === -1 ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
-        this.selector.html(display_width + 'px × ' + display_height + 'px');
+        const display_width = !this.parent_plot.layout.width.toString().includes('.') ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
+        const display_height = !this.parent_plot.layout.height.toString().includes('.') ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
+        this.selector.html(`${display_width}px × ${display_height}px`);
         if (this.layout.class) {
             this.selector.attr('class', this.layout.class);
         }
@@ -712,9 +710,9 @@ class Download extends BaseWidget {
         this.css_string = '';
         for (let stylesheet in Object.keys(document.styleSheets)) {
             if ( document.styleSheets[stylesheet].href !== null
-                 && document.styleSheets[stylesheet].href.indexOf('locuszoom.css') !== -1) {
+                 && document.styleSheets[stylesheet].href.includes('locuszoom.css')) {
                 // FIXME: "Download image" button will render the image incorrectly if the stylesheet has been renamed or concatenated
-                fetch(document.styleSheets[stylesheet].href).then(response => {
+                fetch(document.styleSheets[stylesheet].href).then((response) => {
                     if (!response.ok) {
                         throw new Error(response.statusText);
                     }
@@ -732,7 +730,9 @@ class Download extends BaseWidget {
     }
 
     update() {
-        if (this.button) { return this; }
+        if (this.button) {
+            return this;
+        }
         this.button = new Button(this)
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html || 'Download Image')
@@ -743,7 +743,10 @@ class Download extends BaseWidget {
                     .html('Preparing Image');
                 this.generateBase64SVG().then((url) => {
                     const old = this.button.selector.attr('href');
-                    if (old) { URL.revokeObjectURL(old); }  // Clean up old url instance to prevent memory leaks
+                    if (old) {
+                        // Clean up old url instance to prevent memory leaks
+                        URL.revokeObjectURL(old);
+                    }
                     this.button.selector
                         .attr('href', url)
                         .classed('lz-toolbar-button-gray-disabled', false)
@@ -778,7 +781,7 @@ class Download extends BaseWidget {
             // Pull the svg into a string and add the contents of the locuszoom stylesheet
             // Don't add this with d3 because it will escape the CDATA declaration incorrectly
             let initial_html = d3.select(container.select('svg').node().parentNode).html();
-            const style_def = '<style type="text/css"><![CDATA[ ' + this.css_string + ' ]]></style>';
+            const style_def = `<style type="text/css"><![CDATA[ ${this.css_string} ]]></style>`;
             const insert_at = initial_html.indexOf('>') + 1;
             initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
             // Delete the container node
@@ -797,7 +800,9 @@ class Download extends BaseWidget {
  */
 class RemovePanel extends BaseWidget {
     update() {
-        if (this.button) { return this; }
+        if (this.button) {
+            return this;
+        }
         this.button = new Button(this)
             .setColor(this.layout.color)
             .setHtml('×')
@@ -808,8 +813,8 @@ class RemovePanel extends BaseWidget {
                 }
                 const panel = this.parent_panel;
                 panel.toolbar.hide(true);
-                d3.select(panel.parent.svg.node().parentNode).on('mouseover.' + panel.getBaseId() + '.toolbar', null);
-                d3.select(panel.parent.svg.node().parentNode).on('mouseout.' + panel.getBaseId() + '.toolbar', null);
+                d3.select(panel.parent.svg.node().parentNode).on(`mouseover.${panel.getBaseId()}.toolbar`, null);
+                d3.select(panel.parent.svg.node().parentNode).on(`mouseout.${panel.getBaseId()}.toolbar`, null);
                 return panel.parent.removePanel(panel.id);
             });
         this.button.show();
@@ -882,7 +887,7 @@ class ShiftRegion extends BaseWidget {
         }
 
         if (typeof layout.button_title !== 'string') {
-            layout.button_title = 'Shift region by ' + (layout.step > 0 ? '+' : '-') + positionIntToString(Math.abs(layout.step),null,true);
+            layout.button_title = `Shift region by ${layout.step > 0 ? '+' : '-'}${positionIntToString(Math.abs(layout.step),null,true)}`;
         }
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
@@ -893,7 +898,9 @@ class ShiftRegion extends BaseWidget {
     }
 
     update () {
-        if (this.button) { return this; }
+        if (this.button) {
+            return this;
+        }
         this.button = new Button(this)
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html)
@@ -923,7 +930,7 @@ class ZoomRegion extends BaseWidget {
             layout.button_html = layout.step > 0 ? 'z–' : 'z+';
         }
         if (typeof layout.button_title != 'string') {
-            layout.button_title = 'Zoom region ' + (layout.step > 0 ? 'out' : 'in') + ' by ' + (Math.abs(layout.step) * 100).toFixed(1) + '%';
+            layout.button_title = `Zoom region ${layout.step > 0 ? 'out' : 'in'} by ${(Math.abs(layout.step) * 100).toFixed(1)}%`;
         }
 
         super(layout, parent);
@@ -980,7 +987,9 @@ class ZoomRegion extends BaseWidget {
  */
 class Menu extends BaseWidget {
     update() {
-        if (this.button) { return this; }
+        if (this.button) {
+            return this;
+        }
         this.button = new Button(this)
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html)
@@ -1000,7 +1009,9 @@ class Menu extends BaseWidget {
  */
 class ResizeToData extends BaseWidget {
     update() {
-        if (this.button) { return this; }
+        if (this.button) {
+            return this;
+        }
         this.button = new Button(this)
             .setColor(this.layout.color)
             .setHtml(this.layout.button_html || 'Resize to Data')
@@ -1077,16 +1088,16 @@ class DisplayOptions extends BaseWidget {
 
         const dataLayer = this.parent_panel.data_layers[layout.layer_name];
         if (!dataLayer) {
-            throw new Error("Display options could not locate the specified layer_name: '" + layout.layer_name + "'");
+            throw new Error(`Display options could not locate the specified layer_name: '${layout.layer_name}'`);
         }
         const dataLayerLayout = dataLayer.layout;
 
         // Store default configuration for the layer as a clean deep copy, so we may revert later
         const defaultConfig = {};
-        allowed_fields.forEach(function(name) {
+        allowed_fields.forEach((name) => {
             const configSlot = dataLayerLayout[name];
             if (configSlot !== undefined) {
-                defaultConfig[name] = JSON.parse(JSON.stringify(configSlot));
+                defaultConfig[name] =  deepCopy(configSlot);
             }
         });
 
@@ -1117,18 +1128,18 @@ class DisplayOptions extends BaseWidget {
 
             const renderRow = (display_name, display_options, row_id) => { // Helper method
                 const row = table.append('tr');
-                const radioId = '' + uniqueID + row_id;
+                const radioId = `${uniqueID}${row_id}`;
                 row.append('td')
                     .append('input')
                     .attr('id', radioId)
                     .attr('type', 'radio')
-                    .attr('name', 'display-option-' + uniqueID)
+                    .attr('name', `display-option-${uniqueID}`)
                     .attr('value', row_id)
                     .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
                     .property('checked', (row_id === this._selected_item))
                     .on('click', () => {
                         // If an option is not specified in these display options, use the original defaults
-                        allowed_fields.forEach(function (field_name) {
+                        allowed_fields.forEach((field_name) => {
                             dataLayer.layout[field_name] = display_options[field_name] || defaultConfig[field_name];
                         });
 
@@ -1147,9 +1158,7 @@ class DisplayOptions extends BaseWidget {
             // Render the "display options" menu: default and special custom options
             const defaultName = menuLayout.default_config_display_name || 'Default style';
             renderRow(defaultName, defaultConfig, 'default');
-            menuLayout.options.forEach(function (item, index) {
-                renderRow(item.display_name, item.display, index);
-            });
+            menuLayout.options.forEach((item, index) => renderRow(item.display_name, item.display, index));
             return this;
         });
     }
@@ -1199,7 +1208,9 @@ class SetState extends BaseWidget {
          */
         // The first option listed is automatically assumed to be the default, unless a value exists in plot.state
         this._selected_item = this.parent_plot.state[layout.state_field] || layout.options[0].value;
-        if (!layout.options.find((item) => { return item.value === this._selected_item; })) {
+        if (!layout.options.find((item) => {
+            return item.value === this._selected_item;
+        })) {
             // Check only gets run at widget creation, but generally this widget is assumed to be an exclusive list of options
             throw new Error('There is an existing state value that does not match the known values in this widget');
         }
@@ -1221,12 +1232,12 @@ class SetState extends BaseWidget {
 
             const renderRow = (display_name, value, row_id) => { // Helper method
                 const row = table.append('tr');
-                const radioId = '' + uniqueID + row_id;
+                const radioId = `${uniqueID}${row_id}`;
                 row.append('td')
                     .append('input')
                     .attr('id', radioId)
                     .attr('type', 'radio')
-                    .attr('name', 'set-state-' + uniqueID)
+                    .attr('name', `set-state-${uniqueID}`)
                     .attr('value', row_id)
                     .style('margin', 0) // Override css libraries (eg skeleton) that style form inputs
                     .property('checked', (value === this._selected_item))
@@ -1242,9 +1253,7 @@ class SetState extends BaseWidget {
                     .attr('for', radioId)
                     .text(display_name);
             };
-            layout.options.forEach(function (item, index) {
-                renderRow(item.display_name, item.value, index);
-            });
+            layout.options.forEach((item, index) => renderRow(item.display_name, item.value, index));
             return this;
         });
     }

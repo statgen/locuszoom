@@ -23,9 +23,9 @@ function positionIntToString(pos, exp, suffix) {
     const places_exp = exp - Math.floor((Math.log(pos) / Math.LN10).toFixed(exp + 3));
     const min_exp = Math.min(Math.max(exp, 0), 2);
     const places = Math.min(Math.max(places_exp, min_exp), 12);
-    let ret = '' + (pos / Math.pow(10, exp)).toFixed(places);
+    let ret = `${(pos / Math.pow(10, exp)).toFixed(places)}`;
     if (suffix && typeof exp_symbols[exp] !== 'undefined') {
-        ret += ' ' + exp_symbols[exp] + 'b';
+        ret += ` ${exp_symbols[exp]}b`;
     }
     return ret;
 }
@@ -116,10 +116,14 @@ function prettyTicks(range, clip_range, target_tick_count) {
         clip_range = 'neither';
     }
     if (clip_range === 'low' || clip_range === 'both') {
-        if (ticks[0] < range[0]) { ticks = ticks.slice(1); }
+        if (ticks[0] < range[0]) {
+            ticks = ticks.slice(1);
+        }
     }
     if (clip_range === 'high' || clip_range === 'both') {
-        if (ticks[ticks.length - 1] > range[1]) { ticks.pop(); }
+        if (ticks[ticks.length - 1] > range[1]) {
+            ticks.pop();
+        }
     }
 
     return ticks;
@@ -141,10 +145,10 @@ function prettyTicks(range, clip_range, target_tick_count) {
  */
 function parseFields(data, html) {
     if (typeof data != 'object') {
-        throw new Error('LocusZoom.parseFields invalid arguments: data is not an object');
+        throw new Error('invalid arguments: data is not an object');
     }
     if (typeof html != 'string') {
-        throw new Error('LocusZoom.parseFields invalid arguments: html is not a string');
+        throw new Error('invalid arguments: html is not a string');
     }
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
@@ -152,15 +156,18 @@ function parseFields(data, html) {
     const regex = /{{(?:(#if )?([A-Za-z0-9_:|]+)|(\/if))}}/;
     while (html.length > 0) {
         const m = regex.exec(html);
-        if (!m) { tokens.push({text: html}); html = ''; }
-        else if (m.index !== 0) { tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index); }
-        else if (m[1] === '#if ') { tokens.push({condition: m[2]}); html = html.slice(m[0].length); }
-        else if (m[2]) { tokens.push({variable: m[2]}); html = html.slice(m[0].length); }
-        else if (m[3] === '/if') { tokens.push({close: 'if'}); html = html.slice(m[0].length); }
-        else {
-            console.error('Error tokenizing tooltip when remaining template is ' + JSON.stringify(html) +
-                          ' and previous tokens are ' + JSON.stringify(tokens) +
-                          ' and current regex match is ' + JSON.stringify([m[1], m[2], m[3]]));
+        if (!m) {
+            tokens.push({text: html}); html = '';
+        } else if (m.index !== 0) {
+            tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index);
+        } else if (m[1] === '#if ') {
+            tokens.push({condition: m[2]}); html = html.slice(m[0].length);
+        } else if (m[2]) {
+            tokens.push({variable: m[2]}); html = html.slice(m[0].length);
+        } else if (m[3] === '/if') {
+            tokens.push({close: 'if'}); html = html.slice(m[0].length);
+        } else {
+            console.error(`Error tokenizing tooltip when remaining template is ${JSON.stringify(html)} and previous tokens are ${JSON.stringify(tokens)} and current regex match is ${JSON.stringify([m[1], m[2], m[3]])}`);
             html = html.slice(m[0].length);
         }
     }
@@ -179,7 +186,7 @@ function parseFields(data, html) {
             }
             return token;
         } else {
-            console.error('Error making tooltip AST due to unknown token ' + JSON.stringify(token));
+            console.error(`Error making tooltip AST due to unknown token ${JSON.stringify(token)}`);
             return { text: '' };
         }
     };
@@ -210,9 +217,9 @@ function parseFields(data, html) {
                     return '';
                 }
             } catch (error) {
-                console.error('Error while processing variable ' + JSON.stringify(node.variable));
+                console.error(`Error while processing variable ${JSON.stringify(node.variable)}`);
             }
-            return '{{' + node.variable + '}}';
+            return `{{${node.variable}}}`;
         } else if (node.condition) {
             try {
                 const condition = resolve(node.condition);
@@ -220,11 +227,11 @@ function parseFields(data, html) {
                     return node.then.map(render_node).join('');
                 }
             } catch (error) {
-                console.error('Error while processing condition ' + JSON.stringify(node.variable));
+                console.error(`Error while processing condition ${JSON.stringify(node.variable)}`);
             }
             return '';
         } else {
-            console.error('Error rendering tooltip due to unknown AST node ' + JSON.stringify(node));
+            console.error(`Error rendering tooltip due to unknown AST node ${JSON.stringify(node)}`);
         }
     };
     return ast.map(render_node).join('');
@@ -251,8 +258,10 @@ function populate(selector, datasource, layout) {
         // Require each containing element have an ID. If one isn't present, create one.
         if (typeof target.node().id == 'undefined') {
             let iterator = 0;
-            while (!d3.select('#lz-' + iterator).empty()) { iterator++; }
-            target.attr('id', '#lz-' + iterator);
+            while (!d3.select(`#lz-${iterator}`).empty()) {
+                iterator++;
+            }
+            target.attr('id', `#lz-${iterator}`);
         }
         // Create the plot
         plot = new Plot(target.node().id, datasource, layout);
@@ -265,11 +274,11 @@ function populate(selector, datasource, layout) {
             });
         }
         // Add an SVG to the div and set its dimensions
-        plot.svg = d3.select('div#' + plot.id)
+        plot.svg = d3.select(`div#${plot.id}`)
             .append('svg')
             .attr('version', '1.1')
             .attr('xmlns', 'http://www.w3.org/2000/svg')
-            .attr('id', plot.id + '_svg')
+            .attr('id', `${plot.id}_svg`)
             .attr('class', 'lz-locuszoom');
         applyStyles(plot.svg, plot.layout.style);
         plot.setDimensions();

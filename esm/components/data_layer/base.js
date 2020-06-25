@@ -112,7 +112,7 @@ class BaseDataLayer {
         if (!fieldName || !namespace) {
             throw new Error('Must specify field name and namespace to use when adding field');
         }
-        let fieldString = namespace + ':' + fieldName;
+        let fieldString = `${namespace}:${fieldName}`;
         if (transformations) {
             fieldString += '|';
             if (typeof transformations === 'string') {
@@ -124,7 +124,7 @@ class BaseDataLayer {
             }
         }
         const fields = this.layout.fields;
-        if (fields.indexOf(fieldString) === -1) {
+        if (!fields.includes(fieldString)) {
             fields.push(fieldString);
         }
         return fieldString;
@@ -143,7 +143,7 @@ class BaseDataLayer {
         //  persist across re-render)
         const layer_state = { status_flags: {}, extra_fields: {} };
         const status_flags = layer_state.status_flags;
-        STATUSES.adjectives.forEach(function(status) {
+        STATUSES.adjectives.forEach((status) => {
             status_flags[status] = status_flags[status] || [];
         });
         // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
@@ -151,7 +151,7 @@ class BaseDataLayer {
 
         if (this.parent) {
             // If layer has a parent, store a reference in the overarching plot.state object
-            this.state_id = this.parent.id + '.' + this.id;
+            this.state_id = `${this.parent.id}.${this.id}`;
             this.state = this.parent.state;
             this.state[this.state_id] = layer_state;
         }
@@ -165,7 +165,7 @@ class BaseDataLayer {
      */
     getBaseId () {
         if (this.parent) {
-            return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+            return `${this.parent_plot.id}.${this.parent.id}.${this.id}`;
         } else {
             return '';
         }
@@ -201,7 +201,7 @@ class BaseDataLayer {
             }
             element_id = element[id_field].toString().replace(/\W/g,'');
         }
-        return (this.getBaseId() + '-' + element_id).replace(/([:.[\],])/g, '_');
+        return (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
     }
 
     /**
@@ -225,7 +225,7 @@ class BaseDataLayer {
      * @returns {Object|null} The data bound to that element
      */
     getElementById(id) {
-        const selector = d3.select('#' + id.replace(/([:.[\],])/g, '\\$1')); // escape special characters
+        const selector = d3.select(`#${id.replace(/([:.[\],])/g, '\\$1')}`); // escape special characters
         if (!selector.empty() && selector.data() && selector.data().length) {
             return selector.data()[0];
         } else {
@@ -292,19 +292,20 @@ class BaseDataLayer {
     initialize() {
 
         // Append a container group element to house the main data layer group element and the clip path
+        const base_id = this.getBaseId();
         this.svg.container = this.parent.svg.group.append('g')
             .attr('class', 'lz-data_layer-container')
-            .attr('id', this.getBaseId() + '.data_layer_container');
+            .attr('id', `${base_id}.data_layer_container`);
 
         // Append clip path to the container element
         this.svg.clipRect = this.svg.container.append('clipPath')
-            .attr('id', this.getBaseId() + '.clip')
+            .attr('id', `${base_id}.clip`)
             .append('rect');
 
         // Append svg group for rendering all data layer elements, clipped by the clip path
         this.svg.group = this.svg.container.append('g')
-            .attr('id', this.getBaseId() + '.data_layer')
-            .attr('clip-path', 'url(#' + this.getBaseId() + '.clip)');
+            .attr('id', `${base_id}.data_layer`)
+            .attr('clip-path', `url(#${base_id}.clip)`);
 
         return this;
 
@@ -396,7 +397,7 @@ class BaseDataLayer {
     _getDataExtent (data, axis_config) {
         data = data || this.data;
         // By default this depends only on a single field.
-        return d3.extent(data, function (d) {
+        return d3.extent(data, (d) => {
             const f = new Field(axis_config.field);
             return +f.resolve(d);
         });
@@ -408,11 +409,11 @@ class BaseDataLayer {
      */
     getAxisExtent (dimension) {
 
-        if (['x', 'y'].indexOf(dimension) === -1) {
-            throw new Error('Invalid dimension identifier passed to BaseDataLayer.getAxisExtent()');
+        if (!['x', 'y'].includes(dimension)) {
+            throw new Error('Invalid dimension identifier');
         }
 
-        const axis_name = dimension + '_axis';
+        const axis_name = `${dimension}_axis`;
         const axis_layout = this.layout[axis_name];
 
         // If a floor AND a ceiling are explicitly defined then just return that extent and be done
@@ -488,8 +489,8 @@ class BaseDataLayer {
      *     * color: string or LocusZoom scalable parameter object
      */
     getTicks (dimension, config) {
-        if (['x', 'y1', 'y2'].indexOf(dimension) === -1) {
-            throw new Error('Invalid dimension identifier at layer level' + dimension);
+        if (!['x', 'y1', 'y2'].includes(dimension)) {
+            throw new Error(`Invalid dimension identifier ${dimension}`);
         }
         return [];
     }
@@ -500,7 +501,7 @@ class BaseDataLayer {
      */
     createTooltip (data) {
         if (typeof this.layout.tooltip != 'object') {
-            throw new Error('DataLayer [' + this.id + '] layout does not define a tooltip');
+            throw new Error(`DataLayer [${this.id}] layout does not define a tooltip`);
         }
         const id = this.getElementId(data);
         if (this.tooltips[id]) {
@@ -512,7 +513,7 @@ class BaseDataLayer {
             arrow: null,
             selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
                 .attr('class', 'lz-data_layer-tooltip')
-                .attr('id', id + '-tooltip')
+                .attr('id', `${id}-tooltip`)
         };
         this.layer_state.status_flags['has_tooltip'].push(id);
         this.updateTooltip(data);
@@ -525,7 +526,9 @@ class BaseDataLayer {
      * @param {String} [id] An identifier to the tooltip
      */
     updateTooltip(d, id) {
-        if (typeof id == 'undefined') { id = this.getElementId(d); }
+        if (typeof id == 'undefined') {
+            id = this.getElementId(d);
+        }
         // Empty the tooltip of all HTML (including its arrow!)
         this.tooltips[id].selector.html('');
         this.tooltips[id].arrow = null;
@@ -633,8 +636,8 @@ class BaseDataLayer {
     _getTooltipPosition(tooltip) {
         const panel = this.parent;
 
-        const y_scale = panel['y' + this.layout.y_axis.axis + '_scale'];
-        const y_extent = panel['y' + this.layout.y_axis.axis + '_extent'];
+        const y_scale = panel[`y${this.layout.y_axis.axis}_scale`];
+        const y_extent = panel[`y${this.layout.y_axis.axis}_extent`];
 
         const x = panel.x_scale(panel.x_extent[0]);
         const y = y_scale(y_extent[0]);
@@ -754,17 +757,17 @@ class BaseDataLayer {
 
         // Position the div itself, relative to the layer origin
         tooltip.selector
-            .style('left', tooltip_left + 'px')
-            .style('top', tooltip_top + 'px');
+            .style('left', `${tooltip_left}px`)
+            .style('top', `${tooltip_top}px`);
         // Create / update position on arrow connecting tooltip to data
         if (!tooltip.arrow) {
             tooltip.arrow = tooltip.selector.append('div')
                 .style('position', 'absolute');
         }
         tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+            .attr('class', `lz-data_layer-tooltip-arrow_${arrow_type}`)
+            .style('left', `${arrow_left}px`)
+            .style('top', `${arrow_top}px`);
         return this;
     }
 
@@ -787,7 +790,9 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     showOrHideTooltip(element, first_time) {
-        if (typeof this.layout.tooltip != 'object') { return this; }
+        if (typeof this.layout.tooltip != 'object') {
+            return this;
+        }
         const id = this.getElementId(element);
 
         /**
@@ -797,7 +802,7 @@ class BaseDataLayer {
          * @param operator
          * @returns {null|bool}
          */
-        const resolveStatus = function (statuses, directive, operator) {
+        const resolveStatus = (statuses, directive, operator) => {
             let status = null;
             if (typeof statuses != 'object' || statuses === null) {
                 return null;
@@ -808,7 +813,7 @@ class BaseDataLayer {
                 if (directive.length === 1) {
                     status = statuses[directive[0]];
                 } else {
-                    status = directive.reduce(function (previousValue, currentValue) {
+                    status = directive.reduce((previousValue, currentValue) => {
                         if (operator === 'and') {
                             return statuses[previousValue] && statuses[currentValue];
                         } else if (operator === 'or') {
@@ -852,9 +857,9 @@ class BaseDataLayer {
         // Find all the statuses that apply to just this single element
         const layer_state = this.layer_state;
         var status_flags = {};  // {status_name: bool}
-        STATUSES.adjectives.forEach(function(status) {
-            const antistatus = 'un' + status;
-            status_flags[status] = (layer_state.status_flags[status].indexOf(id) !== -1);
+        STATUSES.adjectives.forEach((status) => {
+            const antistatus = `un${status}`;
+            status_flags[status] = (layer_state.status_flags[status].includes(id));
             status_flags[antistatus] = !status_flags[status];
         });
 
@@ -865,7 +870,7 @@ class BaseDataLayer {
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
         //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-        const has_tooltip = (layer_state.status_flags['has_tooltip'].indexOf(id) !== -1);
+        const has_tooltip = (layer_state.status_flags['has_tooltip'].includes(id));
         const tooltip_was_closed = first_time ? false : !has_tooltip;
         if (show_resolved && !tooltip_was_closed && !hide_resolved) {
             this.createTooltip(element);
@@ -888,11 +893,13 @@ class BaseDataLayer {
      * @returns {Array}
      */
     filter(filters, return_type) {
-        if (typeof return_type == 'undefined' || ['indexes','elements'].indexOf(return_type) === -1) {
+        if (typeof return_type == 'undefined' || !['indexes','elements'].includes(return_type)) {
             return_type = 'indexes';
         }
-        if (!Array.isArray(filters)) { return []; }
-        const test = function (element, filter) {
+        if (!Array.isArray(filters)) {
+            return [];
+        }
+        const test = (element, filter) => {
             const operators = {
                 '=': (a, b) => a === b,
                 // eslint-disable-next-line eqeqeq
@@ -916,12 +923,16 @@ class BaseDataLayer {
             }
         };
         const matches = [];
-        this.data.forEach(function(element, idx) {
+        this.data.forEach((element, idx) => {
             let match = true;
-            filters.forEach(function(filter) {
-                if (!test(element, filter)) { match = false; }
+            filters.forEach((filter) => {
+                if (!test(element, filter)) {
+                    match = false;
+                }
             });
-            if (match) { matches.push(return_type === 'indexes' ? idx : element); }
+            if (match) {
+                matches.push(return_type === 'indexes' ? idx : element);
+            }
         });
         return matches;
     }
@@ -930,12 +941,16 @@ class BaseDataLayer {
      * @param filters
      * @returns {Array}
      */
-    filterIndexes(filters) { return this.filter(filters, 'indexes'); }
+    filterIndexes(filters) {
+        return this.filter(filters, 'indexes');
+    }
     /**
      * @param filters
      * @returns {Array}
      */
-    filterElements(filters) { return this.filter(filters, 'elements'); }
+    filterElements(filters) {
+        return this.filter(filters, 'elements');
+    }
 
     /**
      * Toggle a status (e.g. highlighted, selected, identified) on an element
@@ -969,10 +984,10 @@ class BaseDataLayer {
         }
 
         // Set/unset the proper status class on the appropriate DOM element(s)
-        d3.select('#' + element_id).classed('lz-data_layer-' + this.layout.type + '-' + status, active);
+        d3.select(`#${element_id}`).classed(`lz-data_layer-${this.layout.type}-${status}`, active);
         const element_status_node_id = this.getElementStatusNodeId(element);
         if (element_status_node_id !== null) {
-            d3.select('#' + element_status_node_id).classed('lz-data_layer-' + this.layout.type + '-statusnode-' + status, active);
+            d3.select(`#${element_status_node_id}`).classed(`lz-data_layer-${this.layout.type}-statusnode-${status}`, active);
         }
 
         // Track element ID in the proper status state array
@@ -1021,13 +1036,25 @@ class BaseDataLayer {
     setElementStatusByFilters(status, toggle, filters, exclusive) {
 
         // Sanity check
-        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
-            throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
+        if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
+            throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
-        if (typeof toggle == 'undefined') { toggle = true; } else { toggle = !!toggle; }
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
-        if (!Array.isArray(filters)) { filters = []; }
+        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+            return this;
+        }
+        if (typeof toggle == 'undefined') {
+            toggle = true;
+        } else {
+            toggle = !!toggle;
+        }
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
+        if (!Array.isArray(filters)) {
+            filters = [];
+        }
 
         // Enforce exclusivity (force all elements to have the opposite of toggle first)
         if (exclusive) {
@@ -1051,24 +1078,25 @@ class BaseDataLayer {
     setAllElementStatus(status, toggle) {
 
         // Sanity check
-        if (typeof status == 'undefined' || STATUSES.adjectives.indexOf(status) === -1) {
-            throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
+        if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
+            throw new Error('Invalid status');
         }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
-        if (typeof toggle == 'undefined') { toggle = true; }
+        if (typeof this.layer_state.status_flags[status] == 'undefined') {
+            return this;
+        }
+        if (typeof toggle == 'undefined') {
+            toggle = true;
+        }
 
-        const self = this;
         // Apply statuses
         if (toggle) {
-            this.data.forEach(function(element) {
-                self.setElementStatus(status, element, true);
-            });
+            this.data.forEach((element) => this.setElementStatus(status, element, true));
         } else {
             const status_ids = this.layer_state.status_flags[status].slice();
-            status_ids.forEach(function(id) {
-                const element = self.getElementById(id);
+            status_ids.forEach((id) => {
+                const element = this.getElementById(id);
                 if (typeof element == 'object' && element !== null) {
-                    self.setElementStatus(status, element, false);
+                    this.setElementStatus(status, element, false);
                 }
             });
             this.layer_state.status_flags[status] = [];
@@ -1108,11 +1136,15 @@ class BaseDataLayer {
      * @param {d3.selection} selection
      */
     applyBehaviors(selection) {
-        if (typeof this.layout.behaviors != 'object') { return; }
+        if (typeof this.layout.behaviors != 'object') {
+            return;
+        }
         Object.keys(this.layout.behaviors).forEach((directive) => {
             const event_match = /(click|mouseover|mouseout)/.exec(directive);
-            if (!event_match) { return; }
-            selection.on(event_match[0] + '.' + directive, this.executeBehaviors(directive, this.layout.behaviors[directive]));
+            if (!event_match) {
+                return;
+            }
+            selection.on(`${event_match[0]}.${directive}`, this.executeBehaviors(directive, this.layout.behaviors[directive]));
         });
     }
 
@@ -1132,22 +1164,26 @@ class BaseDataLayer {
 
         // Determine the required state of control and shift keys during the event
         const requiredKeyStates = {
-            'ctrl': (directive.indexOf('ctrl') !== -1),
-            'shift': (directive.indexOf('shift') !== -1)
+            'ctrl': (directive.includes('ctrl')),
+            'shift': (directive.includes('shift'))
         };
         const self = this;
         return function(element) {
 
             // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
-            if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) { return; }
+            if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) {
+                return;
+            }
 
             // Loop through behaviors making each one go in succession
-            behaviors.forEach(function(behavior) {
+            behaviors.forEach((behavior) => {
 
                 // Route first by the action, if defined
-                if (typeof behavior != 'object' || behavior === null) { return; }
+                if (typeof behavior != 'object' || behavior === null) {
+                    return;
+                }
 
-                const current_status_boolean = (self.layer_state.status_flags[behavior.status].indexOf(self.getElementId(element)) !== -1);
+                const current_status_boolean = (self.layer_state.status_flags[behavior.status].includes(self.getElementId(element)));
                 const exclusive = behavior.exclusive && !current_status_boolean;
 
                 switch (behavior.action) {
@@ -1208,13 +1244,15 @@ class BaseDataLayer {
         const status_flags = this.layer_state.status_flags;
         const self = this;
         for (let property in status_flags) {
-            if (!Object.prototype.hasOwnProperty.call(status_flags, property)) { continue; }
+            if (!Object.prototype.hasOwnProperty.call(status_flags, property)) {
+                continue;
+            }
             if (Array.isArray(status_flags[property])) {
-                status_flags[property].forEach(function(element_id) {
+                status_flags[property].forEach((element_id) => {
                     try {
-                        self.setElementStatus(property, self.getElementById(element_id), true);
+                        this.setElementStatus(property, this.getElementById(element_id), true);
                     } catch (e) {
-                        console.warn('Unable to apply state: ' + self.state_id + ', ' + property);
+                        console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
                         console.error(e);
                     }
                 });
@@ -1258,16 +1296,16 @@ class BaseDataLayer {
 }
 
 // TODO: Add stub documentation for dynamically generated methods
-STATUSES.verbs.forEach(function(verb, idx) {
+STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
-    const antiverb = 'un' + verb;
+    const antiverb = `un${verb}`;
     // Set/unset a single element's status
 
     /** @function highlightElement */
     /** @function selectElement */
     /** @function fadeElement */
     /** @function hideElement */
-    BaseDataLayer.prototype[verb + 'Element'] = function(element, exclusive) {
+    BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
         } else {
@@ -1281,8 +1319,12 @@ STATUSES.verbs.forEach(function(verb, idx) {
     /** @function unselectElement */
     /** @function unfadeElement */
     /** @function unhideElement */
-    BaseDataLayer.prototype[antiverb + 'Element'] = function(element, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    BaseDataLayer.prototype[`${antiverb}Element`] = function(element, exclusive) {
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         this.setElementStatus(adjective, element, false, exclusive);
         return this;
     };
@@ -1293,8 +1335,12 @@ STATUSES.verbs.forEach(function(verb, idx) {
     /** @function fadeElementsByFilters */
     /** @function hideElementsByFilters */
     // Set/unset status for arbitrarily many elements given a set of filters
-    BaseDataLayer.prototype[verb + 'ElementsByFilters'] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    BaseDataLayer.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
 
@@ -1302,8 +1348,12 @@ STATUSES.verbs.forEach(function(verb, idx) {
     /** @function unselectElementsByFilters */
     /** @function unfadeElementsByFilters */
     /** @function unhideElementsByFilters */
-    BaseDataLayer.prototype[antiverb + 'ElementsByFilters'] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
+    BaseDataLayer.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
+        if (typeof exclusive == 'undefined') {
+            exclusive = false;
+        } else {
+            exclusive = !!exclusive;
+        }
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
 
@@ -1312,7 +1362,7 @@ STATUSES.verbs.forEach(function(verb, idx) {
     /** @function fadeAllElements */
     /** @function hideAllElements */
     // Set/unset status for all elements
-    BaseDataLayer.prototype[verb + 'AllElements'] = function() {
+    BaseDataLayer.prototype[`${verb}AllElements`] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
@@ -1321,7 +1371,7 @@ STATUSES.verbs.forEach(function(verb, idx) {
     /** @function unselectAllElements */
     /** @function unfadeAllElements */
     /** @function unhideAllElements */
-    BaseDataLayer.prototype[antiverb + 'AllElements'] = function() {
+    BaseDataLayer.prototype[`${antiverb}AllElements`] = function() {
         this.setAllElementStatus(adjective, false);
         return this;
     };

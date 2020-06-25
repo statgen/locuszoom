@@ -1,7 +1,15 @@
 {
     "extends": "eslint:recommended",
     "rules": {
-        "no-console": "off",
+        "arrow-parens": "error",
+        "brace-style": "error",
+        "comma-dangle": ["warn", "only-multiline"],
+        "curly": "error",
+        "eol-last": "error",
+        "eqeqeq": [
+            2,
+            "smart"
+        ],
         "indent": [
             2,
             4,
@@ -10,7 +18,17 @@
                 "CallExpression": { "arguments": "first" }
             }
         ],
-        "space-infix-ops": "error",
+        "linebreak-style": [
+            2,
+            "unix"
+        ],
+        "no-console": "off",
+        "no-trailing-spaces": "error",
+        "no-unused-vars": [
+            "error",
+            { "args": "none" }
+        ],
+        "prefer-template": "error",
         "quotes": [
             2,
             "single",
@@ -19,26 +37,12 @@
                 "allowTemplateLiterals": true
             }
         ],
-        "linebreak-style": [
-            2,
-            "unix"
-        ],
         "semi": [
             2,
             "always"
         ],
-        "eqeqeq": [
-            2,
-            "smart"
-        ],
-        "no-unused-vars": [
-            "error",
-            { "args": "none" }
-        ],
-        "no-trailing-spaces": "error",
-        "curly": "error",
         "space-before-blocks": "error",
-        "eol-last": "error"
+        "space-infix-ops": "error"
     },
     "env": {
         "es6": true,

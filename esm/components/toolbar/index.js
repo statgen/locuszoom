@@ -22,7 +22,7 @@ class Toolbar {
         /** @member {Plot|Panel} */
         this.parent = parent;
         /** @member {String} */
-        this.id = this.parent.getBaseId() + '.toolbar';
+        this.id = `${this.parent.getBaseId()}.toolbar`;
         /** @member {('plot'|'panel')} */
         // FIXME: checking constructor name fails, because minified file renames constructor (sigh)
         this.type = this.parent.constructor.name.toLowerCase();
@@ -71,13 +71,13 @@ class Toolbar {
 
         // Add mouseover event handlers to show/hide panel toolbar
         if (this.type === 'panel') {
-            d3.select(this.parent.parent.svg.node().parentNode).on('mouseover.' + this.id, () => {
+            d3.select(this.parent.parent.svg.node().parentNode).on(`mouseover.${this.id}`, () => {
                 clearTimeout(this.hide_timeout);
                 if (!this.selector || this.selector.style('visibility') === 'hidden') {
                     this.show();
                 }
             });
-            d3.select(this.parent.parent.svg.node().parentNode).on('mouseout.' + this.id, () => {
+            d3.select(this.parent.parent.svg.node().parentNode).on(`mouseout.${this.id}`, () => {
                 clearTimeout(this.hide_timeout);
                 this.hide_timeout = setTimeout(() => {
                     this.hide();
@@ -99,7 +99,7 @@ class Toolbar {
         }
         let persist = false;
         // Persist if at least one widget should also persist
-        this.widgets.forEach(function (widget) {
+        this.widgets.forEach((widget) => {
             persist = persist || widget.shouldPersist();
         });
         // Persist if in a parent drag event
@@ -128,12 +128,10 @@ class Toolbar {
 
             this.selector
                 .classed('lz-toolbar', true)
-                .classed('lz-' + this.type + '-toolbar', true)
+                .classed(`lz-${this.type}-toolbar`, true)
                 .attr('id', this.id);
         }
-        this.widgets.forEach(function (widget) {
-            widget.show();
-        });
+        this.widgets.forEach((widget) => widget.show());
         this.selector.style('visibility', 'visible');
         return this.update();
     }
@@ -147,9 +145,7 @@ class Toolbar {
         if (!this.selector) {
             return this;
         }
-        this.widgets.forEach(function (widget) {
-            widget.update();
-        });
+        this.widgets.forEach((widget) => widget.update());
         return this.position();
     }
 
@@ -165,9 +161,9 @@ class Toolbar {
         // Position the toolbar itself (panel only)
         if (this.type === 'panel') {
             const page_origin = this.parent.getPageOrigin();
-            const top = (page_origin.y + 3.5).toString() + 'px';
-            const left = page_origin.x.toString() + 'px';
-            const width = (this.parent.layout.width - 4).toString() + 'px';
+            const top = `${(page_origin.y + 3.5).toString()}px`;
+            const left = `${page_origin.x.toString()}px`;
+            const width = `${(this.parent.layout.width - 4).toString()}px`;
             this.selector
                 .style('position', 'absolute')
                 .style('top', top)
@@ -175,9 +171,7 @@ class Toolbar {
                 .style('width', width);
         }
         // Recursively position widgets
-        this.widgets.forEach(function (widget) {
-            widget.position();
-        });
+        this.widgets.forEach((widget) => widget.position());
         return this;
     }
 
@@ -190,9 +184,7 @@ class Toolbar {
         if (!this.selector || this.shouldPersist()) {
             return this;
         }
-        this.widgets.forEach(function (widget) {
-            widget.hide();
-        });
+        this.widgets.forEach((widget) => widget.hide());
         this.selector
             .style('visibility', 'hidden');
         return this;
@@ -213,9 +205,7 @@ class Toolbar {
         if (this.shouldPersist() && !force) {
             return this;
         }
-        this.widgets.forEach(function (widget) {
-            widget.destroy(true);
-        });
+        this.widgets.forEach((widget) => widget.destroy(true));
         this.widgets = [];
         this.selector.remove();
         this.selector = null;

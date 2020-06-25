@@ -32,7 +32,7 @@ class Legend {
         /** @member {Panel} */
         this.parent = parent;
         /** @member {String} */
-        this.id = this.parent.getBaseId() + '.legend';
+        this.id = `${this.parent.getBaseId()}.legend`;
 
         this.parent.layout.legend = merge(this.parent.layout.legend || {}, default_layout);
         /** @member {Object} */
@@ -69,7 +69,7 @@ class Legend {
         // Get a legend group selector if not yet defined
         if (!this.selector) {
             this.selector = this.parent.svg.group.append('g')
-                .attr('id', this.parent.getBaseId() + '.legend').attr('class', 'lz-legend');
+                .attr('id', `${this.parent.getBaseId()}.legend`).attr('class', 'lz-legend');
         }
 
         // Get a legend background rect selector if not yet defined
@@ -86,9 +86,7 @@ class Legend {
         }
 
         // Remove all elements from the document and re-render from scratch
-        this.elements.forEach(function(element) {
-            element.remove();
-        });
+        this.elements.forEach((element) => element.remove());
         this.elements = [];
 
         // Gather all elements from data layers in order (top to bottom) and render them
@@ -100,13 +98,13 @@ class Legend {
             if (Array.isArray(this.parent.data_layers[id].layout.legend)) {
                 this.parent.data_layers[id].layout.legend.forEach((element) => {
                     const selector = this.elements_group.append('g')
-                        .attr('transform', 'translate(' + x + ',' + y + ')');
+                        .attr('transform', `translate(${x}, ${y})`);
                     const label_size = +element.label_size || +this.layout.label_size || 12;
                     let label_x = 0;
                     let label_y = (label_size / 2) + (padding / 2);
                     line_height = Math.max(line_height, label_size + padding);
                     // Draw the legend element symbol (line, rect, shape, etc)
-                    const shape = element.shape;
+                    const shape = element.shape || '';
                     const shape_factory = nameToSymbol(shape);
                     if (shape === 'line') {
                         // Line symbol
@@ -115,7 +113,7 @@ class Legend {
                         selector
                             .append('path')
                             .attr('class', element.class || '')
-                            .attr('d', 'M0,' + path_y + 'L' + length + ',' + path_y);
+                            .attr('d', `M0,${path_y}L${length},${path_y}`);
                         applyStyles(selector, element.style || {});
                         label_x = length + padding;
                     } else if (shape === 'rect') {
@@ -139,7 +137,7 @@ class Legend {
                             .append('path')
                             .attr('class', element.class || '')
                             .attr('d', d3.symbol().size(size).type(shape_factory))
-                            .attr('transform', 'translate(' + radius + ',' + (radius + (padding / 2)) + ')')
+                            .attr('transform', `translate(${radius}, ${radius + (padding / 2)})`)
                             .attr('fill', element.color || {});
 
                         applyStyles(selector, element.style || {});
@@ -201,7 +199,9 @@ class Legend {
      * TODO: should this always be chainable?
      */
     position() {
-        if (!this.selector) { return this; }
+        if (!this.selector) {
+            return this;
+        }
         const bcr = this.selector.node().getBoundingClientRect();
         if (!isNaN(+this.layout.pad_from_bottom)) {
             this.layout.origin.y = this.parent.layout.height - bcr.height - +this.layout.pad_from_bottom;

@@ -77,7 +77,7 @@ function install(LocusZoom) {
                 removeByIdx: (idx) => {
                     const plot = this.parent_plot;
                     if (typeof plot.state.model.covariates[idx] == 'undefined') {
-                        throw new Error('Unable to remove model covariate, invalid index: ' + idx.toString());
+                        throw new Error(`Unable to remove model covariate, invalid index: ${idx.toString()}`);
                     }
                     plot.state.model.covariates.splice(idx, 1);
                     plot.applyState();
@@ -109,7 +109,9 @@ function install(LocusZoom) {
 
         update() {
 
-            if (this.button) { return this; }
+            if (this.button) {
+                return this;
+            }
 
             this.button = new _Button(this)
                 .setColor(this.layout.color)
@@ -130,13 +132,13 @@ function install(LocusZoom) {
                 if (!this.parent_plot.state.model.covariates.length) {
                     selector.append('i').html('no covariates in model');
                 } else {
-                    selector.append('h5').html('Model Covariates (' + this.parent_plot.state.model.covariates.length + ')');
+                    selector.append('h5').html(`Model Covariates (${this.parent_plot.state.model.covariates.length})`);
                     const table = selector.append('table');
                     this.parent_plot.state.model.covariates.forEach((covariate, idx) => {
                         const html = ((typeof covariate == 'object' && typeof covariate.html == 'string') ? covariate.html : covariate.toString());
                         const row = table.append('tr');
                         row.append('td').append('button')
-                            .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
+                            .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                             .style('margin-left', '0em')
                             .on('click', () => this.parent_plot.CovariatesModel.removeByIdx(idx))
                             .html('×');
@@ -144,7 +146,7 @@ function install(LocusZoom) {
                             .html(html);
                     });
                     selector.append('button')
-                        .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color)
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                         .style('margin-left', '4px')
                         .html('× Remove All Covariates')
                         .on('click', () => this.parent_plot.CovariatesModel.removeAll());
@@ -209,15 +211,15 @@ function install(LocusZoom) {
                         let html, onclick, highlight;
                         if (data_layer.global_statuses[status_adj]) {
                             html = STATUS_ANTIVERBS[status_idx];
-                            onclick = 'un' + status_verb + 'AllElements';
+                            onclick = `un${status_verb}AllElements`;
                             highlight = '-highlighted';
                         } else {
                             html = STATUS_VERBS[status_idx];
-                            onclick = status_verb + 'AllElements';
+                            onclick = `${status_verb}AllElements`;
                             highlight = '';
                         }
                         row.append('td').append('a')
-                            .attr('class', 'lz-toolbar-button lz-toolbar-button-' + this.layout.color + highlight)
+                            .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}${highlight}`)
                             .style('margin-left', '0em')
                             .on('click', () => {
                                 data_layer[onclick]();
@@ -230,7 +232,7 @@ function install(LocusZoom) {
                     const at_bottom = (idx === (this.parent_panel.data_layer_ids_by_z_index.length - 1));
                     const td = row.append('td');
                     td.append('a')
-                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-' + this.layout.color + (at_bottom ? '-disabled' : ''))
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-${this.layout.color}${at_bottom ? '-disabled' : ''}`)
                         .style('margin-left', '0em')
                         .on('click', () => {
                             data_layer.moveDown(); this.button.menu.populate();
@@ -238,7 +240,7 @@ function install(LocusZoom) {
                         .html('▾')
                         .attr('title', 'Move layer down (further back)');
                     td.append('a')
-                        .attr('class', 'lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-' + this.layout.color + (at_top ? '-disabled' : ''))
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-${this.layout.color}${at_top ? '-disabled' : ''}`)
                         .style('margin-left', '0em')
                         .on('click', () => {
                             data_layer.moveUp(); this.button.menu.populate();
@@ -249,7 +251,7 @@ function install(LocusZoom) {
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-group-end lz-toolbar-button-red')
                         .style('margin-left', '0em')
                         .on('click', () => {
-                            if (confirm('Are you sure you want to remove the ' + name + ' layer? This cannot be undone!')) {
+                            if (confirm(`Are you sure you want to remove the ${name} layer? This cannot be undone!`)) {
                                 data_layer.parent.removeDataLayer(id);
                             }
                             return this.button.menu.populate();

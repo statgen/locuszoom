@@ -203,10 +203,18 @@ describe('LocusZoom.DataLayer', function () {
     describe('Extent generation', function () {
         it('throws an error on invalid axis identifiers', function () {
             const datalayer = new BaseDataLayer({ id: 'test' });
-            assert.throws(function() { datalayer.getAxisExtent(); });
-            assert.throws(function() { datalayer.getAxisExtent('foo'); });
-            assert.throws(function() { datalayer.getAxisExtent(1); });
-            assert.throws(function() { datalayer.getAxisExtent('y1'); });
+            assert.throws(function() {
+                datalayer.getAxisExtent();
+            });
+            assert.throws(function() {
+                datalayer.getAxisExtent('foo');
+            });
+            assert.throws(function() {
+                datalayer.getAxisExtent(1);
+            });
+            assert.throws(function() {
+                datalayer.getAxisExtent('y1');
+            });
         });
         it('generates an accurate extent array for arbitrary data sets', function () {
             const layout = {
@@ -674,10 +682,12 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('should allow for creating and destroying tool tips', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-            this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
+            this.plot.panels.p.data_layers.d.positionTooltip = function () {
+                return 0;
+            };
             const a = this.plot.panels.p.data_layers.d.data[0];
             const a_id = this.plot.panels.p.data_layers.d.getElementId(a);
-            const a_id_q = '#' + (a_id + '-tooltip').replace(/(:|\.|\[|\]|,)/g, '\\$1');
+            const a_id_q = `#${  (`${a_id  }-tooltip`).replace(/(:|\.|\[|\]|,)/g, '\\$1')}`;
             assert.equal(Object.keys(this.plot.panels.p.data_layers.d.tooltips).length, 0);
 
             this.plot.panels.p.data_layers.d.createTooltip(a);
@@ -692,7 +702,9 @@ describe('LocusZoom.DataLayer', function () {
         });
         it('should allow for showing or hiding a tool tip based on layout directives and element status', function () {
             this.plot.panels.p.data_layers.d.data = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-            this.plot.panels.p.data_layers.d.positionTooltip = function () { return 0; };
+            this.plot.panels.p.data_layers.d.positionTooltip = function () {
+                return 0;
+            };
             const d = this.plot.panels.p.data_layers.d;
             const a = d.data[0];
             const a_id = d.getElementId(a);

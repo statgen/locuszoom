@@ -29,24 +29,22 @@ class AnnotationTrack extends BaseDataLayer {
     }
 
     render() {
-        const self = this;
         // Only render points that currently satisfy all provided filter conditions.
         const trackData = this.filter(this.layout.filters, 'elements');
 
         // Put the <g> containing visible lines before the one containing hit areas, so that the hit areas will be on top.
-        let visible_lines_group = this.svg.group.select('g.lz-data_layer-' + self.layout.type + '-visible_lines');
+        let visible_lines_group = this.svg.group.select(`g.lz-data_layer-${this.layout.type}-visible_lines`);
         if (visible_lines_group.size() === 0) {
-            visible_lines_group = this.svg.group.append('g').attr('class', 'lz-data_layer-' + self.layout.type + '-visible_lines');
+            visible_lines_group = this.svg.group.append('g')
+                .attr('class', `lz-data_layer-${this.layout.type}-visible_lines`);
         }
-        const selection = visible_lines_group.selectAll('rect.lz-data_layer-' + self.layout.type)
-            .data(trackData, function (d) {
-                return d[self.layout.id_field];
-            });
+        const selection = visible_lines_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
+            .data(trackData, (d) => d[this.layout.id_field]);
 
         // Draw rectangles (visual and tooltip positioning)
         selection.enter()
             .append('rect')
-            .attr('class', 'lz-data_layer-' + this.layout.type)
+            .attr('class', `lz-data_layer-${this.layout.type}`)
             .attr('id', (d) => this.getElementId(d));
 
         const width = 1;
@@ -60,47 +58,47 @@ class AnnotationTrack extends BaseDataLayer {
         selection.exit()
             .remove();
 
-        let hit_areas_group = this.svg.group.select('g.lz-data_layer-' + self.layout.type + '-hit_areas');
+        let hit_areas_group = this.svg.group.select(`g.lz-data_layer-${this.layout.type}-hit_areas`);
         if (hit_areas_group.size() === 0) {
-            hit_areas_group = this.svg.group.append('g').attr('class', 'lz-data_layer-' + self.layout.type + '-hit_areas');
+            hit_areas_group = this.svg.group.append('g')
+                .attr('class', `lz-data_layer-${this.layout.type}-hit_areas`);
         }
-        const hit_areas_selection = hit_areas_group.selectAll('rect.lz-data_layer-' + self.layout.type)
-            .data(trackData, function (d) {
-                return d[self.layout.id_field];
-            });
+        const hit_areas_selection = hit_areas_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
+            .data(trackData, (d) => d[this.layout.id_field]);
 
         // Add new elements as needed
         hit_areas_selection.enter()
             .append('rect')
-            .attr('class', 'lz-data_layer-' + this.layout.type)
+            .attr('class', `lz-data_layer-${this.layout.type}`)
             .attr('id', (d) => this.getElementId(d));
 
         // Update the set of elements to reflect new data
 
-        const _getX = function (d, i) { // Helper for position calcs below
-            const x_center = self.parent['x_scale'](d[self.layout.x_axis.field]);
-            let x_left = x_center - self.layout.hitarea_width / 2;
+        const _getX = (d, i) => { // Helper for position calcs below
+            const x_center = this.parent['x_scale'](d[this.layout.x_axis.field]);
+            let x_left = x_center - this.layout.hitarea_width / 2;
             if (i >= 1) {
                 // This assumes that the data are in sorted order.
                 const left_node = trackData[i - 1];
-                const left_node_x_center = self.parent['x_scale'](left_node[self.layout.x_axis.field]);
+                const left_node_x_center = this.parent['x_scale'](left_node[this.layout.x_axis.field]);
                 x_left = Math.max(x_left, (x_center + left_node_x_center) / 2);
             }
             return [x_left, x_center];
         };
         hit_areas_selection
-            .attr('height', self.parent.layout.height)
+            .attr('height', this.parent.layout.height)
             .attr('opacity', 0)
-            .attr('x', function (d, i) {
+            .attr('x', (d, i) => {
                 const crds = _getX(d, i);
                 return crds[0];
-            }).attr('width', function (d, i) {
+            }).attr('width', (d, i) => {
                 const crds = _getX(d, i);
-                return (crds[1] - crds[0]) + self.layout.hitarea_width / 2;
+                return (crds[1] - crds[0]) + this.layout.hitarea_width / 2;
             });
 
         // Remove unused elements
-        hit_areas_selection.exit().remove();
+        hit_areas_selection.exit()
+            .remove();
 
         // Set up tooltips and mouse interaction
         this.applyBehaviors(hit_areas_selection);

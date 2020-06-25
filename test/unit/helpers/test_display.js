@@ -80,8 +80,12 @@ describe('Display and parsing helpers', function () {
 
     describe('Parse Fields', function() {
         before(function() {
-            transforms.add('herp', function(x) { return x.toString() + 'herp'; });
-            transforms.add('derp', function(x) { return x.toString() + 'derp'; });
+            transforms.add('herp', function(x) {
+                return `${x.toString()  }herp`;
+            });
+            transforms.add('derp', function(x) {
+                return `${x.toString()  }derp`;
+            });
         });
         after(function() {
             transforms.remove('herp');

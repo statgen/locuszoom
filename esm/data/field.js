@@ -50,8 +50,8 @@ class Field {
     resolve(data, extra) {
         if (typeof data[this.full_name] == 'undefined') { // Check for cached result
             let val = null;
-            if (typeof (data[this.namespace + ':' + this.name]) != 'undefined') { // Fallback: value sans transforms
-                val = data[this.namespace + ':' + this.name];
+            if (typeof (data[`${this.namespace}:${this.name}`]) != 'undefined') { // Fallback: value sans transforms
+                val = data[`${this.namespace}:${this.name}`];
             } else if (typeof data[this.name] != 'undefined') { // Fallback: value present without namespace
                 val = data[this.name];
             } else if (extra && typeof extra[this.full_name] != 'undefined') { // Fallback: check annotations

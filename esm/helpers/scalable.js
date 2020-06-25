@@ -73,7 +73,7 @@ const numerical_bin = (parameters, input) => {
  * @param {*} parameters.null_value  Value to return if the input value fails to match to any categories. Optional.
  */
 const categorical_bin = (parameters, value) => {
-    if (typeof value == 'undefined' || parameters.categories.indexOf(value) === -1) {
+    if (typeof value == 'undefined' || !parameters.categories.includes(value)) {
         return (parameters.null_value ? parameters.null_value : null);
     } else {
         return parameters.values[parameters.categories.indexOf(value)];

@@ -240,7 +240,7 @@ class Plot {
      */
     on(event, hook) {
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error('Unable to register event hook, invalid event: ' + event.toString());
+            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
@@ -257,7 +257,7 @@ class Plot {
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
         if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
-            throw new Error('Unable to remove event hook, invalid event: ' + event.toString());
+            throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
             // Deregistering all hooks for this event may break basic functionality, and should only be used during
@@ -283,11 +283,10 @@ class Plot {
         // TODO: there are small differences between the emit implementation between plots and panels. In the future,
         //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
         if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error('LocusZoom attempted to throw an invalid event: ' + event.toString());
+            throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
         }
         const sourceID = this.getBaseId();
-        const self = this;
-        this.event_hooks[event].forEach(function(hookToRun) {
+        this.event_hooks[event].forEach((hookToRun) => {
             let eventContext;
             if (eventData && eventData.sourceID) {
                 // If we detect that an event originated elsewhere (via bubbling or externally), preserve the context
@@ -299,7 +298,7 @@ class Plot {
             // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
             //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
             //  override anything provided to `call` below.
-            hookToRun.call(self, eventContext);
+            hookToRun.call(this, eventContext);
         });
         return this;
     }
@@ -391,10 +390,10 @@ class Plot {
         let total = 0;
         for (let id in this.panels) {
             // Ensure every panel contributing to the sum has a non-zero proportional dimension
-            if (!this.panels[id].layout['proportional_' + dimension]) {
-                this.panels[id].layout['proportional_' + dimension] = 1 / Object.keys(this.panels).length;
+            if (!this.panels[id].layout[`proportional_${dimension}`]) {
+                this.panels[id].layout[`proportional_${dimension}`] = 1 / Object.keys(this.panels).length;
             }
-            total += this.panels[id].layout['proportional_' + dimension];
+            total += this.panels[id].layout[`proportional_${dimension}`];
         }
         return total;
     }
@@ -431,18 +430,18 @@ class Plot {
             this.layout.responsive_resize = 'both';
         }
         const RESIZE_MODES = [false, 'both', 'width_only'];
-        if (RESIZE_MODES.indexOf(this.layout.responsive_resize) === -1) {
-            throw new Error('LocusZoom option "responsive_resize" should specify one of the following modes: ' + RESIZE_MODES.join(', '));
+        if (!RESIZE_MODES.includes(this.layout.responsive_resize)) {
+            throw new Error(`LocusZoom option "responsive_resize" should specify one of the following modes: ${RESIZE_MODES.join(', ')}`);
         }
 
         // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
         if (this.layout.responsive_resize) {
-            this.window_onresize = d3.select(window).on('resize.lz-' + this.id, () => {
+            this.window_onresize = d3.select(window).on(`resize.lz-${this.id}`, () => {
                 this.rescaleSVG();
             });
             // Forcing one additional setDimensions() call after the page is loaded clears up
             // any disagreements between the initial layout and the loaded responsive container's size
-            d3.select(window).on('load.lz-' + this.id, () => {
+            d3.select(window).on(`load.lz-${this.id}`, () => {
                 this.setDimensions();
             });
         }
@@ -480,8 +479,8 @@ class Plot {
         this.layout.min_width = Math.max(min_width, 1);
         this.layout.min_height = Math.max(min_height, 1);
         d3.select(this.svg.node().parentNode)
-            .style('min-width', this.layout.min_width + 'px')
-            .style('min-height', this.layout.min_height + 'px');
+            .style('min-width', `${this.layout.min_width}px`)
+            .style('min-height', `${this.layout.min_height}px`);
 
         // If width and height arguments were passed then adjust them against plot minimums if necessary.
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
@@ -516,11 +515,9 @@ class Plot {
                 y_offset += panel_height;
                 this.panels[panel_id].toolbar.update();
             });
-        }
-
-        // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
-        // by making it conform to panel dimensions, assuming panels are already positioned correctly.
-        else if (Object.keys(this.panels).length) {
+        } else if (Object.keys(this.panels).length) {
+            // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
+            // by making it conform to panel dimensions, assuming panels are already positioned correctly.
             this.layout.width = 0;
             this.layout.height = 0;
             for (id in this.panels) {
@@ -564,10 +561,9 @@ class Plot {
      * @returns {Panel}
      */
     addPanel(layout) {
-
         // Sanity checks
         if (typeof layout !== 'object') {
-            throw new Error('Invalid panel layout passed to addPanel()');
+            throw new Error('Invalid panel layout');
         }
 
         // Create the Panel and set its parent
@@ -593,8 +589,10 @@ class Plot {
         // Determine if this panel was already in the layout.panels array.
         // If it wasn't, add it. Either way store the layout.panels array index on the panel.
         let layout_idx = null;
-        this.layout.panels.forEach(function(panel_layout, idx) {
-            if (panel_layout.id === panel.id) { layout_idx = idx; }
+        this.layout.panels.forEach((panel_layout, idx) => {
+            if (panel_layout.id === panel.id) {
+                layout_idx = idx;
+            }
         });
         if (layout_idx === null) {
             layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
@@ -611,7 +609,6 @@ class Plot {
             // positioning. TODO: make this additional call unnecessary.
             this.setDimensions(this.layout.width, this.layout.height);
         }
-
         return this.panels[panel.id];
     }
 
@@ -636,14 +633,14 @@ class Plot {
         } else {
             panelsList = Object.keys(this.panels);
         }
-        const self = this;
-        panelsList.forEach(function(pid) {
-            self.panels[pid].data_layer_ids_by_z_index.forEach(function(dlid) {
-                const layer = self.panels[pid].data_layers[dlid];
+
+        panelsList.forEach((pid) => {
+            this.panels[pid].data_layer_ids_by_z_index.forEach((dlid) => {
+                const layer = this.panels[pid].data_layers[dlid];
                 layer.destroyAllTooltips();
 
                 delete layer.layer_state;
-                delete self.layout.state[layer.state_id];
+                delete this.layout.state[layer.state_id];
                 if(mode === 'reset') {
                     layer._setDefaultState();
                 }
@@ -659,7 +656,7 @@ class Plot {
      */
     removePanel(id) {
         if (!this.panels[id]) {
-            throw new Error('Unable to remove panel, ID not found: ' + id);
+            throw new Error(`Unable to remove panel, ID not found: ${id}`);
         }
 
         // Hide all panel boundaries
@@ -805,7 +802,7 @@ class Plot {
         if (this.layout.mouse_guide) {
             const mouse_guide_svg = this.svg.append('g')
                 .attr('class', 'lz-mouse_guide')
-                .attr('id', this.id + '.mouse_guide');
+                .attr('id', `${this.id}.mouse_guide`);
             const mouse_guide_vertical_svg = mouse_guide_svg.append('rect')
                 .attr('class', 'lz-mouse_guide-vertical')
                 .attr('x', -1);
@@ -899,7 +896,9 @@ class Plot {
                 return this.position();
             },
             position: function() {
-                if (!this.showing) { return this; }
+                if (!this.showing) {
+                    return this;
+                }
                 // Position panel boundaries
                 const plot_page_origin = this.parent.getPageOrigin();
                 this.selectors.forEach((selector, panel_idx) => {
@@ -908,25 +907,29 @@ class Plot {
                     const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
                     const width = this.parent.layout.width - 1;
                     selector
-                        .style('top', top + 'px')
-                        .style('left', left + 'px')
-                        .style('width', width + 'px');
+                        .style('top', `${top}px`)
+                        .style('left', `${left}px`)
+                        .style('width', `${width}px`);
                     selector.select('span')
-                        .style('width', width + 'px');
+                        .style('width', `${width}px`);
                 });
                 // Position corner selector
                 const corner_padding = 10;
                 const corner_size = 16;
                 this.corner_selector
-                    .style('top', (plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size) + 'px')
-                    .style('left', (plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size) + 'px');
+                    .style('top', `${plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size}px`)
+                    .style('left', `${plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size}px`);
                 return this;
             },
             hide: function() {
-                if (!this.showing) { return this; }
+                if (!this.showing) {
+                    return this;
+                }
                 this.showing = false;
                 // Remove panel boundaries
-                this.selectors.forEach(function(selector) { selector.remove(); });
+                this.selectors.forEach((selector) => {
+                    selector.remove();
+                });
                 this.selectors = [];
                 // Remove corner boundary
                 this.corner_selector.remove();
@@ -937,11 +940,11 @@ class Plot {
 
         // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
         if (this.layout.panel_boundaries) {
-            d3.select(this.svg.node().parentNode).on('mouseover.' + this.id + '.panel_boundaries', () => {
+            d3.select(this.svg.node().parentNode).on(`mouseover.${this.id}.panel_boundaries`, () => {
                 clearTimeout(this.panel_boundaries.hide_timeout);
                 this.panel_boundaries.show();
             });
-            d3.select(this.svg.node().parentNode).on('mouseout.' + this.id + '.panel_boundaries', () => {
+            d3.select(this.svg.node().parentNode).on(`mouseout.${this.id}.panel_boundaries`, () => {
                 this.panel_boundaries.hide_timeout = setTimeout(() => {
                     this.panel_boundaries.hide();
                 }, 300);
@@ -957,7 +960,7 @@ class Plot {
         }
 
         // Define plot-level mouse events
-        const namespace = '.' + this.id;
+        const namespace = `.${this.id}`;
         if (this.layout.mouse_guide) {
             const mouseout_mouse_guide = () => {
                 this.mouse_guide.vertical.attr('x', -1);
@@ -969,9 +972,9 @@ class Plot {
                 this.mouse_guide.horizontal.attr('y', coords[1]);
             };
             this.svg
-                .on('mouseout' + namespace + '-mouse_guide', mouseout_mouse_guide)
-                .on('touchleave' + namespace + '-mouse_guide', mouseout_mouse_guide)
-                .on('mousemove' + namespace + '-mouse_guide', mousemove_mouse_guide);
+                .on(`mouseout${namespace}-mouse_guide`, mouseout_mouse_guide)
+                .on(`touchleave${namespace}-mouse_guide`, mouseout_mouse_guide)
+                .on(`mousemove${namespace}-mouse_guide`, mousemove_mouse_guide);
         }
         const mouseup = () => {
             this.stopDrag();
@@ -991,17 +994,17 @@ class Plot {
             }
         };
         this.svg
-            .on('mouseup' + namespace, mouseup)
-            .on('touchend' + namespace, mouseup)
-            .on('mousemove' + namespace, mousemove)
-            .on('touchmove' + namespace, mousemove);
+            .on(`mouseup${namespace}`, mouseup)
+            .on(`touchend${namespace}`, mouseup)
+            .on(`mousemove${namespace}`, mousemove)
+            .on(`touchmove${namespace}`, mousemove);
 
         // Add an extra namespaced mouseup handler to the containing body, if there is one
         // This helps to stop interaction events gracefully when dragging outside of the plot element
         if (!d3.select('body').empty()) {
             d3.select('body')
-                .on('mouseup' + namespace, mouseup)
-                .on('touchend' + namespace, mouseup);
+                .on(`mouseup${namespace}`, mouseup)
+                .on(`touchend${namespace}`, mouseup);
         }
 
         this.on('match_requested', (eventData) => {
@@ -1073,14 +1076,12 @@ class Plot {
         const error_callback = opts.onerror || function (err) {
             console.log('An error occurred while acting on an external callback', err);
         };
-        const self = this;
 
-        const listener = function () {
+        const listener = () => {
             try {
-                self.lzd.getData(self.state, fields)
-                    .then(function (new_data) {
-                        success_callback(opts.discrete ? new_data.discrete : new_data.body);
-                    }).catch(error_callback);
+                this.lzd.getData(this.state, fields)
+                    .then((new_data) => success_callback(opts.discrete ? new_data.discrete : new_data.body))
+                    .catch(error_callback);
             } catch (error) {
                 // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
                 error_callback(error);
@@ -1098,7 +1099,7 @@ class Plot {
     applyState(state_changes) {
         state_changes = state_changes || {};
         if (typeof state_changes != 'object') {
-            throw new Error('applyState only accepts an object; ' + (typeof state_changes) + ' given');
+            throw new Error(`applyState only accepts an object; ${typeof state_changes} given`);
         }
 
         // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
@@ -1206,7 +1207,9 @@ class Plot {
      */
     stopDrag() {
 
-        if (!this.interaction.dragging) { return this; }
+        if (!this.interaction.dragging) {
+            return this;
+        }
 
         if (typeof this.panels[this.interaction.panel_id] != 'object') {
             this.interaction = {};
@@ -1217,15 +1220,16 @@ class Plot {
         // Helper function to find the appropriate axis layouts on child data layers
         // Once found, apply the extent as floor/ceiling and remove all other directives
         // This forces all associated axes to conform to the extent generated by a drag action
-        const overrideAxisLayout = function (axis, axis_number, extent) {
-            panel.data_layer_ids_by_z_index.forEach(function (id) {
-                if (panel.data_layers[id].layout[axis + '_axis'].axis === axis_number) {
-                    panel.data_layers[id].layout[axis + '_axis'].floor = extent[0];
-                    panel.data_layers[id].layout[axis + '_axis'].ceiling = extent[1];
-                    delete panel.data_layers[id].layout[axis + '_axis'].lower_buffer;
-                    delete panel.data_layers[id].layout[axis + '_axis'].upper_buffer;
-                    delete panel.data_layers[id].layout[axis + '_axis'].min_extent;
-                    delete panel.data_layers[id].layout[axis + '_axis'].ticks;
+        const overrideAxisLayout = (axis, axis_number, extent) => {
+            panel.data_layer_ids_by_z_index.forEach((id) => {
+                const axis_layout = panel.data_layers[id].layout[`${axis}_axis`];
+                if (axis_layout.axis === axis_number) {
+                    axis_layout.floor = extent[0];
+                    axis_layout.ceiling = extent[1];
+                    delete axis_layout.lower_buffer;
+                    delete axis_layout.upper_buffer;
+                    delete axis_layout.min_extent;
+                    delete axis_layout.ticks;
                 }
             });
         };
@@ -1243,7 +1247,7 @@ class Plot {
             if (this.interaction.dragging.dragged_y !== 0) {
                 // TODO: Hardcoded assumption of only two possible axes with single-digit #s (switch/case)
                 const y_axis_number = parseInt(this.interaction.dragging.method[1]);
-                overrideAxisLayout('y', y_axis_number, panel['y' + y_axis_number + '_extent']);
+                overrideAxisLayout('y', y_axis_number, panel[`y${y_axis_number}_extent`]);
             }
             break;
         }

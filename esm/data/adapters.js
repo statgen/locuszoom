@@ -9,7 +9,7 @@ function validateBuildSource(class_name, build, source) {
     }
     // If the build isn't recognized, our APIs can't transparently select a source to match
     if (build && !['GRCh37', 'GRCh38'].includes(build)) {
-        throw new Error(class_name + ' must specify a valid genome build number');
+        throw new Error(`${class_name} must specify a valid genome build number`);
     }
 }
 
@@ -83,7 +83,7 @@ class BaseAdapter {
      */
     fetchRequest(state, chain, fields) {
         const url = this.getURL(state, chain, fields);
-        return fetch(url).then(response => {
+        return fetch(url).then((response) => {
             if (!response.ok) {
                 throw new Error(response.statusText);
             }
@@ -178,7 +178,7 @@ class BaseAdapter {
             return item.length === N;
         });
         if (!sameLength) {
-            throw new Error(this.constructor.name + ' expects a response in which all arrays of data are the same length');
+            throw new Error(`${this.constructor.name} expects a response in which all arrays of data are the same length`);
         }
 
         // Go down the rows, and create an object for each record
@@ -254,7 +254,9 @@ class BaseAdapter {
             return output_record;
         });
         fieldFound.forEach(function(v, i) {
-            if (!v) {throw new Error('field ' + fields[i] + ' not found in response for ' + outnames[i]);}
+            if (!v) {
+                throw new Error(`field ${fields[i]} not found in response for ${outnames[i]}`);
+            }
         });
         return records;
     }
@@ -339,10 +341,10 @@ class RemoteAdapter extends BaseAdapter {
  */
 class AssociationLZ extends RemoteAdapter {
     preGetData (state, fields, outnames, trans) {
-        // TODO: Modify internals to see if we can go without this source
+        // TODO: Modify internals to see if we can go without this method
         const id_field = this.params.id_field || 'id';
         [id_field, 'position'].forEach(function(x) {
-            if (fields.indexOf(x) === -1) {
+            if (!fields.includes(x)) {
                 fields.unshift(x);
                 outnames.unshift(x);
                 trans.unshift(null);
@@ -356,10 +358,7 @@ class AssociationLZ extends RemoteAdapter {
         if (typeof analysis == 'undefined') {
             throw new Error('Association source must specify an analysis ID to plot');
         }
-        return this.url + 'results/?filter=analysis in ' + analysis  +
-            " and chromosome in  '" + state.chr + "'" +
-            ' and position ge ' + state.start +
-            ' and position le ' + state.end;
+        return `${this.url}results/?filter=analysis in ${analysis} and chromosome in  '${state.chr}' and position ge ${state.start} and position le ${state.end}`;
     }
 
     normalizeResponse (data) {
@@ -368,7 +367,9 @@ class AssociationLZ extends RemoteAdapter {
         // TODO: Consider more fine grained sorting control in the future
         data = super.normalizeResponse(data);
         if (this.params && this.params.sort && data.length && data[0]['position']) {
-            data.sort(function (a, b) { return a['position'] - b['position']; });
+            data.sort(function (a, b) {
+                return a['position'] - b['position'];
+            });
         }
         return data;
     }
@@ -390,8 +391,8 @@ class LDLZ extends RemoteAdapter {
 
     preGetData(state, fields) {
         if (fields.length > 1) {
-            if (fields.length !== 2 || fields.indexOf('isrefvar') === -1) {
-                throw new Error('LD does not know how to get all fields: ' + fields.join(', '));
+            if (fields.length !== 2 || !fields.includes('isrefvar')) {
+                throw new Error(`LD does not know how to get all fields: ${fields.join(', ')}`);
             }
         }
     }
@@ -430,7 +431,7 @@ class LDLZ extends RemoteAdapter {
             // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
             //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
             // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
-            const id_match = dataFields.id && nameMatch(new RegExp(dataFields.id + '\\b'));
+            const id_match = dataFields.id && nameMatch(new RegExp(`${dataFields.id}\\b`));
             dataFields.id = id_match || nameMatch(/\bvariant\b/) || nameMatch(/\bid\b/);
             dataFields.position = dataFields.position || nameMatch(/\bposition\b/i, /\bpos\b/i);
             dataFields.pvalue = dataFields.pvalue || nameMatch(/\bpvalue\b/i, /\blog_pvalue\b/i);
@@ -471,9 +472,13 @@ class LDLZ extends RemoteAdapter {
             const is_log = /log/.test(pval_field);
             let cmp;
             if (is_log) {
-                cmp = function(a, b) { return a > b; };
+                cmp = function(a, b) {
+                    return a > b;
+                };
             } else {
-                cmp = function(a, b) { return a < b; };
+                cmp = function(a, b) {
+                    return a < b;
+                };
             }
             let extremeVal = records[0][pval_field], extremeIdx = 0;
             for(let i = 1; i < records.length; i++) {
@@ -497,9 +502,13 @@ class LDLZ extends RemoteAdapter {
             let keys = this.findMergeFields(chain);
             if (!keys.pvalue || !keys.id) {
                 let columns = '';
-                if (!keys.id) { columns += (columns.length ? ', ' : '') + 'id'; }
-                if (!keys.pvalue) { columns += (columns.length ? ', ' : '') + 'pvalue'; }
-                throw new Error('Unable to find necessary column(s) for merge: ' + columns + ' (available: ' + keys._names_ + ')');
+                if (!keys.id) {
+                    columns += `${columns.length ? ', ' : ''}id`;
+                }
+                if (!keys.pvalue) {
+                    columns += `${columns.length ? ', ' : ''}pvalue`;
+                }
+                throw new Error(`Unable to find necessary column(s) for merge: ${columns} (available: ${keys._names_})`);
             }
             refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
         }
@@ -546,7 +555,7 @@ class LDLZ extends RemoteAdapter {
         let keys = this.findMergeFields(chain);
         let reqFields = this.findRequestedFields(fields, outnames);
         if (!keys.position) {
-            throw new Error('Unable to find position field for merge: ' + keys._names_);
+            throw new Error(`Unable to find position field for merge: ${keys._names_}`);
         }
         const leftJoin = function (left, right, lfield, rfield) {
             let i = 0, j = 0;
@@ -587,7 +596,7 @@ class LDLZ extends RemoteAdapter {
         let url = this.getURL(state, chain, fields);
         let combined = { data: {} };
         let chainRequests = function (url) {
-            return fetch(url).then().then(response => {
+            return fetch(url).then().then((response) => {
                 if (!response.ok) {
                     throw new Error(response.statusText);
                 }
@@ -634,10 +643,7 @@ class GwasCatalogLZ extends RemoteAdapter {
         //   precedence.
         const default_source = (build_option === 'GRCh38') ? 1 : 2;  // EBI GWAS catalog
         const source = this.params.source || default_source;
-        return this.url + '?format=objects&sort=pos&filter=id eq ' + source +
-            " and chrom eq '" + state.chr + "'" +
-            ' and pos ge ' + state.start +
-            ' and pos le ' + state.end;
+        return `${this.url  }?format=objects&sort=pos&filter=id eq ${source} and chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}`;
     }
 
     findMergeFields(records) {
@@ -724,10 +730,7 @@ class GeneLZ extends RemoteAdapter {
         if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
             source = (build === 'GRCh38') ? 1 : 3;
         }
-        return this.url + '?filter=source in ' + source +
-            " and chrom eq '" + state.chr + "'" +
-            ' and start le ' + state.end +
-            ' and end ge ' + state.start;
+        return `${this.url}?filter=source in ${source} and chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
     }
 
     normalizeResponse(data) {
@@ -786,9 +789,9 @@ class GeneConstraintLZ extends RemoteAdapter {
         );
         let query = Object.keys(unique_gene_names).map(function (gene_name) {
             // GraphQL alias names must match a specific set of allowed characters: https://stackoverflow.com/a/45757065/1422268
-            const alias = '_' + gene_name.replace(/[^A-Za-z0-9_]/g, '_');
+            const alias = `_${gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;
             // Each gene symbol is a separate graphQL query, grouped into one request using aliases
-            return alias + ': gene(gene_symbol: "' + gene_name + '", reference_genome: ' + build + ') { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } ';
+            return `${alias}: gene(gene_symbol: "${gene_name}", reference_genome: ${build}) { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } `;
         });
 
         if (!query.length) {
@@ -796,13 +799,13 @@ class GeneConstraintLZ extends RemoteAdapter {
             return Promise.resolve({ data: null });
         }
 
-        query = '{' + query.join(' ') + ' }'; // GraphQL isn't quite JSON; items are separated by spaces but not commas
+        query = `{${query.join(' ')} }`; // GraphQL isn't quite JSON; items are separated by spaces but not commas
         const url = this.getURL(state, chain, fields);
         // See: https://graphql.org/learn/serving-over-http/
         const body = JSON.stringify({ query: query });
         const headers = { 'Content-Type': 'application/json' };
 
-        return fetch(url, { method: 'POST', body, headers }).then(response => {
+        return fetch(url, { method: 'POST', body, headers }).then((response) => {
             if (!response.ok) {
                 throw new Error(response.statusText);
             }
@@ -817,14 +820,14 @@ class GeneConstraintLZ extends RemoteAdapter {
 
         chain.body.forEach(function(gene) {
             // Find payload keys that match gene names in this response
-            const alias = '_' + gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_');  // aliases are modified gene names
+            const alias = `_${gene.gene_name.replace(/[^A-Za-z0-9_]/g, '_')}`;  // aliases are modified gene names
             const constraint = data[alias] && data[alias]['gnomad_constraint']; // gnomad API has two ways of specifying missing data for a requested gene
             if (constraint) {
                 // Add all fields from constraint data- do not override fields present in the gene source
                 Object.keys(constraint).forEach(function (key) {
                     let val = constraint[key];
                     if (typeof gene[key] === 'undefined') {
-                        if (typeof val == 'number' && val.toString().indexOf('.') !== -1) {
+                        if (typeof val == 'number' && val.toString().includes('.')) {
                             val = parseFloat(val.toFixed(2));
                         }
                         gene[key] = val;   // These two sources are both designed to bypass namespacing
@@ -849,10 +852,7 @@ class RecombLZ extends RemoteAdapter {
         if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
             source = (build === 'GRCh38') ? 16 : 15;
         }
-        return this.url + '?filter=id in ' + source +
-            " and chromosome eq '" + state.chr + "'" +
-            ' and position le ' + state.end +
-            ' and position ge ' + state.start;
+        return `${this.url}?filter=id in ${source} and chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}`;
     }
 }
 
@@ -892,7 +892,7 @@ class PheWASLZ extends RemoteAdapter {
             this.url,
             "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
             build.map(function (item) {
-                return 'build=' + encodeURIComponent(item);
+                return `build=${encodeURIComponent(item)}`;
             }).join('&')
         ];
         return url.join('');
@@ -939,7 +939,7 @@ class ConnectorSource extends BaseAdapter {
         /** @property {String[]} Specifies the sources that must be provided in the original config object */
 
         this._getRequiredSources().forEach((k) => {
-            if (specified_ids.indexOf(k) === -1) {
+            if (!specified_ids.includes(k)) {
                 // TODO: Fix constructor.name usage in minified bundles
                 throw new Error(`Configuration for ${this.constructor.name} must specify a source ID corresponding to ${k}`);
             }
@@ -955,7 +955,7 @@ class ConnectorSource extends BaseAdapter {
         Object.keys(this._source_name_mapping).forEach((ns) => {
             const chain_source_id = this._source_name_mapping[ns];
             if (chain.discrete && !chain.discrete[chain_source_id]) {
-                throw new Error(this.constructor.name + ' cannot be used before loading required data for: ' + chain_source_id);
+                throw new Error(`${this.constructor.name} cannot be used before loading required data for: ${chain_source_id}`);
             }
         });
         return Promise.resolve(chain.body || []);
