@@ -301,8 +301,7 @@ class Scatter extends BaseDataLayer {
             }
             this.label_texts = this.label_groups
                 .append('text')
-                .attr('class', `lz-data_layer-${this.layout.type}-label`);
-            this.label_texts
+                .attr('class', `lz-data_layer-${this.layout.type}-label`)
                 .text((d) => parseFields(d, data_layer.layout.label.text || ''))
                 .attr('x', (d) => {
                     let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
@@ -320,17 +319,17 @@ class Scatter extends BaseDataLayer {
                     }
                     return y;
                 })
-                .attr('text-anchor', 'start');
-            applyStyles(this.label_texts, data_layer.layout.label.style || {});
+                .attr('text-anchor', 'start')
+                .call(applyStyles, data_layer.layout.label.style || {});
 
             // Render label lines
             if (data_layer.layout.label.lines) {
                 if (this.label_lines) {
                     this.label_lines.remove();
                 }
-                this.label_lines = this.label_groups.append('line')
-                    .attr('class', `lz-data_layer-${this.layout.type}-label`);
-                this.label_lines
+                this.label_lines = this.label_groups
+                    .append('line')
+                    .attr('class', `lz-data_layer-${this.layout.type}-label`)
                     .attr('x1', (d) => {
                         let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
                         if (isNaN(x)) {
@@ -360,9 +359,8 @@ class Scatter extends BaseDataLayer {
                             y = -1000;
                         }
                         return y;
-                    });
-
-                applyStyles(this.label_lines, data_layer.layout.label.lines.style || {});
+                    })
+                    .call(applyStyles, data_layer.layout.label.lines.style || {});
             }
             // Remove labels when they're no longer in the filtered data set
             this.label_groups.exit()
@@ -384,11 +382,6 @@ class Scatter extends BaseDataLayer {
 
         // Create elements, apply class, ID, and initial position
         const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
-        selection.enter()
-            .append('path')
-            .attr('class', `lz-data_layer-${this.layout.type}`)
-            .attr('id', (d) => this.getElementId(d))
-            .attr('transform', `translate(0, ${initial_y})`);
 
         // Generate new values (or functions for them) for position, color, size, and shape
         const transform = (d) => {
@@ -410,32 +403,33 @@ class Scatter extends BaseDataLayer {
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
-        // Apply position and color
-        selection
+        selection.enter()
+            .append('path')
+            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .attr('id', (d) => this.getElementId(d))
+            .attr('transform', `translate(0, ${initial_y})`)
+            .merge(selection)
             .attr('transform', transform)
             .attr('fill', fill)
             .attr('fill-opacity', fill_opacity)
-            .attr('d', shape);
+            .attr('d', shape)
+            // Apply default event emitters & mouse behaviors to selection
+            .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
+            .call(this.applyBehaviors.bind(this));
 
         // Remove old elements as needed
         selection.exit()
             .remove();
-
-        // Apply default event emitters to selection
-        selection.on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true));
-
-        // Apply mouse behaviors
-        this.applyBehaviors(selection);
 
         // Apply method to keep labels from overlapping each other
         if (this.layout.label) {
             this.flip_labels();
             this.seperate_iterations = 0;
             this.separate_labels();
-            // Apply default event emitters to selection
-            this.label_texts.on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true));
-            // Extend mouse behaviors to labels
-            this.applyBehaviors(this.label_texts);
+            // Apply default event emitters to selection, and extend mouse behaviors to labels
+            this.label_texts
+                .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
+                .call(this.applyBehaviors.bind(this));
         }
     }
 

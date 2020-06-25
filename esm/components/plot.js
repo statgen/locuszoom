@@ -877,10 +877,13 @@ class Plot {
                         .attr('class', 'lz-panel-corner-boundary')
                         .attr('title', 'Resize plot');
 
-                    corner_selector.append('span')
+                    corner_selector
+                        .append('span')
                         .attr('class', 'lz-panel-corner-boundary-outer');
-                    corner_selector.append('span')
+                    corner_selector
+                        .append('span')
                         .attr('class', 'lz-panel-corner-boundary-inner');
+
                     const corner_drag = d3.drag();
                     corner_drag.on('start', () => {
                         this.dragging = true;

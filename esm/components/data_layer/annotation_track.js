@@ -42,14 +42,13 @@ class AnnotationTrack extends BaseDataLayer {
         const selection = visible_lines_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
             .data(trackData, (d) => d[this.layout.id_field]);
 
+        const width = 1;
         // Draw rectangles (visual and tooltip positioning)
         selection.enter()
             .append('rect')
             .attr('class', `lz-data_layer-${this.layout.type}`)
-            .attr('id', (d) => this.getElementId(d));
-
-        const width = 1;
-        selection
+            .attr('id', (d) => this.getElementId(d))
+            .merge(selection)
             .attr('x', (d) => this.parent['x_scale'](d[this.layout.x_axis.field]) - width / 2)
             .attr('width', width)
             .attr('height', this.parent.layout.height)
@@ -67,14 +66,6 @@ class AnnotationTrack extends BaseDataLayer {
         const hit_areas_selection = hit_areas_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
             .data(trackData, (d) => d[this.layout.id_field]);
 
-        // Add new elements as needed
-        hit_areas_selection.enter()
-            .append('rect')
-            .attr('class', `lz-data_layer-${this.layout.type}`)
-            .attr('id', (d) => this.getElementId(d));
-
-        // Update the set of elements to reflect new data
-
         const _getX = (d, i) => { // Helper for position calcs below
             const x_center = this.parent['x_scale'](d[this.layout.x_axis.field]);
             let x_left = x_center - this.layout.hitarea_width / 2;
@@ -86,7 +77,14 @@ class AnnotationTrack extends BaseDataLayer {
             }
             return [x_left, x_center];
         };
-        hit_areas_selection
+
+        // Add new elements as needed
+        hit_areas_selection.enter()
+            .append('rect')
+            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .attr('id', (d) => this.getElementId(d))
+            // Update the set of elements to reflect new data
+            .merge(hit_areas_selection)
             .attr('height', this.parent.layout.height)
             .attr('opacity', 0)
             .attr('x', (d, i) => {
@@ -95,14 +93,13 @@ class AnnotationTrack extends BaseDataLayer {
             }).attr('width', (d, i) => {
                 const crds = _getX(d, i);
                 return (crds[1] - crds[0]) + this.layout.hitarea_width / 2;
-            });
+            })
+            // Set up tooltips and mouse interaction
+            .call(this.applyBehaviors.bind(this));
 
         // Remove unused elements
         hit_areas_selection.exit()
             .remove();
-
-        // Set up tooltips and mouse interaction
-        this.applyBehaviors(hit_areas_selection);
     }
 
     _getTooltipPosition(tooltip) {

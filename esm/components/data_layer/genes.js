@@ -216,32 +216,30 @@ class Genes extends BaseDataLayer {
         const selection = this.svg.group.selectAll('g.lz-data_layer-genes')
             .data(this.data, (d) => d.gene_name);
 
-        selection.enter().append('g')
-            .attr('class', 'lz-data_layer-genes');
-
-        selection
+        selection.enter()
+            .append('g')
+            .attr('class', 'lz-data_layer-genes')
+            .merge(selection)
             .attr('id', (d) => this.getElementId(d))
             .each(function(gene) {
-
                 const data_layer = gene.parent;
 
                 // Render gene bounding boxes (status nodes to show selected/highlighted)
                 const bboxes = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-data_layer-genes-statusnode')
                     .data([gene], (d) => data_layer.getElementStatusNodeId(d));
 
-                bboxes.enter().append('rect')
-                    .attr('class', 'lz-data_layer-genes lz-data_layer-genes-statusnode');
-
-                bboxes
-                    .attr('id', (d) => data_layer.getElementStatusNodeId(d))
-                    .attr('rx', data_layer.layout.bounding_box_padding)
-                    .attr('ry', data_layer.layout.bounding_box_padding);
-
                 width = (d) => d.display_range.width;
                 height = data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
                 x = (d) => d.display_range.start;
                 y = (d) => ((d.track - 1) * data_layer.getTrackHeight());
-                bboxes
+
+                bboxes.enter()
+                    .append('rect')
+                    .attr('class', 'lz-data_layer-genes lz-data_layer-genes-statusnode')
+                    .merge(bboxes)
+                    .attr('id', (d) => data_layer.getElementStatusNodeId(d))
+                    .attr('rx', data_layer.layout.bounding_box_padding)
+                    .attr('ry', data_layer.layout.bounding_box_padding)
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
@@ -258,10 +256,6 @@ class Genes extends BaseDataLayer {
                     .style('fill', boundary_fill)
                     .style('stroke', boundary_stroke);
 
-                boundaries.enter()
-                    .append('rect')
-                    .attr('class', 'lz-data_layer-genes lz-boundary');
-
                 width = (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 height = 1;
                 x = (d) => data_layer.parent.x_scale(d.start);
@@ -272,25 +266,22 @@ class Genes extends BaseDataLayer {
                         + data_layer.layout.label_exon_spacing
                         + (Math.max(data_layer.layout.exon_height, 3) / 2);
                 };
-                boundaries
+
+                boundaries.enter()
+                    .append('rect')
+                    .attr('class', 'lz-data_layer-genes lz-boundary')
+                    .merge(boundaries)
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
                     .attr('y', y);
 
-                boundaries.exit().remove();
+                boundaries.exit()
+                    .remove();
 
                 // Render gene labels
                 const labels = d3.select(this).selectAll('text.lz-data_layer-genes.lz-label')
                     .data([gene], (d) => `${d.gene_name}_label`);
-
-                labels.enter().append('text')
-                    .attr('class', 'lz-data_layer-genes lz-label');
-
-                labels
-                    .attr('text-anchor', (d) => d.display_range.text_anchor)
-                    .text((d) => (d.strand === '+') ? `${d.gene_name}→` : `←${d.gene_name}`)
-                    .style('font-size', gene.parent.layout.label_font_size);
 
                 x = (d) => {
                     if (d.display_range.text_anchor === 'middle') {
@@ -304,7 +295,14 @@ class Genes extends BaseDataLayer {
                 y = (d) => ((d.track - 1) * data_layer.getTrackHeight())
                     + data_layer.layout.bounding_box_padding
                     + data_layer.layout.label_font_size;
-                labels
+
+                labels.enter()
+                    .append('text')
+                    .attr('class', 'lz-data_layer-genes lz-label')
+                    .merge(labels)
+                    .attr('text-anchor', (d) => d.display_range.text_anchor)
+                    .text((d) => (d.strand === '+') ? `${d.gene_name}→` : `←${d.gene_name}`)
+                    .style('font-size', gene.parent.layout.label_font_size)
                     .attr('x', x)
                     .attr('y', y);
 
@@ -319,13 +317,6 @@ class Genes extends BaseDataLayer {
                 const exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon')
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, (d) => d.exon_id);
 
-                exons.enter().append('rect')
-                    .attr('class', 'lz-data_layer-genes lz-exon');
-
-                exons
-                    .style('fill', exon_fill)
-                    .style('stroke', exon_stroke);
-
                 width = (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 height = data_layer.layout.exon_height;
                 x = (d) => data_layer.parent.x_scale(d.start);
@@ -336,61 +327,54 @@ class Genes extends BaseDataLayer {
                         + data_layer.layout.label_exon_spacing;
                 };
 
-                exons
+                exons.enter()
+                    .append('rect')
+                    .attr('class', 'lz-data_layer-genes lz-exon')
+                    .merge(exons)
+                    .style('fill', exon_fill)
+                    .style('stroke', exon_stroke)
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
                     .attr('y', y);
 
-                exons
-                    .exit()
+                exons.exit()
                     .remove();
 
                 // Render gene click area
                 const clickareas = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-clickarea')
                     .data([gene], (d) => `${d.gene_name}_clickarea`);
 
-                clickareas.enter()
-                    .append('rect')
-                    .attr('class', 'lz-data_layer-genes lz-clickarea');
-
-                clickareas
-                    .attr('id', (d) => `${data_layer.getElementId(d)}_clickarea`)
-                    .attr('rx', data_layer.layout.bounding_box_padding)
-                    .attr('ry', data_layer.layout.bounding_box_padding);
-
                 width = (d) => d.display_range.width;
                 height = data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
                 x = (d) => d.display_range.start;
                 y = (d) => ((d.track - 1) * data_layer.getTrackHeight());
-                clickareas
+                clickareas.enter()
+                    .append('rect')
+                    .attr('class', 'lz-data_layer-genes lz-clickarea')
+                    .merge(clickareas)
+                    .attr('id', (d) => `${data_layer.getElementId(d)}_clickarea`)
+                    .attr('rx', data_layer.layout.bounding_box_padding)
+                    .attr('ry', data_layer.layout.bounding_box_padding)
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
-                    .attr('y', y);
+                    .attr('y', y)
+                    // Apply mouse behaviors & events to clickareas
+                    .on('click.event_emitter', (element) => element.parent.parent.emit('element_clicked', element, true))
+                    .call(data_layer.applyBehaviors.bind(data_layer));
 
                 // Remove old clickareas as needed
                 clickareas.exit()
                     .remove();
-
-                // Apply default event emitters to clickareas
-                clickareas.on('click.event_emitter', function(element) {
-                    element.parent.parent.emit('element_clicked', element, true);
-                });
-
-                // Apply mouse behaviors to clickareas
-                data_layer.applyBehaviors(clickareas);
-
             });
 
         // Remove old elements as needed
         selection.exit()
             .remove();
-
     }
 
     _getTooltipPosition(tooltip) {
-
         const gene_bbox_id = this.getElementStatusNodeId(tooltip.data);
         const gene_bbox = d3.select(`#${gene_bbox_id}`).node().getBBox();
         return {

@@ -827,12 +827,12 @@ describe('LocusZoom.DataLayer', function () {
             data_layer.setElementAnnotation('a', 'custom_field', true);
 
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn because of annotations');
+                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn because of annotations');
                 // After turning labels on, confirm that we can cycle them off and influence rendering
                 data_layer.setElementAnnotation('a', 'custom_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups[0].length, 0, 'Labels are removed because of annotations');
+                assert.equal(data_layer.label_groups.size(), 0, 'Labels are removed because of annotations');
             });
         });
 
@@ -843,12 +843,12 @@ describe('LocusZoom.DataLayer', function () {
 
             // Rerender once so the modified layout takes effect
             return this.plot.applyState().then(function () {
-                assert.equal(data_layer.label_groups[0].length, 1, 'Labels are drawn on first render because field value says to');
+                assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
                 // Introduce an annotation that conflicts with the data field from the API
                 data_layer.setElementAnnotation('b', 'd:some_field', false);
                 return self.plot.applyState();
             }).then(function () {
-                assert.equal(data_layer.label_groups.length, 1, 'Real fields says to label, annotation says no. Real field wins.');
+                assert.equal(data_layer.label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');
             });
         });
     });

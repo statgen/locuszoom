@@ -51,9 +51,9 @@ class Arcs extends BaseDataLayer {
             ];
             // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
             const line = d3.line()
-                .curve('curveNatural')
                 .x((d) => d[0])
-                .y((d) => d[1]);
+                .y((d) => d[1])
+                .curve(d3.curveNatural);
             return line(coords);
         }
 
@@ -65,31 +65,31 @@ class Arcs extends BaseDataLayer {
         const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
             .data(trackData, (d) => this.getElementId(d));
+
         // Add new points as necessary
         selection
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs')
-            .attr('id', (d) => this.getElementId(d));
+            .attr('id', (d) => this.getElementId(d))
+            .merge(selection)
+            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('d', (d, i) => _make_line(d))
+            .call(applyStyles, layout.style);
 
         hitareas
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs-hitarea')
-            .attr('id', (d) => this.getElementId(d));
-
-        // Update selection/set coordinates
-        selection
-            .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
-            .attr('d', (d, i) => _make_line(d));
-        applyStyles(selection, layout.style);
-
-        hitareas
+            .attr('id', (d) => this.getElementId(d))
+            .merge(hitareas)
             .style('fill', 'none')
             .style('stroke-width', layout.hitarea_width)
             .style('stroke-opacity', 0)
             .style('stroke', 'transparent')
-            .attr('d', (d) => _make_line(d));
+            .attr('d', (d) => _make_line(d))
+            // Apply mouse behaviors to hitareas
+            .call(this.applyBehaviors.bind(this));
 
         // Remove old elements as needed
         selection.exit()
@@ -97,9 +97,6 @@ class Arcs extends BaseDataLayer {
 
         hitareas.exit()
             .remove();
-
-        // Apply mouse behaviors to hitareas
-        this.applyBehaviors(hitareas);
         return this;
     }
 

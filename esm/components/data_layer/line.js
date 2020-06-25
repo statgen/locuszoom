@@ -201,11 +201,6 @@ class OrthogonalLine extends BaseDataLayer {
             .selectAll('path.lz-data_layer-line')
             .data([this.data]);
 
-        // Create path element, apply class
-        this.path = selection.enter()
-            .append('path')
-            .attr('class', 'lz-data_layer-line');
-
         // In some cases, a vertical line may overlay a track that has no inherent y-values (extent)
         //  When that happens, provide a default height based on the current panel dimensions (accounting
         //      for any resizing that happened after the panel was created)
@@ -222,19 +217,19 @@ class OrthogonalLine extends BaseDataLayer {
                 return isNaN(y) ? default_y[i] : y;
             });
 
-        // Apply line and style
-        selection
-            .attr('d', line);
-
-        applyStyles(selection, this.layout.style);
+        // Create path element, apply class
+        this.path = selection.enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-line')
+            .merge(selection)
+            .attr('d', line)
+            .call(applyStyles, this.layout.style)
+            // Allow the layer to respond to mouseover events and show a tooltip.
+            .call(this.applyBehaviors.bind(this));
 
         // Remove old elements as needed
-        selection
-            .exit()
+        selection.exit()
             .remove();
-
-        // Allow the layer to respond to mouseover events and show a tooltip.
-        this.applyBehaviors(selection);
     }
 
     _getTooltipPosition(tooltip) {

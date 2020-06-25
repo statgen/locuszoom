@@ -214,18 +214,18 @@ function install (LocusZoom) {
             // a) numeric IDs get sorted in numeric order (JS quirk: int object keys act like array indices), or
             // b) text labels get sorted based on order in the source data (hash preserves insertion order)
             if (this.layout.track_split_field && this.layout.split_tracks) {
-                this.data.forEach(function(d) {
+                this.data.forEach((d) => {
                     this.track_split_field_index[d[this.layout.track_split_field]] = null;
-                }.bind(this));
+                });
                 const index = Object.keys(this.track_split_field_index);
                 if (this.layout.track_split_order === 'DESC') {
                     index.reverse();
                 }
-                index.forEach(function(val) {
+                index.forEach((val) => {
                     this.track_split_field_index[val] = this.tracks + 1;
                     this.interval_track_index[this.tracks + 1] = [];
                     this.tracks++;
-                }.bind(this));
+                });
             }
 
             this.data.forEach(function(d, i) {
@@ -318,138 +318,72 @@ function install (LocusZoom) {
                     .style('display', (this.layout.split_tracks ? null : 'none'));
             });
 
-            let width, height, x, y, fill, fill_opacity;
-
             // Render interval groups
             const selection = this.svg.group.selectAll('g.lz-data_layer-intervals')
-                .data(this.data, function (d) {
+                .data(this.data, (d) => {
                     return d[this.layout.id_field];
-                }.bind(this));
+                });
 
-            selection.enter().append('g')
-                .attr('class', 'lz-data_layer-intervals');
-
-            selection.attr('id', (d) => this.getElementId(d))
+            selection.enter()
+                .append('g')
+                .attr('class', 'lz-data_layer-intervals')
+                .merge(selection)
+                .attr('id', (d) => this.getElementId(d))
                 .each(function(interval) {
-
                     const data_layer = interval.parent;
-
                     // Render interval status nodes (displayed behind intervals to show highlight
                     // without needing to modify interval display element(s))
                     const statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete')
-                        .data([interval], function (d) {
-                            return `${data_layer.getElementId(d)}-statusnode`;
-                        });
-                    statusnodes.enter().insert('rect', ':first-child')
-                        .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete');
-                    statusnodes
-                        .attr('id', function(d) {
-                            return `${data_layer.getElementId(d)}-statusnode`;
-                        })
-                        .attr('rx', function() {
-                            return data_layer.layout.bounding_box_padding;
-                        })
-                        .attr('ry', function() {
-                            return data_layer.layout.bounding_box_padding;
-                        })
-                        .style('display', data_layer.layout.split_tracks ? 'none' : null);
-                    width = function(d) {
-                        return d.display_range.width + (2 * data_layer.layout.bounding_box_padding);
-                    };
-                    height = function() {
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    };
-                    x = function(d) {
-                        return d.display_range.start - data_layer.layout.bounding_box_padding;
-                    };
-                    y = function(d) {
-                        return ((d.track - 1) * data_layer.getTrackHeight());
-                    };
-
-                    statusnodes
-                        .attr('width', width)
-                        .attr('height', height)
-                        .attr('x', x)
-                        .attr('y', y);
+                        .data([interval], (d) => `${data_layer.getElementId(d)}-statusnode`);
+                    statusnodes.enter()
+                        .insert('rect', ':first-child')
+                        .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete')
+                        .merge(statusnodes)
+                        .attr('id', (d) => `${data_layer.getElementId(d)}-statusnode`)
+                        .attr('rx', data_layer.layout.bounding_box_padding)
+                        .attr('ry', data_layer.layout.bounding_box_padding)
+                        .style('display', data_layer.layout.split_tracks ? 'none' : null)
+                        .attr('width', (d) => d.display_range.width + (2 * data_layer.layout.bounding_box_padding))
+                        .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
+                        .attr('x', (d) => d.display_range.start - data_layer.layout.bounding_box_padding)
+                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
 
                     statusnodes.exit()
                         .remove();
 
                     // Render primary interval rects
                     const rects = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-interval_rect')
-                        .data([interval], function (d) {
-                            return `${d[data_layer.layout.id_field]}_interval_rect`;
-                        });
+                        .data([interval], (d) => `${d[data_layer.layout.id_field]}_interval_rect`);
 
-                    rects.enter().append('rect')
-                        .attr('class', 'lz-data_layer-intervals lz-interval_rect');
+                    rects.enter()
+                        .append('rect')
+                        .attr('class', 'lz-data_layer-intervals lz-interval_rect')
+                        .merge(rects)
+                        .attr('width', (d) => d.display_range.width)
+                        .attr('height', data_layer.layout.track_height)
+                        .attr('x', (d) => d.display_range.start)
+                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()) + data_layer.layout.bounding_box_padding)
+                        .attr('fill', (d, i) => data_layer.resolveScalableParameter(data_layer.layout.color, d, i))
+                        .attr('fill-opacity', (d, i) => data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d, i));
 
-                    height = data_layer.layout.track_height;
-                    width = function(d) {
-                        return d.display_range.width;
-                    };
-                    x = function(d) {
-                        return d.display_range.start;
-                    };
-                    y = function(d) {
-                        return ((d.track - 1) * data_layer.getTrackHeight())
-                            + data_layer.layout.bounding_box_padding;
-                    };
-                    fill = function(d, i) {
-                        return data_layer.resolveScalableParameter(data_layer.layout.color, d, i);
-                    };
-                    fill_opacity = function(d, i) {
-                        return data_layer.resolveScalableParameter(data_layer.layout.fill_opacity, d, i);
-                    };
-
-                    rects
-                        .attr('width', width)
-                        .attr('height', height)
-                        .attr('x', x)
-                        .attr('y', y)
-                        .attr('fill', fill)
-                        .attr('fill-opacity', fill_opacity);
-
-                    rects.exit().remove();
+                    rects.exit()
+                        .remove();
 
                     // Render interval click areas
                     const clickareas = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-clickarea')
-                        .data([interval], function (d) {
-                            return `${d.interval_name}_clickarea`;
-                        });
+                        .data([interval], (d) => `${d.interval_name}_clickarea`);
 
-                    clickareas.enter().append('rect')
-                        .attr('class', 'lz-data_layer-intervals lz-clickarea');
-
-                    clickareas
-                        .attr('id', function(d) {
-                            return `${data_layer.getElementId(d)}_clickarea`;
-                        })
-                        .attr('rx', function() {
-                            return data_layer.layout.bounding_box_padding;
-                        })
-                        .attr('ry', function() {
-                            return data_layer.layout.bounding_box_padding;
-                        });
-
-                    width = function(d) {
-                        return d.display_range.width;
-                    };
-                    height = function() {
-                        return data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                    };
-                    x = function(d) {
-                        return d.display_range.start;
-                    };
-                    y = function(d) {
-                        return ((d.track - 1) * data_layer.getTrackHeight());
-                    };
-
-                    clickareas
-                        .attr('width', width)
-                        .attr('height', height)
-                        .attr('x', x)
-                        .attr('y', y);
+                    clickareas.enter()
+                        .append('rect')
+                        .attr('class', 'lz-data_layer-intervals lz-clickarea')
+                        .merge(clickareas)
+                        .attr('id', (d) => `${data_layer.getElementId(d)}_clickarea`)
+                        .attr('rx', data_layer.layout.bounding_box_padding)
+                        .attr('ry', data_layer.layout.bounding_box_padding)
+                        .attr('width', (d) => d.display_range.width)
+                        .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
+                        .attr('x', (d) => d.display_range.start)
+                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
 
                     // Remove old clickareas as needed
                     clickareas.exit()
@@ -462,11 +396,11 @@ function install (LocusZoom) {
 
                     // Apply mouse behaviors to clickareas
                     data_layer.applyBehaviors(clickareas);
-
                 });
 
             // Remove old elements as needed
-            selection.exit().remove();
+            selection.exit()
+                .remove();
 
             // Update the legend axis if the number of ticks changed
             if (this.previous_tracks !== this.tracks) {
@@ -564,13 +498,9 @@ function install (LocusZoom) {
         //  using explicitly provided itemRgb information
         _makeColorScheme(category_info) {
             // If at least one element has an explicit itemRgb, assume the entire dataset has colors
-            const has_explicit_colors = category_info.find(function (item) {
-                return item[2];
-            });
+            const has_explicit_colors = category_info.find((item) => item[2]);
             if (has_explicit_colors) {
-                return category_info.map(function (item) {
-                    return item[2];
-                });
+                return category_info.map((item) => item[2]);
             }
 
             // Use a set of color schemes for common 15, 18, or 25 state models, as specified from:
@@ -601,21 +531,19 @@ function install (LocusZoom) {
             // Use the hard-coded legend if available (ignoring any mods on re-render)
             const legend = this._base_layout.legend;
             if (legend && legend.length) {
-                return legend.map(function (item) {
-                    return [item[self.layout.track_split_field], item.label, item.color];
-                });
+                return legend.map((item) => [item[this.layout.track_split_field], item.label, item.color]);
             }
 
             // Generate options from data, if no preset legend exists
             const unique_ids = {}; // make categories unique
             const categories = [];
 
-            data.forEach(function (item) {
+            data.forEach((item) => {
                 const id = item[self.layout.track_split_field];
                 if (!Object.prototype.hasOwnProperty.call(unique_ids, id)) {
                     unique_ids[id] = null;
                     // If rgbfield is null, then the last entry is undefined/null as well
-                    categories.push([id, item[self.layout.track_label_field], item[rgb_field]]);
+                    categories.push([id, item[this.layout.track_label_field], item[rgb_field]]);
                 }
             });
             return categories;

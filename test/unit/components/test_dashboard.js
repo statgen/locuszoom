@@ -42,12 +42,10 @@ describe('LocusZoom.Toolbar', function() {
         });
         it('should generate a selector for its DOM element when shown', function() {
             this.plot.toolbar.show();
-            assert.isArray(this.plot.toolbar.selector);
             assert.instanceOf(this.plot.toolbar.selector, d3.selection);
             assert.equal(this.plot.toolbar.selector.empty(), false);
             assert.equal(this.plot.toolbar.selector.attr('id'), d3.select('#plot\\.toolbar').attr('id'));
             this.plot.panels.test.toolbar.show();
-            assert.isArray(this.plot.panels.test.toolbar.selector);
             assert.ok(this.plot.panels.test.toolbar.selector instanceof d3.selection);
             assert.equal(this.plot.panels.test.toolbar.selector.empty(), false);
             assert.equal(this.plot.panels.test.toolbar.selector.attr('id'), d3.select('#plot\\.test\\.toolbar').attr('id'));

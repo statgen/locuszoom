@@ -67,13 +67,7 @@ class Forest extends BaseDataLayer {
                 .data(this.data, (d) => {
                     return d[this.layout.id_field];
                 });
-            // Create confidence interval rect elements
-            ci_selection.enter()
-                .append('rect')
-                .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
-                .attr('id', (d) => `${this.getElementId(d)}_ci`)
-                .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`);
-            // Apply position and size parameters
+
             const ci_transform = (d) => {
                 let x = this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
                 let y = this.parent[y_scale](d[this.layout.y_axis.field]);
@@ -90,8 +84,13 @@ class Forest extends BaseDataLayer {
                     - this.parent[x_scale](d[this.layout.confidence_intervals.start_field]);
             };
             const ci_height = 1;
-
-            ci_selection
+            // Create confidence interval rect elements
+            ci_selection.enter()
+                .append('rect')
+                .attr('class', 'lz-data_layer-forest lz-data_layer-forest-ci')
+                .attr('id', (d) => `${this.getElementId(d)}_ci`)
+                .attr('transform', `translate(0, ${isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height})`)
+                .merge(ci_selection)
                 .attr('transform', ci_transform)
                 .attr('width', ci_width)
                 .attr('height', ci_height);
@@ -110,11 +109,6 @@ class Forest extends BaseDataLayer {
 
         // Create elements, apply class, ID, and initial position
         const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
-        points_selection.enter()
-            .append('path')
-            .attr('class', 'lz-data_layer-forest lz-data_layer-forest-point')
-            .attr('id', (d) => this.getElementId(d))
-            .attr('transform', `translate(0, ${initial_y})`);
 
         // Generate new values (or functions for them) for position, color, size, and shape
         const transform = (d) => {
@@ -129,35 +123,31 @@ class Forest extends BaseDataLayer {
             return `translate(${x}, ${y})`;
         };
 
-        const fill = (d, i) => {
-            return this.resolveScalableParameter(this.layout.color, d, i);
-        };
-        const fill_opacity = (d, i) => {
-            return this.resolveScalableParameter(this.layout.fill_opacity, d, i);
-        };
+        const fill = (d, i) => this.resolveScalableParameter(this.layout.color, d, i);
+        const fill_opacity = (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i);
 
         const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
-        // Apply position and color
-        points_selection
+        points_selection.enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-forest lz-data_layer-forest-point')
+            .attr('id', (d) => this.getElementId(d))
+            .attr('transform', `translate(0, ${initial_y})`)
+            .merge(points_selection)
             .attr('transform', transform)
             .attr('fill', fill)
             .attr('fill-opacity', fill_opacity)
-            .attr('d', shape);
+            .attr('d', shape)
+            // Apply behaviors to points
+            .on('click.event_emitter', (element_data) => {
+                this.parent.emit('element_clicked', element_data, true);
+            }).call(this.applyBehaviors.bind(this));
 
         // Remove old elements as needed
         points_selection.exit()
             .remove();
-
-        // Apply default event emitters to selection
-        points_selection.on('click.event_emitter', (element_data) => {
-            this.parent.emit('element_clicked', element_data, true);
-        });
-
-        // Apply behaviors to points
-        this.applyBehaviors(points_selection);
     }
 }
 
