@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import {layouts} from '../../../esm/registry';
+import {LAYOUTS} from '../../../esm/registry';
 import {populate} from '../../../esm/helpers/display';
 import Plot from '../../../esm/components/plot';
 import Panel from '../../../esm/components/panel';
@@ -13,7 +13,7 @@ describe('Panel', function() {
     describe('Constructor', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = layouts.get('plot', 'standard_association');
+            const layout = LAYOUTS.get('plot', 'standard_association');
             this.plot = populate('#plot_id', null, layout);
             this.panel = this.plot.panels.association;
         });
@@ -48,7 +48,7 @@ describe('Panel', function() {
     describe('Geometry Methods', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
-            const layout = layouts.get('plot', 'standard_association');
+            const layout = LAYOUTS.get('plot', 'standard_association');
             this.plot = populate('#plot_id', null, layout);
             this.association_panel = this.plot.panels.association;
             this.genes_panel = this.plot.panels.genes;

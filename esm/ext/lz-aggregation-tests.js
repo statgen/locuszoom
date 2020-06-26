@@ -14,6 +14,7 @@
 
 import {helpers} from 'raremetal.js';
 import {RemoteAdapter} from '../data';
+import {deepCopy} from '../helpers/layouts';
 
 
 function install (LocusZoom) {
@@ -172,7 +173,7 @@ function install (LocusZoom) {
                 throw `${this.constructor.SOURCE_NAME} cannot be used before loading required data for: ${this._from}`;
             }
             // Copy the data so that mutations (like sorting) don't affect the original
-            return Promise.resolve(JSON.parse(JSON.stringify(chain.discrete[this._from]['variants'])));
+            return Promise.resolve(deepCopy(chain.discrete[this._from]['variants']));
         }
 
         normalizeResponse(data) {

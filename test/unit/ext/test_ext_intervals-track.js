@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 
 import LocusZoom from 'locuszoom';
-import {data_layers, layouts} from '../../../esm/registry';
+import {DATA_LAYERS, LAYOUTS} from '../../../esm/registry';
 import intervals_plugin from '../../../esm/ext/lz-intervals-track';
 
 /**
@@ -20,12 +20,12 @@ describe('Interval annotation track', function () {
         };
 
         beforeEach(function () {
-            const layout = layouts.get('data_layer', 'intervals', {
+            const layout = LAYOUTS.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
                 track_split_field: '{{namespace[intervals]}}state_id'
             });
-            const instance = data_layers.create('intervals', layout);
+            const instance = DATA_LAYERS.create('intervals', layout);
             this.instance = instance;
             this.color_config = find_color_options(instance._base_layout);
             this.color_config.field = '{{namespace[intervals]}}state_id';

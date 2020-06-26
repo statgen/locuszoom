@@ -1,7 +1,7 @@
 /** @module */
 import * as d3 from 'd3';
 
-import {merge} from '../helpers/layouts';
+import {deepCopy, merge} from '../helpers/layouts';
 import Requester from '../data/requester';
 import Toolbar from './toolbar';
 import Panel from './panel';
@@ -154,7 +154,7 @@ class Plot {
          * Values in the layout object may change during rendering etc. Retain a copy of the original plot state
          * @member {Object}
          */
-        this._base_layout = JSON.parse(JSON.stringify(this.layout));
+        this._base_layout = deepCopy(this.layout);
 
         /**
          * Create a shortcut to the state in the layout on the Plot. Tracking in the layout allows the plot to be created

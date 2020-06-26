@@ -3,11 +3,11 @@
  * @module
  * @public
  */
-import adapters from './adapters';
-import data_layers from './data_layers';
-import layouts from './layouts';
-import scalable from './scalable';
-import transforms from './transforms';
-import widgets from './widgets';
+import ADAPTERS from './adapters';
+import DATA_LAYERS from './data_layers';
+import LAYOUTS from './layouts';
+import SCALABLE from './scalable';
+import TRANSFORMS from './transforms';
+import WIDGETS from './widgets';
 
-export { adapters, data_layers, layouts, scalable, transforms, widgets };
+export { ADAPTERS, DATA_LAYERS, LAYOUTS, SCALABLE, TRANSFORMS, WIDGETS };

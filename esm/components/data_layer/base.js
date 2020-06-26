@@ -4,7 +4,7 @@ import * as d3 from 'd3';
 import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
-import {merge} from '../../helpers/layouts';
+import {deepCopy, merge} from '../../helpers/layouts';
 import scalable from '../../registry/scalable';
 
 
@@ -69,7 +69,7 @@ class BaseDataLayer {
          * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
          * @member {Object}
          */
-        this._base_layout = JSON.parse(JSON.stringify(this.layout));
+        this._base_layout = deepCopy(this.layout);
 
         /** @member {Object} */
         this.state = {};

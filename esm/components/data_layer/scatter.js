@@ -34,7 +34,6 @@ class Scatter extends BaseDataLayer {
         super(...arguments);
     }
 
-
     // Implement tooltip position to be layer-specific
     _getTooltipPosition(tooltip) {
         const x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
@@ -396,9 +395,6 @@ class Scatter extends BaseDataLayer {
             return `translate(${x}, ${y})`;
         };
 
-        const fill = (d, i) => this.resolveScalableParameter(this.layout.color, d, i);
-        const fill_opacity = (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i);
-
         const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
@@ -410,8 +406,8 @@ class Scatter extends BaseDataLayer {
             .attr('transform', `translate(0, ${initial_y})`)
             .merge(selection)
             .attr('transform', transform)
-            .attr('fill', fill)
-            .attr('fill-opacity', fill_opacity)
+            .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
+            .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i))
             .attr('d', shape)
             // Apply default event emitters & mouse behaviors to selection
             .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))

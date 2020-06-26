@@ -2,7 +2,7 @@
  *  @module
  *  @private
  */
-import { transforms } from '../registry';
+import { TRANSFORMS } from '../registry';
 
 /**
  * The Requester manages fetching of data across multiple data sources. It is used internally by LocusZoom data layers.
@@ -31,7 +31,7 @@ class Requester {
             var parts = re.exec(raw);
             var ns = parts[1] || 'base';
             var field = parts[2];
-            var trans = transforms.get(parts[3]);
+            var trans = TRANSFORMS.get(parts[3]);
             if (typeof requests[ns] == 'undefined') {
                 requests[ns] = {outnames:[], fields:[], trans:[]};
             }

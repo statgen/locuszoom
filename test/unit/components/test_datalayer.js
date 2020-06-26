@@ -1,7 +1,7 @@
 import {assert} from 'chai';
 import * as d3 from 'd3';
 
-import { scalable } from '../../../esm/registry';
+import { SCALABLE } from '../../../esm/registry';
 import BaseDataLayer from '../../../esm/components/data_layer/base';
 import {populate} from '../../../esm/helpers/display';
 import DataSources from '../../../esm/data';
@@ -113,7 +113,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(layout.scale, {}), null);
         });
         it('can operate in a state-aware manner based on index in data[]', function () {
-            scalable.add('fake', (parameters, input, index) => index);
+            SCALABLE.add('fake', (parameters, input, index) => index);
             const datalayer = new BaseDataLayer({ id: 'test' });
             const config = { scale_function: 'fake' };
             // The same input value will yield a different scaling function result, because position in data matters.
@@ -121,10 +121,10 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(config, 'avalue', 1), 1);
 
             // Clean up/ deregister scale function when done
-            scalable.remove('fake');
+            SCALABLE.remove('fake');
         });
         it('supports operating on an entire data element in the absence of a specified field', function () {
-            scalable.add('test_effect_direction', function (parameters, input) {
+            SCALABLE.add('test_effect_direction', function (parameters, input) {
                 if (typeof input == 'undefined') {
                     return null;
                 } else if ((input.beta && input.beta > 0) || (input.or && input.or > 0)) {
@@ -152,7 +152,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[4]), null);
 
             // Clean up/ deregister scale function when done
-            scalable.remove('test_effect_direction');
+            SCALABLE.remove('test_effect_direction');
         });
         it('iterates over an array of options until exhausted or a non-null value is found', function () {
             const datalayer = new BaseDataLayer({ id: 'test' });

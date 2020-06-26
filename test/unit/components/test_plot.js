@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import { layouts } from '../../../esm/registry';
+import { LAYOUTS } from '../../../esm/registry';
 import {populate} from '../../../esm/helpers/display';
 import DataSources from '../../../esm/data';
 import {_updateStatePosition} from '../../../esm/components/plot';
@@ -93,7 +93,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.height, this.plot.layout.min_height);
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function() {
-            const responsive_layout = layouts.get('plot', 'standard_association', {
+            const responsive_layout = LAYOUTS.get('plot', 'standard_association', {
                 responsive_resize: true,
                 aspect_ratio: 2,
                 panels: [
@@ -120,8 +120,8 @@ describe('LocusZoom.Plot', function() {
                 height: 500,
                 aspect_ratio: 2,
                 panels: [
-                    layouts.get('panel', 'association', { margin: { left: 200 } }),
-                    layouts.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
+                    LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
+                    LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
                 ]
             };
             this.plot = populate('#plot', null, layout);
@@ -172,7 +172,7 @@ describe('LocusZoom.Plot', function() {
         describe('Mouse Guide Layer', function() {
             beforeEach(function() {
                 d3.select('body').append('div').attr('id', 'plot');
-                const layout = layouts.get('plot', 'standard_association');
+                const layout = LAYOUTS.get('plot', 'standard_association');
                 this.plot = populate('#plot', null, layout);
             });
             it('first child should be a mouse guide layer group element', function() {

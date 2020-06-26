@@ -89,7 +89,7 @@ function merge(custom_layout, default_layout) {
         }
         // Undefined custom value: pull the default value
         if (custom_type === 'undefined') {
-            custom_layout[property] = JSON.parse(JSON.stringify(default_layout[property]));
+            custom_layout[property] = deepCopy(default_layout[property]);
             continue;
         }
         // Both values are objects: merge recursively

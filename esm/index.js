@@ -8,12 +8,12 @@ import {default as DataSources} from './data';
 import { populate } from './helpers/display';
 
 import {
-    adapters as Adapters,
-    data_layers as DataLayers,
-    widgets as Widgets,
-    layouts as Layouts,
-    scalable as ScaleFunctions,
-    transforms as TransformationFunctions,
+    ADAPTERS as Adapters,
+    DATA_LAYERS as DataLayers,
+    WIDGETS as Widgets,
+    LAYOUTS as Layouts,
+    SCALABLE as ScaleFunctions,
+    TRANSFORMS as TransformationFunctions,
 } from './registry';
 
 

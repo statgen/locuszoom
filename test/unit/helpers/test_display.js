@@ -2,7 +2,7 @@ import {assert} from 'chai';
 import * as d3 from 'd3';
 
 
-import {transforms} from '../../../esm/registry';
+import {TRANSFORMS} from '../../../esm/registry';
 import {parseFields, parsePositionQuery, populate, positionIntToString, positionStringToInt, prettyTicks} from '../../../esm/helpers/display';
 
 
@@ -80,16 +80,16 @@ describe('Display and parsing helpers', function () {
 
     describe('Parse Fields', function() {
         before(function() {
-            transforms.add('herp', function(x) {
+            TRANSFORMS.add('herp', function(x) {
                 return `${x.toString()  }herp`;
             });
-            transforms.add('derp', function(x) {
+            TRANSFORMS.add('derp', function(x) {
                 return `${x.toString()  }derp`;
             });
         });
         after(function() {
-            transforms.remove('herp');
-            transforms.remove('derp');
+            TRANSFORMS.remove('herp');
+            TRANSFORMS.remove('derp');
         });
         it('should require that data be present and be an object', function() {
             assert.throws(function() {

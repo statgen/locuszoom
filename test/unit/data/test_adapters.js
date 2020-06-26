@@ -7,7 +7,7 @@ import {
     ConnectorSource,
     GeneLZ,
     GwasCatalogLZ,
-    LDLZ,
+    LDServer,
     RecombLZ,
     StaticSource
 } from '../../../esm/data/adapters';
@@ -406,16 +406,16 @@ describe('Data adapters', function () {
         });
     });
 
-    describe('LDLZ Source', function () {
+    describe('LDServer Source', function () {
         it('validates the selected build name', function () {
-            const source = new LDLZ({ url: 'www.fake.test', params: { build: 99 } });
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 99 } });
             assert.throws(function () {
                 source.getURL({});
             }, /must specify a valid genome build number/);
         });
 
         it('will prefer a refvar in plot.state if one is provided', function () {
-            const source = new LDLZ({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
             const ref = source.getRefvar(
                 { ldrefvar: 'Something' },
                 { header: {}, body: [{ id: 'a', pvalue: 0 }] },
@@ -425,7 +425,7 @@ describe('Data adapters', function () {
         });
 
         it('auto-selects the best reference variant (lowest pvalue)', function () {
-            const source = new LDLZ({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
             const ref = source.getRefvar(
                 {},
                 {
@@ -442,7 +442,7 @@ describe('Data adapters', function () {
         });
 
         it('auto-selects the best reference variant (largest nlog_pvalue)', function () {
-            const source = new LDLZ({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
             const ref = source.getRefvar(
                 {},
                 {
@@ -460,7 +460,7 @@ describe('Data adapters', function () {
 
         it('correctly identifies the variant-marker field', function () {
             //
-            const source_default = new LDLZ({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const source_default = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
             let dataFields = source_default.findMergeFields(
                 { body: [{ 'assoc:id': 'a', log_pvalue: 10 }] }
             );
@@ -471,7 +471,7 @@ describe('Data adapters', function () {
             );
             assert.equal(dataFields.id, 'assoc:variant', 'Uses a default option (variant name)');
 
-            const source_options = new LDLZ({
+            const source_options = new LDServer({
                 url: 'www.fake.test',
                 params: { build: 'GRCh37', id_field: 'marker' }
             });
@@ -487,7 +487,7 @@ describe('Data adapters', function () {
         });
 
         it('coerces variant formats to one expected by the LD server', function () {
-            const source = new LDLZ({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
 
             const portal_format = '8:117974679:G:A';
             const ldserver_format = '8:117974679_G/A';

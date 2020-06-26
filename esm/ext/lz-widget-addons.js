@@ -9,6 +9,7 @@
  *    space is hard to read. (see "multiple phenotypes layered" demo)
  * @module
  */
+import {deepCopy} from '../helpers/layouts';
 
 // In order to work in a UMD context, this module imports the top-level LocusZoom symbol
 
@@ -54,7 +55,7 @@ function install(LocusZoom) {
                  */
                 add: (element_reference) => {
                     const plot = this.parent_plot;
-                    const element = JSON.parse(JSON.stringify(element_reference));
+                    const element = deepCopy(element_reference);
                     if (typeof element_reference == 'object' && typeof element.html != 'string') {
                         element.html = ( (typeof element_reference.toHTML == 'function') ? element_reference.toHTML() : element_reference.toString());
                     }

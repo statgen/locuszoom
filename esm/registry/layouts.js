@@ -26,7 +26,7 @@ class LayoutRegistry extends RegistryBase {
         base = merge(overrides, base);
         if (base.unnamespaced) {
             delete base.unnamespaced;
-            return JSON.parse(JSON.stringify(base));
+            return deepCopy(base);
         }
         let default_namespace = '';
         if (typeof base.namespace == 'string') {
@@ -64,7 +64,7 @@ class LayoutRegistry extends RegistryBase {
             super.add(type, new RegistryBase());
         }
         // Ensure that each use of a layout can be modified, by returning a copy is independent
-        const copy = JSON.parse(JSON.stringify(item));
+        const copy = deepCopy(item);
         return super.get(type).add(name, copy, override);
     }
 

@@ -1,6 +1,6 @@
 /** @module */
 import {RegistryBase} from '../registry/base';
-import { adapters } from '../registry';
+import { ADAPTERS } from '../registry';
 
 /**
  * Create and coordinate an ensemble of (namespaced) data source instances
@@ -18,7 +18,7 @@ class DataSources extends RegistryBase {
         super();
         // This both acts as a registry (of the instantiated sources for this plot), and references a registry
         //   (to locate adapter classes by name, when creating from config)
-        this._registry = registry || adapters;
+        this._registry = registry || ADAPTERS;
     }
 
     /**
