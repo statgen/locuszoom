@@ -50,7 +50,7 @@ function positionStringToInt(p) {
         } else {
             mult = 1e3; //K
         }
-        val = val.replace(suffixre,'');
+        val = val.replace(suffixre, '');
     }
     val = Number(val) * mult;
     return val;
@@ -280,8 +280,9 @@ function populate(selector, datasource, layout) {
             .attr('version', '1.1')
             .attr('xmlns', 'http://www.w3.org/2000/svg')
             .attr('id', `${plot.id}_svg`)
-            .attr('class', 'lz-locuszoom');
-        applyStyles(plot.svg, plot.layout.style);
+            .attr('class', 'lz-locuszoom')
+            .call(applyStyles, plot.layout.style);
+
         plot.setDimensions();
         plot.positionPanels();
         // Initialize the plot

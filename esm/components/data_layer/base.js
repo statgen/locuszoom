@@ -200,7 +200,7 @@ class BaseDataLayer {
             if (typeof element[id_field] == 'undefined') {
                 throw new Error('Unable to generate element ID');
             }
-            element_id = element[id_field].toString().replace(/\W/g,'');
+            element_id = element[id_field].toString().replace(/\W/g, '');
         }
         return (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
     }
@@ -894,7 +894,7 @@ class BaseDataLayer {
      * @returns {Array}
      */
     filter(filters, return_type) {
-        if (typeof return_type == 'undefined' || !['indexes','elements'].includes(return_type)) {
+        if (typeof return_type == 'undefined' || !['indexes', 'elements'].includes(return_type)) {
             return_type = 'indexes';
         }
         if (!Array.isArray(filters)) {

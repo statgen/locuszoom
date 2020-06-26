@@ -628,7 +628,7 @@ class CategoryScatter extends Scatter {
                 const bounds = categoryBounds[category];
                 let xPos;
 
-                switch(position) {
+                switch (position) {
                 case 'left':
                     xPos = bounds[0];
                     break;

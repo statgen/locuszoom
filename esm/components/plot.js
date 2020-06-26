@@ -642,7 +642,7 @@ class Plot {
 
                 delete layer.layer_state;
                 delete this.layout.state[layer.state_id];
-                if(mode === 'reset') {
+                if (mode === 'reset') {
                     layer._setDefaultState();
                 }
             });
@@ -1238,7 +1238,7 @@ class Plot {
             });
         };
 
-        switch(this.interaction.dragging.method) {
+        switch (this.interaction.dragging.method) {
         case 'background':
         case 'x_tick':
             if (this.interaction.dragging.dragged_x !== 0) {

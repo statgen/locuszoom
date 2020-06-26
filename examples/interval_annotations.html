@@ -67,7 +67,7 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-      .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 19} }])
@@ -75,9 +75,6 @@
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
     layout = LocusZoom.Layouts.get("plot", "interval_association");
-    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
-    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-    layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
     // Modify the association panel: custom "label point" tooltip option + add the required filters directive
     var assoc_layer = layout.panels[0].data_layers[2];

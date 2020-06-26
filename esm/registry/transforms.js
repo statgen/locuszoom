@@ -37,7 +37,7 @@ class TransformationFunctions extends RegistryBase {
             //  a callable
             return null;
         }
-        if (name.substring(0,1) === '|') {
+        if (name.substring(0, 1) === '|') {
             // Legacy artifact of how this function is called- if a pipe is present, this is the template string
             //  (`|func1|func2...`), rather than any one single transformation function.
             // A sequence of transformation functions is expected

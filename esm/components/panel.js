@@ -500,8 +500,9 @@ class Panel {
                 .attr('display', null)
                 .attr('x', parseFloat(this.layout.title.x))
                 .attr('y', parseFloat(this.layout.title.y))
-                .text(this.layout.title.text);
-            applyStyles(this.title, this.layout.title.style);
+                .text(this.layout.title.text)
+                .call(applyStyles, this.layout.title.style);
+
         } else {
             this.title.attr('display', 'none');
         }
@@ -639,7 +640,7 @@ class Panel {
     getLinkedPanelIds(axis) {
         axis = axis || null;
         const linked_panel_ids = [];
-        if (!['x','y1','y2'].includes(axis)) {
+        if (!['x', 'y1', 'y2'].includes(axis)) {
             return linked_panel_ids;
         }
         if (!this.layout.interaction[`${axis}_linked`]) {
@@ -1207,7 +1208,7 @@ class Panel {
 
         // Initialize the axis; set scale and orientation
         let axis_factory;
-        switch(axis_params[axis].orientation) {
+        switch (axis_params[axis].orientation) {
         case 'right':
             axis_factory = d3.axisRight;
             break;
@@ -1232,7 +1233,7 @@ class Panel {
             }
         } else {
             let ticks = this[`${axis}_ticks`].map((t) => {
-                return(t[axis.substr(0,1)]);
+                return (t[axis.substr(0, 1)]);
             });
             this[`${axis}_axis`].tickValues(ticks)
                 .tickFormat((t, i) => {

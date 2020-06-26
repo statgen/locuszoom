@@ -69,9 +69,8 @@ class Line extends BaseDataLayer {
 
         // Apply line and style
         selection
-            .attr('d', line);
-
-        applyStyles(selection, this.layout.style);
+            .attr('d', line)
+            .call(applyStyles, this.layout.style);
 
         // Remove old elements as needed
         selection.exit()
@@ -153,7 +152,7 @@ class OrthogonalLine extends BaseDataLayer {
     constructor(layout) {
         layout = merge(layout, default_orthogonal_layout);
         // Require that orientation be "horizontal" or "vertical" only
-        if (!['horizontal','vertical'].includes(layout.orientation)) {
+        if (!['horizontal', 'vertical'].includes(layout.orientation)) {
             layout.orientation = 'horizontal';
         }
         super(...arguments);

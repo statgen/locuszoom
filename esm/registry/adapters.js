@@ -18,7 +18,7 @@ for (let [name, type] of Object.entries(adapters)) {
 
 // Add some hard-coded aliases for backwards compatibility
 registry.add('StaticJSON', adapters.StaticSource);
-registry.add('LDLZ2', adapters.LDLZ);
+registry.add('LDLZ2', adapters.LDServer);
 
 
 export default registry;

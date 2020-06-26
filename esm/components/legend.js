@@ -114,8 +114,8 @@ class Legend {
                         selector
                             .append('path')
                             .attr('class', element.class || '')
-                            .attr('d', `M0,${path_y}L${length},${path_y}`);
-                        applyStyles(selector, element.style || {});
+                            .attr('d', `M0,${path_y}L${length},${path_y}`)
+                            .call(applyStyles, element.style || {});
                         label_x = length + padding;
                     } else if (shape === 'rect') {
                         // Rect symbol
@@ -126,8 +126,9 @@ class Legend {
                             .attr('class', element.class || '')
                             .attr('width', width)
                             .attr('height', height)
-                            .attr('fill', element.color || {});
-                        applyStyles(selector, element.style || {});
+                            .attr('fill', element.color || {})
+                            .call(applyStyles, element.style || {});
+
                         label_x = width + padding;
                         line_height = Math.max(line_height, height + padding);
                     } else if (shape_factory) {
@@ -139,9 +140,9 @@ class Legend {
                             .attr('class', element.class || '')
                             .attr('d', d3.symbol().size(size).type(shape_factory))
                             .attr('transform', `translate(${radius}, ${radius + (padding / 2)})`)
-                            .attr('fill', element.color || {});
+                            .attr('fill', element.color || {})
+                            .call(applyStyles, element.style || {});
 
-                        applyStyles(selector, element.style || {});
                         label_x = (2 * radius) + padding;
                         label_y = Math.max((2 * radius) + (padding / 2), label_y);
                         line_height = Math.max(line_height, (2 * radius) + padding);
@@ -155,6 +156,7 @@ class Legend {
                         .attr('y', label_y)
                         .style('font-size', label_size)
                         .text(element.label);
+
                     // Position the legend element group based on legend layout orientation
                     const bcr = selector.node().getBoundingClientRect();
                     if (this.layout.orientation === 'vertical') {

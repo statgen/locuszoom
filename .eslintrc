@@ -4,6 +4,7 @@
         "arrow-parens": "error",
         "brace-style": "error",
         "comma-dangle": ["warn", "only-multiline"],
+        "comma-spacing": "warn",
         "curly": "error",
         "eol-last": "error",
         "eqeqeq": [
@@ -18,6 +19,7 @@
                 "CallExpression": { "arguments": "first" }
             }
         ],
+        "keyword-spacing": "warn",
         "linebreak-style": [
             2,
             "unix"

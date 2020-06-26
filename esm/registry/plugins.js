@@ -17,7 +17,7 @@ class Plugins extends RegistryBase {
      * @return {*}
      */
     use(extensions) {
-        for (let[type, items] of Object.entries(extensions)) {
+        for (let [type, items] of Object.entries(extensions)) {
             for (let item of items) {
                 this.get(type).add(...item);
             }

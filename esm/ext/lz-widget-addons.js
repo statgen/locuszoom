@@ -276,7 +276,7 @@ function install(LocusZoom) {
     }();
 
     const covariates_model_plot = function () {
-        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_plot', { unnamespaced: true });
+        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'region_nav_plot', { unnamespaced: true });
         covariates_model_plot_toolbar.widgets.push({
             type: 'covariates_model',
             button_html: 'Model',

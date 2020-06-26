@@ -92,7 +92,7 @@
               params: { source: 45, id_field: "variant" }
           }])
           .add("credset", ["CredibleSetLZ", { params: { fields: { log_pvalue: 'assoc:log_pvalue' }, threshold: 0.95 } }])
-          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+          .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: { build: 'GRCh37' }}])
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' }}])
           .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
@@ -109,8 +109,6 @@
       }
 
       layout = LocusZoom.Layouts.get("plot", "association_credible_set", {state: initialState});
-      layout.toolbar = LocusZoom.Layouts.get("toolbar", "region_nav_plot");
-      layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
       // Generate the LocusZoom plot
       window.plot = LocusZoom.populate("#plot", data_sources, layout);

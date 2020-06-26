@@ -413,8 +413,7 @@ const annotation_catalog_layer = {
  * Individual toolbar buttons
  */
 const ldlz2_pop_selector_menu = {
-    // **Note**: this widget is aimed at the LDLZ2 datasource, and the UM 1000G LDServer. Older LZ usages
-    //  (on the original LD data source) will not work with these population names.
+    // **Note**: this widget is aimed at the LDServer datasource, and the UM 1000G LDServer
     type: 'set_state',
     position: 'right',
     color: 'blue',
@@ -461,6 +460,7 @@ const standard_panel_toolbar = {
 };
 
 const standard_plot_toolbar = {
+    // Suitable for most any type of plot drawn with LZ
     widgets: [
         {
             type: 'title',
@@ -471,13 +471,15 @@ const standard_plot_toolbar = {
         {
             type: 'download',
             position: 'right'
-        }
+        },
     ]
 };
 
 const region_nav_plot_toolbar = function () {
+    // Useful for most region-based plots
     const region_nav_plot_toolbar = deepCopy(standard_plot_toolbar);
     region_nav_plot_toolbar.widgets.push(
+        deepCopy(ldlz2_pop_selector_menu),
         {
             type: 'shift_region',
             step: 500000,
@@ -773,7 +775,7 @@ const standard_association_plot = {
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_plot_toolbar),
+    toolbar: deepCopy(region_nav_plot_toolbar),
     panels: [
         merge({ proportional_height: 0.5}, deepCopy(association_panel)),
         merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
@@ -787,7 +789,7 @@ const association_catalog_plot = {
     responsive_resize: 'width_only',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_plot_toolbar),
+    toolbar: deepCopy(region_nav_plot_toolbar),
     panels: [
         deepCopy(annotation_catalog_panel),
         deepCopy(association_catalog_panel),
@@ -827,7 +829,7 @@ const coaccessibility_plot = {
     responsive_resize: 'both',
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(region_nav_plot_toolbar),
+    toolbar: deepCopy(standard_plot_toolbar),
     panels: [
         Object.assign(
             { proportional_height: 0.4 },

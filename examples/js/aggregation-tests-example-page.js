@@ -39,11 +39,6 @@ function customizePlotLayout(layout) {
     // 1. The association panel must pull from aggregation tests in order to draw on that data
     // 2. Genes layer must pull from the aggregation source + the aggregation_genes connector if we want to color
     //  the gene track by aggregation test results
-
-    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
-    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-    layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
-
     const assocLayout = layout.panels[0].data_layers[2];
     assocLayout.fields.unshift('aggregation: all');
 
@@ -199,7 +194,7 @@ function createDisplayWidgets(label_store, context) {
             from: 'aggregation',
             params: { id_field: 'variant' }
         }])
-        .add('ld', ['LDLZ2', {
+        .add('ld', ['LDServer', {
             url: 'https://portaldev.sph.umich.edu/ld/',
             params: { source: '1000G', build: 'GRCh37', population: 'ALL' }
         }])

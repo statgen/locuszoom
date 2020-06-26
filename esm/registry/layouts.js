@@ -56,7 +56,7 @@ class LayoutRegistry extends RegistryBase {
         if (!(type && name && item)) {
             throw new Error('To add a layout, type, name, and item must all be specified');
         }
-        if(!(typeof item === 'object')) {
+        if (!(typeof item === 'object')) {
             throw new Error('The configuration to be added must be an object');
         }
 

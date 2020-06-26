@@ -86,7 +86,7 @@
       var apiBase = "//portaldev.sph.umich.edu/api/v1/";
       var data_sources = new LocusZoom.DataSources()
           .add("assoc", ["AssociationLZ", { url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" } }])
-          .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', population: 'ALL' } }])
+          .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', population: 'ALL' } }])
           .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/" }])
           .add("catalog", ["GwasCatalogLZ", { url: apiBase + 'annotation/gwascatalog/results/' }])
           .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/" }])
@@ -134,11 +134,6 @@
           },
           '#0000CC'
       ];
-
-      // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
-      //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-      layout.toolbar = LocusZoom.Layouts.get("toolbar", "region_nav_plot");
-      layout.toolbar.widgets.push(LocusZoom.Layouts.get('toolbar_widgets', 'ldlz2_pop_selector'));
 
       // Generate the LocusZoom plot
       window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);

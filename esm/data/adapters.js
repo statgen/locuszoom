@@ -132,7 +132,7 @@ class BaseAdapter {
     getData(state, fields, outnames, trans) {
         if (this.preGetData) { // TODO try to remove this method if at all possible
             const pre = this.preGetData(state, fields, outnames, trans);
-            if(this.pre) {
+            if (this.pre) {
                 state = pre.state || state;
                 fields = pre.fields || fields;
                 outnames = pre.outnames || outnames;
@@ -185,9 +185,9 @@ class BaseAdapter {
         // Go down the rows, and create an object for each record
         const records = [];
         const fields = Object.keys(data);
-        for(let i = 0; i < N; i++) {
+        for (let i = 0; i < N; i++) {
             const record = {};
-            for(let j = 0; j < fields.length; j++) {
+            for (let j = 0; j < fields.length; j++) {
                 record[fields[j]] = data[fields[j]][i];
             }
             records.push(record);
@@ -382,9 +382,9 @@ class AssociationLZ extends RemoteAdapter {
  * This source is designed to connect its results to association data, and therefore depends on association data having
  *  been loaded by a previous request in the data chain.
  *
- * In older versions of LocusZoom, this was known as "LDLZ2". A prior source (targeted at older APIs) has been removed.
+ * In older versions of LocusZoom, this was known as "LDServer". A prior source (targeted at older APIs) has been removed.
  */
-class LDLZ extends RemoteAdapter {
+class LDServer extends RemoteAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -444,8 +444,8 @@ class LDLZ extends RemoteAdapter {
     findRequestedFields (fields, outnames) {
         // Assumption: all usages of this source will only ever ask for "isrefvar" or "state". This maps to output names.
         let obj = {};
-        for(let i = 0; i < fields.length; i++) {
-            if(fields[i] === 'isrefvar') {
+        for (let i = 0; i < fields.length; i++) {
+            if (fields[i] === 'isrefvar') {
                 obj.isrefvarin = fields[i];
                 obj.isrefvarout = outnames && outnames[i];
             } else {
@@ -482,7 +482,7 @@ class LDLZ extends RemoteAdapter {
                 };
             }
             let extremeVal = records[0][pval_field], extremeIdx = 0;
-            for(let i = 1; i < records.length; i++) {
+            for (let i = 1; i < records.length; i++) {
                 if (cmp(records[i][pval_field], extremeVal)) {
                     extremeVal = records[i][pval_field];
                     extremeIdx = i;
@@ -536,7 +536,7 @@ class LDLZ extends RemoteAdapter {
         const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?):(\d+)[_:]?(\w+)?[/:|]?([^_]+)?_?(.*)?/;
         const match = refVar && refVar.match(REGEX_MARKER);
 
-        if(!match) {
+        if (!match) {
             throw new Error('Could not request LD for a missing or incomplete marker format');
         }
         refVar = [match[1], ':', match[2], '_', match[3], '/', match[4]].join('');
@@ -586,7 +586,7 @@ class LDLZ extends RemoteAdapter {
         // LD servers vary slightly. Some report corr as "rsquare", others as "correlation"
         let corrField = data.rsquare ? 'rsquare' : 'correlation';
         leftJoin(chain.body, data, reqFields.ldout, corrField);
-        if(reqFields.isrefvarin && chain.header.ldrefvar) {
+        if (reqFields.isrefvarin && chain.header.ldrefvar) {
             tagRefVariant(chain.body, chain.header.ldrefvar, keys.id, reqFields.isrefvarout, reqFields.ldout);
         }
         return chain.body;
@@ -996,7 +996,7 @@ export {
     GeneConstraintLZ,
     GeneLZ,
     GwasCatalogLZ,
-    LDLZ,
+    LDServer,
     PheWASLZ,
     RecombLZ,
     StaticSource,

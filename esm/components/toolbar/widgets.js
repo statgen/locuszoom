@@ -603,8 +603,8 @@ class Button {
             .on('mouseover', (this.status === 'disabled') ? null : this.onmouseover)
             .on('mouseout', (this.status === 'disabled') ? null : this.onmouseout)
             .on('click', (this.status === 'disabled') ? null : this.onclick)
-            .html(this.html);
-        applyStyles(this.selector, this.style);
+            .html(this.html)
+            .call(applyStyles, this.style);
 
         this.menu.update();
         this.postUpdate();
@@ -705,7 +705,7 @@ class RegionScale extends BaseWidget {
  * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
  * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
  */
-class Download extends BaseWidget {
+class DownloadSVG extends BaseWidget {
     constructor(layout, parent) {
         super(layout, parent);
         this.css_string = '';
@@ -719,7 +719,7 @@ class Download extends BaseWidget {
                     }
                     return response.text();
                 }).then((response) => {
-                    this.css_string = response.replace(/[\r\n]/g,' ').replace(/\s+/g,' ');
+                    this.css_string = response.replace(/[\r\n]/g, ' ').replace(/\s+/g, ' ');
                     if (this.css_string.indexOf('/* ! LocusZoom HTML Styles */')) {
                         this.css_string = this.css_string.substring(0, this.css_string.indexOf('/* ! LocusZoom HTML Styles */'));
                     }
@@ -784,7 +784,7 @@ class Download extends BaseWidget {
             let initial_html = d3.select(container.select('svg').node().parentNode).html();
             const style_def = `<style type="text/css"><![CDATA[ ${this.css_string} ]]></style>`;
             const insert_at = initial_html.indexOf('>') + 1;
-            initial_html = initial_html.slice(0,insert_at) + style_def + initial_html.slice(insert_at);
+            initial_html = initial_html.slice(0, insert_at) + style_def + initial_html.slice(insert_at);
             // Delete the container node
             container.remove();
             // Create an object URL based on the rendered markup
@@ -888,7 +888,7 @@ class ShiftRegion extends BaseWidget {
         }
 
         if (typeof layout.button_title !== 'string') {
-            layout.button_title = `Shift region by ${layout.step > 0 ? '+' : '-'}${positionIntToString(Math.abs(layout.step),null,true)}`;
+            layout.button_title = `Shift region by ${layout.step > 0 ? '+' : '-'}${positionIntToString(Math.abs(layout.step), null, true)}`;
         }
         super(layout, parent);
         if (isNaN(this.parent_plot.state.start) || isNaN(this.parent_plot.state.end)) {
@@ -1174,7 +1174,7 @@ class DisplayOptions extends BaseWidget {
  * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
  * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
  *
- * For example, the LDLZ2 data source can use it to change LD reference population (for all panels) after render
+ * For example, the LDServer data source can use it to change LD reference population (for all panels) after render
  *
  * @param {object} layout
  * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
@@ -1271,7 +1271,7 @@ export {
     Button as _Button, // This is used to create Widgets that contain a button. It actually shouldn't be in the registry because it's not usable directly..
     Dimensions as dimensions,
     DisplayOptions as display_options,
-    Download as download,
+    DownloadSVG as download,
     Menu as menu,
     MovePanelDown as move_panel_down,
     MovePanelUp as move_panel_up,
