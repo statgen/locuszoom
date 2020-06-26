@@ -20,8 +20,7 @@ const default_layout = {
     height: 1,
     min_width: 1,
     min_height: 1,
-    responsive_resize: false, // Allowed values: false, "width_only", "both" (synonym for true)
-    aspect_ratio: 1,
+    responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
     toolbar: {
         widgets: []
@@ -422,18 +421,9 @@ class Plot {
         if (isNaN(this.layout.height) || this.layout.height <= 0) {
             throw new Error('Plot layout parameter `width` must be a positive number');
         }
-        if (isNaN(this.layout.aspect_ratio) || this.layout.aspect_ratio <= 0) {
-            throw new Error('Plot layout parameter `aspect_ratio` must be a positive number');
-        }
-        if (this.layout.responsive_resize === true) {
-            // Backwards compatible support
-            console.warn('LocusZoom "responsive_resize" specifies a deprecated value. The new value should be "both". Please update your layout.');
-            this.layout.responsive_resize = 'both';
-        }
-        const RESIZE_MODES = [false, 'both', 'width_only'];
-        if (!RESIZE_MODES.includes(this.layout.responsive_resize)) {
-            throw new Error(`LocusZoom option "responsive_resize" should specify one of the following modes: ${RESIZE_MODES.join(', ')}`);
-        }
+
+        // Backwards compatible check: there was previously a third option. Anything truthy should thus act as "responsive_resize: true"
+        this.layout.responsive_resize = !!this.layout.responsive_resize;
 
         // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
         if (this.layout.responsive_resize) {
@@ -488,20 +478,11 @@ class Plot {
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
             this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
             this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-            this.layout.aspect_ratio = this.layout.width / this.layout.height;
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
                 if (this.svg) {
                     this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
-                }
-
-                if (this.layout.responsive_resize === 'both') { // Then also change the height
-                    this.layout.height = this.layout.width / this.layout.aspect_ratio;
-                    if (this.layout.height < this.layout.min_height) {
-                        this.layout.height = this.layout.min_height;
-                        this.layout.width  = this.layout.height * this.layout.aspect_ratio;
-                    }
                 }
             }
             // Resize/reposition panels to fit, update proportional origins if necessary
@@ -529,12 +510,9 @@ class Plot {
             this.layout.height = Math.max(this.layout.height, this.layout.min_height);
         }
 
-        // Keep aspect ratio in agreement with dimensions
-        this.layout.aspect_ratio = this.layout.width / this.layout.height;
-
         // Apply layout width and height as discrete values or viewbox values
         if (this.svg !== null) {
-            if (this.layout.responsive_resize === 'both') {
+            if (this.layout.responsive_resize) {
                 this.svg
                     .attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`)
                     .attr('preserveAspectRatio', 'xMinYMin meet');

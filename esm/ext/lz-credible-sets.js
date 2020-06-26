@@ -323,7 +323,7 @@ function install (LocusZoom) {
         state: {},
         width: 800,
         height: 450,
-        responsive_resize: 'both',
+        responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
         toolbar: LocusZoom.Layouts.get('toolbar', 'region_nav_plot', { unnamespaced: true }),

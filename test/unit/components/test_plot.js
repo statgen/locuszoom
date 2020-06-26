@@ -17,7 +17,6 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 1,
                 min_height: 1,
-                aspect_ratio: 1,
                 panels: []
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -63,25 +62,18 @@ describe('LocusZoom.Plot', function() {
             this.plot.setDimensions(563, 681);
             assert.equal(this.plot.layout.width, 563);
             assert.equal(this.plot.layout.height, 681);
-            assert.equal(this.plot.layout.aspect_ratio, 563 / 681);
 
             this.plot.setDimensions(1320.3, -50);
             assert.equal(this.plot.layout.width, 563);
             assert.equal(this.plot.layout.height, 681);
-            assert.equal(this.plot.layout.aspect_ratio, 563 / 681);
 
             this.plot.setDimensions('q', 0);
             assert.equal(this.plot.layout.width, 563);
             assert.equal(this.plot.layout.height, 681);
-            assert.equal(this.plot.layout.aspect_ratio, 563 / 681);
 
             this.plot.setDimensions(1, 1);
             assert.equal(this.plot.layout.width, this.plot.layout.min_width);
             assert.equal(this.plot.layout.height, this.plot.layout.min_height);
-            assert.equal(
-                this.plot.layout.aspect_ratio,
-                this.plot.layout.min_width / this.plot.layout.min_height
-            );
         });
         it('should enforce minimum dimensions based on its panels', function() {
             this.plot.addPanel({ id: 'p1', width: 50, height: 30, min_width: 50, min_height: 30 });
@@ -95,12 +87,12 @@ describe('LocusZoom.Plot', function() {
         it('should allow for responsively positioning panels using a proportional dimensions', function() {
             const responsive_layout = LAYOUTS.get('plot', 'standard_association', {
                 responsive_resize: true,
-                aspect_ratio: 2,
                 panels: [
                     { id: 'positions', proportional_width: 1, proportional_height: 0.6, min_height: 60 },
                     { id: 'genes', proportional_width: 1, proportional_height: 0.4, min_height: 40 }
                 ]
             });
+            responsive_layout.state = { chr: '1', start: 1, end: 100000 };
             this.plot = populate('#plot', null, responsive_layout);
             assert.equal(this.plot.layout.panels[0].height / this.plot.layout.height, 0.6);
             assert.equal(this.plot.layout.panels[1].height / this.plot.layout.height, 0.4);
@@ -118,7 +110,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 1000,
                 height: 500,
-                aspect_ratio: 2,
                 panels: [
                     LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
                     LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
@@ -135,35 +126,17 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[0].origin.x, this.plot.layout.panels[0].origin.x);
         });
         it('should not allow for a non-numerical / non-positive predefined dimensions', function() {
-            assert.throws(function() {
-                this.plot = populate('#plot', null, { width: 0, height: 0 });
+            assert.throws(() => {
+                populate('#plot', null, { width: 0, height: 0 });
             });
-            assert.throws(function() {
-                this.plot = populate('#plot', null, { width: 20, height: -20 });
+            assert.throws(() => {
+                populate('#plot', null, { width: 20, height: -20 });
             });
-            assert.throws(function() {
-                this.plot = populate('#plot', null, { width: 'foo', height: 40 });
+            assert.throws(() => {
+                populate('#plot', null, { width: 'foo', height: 40 });
             });
-            assert.throws(function() {
-                this.plot = populate('#plot', null, { width: 60, height: [1,2] });
-            });
-        });
-        it('should not allow for a non-numerical / non-positive predefined aspect ratio', function() {
-            assert.throws(function() {
-                const responsive_layout = { responsive_resize: true, aspect_ratio: 0 };
-                this.plot = populate('#plot', null, responsive_layout);
-            });
-            assert.throws(function() {
-                const responsive_layout = { responsive_resize: true, aspect_ratio: -1 };
-                this.plot = populate('#plot', null, responsive_layout);
-            });
-            assert.throws(function() {
-                const responsive_layout = { responsive_resize: true, aspect_ratio: 'foo' };
-                this.plot = populate('#plot', null, responsive_layout);
-            });
-            assert.throws(function() {
-                const responsive_layout = { responsive_resize: true, aspect_ratio: [1, 2, 3] };
-                this.plot = populate('#plot', null, responsive_layout);
+            assert.throws(() => {
+                populate('#plot', null, { width: 60, height: [1,2] });
             });
         });
     });
@@ -173,6 +146,7 @@ describe('LocusZoom.Plot', function() {
             beforeEach(function() {
                 d3.select('body').append('div').attr('id', 'plot');
                 const layout = LAYOUTS.get('plot', 'standard_association');
+                layout.state = { chr: '1', start: 1, end: 100000 };
                 this.plot = populate('#plot', null, layout);
             });
             it('first child should be a mouse guide layer group element', function() {
@@ -189,7 +163,6 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                aspect_ratio: 1,
                 panels: []
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -362,7 +335,6 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                aspect_ratio: 1,
                 panels: []
             };
             d3.select('body').append('div').attr('id', 'plot');

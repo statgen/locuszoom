@@ -14,6 +14,7 @@ describe('Panel', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
             const layout = LAYOUTS.get('plot', 'standard_association');
+            layout.state = { chr: '1', start: 1, end: 100000 };
             this.plot = populate('#plot_id', null, layout);
             this.panel = this.plot.panels.association;
         });
@@ -49,6 +50,7 @@ describe('Panel', function() {
         beforeEach(function() {
             d3.select('body').append('div').attr('id', 'plot_id');
             const layout = LAYOUTS.get('plot', 'standard_association');
+            layout.state = { chr: '1', start: 1, end: 100000 };
             this.plot = populate('#plot_id', null, layout);
             this.association_panel = this.plot.panels.association;
             this.genes_panel = this.plot.panels.genes;
@@ -234,7 +236,6 @@ describe('Panel', function() {
                 min_width: 100,
                 min_height: 100,
                 resizable: false,
-                aspect_ratio: 1,
                 panels: [
                     {
                         id: 'test',
