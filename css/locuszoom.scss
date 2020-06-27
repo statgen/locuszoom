@@ -260,10 +260,7 @@ svg.#{$namespace}-locuszoom  {
 
 }
 
-// The following comment is used by the download toolbar widget when generating a CSS string.
-// Since no HTML elements will be in the exported SVG element there's no need to include their styles.
-/* ! LocusZoom HTML Styles */
-
+// Styles for HTML elements
 div.#{$namespace}-data_layer-tooltip {
   font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
   font-size: 12px;
@@ -703,7 +700,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-gray-highlighted {
   border: 1px solid rgba(51,51,51,1);
   background-color: rgba(51,51,51,1);
-  color: rgba(216,216,216,1);
+  color: rgba(216,216,216,1) !important;
 }
 .#{$namespace}-toolbar-button-gray-disabled {
   background-color: rgba(216,216,216,0.6);
@@ -726,7 +723,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-red-highlighted {
   border: 1px solid rgba(89,49,49,1);
   background-color: rgba(89,49,49,1);
-  color: rgba(230,195,195,1);
+  color: rgba(230,195,195,1) !important;
 }
 .#{$namespace}-toolbar-button-red-disabled {
   background-color: rgba(230,195,195,0.6);
@@ -749,7 +746,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-orange-highlighted {
   border: 1px solid rgba(89,69,49,1);
   background-color: rgba(89,69,49,1);
-  color: rgba(230,213,195,1);
+  color: rgba(230,213,195,1) !important;
 }
 .#{$namespace}-toolbar-button-orange-disabled {
   background-color: rgba(230,213,195,0.6);
@@ -772,7 +769,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-yellow-highlighted {
   border: 1px solid rgba(89,89,49,1);
   background-color: rgba(89,89,49,1);
-  color: rgba(230,230,195,1);
+  color: rgba(230,230,195,1) !important;
 }
 .#{$namespace}-toolbar-button-yellow-disabled {
   background-color: rgba(230,230,195,0.6);
@@ -795,7 +792,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-green-highlighted {
   border: 1px solid rgba(59,89,49,1);
   background-color: rgba(59,89,49,1);
-  color: rgba(204,230,195,1);
+  color: rgba(204,230,195,1) !important;
 }
 .#{$namespace}-toolbar-button-green-disabled {
   background-color: rgba(204,230,195,0.6);
@@ -818,7 +815,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-blue-highlighted {
   border: 1px solid rgba(49,66,89,1);
   background-color: rgba(49,66,89,1);
-  color: rgba(195,210,230,1);
+  color: rgba(195,210,230,1) !important;
 }
 .#{$namespace}-toolbar-button-blue-disabled {
   background-color: rgba(195,210,230,0.6);
@@ -841,7 +838,7 @@ div.#{$namespace}-toolbar-menu {
 .#{$namespace}-toolbar-button-purple-highlighted {
   border: 1px solid rgba(80,49,89,1);
   background-color: rgba(80,49,89,1);
-  color: rgba(221,195,230,1);
+  color: rgba(221,195,230,1) !important;
 }
 .#{$namespace}-toolbar-button-purple-disabled {
   background-color: rgba(221,195,230,0.6);
