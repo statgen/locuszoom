@@ -87,7 +87,7 @@ function install(LocusZoom) {
                     return plot;
                 },
                 /**
-                 * Empty the `state.model.covariates` array (and toolbar component menu representation thereof) of all
+                 * Empty the `state.model.covariates` array (and toolbar widget menu representation thereof) of all
                  *  elements. When plot state is changed, this will automatically trigger requests for new data accordingly
                  */
                 removeAll: () => {
@@ -98,7 +98,7 @@ function install(LocusZoom) {
                     return plot;
                 },
                 /**
-                 * Manually trigger the update methods on the toolbar component's button and menu elements to force
+                 * Manually trigger the update methods on the toolbar widget's button and menu elements to force
                  *   display of most up-to-date content. Can be used to force the toolbar to reflect changes made, eg if
                  *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
                  */

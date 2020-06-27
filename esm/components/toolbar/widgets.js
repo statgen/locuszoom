@@ -720,7 +720,7 @@ class DownloadSVG extends BaseWidget {
                     return response.text();
                 }).then((response) => {
                     this.css_string = response.replace(/[\r\n]/g, ' ').replace(/\s+/g, ' ');
-                    if (this.css_string.indexOf('/* ! LocusZoom HTML Styles */')) {
+                    if (this.css_string.includes('/* ! LocusZoom HTML Styles */')) {
                         this.css_string = this.css_string.substring(0, this.css_string.indexOf('/* ! LocusZoom HTML Styles */'));
                     }
                 });
@@ -742,7 +742,7 @@ class DownloadSVG extends BaseWidget {
                 this.button.selector
                     .classed('lz-toolbar-button-gray-disabled', true)
                     .html('Preparing Image');
-                this.generateBase64SVG().then((url) => {
+                this.getBlobUrl().then((url) => {
                     const old = this.button.selector.attr('href');
                     if (old) {
                         // Clean up old url instance to prevent memory leaks
@@ -765,32 +765,42 @@ class DownloadSVG extends BaseWidget {
         return this;
     }
 
-    generateBase64SVG () {
+    generateSVG () {
         return new Promise((resolve) => {
             // Insert a hidden div, clone the node into that so we can modify it with d3
-            const container = this.parent.selector.append('div')
-                .style('display', 'none')
-                .html(this.parent_plot.svg.node().outerHTML);
+            let copy = this.parent_plot.svg.node().cloneNode(true);
+            copy.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+            copy = d3.select(copy);
+
             // Remove unnecessary elements
-            container.selectAll('g.lz-curtain').remove();
-            container.selectAll('g.lz-mouse_guide').remove();
+            copy.selectAll('g.lz-curtain').remove();
+            copy.selectAll('g.lz-mouse_guide').remove();
             // Convert units on axis tick dy attributes from ems to pixels
-            container.selectAll('g.tick text').each(function() {
+            copy.selectAll('g.tick text').each(function() {
                 const dy = +(d3.select(this).attr('dy').substring(-2).slice(0, -2)) * 10;
                 d3.select(this).attr('dy', dy);
             });
             // Pull the svg into a string and add the contents of the locuszoom stylesheet
             // Don't add this with d3 because it will escape the CDATA declaration incorrectly
-            let initial_html = d3.select(container.select('svg').node().parentNode).html();
+            const serializer = new XMLSerializer();
+            let initial_html = serializer.serializeToString(copy.node());
             const style_def = `<style type="text/css"><![CDATA[ ${this.css_string} ]]></style>`;
             const insert_at = initial_html.indexOf('>') + 1;
             initial_html = initial_html.slice(0, insert_at) + style_def + initial_html.slice(insert_at);
-            // Delete the container node
-            container.remove();
             // Create an object URL based on the rendered markup
-            const content = new Blob([initial_html], { type: 'image/svg+xml' });
-            resolve(URL.createObjectURL(content));
+            resolve(initial_html);
         });
+    }
+
+    /**
+     * Converts the SVG string into a downloadable binary object
+     */
+    getBlobUrl() {
+        this.generateSVG()
+            .then((markup) => {
+                const blob = new Blob([markup], { type: 'image/svg+xml' });
+                return URL.createObjectURL(blob);
+            });
     }
 }
 
