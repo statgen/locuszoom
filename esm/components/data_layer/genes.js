@@ -11,8 +11,8 @@ const default_layout = {
     label_font_size: 12,
     label_exon_spacing: 3,
     exon_height: 10,
-    bounding_box_padding: 5,
-    track_vertical_spacing: 7,
+    bounding_box_padding: 3,
+    track_vertical_spacing: 5,
     tooltip_positioning: 'top',
 };
 

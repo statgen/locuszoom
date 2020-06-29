@@ -752,8 +752,8 @@ const phewas_panel = {
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
     width: 800,
-    height: 50,
-    min_height: 50,
+    height: 45,
+    min_height: 45,
     proportional_width: 1,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',

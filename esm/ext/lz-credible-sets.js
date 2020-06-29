@@ -191,10 +191,10 @@ function install (LocusZoom) {
         id: 'annotationcredibleset',
         title: { text: 'SNPs in 95% credible set', x: 50, style: { 'font-size': '14px' } },
         width: 800,
-        height: 100,
-        min_height: 100,
+        height: 45,
+        min_height: 45,
         proportional_width: 1,
-        margin: { top: 35, right: 50, bottom: 40, left: 50 },
+        margin: { top: 25, right: 50, bottom: 0, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),
         interaction: {

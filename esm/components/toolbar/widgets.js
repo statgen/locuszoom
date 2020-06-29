@@ -800,6 +800,20 @@ class DownloadSVG extends BaseWidget {
         element.insertBefore( styleElement, refNode );
     }
 
+    /**
+     * Get the target dimensions for the rendered image.
+     *
+     * For non-vector displays, these dimensions will yield ~300 DPI image for an 8" wide print figure.
+     * @return {number[]}
+     * @private
+     */
+    _getDimensions() {
+        let { width, height } = this.parent_plot.svg.node().getBoundingClientRect();
+        const target_width = 2400;
+        const rescale = target_width / width;
+        return [rescale * width, rescale * height];
+    }
+
     _generateSVG () {
         return new Promise((resolve) => {
             // Copy the DOM node so that we can modify the image for publication
@@ -820,6 +834,13 @@ class DownloadSVG extends BaseWidget {
             const serializer = new XMLSerializer();
 
             copy = copy.node();
+
+            // Firefox has issues saving the SVG in certain contexts (esp rendering to canvas) unless a width is given.
+            //  See: https://bugzilla.mozilla.org/show_bug.cgi?id=700533
+            const [width, height] = this._getDimensions();
+            copy.setAttribute('width', width);
+            copy.setAttribute('height', height);
+
             // Add CSS to the node
             this._appendCSS(this._getCSS(copy), copy);
             let svg_markup = serializer.serializeToString(copy);
@@ -844,6 +865,7 @@ class DownloadPNG extends DownloadSVG {
         super(...arguments);
         this._filename = this.layout.filename || 'locuszoom.png';
         this._button_html = this.layout.button_html || 'Save as PNG';
+        this._button_title = this.layout.button_title || 'Download image';
     }
 
     _getBlobUrl() {
@@ -851,13 +873,7 @@ class DownloadPNG extends DownloadSVG {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
 
-            // Get canvas dimensions. To support publication figures (8" wide at 300dpi), we draw the PNG larger
-            //  than it would appear on screen.
-            let { width, height } = this.parent_plot.svg.node().getBoundingClientRect();
-            const target_width = 2400;
-            const rescale = target_width / width;
-            width = rescale * width;
-            height = rescale * height;
+            const [width, height] = this._getDimensions();
 
             canvas.width = width;
             canvas.height = height;
