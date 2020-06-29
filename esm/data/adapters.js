@@ -533,7 +533,7 @@ class LDServer extends RemoteAdapter {
         let refVar = this.getRefvar(state, chain, fields);
         // Some datasets, notably the Portal, use a different marker format.
         //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
-        const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?):(\d+)[_:]?(\w+)?[/:|]?([^_]+)?_?(.*)?/;
+        const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
         const match = refVar && refVar.match(REGEX_MARKER);
 
         if (!match) {
