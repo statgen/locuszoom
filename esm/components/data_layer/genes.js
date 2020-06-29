@@ -9,10 +9,10 @@ const default_layout = {
     stroke: 'rgb(54, 54, 150)',
     color: '#363696',
     label_font_size: 12,
-    label_exon_spacing: 4,
-    exon_height: 16,
-    bounding_box_padding: 6,
-    track_vertical_spacing: 10,
+    label_exon_spacing: 3,
+    exon_height: 10,
+    bounding_box_padding: 5,
+    track_vertical_spacing: 7,
     tooltip_positioning: 'top',
 };
 
