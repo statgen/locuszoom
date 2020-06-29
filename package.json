@@ -31,7 +31,7 @@
   "scripts": {
     "test": "mocha --recursive test/**/*.js",
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
-    "css": "sass ./css/locuszoom.scss ./dist/locuszoom.css",
+    "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
     "prod": "npm run css && webpack --config webpack.prod.cjs",
     "docs": "jsdoc --recurse --readme ./README.md --destination jsdoc esm/"

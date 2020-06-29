@@ -701,33 +701,16 @@ class RegionScale extends BaseWidget {
 
 /**
  * Button to export current plot to an SVG image
- * @param {string} [layout.button_html="Download Image"]
- * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
- * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
  */
 class DownloadSVG extends BaseWidget {
+    /**
+     * @param {string} [layout.button_html="Download Image"]
+     * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
+     * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
+    */
     constructor(layout, parent) {
         super(layout, parent);
-        this.css_string = '';
-        for (let stylesheet in Object.keys(document.styleSheets)) {
-            if ( document.styleSheets[stylesheet].href !== null
-                 && document.styleSheets[stylesheet].href.includes('locuszoom.css')) {
-                // FIXME: "Download image" button will render the image incorrectly if the stylesheet has been renamed or concatenated
-                fetch(document.styleSheets[stylesheet].href).then((response) => {
-                    if (!response.ok) {
-                        throw new Error(response.statusText);
-                    }
-                    return response.text();
-                }).then((response) => {
-                    this.css_string = response.replace(/[\r\n]/g, ' ').replace(/\s+/g, ' ');
-                    if (this.css_string.includes('/* ! LocusZoom HTML Styles */')) {
-                        this.css_string = this.css_string.substring(0, this.css_string.indexOf('/* ! LocusZoom HTML Styles */'));
-                    }
-                });
-                // Found stylesheet we want, stop checking others
-                break;
-            }
-        }
+        this._filename = this.layout.filename || 'locuszoom.svg';
     }
 
     update() {
@@ -742,7 +725,7 @@ class DownloadSVG extends BaseWidget {
                 this.button.selector
                     .classed('lz-toolbar-button-gray-disabled', true)
                     .html('Preparing Image');
-                this.getBlobUrl().then((url) => {
+                this._getBlobUrl().then((url) => {
                     const old = this.button.selector.attr('href');
                     if (old) {
                         // Clean up old url instance to prevent memory leaks
@@ -761,13 +744,79 @@ class DownloadSVG extends BaseWidget {
         this.button.show();
         this.button.selector
             .attr('href-lang', 'image/svg+xml')
-            .attr('download', this.layout.filename || 'locuszoom.svg');
+            .attr('download', this._filename);
         return this;
     }
 
-    generateSVG () {
+    /**
+     * Extract all CSS rules whose selectors directly reference elements under the root node
+     * @param {Element} root
+     * @return {string}
+     * @private
+     */
+    _getCSS(root) {
+        const desired_selectors = new Set();
+        // Hack: this method is based on text matching the rules on a given node; it doesn't handle, eg ancestors.
+        // Since all LZ cssRules are written as "svg .classname", we need to strip the parent selector prefix in order
+        // to extract CSS.
+        const ancestor_pattern = /^svg\.lz-locuszoom\s*/;
+
+        // Add Parent element Id and Classes to the list
+        desired_selectors.add( `#${root.id}` );
+        for (let i = 0; i < root.classList.length; i++) {
+            desired_selectors.add(`.${root.classList[i]}`);
+        }
+
+        // Add Children element Ids and Classes to the list for all elements in the hierarchy
+        const nodes = root.getElementsByTagName('*');
+        for (let i = 0; i < nodes.length; i++) {
+            const id = nodes[i].id;
+            desired_selectors.add(`#${id}`);
+            const classes = nodes[i].classList;
+            for (let i = 0; i < classes.length; i++) {
+                desired_selectors.add(`.${classes[i]}`);
+            }
+        }
+
+        // Extract all relevant CSS Rules by iterating through all available stylesheets
+        let extractedCSSText = '';
+        for (let i = 0; i < document.styleSheets.length; i++) {
+            const s = document.styleSheets[i];
+            try {
+                if (!s.cssRules) {
+                    continue;
+                }
+            } catch ( e ) {
+                if (e.name !== 'SecurityError') {
+                    throw e;
+                } // for Firefox
+                continue;
+            }
+            let cssRules = s.cssRules;
+            for (let i = 0; i < cssRules.length; i++) {
+                const rule = cssRules[i];
+                const strip_parent = rule.selectorText && rule.selectorText.replace(ancestor_pattern, '');
+
+                if (desired_selectors.has(strip_parent)) {
+                    extractedCSSText += rule.cssText;
+                }
+            }
+        }
+        return extractedCSSText;
+    }
+
+    _appendCSS( cssText, element ) {
+        // Append styles to the constructed SVG DOM node
+        var styleElement = document.createElement('style');
+        styleElement.setAttribute('type', 'text/css');
+        styleElement.innerHTML = cssText;
+        var refNode = element.hasChildNodes() ? element.children[0] : null;
+        element.insertBefore( styleElement, refNode );
+    }
+
+    _generateSVG () {
         return new Promise((resolve) => {
-            // Insert a hidden div, clone the node into that so we can modify it with d3
+            // Copy the DOM node so that we can modify the image for publication
             let copy = this.parent_plot.svg.node().cloneNode(true);
             copy.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
             copy = d3.select(copy);
@@ -783,26 +832,39 @@ class DownloadSVG extends BaseWidget {
             // Pull the svg into a string and add the contents of the locuszoom stylesheet
             // Don't add this with d3 because it will escape the CDATA declaration incorrectly
             const serializer = new XMLSerializer();
-            let initial_html = serializer.serializeToString(copy.node());
-            const style_def = `<style type="text/css"><![CDATA[ ${this.css_string} ]]></style>`;
-            const insert_at = initial_html.indexOf('>') + 1;
-            initial_html = initial_html.slice(0, insert_at) + style_def + initial_html.slice(insert_at);
-            // Create an object URL based on the rendered markup
-            resolve(initial_html);
+
+            copy = copy.node();
+            // Add CSS to the node
+            this._appendCSS(this._getCSS(copy), copy);
+            let svg_markup = serializer.serializeToString(copy);
+            resolve(svg_markup);
         });
     }
 
     /**
      * Converts the SVG string into a downloadable binary object
      */
-    getBlobUrl() {
-        this.generateSVG()
-            .then((markup) => {
-                const blob = new Blob([markup], { type: 'image/svg+xml' });
-                return URL.createObjectURL(blob);
-            });
+    _getBlobUrl() {
+        return this._generateSVG().then((markup) => {
+            const blob = new Blob([markup], { type: 'image/svg+xml' });
+            return URL.createObjectURL(blob);
+        });
     }
 }
+
+// class DownloadPNG extends DownloadSVG {
+//     constructor(layout, parent) {
+//         super(...arguments);
+//         this._filename = this.layout.filename || 'locuszoom.png';
+//     }
+//
+//     _getBlobUrl() {
+//         super._getBlobUrl().then((svg_url) => {
+//             var canvas = document.createElement('canvas');
+// 	        var context = canvas.getContext('2d');
+//         });
+//     }
+// }
 
 /**
  * Button to remove panel from plot.
