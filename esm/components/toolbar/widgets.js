@@ -755,28 +755,10 @@ class DownloadSVG extends BaseWidget {
      * @private
      */
     _getCSS(root) {
-        const desired_selectors = new Set();
         // Hack: this method is based on text matching the rules on a given node; it doesn't handle, eg ancestors.
         // Since all LZ cssRules are written as "svg .classname", we need to strip the parent selector prefix in order
         // to extract CSS.
         const ancestor_pattern = /^svg\.lz-locuszoom\s*/;
-
-        // Add Parent element Id and Classes to the list
-        desired_selectors.add( `#${root.id}` );
-        for (let i = 0; i < root.classList.length; i++) {
-            desired_selectors.add(`.${root.classList[i]}`);
-        }
-
-        // Add Children element Ids and Classes to the list for all elements in the hierarchy
-        const nodes = root.getElementsByTagName('*');
-        for (let i = 0; i < nodes.length; i++) {
-            const id = nodes[i].id;
-            desired_selectors.add(`#${id}`);
-            const classes = nodes[i].classList;
-            for (let i = 0; i < classes.length; i++) {
-                desired_selectors.add(`.${classes[i]}`);
-            }
-        }
 
         // Extract all relevant CSS Rules by iterating through all available stylesheets
         let extractedCSSText = '';
@@ -794,10 +776,12 @@ class DownloadSVG extends BaseWidget {
             }
             let cssRules = s.cssRules;
             for (let i = 0; i < cssRules.length; i++) {
+                // FIXME: We could write smaller SVGs by extracting only the exact CSS rules for this plot. However,
+                //   extracting rules (including parent selectors) is a finicky process
+                // Instead just fetch all LZ plot rules, under a known hardcoded parent selector.
                 const rule = cssRules[i];
-                const strip_parent = rule.selectorText && rule.selectorText.replace(ancestor_pattern, '');
-
-                if (desired_selectors.has(strip_parent)) {
+                const is_match = (rule.selectorText && rule.selectorText.match(ancestor_pattern));
+                if (is_match) {
                     extractedCSSText += rule.cssText;
                 }
             }
