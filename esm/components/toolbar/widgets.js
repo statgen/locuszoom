@@ -704,13 +704,15 @@ class RegionScale extends BaseWidget {
  */
 class DownloadSVG extends BaseWidget {
     /**
-     * @param {string} [layout.button_html="Download Image"]
+     * @param {string} [layout.button_html="Download SVG"]
      * @param {string} [layout.button_title="Download image of the current plot as locuszoom.svg"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
     */
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
+        this._button_html = this.layout.button_html || 'Save as SVG';
+        this._button_title = this.layout.button_title || 'Download hi-res image';
     }
 
     update() {
@@ -719,8 +721,8 @@ class DownloadSVG extends BaseWidget {
         }
         this.button = new Button(this)
             .setColor(this.layout.color)
-            .setHtml(this.layout.button_html || 'Download Image')
-            .setTitle(this.layout.button_title || 'Download image of the current plot as locuszoom.svg')
+            .setHtml(this._button_html)
+            .setTitle(this._button_title)
             .setOnMouseover(() => {
                 this.button.selector
                     .classed('lz-toolbar-button-gray-disabled', true)
@@ -735,7 +737,7 @@ class DownloadSVG extends BaseWidget {
                         .attr('href', url)
                         .classed('lz-toolbar-button-gray-disabled', false)
                         .classed('lz-toolbar-button-gray-highlighted', true)
-                        .html(this.layout.button_html || 'Download Image');
+                        .html(this._button_html);
                 });
             })
             .setOnMouseout(() => {
@@ -827,6 +829,7 @@ class DownloadSVG extends BaseWidget {
 
     /**
      * Converts the SVG string into a downloadable binary object
+     * @return {Promise}
      */
     _getBlobUrl() {
         return this._generateSVG().then((markup) => {
@@ -836,19 +839,44 @@ class DownloadSVG extends BaseWidget {
     }
 }
 
-// class DownloadPNG extends DownloadSVG {
-//     constructor(layout, parent) {
-//         super(...arguments);
-//         this._filename = this.layout.filename || 'locuszoom.png';
-//     }
-//
-//     _getBlobUrl() {
-//         super._getBlobUrl().then((svg_url) => {
-//             var canvas = document.createElement('canvas');
-// 	        var context = canvas.getContext('2d');
-//         });
-//     }
-// }
+class DownloadPNG extends DownloadSVG {
+    constructor(layout, parent) {
+        super(...arguments);
+        this._filename = this.layout.filename || 'locuszoom.png';
+        this._button_html = this.layout.button_html || 'Save as PNG';
+    }
+
+    _getBlobUrl() {
+        return super._getBlobUrl().then((svg_url) => {
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            // Get canvas dimensions. To support publication figures (8" wide at 300dpi), we draw the PNG larger
+            //  than it would appear on screen.
+            let { width, height } = this.parent_plot.svg.node().getBoundingClientRect();
+            const target_width = 2400;
+            const rescale = target_width / width;
+            width = rescale * width;
+            height = rescale * height;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    context.drawImage(image, 0, 0, width, height);
+                    // Once canvas rendered, revoke svg blob to avoid memory leaks, and create new url for the canvas
+                    URL.revokeObjectURL(svg_url);
+                    canvas.toBlob((png) => {
+                        resolve(URL.createObjectURL(png));
+                    });
+                };
+                image.src = svg_url;
+            });
+        });
+    }
+}
 
 /**
  * Button to remove panel from plot.
@@ -1328,6 +1356,7 @@ export {
     Dimensions as dimensions,
     DisplayOptions as display_options,
     DownloadSVG as download,
+    DownloadPNG as download_png,
     Menu as menu,
     MovePanelDown as move_panel_down,
     MovePanelUp as move_panel_up,

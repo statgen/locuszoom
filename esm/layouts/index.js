@@ -472,6 +472,10 @@ const standard_plot_toolbar = {
             type: 'download',
             position: 'right'
         },
+        {
+            type: 'download_png',
+            position: 'right',
+        },
     ]
 };
 
