@@ -69,9 +69,9 @@ class Panel {
             throw new Error('Unable to create panel, invalid layout');
         }
 
-        /** @member {Plot|null} */
+        /** @protected @member {Plot|null} */
         this.parent = parent || null;
-        /** @member {Plot|null} */
+        /** @protected @member {Plot|null} */
         this.parent_plot = parent;
 
         // Ensure a valid ID is present. If there is no valid ID then generate one
@@ -93,31 +93,33 @@ class Panel {
                 throw new Error(`Cannot create panel with id [${layout.id}]; panel with that id already exists`);
             }
         }
-        /** @member {String} */
+        /** @public @member {String} */
         this.id = layout.id;
 
-        /** @member {Boolean} */
+        /** @private @member {Boolean} */
         this.initialized = false;
         /**
          * The index of this panel in the parent plot's `layout.panels`
+         * @private
          * @member {number}
          * */
         this.layout_idx = null;
-        /** @member {Object} */
+        /** @private @member {Object} */
         this.svg = {};
 
         /**
          * A JSON-serializable object used to describe the composition of the Panel
+         * @public
          * @member {Object}
          */
         this.layout = merge(layout || {}, default_layout);
 
         // Define state parameters specific to this panel
         if (this.parent) {
-            /** @member {Object} */
+            /** @private @member {Object} */
             this.state = this.parent.state;
 
-            /** @member {String} */
+            /** @private @member {String} */
             this.state_id = this.id;
             this.state[this.state_id] = this.state[this.state_id] || {};
         } else {
@@ -125,42 +127,42 @@ class Panel {
             this.state_id = null;
         }
 
-        /** @member {Object} */
+        /** @protected @member {Object} */
         this.data_layers = {};
-        /** @member {String[]} */
+        /** @private @member {String[]} */
         this.data_layer_ids_by_z_index = [];
 
         /**
          * Track data requests in progress
          * @member {Promise[]}
-         *  @protected
+         * @private
          */
         this.data_promises = [];
 
-        /** @member {d3.scale} */
+        /** @private @member {d3.scale} */
         this.x_scale  = null;
-        /** @member {d3.scale} */
+        /** @private @member {d3.scale} */
         this.y1_scale = null;
-        /** @member {d3.scale} */
+        /** @private @member {d3.scale} */
         this.y2_scale = null;
 
-        /** @member {d3.extent} */
+        /** @private @member {d3.extent} */
         this.x_extent  = null;
-        /** @member {d3.extent} */
+        /** @private @member {d3.extent} */
         this.y1_extent = null;
-        /** @member {d3.extent} */
+        /** @private @member {d3.extent} */
         this.y2_extent = null;
 
-        /** @member {Number[]} */
+        /** @private @member {Number[]} */
         this.x_ticks  = [];
-        /** @member {Number[]} */
+        /** @private @member {Number[]} */
         this.y1_ticks = [];
-        /** @member {Number[]} */
+        /** @private @member {Number[]} */
         this.y2_ticks = [];
 
         /**
          * A timeout ID as returned by setTimeout
-         * @protected
+         * @private
          * @member {number}
          */
         this.zoom_timeout = null;

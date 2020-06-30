@@ -31,27 +31,35 @@ const default_layout = {
 */
 class BaseDataLayer {
     constructor(layout, parent) {
-        /** @member {Boolean} */
+        /** @private @member {Boolean} */
         this.initialized = false;
-        /** @member {Number} */
+        /** @private @member {Number} */
         this.layout_idx = null;
 
-        /** @member {String} */
+        /** @public @member {String} */
         this.id     = null;
-        /** @member {Panel} */
+        /** @protected @member {Panel} */
         this.parent = parent || null;
         /**
+         * @private
          * @member {{group: d3.selection, container: d3.selection, clipRect: d3.selection}}
          */
         this.svg    = {};
 
-        /** @member {LocusZoom.Plot} */
+        /** @protected @member {LocusZoom.Plot} */
         this.parent_plot = null;
         if (parent) {
             this.parent_plot = parent.parent;
         }
 
-        /** @member {Object} */
+        /**
+         * The current layout configuration for this data layer. This reflects any resizing or dynamically generated
+         *  config options produced during rendering. Direct layout mutations are a powerful way to dynamically
+         *  modify the plot in response to user interactions, but require a deep knowledge of LZ internals to use
+         *  effectively.
+         * @public
+         * @member {Object}
+         */
         this.layout = merge(layout || {}, default_layout);
         if (this.layout.id) {
             this.id = this.layout.id;
@@ -67,25 +75,32 @@ class BaseDataLayer {
 
         /**
          * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+         * @protected
          * @member {Object}
          */
         this._base_layout = deepCopy(this.layout);
 
-        /** @member {Object} */
+        /** @private @member {Object} */
         this.state = {};
-        /** @member {String} */
+        /** @private @member {String} */
         this.state_id = null;
 
-        /** @member {Object} */
+        /** @private @member {Object} */
         this.layer_state = null;
         // Create a default state (and set any references to the parent as appropriate)
         this._setDefaultState();
 
         // Initialize parameters for storing data and tool tips
-        /** @member {Array} */
+        /**
+         * The data retrieved from a region request. This field is useful for debugging, but will be overridden on
+         *  re-render; do not modify it directly. The point annotation cache can be used to preserve markings
+         *  after re-render.
+         * @protected
+         * @member {Array}
+         */
         this.data = [];
         if (this.layout.tooltip) {
-            /** @member {Object} */
+            /** @private @member {Object} */
             this.tooltips = {};
         }
 

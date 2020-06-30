@@ -112,27 +112,28 @@ class Plot {
      * @param {Object} layout A JSON-serializable object of layout configuration parameters
     */
     constructor(id, datasource, layout) {
-        /** @member Boolean} */
+        /** @private @member Boolean} */
         this.initialized = false;
         // TODO: This makes sense for all other locuszoom elements to have; determine whether this is interface boilerplate or something that can be removed
         this.parent_plot = this;
 
-        /** @member {String} */
+        /** @public @member {String} */
         this.id = id;
 
-        /** @member {Element} */
+        /** @private @member {Element} */
         this.container = null;
         /**
          * Selector for a node that will contain the plot. (set externally by populate methods)
+         * @private
          * @member {d3.selection}
          */
         this.svg = null;
 
-        /** @member {Object.<String, Number>} */
+        /** @public @member {Object.<String, Number>} */
         this.panels = {};
         /**
          * TODO: This is currently used by external classes that manipulate the parent and may indicate room for a helper method in the api to coordinate boilerplate
-         * @protected
+         * @private
          * @member {String[]}
          */
         this.panel_ids_by_y_index = [];
@@ -146,11 +147,18 @@ class Plot {
         this.remap_promises = [];
 
 
+        /**
+         * The current layout options for the plot, including the effect of any resizing events or dynamically
+         *  generated config produced during rendering options.
+         * @public
+         * @type {Object}
+         */
         this.layout = layout;
         merge(this.layout, default_layout); // TODO: evaluate how the default layout is applied
 
         /**
-         * Values in the layout object may change during rendering etc. Retain a copy of the original plot state
+         * Values in the layout object may change during rendering etc. Retain a copy of the original plot options
+         * @protected
          * @member {Object}
          */
         this._base_layout = deepCopy(this.layout);
@@ -160,21 +168,20 @@ class Plot {
          *   with initial state/setup.
          *
          * Tracks state of the plot, eg start and end position
+         * @public
          * @member {Object}
          */
         this.state = this.layout.state;
 
-        /** @member {Requester} */
+        /** @private @member {Requester} */
         this.lzd = new Requester(datasource);
 
         /**
-         * Window.onresize listener (responsive layouts only)
-         * TODO: .on appears to return a selection, not a listener? Check logic here
-         * https://github.com/d3/d3-selection/blob/00b904b9bcec4dfaf154ae0bbc777b1fc1d7bc08/test/selection/on-test.js#L11
-         * @deprecated
-         * @member {d3.selection}
+         * Track global event listeners that are used by LZ. This allows cleanup of listeners when plot is destroyed.
+         * @private
+         * @member {Map}
          */
-        this.window_onresize = null;
+        this._window_listeners = new Map();
 
         /**
          * Known event hooks that the panel can respond to
@@ -182,13 +189,13 @@ class Plot {
          * @member {Object}
          */
         this.event_hooks = {
-            'layout_changed': [],
+            'layout_changed': [],  // Caution: Direct layout mutations will *not* be captured by this event.
             'data_requested': [],
             'data_rendered': [],
             'element_clicked': [], // Select or unselect
             'element_selection': [], // Element becomes active (only)
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
-            'panel_removed': [],
+            'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
             'state_changed': []  // Only triggered when a state change causes rerender
         };
 
@@ -201,10 +208,10 @@ class Plot {
          *   associated with a clicked plot element
          */
 
-        //
         /**
          * Event information describing interaction (e.g. panning and zooming) is stored on the plot
          * TODO: Add/ document details of interaction structure as we expand
+         * @private
          * @member {{panel_id: String, linked_panel_ids: Array, x_linked: *, dragging: *, zooming: *}}
          * @returns {Plot}
          */
@@ -589,6 +596,43 @@ class Plot {
             });
     }
 
+    /**
+     * Keep a record of window-level event listeners used by the plot.
+     * This allows safe cleanup of the plot on removal from the page
+     */
+    trackWindowListener(event_name, listener) {
+        const tracker = this._window_listeners.get(event_name) || [];
+        if (!tracker.includes(listener)) {
+            tracker.push(listener);
+        }
+        this._window_listeners.set(event_name, tracker);
+    }
+
+    /**
+     * Remove the plot from the page, and clean up any globally registered event listeners
+     */
+    destroy() {
+        for (let [event_name, listeners] of this._window_listeners.entries()) {
+            for (let listener of listeners) {
+                window.removeEventListener(event_name, listener);
+            }
+        }
+        // Clear the SVG, plus other HTML nodes (like toolbar) that live under the same parent
+        const parent = this.svg.node().parentNode;
+        if (!parent) {
+            throw new Error('Plot has already been removed');
+        }
+        while (parent.lastElementChild) {
+            parent.removeChild(parent.lastElementChild);
+        }
+        // Clear toolbar event listeners defined on the parent lz-container. As of 2020 this appears to be the
+        //  state of the art cross-browser DOM API for this task.
+        // eslint-disable-next-line no-self-assign
+        parent.outerHTML = parent.outerHTML;
+
+        this.initialized = false;
+    }
+
     /******* The private interface: methods only used by LocusZoom internals */
     /**
      * Track whether the target panel can respond to mouse interaction events
@@ -722,14 +766,15 @@ class Plot {
 
         // If this is a responsive layout then set a namespaced/unique onresize event listener on the window
         if (this.layout.responsive_resize) {
-            this.window_onresize = d3.select(window).on(`resize.lz-${this.id}`, () => {
-                this.rescaleSVG();
-            });
+            const resize_listener = () => this.rescaleSVG();
+            window.addEventListener('resize', resize_listener);
+            this.trackWindowListener('resize', resize_listener);
+
             // Forcing one additional setDimensions() call after the page is loaded clears up
             // any disagreements between the initial layout and the loaded responsive container's size
-            d3.select(window).on(`load.lz-${this.id}`, () => {
-                this.setDimensions();
-            });
+            const load_listener = () => this.setDimensions();
+            window.addEventListener('load', load_listener);
+            this.trackWindowListener('load', load_listener);
         }
 
         // Add panels
