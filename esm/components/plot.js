@@ -114,7 +114,8 @@ class Plot {
     constructor(id, datasource, layout) {
         /** @private @member Boolean} */
         this.initialized = false;
-        // TODO: This makes sense for all other locuszoom elements to have; determine whether this is interface boilerplate or something that can be removed
+
+        /** @private @member {Plot} */
         this.parent_plot = this;
 
         /** @public @member {String} */

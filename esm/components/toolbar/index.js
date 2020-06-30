@@ -22,23 +22,28 @@ class Toolbar {
         // }
         /** @member {Plot|Panel} */
         this.parent = parent;
+
         /** @member {String} */
         this.id = `${this.parent.getBaseId()}.toolbar`;
+
         /** @member {('plot'|'panel')} */
-        // FIXME: checking constructor name fails, because minified file renames constructor (sigh)
-        this.type = this.parent.constructor.name.toLowerCase();
+        this.type = (this.parent.parent) ? 'panel' : 'plot';
+
         /** @member {Plot} */
-        this.parent_plot = this.type === 'plot' ? this.parent : this.parent.parent;
+        this.parent_plot = this.parent.parent_plot;
 
         /** @member {d3.selection} */
         this.selector = null;
+
         /** @member {BaseWidget[]} */
         this.widgets = [];
+
         /**
          * The timer identifier as returned by setTimeout
          * @member {Number}
          */
         this.hide_timeout = null;
+
         /**
          * Whether to hide the toolbar. Can be overridden by a child widget. Check via `shouldPersist`
          * @protected
@@ -72,18 +77,18 @@ class Toolbar {
 
         // Add mouseover event handlers to show/hide panel toolbar
         if (this.type === 'panel') {
-            d3.select(this.parent.parent.svg.node().parentNode).on(`mouseover.${this.id}`, () => {
-                clearTimeout(this.hide_timeout);
-                if (!this.selector || this.selector.style('visibility') === 'hidden') {
-                    this.show();
-                }
-            });
-            d3.select(this.parent.parent.svg.node().parentNode).on(`mouseout.${this.id}`, () => {
-                clearTimeout(this.hide_timeout);
-                this.hide_timeout = setTimeout(() => {
-                    this.hide();
-                }, 300);
-            });
+            d3.select(this.parent.parent.svg.node().parentNode)
+                .on(`mouseover.${this.id}`, () => {
+                    clearTimeout(this.hide_timeout);
+                    if (!this.selector || this.selector.style('visibility') === 'hidden') {
+                        this.show();
+                    }
+                }).on(`mouseout.${this.id}`, () => {
+                    clearTimeout(this.hide_timeout);
+                    this.hide_timeout = setTimeout(() => {
+                        this.hide();
+                    }, 300);
+                });
         }
 
         return this;
