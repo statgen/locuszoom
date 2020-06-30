@@ -161,7 +161,7 @@ class Toolbar {
         }
         // Position the toolbar itself (panel only)
         if (this.type === 'panel') {
-            const page_origin = this.parent.getPageOrigin();
+            const page_origin = this.parent._getPageOrigin();
             const top = `${(page_origin.y + 3.5).toString()}px`;
             const left = `${page_origin.x.toString()}px`;
             const width = `${(this.parent.layout.width - 4).toString()}px`;

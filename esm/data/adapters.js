@@ -42,10 +42,10 @@ class BaseAdapter {
     /**
      * Parse configuration used to create the data source. Many custom sources will override this method to suit their
      *  needs (eg specific config options, or for sources that do not retrieve data from a URL)
+     * @protected
      * @param {String|Object} config Basic configuration- either a url, or a config object
      * @param {String} [config.url] The datasource URL
      * @param {String} [config.params] Initial config params for the datasource
-     * @private
      */
     parseInit(config) {
         /** @member {Object} */
@@ -67,8 +67,9 @@ class BaseAdapter {
     }
 
     /**
-    * Stub: build the URL for any requests made by this source.
-    */
+     * Stub: build the URL for any requests made by this source.
+     * @protected
+     */
     getURL(state, chain, fields) {
         return this.url;
     }
@@ -115,45 +116,6 @@ class BaseAdapter {
     }
 
     /**
-     * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
-     * This is the public-facing datasource method that will most be called by the plot, but custom data sources will
-     *  almost never want to override this method directly- more specific hooks are provided to control individual pieces
-     *  of the request lifecycle.
-     *
-     * @public
-     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
-     * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
-     *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
-     * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
-     *     This must be an array with the same length as `fields`
-     * @returns {function} A callable operation that can be used as part of the data chain
-     */
-    getData(state, fields, outnames, trans) {
-        if (this.preGetData) { // TODO try to remove this method if at all possible
-            const pre = this.preGetData(state, fields, outnames, trans);
-            if (this.pre) {
-                state = pre.state || state;
-                fields = pre.fields || fields;
-                outnames = pre.outnames || outnames;
-                trans = pre.trans || trans;
-            }
-        }
-
-        return (chain) => {
-            if (this.__dependentSource && chain && chain.body && !chain.body.length) {
-                // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
-                // Therefore, it should simply return the previous data chain.
-                return Promise.resolve(chain);
-            }
-
-            return this.getRequest(state, chain, fields).then((resp) => {
-                return this.parseResponse(resp, chain, fields, outnames, trans);
-            });
-        };
-    }
-
-    /**
      * Ensure the server response is in a canonical form, an array of one object per record. [ {field: oneval} ].
      * If the server response contains columns, reformats the response from {column1: [], column2: []} to the above.
      *
@@ -161,9 +123,8 @@ class BaseAdapter {
      *
      * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
      *  sources (eg, if the payload provides extra data rather than a series of records).
-     *
-     * @param {Object[]|Object} data The original parsed server response
      * @protected
+     * @param {Object[]|Object} data The original parsed server response
      */
     normalizeResponse(data) {
         if (Array.isArray(data)) {
@@ -199,6 +160,7 @@ class BaseAdapter {
      * Hook to post-process the data returned by this source with new, additional behavior.
      *   (eg cleaning up API values or performing complex calculations on the returned data)
      *
+     * @protected
      * @param {Object[]} records The parsed data from the source (eg standardized api response)
      * @param {Object} chain The data chain object. For example, chain.headers may provide useful annotation metadata
      * @returns {Object[]|Promise} The modified set of records
@@ -216,6 +178,7 @@ class BaseAdapter {
      *  This is particularly common for sources at the end of a chain- many "dependent" sources do not allow
      *  cherry-picking individual fields, in which case by **convention** the fields array specifies "last_source_name:all"
      *
+     * @protected
      * @param {Object[]} data One record object per element
      * @param {String[]} fields The names of fields to extract (as named in the source data). Eg "afield"
      * @param {String[]} outnames How to represent the source fields in the output. Eg "namespace:afield|atransform"
@@ -266,13 +229,13 @@ class BaseAdapter {
      * Combine records from this source with others in the chain to yield final chain body.
      *   Handles merging this data with other sources (if applicable).
      *
+     * @protected
      * @param {Object[]} data The data That would be returned from this source alone
      * @param {Object} chain The data chain built up during previous requests
      * @param {String[]} fields
      * @param {String[]} outnames
      * @param {String[]} trans
      * @return {Promise|Object[]} The new chain body
-     * @protected
      */
     combineChainBody(data, chain, fields, outnames, trans) {
         return data;
@@ -282,7 +245,8 @@ class BaseAdapter {
      * Coordinates the work of parsing a response and returning records. This is broken into 4 steps, which may be
      *  overridden separately for fine-grained control. Each step can return either raw data or a promise.
      *
-     * @public
+     * @protected
+     *
      * @param {String|Object} resp The raw data associated with the response
      * @param {Object} chain The combined parsed response data from this and all other requests made in the chain
      * @param {String[]} fields Array of requested field names (as they would appear in the response payload)
@@ -317,6 +281,45 @@ class BaseAdapter {
             }).then((new_body) => {
                 return { header: chain.header || {}, discrete: chain.discrete, body: new_body };
             });
+    }
+
+    /**
+     * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
+     * This is the public-facing datasource method that will most be called by the plot, but custom data sources will
+     *  almost never want to override this method directly- more specific hooks are provided to control individual pieces
+     *  of the request lifecycle.
+     *
+     * @private
+     * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
+     * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
+     * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
+     *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
+     * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
+     *     This must be an array with the same length as `fields`
+     * @returns {function} A callable operation that can be used as part of the data chain
+     */
+    getData(state, fields, outnames, trans) {
+        if (this.preGetData) { // TODO try to remove this method if at all possible
+            const pre = this.preGetData(state, fields, outnames, trans);
+            if (this.pre) {
+                state = pre.state || state;
+                fields = pre.fields || fields;
+                outnames = pre.outnames || outnames;
+                trans = pre.trans || trans;
+            }
+        }
+
+        return (chain) => {
+            if (this.__dependentSource && chain && chain.body && !chain.body.length) {
+                // A "dependent" source should not attempt to fire a request if there is no data for it to act on.
+                // Therefore, it should simply return the previous data chain.
+                return Promise.resolve(chain);
+            }
+
+            return this.getRequest(state, chain, fields).then((resp) => {
+                return this.parseResponse(resp, chain, fields, outnames, trans);
+            });
+        };
     }
 }
 

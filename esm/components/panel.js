@@ -183,17 +183,7 @@ class Panel {
         this.initializeLayout();
     }
 
-    /** @protected */
-    applyDataLayerZIndexesToDataLayerLayouts () {
-        this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
-            this.data_layers[dlid].layout.z_index = idx;
-        });
-    }
-
-    /** @returns {string} */
-    getBaseId () {
-        return `${this.parent.id}.${this.id}`;
-    }
+    /******* Public methods: intended for direct external manipulation of panel internals */
 
     /**
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
@@ -215,6 +205,7 @@ class Panel {
      *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
+     * @public
      * @param {String} event The name of the event (as defined in `event_hooks`)
      * @param {function} hook
      * @returns {function} The registered event listener
@@ -230,8 +221,10 @@ class Panel {
         this.event_hooks[event].push(hook);
         return hook;
     }
+
     /**
      * Remove one or more previously defined event listeners
+     * @public
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} [hook] The callback to deregister
      * @returns {Panel}
@@ -255,12 +248,14 @@ class Panel {
         }
         return this;
     }
+
     /**
      * Handle running of event hooks when an event is emitted
      *
      * There is a shorter overloaded form of this method: if the event does not have any data, the second
      *   argument can be a boolean to control bubbling
      *
+     * @public
      * @param {string} event A known event name
      * @param {*} [eventData] Data or event description that will be passed to the event listener
      * @param {boolean} [bubble=false] Whether to bubble the event to the parent
@@ -293,190 +288,11 @@ class Panel {
     }
 
     /**
-     * Get an object with the x and y coordinates of the panel's origin in terms of the entire page
-     * Necessary for positioning any HTML elements over the panel
-     * @returns {{x: Number, y: Number}}
-     */
-    getPageOrigin() {
-        const plot_origin = this.parent.getPageOrigin();
-        return {
-            x: plot_origin.x + this.layout.origin.x,
-            y: plot_origin.y + this.layout.origin.y
-        };
-    }
-
-
-    /**
-     * Prepare the panel for first use by performing parameter validation, creating axes, setting default dimensions,
-     *   and preparing / positioning data layers as appropriate.
-     * @returns {Panel}
-     */
-    initializeLayout() {
-
-        // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
-        // This will default the panel to taking up the full width of the plot.
-        if (this.layout.width === 0 && this.layout.proportional_width === null) {
-            this.layout.proportional_width = 1;
-        }
-
-        // If the layout is missing BOTH height and proportional height then set the proportional height to
-        // an equal share of the plot's current height.
-        if (this.layout.height === 0 && this.layout.proportional_height === null) {
-            const panel_count = Object.keys(this.parent.panels).length;
-            if (panel_count > 0) {
-                this.layout.proportional_height = (1 / panel_count);
-            } else {
-                this.layout.proportional_height = 1;
-            }
-        }
-
-        // Set panel dimensions, origin, and margin
-        this.setDimensions();
-        this.setOrigin();
-        this.setMargin();
-
-        // Set ranges
-        // TODO: Define stub values in constructor
-        this.x_range = [0, this.layout.cliparea.width];
-        this.y1_range = [this.layout.cliparea.height, 0];
-        this.y2_range = [this.layout.cliparea.height, 0];
-
-        // Initialize panel axes
-        ['x', 'y1', 'y2'].forEach((axis) => {
-            if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false) {
-                // The default layout sets the axis to an empty object, so set its render boolean here
-                this.layout.axes[axis].render = false;
-            } else {
-                this.layout.axes[axis].render = true;
-                this.layout.axes[axis].label = this.layout.axes[axis].label || null;
-                this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
-            }
-        });
-
-        // Add data layers (which define x and y extents)
-        this.layout.data_layers.forEach((data_layer_layout) => {
-            this.addDataLayer(data_layer_layout);
-        });
-
-        return this;
-    }
-
-    /**
-     * Set the dimensions for the panel. If passed with no arguments will calculate optimal size based on layout
-     *   directives and the available area within the plot. If passed discrete width (number) and height (number) will
-     *   attempt to resize the panel to them, but may be limited by minimum dimensions defined on the plot or panel.
-     *
-     * @public
-     * @param {number} [width]
-     * @param {number} [height]
-     * @returns {Panel}
-     */
-    setDimensions(width, height) {
-        if (typeof width != 'undefined' && typeof height != 'undefined') {
-            if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
-                this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
-                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
-            }
-        } else {
-            if (this.layout.proportional_width !== null) {
-                this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
-            }
-            if (this.layout.proportional_height !== null) {
-                this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
-            }
-        }
-        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
-        if (this.svg.clipRect) {
-            this.svg.clipRect
-                .attr('width', this.layout.width)
-                .attr('height', this.layout.height);
-        }
-        if (this.initialized) {
-            this.render();
-            this.curtain.update();
-            this.loader.update();
-            this.toolbar.update();
-            if (this.legend) {
-                this.legend.position();
-            }
-        }
-        return this;
-    }
-
-    /**
-     * Set panel origin on the plot, and re-render as appropriate
-     *
-     * @public
-     * @param {number} x
-     * @param {number} y
-     * @returns {Panel}
-     */
-    setOrigin(x, y) {
-        if (!isNaN(x) && x >= 0) {
-            this.layout.origin.x = Math.max(Math.round(+x), 0);
-        }
-        if (!isNaN(y) && y >= 0) {
-            this.layout.origin.y = Math.max(Math.round(+y), 0);
-        }
-        if (this.initialized) {
-            this.render();
-        }
-        return this;
-    }
-
-    /**
-     * Set margins around this panel
-     * @public
-     * @param {number} top
-     * @param {number} right
-     * @param {number} bottom
-     * @param {number} left
-     * @returns {Panel}
-     */
-    setMargin(top, right, bottom, left) {
-        let extra;
-        if (!isNaN(top)    && top    >= 0) {
-            this.layout.margin.top = Math.max(Math.round(+top), 0);
-        }
-        if (!isNaN(right)  && right  >= 0) {
-            this.layout.margin.right = Math.max(Math.round(+right), 0);
-        }
-        if (!isNaN(bottom) && bottom >= 0) {
-            this.layout.margin.bottom = Math.max(Math.round(+bottom), 0);
-        }
-        if (!isNaN(left)   && left   >= 0) {
-            this.layout.margin.left = Math.max(Math.round(+left), 0);
-        }
-        if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
-            extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
-            this.layout.margin.top -= extra;
-            this.layout.margin.bottom -= extra;
-        }
-        if (this.layout.margin.left + this.layout.margin.right > this.layout.width) {
-            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
-            this.layout.margin.left -= extra;
-            this.layout.margin.right -= extra;
-        }
-        ['top', 'right', 'bottom', 'left'].forEach((m) => {
-            this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
-        });
-        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
-        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
-        this.layout.cliparea.origin.x = this.layout.margin.left;
-        this.layout.cliparea.origin.y = this.layout.margin.top;
-
-        if (this.initialized) {
-            this.render();
-        }
-        return this;
-    }
-
-    /**
      * Set the title for the panel. If passed an object, will merge the object with the existing layout configuration, so
      *   that all or only some of the title layout object's parameters can be customized. If passed null, false, or an empty
      *   string, the title DOM element will be set to display: none.
      *
+     * @public
      * @param {string|object|null} title The title text, or an object with additional configuration
      * @param {string} title.text Text to display. Since titles are rendered as SVG text, HTML and newlines will not be rendered.
      * @param {number} title.x X-offset, in pixels, for the title's text anchor (default left) relative to the top-left corner of the panel.
@@ -509,183 +325,11 @@ class Panel {
         return this;
     }
 
-
-    /**
-     * Prepare the first rendering of the panel. This includes drawing the individual data layers, but also creates shared
-     *   elements such as axes,  title, and loader/curtain.
-     * @returns {Panel}
-     */
-    initialize() {
-
-        // Append a container group element to house the main panel group element and the clip path
-        // Position with initial layout parameters
-        const base_id = this.getBaseId();
-        this.svg.container = this.parent.svg.append('g')
-            .attr('id', `${base_id}.panel_container`)
-            .attr('transform', `translate(${this.layout.origin.x || 0}, ${this.layout.origin.y || 0})`);
-
-        // Append clip path to the parent svg element, size with initial layout parameters
-        const clipPath = this.svg.container.append('clipPath')
-            .attr('id', `${base_id}.clip`);
-        this.svg.clipRect = clipPath.append('rect')
-            .attr('width', this.layout.width)
-            .attr('height', this.layout.height);
-
-        // Append svg group for rendering all panel child elements, clipped by the clip path
-        this.svg.group = this.svg.container.append('g')
-            .attr('id', `${base_id}.panel`)
-            .attr('clip-path', `url(#${base_id}.clip)`);
-
-        // Add curtain and loader prototypes to the panel
-        /** @member {Object} */
-        this.curtain = generateCurtain.call(this);
-        /** @member {Object} */
-        this.loader = generateLoader.call(this);
-
-        /**
-         * Create the toolbar object and hang widgets on it as defined by panel layout
-         * @member {Toolbar}
-         */
-        this.toolbar = new Toolbar(this);
-
-        // Inner border
-        this.inner_border = this.svg.group.append('rect')
-            .attr('class', 'lz-panel-background')
-            .on('click', () => {
-                if (this.layout.background_click === 'clear_selections') {
-                    this.clearSelections();
-                }
-            });
-
-        // Add the title
-        /** @member {Element} */
-        this.title = this.svg.group.append('text').attr('class', 'lz-panel-title');
-        if (typeof this.layout.title != 'undefined') {
-            this.setTitle();
-        }
-
-        // Initialize Axes
-        this.svg.x_axis = this.svg.group.append('g')
-            .attr('id', `${base_id}.x_axis`)
-            .attr('class', 'lz-x lz-axis');
-        if (this.layout.axes.x.render) {
-            this.svg.x_axis_label = this.svg.x_axis.append('text')
-                .attr('class', 'lz-x lz-axis lz-label')
-                .attr('text-anchor', 'middle');
-        }
-        this.svg.y1_axis = this.svg.group.append('g')
-            .attr('id', `${base_id}.y1_axis`).attr('class', 'lz-y lz-y1 lz-axis');
-        if (this.layout.axes.y1.render) {
-            this.svg.y1_axis_label = this.svg.y1_axis.append('text')
-                .attr('class', 'lz-y1 lz-axis lz-label')
-                .attr('text-anchor', 'middle');
-        }
-        this.svg.y2_axis = this.svg.group.append('g')
-            .attr('id', `${base_id}.y2_axis`)
-            .attr('class', 'lz-y lz-y2 lz-axis');
-        if (this.layout.axes.y2.render) {
-            this.svg.y2_axis_label = this.svg.y2_axis.append('text')
-                .attr('class', 'lz-y2 lz-axis lz-label')
-                .attr('text-anchor', 'middle');
-        }
-
-        // Initialize child Data Layers
-        this.data_layer_ids_by_z_index.forEach((id) => {
-            this.data_layers[id].initialize();
-        });
-
-        /**
-         * Legend object, as defined by panel layout and child data layer layouts
-         * @member {Legend}
-         * */
-        this.legend = null;
-        if (this.layout.legend) {
-            this.legend = new Legend(this);
-        }
-
-        // Establish panel background drag interaction mousedown event handler (on the panel background)
-        if (this.layout.interaction.drag_background_to_pan) {
-            const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
-            const mousedown = () => {
-                this.parent.startDrag(this, 'background');
-            };
-            this.svg.container.select('.lz-panel-background')
-                .on(`mousedown${namespace}.background`, mousedown)
-                .on(`touchstart${namespace}.background`, mousedown);
-        }
-
-        return this;
-    }
-
-    /**
-     * Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
-     */
-    resortDataLayers() {
-        const sort = [];
-        this.data_layer_ids_by_z_index.forEach((id) => {
-            sort.push(this.data_layers[id].layout.z_index);
-        });
-        this.svg.group
-            .selectAll('g.lz-data_layer-container')
-            .data(sort)
-            .sort(d3.ascending);
-        this.applyDataLayerZIndexesToDataLayerLayouts();
-    }
-
-    /**
-     * Get an array of panel IDs that are axis-linked to this panel
-     * @param {('x'|'y1'|'y2')} axis
-     * @returns {Array}
-     */
-    getLinkedPanelIds(axis) {
-        axis = axis || null;
-        const linked_panel_ids = [];
-        if (!['x', 'y1', 'y2'].includes(axis)) {
-            return linked_panel_ids;
-        }
-        if (!this.layout.interaction[`${axis}_linked`]) {
-            return linked_panel_ids;
-        }
-        this.parent.panel_ids_by_y_index.forEach((panel_id) => {
-            if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[`${axis}_linked`]) {
-                linked_panel_ids.push(panel_id);
-            }
-        });
-        return linked_panel_ids;
-    }
-
-    /**
-     * Move a panel up relative to others by y-index
-     * @returns {Panel}
-     */
-    moveUp() {
-        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]) {
-            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
-            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
-            this.parent.applyPanelYIndexesToPanelLayouts();
-            this.parent.positionPanels();
-        }
-        return this;
-    }
-
-    /**
-     * Move a panel down (y-axis) relative to others in the plot
-     * @returns {Panel}
-     */
-    moveDown() {
-        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]) {
-            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
-            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
-            this.parent.applyPanelYIndexesToPanelLayouts();
-            this.parent.positionPanels();
-        }
-        return this;
-    }
-
     /**
      * Create a new data layer from a provided layout object. Should have the keys specified in `DefaultLayout`
      * Will automatically add at the top (depth/z-index) of the panel unless explicitly directed differently
      *   in the layout provided.
+     * @public
      * @param {object} layout
      * @returns {*}
      */
@@ -747,6 +391,7 @@ class Panel {
 
     /**
      * Remove a data layer by id
+     * @public
      * @param {string} id
      * @returns {Panel}
      */
@@ -782,6 +427,7 @@ class Panel {
 
     /**
      * Clear all selections on all data layers
+     * @public
      * @returns {Panel}
      */
     clearSelections() {
@@ -792,138 +438,9 @@ class Panel {
     }
 
     /**
-     * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
-     *   from the API as the viewing region changes
-     * @returns {Promise}
-     */
-    reMap() {
-        this.emit('data_requested');
-        this.data_promises = [];
-
-        // Remove any previous error messages before attempting to load new data
-        this.curtain.hide();
-        // Trigger reMap on each Data Layer
-        for (let id in this.data_layers) {
-            try {
-                this.data_promises.push(this.data_layers[id].reMap());
-            } catch (error) {
-                console.error(error);
-                this.curtain.show(error.message || error);
-            }
-        }
-        // When all finished trigger a render
-        return Promise.all(this.data_promises)
-            .then(() => {
-                this.initialized = true;
-                this.render();
-                this.emit('layout_changed', true);
-                this.emit('data_rendered');
-            })
-            .catch((error) => {
-                console.error(error);
-                this.curtain.show(error.message || error);
-            });
-    }
-
-    /**
-     * Iterate over data layers to generate panel axis extents
-     * @returns {Panel}
-     */
-    generateExtents() {
-
-        // Reset extents
-        ['x', 'y1', 'y2'].forEach((axis) => {
-            this[`${axis}_extent`] = null;
-        });
-
-        // Loop through the data layers
-        for (let id in this.data_layers) {
-
-            const data_layer = this.data_layers[id];
-
-            // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
-            if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled) {
-                this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent('x')));
-            }
-
-            // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
-            if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled) {
-                const y_axis = `y${data_layer.layout.y_axis.axis}`;
-                this[`${y_axis}_extent`] = d3.extent((this[`${y_axis}_extent`] || []).concat(data_layer.getAxisExtent('y')));
-            }
-
-        }
-
-        // Override x_extent from state if explicitly defined to do so
-        if (this.layout.axes.x && this.layout.axes.x.extent === 'state') {
-            this.x_extent = [ this.state.start, this.state.end ];
-        }
-
-        return this;
-
-    }
-
-    /**
-     * Generate an array of ticks for an axis. These ticks are generated in one of three ways (highest wins):
-     *   1. An array of specific tick marks
-     *   2. Query each data layer for what ticks are appropriate, and allow a panel-level tick configuration parameter
-     *     object to override the layer's default presentation settings
-     *   3. Generate generic tick marks based on the extent of the data
-     * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
-     * @returns {Number[]|Object[]}  TODO: number format?
-     *   An array of numbers: interpreted as an array of axis value offsets for positioning.
-     *   An array of objects: each object must have an 'x' attribute to position the tick.
-     *   Other supported object keys:
-     *     * text: string to render for a given tick
-     *     * style: d3-compatible CSS style object
-     *     * transform: SVG transform attribute string
-     *     * color: string or LocusZoom scalable parameter object
-     */
-    generateTicks(axis) {
-
-        // Parse an explicit 'ticks' attribute in the axis layout
-        if (this.layout.axes[axis].ticks) {
-            const layout = this.layout.axes[axis];
-
-            const baseTickConfig = layout.ticks;
-            if (Array.isArray(baseTickConfig)) {
-                // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
-                return baseTickConfig;
-            }
-
-            if (typeof baseTickConfig === 'object') {
-                // If the layout specifies base configuration for ticks- but without specific positions- then ask each
-                //   data layer to report the tick marks that it thinks it needs
-                // TODO: Few layers currently need to specify custom ticks (which is ok!). But if it becomes common, consider adding mechanisms to deduplicate ticks across layers
-                const self = this;
-
-                // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
-                const config = { position: baseTickConfig.position };
-
-                const combinedTicks = this.data_layer_ids_by_z_index.reduce((acc, data_layer_id) => {
-                    const nextLayer = self.data_layers[data_layer_id];
-                    return acc.concat(nextLayer.getTicks(axis, config));
-                }, []);
-
-                return combinedTicks.map((item) => {
-                    // The layer makes suggestions, but tick configuration params specified on the panel take precedence
-                    let itemConfig = {};
-                    itemConfig = merge(itemConfig, baseTickConfig);
-                    return merge(itemConfig, item);
-                });
-            }
-        }
-
-        // If no other configuration is provided, attempt to generate ticks from the extent
-        if (this[`${axis}_extent`]) {
-            return prettyTicks(this[`${axis}_extent`], 'both');
-        }
-        return [];
-    }
-
-    /**
      * Update rendering of this panel whenever an event triggers a redraw. Assumes that the panel has already been
      *   prepared the first time via `initialize`
+     * @public
      * @returns {Panel}
      */
     render() {
@@ -1092,13 +609,13 @@ class Panel {
                 // Look for a shift key press while scrolling to execute.
                 // If not present, gracefully raise a notification and allow conventional scrolling
                 if (!d3.event.shiftKey) {
-                    if (this.parent.canInteract(this.id)) {
+                    if (this.parent._canInteract(this.id)) {
                         this.loader.show('Press <tt>[SHIFT]</tt> while scrolling to zoom').hide(1000);
                     }
                     return;
                 }
                 d3.event.preventDefault();
-                if (!this.parent.canInteract(this.id)) {
+                if (!this.parent._canInteract(this.id)) {
                     return;
                 }
                 const coords = d3.mouse(this.svg.container.node());
@@ -1141,9 +658,543 @@ class Panel {
         return this;
     }
 
+    /**
+     * Add a "basic" loader to a panel
+     * This method is just a shortcut for adding the most commonly used type of loading indicator, which appears when
+     *   data is requested, animates (e.g. shows an infinitely cycling progress bar as opposed to one that loads from
+     *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
+     *
+     * @public
+     * @param {Boolean} show_immediately
+     * @returns {Panel}
+     */
+    addBasicLoader(show_immediately) {
+        if (typeof show_immediately != 'undefined') {
+            show_immediately = true;
+        }
+        if (show_immediately) {
+            this.loader.show('Loading...').animate();
+        }
+        this.on('data_requested', () => {
+            this.loader.show('Loading...').animate();
+        });
+        this.on('data_rendered', () => {
+            this.loader.hide();
+        });
+        return this;
+    }
+
+    /************* Private interface: only used internally */
+    /** @private */
+    applyDataLayerZIndexesToDataLayerLayouts () {
+        this.data_layer_ids_by_z_index.forEach((dlid, idx) => {
+            this.data_layers[dlid].layout.z_index = idx;
+        });
+    }
+
+    /**
+     * @private
+     * @returns {string}
+     */
+    getBaseId () {
+        return `${this.parent.id}.${this.id}`;
+    }
+
+    /**
+     * Get an object with the x and y coordinates of the panel's origin in terms of the entire page
+     * Necessary for positioning any HTML elements over the panel
+     * @private
+     * @returns {{x: Number, y: Number}}
+     */
+    _getPageOrigin() {
+        const plot_origin = this.parent._getPageOrigin();
+        return {
+            x: plot_origin.x + this.layout.origin.x,
+            y: plot_origin.y + this.layout.origin.y
+        };
+    }
+
+    /**
+     * Prepare the panel for first use by performing parameter validation, creating axes, setting default dimensions,
+     *   and preparing / positioning data layers as appropriate.
+     * @private
+     * @returns {Panel}
+     */
+    initializeLayout() {
+
+        // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
+        // This will default the panel to taking up the full width of the plot.
+        if (this.layout.width === 0 && this.layout.proportional_width === null) {
+            this.layout.proportional_width = 1;
+        }
+
+        // If the layout is missing BOTH height and proportional height then set the proportional height to
+        // an equal share of the plot's current height.
+        if (this.layout.height === 0 && this.layout.proportional_height === null) {
+            const panel_count = Object.keys(this.parent.panels).length;
+            if (panel_count > 0) {
+                this.layout.proportional_height = (1 / panel_count);
+            } else {
+                this.layout.proportional_height = 1;
+            }
+        }
+
+        // Set panel dimensions, origin, and margin
+        this.setDimensions();
+        this.setOrigin();
+        this.setMargin();
+
+        // Set ranges
+        // TODO: Define stub values in constructor
+        this.x_range = [0, this.layout.cliparea.width];
+        this.y1_range = [this.layout.cliparea.height, 0];
+        this.y2_range = [this.layout.cliparea.height, 0];
+
+        // Initialize panel axes
+        ['x', 'y1', 'y2'].forEach((axis) => {
+            if (!Object.keys(this.layout.axes[axis]).length || this.layout.axes[axis].render === false) {
+                // The default layout sets the axis to an empty object, so set its render boolean here
+                this.layout.axes[axis].render = false;
+            } else {
+                this.layout.axes[axis].render = true;
+                this.layout.axes[axis].label = this.layout.axes[axis].label || null;
+                this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
+            }
+        });
+
+        // Add data layers (which define x and y extents)
+        this.layout.data_layers.forEach((data_layer_layout) => {
+            this.addDataLayer(data_layer_layout);
+        });
+
+        return this;
+    }
+
+    /**
+     * Set the dimensions for the panel. If passed with no arguments will calculate optimal size based on layout
+     *   directives and the available area within the plot. If passed discrete width (number) and height (number) will
+     *   attempt to resize the panel to them, but may be limited by minimum dimensions defined on the plot or panel.
+     *
+     * @private
+     * @param {number} [width]
+     * @param {number} [height]
+     * @returns {Panel}
+     */
+    setDimensions(width, height) {
+        if (typeof width != 'undefined' && typeof height != 'undefined') {
+            if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
+                this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+            }
+        } else {
+            if (this.layout.proportional_width !== null) {
+                this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
+            }
+            if (this.layout.proportional_height !== null) {
+                this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+            }
+        }
+        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
+        if (this.svg.clipRect) {
+            this.svg.clipRect
+                .attr('width', this.layout.width)
+                .attr('height', this.layout.height);
+        }
+        if (this.initialized) {
+            this.render();
+            this.curtain.update();
+            this.loader.update();
+            this.toolbar.update();
+            if (this.legend) {
+                this.legend.position();
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Set panel origin on the plot, and re-render as appropriate
+     *
+     * @private
+     * @param {number} x
+     * @param {number} y
+     * @returns {Panel}
+     */
+    setOrigin(x, y) {
+        if (!isNaN(x) && x >= 0) {
+            this.layout.origin.x = Math.max(Math.round(+x), 0);
+        }
+        if (!isNaN(y) && y >= 0) {
+            this.layout.origin.y = Math.max(Math.round(+y), 0);
+        }
+        if (this.initialized) {
+            this.render();
+        }
+        return this;
+    }
+
+    /**
+     * Set margins around this panel
+     * @private
+     * @param {number} top
+     * @param {number} right
+     * @param {number} bottom
+     * @param {number} left
+     * @returns {Panel}
+     */
+    setMargin(top, right, bottom, left) {
+        let extra;
+        if (!isNaN(top)    && top    >= 0) {
+            this.layout.margin.top = Math.max(Math.round(+top), 0);
+        }
+        if (!isNaN(right)  && right  >= 0) {
+            this.layout.margin.right = Math.max(Math.round(+right), 0);
+        }
+        if (!isNaN(bottom) && bottom >= 0) {
+            this.layout.margin.bottom = Math.max(Math.round(+bottom), 0);
+        }
+        if (!isNaN(left)   && left   >= 0) {
+            this.layout.margin.left = Math.max(Math.round(+left), 0);
+        }
+        if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
+            extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
+            this.layout.margin.top -= extra;
+            this.layout.margin.bottom -= extra;
+        }
+        if (this.layout.margin.left + this.layout.margin.right > this.layout.width) {
+            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
+            this.layout.margin.left -= extra;
+            this.layout.margin.right -= extra;
+        }
+        ['top', 'right', 'bottom', 'left'].forEach((m) => {
+            this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
+        });
+        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
+        this.layout.cliparea.origin.x = this.layout.margin.left;
+        this.layout.cliparea.origin.y = this.layout.margin.top;
+
+        if (this.initialized) {
+            this.render();
+        }
+        return this;
+    }
+
+    /**
+     * Prepare the first rendering of the panel. This includes drawing the individual data layers, but also creates shared
+     *   elements such as axes,  title, and loader/curtain.
+     * @private
+     * @returns {Panel}
+     */
+    initialize() {
+
+        // Append a container group element to house the main panel group element and the clip path
+        // Position with initial layout parameters
+        const base_id = this.getBaseId();
+        this.svg.container = this.parent.svg.append('g')
+            .attr('id', `${base_id}.panel_container`)
+            .attr('transform', `translate(${this.layout.origin.x || 0}, ${this.layout.origin.y || 0})`);
+
+        // Append clip path to the parent svg element, size with initial layout parameters
+        const clipPath = this.svg.container.append('clipPath')
+            .attr('id', `${base_id}.clip`);
+        this.svg.clipRect = clipPath.append('rect')
+            .attr('width', this.layout.width)
+            .attr('height', this.layout.height);
+
+        // Append svg group for rendering all panel child elements, clipped by the clip path
+        this.svg.group = this.svg.container.append('g')
+            .attr('id', `${base_id}.panel`)
+            .attr('clip-path', `url(#${base_id}.clip)`);
+
+        // Add curtain and loader prototypes to the panel
+        /** @member {Object} */
+        this.curtain = generateCurtain.call(this);
+        /** @member {Object} */
+        this.loader = generateLoader.call(this);
+
+        /**
+         * Create the toolbar object and hang widgets on it as defined by panel layout
+         * @member {Toolbar}
+         */
+        this.toolbar = new Toolbar(this);
+
+        // Inner border
+        this.inner_border = this.svg.group.append('rect')
+            .attr('class', 'lz-panel-background')
+            .on('click', () => {
+                if (this.layout.background_click === 'clear_selections') {
+                    this.clearSelections();
+                }
+            });
+
+        // Add the title
+        /** @member {Element} */
+        this.title = this.svg.group.append('text').attr('class', 'lz-panel-title');
+        if (typeof this.layout.title != 'undefined') {
+            this.setTitle();
+        }
+
+        // Initialize Axes
+        this.svg.x_axis = this.svg.group.append('g')
+            .attr('id', `${base_id}.x_axis`)
+            .attr('class', 'lz-x lz-axis');
+        if (this.layout.axes.x.render) {
+            this.svg.x_axis_label = this.svg.x_axis.append('text')
+                .attr('class', 'lz-x lz-axis lz-label')
+                .attr('text-anchor', 'middle');
+        }
+        this.svg.y1_axis = this.svg.group.append('g')
+            .attr('id', `${base_id}.y1_axis`).attr('class', 'lz-y lz-y1 lz-axis');
+        if (this.layout.axes.y1.render) {
+            this.svg.y1_axis_label = this.svg.y1_axis.append('text')
+                .attr('class', 'lz-y1 lz-axis lz-label')
+                .attr('text-anchor', 'middle');
+        }
+        this.svg.y2_axis = this.svg.group.append('g')
+            .attr('id', `${base_id}.y2_axis`)
+            .attr('class', 'lz-y lz-y2 lz-axis');
+        if (this.layout.axes.y2.render) {
+            this.svg.y2_axis_label = this.svg.y2_axis.append('text')
+                .attr('class', 'lz-y2 lz-axis lz-label')
+                .attr('text-anchor', 'middle');
+        }
+
+        // Initialize child Data Layers
+        this.data_layer_ids_by_z_index.forEach((id) => {
+            this.data_layers[id].initialize();
+        });
+
+        /**
+         * Legend object, as defined by panel layout and child data layer layouts
+         * @member {Legend}
+         * */
+        this.legend = null;
+        if (this.layout.legend) {
+            this.legend = new Legend(this);
+        }
+
+        // Establish panel background drag interaction mousedown event handler (on the panel background)
+        if (this.layout.interaction.drag_background_to_pan) {
+            const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
+            const mousedown = () => {
+                this.parent.startDrag(this, 'background');
+            };
+            this.svg.container.select('.lz-panel-background')
+                .on(`mousedown${namespace}.background`, mousedown)
+                .on(`touchstart${namespace}.background`, mousedown);
+        }
+
+        return this;
+    }
+
+    /**
+     * Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+     * @private
+     */
+    resortDataLayers() {
+        const sort = [];
+        this.data_layer_ids_by_z_index.forEach((id) => {
+            sort.push(this.data_layers[id].layout.z_index);
+        });
+        this.svg.group
+            .selectAll('g.lz-data_layer-container')
+            .data(sort)
+            .sort(d3.ascending);
+        this.applyDataLayerZIndexesToDataLayerLayouts();
+    }
+
+    /**
+     * Get an array of panel IDs that are axis-linked to this panel
+     * @private
+     * @param {('x'|'y1'|'y2')} axis
+     * @returns {Array}
+     */
+    getLinkedPanelIds(axis) {
+        axis = axis || null;
+        const linked_panel_ids = [];
+        if (!['x', 'y1', 'y2'].includes(axis)) {
+            return linked_panel_ids;
+        }
+        if (!this.layout.interaction[`${axis}_linked`]) {
+            return linked_panel_ids;
+        }
+        this.parent.panel_ids_by_y_index.forEach((panel_id) => {
+            if (panel_id !== this.id && this.parent.panels[panel_id].layout.interaction[`${axis}_linked`]) {
+                linked_panel_ids.push(panel_id);
+            }
+        });
+        return linked_panel_ids;
+    }
+
+    /**
+     * Move a panel up relative to others by y-index
+     * @private
+     * @returns {Panel}
+     */
+    moveUp() {
+        if (this.parent.panel_ids_by_y_index[this.layout.y_index - 1]) {
+            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index - 1];
+            this.parent.panel_ids_by_y_index[this.layout.y_index - 1] = this.id;
+            this.parent.applyPanelYIndexesToPanelLayouts();
+            this.parent.positionPanels();
+        }
+        return this;
+    }
+
+    /**
+     * Move a panel down (y-axis) relative to others in the plot
+     * @private
+     * @returns {Panel}
+     */
+    moveDown() {
+        if (this.parent.panel_ids_by_y_index[this.layout.y_index + 1]) {
+            this.parent.panel_ids_by_y_index[this.layout.y_index] = this.parent.panel_ids_by_y_index[this.layout.y_index + 1];
+            this.parent.panel_ids_by_y_index[this.layout.y_index + 1] = this.id;
+            this.parent.applyPanelYIndexesToPanelLayouts();
+            this.parent.positionPanels();
+        }
+        return this;
+    }
+
+    /**
+     * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
+     *   from the API as the viewing region changes
+     * @private
+     * @returns {Promise}
+     */
+    reMap() {
+        this.emit('data_requested');
+        this.data_promises = [];
+
+        // Remove any previous error messages before attempting to load new data
+        this.curtain.hide();
+        // Trigger reMap on each Data Layer
+        for (let id in this.data_layers) {
+            try {
+                this.data_promises.push(this.data_layers[id].reMap());
+            } catch (error) {
+                console.error(error);
+                this.curtain.show(error.message || error);
+            }
+        }
+        // When all finished trigger a render
+        return Promise.all(this.data_promises)
+            .then(() => {
+                this.initialized = true;
+                this.render();
+                this.emit('layout_changed', true);
+                this.emit('data_rendered');
+            })
+            .catch((error) => {
+                console.error(error);
+                this.curtain.show(error.message || error);
+            });
+    }
+
+    /**
+     * Iterate over data layers to generate panel axis extents
+     * @private
+     * @returns {Panel}
+     */
+    generateExtents() {
+
+        // Reset extents
+        ['x', 'y1', 'y2'].forEach((axis) => {
+            this[`${axis}_extent`] = null;
+        });
+
+        // Loop through the data layers
+        for (let id in this.data_layers) {
+
+            const data_layer = this.data_layers[id];
+
+            // If defined and not decoupled, merge the x extent of the data layer with the panel's x extent
+            if (data_layer.layout.x_axis && !data_layer.layout.x_axis.decoupled) {
+                this.x_extent = d3.extent((this.x_extent || []).concat(data_layer.getAxisExtent('x')));
+            }
+
+            // If defined and not decoupled, merge the y extent of the data layer with the panel's appropriate y extent
+            if (data_layer.layout.y_axis && !data_layer.layout.y_axis.decoupled) {
+                const y_axis = `y${data_layer.layout.y_axis.axis}`;
+                this[`${y_axis}_extent`] = d3.extent((this[`${y_axis}_extent`] || []).concat(data_layer.getAxisExtent('y')));
+            }
+
+        }
+
+        // Override x_extent from state if explicitly defined to do so
+        if (this.layout.axes.x && this.layout.axes.x.extent === 'state') {
+            this.x_extent = [ this.state.start, this.state.end ];
+        }
+
+        return this;
+
+    }
+
+    /**
+     * Generate an array of ticks for an axis. These ticks are generated in one of three ways (highest wins):
+     *   1. An array of specific tick marks
+     *   2. Query each data layer for what ticks are appropriate, and allow a panel-level tick configuration parameter
+     *     object to override the layer's default presentation settings
+     *   3. Generate generic tick marks based on the extent of the data
+     *
+     * @private
+     * @param {('x'|'y1'|'y2')} axis The string identifier of the axis
+     * @returns {Number[]|Object[]}  TODO: number format?
+     *   An array of numbers: interpreted as an array of axis value offsets for positioning.
+     *   An array of objects: each object must have an 'x' attribute to position the tick.
+     *   Other supported object keys:
+     *     * text: string to render for a given tick
+     *     * style: d3-compatible CSS style object
+     *     * transform: SVG transform attribute string
+     *     * color: string or LocusZoom scalable parameter object
+     */
+    generateTicks(axis) {
+
+        // Parse an explicit 'ticks' attribute in the axis layout
+        if (this.layout.axes[axis].ticks) {
+            const layout = this.layout.axes[axis];
+
+            const baseTickConfig = layout.ticks;
+            if (Array.isArray(baseTickConfig)) {
+                // Array of specific ticks hard-coded into a panel will override any ticks that an individual layer might specify
+                return baseTickConfig;
+            }
+
+            if (typeof baseTickConfig === 'object') {
+                // If the layout specifies base configuration for ticks- but without specific positions- then ask each
+                //   data layer to report the tick marks that it thinks it needs
+                // TODO: Few layers currently need to specify custom ticks (which is ok!). But if it becomes common, consider adding mechanisms to deduplicate ticks across layers
+                const self = this;
+
+                // Pass any layer-specific customizations for how ticks are calculated. (styles are overridden separately)
+                const config = { position: baseTickConfig.position };
+
+                const combinedTicks = this.data_layer_ids_by_z_index.reduce((acc, data_layer_id) => {
+                    const nextLayer = self.data_layers[data_layer_id];
+                    return acc.concat(nextLayer.getTicks(axis, config));
+                }, []);
+
+                return combinedTicks.map((item) => {
+                    // The layer makes suggestions, but tick configuration params specified on the panel take precedence
+                    let itemConfig = {};
+                    itemConfig = merge(itemConfig, baseTickConfig);
+                    return merge(itemConfig, item);
+                });
+            }
+        }
+
+        // If no other configuration is provided, attempt to generate ticks from the extent
+        if (this[`${axis}_extent`]) {
+            return prettyTicks(this[`${axis}_extent`], 'both');
+        }
+        return [];
+    }
 
     /**
      * Render ticks for a particular axis
+     * @private
      * @param {('x'|'y1'|'y2')} axis The identifier of the axes
      * @returns {Panel}
      */
@@ -1311,6 +1362,7 @@ class Panel {
     /**
      * Force the height of this panel to the largest absolute height of the data in
      *   all child data layers (if not null for any child data layers)
+     * @private
      * @param {number|null} [target_height] A target height, which will be used in situations when the expected height can be
      *   pre-calculated (eg when the layers are transitioning)
      */
@@ -1341,6 +1393,7 @@ class Panel {
 
     /**
      * Methods to set/unset element statuses across all data layers
+     * @private
      * @param {String} status
      * @param {Boolean} toggle
      * @param {Array} filters
@@ -1351,8 +1404,10 @@ class Panel {
             this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
         });
     }
+
     /**
      * Set/unset element statuses across all data layers
+     * @private
      * @param {String} status
      * @param {Boolean} toggle
      */
@@ -1361,37 +1416,17 @@ class Panel {
             this.data_layers[id].setAllElementStatus(status, toggle);
         });
     }
-
-    /**
-     * Add a "basic" loader to a panel
-     * This method is just a shortcut for adding the most commonly used type of loading indicator, which appears when
-     *   data is requested, animates (e.g. shows an infinitely cycling progress bar as opposed to one that loads from
-     *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
-     *
-     *
-     * @param {Boolean} show_immediately
-     * @returns {Panel}
-     */
-    addBasicLoader(show_immediately) {
-        if (typeof show_immediately != 'undefined') {
-            show_immediately = true;
-        }
-        if (show_immediately) {
-            this.loader.show('Loading...').animate();
-        }
-        this.on('data_requested', () => {
-            this.loader.show('Loading...').animate();
-        });
-        this.on('data_rendered', () => {
-            this.loader.hide();
-        });
-        return this;
-    }
 }
+
 STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
     const antiverb = `un${verb}`;
     // Set/unset status for arbitrarily many elements given a set of filters
+
+    /** @private @function highlightElementsByFilters */
+    /** @private @function selectElementsByFilters */
+    /** @private @function fadeElementsByFilters */
+    /** @private @function hideElementsByFilters */
     Panel.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1400,6 +1435,11 @@ STATUSES.verbs.forEach((verb, idx) => {
         }
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
+
+    /** @private @function unhighlightElementsByFilters */
+    /** @private @function unselectElementsByFilters */
+    /** @private @function unfadeElementsByFilters */
+    /** @private @function unhideElementsByFilters */
     Panel.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1408,11 +1448,21 @@ STATUSES.verbs.forEach((verb, idx) => {
         }
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
+
     // Set/unset status for all elements
+    /** @private @function highlightAllElements */
+    /** @private @function selectAllElements */
+    /** @private @function fadeAllElements */
+    /** @private @function hideAllElements */
     Panel.prototype[`${verb}AllElements`] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
+
+    /** @private @function unhighlightAllElements */
+    /** @private @function unselectAllElements */
+    /** @private @function unfadeAllElements */
+    /** @private @function unhideAllElements */
     Panel.prototype[`${antiverb}AllElements`] = function() {
         this.setAllElementStatus(adjective, false);
         return this;

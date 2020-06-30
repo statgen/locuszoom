@@ -301,7 +301,7 @@ class Button {
                 const padding = 3;
                 const scrollbar_padding = 20;
                 const menu_height_padding = 14; // 14: 2x 6px padding, 2x 1px border
-                const page_origin = this.parent_svg.getPageOrigin();
+                const page_origin = this.parent_svg._getPageOrigin();
                 const page_scroll_top = document.documentElement.scrollTop || document.body.scrollTop;
                 const container_offset = this.parent_plot.getContainerOffset();
                 const toolbar_client_rect = this.parent_toolbar.selector.node().getBoundingClientRect();

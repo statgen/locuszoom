@@ -90,6 +90,7 @@ class Scatter extends BaseDataLayer {
             const dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x) {
+                // FIXME selection bug
                 const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
                 flip(da, dal);
             }
@@ -103,6 +104,7 @@ class Scatter extends BaseDataLayer {
             }
             let dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
+            // FIXME selection bug
             const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
             data_layer.label_texts.each(function () {
                 const b = this;

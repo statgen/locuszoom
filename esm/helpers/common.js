@@ -60,7 +60,7 @@ function generateCurtain() {
                 applyStyles(this.curtain.selector, css);
             }
             // Update size and position
-            const page_origin = this.getPageOrigin();
+            const page_origin = this._getPageOrigin();
             this.curtain.selector
                 .style('top', `${page_origin.y}px`)
                 .style('left', `${page_origin.x}px`)
@@ -160,7 +160,7 @@ function generateLoader() {
             }
             // Update size and position
             const padding = 6; // is there a better place to store/define this?
-            const page_origin = this.getPageOrigin();
+            const page_origin = this._getPageOrigin();
             const loader_boundrect = this.loader.selector.node().getBoundingClientRect();
             this.loader.selector
                 .style('top', `${page_origin.y + this.layout.height - loader_boundrect.height - padding}px`)

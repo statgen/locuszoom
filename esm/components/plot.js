@@ -214,6 +214,8 @@ class Plot {
         this.initializeLayout();
     }
 
+    /******* User-facing methods that allow manipulation of the plot instance: the public interface */
+
     /**
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
@@ -234,6 +236,7 @@ class Plot {
      *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
      *   that was clicked.
      *
+     * @public
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} hook
      * @returns {function} The registered event listener
@@ -248,8 +251,10 @@ class Plot {
         this.event_hooks[event].push(hook);
         return hook;
     }
+
     /**
      * Remove one or more previously defined event listeners
+     * @public
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} [hook] The callback to deregister
      * @returns {Plot}
@@ -273,8 +278,10 @@ class Plot {
         }
         return this;
     }
+
     /**
      * Handle running of event hooks when an event is emitted
+     * @public
      * @param {string} event A known event name
      * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {Plot}
@@ -304,11 +311,292 @@ class Plot {
     }
 
     /**
+     * Create a new panel from a layout, and handle the work of initializing and placing the panel on the plot
+     * @public
+     * @param {Object} layout
+     * @returns {Panel}
+     */
+    addPanel(layout) {
+        // Sanity checks
+        if (typeof layout !== 'object') {
+            throw new Error('Invalid panel layout');
+        }
+
+        // Create the Panel and set its parent
+        const panel = new Panel(layout, this);
+
+        // Store the Panel on the Plot
+        this.panels[panel.id] = panel;
+
+        // If a discrete y_index was set in the layout then adjust other panel y_index values to accommodate this one
+        if (panel.layout.y_index !== null && !isNaN(panel.layout.y_index)
+            && this.panel_ids_by_y_index.length > 0) {
+            // Negative y_index values should count backwards from the end, so convert negatives to appropriate values here
+            if (panel.layout.y_index < 0) {
+                panel.layout.y_index = Math.max(this.panel_ids_by_y_index.length + panel.layout.y_index, 0);
+            }
+            this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
+            this.applyPanelYIndexesToPanelLayouts();
+        } else {
+            const length = this.panel_ids_by_y_index.push(panel.id);
+            this.panels[panel.id].layout.y_index = length - 1;
+        }
+
+        // Determine if this panel was already in the layout.panels array.
+        // If it wasn't, add it. Either way store the layout.panels array index on the panel.
+        let layout_idx = null;
+        this.layout.panels.forEach((panel_layout, idx) => {
+            if (panel_layout.id === panel.id) {
+                layout_idx = idx;
+            }
+        });
+        if (layout_idx === null) {
+            layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
+        }
+        this.panels[panel.id].layout_idx = layout_idx;
+
+        // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
+        if (this.initialized) {
+            this.positionPanels();
+            // Initialize and load data into the new panel
+            this.panels[panel.id].initialize();
+            this.panels[panel.id].reMap();
+            // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
+            // positioning. TODO: make this additional call unnecessary.
+            this.setDimensions(this.layout.width, this.layout.height);
+        }
+        return this.panels[panel.id];
+    }
+
+    /**
+     * Clear all state, tooltips, and other persisted data associated with one (or all) panel(s) in the plot
+     *
+     * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
+     *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
+     *   @public
+     *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+     *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+     *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+     * @returns {Plot}
+     */
+    clearPanelData(panelId, mode) {
+        mode = mode || 'wipe';
+
+        // TODO: Add unit tests for this method
+        let panelsList;
+        if (panelId) {
+            panelsList = [panelId];
+        } else {
+            panelsList = Object.keys(this.panels);
+        }
+
+        panelsList.forEach((pid) => {
+            this.panels[pid].data_layer_ids_by_z_index.forEach((dlid) => {
+                const layer = this.panels[pid].data_layers[dlid];
+                layer.destroyAllTooltips();
+
+                delete layer.layer_state;
+                delete this.layout.state[layer.state_id];
+                if (mode === 'reset') {
+                    layer._setDefaultState();
+                }
+            });
+        });
+        return this;
+    }
+
+    /**
+     * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
+     * @public
+     * @param {String} id
+     * @returns {Plot}
+     */
+    removePanel(id) {
+        if (!this.panels[id]) {
+            throw new Error(`Unable to remove panel, ID not found: ${id}`);
+        }
+
+        // Hide all panel boundaries
+        this.panel_boundaries.hide();
+
+        // Destroy all tooltips and state vars for all data layers on the panel
+        this.clearPanelData(id);
+
+        // Remove all panel-level HTML overlay elements
+        this.panels[id].loader.hide();
+        this.panels[id].toolbar.destroy(true);
+        this.panels[id].curtain.hide();
+
+        // Remove the svg container for the panel if it exists
+        if (this.panels[id].svg.container) {
+            this.panels[id].svg.container.remove();
+        }
+
+        // Delete the panel and its presence in the plot layout and state
+        this.layout.panels.splice(this.panels[id].layout_idx, 1);
+        delete this.panels[id];
+        delete this.layout.state[id];
+
+        // Update layout_idx values for all remaining panels
+        this.layout.panels.forEach((panel_layout, idx) => {
+            this.panels[panel_layout.id].layout_idx = idx;
+        });
+
+        // Remove the panel id from the y_index array
+        this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
+        this.applyPanelYIndexesToPanelLayouts();
+
+        // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
+        if (this.initialized) {
+            // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
+            this.layout.min_height = this._base_layout.min_height;
+            this.layout.min_width = this._base_layout.min_width;
+
+            this.positionPanels();
+            // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
+            // positioning. TODO: make this additional call unnecessary.
+            this.setDimensions(this.layout.width, this.layout.height);
+        }
+
+        this.emit('panel_removed', id);
+
+        return this;
+    }
+
+    /**
+     * Refresh (or fetch) a plot's data from sources, regardless of whether position or state has changed
+     * @public
+     * @returns {Promise}
+     */
+    refresh() {
+        return this.applyState();
+    }
+
+    /**
+     * A user-defined callback function that can receive (and potentially act on) new plot data.
+     * @callback externalDataCallback
+     * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
+     *  a data layer making an equivalent request.
+     */
+
+    /**
+     * A user-defined callback function that can respond to errors received during a previous operation
+     * @callback externalErrorCallback
+     * @param err A representation of the error that occurred
+     */
+
+    /**
+     * Allow newly fetched data to be made available outside the LocusZoom plot. For example, a callback could be
+     *  registered to draw an HTML table of top GWAS hits, and update that table whenever the plot region changes.
+     *
+     * This is a convenience method for external hooks. It registers an event listener and returns parsed data,
+     *  using the same fields syntax and underlying methods as data layers.
+     *
+     * @public
+     * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
+     *  Different data sources should be prefixed by the source name.
+     * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
+     *  new data is received by the plot.
+     * @param {Object} [opts] Options
+     * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
+     *  occurs during the data request or subsequent callback operations
+     * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
+     *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
+     *  uncombined record info
+     *  @return {function} The newly created event listener, to allow for later cleanup/removal
+     */
+    subscribeToData(fields, success_callback, opts) {
+        opts = opts || {};
+
+        // Register an event listener that is notified whenever new data has been rendered
+        const error_callback = opts.onerror || function (err) {
+            console.log('An error occurred while acting on an external callback', err);
+        };
+
+        const listener = () => {
+            try {
+                this.lzd.getData(this.state, fields)
+                    .then((new_data) => success_callback(opts.discrete ? new_data.discrete : new_data.body))
+                    .catch(error_callback);
+            } catch (error) {
+                // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
+                error_callback(error);
+            }
+        };
+        this.on('data_rendered', listener);
+        return listener;
+    }
+
+    /**
+     * Update state values and trigger a pull for fresh data on all data sources for all data layers
+     * @public
+     * @param state_changes
+     * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+     */
+    applyState(state_changes) {
+        state_changes = state_changes || {};
+        if (typeof state_changes != 'object') {
+            throw new Error(`applyState only accepts an object; ${typeof state_changes} given`);
+        }
+
+        // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
+        let mods = { chr: this.state.chr, start: this.state.start, end: this.state.end };
+        for (var property in state_changes) {
+            mods[property] = state_changes[property];
+        }
+        mods = _updateStatePosition(mods, this.layout);
+
+        // Apply new state to the actual state
+        for (property in mods) {
+            this.state[property] = mods[property];
+        }
+
+        // Generate requests for all panels given new state
+        this.emit('data_requested');
+        this.remap_promises = [];
+        this.loading_data = true;
+        for (let id in this.panels) {
+            this.remap_promises.push(this.panels[id].reMap());
+        }
+
+        return Promise.all(this.remap_promises)
+            .catch((error) => {
+                console.error(error);
+                this.curtain.show(error.message || error);
+                this.loading_data = false;
+            })
+            .then(() => {
+                // Update toolbar / widgets
+                this.toolbar.update();
+
+                // Apply panel-level state values
+                this.panel_ids_by_y_index.forEach((panel_id) => {
+                    const panel = this.panels[panel_id];
+                    panel.toolbar.update();
+                    // Apply data-layer-level state values
+                    panel.data_layer_ids_by_z_index.forEach((data_layer_id) => {
+                        panel.data_layers[data_layer_id].applyAllElementStatus();
+                    });
+                });
+
+                // Emit events
+                this.emit('layout_changed');
+                this.emit('data_rendered');
+                this.emit('state_changed', state_changes);
+
+                this.loading_data = false;
+
+            });
+    }
+
+    /******* The private interface: methods only used by LocusZoom internals */
+    /**
      * Track whether the target panel can respond to mouse interaction events
+     * @private
      * @param {String} panel_id
      * @returns {boolean}
      */
-    canInteract(panel_id) {
+    _canInteract(panel_id) {
         panel_id = panel_id || null;
         if (panel_id) {
             return ((typeof this.interaction.panel_id == 'undefined' || this.interaction.panel_id === panel_id) && !this.loading_data);
@@ -321,9 +609,10 @@ class Plot {
      * Get an object with the x and y coordinates of the plot's origin in terms of the entire page
      *  This returns a result with absolute position relative to the page, regardless of current scrolling
      * Necessary for positioning any HTML elements over the plot
+     * @private
      * @returns {{x: Number, y: Number, width: Number, height: Number}}
      */
-    getPageOrigin() {
+    _getPageOrigin() {
         const bounding_client_rect = this.svg.node().getBoundingClientRect();
         let x_offset = document.documentElement.scrollLeft || document.body.scrollLeft;
         let y_offset = document.documentElement.scrollTop || document.body.scrollTop;
@@ -348,6 +637,7 @@ class Plot {
 
     /**
      * Get the top and left offset values for the plot's container element (the div that was populated)
+     * @private
      * @returns {{top: number, left: number}}
      */
     getContainerOffset() {
@@ -363,6 +653,7 @@ class Plot {
 
     /**
      * Notify each child panel of the plot of changes in panel ordering/ arrangement
+     * @private
      */
     applyPanelYIndexesToPanelLayouts () {
         this.panel_ids_by_y_index.forEach((pid, idx) => {
@@ -372,6 +663,7 @@ class Plot {
 
     /**
      * Get the qualified ID pathname for the plot
+     * @private
      * @returns {String}
      */
     getBaseId () {
@@ -380,6 +672,7 @@ class Plot {
 
     /**
      * Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
+     * @private
      * @param {('Height'|'Width')} dimension
      * @returns {number}
      */
@@ -400,6 +693,7 @@ class Plot {
 
     /**
      * Resize the plot to fit the bounding container
+     * @private
      * @returns {Plot}
      */
     rescaleSVG() {
@@ -410,6 +704,7 @@ class Plot {
 
     /**
      * Prepare the plot for first use by performing parameter validation, setting up panels, and calculating dimensions
+     * @private
      * @returns {Plot}
      */
     initializeLayout() {
@@ -450,6 +745,7 @@ class Plot {
      *
      * If dimensions are provided, resizes each panel proportionally to match the new plot dimensions. Otherwise,
      *   calculates the appropriate plot dimensions based on all panels.
+     * @private
      * @param {Number} [width] If provided and larger than minimum size, set plot to this width
      * @param {Number} [height] If provided and larger than minimum size, set plot to this height
      * @returns {Plot}
@@ -535,165 +831,11 @@ class Plot {
     }
 
     /**
-     * Create a new panel from a layout, and handle the work of initializing and placing the panel on the plot
-     * @param {Object} layout
-     * @returns {Panel}
-     */
-    addPanel(layout) {
-        // Sanity checks
-        if (typeof layout !== 'object') {
-            throw new Error('Invalid panel layout');
-        }
-
-        // Create the Panel and set its parent
-        const panel = new Panel(layout, this);
-
-        // Store the Panel on the Plot
-        this.panels[panel.id] = panel;
-
-        // If a discrete y_index was set in the layout then adjust other panel y_index values to accommodate this one
-        if (panel.layout.y_index !== null && !isNaN(panel.layout.y_index)
-            && this.panel_ids_by_y_index.length > 0) {
-            // Negative y_index values should count backwards from the end, so convert negatives to appropriate values here
-            if (panel.layout.y_index < 0) {
-                panel.layout.y_index = Math.max(this.panel_ids_by_y_index.length + panel.layout.y_index, 0);
-            }
-            this.panel_ids_by_y_index.splice(panel.layout.y_index, 0, panel.id);
-            this.applyPanelYIndexesToPanelLayouts();
-        } else {
-            const length = this.panel_ids_by_y_index.push(panel.id);
-            this.panels[panel.id].layout.y_index = length - 1;
-        }
-
-        // Determine if this panel was already in the layout.panels array.
-        // If it wasn't, add it. Either way store the layout.panels array index on the panel.
-        let layout_idx = null;
-        this.layout.panels.forEach((panel_layout, idx) => {
-            if (panel_layout.id === panel.id) {
-                layout_idx = idx;
-            }
-        });
-        if (layout_idx === null) {
-            layout_idx = this.layout.panels.push(this.panels[panel.id].layout) - 1;
-        }
-        this.panels[panel.id].layout_idx = layout_idx;
-
-        // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
-        if (this.initialized) {
-            this.positionPanels();
-            // Initialize and load data into the new panel
-            this.panels[panel.id].initialize();
-            this.panels[panel.id].reMap();
-            // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
-            // positioning. TODO: make this additional call unnecessary.
-            this.setDimensions(this.layout.width, this.layout.height);
-        }
-        return this.panels[panel.id];
-    }
-
-
-    /**
-     * Clear all state, tooltips, and other persisted data associated with one (or all) panel(s) in the plot
-     *
-     * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
-     *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
-     *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
-     *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
-     *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
-     * @returns {Plot}
-     */
-    clearPanelData(panelId, mode) {
-        mode = mode || 'wipe';
-
-        // TODO: Add unit tests for this method
-        let panelsList;
-        if (panelId) {
-            panelsList = [panelId];
-        } else {
-            panelsList = Object.keys(this.panels);
-        }
-
-        panelsList.forEach((pid) => {
-            this.panels[pid].data_layer_ids_by_z_index.forEach((dlid) => {
-                const layer = this.panels[pid].data_layers[dlid];
-                layer.destroyAllTooltips();
-
-                delete layer.layer_state;
-                delete this.layout.state[layer.state_id];
-                if (mode === 'reset') {
-                    layer._setDefaultState();
-                }
-            });
-        });
-        return this;
-    }
-
-    /**
-     * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
-     * @param {String} id
-     * @returns {Plot}
-     */
-    removePanel(id) {
-        if (!this.panels[id]) {
-            throw new Error(`Unable to remove panel, ID not found: ${id}`);
-        }
-
-        // Hide all panel boundaries
-        this.panel_boundaries.hide();
-
-        // Destroy all tooltips and state vars for all data layers on the panel
-        this.clearPanelData(id);
-
-        // Remove all panel-level HTML overlay elements
-        this.panels[id].loader.hide();
-        this.panels[id].toolbar.destroy(true);
-        this.panels[id].curtain.hide();
-
-        // Remove the svg container for the panel if it exists
-        if (this.panels[id].svg.container) {
-            this.panels[id].svg.container.remove();
-        }
-
-        // Delete the panel and its presence in the plot layout and state
-        this.layout.panels.splice(this.panels[id].layout_idx, 1);
-        delete this.panels[id];
-        delete this.layout.state[id];
-
-        // Update layout_idx values for all remaining panels
-        this.layout.panels.forEach((panel_layout, idx) => {
-            this.panels[panel_layout.id].layout_idx = idx;
-        });
-
-        // Remove the panel id from the y_index array
-        this.panel_ids_by_y_index.splice(this.panel_ids_by_y_index.indexOf(id), 1);
-        this.applyPanelYIndexesToPanelLayouts();
-
-        // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
-        if (this.initialized) {
-            // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
-            this.layout.min_height = this._base_layout.min_height;
-            this.layout.min_width = this._base_layout.min_width;
-
-            this.positionPanels();
-            // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
-            // positioning. TODO: make this additional call unnecessary.
-            this.setDimensions(this.layout.width, this.layout.height);
-        }
-
-        this.emit('panel_removed', id);
-
-        return this;
-    }
-
-
-    /**
      * Automatically position panels based on panel positioning rules and values.
      * Keep panels from overlapping vertically by adjusting origins, and keep the sum of proportional heights at 1.
      *
-     * TODO: This logic currently only supports dynamic positioning of panels to prevent overlap in a VERTICAL orientation.
-     *      Some framework exists for positioning panels in horizontal orientations as well (width, proportional_width, origin.x, etc.)
-     *      but the logic for keeping these user-definable values straight approaches the complexity of a 2D box-packing algorithm.
-     *      That's complexity we don't need right now, and may not ever need, so it's on hiatus until a use case materializes.
+     * LocusZoom panels can only be stacked vertically (not horizontally)
+     * @private
      */
     positionPanels() {
 
@@ -767,7 +909,7 @@ class Plot {
     /**
      * Prepare the first rendering of the plot. This includes initializing the individual panels, but also creates shared
      *   elements such as mouse events, panel guides/boundaries, and loader/curtain.
-     *
+     * @private
      * @returns {Plot}
      */
     initialize() {
@@ -882,9 +1024,9 @@ class Plot {
                     return this;
                 }
                 // Position panel boundaries
-                const plot_page_origin = this.parent.getPageOrigin();
+                const plot_page_origin = this.parent._getPageOrigin();
                 this.selectors.forEach((selector, panel_idx) => {
-                    const panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].getPageOrigin();
+                    const panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]]._getPageOrigin();
                     const left = plot_page_origin.x;
                     const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
                     const width = this.parent.layout.width - 1;
@@ -1011,132 +1153,8 @@ class Plot {
     }
 
     /**
-     * Refresh (or fetch) a plot's data from sources, regardless of whether position or state has changed
-     * @returns {Promise}
-     */
-    refresh() {
-        return this.applyState();
-    }
-
-
-    /**
-     * A user-defined callback function that can receive (and potentially act on) new plot data.
-     * @callback externalDataCallback
-     * @param {Object} new_data The body resulting from a data request. This represents the same information that would be passed to
-     *  a data layer making an equivalent request.
-     */
-
-    /**
-     * A user-defined callback function that can respond to errors received during a previous operation
-     * @callback externalErrorCallback
-     * @param err A representation of the error that occurred
-     */
-
-    /**
-     * Allow newly fetched data to be made available outside the LocusZoom plot. For example, a callback could be
-     *  registered to draw an HTML table of top GWAS hits, and update that table whenever the plot region changes.
-     *
-     * This is a convenience method for external hooks. It registers an event listener and returns parsed data,
-     *  using the same fields syntax and underlying methods as data layers.
-     *
-     * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
-     *  Different data sources should be prefixed by the source name.
-     * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
-     *  new data is received by the plot.
-     * @param {Object} [opts] Options
-     * @param {externalErrorCallback} [opts.onerror] User defined function that is automatically called if a problem
-     *  occurs during the data request or subsequent callback operations
-     * @param {boolean} [opts.discrete=false] Normally the callback will subscribe to the combined body from the chain,
-     *  which may not be in a format that matches what the external callback wants to do. If discrete=true, returns the
-     *  uncombined record info
-     *  @return {function} The newly created event listener, to allow for later cleanup/removal
-     */
-    subscribeToData(fields, success_callback, opts) {
-        opts = opts || {};
-
-        // Register an event listener that is notified whenever new data has been rendered
-        const error_callback = opts.onerror || function (err) {
-            console.log('An error occurred while acting on an external callback', err);
-        };
-
-        const listener = () => {
-            try {
-                this.lzd.getData(this.state, fields)
-                    .then((new_data) => success_callback(opts.discrete ? new_data.discrete : new_data.body))
-                    .catch(error_callback);
-            } catch (error) {
-                // In certain cases, errors are thrown before a promise can be generated, and LZ error display seems to rely on these errors bubbling up
-                error_callback(error);
-            }
-        };
-        this.on('data_rendered', listener);
-        return listener;
-    }
-
-    /**
-     * Update state values and trigger a pull for fresh data on all data sources for all data layers
-     * @param state_changes
-     * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
-     */
-    applyState(state_changes) {
-        state_changes = state_changes || {};
-        if (typeof state_changes != 'object') {
-            throw new Error(`applyState only accepts an object; ${typeof state_changes} given`);
-        }
-
-        // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
-        let mods = { chr: this.state.chr, start: this.state.start, end: this.state.end };
-        for (var property in state_changes) {
-            mods[property] = state_changes[property];
-        }
-        mods = _updateStatePosition(mods, this.layout);
-
-        // Apply new state to the actual state
-        for (property in mods) {
-            this.state[property] = mods[property];
-        }
-
-        // Generate requests for all panels given new state
-        this.emit('data_requested');
-        this.remap_promises = [];
-        this.loading_data = true;
-        for (let id in this.panels) {
-            this.remap_promises.push(this.panels[id].reMap());
-        }
-
-        return Promise.all(this.remap_promises)
-            .catch((error) => {
-                console.error(error);
-                this.curtain.show(error.message || error);
-                this.loading_data = false;
-            })
-            .then(() => {
-                // Update toolbar / widgets
-                this.toolbar.update();
-
-                // Apply panel-level state values
-                this.panel_ids_by_y_index.forEach((panel_id) => {
-                    const panel = this.panels[panel_id];
-                    panel.toolbar.update();
-                    // Apply data-layer-level state values
-                    panel.data_layer_ids_by_z_index.forEach((data_layer_id) => {
-                        panel.data_layers[data_layer_id].applyAllElementStatus();
-                    });
-                });
-
-                // Emit events
-                this.emit('layout_changed');
-                this.emit('data_rendered');
-                this.emit('state_changed', state_changes);
-
-                this.loading_data = false;
-
-            });
-    }
-
-    /**
      * Register interactions along the specified axis, provided that the target panel allows interaction.
-     *
+     * @private
      * @param {Panel} panel
      * @param {('x_tick'|'y1_tick'|'y2_tick')} method The direction (axis) along which dragging is being performed.
      * @returns {Plot}
@@ -1159,7 +1177,7 @@ class Plot {
             break;
         }
 
-        if (!(panel instanceof Panel) || !axis || !this.canInteract()) {
+        if (!(panel instanceof Panel) || !axis || !this._canInteract()) {
             return this.stopDrag();
         }
 
@@ -1185,6 +1203,7 @@ class Plot {
     /**
      * Process drag interactions across the target panel and synchronize plot state across other panels in sync;
      *   clear the event when complete
+     * @private
      * @returns {Plot}
      */
     stopDrag() {
