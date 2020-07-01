@@ -62,15 +62,16 @@ class Toolbar {
      */
     initialize() {
         // Parse layout to generate widget instances
-        // In LZ 0.12, `dashboard.widgets` was renamed to `toolbar.widgets`. Preserve a backwards-compatible alias.
-        const options = this.parent.layout.toolbar.widgets || this.parent.layout.toolbar.widgets;
+        // In LZ 0.12, `dashboard.components` was renamed to `toolbar.widgets`. Preserve a backwards-compatible alias.
+        const options = (this.parent.layout.dashboard && this.parent.layout.dashboard.components) || this.parent.layout.toolbar.widgets;
         if (Array.isArray(options)) {
             options.forEach((layout) => {
                 try {
                     const widget = widgets.create(layout.type, layout, this);
                     this.widgets.push(widget);
                 } catch (e) {
-                    console.warn(e);
+                    console.warn('Failed to create widget');
+                    console.error(e);
                 }
             });
         }

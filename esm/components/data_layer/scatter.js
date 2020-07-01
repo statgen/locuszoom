@@ -59,6 +59,7 @@ class Scatter extends BaseDataLayer {
         const handle_lines = Boolean(data_layer.layout.label.lines);
         const min_x = 2 * spacing;
         const max_x = this.parent.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
+
         const flip = (dn, dnl) => {
             const dnx = +dn.attr('x');
             const text_swing = (2 * spacing) + (2 * Math.sqrt(point_size));
@@ -90,8 +91,7 @@ class Scatter extends BaseDataLayer {
             const dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
             if (dax + abound.width + spacing > max_x) {
-                // FIXME selection bug
-                const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+                const dal = handle_lines ? d3.select(data_layer.label_lines.nodes()[i]) : null;
                 flip(da, dal);
             }
         });
@@ -104,8 +104,7 @@ class Scatter extends BaseDataLayer {
             }
             let dax = +da.attr('x');
             const abound = da.node().getBoundingClientRect();
-            // FIXME selection bug
-            const dal = handle_lines ? d3.select(data_layer.label_lines[0][i]) : null;
+            const dal = handle_lines ? d3.select(data_layer.label_lines.nodes()[i]) : null;
             data_layer.label_texts.each(function () {
                 const b = this;
                 const db = d3.select(b);
@@ -203,7 +202,7 @@ class Scatter extends BaseDataLayer {
         if (again) {
             // Adjust lines to follow the labels
             if (data_layer.layout.label.lines) {
-                const label_elements = data_layer.label_texts[0];
+                const label_elements = data_layer.label_texts.nodes();
                 data_layer.label_lines.attr('y2', (d, i) => {
                     const label_line = d3.select(label_elements[i]);
                     return label_line.attr('y');
@@ -292,7 +291,7 @@ class Scatter extends BaseDataLayer {
                 .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
                 .data(filtered_data, (d) => `${d[this.layout.id_field]}_label`);
 
-            this.label_groups.enter()
+            const groups_enter = this.label_groups.enter()
                 .append('g')
                 .attr('class', `lz-data_layer-${this.layout.type}-label`);
 
@@ -300,7 +299,7 @@ class Scatter extends BaseDataLayer {
             if (this.label_texts) {
                 this.label_texts.remove();
             }
-            this.label_texts = this.label_groups
+            this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
                 .attr('class', `lz-data_layer-${this.layout.type}-label`)
                 .text((d) => parseFields(d, data_layer.layout.label.text || ''))
@@ -328,7 +327,7 @@ class Scatter extends BaseDataLayer {
                 if (this.label_lines) {
                     this.label_lines.remove();
                 }
-                this.label_lines = this.label_groups
+                this.label_lines = this.label_groups.merge(groups_enter)
                     .append('line')
                     .attr('class', `lz-data_layer-${this.layout.type}-label`)
                     .attr('x1', (d) => {
@@ -582,7 +581,8 @@ class CategoryScatter extends Scatter {
         if (baseParams.values.length) {
             colors = baseParams.values;
         } else {
-            colors = d3.schemeSet3; // max default: up to 12 items
+            // Originally from d3v3 category20
+            colors = ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'];
         }
         while (colors.length < categoryNames.length) {
             colors = colors.concat(colors);
