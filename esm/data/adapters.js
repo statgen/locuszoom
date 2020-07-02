@@ -368,7 +368,8 @@ class AssociationLZ extends RemoteAdapter {
     normalizeResponse (data) {
         // Some association sources do not sort their data in a predictable order, which makes it hard to reliably
         //  align with other sources (such as LD). For performance reasons, sorting is an opt-in argument.
-        // TODO: Consider more fine grained sorting control in the future
+        // TODO: Consider more fine grained sorting control in the future. This was added as a very specific
+        //   workaround for the original T2D portal.
         data = super.normalizeResponse(data);
         if (this.params && this.params.sort && data.length && data[0]['position']) {
             data.sort(function (a, b) {
@@ -674,7 +675,9 @@ class GwasCatalogLZ extends RemoteAdapter {
             return chain.body;
         }
 
-        const decider = 'log_pvalue'; //  TODO: Better reuse options in the future
+        //  TODO: Better reuse options in the future. This source is very specifically tied to the PortalDev API, where
+        //   the field name is always "log_pvalue". Relatively few sites will write their own gwas-catalog endpoint.
+        const decider = 'log_pvalue';
         const decider_out = outnames[fields.indexOf(decider)];
 
         function leftJoin(left, right, fields, outnames, trans) { // Add `fields` from `right` to `left`

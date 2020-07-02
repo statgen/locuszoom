@@ -51,8 +51,7 @@ class Toolbar {
          */
         this.persist = false;
 
-        // TODO: Return value from constructor function?
-        return this.initialize();
+        this.initialize();
     }
 
     /**

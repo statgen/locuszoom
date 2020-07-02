@@ -192,7 +192,6 @@ class Legend {
         this.selector
             .style('visibility', this.layout.hidden ? 'hidden' : 'visible');
 
-        // TODO: Annotate return type and make consistent
         return this.position();
     }
 

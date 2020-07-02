@@ -457,6 +457,15 @@ class Scatter extends BaseDataLayer {
  *
  */
 class CategoryScatter extends Scatter {
+    constructor(layout) {
+        super(...arguments);
+        /**
+         * Define category names and extents (boundaries) for plotting.
+         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         */
+        this._categories = {};
+    }
+
     /**
      * This plot layer makes certain assumptions about the data passed in. Transform the raw array of records from
      *   the datasource to prepare it for plotting, as follows:
@@ -653,10 +662,6 @@ class CategoryScatter extends Scatter {
 
     applyCustomDataMethods() {
         this.data = this._prepareData();
-        /**
-         * Define category names and extents (boundaries) for plotting.  TODO: properties in constructor
-         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
-         */
         this._categories = this._generateCategoryBounds();
         return this;
     }

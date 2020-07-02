@@ -31,14 +31,27 @@ const default_layout = {
 */
 class BaseDataLayer {
     constructor(layout, parent) {
-        /** @private @member {Boolean} */
+        /**
+         * @private
+         * @member {Boolean}
+         */
         this.initialized = false;
-        /** @private @member {Number} */
+        /**
+         * @private
+         * @member {Number}
+         */
         this.layout_idx = null;
 
-        /** @public @member {String} */
+        /**
+         * The unique identifier for this layer. Should be unique within this layer.
+         * @public
+         * @member {String}
+         */
         this.id     = null;
-        /** @protected @member {Panel} */
+        /**
+         * @protected
+         * @member {Panel}
+         */
         this.parent = parent || null;
         /**
          * @private
@@ -46,7 +59,10 @@ class BaseDataLayer {
          */
         this.svg    = {};
 
-        /** @protected @member {LocusZoom.Plot} */
+        /**
+         * @protected
+         * @member {Plot}
+         */
         this.parent_plot = null;
         if (parent) {
             this.parent_plot = parent.parent;
@@ -80,12 +96,21 @@ class BaseDataLayer {
          */
         this._base_layout = deepCopy(this.layout);
 
-        /** @private @member {Object} */
+        /**
+         * @private
+         * @member {Object}
+         */
         this.state = {};
-        /** @private @member {String} */
+        /**
+         * @private
+         * @member {String}
+         */
         this.state_id = null;
 
-        /** @private @member {Object} */
+        /**
+         * @private
+         * @member {Object}
+         * */
         this.layer_state = null;
         // Create a default state (and set any references to the parent as appropriate)
         this._setDefaultState();
@@ -100,7 +125,10 @@ class BaseDataLayer {
          */
         this.data = [];
         if (this.layout.tooltip) {
-            /** @private @member {Object} */
+            /**
+             * @private
+             * @member {Object}
+             */
             this.tooltips = {};
         }
 
@@ -1340,8 +1368,8 @@ class BaseDataLayer {
     }
 
     /**
-     * @private
      * Position the datalayer and all tooltips
+     * @private
      * @returns {BaseDataLayer}
      */
     draw() {
@@ -1381,10 +1409,22 @@ STATUSES.verbs.forEach((verb, idx) => {
     const antiverb = `un${verb}`;
     // Set/unset a single element's status
 
-    /** @private @function highlightElement */
-    /** @private @function selectElement */
-    /** @private @function fadeElement */
-    /** @private @function hideElement */
+    /**
+     * @private
+     * @function highlightElement
+     */
+    /**
+     * @private
+     * @function selectElement
+     */
+    /**
+     *  @private
+     *  @function fadeElement
+     */
+    /**
+     *  @private
+     *  @function hideElement
+     */
     BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1395,10 +1435,22 @@ STATUSES.verbs.forEach((verb, idx) => {
         return this;
     };
 
-    /** @private @function unhighlightElement */
-    /** @private @function unselectElement */
-    /** @private @function unfadeElement */
-    /** @private @function unhideElement */
+    /**
+     * @private
+     * @function unhighlightElement
+     */
+    /**
+     *  @private
+     *  @function unselectElement
+     */
+    /**
+     *  @private
+     *  @function unfadeElement
+     */
+    /**
+     *  @private
+     *  @function unhideElement
+     */
     BaseDataLayer.prototype[`${antiverb}Element`] = function(element, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1410,10 +1462,22 @@ STATUSES.verbs.forEach((verb, idx) => {
     };
 
 
-    /** @private @function highlightElementsByFilters */
-    /** @private @function selectElementsByFilters */
-    /** @private @function fadeElementsByFilters */
-    /** @private @function hideElementsByFilters */
+    /**
+     * @private
+     * @function highlightElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function selectElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function fadeElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function hideElementsByFilters
+     */
     // Set/unset status for arbitrarily many elements given a set of filters
     BaseDataLayer.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
@@ -1424,10 +1488,22 @@ STATUSES.verbs.forEach((verb, idx) => {
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
 
-    /** @private @function unhighlightElementsByFilters */
-    /** @private @function unselectElementsByFilters */
-    /** @private @function unfadeElementsByFilters */
-    /** @private @function unhideElementsByFilters */
+    /**
+     *  @private
+     *  @function unhighlightElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function unselectElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function unfadeElementsByFilters
+     */
+    /**
+     * @private
+     * @function unhideElementsByFilters
+     */
     BaseDataLayer.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1437,20 +1513,44 @@ STATUSES.verbs.forEach((verb, idx) => {
         return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
 
-    /** @private @function highlightAllElements */
-    /** @private @function selectAllElements */
-    /** @private @function fadeAllElements */
-    /** @private @function hideAllElements */
+    /**
+     * @private
+     * @function highlightAllElements
+     */
+    /**
+     *  @private
+     *  @function selectAllElements
+     */
+    /**
+     *  @private
+     *  @function fadeAllElements
+     */
+    /**
+     *  @private
+     *  @function hideAllElements
+     */
     // Set/unset status for all elements
     BaseDataLayer.prototype[`${verb}AllElements`] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
 
-    /** @private @function unhighlightAllElements */
-    /** @private @function unselectAllElements */
-    /** @private @function unfadeAllElements */
-    /** @private @function unhideAllElements */
+    /**
+     * @private
+     * @function unhighlightAllElements
+     */
+    /**
+     *  @private
+     *  @function unselectAllElements
+     */
+    /**
+     * @private
+     * @function unfadeAllElements
+     * */
+    /**
+     * @private
+     * @function unhideAllElements
+     */
     BaseDataLayer.prototype[`${antiverb}AllElements`] = function() {
         this.setAllElementStatus(adjective, false);
         return this;

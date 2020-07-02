@@ -69,9 +69,15 @@ class Panel {
             throw new Error('Unable to create panel, invalid layout');
         }
 
-        /** @protected @member {Plot|null} */
+        /**
+         * @protected
+         * @member {Plot|null}
+         */
         this.parent = parent || null;
-        /** @protected @member {Plot|null} */
+        /**
+         *  @protected
+         *  @member {Plot|null}
+         */
         this.parent_plot = parent;
 
         // Ensure a valid ID is present. If there is no valid ID then generate one
@@ -93,10 +99,16 @@ class Panel {
                 throw new Error(`Cannot create panel with id [${layout.id}]; panel with that id already exists`);
             }
         }
-        /** @public @member {String} */
+        /**
+         * @public
+         * @member {String}
+         */
         this.id = layout.id;
 
-        /** @private @member {Boolean} */
+        /**
+         * @private
+         * @member {Boolean}
+         */
         this.initialized = false;
         /**
          * The index of this panel in the parent plot's `layout.panels`
@@ -104,7 +116,10 @@ class Panel {
          * @member {number}
          * */
         this.layout_idx = null;
-        /** @private @member {Object} */
+        /**
+         * @private
+         * @member {Object}
+         */
         this.svg = {};
 
         /**
@@ -116,10 +131,16 @@ class Panel {
 
         // Define state parameters specific to this panel
         if (this.parent) {
-            /** @private @member {Object} */
+            /**
+             * @private
+             * @member {Object}
+             */
             this.state = this.parent.state;
 
-            /** @private @member {String} */
+            /**
+             *  @private
+             *  @member {String}
+             */
             this.state_id = this.id;
             this.state[this.state_id] = this.state[this.state_id] || {};
         } else {
@@ -127,9 +148,15 @@ class Panel {
             this.state_id = null;
         }
 
-        /** @protected @member {Object} */
+        /**
+         * @protected
+         * @member {Object}
+         */
         this.data_layers = {};
-        /** @private @member {String[]} */
+        /**
+         * @private
+         * @member {String[]}
+         */
         this.data_layer_ids_by_z_index = [];
 
         /**
@@ -139,25 +166,52 @@ class Panel {
          */
         this.data_promises = [];
 
-        /** @private @member {d3.scale} */
+        /**
+         * @private
+         * @member {d3.scale}
+         */
         this.x_scale  = null;
-        /** @private @member {d3.scale} */
+        /**
+         * @private
+         * @member {d3.scale}
+         */
         this.y1_scale = null;
-        /** @private @member {d3.scale} */
+        /**
+         *  @private
+         *  @member {d3.scale}
+         */
         this.y2_scale = null;
 
-        /** @private @member {d3.extent} */
+        /**
+         * @private
+         * @member {d3.extent}
+         */
         this.x_extent  = null;
-        /** @private @member {d3.extent} */
+        /**
+         *  @private
+         *  @member {d3.extent}
+         */
         this.y1_extent = null;
-        /** @private @member {d3.extent} */
+        /**
+         *  @private
+         *  @member {d3.extent}
+         */
         this.y2_extent = null;
 
-        /** @private @member {Number[]} */
+        /**
+         * @private
+         * @member {Number[]}
+         */
         this.x_ticks  = [];
-        /** @private @member {Number[]} */
+        /**
+         *  @private
+         *  @member {Number[]}
+         */
         this.y1_ticks = [];
-        /** @private @member {Number[]} */
+        /**
+         * @private
+         * @member {Number[]}
+         */
         this.y2_ticks = [];
 
         /**
@@ -1425,10 +1479,22 @@ STATUSES.verbs.forEach((verb, idx) => {
     const antiverb = `un${verb}`;
     // Set/unset status for arbitrarily many elements given a set of filters
 
-    /** @private @function highlightElementsByFilters */
-    /** @private @function selectElementsByFilters */
-    /** @private @function fadeElementsByFilters */
-    /** @private @function hideElementsByFilters */
+    /**
+     * @private
+     * @function highlightElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function selectElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function fadeElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function hideElementsByFilters
+     */
     Panel.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1438,10 +1504,22 @@ STATUSES.verbs.forEach((verb, idx) => {
         return this.setElementStatusByFilters(adjective, true, filters, exclusive);
     };
 
-    /** @private @function unhighlightElementsByFilters */
-    /** @private @function unselectElementsByFilters */
-    /** @private @function unfadeElementsByFilters */
-    /** @private @function unhideElementsByFilters */
+    /**
+     * @private
+     * @function unhighlightElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function unselectElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function unfadeElementsByFilters
+     */
+    /**
+     *  @private
+     *  @function unhideElementsByFilters
+     */
     Panel.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
         if (typeof exclusive == 'undefined') {
             exclusive = false;
@@ -1452,19 +1530,43 @@ STATUSES.verbs.forEach((verb, idx) => {
     };
 
     // Set/unset status for all elements
-    /** @private @function highlightAllElements */
-    /** @private @function selectAllElements */
-    /** @private @function fadeAllElements */
-    /** @private @function hideAllElements */
+    /**
+     * @private
+     * @function highlightAllElements
+     */
+    /**
+     *  @private
+     *  @function selectAllElements
+     */
+    /**
+     *  @private
+     *  @function fadeAllElements
+     */
+    /**
+     *  @private
+     *  @function hideAllElements
+     */
     Panel.prototype[`${verb}AllElements`] = function() {
         this.setAllElementStatus(adjective, true);
         return this;
     };
 
-    /** @private @function unhighlightAllElements */
-    /** @private @function unselectAllElements */
-    /** @private @function unfadeAllElements */
-    /** @private @function unhideAllElements */
+    /**
+     * @private
+     * @function unhighlightAllElements
+     */
+    /**
+     *  @private
+     *  @function unselectAllElements
+     */
+    /**
+     * @private
+     * @function unfadeAllElements
+     */
+    /**
+     *  @private
+     *  @function unhideAllElements
+     */
     Panel.prototype[`${antiverb}AllElements`] = function() {
         this.setAllElementStatus(adjective, false);
         return this;

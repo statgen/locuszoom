@@ -112,16 +112,28 @@ class Plot {
      * @param {Object} layout A JSON-serializable object of layout configuration parameters
     */
     constructor(id, datasource, layout) {
-        /** @private @member Boolean} */
+        /**
+         * @private
+         * @member Boolean}
+         */
         this.initialized = false;
 
-        /** @private @member {Plot} */
+        /**
+         *  @private
+         *  @member {Plot}
+         */
         this.parent_plot = this;
 
-        /** @public @member {String} */
+        /**
+         *  @public
+         *  @member {String}
+         */
         this.id = id;
 
-        /** @private @member {Element} */
+        /**
+         * @private
+         * @member {Element}
+         */
         this.container = null;
         /**
          * Selector for a node that will contain the plot. (set externally by populate methods)
@@ -130,7 +142,11 @@ class Plot {
          */
         this.svg = null;
 
-        /** @public @member {Object.<String, Number>} */
+        /**
+         * Direct access to panel instances, keyed by panel ID. Used primarily for introspection/ development.
+         *  @public
+         *  @member {Object.<String, Number>}
+         */
         this.panels = {};
         /**
          * TODO: This is currently used by external classes that manipulate the parent and may indicate room for a helper method in the api to coordinate boilerplate
@@ -174,7 +190,10 @@ class Plot {
          */
         this.state = this.layout.state;
 
-        /** @private @member {Requester} */
+        /**
+         * @private
+         * @member {Requester}
+         */
         this.lzd = new Requester(datasource);
 
         /**
