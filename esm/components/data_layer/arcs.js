@@ -47,7 +47,7 @@ class Arcs extends BaseDataLayer {
             const coords = [
                 [x_scale(x1), y_scale(0)],
                 [x_scale(xmid), y_scale(d[layout.y_axis.field])],
-                [x_scale(x2), y_scale(0)]
+                [x_scale(x2), y_scale(0)],
             ];
             // Smoothing options: https://bl.ocks.org/emmasaunders/f7178ed715a601c5b2c458a2c7093f78
             const line = d3.line()

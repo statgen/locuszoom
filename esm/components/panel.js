@@ -29,17 +29,17 @@ const default_layout = {
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
     toolbar: {
-        widgets: []
+        widgets: [],
     },
     cliparea: {
         height: 0,
         width: 0,
-        origin: { x: 0, y: 0 }
+        origin: { x: 0, y: 0 },
     },
     axes: {  // These are the only axes supported!!
         x:  {},
         y1: {},
-        y2: {}
+        y2: {},
     },
     legend: null,
     interaction: {
@@ -50,9 +50,9 @@ const default_layout = {
         scroll_to_zoom: false,
         x_linked: false,
         y1_linked: false,
-        y2_linked: false
+        y2_linked: false,
     },
-    data_layers: []
+    data_layers: [],
 };
 
 /**
@@ -232,7 +232,7 @@ class Panel {
             'data_rendered': [],
             'element_clicked': [],
             'element_selection': [],
-            'match_requested': [] // A data layer is attempting to highlight matching points (internal use only)
+            'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
         };
 
         // Initialize the layout
@@ -648,7 +648,7 @@ class Panel {
             // Shift the extent
             this[`${axis}_extent`] = [
                 this[`${axis}_scale`].invert(ranges[axis][0]),
-                this[`${axis}_scale`].invert(ranges[axis][1])
+                this[`${axis}_scale`].invert(ranges[axis][1]),
             ];
 
             // Finalize Scale
@@ -684,8 +684,8 @@ class Panel {
                     linked_panel_ids: this.getLinkedPanelIds('x'),
                     zooming: {
                         scale: (delta < 1) ? 0.9 : 1.1,
-                        center: coords[0]
-                    }
+                        center: coords[0],
+                    },
                 };
                 this.render();
                 this.parent.interaction.linked_panel_ids.forEach((panel_id) => {
@@ -766,7 +766,7 @@ class Panel {
         const plot_origin = this.parent._getPageOrigin();
         return {
             x: plot_origin.x + this.layout.origin.x,
-            y: plot_origin.y + this.layout.origin.y
+            y: plot_origin.y + this.layout.origin.y,
         };
     }
 
@@ -1282,22 +1282,22 @@ class Panel {
                 orientation: 'bottom',
                 label_x: this.layout.cliparea.width / 2,
                 label_y: (this.layout.axes[axis].label_offset || 0),
-                label_rotate: null
+                label_rotate: null,
             },
             y1: {
                 position: `translate(${this.layout.margin.left}, ${this.layout.margin.top})`,
                 orientation: 'left',
                 label_x: -1 * (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
-                label_rotate: -90
+                label_rotate: -90,
             },
             y2: {
                 position: `translate(${this.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
                 orientation: 'right',
                 label_x: (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
-                label_rotate: -90
-            }
+                label_rotate: -90,
+            },
         };
 
         // Generate Ticks

@@ -312,13 +312,13 @@ function parsePositionQuery(x) {
             return {
                 chr:match[1],
                 start: center - offset,
-                end: center + offset
+                end: center + offset,
             };
         } else {
             return {
                 chr: match[1],
                 start: positionStringToInt(match[2]),
-                end: positionStringToInt(match[4])
+                end: positionStringToInt(match[4]),
             };
         }
     }
@@ -326,7 +326,7 @@ function parsePositionQuery(x) {
     if (match) {
         return {
             chr:match[1],
-            position: positionStringToInt(match[2])
+            position: positionStringToInt(match[2]),
         };
     }
     return null;

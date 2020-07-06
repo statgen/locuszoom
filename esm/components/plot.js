@@ -23,10 +23,10 @@ const default_layout = {
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
     toolbar: {
-        widgets: []
+        widgets: [],
     },
     panel_boundaries: true,
-    mouse_guide: true
+    mouse_guide: true,
 };
 
 /**
@@ -216,7 +216,7 @@ class Plot {
             'element_selection': [], // Element becomes active (only)
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
             'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
-            'state_changed': []  // Only triggered when a state change causes rerender
+            'state_changed': [],  // Only triggered when a state change causes rerender
         };
 
         /**
@@ -695,7 +695,7 @@ class Plot {
             x: x_offset + bounding_client_rect.left,
             y: y_offset + bounding_client_rect.top,
             width: bounding_client_rect.width,
-            height: bounding_client_rect.height
+            height: bounding_client_rect.height,
         };
     }
 
@@ -998,7 +998,7 @@ class Plot {
             this.mouse_guide = {
                 svg: mouse_guide_svg,
                 vertical: mouse_guide_vertical_svg,
-                horizontal: mouse_guide_horizontal_svg
+                horizontal: mouse_guide_horizontal_svg,
             };
         }
 
@@ -1124,7 +1124,7 @@ class Plot {
                 this.corner_selector.remove();
                 this.corner_selector = null;
                 return this;
-            }
+            },
         };
 
         // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
@@ -1256,8 +1256,8 @@ class Plot {
                 start_y: coords[1],
                 dragged_x: 0,
                 dragged_y: 0,
-                axis: axis
-            }
+                axis: axis,
+            },
         };
 
         this.svg.style('cursor', 'all-scroll');

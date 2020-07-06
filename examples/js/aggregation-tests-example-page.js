@@ -52,8 +52,8 @@ function customizePlotLayout(layout) {
             field: 'aggregation_best_pvalue',
             parameters: {
                 field_value: null,
-                then: '#B8B8B8'
-            }
+                then: '#B8B8B8',
+            },
         },
         {
             scale_function: 'numerical_bin',
@@ -61,9 +61,9 @@ function customizePlotLayout(layout) {
             // This UI is for gene-based tests, hence Default significance threshold is based on 20k human protein coding genes
             parameters: {
                 breaks: [0, 0.05 / 20000],
-                values: ['#d43f3a', '#357ebd']
-            }
-        }
+                values: ['#d43f3a', '#357ebd'],
+            },
+        },
     ];
     genesLayout.color = colorConfig;
     genesLayout.stroke = colorConfig;
@@ -89,7 +89,7 @@ function jumpToRegion(plot, input_selector, error_selector) {
         plot.applyState({
             chr: match[1],
             start: +match[2],
-            end: +match[3]
+            end: +match[3],
         });
     }
 }
@@ -192,23 +192,23 @@ function createDisplayWidgets(label_store, context) {
         .add('aggregation', ['AggregationTestSourceLZ', { url: 'https://portaldev.sph.umich.edu/raremetal/v1/aggregation/covariance' }])
         .add('assoc', ['AssocFromAggregationLZ', {  // Use a special source that restructures already-fetched data
             from: 'aggregation',
-            params: { id_field: 'variant' }
+            params: { id_field: 'variant' },
         }])
         .add('ld', ['LDServer', {
             url: 'https://portaldev.sph.umich.edu/ld/',
-            params: { source: '1000G', build: 'GRCh37', population: 'ALL' }
+            params: { source: '1000G', build: 'GRCh37', population: 'ALL' },
         }])
         .add('gene', ['GeneLZ', { url: apiBase + 'annotation/genes/', params: { build: 'GRCh37' } }])
         .add('aggregation_genes', ['GeneAggregationConnectorLZ', {
             sources: {
                 aggregation_ns: 'aggregation',
-                gene_ns: 'gene'
-            }
+                gene_ns: 'gene',
+            },
         }])
         .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
         .add('constraint', ['GeneConstraintLZ', {
             url: 'https://gnomad.broadinstitute.org/api',
-            params: { build: 'GRCh37' }
+            params: { build: 'GRCh37' },
         }]);
 
     const stateUrlMapping = { chr: 'chrom', start: 'start', end: 'end' };
@@ -249,7 +249,7 @@ function createDisplayWidgets(label_store, context) {
             {
                 title: 'Gene', field: 'group', formatter: 'link', widthGrow: 3,
                 // TODO: exac gives timeouts if we use https
-                formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' }
+                formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' },
             },
             { title: 'Mask', field: 'mask_name', headerFilter: true, widthGrow: 8 },
             { title: '# Variants', field: 'variant_count', widthGrow: 2 },
@@ -261,15 +261,15 @@ function createDisplayWidgets(label_store, context) {
                 formatter: _formatSciNotation,
                 sorter: 'number',
                 visible: false,
-                widthGrow: 2
-            }
+                widthGrow: 2,
+            },
         ],
         placeholder: 'No Data Available',
         initialSort: [
-            { column: 'pvalue', dir: 'asc' }
+            { column: 'pvalue', dir: 'asc' },
         ],
         selectable: 1,
-        selectablePersistence: false
+        selectablePersistence: false,
     });
 
     const variantsTable = new VariantsTableController(TABLE_SELECTOR_VARIANTS, {
@@ -280,12 +280,12 @@ function createDisplayWidgets(label_store, context) {
         columns: [
             { title: 'Variant', field: 'variant' },
             { title: 'p-value', field: 'pvalue', formatter: _formatSciNotation, sorter: 'number' },
-            { title: 'Alt allele frequency', field: 'altFreq', formatter: _formatSciNotation, sorter: 'number' }
+            { title: 'Alt allele frequency', field: 'altFreq', formatter: _formatSciNotation, sorter: 'number' },
         ],
         placeholder: 'No Data Available',
         initialSort: [
-            { column: 'variant', dir: 'asc' }
-        ]
+            { column: 'variant', dir: 'asc' },
+        ],
     });
 
     ////////////////////////////////
@@ -366,7 +366,7 @@ function setupWidgetListeners(plot, aggregationTable, variantsTable, resultStora
             // When new data has been received (and post-processed), pass it on to any UI elements that use that data
             resultStorage({
                 groups: groups,
-                variants: variants
+                variants: variants,
             });
         },
         { discrete: true }
@@ -422,7 +422,7 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                     ['burden', 'Burden'],
                     ['skat', 'SKAT'],
                     ['vt', 'VT'],
-                    ['skat-o', 'SKAT-O']
+                    ['skat-o', 'SKAT-O'],
                 ],
                 // Tracking internal state
                 status_css: { color: 'red' },
@@ -476,7 +476,7 @@ function makeUI(selector, geno_id, build, masks, phenotypes) {
                         masks: this.selected_masks.slice(),
                     });
                 }
-            }
+            },
         },
     });
 }

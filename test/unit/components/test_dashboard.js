@@ -12,19 +12,19 @@ describe('LocusZoom.Toolbar', function() {
             var layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'dimensions' }
-                    ]
+                        { type: 'dimensions' },
+                    ],
                 },
                 panels: [
                     {
                         id: 'test', width: 100, height: 100,
                         toolbar: {
                             widgets: [
-                                { type: 'remove_panel' }
-                            ]
-                        }
-                    }
-                ]
+                                { type: 'remove_panel' },
+                            ],
+                        },
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -85,8 +85,8 @@ describe('LocusZoom.Toolbar', function() {
             var datasources = new DataSources();
             var layout = {
                 panels: [
-                    { id: 'test', width: 100, height: 100 }
-                ]
+                    { id: 'test', width: 100, height: 100 },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -98,12 +98,12 @@ describe('LocusZoom.Toolbar', function() {
             var layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'dimensions' }
-                    ]
+                        { type: 'dimensions' },
+                    ],
                 },
                 panels: [
-                    { id: 'test', width: 100, height: 100 }
-                ]
+                    { id: 'test', width: 100, height: 100 },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -118,12 +118,12 @@ describe('LocusZoom.Toolbar', function() {
             var layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'dimensions' }
-                    ]
+                        { type: 'dimensions' },
+                    ],
                 },
                 panels: [
-                    { id: 'test', width: 100, height: 100 }
-                ]
+                    { id: 'test', width: 100, height: 100 },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -136,7 +136,7 @@ describe('LocusZoom.Toolbar', function() {
             assert.equal(this.plot.toolbar.widgets[0].selector.html(), '100px × 100px');
         });
         it('Should show updated plot dimensions automatically as dimensions change', function() {
-            this.plot.setDimensions(220,330);
+            this.plot.setDimensions(220, 330);
             assert.equal(this.plot.toolbar.widgets[0].selector.html(), '220px × 330px');
         });
     });
@@ -148,13 +148,13 @@ describe('LocusZoom.Toolbar', function() {
                 state: {
                     chr: 1,
                     start: 126547453,
-                    end: 126847453
+                    end: 126847453,
                 },
                 toolbar: {
                     widgets: [
-                        { type: 'region_scale' }
-                    ]
-                }
+                        { type: 'region_scale' },
+                    ],
+                },
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);

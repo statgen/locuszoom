@@ -105,7 +105,7 @@ function install(LocusZoom) {
                 updateWidget: () => {
                     this.button.update();
                     this.button.menu.update();
-                }
+                },
             };
         }
 
@@ -282,7 +282,7 @@ function install(LocusZoom) {
             type: 'covariates_model',
             button_html: 'Model',
             button_title: 'Show and edit covariates currently in model',
-            position: 'left'
+            position: 'left',
         });
         return covariates_model_plot_toolbar;
     }();

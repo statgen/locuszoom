@@ -118,7 +118,7 @@ class Genes extends BaseDataLayer {
             // (range: values in terms of pixels on the screen)
             item.display_range = {
                 start: this.parent.x_scale(Math.max(item.start, this.state.start)),
-                end:   this.parent.x_scale(Math.min(item.end, this.state.end))
+                end:   this.parent.x_scale(Math.min(item.end, this.state.end)),
             };
             item.display_range.label_width = _getLabelWidth(item.gene_name, this.layout.label_font_size);
             item.display_range.width = item.display_range.end - item.display_range.start;
@@ -161,7 +161,7 @@ class Genes extends BaseDataLayer {
             // (domain: values in terms of the data set, e.g. megabases)
             item.display_domain = {
                 start: this.parent.x_scale.invert(item.display_range.start),
-                end:   this.parent.x_scale.invert(item.display_range.end)
+                end:   this.parent.x_scale.invert(item.display_range.end),
             };
             item.display_domain.width = item.display_domain.end - item.display_domain.start;
 

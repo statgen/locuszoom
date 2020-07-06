@@ -9,7 +9,7 @@ import {applyStyles} from '../../helpers/common';
 const default_layout = {
     style: {
         fill: 'none',
-        'stroke-width': '2px'
+        'stroke-width': '2px',
     },
     interpolate: 'curveLinear',
     x_axis: { field: 'x' },
@@ -127,19 +127,19 @@ const default_orthogonal_layout = {
     style: {
         'stroke': '#D3D3D3',
         'stroke-width': '3px',
-        'stroke-dasharray': '10px 10px'
+        'stroke-dasharray': '10px 10px',
     },
     orientation: 'horizontal',
     x_axis: {
         axis: 1,
-        decoupled: true
+        decoupled: true,
     },
     y_axis: {
         axis: 1,
-        decoupled: true
+        decoupled: true,
     },
     tooltip_positioning: 'vertical',
-    offset: 0
+    offset: 0,
 };
 
 
@@ -184,12 +184,12 @@ class OrthogonalLine extends BaseDataLayer {
         if (this.layout.orientation === 'horizontal') {
             this.data = [
                 { x: panel[x_extent][0], y: this.layout.offset },
-                { x: panel[x_extent][1], y: this.layout.offset }
+                { x: panel[x_extent][1], y: this.layout.offset },
             ];
         } else if (this.layout.orientation === 'vertical') {
             this.data = [
                 { x: this.layout.offset, y: panel[y_extent][0] },
-                { x: this.layout.offset, y: panel[y_extent][1] }
+                { x: this.layout.offset, y: panel[y_extent][1] },
             ];
         } else {
             throw new Error('Unrecognized vertical line type. Must be "vertical" or "horizontal"');

@@ -385,7 +385,7 @@ class Button {
                     this.setOnclick();
                 }
                 return this;
-            }
+            },
         };
     }
 
@@ -1009,7 +1009,7 @@ class ShiftRegion extends BaseWidget {
             .setOnclick(() => {
                 this.parent_plot.applyState({
                     start: Math.max(this.parent_plot.state.start + this.layout.step, 1),
-                    end: this.parent_plot.state.end + this.layout.step
+                    end: this.parent_plot.state.end + this.layout.step,
                 });
             });
         this.button.show();
@@ -1070,7 +1070,7 @@ class ZoomRegion extends BaseWidget {
                 const delta = Math.floor((new_region_scale - current_region_scale) / 2);
                 this.parent_plot.applyState({
                     start: Math.max(this.parent_plot.state.start - delta, 1),
-                    end: this.parent_plot.state.end + delta
+                    end: this.parent_plot.state.end + delta,
                 });
             });
         this.button.show();

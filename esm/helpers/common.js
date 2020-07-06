@@ -96,7 +96,7 @@ function generateCurtain() {
             this.curtain.content_selector = null;
             this.curtain.showing = false;
             return this.curtain;
-        }
+        },
     };
 }
 
@@ -219,7 +219,7 @@ function generateLoader() {
             this.loader.cancel_selector = null;
             this.loader.showing = false;
             return this.loader;
-        }
+        },
     };
 }
 

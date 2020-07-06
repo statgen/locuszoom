@@ -14,9 +14,9 @@ const default_layout = {
     color: '#888888',
     fill_opacity: 1,
     y_axis: {
-        axis: 1
+        axis: 1,
     },
-    id_field: 'id'
+    id_field: 'id',
 };
 /**
  * Scatter Data Layer
@@ -653,8 +653,8 @@ class CategoryScatter extends Scatter {
                     x: xPos,
                     text: category,
                     style: {
-                        'fill': knownColors[knownCategories.indexOf(category)] || '#000000'
-                    }
+                        'fill': knownColors[knownCategories.indexOf(category)] || '#000000',
+                    },
                 };
             });
         }

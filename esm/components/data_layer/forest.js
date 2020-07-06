@@ -12,14 +12,14 @@ const default_layout = {
     color: '#888888',
     fill_opacity: 1,
     y_axis: {
-        axis: 2
+        axis: 2,
     },
     id_field: 'id',
     confidence_intervals: {
         start_field: 'ci_start',
-        end_field: 'ci_end'
+        end_field: 'ci_end',
     },
-    show_no_significance_line: true
+    show_no_significance_line: true,
 };
 
 /**
@@ -47,7 +47,7 @@ class Forest extends BaseDataLayer {
             x_min: x_center - offset,
             x_max: x_center + offset,
             y_min: y_center - offset,
-            y_max: y_center + offset
+            y_max: y_center + offset,
         };
     }
 

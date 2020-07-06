@@ -49,7 +49,7 @@ module.exports = {
         rules: [
             {
                 test: /\.m?js$/,
-                exclude: file => (/node_modules/.test(file)),
+                exclude: (file) => (/node_modules/.test(file)),
                 use: [
                     { loader: 'babel-loader', options: { presets: ['@babel/preset-env'] } },
                     'eslint-loader'
@@ -67,7 +67,7 @@ module.exports = {
         filename: (data) => {
             // For backwards compatibility, the filename is different than the chunk name.
             const match = FILENAMES[data.chunk.name];
-            if(!match) {
+            if (!match) {
                 const msg = `Must provide a filename for this chunk: ${data.chunk.name}`;
                 console.error(msg);
                 throw new Error(msg);
@@ -78,7 +78,7 @@ module.exports = {
         libraryExport: 'default',
     },
     externals: {
-        d3: 'd3' ,
+        d3: 'd3',
         locuszoom: 'LocusZoom',
         'gwas-credible-sets': 'gwasCredibleSets',
         'tabix-reader': 'tabix',

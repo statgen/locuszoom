@@ -15,7 +15,7 @@ const default_layout = {
     height: 10,
     padding: 5,
     label_size: 12,
-    hidden: false
+    hidden: false,
 };
 
 /**

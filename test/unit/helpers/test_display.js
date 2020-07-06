@@ -134,7 +134,7 @@ describe('Display and parsing helpers', function () {
         it('should parse all fields that match the general field pattern whether explicitly present in the data object or not', function() {
             const data = {
                 'foo:field_1': 123,
-                'bar:field2': 'foo'
+                'bar:field2': 'foo',
             };
             const html = '<strong>{{foo:field_1}} and {{bar:field2}}, {{bar:field2|herp|derp}}; {{field3}}</strong>';
             const expected_value = '<strong>123 and foo, fooherpderp; </strong>';
@@ -143,7 +143,7 @@ describe('Display and parsing helpers', function () {
         it('should hide non-existant fields but show broken ones', function() {
             const data = {
                 'foo:field_1': 12345,
-                'bar:field2': 'foo'
+                'bar:field2': 'foo',
             };
             const html = '{{bar:field2||nope|}}{{wat}}{{bar:field2|herp||derp}}';
             const expected_value = '{{bar:field2||nope|}}{{bar:field2|herp||derp}}';
@@ -152,7 +152,7 @@ describe('Display and parsing helpers', function () {
         it('should handle conditional blocks', function() {
             const data = {
                 'foo:field_1': 1234,
-                'bar:field2': 'foo'
+                'bar:field2': 'foo',
             };
             const html = '{{#if foo:field_1}}<strong>{{foo:field_1}}'
                 + '{{#if bar:field2}} and {{bar:field2}}{{/if}}, '
@@ -162,7 +162,7 @@ describe('Display and parsing helpers', function () {
             assert.equal(parseFields(data, html), expected_value);
             const data2 = {
                 'fieldA': '',
-                'fieldB': ''
+                'fieldB': '',
             };
             const html2 = '{{#if fieldA}}A1<br>{{/if}}'
                 + '{{#if fieldA|derp}}A2<br>{{/if}}'
@@ -173,7 +173,7 @@ describe('Display and parsing helpers', function () {
         });
         it('should treat 0 as truthy in conditions', function() {
             const data = {
-                'foo': 0
+                'foo': 0,
             };
             const html = 'a{{#if foo}}{{foo}}{{/if}}';
             const expected_value = 'a0';
@@ -182,7 +182,7 @@ describe('Display and parsing helpers', function () {
         it('should treat broken/non-existant conditions as false', function() {
             const data = {
                 'foo:field_1': 12345,
-                'bar:field2': 'foo'
+                'bar:field2': 'foo',
             };
             const html = 'a{{#if foo:field_3}}b{{/if}}c';
             const expected_value = 'ac';
@@ -193,7 +193,7 @@ describe('Display and parsing helpers', function () {
         it('should handle nasty input', function() {
             const data = {
                 'foo:field_1': 12345,
-                'bar:field2': 'foo'
+                'bar:field2': 'foo',
             };
             const html = '{{#iff foo:field_1}}<strong>{{{{foo:field_1}}}}'
                 + '{{#if bar:field2}} and {{bar:field2||nope|}}{{/if}}{{/if}}{{/if}}, '
@@ -223,10 +223,10 @@ describe('Display and parsing helpers', function () {
             assert.equal(plot.svg.html(), svg_selector.html());
         });
 
-        it('should allow for populating an element with a predefined layout that parses any included state',function() {
+        it('should allow for populating an element with a predefined layout that parses any included state', function() {
             const layout = {
                 foo: 'bar',
-                state: { chr: 10 }
+                state: { chr: 10 },
             };
             const plot = populate('#plot_id', {}, layout);
             assert.equal(plot.layout.foo, 'bar');

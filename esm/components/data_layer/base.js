@@ -137,7 +137,7 @@ class BaseDataLayer {
             'highlighted': false,
             'selected': false,
             'faded': false,
-            'hidden': false
+            'hidden': false,
         };
     }
 
@@ -457,7 +457,7 @@ class BaseDataLayer {
                 // If specified, floor and ceiling will override the actual data range
                 return [
                     isNaN(axis_layout.floor) ? data_extent[0] : axis_layout.floor,
-                    isNaN(axis_layout.ceiling) ? data_extent[1] : axis_layout.ceiling
+                    isNaN(axis_layout.ceiling) ? data_extent[1] : axis_layout.ceiling,
                 ];
             }
         }
@@ -672,7 +672,7 @@ class BaseDataLayer {
                 '<=': (a, b) => a <= b,
                 '>': (a, b) => a > b,
                 '>=': (a, b) => a >= b,
-                '%': (a, b) => a % b
+                '%': (a, b) => a % b,
             };
 
             if (!Array.isArray(filter)) {
@@ -819,7 +819,7 @@ class BaseDataLayer {
             arrow: null,
             selector: d3.select(this.parent_plot.svg.node().parentNode).append('div')
                 .attr('class', 'lz-data_layer-tooltip')
-                .attr('id', `${id}-tooltip`)
+                .attr('id', `${id}-tooltip`),
         };
         this.layer_state.status_flags['has_tooltip'].push(id);
         this.updateTooltip(data);
@@ -1269,7 +1269,7 @@ class BaseDataLayer {
         // Determine the required state of control and shift keys during the event
         const requiredKeyStates = {
             'ctrl': (directive.includes('ctrl')),
-            'shift': (directive.includes('shift'))
+            'shift': (directive.includes('shift')),
         };
         const self = this;
         return function(element) {
@@ -1338,7 +1338,7 @@ class BaseDataLayer {
         const panel_origin = this.parent._getPageOrigin();
         return {
             x: panel_origin.x + this.parent.layout.margin.left,
-            y: panel_origin.y + this.parent.layout.margin.top
+            y: panel_origin.y + this.parent.layout.margin.top,
         };
     }
 

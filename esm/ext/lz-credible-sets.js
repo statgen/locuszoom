@@ -72,7 +72,7 @@ function install (LocusZoom) {
                     credset_data.push({
                         posterior_prob: posteriorProbabilities[i],
                         contrib_fraction: credSetScaled[i],
-                        is_member: credSetBool[i]
+                        is_member: credSetBool[i],
                     });
                 }
             } catch (e) {
@@ -113,7 +113,7 @@ function install (LocusZoom) {
         hide: { and: ['unhighlighted', 'unselected'] },
         html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
             + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
-            '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>'
+            '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>',
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
@@ -129,17 +129,17 @@ function install (LocusZoom) {
                 '{{namespace[assoc]}}ref_allele',
                 '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction',
                 '{{namespace[credset]}}is_member',
-                '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'
+                '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar',
             ],
-            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' }
+            match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         });
         base.color.unshift({
             field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
             scale_function: 'if',
             parameters: {
                 field_value: true,
-                then: '#FFf000'
-            }
+                then: '#FFf000',
+            },
         });
         return base;
     }());
@@ -150,7 +150,7 @@ function install (LocusZoom) {
         type: 'annotation_track',
         id_field: '{{namespace[assoc]}}variant',
         x_axis: {
-            field: '{{namespace[assoc]}}position'
+            field: '{{namespace[assoc]}}position',
         },
         color: [
             {
@@ -158,33 +158,33 @@ function install (LocusZoom) {
                 scale_function: 'if',
                 parameters: {
                     field_value: true,
-                    then: '#001cee'
-                }
+                    then: '#001cee',
+                },
             },
-            '#00CC00'
+            '#00CC00',
         ],
         fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[credset]}}posterior_prob', '{{namespace[credset]}}contrib_fraction', '{{namespace[credset]}}is_member'],
         match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
-            ['{{namespace[credset]}}is_member', true]
+            ['{{namespace[credset]}}is_member', true],
         ],
         behaviors: {
             onmouseover: [
-                { action: 'set', status: 'highlighted' }
+                { action: 'set', status: 'highlighted' },
             ],
             onmouseout: [
-                { action: 'unset', status: 'highlighted' }
+                { action: 'unset', status: 'highlighted' },
             ],
             onclick: [
-                { action: 'toggle', status: 'selected', exclusive: true }
+                { action: 'toggle', status: 'selected', exclusive: true },
             ],
             onshiftclick: [
-                { action: 'toggle', status: 'selected' }
-            ]
+                { action: 'toggle', status: 'selected' },
+            ],
         },
         tooltip: LocusZoom.Layouts.get('tooltip', 'annotation_credible_set', { unnamespaced: true }),
-        tooltip_positioning: 'top'
+        tooltip_positioning: 'top',
     });
 
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
@@ -200,11 +200,11 @@ function install (LocusZoom) {
         interaction: {
             drag_background_to_pan: true,
             scroll_to_zoom: true,
-            x_linked: true
+            x_linked: true,
         },
         data_layers: [
-            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true })
-        ]
+            LocusZoom.Layouts.get('data_layer', 'annotation_credible_set', { unnamespaced: true }),
+        ],
     });
 
     LocusZoom.Layouts.add('panel', 'association_credible_set', function () {
@@ -215,8 +215,8 @@ function install (LocusZoom) {
             data_layers: [
                 LocusZoom.Layouts.get('data_layer', 'significance', { unnamespaced: true }),
                 LocusZoom.Layouts.get('data_layer', 'recomb_rate', { unnamespaced: true }),
-                LocusZoom.Layouts.get('data_layer', 'association_credible_set', { unnamespaced: true })
-            ]
+                LocusZoom.Layouts.get('data_layer', 'association_credible_set', { unnamespaced: true }),
+            ],
         });
         // Add "display options" button to control how credible set coloring is overlaid on the standard association plot
         l.toolbar.widgets.push(
@@ -243,8 +243,8 @@ function install (LocusZoom) {
                                 parameters: {
                                     field_value: true,
                                     then: '#00CC00',
-                                    else: '#CCCCCC'
-                                }
+                                    else: '#CCCCCC',
+                                },
                             },
                             legend: [ // Tells the legend how to represent this display option
                                 {
@@ -252,17 +252,17 @@ function install (LocusZoom) {
                                     color: '#00CC00',
                                     size: 40,
                                     label: 'In credible set',
-                                    class: 'lz-data_layer-scatter'
+                                    class: 'lz-data_layer-scatter',
                                 },
                                 {
                                     shape: 'circle',
                                     color: '#CCCCCC',
                                     size: 40,
                                     label: 'Not in credible set',
-                                    class: 'lz-data_layer-scatter'
-                                }
-                            ]
-                        }
+                                    class: 'lz-data_layer-scatter',
+                                },
+                            ],
+                        },
                     },
                     {
                         // Second option. The same plot- or even the same field- can be colored in more than one way.
@@ -276,17 +276,17 @@ function install (LocusZoom) {
                                     scale_function: 'if',
                                     parameters: {
                                         field_value: 0,
-                                        then: '#777777'
-                                    }
+                                        then: '#777777',
+                                    },
                                 },
                                 {
                                     scale_function: 'interpolate',
                                     field: '{{namespace[credset]}}contrib_fraction',
                                     parameters: {
                                         breaks: [0, 1],
-                                        values: ['#fafe87', '#9c0000']
-                                    }
-                                }
+                                        values: ['#fafe87', '#9c0000'],
+                                    },
+                                },
                             ],
                             legend: [
                                 {
@@ -294,26 +294,26 @@ function install (LocusZoom) {
                                     color: '#777777',
                                     size: 40,
                                     label: 'No contribution',
-                                    class: 'lz-data_layer-scatter'
+                                    class: 'lz-data_layer-scatter',
                                 },
                                 {
                                     shape: 'circle',
                                     color: '#fafe87',
                                     size: 40,
                                     label: 'Some contribution',
-                                    class: 'lz-data_layer-scatter'
+                                    class: 'lz-data_layer-scatter',
                                 },
                                 {
                                     shape: 'circle',
                                     color: '#9c0000',
                                     size: 40,
                                     label: 'Most contribution',
-                                    class: 'lz-data_layer-scatter'
-                                }
-                            ]
-                        }
-                    }
-                ]
+                                    class: 'lz-data_layer-scatter',
+                                },
+                            ],
+                        },
+                    },
+                ],
             }
         );
         return l;
@@ -330,8 +330,8 @@ function install (LocusZoom) {
         panels: [
             LocusZoom.Layouts.get('panel', 'association_credible_set', { unnamespaced: true }),
             LocusZoom.Layouts.get('panel', 'annotation_credible_set', { unnamespaced: true }),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true })
-        ]
+            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true }),
+        ],
     });
 
 }

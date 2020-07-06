@@ -78,12 +78,12 @@ describe('_LayoutRegistry', function() {
                         charlie: ['delta', 'echo'],
                         foxtrot: {
                             golf: 'bar',
-                            hotel: ['india', 'juliet', 'kilo']
-                        }
+                            hotel: ['india', 'juliet', 'kilo'],
+                        },
                     },
                     property_2: false,
-                    property_3: true
-                }
+                    property_3: true,
+                },
             };
             const mods = {
                 scalar_1: 456,
@@ -92,13 +92,13 @@ describe('_LayoutRegistry', function() {
                     property_1: {
                         foxtrot: {
                             golf: 789,
-                            new_value: 'foo'
-                        }
+                            new_value: 'foo',
+                        },
                     },
                     property_3: false,
-                    new_value: 'bar'
+                    new_value: 'bar',
                 },
-                new_value: 'baz'
+                new_value: 'baz',
             };
             const expected_layout = {
                 scalar_1: 456,
@@ -112,18 +112,18 @@ describe('_LayoutRegistry', function() {
                         foxtrot: {
                             golf: 789,
                             hotel: ['india', 'juliet', 'kilo'],
-                            new_value: 'foo'
-                        }
+                            new_value: 'foo',
+                        },
                     },
                     property_2: false,
                     property_3: false,
-                    new_value: 'bar'
+                    new_value: 'bar',
                 },
-                new_value: 'baz'
+                new_value: 'baz',
             };
 
             lookup.add('test', 'test', base_layout);
-            assert.deepEqual(lookup.get('test','test', mods), expected_layout);
+            assert.deepEqual(lookup.get('test', 'test', mods), expected_layout);
         });
 
         it('Allows for namespacing arbitrary keys and values at all nesting levels', function() {
@@ -149,12 +149,12 @@ describe('_LayoutRegistry', function() {
                         array: ['nematoad', '{{namespace}}oryx', '{{namespace[1]}}pigeon', '{{namespace[jackal]}}quail'],
                         object: {
                             scalar: 'rhea',
-                            array: ['serpent', '{{namespace[0]}}tortoise', '{{namespace[upapa]}}vulture', '{{namespace}}xerus']
-                        }
+                            array: ['serpent', '{{namespace[0]}}tortoise', '{{namespace[upapa]}}vulture', '{{namespace}}xerus'],
+                        },
                     },
                     property_1: false,
-                    property_2: true
-                }
+                    property_2: true,
+                },
             };
 
             lookup.add('test', 'test', base_layout);
@@ -167,25 +167,25 @@ describe('_LayoutRegistry', function() {
             assert.equal(no_namespace_layout['scalar_1'], 'aardvark');
             assert.equal(no_namespace_layout['scalar_2'], 'albacore');
             assert.equal(no_namespace_layout.namespace_scalar, 'badger');
-            assert.equal(no_namespace_layout.namespace_0_scalar,'crocodile');
-            assert.equal(no_namespace_layout.namespace_dingo_scalar,'emu');
-            assert.equal(no_namespace_layout.namespace_1_scalar,'ferret');
-            assert.equal(no_namespace_layout.nested_object.property_0.namespace_scalar,'{{hog}} and {{yak}} and {{zebu}}');
+            assert.equal(no_namespace_layout.namespace_0_scalar, 'crocodile');
+            assert.equal(no_namespace_layout.namespace_dingo_scalar, 'emu');
+            assert.equal(no_namespace_layout.namespace_1_scalar, 'ferret');
+            assert.equal(no_namespace_layout.nested_object.property_0.namespace_scalar, '{{hog}} and {{yak}} and {{zebu}}');
             assert.equal(no_namespace_layout.nested_object.property_0.namespace_0_scalar, 'iguana');
             assert.equal(no_namespace_layout.nested_object.property_0.namespace_jackal_scalar, 'kangaroo');
             assert.equal(no_namespace_layout.nested_object.property_0.namespace_dingo_scalar, 'lemur');
             assert.equal(no_namespace_layout.nested_object.property_0.namespace_1_scalar, 'moose');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[1],'oryx');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[2],'pigeon');
-            assert.equal(no_namespace_layout.nested_object.property_0.array[3],'quail');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[1],'tortoise');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[2],'vulture');
-            assert.equal(no_namespace_layout.nested_object.property_0.object.array[3],'xerus');
+            assert.equal(no_namespace_layout.nested_object.property_0.array[1], 'oryx');
+            assert.equal(no_namespace_layout.nested_object.property_0.array[2], 'pigeon');
+            assert.equal(no_namespace_layout.nested_object.property_0.array[3], 'quail');
+            assert.equal(no_namespace_layout.nested_object.property_0.object.array[1], 'tortoise');
+            assert.equal(no_namespace_layout.nested_object.property_0.object.array[2], 'vulture');
+            assert.equal(no_namespace_layout.nested_object.property_0.object.array[3], 'xerus');
 
             // Single namespace string: use in place of all namespace placeholders
             const single_namespace_layout = lookup.get('test', 'test', { namespace: 'ns' });
-            assert.equal(single_namespace_layout['ns:scalar_1'],'aardvark');
-            assert.equal(single_namespace_layout['ns:scalar_2'],'ns:albacore');
+            assert.equal(single_namespace_layout['ns:scalar_1'], 'aardvark');
+            assert.equal(single_namespace_layout['ns:scalar_2'], 'ns:albacore');
             assert.equal(single_namespace_layout.namespace_scalar, 'ns:badger');
             assert.equal(single_namespace_layout.namespace_0_scalar, 'ns:crocodile');
             assert.equal(single_namespace_layout.namespace_dingo_scalar, 'ns:emu');
@@ -228,8 +228,8 @@ describe('_LayoutRegistry', function() {
                     dingo: 'ns_dingo',
                     jackal: 'ns_jackal',
                     1: 'ns_1',
-                    'default': 'ns_default'
-                }
+                    'default': 'ns_default',
+                },
             });
             assert.equal(object_namespace_layout['ns_default:scalar_1'], 'aardvark');
             assert.equal(object_namespace_layout['ns_dingo:scalar_2'], 'ns_1:albacore');
@@ -257,7 +257,7 @@ describe('_LayoutRegistry', function() {
                 namespace: { dingo: 'ns_dingo', jackal: 'ns_jackal', default: 'ns_0' },
                 '{{namespace[dingo]}}scalar_1': 'aardvark',
                 '{{namespace[dingo]}}scalar_2': '{{namespace[jackal]}}albacore',
-                scalar_3: '{{namespace}}badger'
+                scalar_3: '{{namespace}}badger',
             };
             lookup.add('test', 'layout_0', layout_0);
 
@@ -265,14 +265,14 @@ describe('_LayoutRegistry', function() {
                 namespace: { ferret: 'ns_ferret', default: 'ns_1' },
                 '{{namespace}}scalar_1': 'emu',
                 '{{namespace[ferret]}}scalar_2': '{{namespace}}kangaroo',
-                nested_layout: lookup.get('test', 'layout_0', { unnamespaced: true })
+                nested_layout: lookup.get('test', 'layout_0', { unnamespaced: true }),
             };
             lookup.add('test', 'layout_1', layout_1);
             const ns_layout_1 = lookup.get('test', 'layout_1', {
                 namespace: {
                     dingo: 'ns_dingo_mod',
-                    default: 'ns_mod'
-                }
+                    default: 'ns_mod',
+                },
             });
             assert.equal(ns_layout_1['ns_mod:scalar_1'], 'emu');
             assert.equal(ns_layout_1['ns_ferret:scalar_2'], 'ns_mod:kangaroo');
@@ -297,12 +297,12 @@ describe('Layout helpers', function () {
                         charlie: ['delta', 'echo'],
                         foxtrot: {
                             golf: 'bar',
-                            hotel: ['india', 'juliet', 'kilo']
-                        }
+                            hotel: ['india', 'juliet', 'kilo'],
+                        },
                     },
                     property_2: false,
-                    property_3: true
-                }
+                    property_3: true,
+                },
             };
         });
 
@@ -344,10 +344,10 @@ describe('Layout helpers', function () {
                 array_of_scalars: [4, 6],
                 nested_object: {
                     property_1: {
-                        charlie: ['whiskey', 'xray']
+                        charlie: ['whiskey', 'xray'],
                     },
-                    property_2: true
-                }
+                    property_2: true,
+                },
             };
             const expected_layout = JSON.parse(JSON.stringify(this.default_layout));
             expected_layout.array_of_scalars = [ 4, 6 ];
@@ -362,14 +362,14 @@ describe('Layout helpers', function () {
                 array_of_scalars: 'number',
                 nested_object: {
                     property_1: {
-                        foxtrot: false
+                        foxtrot: false,
                     },
                     property_3: {
                         nested: {
-                            something: ['foo']
-                        }
-                    }
-                }
+                            something: ['foo'],
+                        },
+                    },
+                },
             };
             const expected_layout = JSON.parse(JSON.stringify(this.default_layout));
             expected_layout.array_of_scalars = 'number';

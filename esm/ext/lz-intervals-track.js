@@ -237,7 +237,7 @@ function install (LocusZoom) {
                 // bounded by what we can see (range: values in terms of pixels on the screen)
                 this.data[i].display_range = {
                     start: this.parent.x_scale(Math.max(d[this.layout.start_field], this.state.start)),
-                    end:   this.parent.x_scale(Math.min(d[this.layout.end_field], this.state.end))
+                    end:   this.parent.x_scale(Math.min(d[this.layout.end_field], this.state.end)),
                 };
                 this.data[i].display_range.width = this.data[i].display_range.end - this.data[i].display_range.start;
 
@@ -245,7 +245,7 @@ function install (LocusZoom) {
                 // (domain: values in terms of the data set, e.g. megabases)
                 this.data[i].display_domain = {
                     start: this.parent.x_scale.invert(this.data[i].display_range.start),
-                    end:   this.parent.x_scale.invert(this.data[i].display_range.end)
+                    end:   this.parent.x_scale.invert(this.data[i].display_range.end),
                 };
                 this.data[i].display_domain.width = this.data[i].display_domain.end - this.data[i].display_domain.start;
 
@@ -422,7 +422,7 @@ function install (LocusZoom) {
                 x_min: tooltip.data.display_range.start,
                 x_max: tooltip.data.display_range.end,
                 y_min: interval_bbox.y,
-                y_max: interval_bbox.y + interval_bbox.height
+                y_max: interval_bbox.y + interval_bbox.height,
             };
         }
 
@@ -443,8 +443,8 @@ function install (LocusZoom) {
                         ticks: [],
                         range: {
                             start: (target_height - (this.layout.track_height / 2)),
-                            end: (this.layout.track_height / 2)
-                        }
+                            end: (this.layout.track_height / 2),
+                        },
                     };
                     // There is a very tight coupling between the display directives: each legend item must identify a key
                     //  field for unique tracks. (Typically this is `state_id`, the same key field used to assign unique colors)
@@ -458,14 +458,14 @@ function install (LocusZoom) {
                             }
                             this.parent.layout.axes[legend_axis].ticks.push({
                                 y: track,
-                                text: element.label
+                                text: element.label,
                             });
                         }
                     });
                     this.layout.y_axis = {
                         axis: this.layout.track_split_legend_to_y_axis,
                         floor: 1,
-                        ceiling: tracks
+                        ceiling: tracks,
                     };
                     this.parent.render();
                 }
@@ -555,7 +555,7 @@ function install (LocusZoom) {
         closable: false,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}'
+        html: '{{{{namespace[intervals]}}state_name|htmlescape}}<br>{{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}',
     };
 
     const intervals_layer_layout =  {
@@ -574,7 +574,7 @@ function install (LocusZoom) {
             {
                 // If present, an explicit color field will override any other option (and be used to auto-generate legend)
                 field: '{{namespace[intervals]}}itemRgb',
-                scale_function: 'to_rgb'
+                scale_function: 'to_rgb',
             },
             {
                 field: '{{namespace[intervals]}}state_name',
@@ -583,26 +583,26 @@ function install (LocusZoom) {
                     // Placeholder. Empty categories and values will automatically be filled in when new data loads.
                     categories: [],
                     values: [],
-                    null_value: '#B8B8B8'
-                }
-            }
+                    null_value: '#B8B8B8',
+                },
+            },
         ],
         legend: [], // Placeholder; auto-filled when data loads.
         behaviors: {
             onmouseover: [
-                { action: 'set', status: 'highlighted' }
+                { action: 'set', status: 'highlighted' },
             ],
             onmouseout: [
-                { action: 'unset', status: 'highlighted' }
+                { action: 'unset', status: 'highlighted' },
             ],
             onclick: [
-                { action: 'toggle', status: 'selected', exclusive: true }
+                { action: 'toggle', status: 'selected', exclusive: true },
             ],
             onshiftclick: [
-                { action: 'toggle', status: 'selected' }
-            ]
+                { action: 'toggle', status: 'selected' },
+            ],
         },
-        tooltip: intervals_tooltip_layout
+        tooltip: intervals_tooltip_layout,
     };
 
     const intervals_panel_layout = {
@@ -617,7 +617,7 @@ function install (LocusZoom) {
             l.widgets.push({
                 type: 'toggle_split_tracks',
                 data_layer_id: 'intervals',
-                position: 'right'
+                position: 'right',
             });
             return l;
         })(),
@@ -625,15 +625,15 @@ function install (LocusZoom) {
         interaction: {
             drag_background_to_pan: true,
             scroll_to_zoom: true,
-            x_linked: true
+            x_linked: true,
         },
         legend: {
             hidden: true,
             orientation: 'horizontal',
             origin: { x: 50, y: 0 },
-            pad_from_bottom: 5
+            pad_from_bottom: 5,
         },
-        data_layers: [intervals_layer_layout]
+        data_layers: [intervals_layer_layout],
     };
 
     const intervals_plot_layout = {
@@ -648,14 +648,14 @@ function install (LocusZoom) {
             LocusZoom.Layouts.get('panel', 'association', {
                 unnamespaced: true,
                 width: 800,
-                proportional_height: (225 / 570)
+                proportional_height: (225 / 570),
             }),
             Object.assign(
                 { unnamespaced: true, proportional_height: (120 / 570) },
                 intervals_panel_layout
             ),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) })
-        ]
+            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
+        ],
     };
 
     LocusZoom.Adapters.add('IntervalLZ', IntervalLZ);

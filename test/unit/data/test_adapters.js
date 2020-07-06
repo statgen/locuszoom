@@ -9,7 +9,7 @@ import {
     GwasCatalogLZ,
     LDServer,
     RecombLZ,
-    StaticSource
+    StaticSource,
 } from '../../../esm/data/adapters';
 
 /**
@@ -105,7 +105,7 @@ describe('Data adapters', function () {
                     // Async test depends on promise
                     return new custom_class({}).parseResponse([{ a: 1, b: 1 }, {
                         a: 2,
-                        b: 2
+                        b: 2,
                     }], {}, ['a', 'b', 'force'], ['a', 'b', 'force'], []).then(function (records) {
                         records.body.forEach(function (item) {
                             assert.ok(item.force, 'Record should have an additional key not in raw server payload');
@@ -148,7 +148,7 @@ describe('Data adapters', function () {
                     // Output fields can be mapped to any arbitrary based on the field->outnames provided
                     assert.deepEqual(res, [{ 'namespace:id|add1': 2, 'bork:bork': 5 }, {
                         'namespace:id|add1': 3,
-                        'bork:bork': 10
+                        'bork:bork': 10,
                     }]);
                 });
 
@@ -188,7 +188,7 @@ describe('Data adapters', function () {
                     const res = source.combineChainBody(records, {
                         header: {},
                         body: [{ 'namespace:b': 2 }],
-                        discrete: {}
+                        discrete: {},
                     });
 
                     assert.deepEqual(res, [{ 'namespace:a': 1, 'namespace:b': 2 }]);
@@ -268,7 +268,7 @@ describe('Data adapters', function () {
     describe('Association Data Source', function () {
         it('allows normalization + sorting of data', function () {
             const source = new AssociationLZ({
-                url: 'locuszoom.org', params: { sort: true }
+                url: 'locuszoom.org', params: { sort: true },
             });
 
             const sampleData = { position: [2, 1] };
@@ -281,7 +281,7 @@ describe('Data adapters', function () {
         });
         it('usually returns normalized data in the order the data was provided', function () {
             const source = new AssociationLZ({
-                url: 'locuszoom.org', params: {}
+                url: 'locuszoom.org', params: {},
             });
             const sampleData = { position: [2, 1] };
             const expectedData = [{ 'position': 2 }, { 'position': 1 }];
@@ -367,14 +367,14 @@ describe('Data adapters', function () {
                     'assoc:position': 4,
                     'catalog:rsid': 'rs4',
                     'catalog:trait': 'arithomania',
-                    'n_catalog_matches': 1
+                    'n_catalog_matches': 1,
                 },
                 {
                     'assoc:chromosome': 1,
                     'assoc:position': 6,
                     'catalog:rsid': 'rs6',
                     'catalog:trait': 'arithomania',
-                    'n_catalog_matches': 1
+                    'n_catalog_matches': 1,
                 },
             ]);
         });
@@ -473,7 +473,7 @@ describe('Data adapters', function () {
 
             const source_options = new LDServer({
                 url: 'www.fake.test',
-                params: { build: 'GRCh37', id_field: 'marker' }
+                params: { build: 'GRCh37', id_field: 'marker' },
             });
             dataFields = source_options.findMergeFields(
                 { body: [{ 'assoc:id': 'a', 'assoc:marker': 'b', log_pvalue: 10 }] }
@@ -493,7 +493,7 @@ describe('Data adapters', function () {
             const ldserver_format = '8:117974679_G/A';
             const request_url = source.getURL({ ldrefvar: portal_format }, {
                 header: {},
-                body: []
+                body: [],
             }, ['isrefvar', 'state']);
             assert.equal(
                 request_url,
@@ -508,7 +508,7 @@ describe('Data adapters', function () {
             this.data = [
                 { x: 0, y: 3, z: 8 },
                 { x: 2, y: 7, h: 5 },
-                { x: 8, y: 1, q: 6 }
+                { x: 8, y: 1, q: 6 },
             ];
             this.source = new StaticSource(this.data);
         });
@@ -519,7 +519,7 @@ describe('Data adapters', function () {
             return this.source.getData({}, ['x'], ['test:x'], [null])({
                 header: {},
                 body: [],
-                discrete: {}
+                discrete: {},
             }).then((data) => {
                 const expected_data = [{ 'test:x': 0 }, { 'test:x': 2 }, { 'test:x': 8 }];
                 assert.hasAllKeys(data, ['header', 'body', 'discrete']);
@@ -530,7 +530,7 @@ describe('Data adapters', function () {
             return this.source.getData({}, ['q'], ['test:q'], [null])({
                 header: {},
                 body: [],
-                discrete: {}
+                discrete: {},
             }).then((data) => {
                 const expected_data = [{ 'test:q': undefined }, { 'test:q': undefined }, { 'test:q': 6 }];
                 assert.deepEqual(data.body, expected_data);
@@ -634,7 +634,7 @@ describe('Data adapters', function () {
             return instance.getData()(
                 {
                     discrete: rawChain,
-                    body: [{ who: 1 }, { what: 2 }]
+                    body: [{ who: 1 }, { what: 2 }],
                 }
             ).then(function (response) {
                 assert.deepEqual(response.body, expectedBody, 'Response body was correctly annotated');

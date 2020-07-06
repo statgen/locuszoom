@@ -71,7 +71,7 @@ function install (LocusZoom) {
             const url = this.getURL(state, chain, fields);
             const body = this.getCacheKey(state, chain, fields);
             const headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
             };
 
             return fetch(url, {method: 'POST', body: body, headers: headers}).then((response) => {
@@ -188,7 +188,7 @@ function install (LocusZoom) {
                     position: +match[2],
                     ref_allele: match[3],
                     ref_allele_freq: 1 - one_variant.altFreq,
-                    log_pvalue: -Math.log10(one_variant.pvalue)
+                    log_pvalue: -Math.log10(one_variant.pvalue),
                 };
             }).sort((a, b) => {
                 a = a.variant;

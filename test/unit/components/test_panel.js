@@ -182,8 +182,8 @@ describe('Panel', function() {
                 width: 800,
                 height: 400,
                 panels: [
-                    { id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1 }
-                ]
+                    { id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1 },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, layout);
@@ -240,9 +240,9 @@ describe('Panel', function() {
                     {
                         id: 'test',
                         width: 100,
-                        height: 100
-                    }
-                ]
+                        height: 100,
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, this.layout);
@@ -343,7 +343,7 @@ describe('Panel', function() {
                         height: 100,
                         axes: {
                             x: { label: 'x' },
-                            y1: { label: 'y1' }
+                            y1: { label: 'y1' },
                         },
                         interaction: {},
                         data_layers: [
@@ -354,16 +354,16 @@ describe('Panel', function() {
                                 id_field: 'static:id',
                                 z_index: 0,
                                 x_axis: {
-                                    field: 'static:x'
+                                    field: 'static:x',
                                 },
                                 y_axis: {
                                     axis: 1,
-                                    field: 'static:y'
-                                }
-                            }
-                        ]
-                    }
-                ]
+                                    field: 'static:y',
+                                },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
         });
@@ -388,15 +388,15 @@ describe('Panel', function() {
                     { id: 'p4', interaction: { x_linked: true } },
                     { id: 'p5', interaction: { y2_linked: true } },
                     { id: 'p6', interaction: { x_linked: true } },
-                    { id: 'p7', interaction: { y1_linked: true } }
-                ]
+                    { id: 'p7', interaction: { y1_linked: true } },
+                ],
             };
             const plot = populate('#plot', null, layout);
             assert.ok(Array.isArray(plot.panels.p1.getLinkedPanelIds()));
             assert.ok(Array.isArray(plot.panels.p1.getLinkedPanelIds('x')));
-            assert.deepEqual(plot.panels.p1.getLinkedPanelIds('x'), ['p4','p6']);
+            assert.deepEqual(plot.panels.p1.getLinkedPanelIds('x'), ['p4', 'p6']);
             assert.deepEqual(plot.panels.p1.getLinkedPanelIds('y1'), []);
-            assert.deepEqual(plot.panels.p3.getLinkedPanelIds('y1'), ['p2','p7']);
+            assert.deepEqual(plot.panels.p3.getLinkedPanelIds('y1'), ['p2', 'p7']);
             assert.deepEqual(plot.panels.p4.getLinkedPanelIds('foo'), []);
             assert.deepEqual(plot.panels.p4.getLinkedPanelIds({}), []);
             assert.deepEqual(plot.panels.p4.getLinkedPanelIds(7), []);
@@ -486,7 +486,7 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.start_y, 50);
                 assert.equal(this.plot.interaction.dragging.dragged_x, -25);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2, 6]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
                 assert.deepEqual(this.plot.interaction, {});
@@ -518,7 +518,7 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.start_y, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_x, -25);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [1,9]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [1, 9]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
                 assert.deepEqual(this.plot.interaction, {});
@@ -534,7 +534,7 @@ describe('Panel', function() {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
-                    }
+                    },
                 };
 
                 // Simulate shift+click (mousedown) at [ 50, 0 ] (x tick probably doesn't exist there but that's okay)
@@ -556,7 +556,7 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.start_y, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_x, -25);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 0);
-                assert.deepEqual(this.plot.panels.p.x_extent, [2,6]);
+                assert.deepEqual(this.plot.panels.p.x_extent, [2, 6]);
 
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot'](event);
@@ -589,7 +589,7 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.start_y, 25);
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 50);
-                assert.deepEqual(this.plot.panels.p.y1_extent, [2,14.000000000000004]);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [2, 14.000000000000004]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot']();
                 assert.deepEqual(this.plot.interaction, {});
@@ -605,7 +605,7 @@ describe('Panel', function() {
                 const event = {
                     shiftKey: true, preventDefault: function () {
                         return null;
-                    }
+                    },
                 };
                 // Simulate shift+click (mousedown) at [ 0, 25 ] (y1 tick probably doesn't exist there but that's okay)
                 sinon.stub(d3, 'mouse').callsFake(() => [0, 25]);
@@ -627,7 +627,7 @@ describe('Panel', function() {
                 assert.equal(this.plot.interaction.dragging.start_y, 25);
                 assert.equal(this.plot.interaction.dragging.dragged_x, 0);
                 assert.equal(this.plot.interaction.dragging.dragged_y, 50);
-                assert.deepEqual(this.plot.panels.p.y1_extent, [4,8]);
+                assert.deepEqual(this.plot.panels.p.y1_extent, [4, 8]);
                 // Simulate mouseup at new location
                 this.plot.svg.node()['__onmouseup.plot'](event);
                 assert.deepEqual(this.plot.interaction, {});
@@ -641,8 +641,8 @@ describe('Panel', function() {
         beforeEach(function() {
             const layout = {
                 panels: [
-                    { id: 'panel0' }
-                ]
+                    { id: 'panel0' },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, layout);
@@ -661,7 +661,7 @@ describe('Panel', function() {
 
             assert.ok(spy.calledWith({
                 sourceID: 'plot.panel0',
-                data: {something:1}
+                data: {something:1},
             }));
         });
 
@@ -763,7 +763,7 @@ describe('Panel', function() {
             //  listener could be used to trigger changes to a viewmodel for a different widget
             const bind_context = {
                 someInstanceMethod: function () {
-                }
+                },
             };
             this.panel.on('element_clicked', function () {
                 assert.deepEqual(this, bind_context, 'Manually bound context overrides defaults');

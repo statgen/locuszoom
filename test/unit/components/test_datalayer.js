@@ -24,10 +24,10 @@ describe('LocusZoom.DataLayer', function () {
                             { id: 'layerA', type: 'line' },
                             { id: 'layerB', type: 'line' },
                             { id: 'layerC', type: 'line' },
-                            { id: 'layerD', type: 'line' }
-                        ]
-                    }
-                ]
+                            { id: 'layerD', type: 'line' },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, layout);
@@ -104,9 +104,9 @@ describe('LocusZoom.DataLayer', function () {
                     field: 'test',
                     parameters: {
                         categories: ['lion', 'tiger', 'bear'],
-                        values: ['dorothy', 'toto', 'scarecrow']
-                    }
-                }
+                        values: ['dorothy', 'toto', 'scarecrow'],
+                    },
+                },
             };
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'lion' }), 'dorothy');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'manatee' }), null);
@@ -140,9 +140,9 @@ describe('LocusZoom.DataLayer', function () {
                     scale_function: 'test_effect_direction',
                     parameters: {
                         '+': 'triangle-up',
-                        '-': 'triangle-down'
-                    }
-                }
+                        '-': 'triangle-down',
+                    },
+                },
             };
             const variants = [{ beta: 0.5 }, { beta: -0.06 }, { or: -0.34 }, { or: 1.6 }, { foo: 'bar' }];
             assert.equal(datalayer.resolveScalableParameter(layout.scale, variants[0]), 'triangle-up');
@@ -163,19 +163,19 @@ describe('LocusZoom.DataLayer', function () {
                         field: 'test',
                         parameters: {
                             field_value: 'wizard',
-                            then: 'oz'
-                        }
+                            then: 'oz',
+                        },
                     },
                     {
                         scale_function: 'categorical_bin',
                         field: 'test',
                         parameters: {
                             categories: ['lion', 'tiger', 'bear'],
-                            values: ['dorothy', 'toto', 'scarecrow']
-                        }
+                            values: ['dorothy', 'toto', 'scarecrow'],
+                        },
                     },
-                    'munchkin'
-                ]
+                    'munchkin',
+                ],
             };
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'wizard' }), 'oz');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { test: 'tiger' }), 'toto');
@@ -190,9 +190,9 @@ describe('LocusZoom.DataLayer', function () {
                     {
                         scale_function: 'if',
                         field: 'custom_field',
-                        parameters: { field_value: 'little_dog', then: 'too' }
-                    }
-                ]
+                        parameters: { field_value: 'little_dog', then: 'too' },
+                    },
+                ],
             };
             const datalayer = new BaseDataLayer(layout);
             datalayer.setElementAnnotation('toto', 'custom_field', 'little_dog');
@@ -219,7 +219,7 @@ describe('LocusZoom.DataLayer', function () {
         it('generates an accurate extent array for arbitrary data sets', function () {
             const layout = {
                 id: 'test',
-                x_axis: { field: 'x' }
+                x_axis: { field: 'x' },
             };
             const datalayer = new BaseDataLayer(layout);
 
@@ -227,22 +227,22 @@ describe('LocusZoom.DataLayer', function () {
             assert.deepEqual(datalayer.getAxisExtent('x'), [], 'No extent is returned if basic criteria cannot be met');
 
             datalayer.data = [
-                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
+                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [1, 4]);
 
             datalayer.data = [
-                { x: 200 }, { x: -73 }, { x: 0 }, { x: 38 }
+                { x: 200 }, { x: -73 }, { x: 0 }, { x: 38 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-73, 200]);
 
             datalayer.data = [
-                { x: 6 }
+                { x: 6 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [6, 6]);
 
             datalayer.data = [
-                { x: 'apple' }, { x: 'pear' }, { x: 'orange' }
+                { x: 'apple' }, { x: 'pear' }, { x: 'orange' },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [undefined, undefined]);
         });
@@ -251,24 +251,24 @@ describe('LocusZoom.DataLayer', function () {
                 id: 'test',
                 x_axis: {
                     field: 'x',
-                    lower_buffer: 0.05
-                }
+                    lower_buffer: 0.05,
+                },
             };
             let datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
+                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [0.85, 4]);
             layout = {
                 id: 'test',
                 x_axis: {
                     field: 'x',
-                    upper_buffer: 0.2
-                }
+                    upper_buffer: 0.2,
+                },
             };
             datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 62 }, { x: 7 }, { x: -18 }, { x: 106 }
+                { x: 62 }, { x: 7 }, { x: -18 }, { x: 106 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-18, 130.8]);
             layout = {
@@ -276,12 +276,12 @@ describe('LocusZoom.DataLayer', function () {
                 x_axis: {
                     field: 'x',
                     lower_buffer: 0.35,
-                    upper_buffer: 0.6
-                }
+                    upper_buffer: 0.6,
+                },
             };
             datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 95 }, { x: 0 }, { x: -4 }, { x: 256 }
+                { x: 95 }, { x: 0 }, { x: -4 }, { x: 256 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-95, 412]);
         });
@@ -290,12 +290,12 @@ describe('LocusZoom.DataLayer', function () {
                 id: 'test',
                 x_axis: {
                     field: 'x',
-                    min_extent: [0, 3]
-                }
+                    min_extent: [0, 3],
+                },
             };
             let datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 }
+                { x: 1 }, { x: 2 }, { x: 3 }, { x: 4 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [0, 4], 'Increase extent exactly to the boundaries when no padding is specified');
 
@@ -308,22 +308,22 @@ describe('LocusZoom.DataLayer', function () {
                     field: 'x',
                     upper_buffer: 0.1,
                     lower_buffer: 0.2,
-                    min_extent: [0, 10]
-                }
+                    min_extent: [0, 10],
+                },
             };
             datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
+                { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [0, 10], 'Extent is enforced but no padding applied when data is far from boundary');
 
             datalayer.data = [
-                { x: 0.6 }, { x: 4 }, { x: 5 }, { x: 9 }
+                { x: 0.6 }, { x: 4 }, { x: 5 }, { x: 9 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-1.08, 10], 'Extent is is enforced and padding is applied when data is close to the lower boundary');
 
             datalayer.data = [
-                { x: 0.4 }, { x: 4 }, { x: 5 }, { x: 9.8 }
+                { x: 0.4 }, { x: 4 }, { x: 5 }, { x: 9.8 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [-1.48, 10.74], 'Padding is enforced on both sides when data is close to both boundaries');
 
@@ -335,12 +335,12 @@ describe('LocusZoom.DataLayer', function () {
                     field: 'x',
                     min_extent: [6, 10],
                     lower_buffer: 0.5,
-                    floor: 0
-                }
+                    floor: 0,
+                },
             };
             let datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 8 }, { x: 9 }, { x: 8 }, { x: 8.5 }
+                { x: 8 }, { x: 9 }, { x: 8 }, { x: 8.5 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [0, 10]);
             layout = {
@@ -349,12 +349,12 @@ describe('LocusZoom.DataLayer', function () {
                     field: 'x',
                     min_extent: [0, 10],
                     upper_buffer: 0.8,
-                    ceiling: 5
-                }
+                    ceiling: 5,
+                },
             };
             datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 }
+                { x: 3 }, { x: 4 }, { x: 5 }, { x: 6 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [0, 5]);
             layout = {
@@ -365,12 +365,12 @@ describe('LocusZoom.DataLayer', function () {
                     lower_buffer: 0.8,
                     upper_buffer: 0.8,
                     floor: 4,
-                    ceiling: 6
-                }
+                    ceiling: 6,
+                },
             };
             datalayer = new BaseDataLayer(layout);
             datalayer.data = [
-                { x: 2 }, { x: 4 }, { x: 5 }, { x: 17 }
+                { x: 2 }, { x: 4 }, { x: 5 }, { x: 17 },
             ];
             assert.deepEqual(datalayer.getAxisExtent('x'), [4, 6]);
         });
@@ -384,9 +384,9 @@ describe('LocusZoom.DataLayer', function () {
                 panels: [
                     {
                         id: 'p1',
-                        data_layers: []
-                    }
-                ]
+                        data_layers: [],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
         });
@@ -397,7 +397,7 @@ describe('LocusZoom.DataLayer', function () {
         it('should allow for explicitly setting data layer z_index', function () {
             this.layout.panels[0].data_layers = [
                 { id: 'd1', type: 'line', z_index: 1 },
-                { id: 'd2', type: 'line', z_index: 0 }
+                { id: 'd2', type: 'line', z_index: 0 },
             ];
             this.plot = populate('#plot', null, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d2', 'd1']);
@@ -409,7 +409,7 @@ describe('LocusZoom.DataLayer', function () {
                 { id: 'd1', type: 'line' },
                 { id: 'd2', type: 'line' },
                 { id: 'd3', type: 'line' },
-                { id: 'd4', type: 'line', z_index: -1 }
+                { id: 'd4', type: 'line', z_index: -1 },
             ];
             this.plot = populate('#plot', null, this.layout);
             assert.deepEqual(this.plot.panels.p1.data_layer_ids_by_z_index, ['d1', 'd2', 'd4', 'd3']);
@@ -501,11 +501,11 @@ describe('LocusZoom.DataLayer', function () {
                                 fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
-                                highlighted: { onmouseover: 'toggle' }
-                            }
-                        ]
-                    }
-                ]
+                                highlighted: { onmouseover: 'toggle' },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);
@@ -583,11 +583,11 @@ describe('LocusZoom.DataLayer', function () {
                                 fields: ['d:id'],
                                 id_field: 'd:id',
                                 type: 'scatter',
-                                selected: { onclick: 'toggle' }
-                            }
-                        ]
-                    }
-                ]
+                                selected: { onclick: 'toggle' },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);
@@ -665,13 +665,13 @@ describe('LocusZoom.DataLayer', function () {
                                     closable: true,
                                     show: { or: ['highlighted', 'selected'] },
                                     hide: { and: ['unhighlighted', 'unselected'] },
-                                    html: 'foo'
+                                    html: 'foo',
                                 },
-                                behaviors: { onclick: [{ action: 'toggle', status: 'selected', exclusive: true }] }
-                            }
-                        ]
-                    }
-                ]
+                                behaviors: { onclick: [{ action: 'toggle', status: 'selected', exclusive: true }] },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, this.layout);
@@ -794,11 +794,11 @@ describe('LocusZoom.DataLayer', function () {
                                 label: {
                                     text: 'd:id',
                                     filters: [{ field: 'custom_field', operator: '=', value: true }],
-                                }
-                            }
-                        ]
-                    }
-                ]
+                                },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, layout);

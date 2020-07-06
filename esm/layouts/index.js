@@ -23,7 +23,7 @@ const standard_association_tooltip = {
         <a href="javascript:void(0);" 
         onclick="var data = this.parentNode.__data__;
                  data.getDataLayer().makeLDReference(data);"
-                 >Make LD Reference</a><br>`
+                 >Make LD Reference</a><br>`,
 };
 
 const standard_association_tooltip_with_label = function() {
@@ -51,7 +51,7 @@ const standard_genes_tooltip = {
         + '<tr><td>Missense</td><td>{{exp_mis}}</td><td>{{obs_mis}}</td><td>z = {{mis_z}}<br>o/e = {{oe_mis}} ({{oe_mis_lower}} - {{oe_mis_upper}})</td></tr>'
         + '<tr><td>pLoF</td><td>{{exp_lof}}</td><td>{{obs_lof}}</td><td>pLI = {{pLI}}<br>o/e = {{oe_lof}} ({{oe_lof_lower}} - {{oe_lof_upper}})</td></tr>'
         + '</table><br>{{/if}}'
-        + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>'
+        + '<a href="https://gnomad.broadinstitute.org/gene/{{gene_id|htmlescape}}" target="_blank" rel="noopener">More data on gnomAD</a>',
 };
 
 const catalog_variant_tooltip = {
@@ -64,7 +64,7 @@ const catalog_variant_tooltip = {
         + 'Top Trait: <strong>{{{{namespace[catalog]}}trait|htmlescape}}</strong><br>'
         + 'Top P Value: <strong>{{{{namespace[catalog]}}log_pvalue|logtoscinotation}}</strong><br>'
         // User note: if a different catalog is used, the tooltip will need to be replaced with a different link URL
-        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>'
+        + 'More: <a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">GWAS catalog</a> / <a href="https://www.ncbi.nlm.nih.gov/snp/{{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">dbSNP</a>',
 };
 
 const coaccessibility_tooltip = {
@@ -78,7 +78,7 @@ const coaccessibility_tooltip = {
         '<strong>Promoter</strong><br>' +
         '{{{{namespace[access]}}start2|htmlescape}}-{{{{namespace[access]}}end2|htmlescape}}<br>' +
         '{{#if {{namespace[access]}}target}}<strong>Target</strong>: {{{{namespace[access]}}target|htmlescape}}<br>{{/if}}' +
-        '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}'
+        '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}',
 };
 
 /**
@@ -89,7 +89,7 @@ const significance_layer = {
     id: 'significance',
     type: 'orthogonal_line',
     orientation: 'horizontal',
-    offset: LZ_SIG_THRESHOLD_LOGP
+    offset: LZ_SIG_THRESHOLD_LOGP,
 };
 
 const recomb_rate_layer = {
@@ -100,17 +100,17 @@ const recomb_rate_layer = {
     z_index: 1,
     style: {
         'stroke': '#0000FF',
-        'stroke-width': '1.5px'
+        'stroke-width': '1.5px',
     },
     x_axis: {
-        field: '{{namespace[recomb]}}position'
+        field: '{{namespace[recomb]}}position',
     },
     y_axis: {
         axis: 2,
         field: '{{namespace[recomb]}}recomb_rate',
         floor: 0,
-        ceiling: 100
-    }
+        ceiling: 100,
+    },
 };
 
 const association_pvalues_layer = {
@@ -123,8 +123,8 @@ const association_pvalues_layer = {
         parameters: {
             field_value: 1,
             then: 'diamond',
-            else: 'circle'
-        }
+            else: 'circle',
+        },
     },
     point_size: {
         scale_function: 'if',
@@ -132,8 +132,8 @@ const association_pvalues_layer = {
         parameters: {
             field_value: 1,
             then: 80,
-            else: 40
-        }
+            else: 40,
+        },
     },
     color: [
         {
@@ -141,18 +141,18 @@ const association_pvalues_layer = {
             field: '{{namespace[ld]}}isrefvar',
             parameters: {
                 field_value: 1,
-                then: '#9632b8'
-            }
+                then: '#9632b8',
+            },
         },
         {
             scale_function: 'numerical_bin',
             field: '{{namespace[ld]}}state',
             parameters: {
                 breaks: [0, 0.2, 0.4, 0.6, 0.8],
-                values: ['#357ebd', '#46b8da', '#5cb85c', '#eea236', '#d43f3a']
-            }
+                values: ['#357ebd', '#46b8da', '#5cb85c', '#eea236', '#d43f3a'],
+            },
         },
-        '#B8B8B8'
+        '#B8B8B8',
     ],
     legend: [
         { shape: 'diamond', color: '#9632b8', size: 40, label: 'LD Ref Var', class: 'lz-data_layer-scatter' },
@@ -161,35 +161,35 @@ const association_pvalues_layer = {
         { shape: 'circle', color: '#5cb85c', size: 40, label: '0.6 > r² ≥ 0.4', class: 'lz-data_layer-scatter' },
         { shape: 'circle', color: '#46b8da', size: 40, label: '0.4 > r² ≥ 0.2', class: 'lz-data_layer-scatter' },
         { shape: 'circle', color: '#357ebd', size: 40, label: '0.2 > r² ≥ 0.0', class: 'lz-data_layer-scatter' },
-        { shape: 'circle', color: '#B8B8B8', size: 40, label: 'no r² data', class: 'lz-data_layer-scatter' }
+        { shape: 'circle', color: '#B8B8B8', size: 40, label: 'no r² data', class: 'lz-data_layer-scatter' },
     ],
     label: null,
     fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
     id_field: '{{namespace[assoc]}}variant',
     z_index: 2,
     x_axis: {
-        field: '{{namespace[assoc]}}position'
+        field: '{{namespace[assoc]}}position',
     },
     y_axis: {
         axis: 1,
         field: '{{namespace[assoc]}}log_pvalue',
         floor: 0,
         upper_buffer: 0.10,
-        min_extent: [0, 10]
+        min_extent: [0, 10],
     },
     behaviors: {
         onmouseover: [
-            { action: 'set', status: 'highlighted' }
+            { action: 'set', status: 'highlighted' },
         ],
         onmouseout: [
-            { action: 'unset', status: 'highlighted' }
+            { action: 'unset', status: 'highlighted' },
         ],
         onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
+            { action: 'toggle', status: 'selected', exclusive: true },
         ],
         onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
+            { action: 'toggle', status: 'selected' },
+        ],
     },
     tooltip: deepCopy(standard_association_tooltip),
 };
@@ -226,8 +226,8 @@ const coaccessibility_layer = {
             scale_function: 'ordinal_cycle',
             parameters: {
                 values: ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'], // Drawn from d3v3 "category20"
-            }
-        }
+            },
+        },
     ],
     x_axis: {
         field1: '{{namespace[access]}}start1',
@@ -237,23 +237,23 @@ const coaccessibility_layer = {
         axis: 1,
         field: '{{namespace[access]}}score',
         upper_buffer: 0.1,
-        min_extent: [0, 1]
+        min_extent: [0, 1],
     },
     behaviors: {
         onmouseover: [
-            { action: 'set', status: 'highlighted' }
+            { action: 'set', status: 'highlighted' },
         ],
         onmouseout: [
-            { action: 'unset', status: 'highlighted' }
+            { action: 'unset', status: 'highlighted' },
         ],
         onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
+            { action: 'toggle', status: 'selected', exclusive: true },
         ],
         onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
+            { action: 'toggle', status: 'selected' },
+        ],
     },
-    tooltip: deepCopy(coaccessibility_tooltip)
+    tooltip: deepCopy(coaccessibility_tooltip),
 };
 
 const association_pvalues_catalog_layer = function () {
@@ -279,13 +279,13 @@ const phewas_pvalues_layer = {
         field: '{{namespace[phewas]}}x',  // Synthetic/derived field added by `category_scatter` layer
         category_field: '{{namespace[phewas]}}trait_group',
         lower_buffer: 0.025,
-        upper_buffer: 0.025
+        upper_buffer: 0.025,
     },
     y_axis: {
         axis: 1,
         field: '{{namespace[phewas]}}log_pvalue',
         floor: 0,
-        upper_buffer: 0.15
+        upper_buffer: 0.15,
     },
     color: [{
         field: '{{namespace[phewas]}}trait_group',
@@ -293,8 +293,8 @@ const phewas_pvalues_layer = {
         parameters: {
             categories: [],
             values: [],
-            null_value: '#B8B8B8'
-        }
+            null_value: '#B8B8B8',
+        },
     }],
     fill_opacity: 0.7,
     tooltip: {
@@ -304,22 +304,22 @@ const phewas_pvalues_layer = {
         html: [
             '<strong>Trait:</strong> {{{{namespace[phewas]}}trait_label|htmlescape}}<br>',
             '<strong>Trait Category:</strong> {{{{namespace[phewas]}}trait_group|htmlescape}}<br>',
-            '<strong>P-value:</strong> {{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}<br>'
-        ].join('')
+            '<strong>P-value:</strong> {{{{namespace[phewas]}}log_pvalue|logtoscinotation|htmlescape}}<br>',
+        ].join(''),
     },
     behaviors: {
         onmouseover: [
-            { action: 'set', status: 'highlighted' }
+            { action: 'set', status: 'highlighted' },
         ],
         onmouseout: [
-            { action: 'unset', status: 'highlighted' }
+            { action: 'unset', status: 'highlighted' },
         ],
         onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
+            { action: 'toggle', status: 'selected', exclusive: true },
         ],
         onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
+            { action: 'toggle', status: 'selected' },
+        ],
     },
     label: {
         text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
@@ -328,22 +328,22 @@ const phewas_pvalues_layer = {
             style: {
                 'stroke-width': '2px',
                 'stroke': '#333333',
-                'stroke-dasharray': '2px 2px'
-            }
+                'stroke-dasharray': '2px 2px',
+            },
         },
         filters: [
             {
                 field: '{{namespace[phewas]}}log_pvalue',
                 operator: '>=',
-                value: 20
-            }
+                value: 20,
+            },
         ],
         style: {
             'font-size': '14px',
             'font-weight': 'bold',
-            'fill': '#333333'
-        }
-    }
+            'fill': '#333333',
+        },
+    },
 };
 
 const genes_layer = {
@@ -354,17 +354,17 @@ const genes_layer = {
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
-            { action: 'set', status: 'highlighted' }
+            { action: 'set', status: 'highlighted' },
         ],
         onmouseout: [
-            { action: 'unset', status: 'highlighted' }
+            { action: 'unset', status: 'highlighted' },
         ],
         onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
+            { action: 'toggle', status: 'selected', exclusive: true },
         ],
         onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
+            { action: 'toggle', status: 'selected' },
+        ],
     },
     tooltip: deepCopy(standard_genes_tooltip),
 };
@@ -376,35 +376,35 @@ const annotation_catalog_layer = {
     type: 'annotation_track',
     id_field: '{{namespace[catalog]}}variant',
     x_axis: {
-        field: '{{namespace[assoc]}}position'
+        field: '{{namespace[assoc]}}position',
     },
     color: '#0000CC',
     fields: [
         '{{namespace[assoc]}}variant', '{{namespace[assoc]}}chromosome', '{{namespace[assoc]}}position',
         '{{namespace[catalog]}}variant', '{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait',
-        '{{namespace[catalog]}}log_pvalue', '{{namespace[catalog]}}pos'
+        '{{namespace[catalog]}}log_pvalue', '{{namespace[catalog]}}pos',
     ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
         ['{{namespace[catalog]}}rsid', '!=', null],
-        ['{{namespace[catalog]}}log_pvalue', '>', LZ_SIG_THRESHOLD_LOGP]
+        ['{{namespace[catalog]}}log_pvalue', '>', LZ_SIG_THRESHOLD_LOGP],
     ],
     behaviors: {
         onmouseover: [
-            { action: 'set', status: 'highlighted' }
+            { action: 'set', status: 'highlighted' },
         ],
         onmouseout: [
-            { action: 'unset', status: 'highlighted' }
+            { action: 'unset', status: 'highlighted' },
         ],
         onclick: [
-            { action: 'toggle', status: 'selected', exclusive: true }
+            { action: 'toggle', status: 'selected', exclusive: true },
         ],
         onshiftclick: [
-            { action: 'toggle', status: 'selected' }
-        ]
+            { action: 'toggle', status: 'selected' },
+        ],
     },
     tooltip: deepCopy(catalog_variant_tooltip),
-    tooltip_positioning: 'top'
+    tooltip_positioning: 'top',
 };
 
 /**
@@ -428,8 +428,8 @@ const ldlz2_pop_selector_menu = {
         { display_name: 'AMR', value: 'AMR' },
         { display_name: 'EAS', value: 'EAS' },
         { display_name: 'EUR', value: 'EUR' },
-        { display_name: 'SAS', value: 'SAS' }
-    ]
+        { display_name: 'SAS', value: 'SAS' },
+    ],
 };
 
 /**
@@ -441,20 +441,20 @@ const standard_panel_toolbar = {
             type: 'remove_panel',
             position: 'right',
             color: 'red',
-            group_position: 'end'
+            group_position: 'end',
         },
         {
             type: 'move_panel_up',
             position: 'right',
-            group_position: 'middle'
+            group_position: 'middle',
         },
         {
             type: 'move_panel_down',
             position: 'right',
             group_position: 'start',
-            style: { 'margin-left': '0.75em' }
-        }
-    ]
+            style: { 'margin-left': '0.75em' },
+        },
+    ],
 };
 
 const standard_plot_toolbar = {
@@ -464,17 +464,17 @@ const standard_plot_toolbar = {
             type: 'title',
             title: 'LocusZoom',
             subtitle: `<a href="https://statgen.github.io/locuszoom/" target="_blank" rel="noopener">v${version}</a>`,
-            position: 'left'
+            position: 'left',
         },
         {
             type: 'download',
-            position: 'right'
+            position: 'right',
         },
         {
             type: 'download_png',
             position: 'right',
         },
-    ]
+    ],
 };
 
 const region_nav_plot_toolbar = function () {
@@ -487,39 +487,39 @@ const region_nav_plot_toolbar = function () {
             step: 500000,
             button_html: '>>',
             position: 'right',
-            group_position: 'end'
+            group_position: 'end',
         }, {
             type: 'shift_region',
             step: 50000,
             button_html: '>',
             position: 'right',
-            group_position: 'middle'
+            group_position: 'middle',
         },
         {
             type: 'zoom_region',
             step: 0.2,
             position: 'right',
-            group_position: 'middle'
+            group_position: 'middle',
         },
         {
             type: 'zoom_region',
             step: -0.2,
             position: 'right',
-            group_position: 'middle'
+            group_position: 'middle',
         },
         {
             type: 'shift_region',
             step: -50000,
             button_html: '<',
             position: 'right',
-            group_position: 'middle'
+            group_position: 'middle',
         },
         {
             type: 'shift_region',
             step: -500000,
             button_html: '<<',
             position: 'right',
-            group_position: 'start'
+            group_position: 'start',
         }
     );
     return region_nav_plot_toolbar;
@@ -542,7 +542,7 @@ const association_panel = {
         const base = deepCopy(standard_panel_toolbar);
         base.widgets.push({
             type: 'toggle_legend',
-            position: 'right'
+            position: 'right',
         });
         return base;
     })(),
@@ -551,21 +551,21 @@ const association_panel = {
             label: 'Chromosome {{chr}} (Mb)',
             label_offset: 32,
             tick_format: 'region',
-            extent: 'state'
+            extent: 'state',
         },
         y1: {
             label: '-log10 p-value',
-            label_offset: 28
+            label_offset: 28,
         },
         y2: {
             label: 'Recombination Rate (cM/Mb)',
-            label_offset: 40
-        }
+            label_offset: 40,
+        },
     },
     legend: {
         orientation: 'vertical',
         origin: { x: 55, y: 40 },
-        hidden: true
+        hidden: true,
     },
     interaction: {
         drag_background_to_pan: true,
@@ -573,13 +573,13 @@ const association_panel = {
         drag_y1_ticks_to_scale: true,
         drag_y2_ticks_to_scale: true,
         scroll_to_zoom: true,
-        x_linked: true
+        x_linked: true,
     },
     data_layers: [
         deepCopy(significance_layer),
         deepCopy(recomb_rate_layer),
-        deepCopy(association_pvalues_layer)
-    ]
+        deepCopy(association_pvalues_layer),
+    ],
 };
 
 const coaccessibility_panel = {
@@ -597,31 +597,31 @@ const coaccessibility_panel = {
             label: 'Chromosome {{chr}} (Mb)',
             label_offset: 32,
             tick_format: 'region',
-            extent: 'state'
+            extent: 'state',
         },
         y1: {
             label: 'Score',
             label_offset: 28,
             render: false,  // We are mainly concerned with the relative magnitudes: hide y axis to avoid clutter.
-        }
+        },
     },
     interaction: {
         drag_background_to_pan: true,
         drag_x_ticks_to_scale: true,
         drag_y1_ticks_to_scale: true,
         scroll_to_zoom: true,
-        x_linked: true
+        x_linked: true,
     },
     data_layers: [
-        deepCopy(coaccessibility_layer)
-    ]
+        deepCopy(coaccessibility_layer),
+    ],
 };
 
 const association_catalog_panel = function () {
     let base = deepCopy(association_panel);
     base = merge({
         id: 'associationcatalog',
-        namespace: { 'assoc': 'assoc', 'ld': 'ld', 'catalog': 'catalog' } // Required to resolve display options
+        namespace: { 'assoc': 'assoc', 'ld': 'ld', 'catalog': 'catalog' }, // Required to resolve display options
     }, base);
 
     base.toolbar.widgets.push({
@@ -647,8 +647,8 @@ const association_catalog_panel = function () {
                             style: {
                                 'stroke-width': '2px',
                                 'stroke': '#333333',
-                                'stroke-dasharray': '2px 2px'
-                            }
+                                'stroke-dasharray': '2px 2px',
+                            },
                         },
                         filters: [
                             // Only label points if they are significant for some trait in the catalog, AND in high LD
@@ -656,33 +656,33 @@ const association_catalog_panel = function () {
                             {
                                 field: '{{namespace[catalog]}}trait',
                                 operator: '!=',
-                                value: null
+                                value: null,
                             },
                             {
                                 field: '{{namespace[catalog]}}log_pvalue',
                                 operator: '>',
-                                value: LZ_SIG_THRESHOLD_LOGP
+                                value: LZ_SIG_THRESHOLD_LOGP,
                             },
                             {
                                 field: '{{namespace[ld]}}state',
                                 operator: '>',
-                                value: 0.4
+                                value: 0.4,
                             },
                         ],
                         style: {
                             'font-size': '10px',
                             'font-weight': 'bold',
-                            'fill': '#333333'
-                        }
-                    }
-                }
-            }
-        ]
+                            'fill': '#333333',
+                        },
+                    },
+                },
+            },
+        ],
     });
     base.data_layers = [
         deepCopy(significance_layer),
         deepCopy(recomb_rate_layer),
-        deepCopy(association_pvalues_catalog_layer)
+        deepCopy(association_pvalues_catalog_layer),
     ];
     return base;
 }();
@@ -699,7 +699,7 @@ const genes_panel = {
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
-        x_linked: true
+        x_linked: true,
     },
     toolbar: (function () {
         const base = deepCopy(standard_panel_toolbar);
@@ -711,8 +711,8 @@ const genes_panel = {
         return base;
     })(),
     data_layers: [
-        deepCopy(genes_layer)
-    ]
+        deepCopy(genes_layer),
+    ],
 };
 
 const phewas_panel = {
@@ -730,21 +730,21 @@ const phewas_panel = {
                 style: {
                     'font-weight': 'bold',
                     'font-size': '11px',
-                    'text-anchor': 'start'
+                    'text-anchor': 'start',
                 },
                 transform: 'rotate(50)',
-                position: 'left'  // Special param recognized by `category_scatter` layers
-            }
+                position: 'left',  // Special param recognized by `category_scatter` layers
+            },
         },
         y1: {
             label: '-log10 p-value',
-            label_offset: 28
-        }
+            label_offset: 28,
+        },
     },
     data_layers: [
         deepCopy(significance_layer),
-        deepCopy(phewas_pvalues_layer)
-    ]
+        deepCopy(phewas_pvalues_layer),
+    ],
 };
 
 const annotation_catalog_panel = {
@@ -759,11 +759,11 @@ const annotation_catalog_panel = {
     interaction: {
         drag_background_to_pan: true,
         scroll_to_zoom: true,
-        x_linked: true
+        x_linked: true,
     },
     data_layers: [
-        deepCopy(annotation_catalog_layer)
-    ]
+        deepCopy(annotation_catalog_layer),
+    ],
 };
 
 /**
@@ -781,7 +781,7 @@ const standard_association_plot = {
     panels: [
         merge({ proportional_height: 0.5}, deepCopy(association_panel)),
         merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
-    ]
+    ],
 };
 
 const association_catalog_plot = {
@@ -796,7 +796,7 @@ const association_catalog_plot = {
         deepCopy(annotation_catalog_panel),
         deepCopy(association_catalog_panel),
         deepCopy(genes_panel),
-    ]
+    ],
 };
 
 const standard_phewas_plot = {
@@ -816,12 +816,12 @@ const standard_phewas_plot = {
                     label: 'Chromosome {{chr}} (Mb)',
                     label_offset: 32,
                     tick_format: 'region',
-                    extent: 'state'
-                }
-            }
+                    extent: 'state',
+                },
+            },
         }, deepCopy(genes_panel)),
     ],
-    mouse_guide: false
+    mouse_guide: false,
 };
 
 const coaccessibility_plot = {
@@ -869,7 +869,7 @@ const coaccessibility_plot = {
             layer.stroke = color_config;
             return base;
         }(),
-    ]
+    ],
 };
 
 

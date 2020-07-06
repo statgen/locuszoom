@@ -7,7 +7,7 @@ describe('Scale Functions', function() {
         it('should match against an arbitrary value, return null if not matched', function() {
             const parameters = {
                 field_value: 6,
-                then: true
+                then: true,
             };
             assert.equal(if_value(parameters, 0), null);
             assert.equal(if_value(parameters, 'foo'), null);
@@ -17,7 +17,7 @@ describe('Scale Functions', function() {
             const parameters = {
                 field_value: 'kiwi',
                 then: 'pineapple',
-                else: 'watermelon'
+                else: 'watermelon',
             };
             assert.equal(if_value(parameters, 0), 'watermelon');
             assert.equal(if_value(parameters, 'foo'), 'watermelon');
@@ -28,7 +28,7 @@ describe('Scale Functions', function() {
         it('should work with arbitrarily many breaks/values', function() {
             const parameters = {
                 breaks: [-167, -46, 15, 23, 76.8, 952],
-                values: ['value-167', 'value-46', 'value15', 'value23', 'value76.8', 'value952']
+                values: ['value-167', 'value-46', 'value15', 'value23', 'value76.8', 'value952'],
             };
             assert.equal(numerical_bin(parameters, -50000), 'value-167');
             assert.equal(numerical_bin(parameters, 0), 'value-46');
@@ -41,7 +41,7 @@ describe('Scale Functions', function() {
             const parameters = {
                 breaks: [0, 0.2, 0.4, 0.6, 0.8],
                 values: ['value0', 'value0.2', 'value0.4', 'value0.6', 'value0.8'],
-                null_value: 'null_value'
+                null_value: 'null_value',
             };
             assert.equal(numerical_bin(parameters, 0), 'value0');
             assert.equal(numerical_bin(parameters, -12), 'value0');
@@ -56,7 +56,7 @@ describe('Scale Functions', function() {
         it('should work with arbitrarily many categories/values', function() {
             const parameters = {
                 categories: ['oxygen', 'fluorine', 'tungsten'],
-                values: ['value-oxygen', 'value-fluorine', 'value-tungsten']
+                values: ['value-oxygen', 'value-fluorine', 'value-tungsten'],
             };
             assert.equal(categorical_bin(parameters, 'fluorine'), 'value-fluorine');
             assert.equal(categorical_bin(parameters, 'tungsten'), 'value-tungsten');
@@ -68,7 +68,7 @@ describe('Scale Functions', function() {
             const parameters = {
                 categories: ['dog', 'cat', 'hippo', 'marmoset'],
                 values: ['value-dog', 'value-cat', 'value-hippo', 'value-marmoset'],
-                null_value: 'null_value'
+                null_value: 'null_value',
             };
             assert.equal(categorical_bin(parameters, 'dog'), 'value-dog');
             assert.equal(categorical_bin(parameters, 'hippo'), 'value-hippo');
@@ -101,7 +101,7 @@ describe('Scale Functions', function() {
             const parameters = {
                 breaks: [-167, -45, 15, 23, 76.8, 952],
                 values: [0, 10, 100, 1000, 10000, 100000],
-                null_value: -1
+                null_value: -1,
             };
             assert.equal(interpolate(parameters, -50000), 0);
             assert.equal(interpolate(parameters, 0), 77.5);
@@ -114,7 +114,7 @@ describe('Scale Functions', function() {
             const parameters = {
                 breaks: [-100, -50, 0, 50, 100],
                 values: ['#a6611a', '#dfc27d', '#f5f5f5', '#80cdc1', '#018571'],
-                null_value: '#333333'
+                null_value: '#333333',
             };
             assert.equal(interpolate(parameters, 0), 'rgb(245, 245, 245)');
             assert.equal(interpolate(parameters, -12), 'rgb(240, 233, 216)');

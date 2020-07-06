@@ -33,7 +33,7 @@ const LocusZoom = {
     get KnownDataSources() { // Backwards- compatibility alias
         console.warn('Deprecation warning: KnownDataSources has been renamed to "Adapters"');
         return Adapters;
-    }
+    },
 };
 
 

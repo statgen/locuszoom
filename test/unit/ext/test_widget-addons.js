@@ -20,9 +20,9 @@ describe('Toolbar addons', function () {
             const layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'covariates_model' }
-                    ]
-                }
+                        { type: 'covariates_model' },
+                    ],
+                },
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -68,12 +68,12 @@ describe('Toolbar addons', function () {
             const obj1 = {
                 foo: 'bar', baz: function () {
                     return 'baz';
-                }
+                },
             };
             const obj2 = {
                 foo: 'asdf', baz: function () {
                     return 'baz';
-                }
+                },
             };
             this.plot.CovariatesModel.add(obj1);
             assert.equal(this.plot.state.model.covariates.length, 3);

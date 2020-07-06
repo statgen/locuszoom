@@ -17,7 +17,7 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 1,
                 min_height: 1,
-                panels: []
+                panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', null, layout);
@@ -40,8 +40,8 @@ describe('LocusZoom.Plot', function() {
             assert.equal(panelB.id, 'panelB');
             assert.equal(this.plot.panels[panelB.id], panelB);
             assert.equal(this.plot.panels[panelB.id].parent, this.plot);
-            assert.equal(this.plot.panels[panelB.id].layout_idx,1);
-            assert.equal(this.plot.layout.panels.length,2);
+            assert.equal(this.plot.panels[panelB.id].layout_idx, 1);
+            assert.equal(this.plot.layout.panels.length, 2);
             assert.equal(this.plot.layout.panels[1].id, 'panelB');
             assert.equal(this.plot.layout.panels[1].foo, 'baz');
         });
@@ -50,12 +50,12 @@ describe('LocusZoom.Plot', function() {
             const panelB = this.plot.addPanel({ id: 'panelB', foo: 'baz' });
             assert.hasAnyKeys(this.plot.panels, ['panelA']);
             assert.equal(this.plot.panels[panelA.id].id, panelA.id);
-            assert.equal(this.plot.layout.panels.length,2);
+            assert.equal(this.plot.layout.panels.length, 2);
 
             this.plot.removePanel('panelA');
             assert.doesNotHaveAnyKeys(this.plot.panels, ['panelA']);
-            assert.equal(this.plot.layout.panels.length,1);
-            assert.equal(this.plot.layout.panels[0].id,'panelB');
+            assert.equal(this.plot.layout.panels.length, 1);
+            assert.equal(this.plot.layout.panels[0].id, 'panelB');
             assert.equal(this.plot.panels[panelB.id].layout_idx, 0);
         });
         it('should allow setting dimensions, bounded by layout minimums', function() {
@@ -89,8 +89,8 @@ describe('LocusZoom.Plot', function() {
                 responsive_resize: true,
                 panels: [
                     { id: 'positions', proportional_width: 1, proportional_height: 0.6, min_height: 60 },
-                    { id: 'genes', proportional_width: 1, proportional_height: 0.4, min_height: 40 }
-                ]
+                    { id: 'genes', proportional_width: 1, proportional_height: 0.4, min_height: 40 },
+                ],
             });
             responsive_layout.state = { chr: '1', start: 1, end: 100000 };
             this.plot = populate('#plot', null, responsive_layout);
@@ -112,8 +112,8 @@ describe('LocusZoom.Plot', function() {
                 height: 500,
                 panels: [
                     LAYOUTS.get('panel', 'association', { margin: { left: 200 } }),
-                    LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } })
-                ]
+                    LAYOUTS.get('panel', 'association', { id: 'assoc2', margin: { right: 300 } }),
+                ],
             };
             this.plot = populate('#plot', null, layout);
             assert.equal(this.plot.layout.panels[0].margin.left, 200);
@@ -136,7 +136,7 @@ describe('LocusZoom.Plot', function() {
                 populate('#plot', null, { width: 'foo', height: 40 });
             });
             assert.throws(() => {
-                populate('#plot', null, { width: 60, height: [1,2] });
+                populate('#plot', null, { width: 60, height: [1, 2] });
             });
         });
     });
@@ -163,7 +163,7 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                panels: []
+                panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -177,8 +177,8 @@ describe('LocusZoom.Plot', function() {
             assert.equal((+svg.attr('width')), 100);
             assert.equal((+svg.attr('height')), 100);
             assert.equal(this.plot.panels.panelA.layout.width, 100);
-            assert.equal(this.plot.panels.panelA.layout.height,100);
-            assert.equal(this.plot.panels.panelA.layout.proportional_height,1);
+            assert.equal(this.plot.panels.panelA.layout.height, 100);
+            assert.equal(this.plot.panels.panelA.layout.proportional_height, 1);
             assert.equal(this.plot.panels.panelA.layout.proportional_origin.y, 0);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
             assert.equal(this.plot.sumProportional('height'), 1);
@@ -335,7 +335,7 @@ describe('LocusZoom.Plot', function() {
                 height: 100,
                 min_width: 100,
                 min_height: 100,
-                panels: []
+                panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
@@ -448,7 +448,7 @@ describe('LocusZoom.Plot', function() {
     describe('subscribeToData', function() {
         beforeEach(function() {
             const layout = {
-                panels: [{ id: 'panel0' }]
+                panels: [{ id: 'panel0' }],
             };
 
             this.first_source_data = [ { x: 0, y: false  }, { x: 1, y: true } ];
@@ -484,7 +484,7 @@ describe('LocusZoom.Plot', function() {
                     assert.ok(dataCallback.called, 'Data handler was called');
                     assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
                     done();
-                } catch(error) {
+                } catch (error) {
                     done(error);
                 }
             }, 0);
@@ -497,7 +497,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.subscribeToData(
                 [ 'first:x' ],
                 dataCallback,
-                { onerror: done , discrete: true }
+                { onerror: done, discrete: true }
             );
             // Ugly hack: callback was not recognized at time of promise resolution, and data_rendered may be fired
             //  more than once during rerender
@@ -506,7 +506,7 @@ describe('LocusZoom.Plot', function() {
                     assert.ok(dataCallback.called, 'Data handler was called');
                     assert.ok(dataCallback.calledWith(expectedData), 'Data handler received the expected data');
                     done();
-                } catch(error) {
+                } catch (error) {
                     done(error);
                 }
             }, 0);
@@ -567,24 +567,24 @@ describe('LocusZoom.Plot', function() {
                                 id_field: 's:id',
                                 type: 'scatter',
                                 fields: ['s:id', 's:x'],
-                                match: { send: 's:x', receive: 's:x' }
+                                match: { send: 's:x', receive: 's:x' },
                             },
                             {
                                 id: 'd2',
                                 id_field: 's:id',
                                 type: 'scatter',
-                                fields: ['s:id', 's:x', 's:y']
+                                fields: ['s:id', 's:x', 's:y'],
                             },
                             {
                                 id: 'd3',
                                 id_field: 's:id',
                                 type: 'scatter',
                                 fields: ['s:id', 's:y'],
-                                match: { receive: 's:y' }
-                            }
-                        ]
-                    }
-                ]
+                                match: { receive: 's:y' },
+                            },
+                        ],
+                    },
+                ],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', data_sources, this.layout);

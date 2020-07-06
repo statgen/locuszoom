@@ -427,7 +427,7 @@ class LDServer extends RemoteAdapter {
             id: this.params.id_field,
             position: this.params.position_field,
             pvalue: this.params.pvalue_field,
-            _names_:null
+            _names_:null,
         };
         if (chain && chain.body && chain.body.length > 0) {
             const names = Object.keys(chain.body[0]);
@@ -552,7 +552,7 @@ class LDServer extends RemoteAdapter {
             '&variant=', encodeURIComponent(refVar),
             '&chrom=', encodeURIComponent(state.chr),
             '&start=', encodeURIComponent(state.start),
-            '&stop=', encodeURIComponent(state.end)
+            '&stop=', encodeURIComponent(state.end),
         ].join('');
     }
 
@@ -900,7 +900,7 @@ class PheWASLZ extends RemoteAdapter {
             "?filter=variant eq '", encodeURIComponent(state.variant), "'&format=objects&",
             build.map(function (item) {
                 return `build=${encodeURIComponent(item)}`;
-            }).join('&')
+            }).join('&'),
         ];
         return url.join('');
     }

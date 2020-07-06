@@ -23,7 +23,7 @@ describe('Interval annotation track', function () {
             const layout = LAYOUTS.get('data_layer', 'intervals', {
                 // Unit tests will use the most rigorous form of the track (coloring and separation are determined by
                 //  a unique ID that is separate from the label)
-                track_split_field: '{{namespace[intervals]}}state_id'
+                track_split_field: '{{namespace[intervals]}}state_id',
             });
             const instance = DATA_LAYERS.create('intervals', layout);
             this.instance = instance;
@@ -83,7 +83,7 @@ describe('Interval annotation track', function () {
                 [
                     { color: '#FF0000', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                     { color: '#00FF00', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
-                    { color: '#0000FF', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 }
+                    { color: '#0000FF', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
                 'Legend items map the correct stateID and colors together'
             );
@@ -116,7 +116,7 @@ describe('Interval annotation track', function () {
                 [
                     { color: 'rgb(212,212,212)', 'intervals:state_id': 1, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                     { color: 'rgb(192,192,192)', 'intervals:state_id': 2, label: 'Weak enhancer', shape: 'rect', 'width': 9 },
-                    { color: 'rgb(128,128,128)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 }
+                    { color: 'rgb(128,128,128)', 'intervals:state_id': 3, label: 'Strong enhancer', shape: 'rect', 'width': 9 },
                 ],
                 'Legend items map the correct stateID and colors together'
             );
