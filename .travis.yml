@@ -8,6 +8,7 @@ cache:
 before_script:
   - npm install
 script:
+  - eslint .
   - npm test
 branches:
   only:

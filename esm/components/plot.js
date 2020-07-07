@@ -873,9 +873,11 @@ class Plot {
 
         // Apply layout width and height as discrete values or viewbox values
         if (this.svg !== null) {
+            // The viewBox must always be specified in order for "save as image" button to work
+            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`);
+
             if (this.layout.responsive_resize) {
                 this.svg
-                    .attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`)
                     .attr('preserveAspectRatio', 'xMinYMin meet');
             } else {
                 this.svg
