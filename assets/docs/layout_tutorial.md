@@ -86,7 +86,7 @@ In this view, we have abstracted away all the details of what is plotted, and we
 plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
 we control how the total space is allocated between two panels (`proportional_height`). The actual details of what to 
 render are defined as nested layouts (association and genes panels), and the registry also contains predefined options 
-for this piece- `LocusZoom.Layouts.get(...)` just returns a JSON object.  
+for this piece- `LocusZoom.Layouts.get(...)` returns a JSON object.  
 
 Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in 
 terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
@@ -117,8 +117,8 @@ Key things to notice are:
 
 1. The data layer will only see the fields requested by name. Even if a field is present in the API payload, it
     will not be visible in the data layer unless explicitly referenced in the `fields` array for that data layer.
-2. This layout is generic: the use of namespaces means "given association data from somewhere". See the sections 
-    below for more details on how to use an abstract layout with a specific dataset.
+2. This layout is generic: the use of namespaces means "given association data from somewhere". See "using namespaces" 
+    below for more details on how to use an abstract layout with a specific dataset (via namespaces).
 3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax. But the 
     field must always be requested in the `fields` array.
 
@@ -188,8 +188,8 @@ When a layout is first loaded into the registry, it is defined to work in the ab
   where namespaces are replaced by a specific datasource name later on.
  
 ```js
-LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
-    namespace: { 'assoc': 'assoc', 'ld': 'ld' },
+LocusZoom.Layouts.add('data_layer', 'association_pvalues', { // Define a new datalayer
+    namespace: { 'assoc': 'assoc', 'ld': 'ld' },  // Provides default namespaces, eg look for "assoc" data in a source called "assoc"
     fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
 });
 ```
@@ -216,8 +216,8 @@ from a particular source". There are three ways to fetch something, and each beh
     ```
 
 3. Fetch an existing abstract layout for further modification, and keep it abstract. Note the special `unnamespaced: true` option, which causes
- the layout to be returned exactly as it appears in the registry. This option is used quite a lot in the LZ source code (`Layouts.js`), 
- because it makes it easy to build a reusable layout (like a panel) out of smaller reusable pieces (like datalayers).
+ the layout to be returned exactly as it appears in the registry (*abstract*). This option is used quite a lot in the LZ source code (`Layouts.js`), 
+ because it makes it easy to build a reusable abstract layout (like a panel) out of smaller reusable pieces (like datalayers).
  
     ```js
     > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true });
@@ -262,7 +262,7 @@ return a new, modified object. Eg, for a toolbar (dashboard) that adds just one 
             position: 'right'
         });
         return base;
-    })()
+    })() // Function calls itself immediately, so "dashboard" is set to the return value
 }
 ```
 
