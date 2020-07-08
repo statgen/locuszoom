@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Layouts**
-
 # Layouts
 
 A Layout is a JSON object that is used to describe the composition and behavior of an entire LocusZoom plot *or* a component therein. As true JSON layouts cannot contain functions or special JavaScript literals such as `NaN` or `Infinity`.
@@ -10,10 +8,10 @@ In this documentation the individual elements in a layout are called **directive
 
 Refer to the following pages for specific documentation of supported directives by layout type:
 
-* [[Plot layouts|Plot#plot-layout]]
-* [[Panel layouts|Panel#panel-layout]]
-* [[Data Layer layouts|Data-Layer#data-layer-layout]]
-* [[Dashboard layouts|Dashboard#dashboard-layout]]
+* [Plot layouts](plot.md#plot-layout)
+* [Panel layouts](panel.md#panel-layout)
+* [Data Layer layouts](data-layer.md#data-layer-layout)
+* [Dashboard layout](dashboard.md#dashboard-layout)
 
 ## User-Defined Layouts
 
@@ -115,7 +113,7 @@ Note that the same method is used internally when using `LocusZoom.Layouts.get()
 
 ## Advanced features
 ### Dynamic Namespacing
-As described in [[Data Sources]], individual data sources must be *namespaced* if more than one are in use in a single plot. This usually manifests at the lowest levels in layout directives where field names are defined. For instance, when using a [[scatter data layer|Data-Layer#scatter]] it's necessary to set the `id_field` directive on the data layer layout to the field coming back from the data source to be interpreted as the unique identifier for the datum, but if the data source going into the scatter data layer is namespaced then that namespace must present on this directive, as well as all values defined in the `fields` array.
+As described in [Data Sources](data-sources.md), individual data sources must be *namespaced* if more than one are in use in a single plot. This usually manifests at the lowest levels in layout directives where field names are defined. For instance, when using a [scatter data layer](data-layer.md#scatter) it's necessary to set the `id_field` directive on the data layer layout to the field coming back from the data source to be interpreted as the unique identifier for the datum, but if the data source going into the scatter data layer is namespaced then that namespace must present on this directive, as well as all values defined in the `fields` array.
 
 The Layouts object provides a shortcut for doing this in an automated way when getting stored layouts. To begin, it's possible to see which elements of a stored layout are namespaced and how by passing `unnamespaced: true` in the modifications object:
 

@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Data Layer**
-
 # Data Layer
 
 A data layer is a layer in terms of depth of z-index within a panel for displaying data. It is clipped by the panel's defined clip area and can be one of any supported type. Depending on the type of the data layer it will be able to display different data and support different layout directives.
@@ -10,7 +8,7 @@ A data layer's **layout** is a serializable object that describes every customiz
 
 ### Scalable Layout Directives
 
-Several directives supported by data layers may be **scalable**, and will be denoted as such. Scalable directives are those that can be defined statically as a scalar value (string or number), one or more [[Scale Functions]], or a combination thereof.
+Several directives supported by data layers may be **scalable**, and will be denoted as such. Scalable directives are those that can be defined statically as a scalar value (string or number), one or more [Scale Functions](scale-functions.md), or a combination thereof.
 
 ### Supported Layout Directives - All/Most Data Layer Types
 
@@ -20,7 +18,7 @@ These directives are commonly implemented across several or all data layer types
   The name of a defined `DataLayer` class. LocusZoom Core comes pre-supplied with several types of Data Layers already defined and provides an API to create custom Data Layers as needed. See [Data Layer Types](#data-layer-types) for more details.  
 
 * **`fields`** - *Array*  
-  An array of strings that map to valid fields in the [[Data Sources]].  These values will be processed during every request for data so that every data object stored in the Data Layer has each of these values as a named property.  
+  An array of strings that map to valid fields in the [Data Sources](data-sources.md).  These values will be processed during every request for data so that every data object stored in the Data Layer has each of these values as a named property.  
 
 * **`color`** - *String _or_ Object, Scalable*  
   A string representing a uniform color for data represented by a data layer _or_ an object describing a dynamic coloring scheme. Note that while most browsers support support four-dimensional color definitions (e.g. RGBA/HSLA) standards-compliant SVG does not. This means if you define any colors using `rgba` or `hsla` they may appear to function correctly in a browser but downloaded SVGs will render such colors as flat black. When working with transparency and requiring SVG download support it's recommended to stick to three-dimensional color declarations (`rgb`/`hsl`) and define opacity for elements separately using the `fill_opacity` directive.  
@@ -40,7 +38,7 @@ These directives are commonly implemented across several or all data layer types
 * **`(x|y)_axis`** - *Object*  
   An object that attaches a data field to an axis and sets limits on the range of the data displayed.  
 
-  For a panel with axes, both axes (**`data_layer.x_axis`** and **`data_layer.y_axis`**) should be defined as objects with at least a field defined on each for a data layer to render properly.  Not all panels and data layers have axes in the traditional sense. If a panel / data layer does not define an **`x_axis`**, for example, then the x_axis (shown or not) is assumed to be genetic position and the range of the axis shown assumed to be bounded by the **`start`** and **`end`** values defined in the [[State]].  
+  For a panel with axes, both axes (**`data_layer.x_axis`** and **`data_layer.y_axis`**) should be defined as objects with at least a field defined on each for a data layer to render properly.  Not all panels and data layers have axes in the traditional sense. If a panel / data layer does not define an **`x_axis`**, for example, then the x_axis (shown or not) is assumed to be genetic position and the range of the axis shown assumed to be bounded by the **`start`** and **`end`** values defined in the [State](state.md).  
 
   * **`(x|y)_axis.field`** - *String*  
     Name of the field to map to the axis. The field name used here should also be present in **`data_layer.fields`**.  
@@ -116,7 +114,7 @@ The following behavior **actions** are currently supported:
 * **`toggle`** - Set an element's status to true if currently false and false if currently true
 * **`link`** - Load a URL (see details below)
 
-In the case of `set`, `unset`, and `toggle` the behavior is in reference to one (and only one) status. A status is a flag on an individual element that affects how that element appears and whether a tooltip should be showing for that element. The [[State]] object keeps arrays of element IDs for all statuses on each data layer to be used for further interaction logic.
+In the case of `set`, `unset`, and `toggle` the behavior is in reference to one (and only one) status. A status is a flag on an individual element that affects how that element appears and whether a tooltip should be showing for that element. The [State](state.md) object keeps arrays of element IDs for all statuses on each data layer to be used for further interaction logic.
 
 The following element **statuses** are currently supported:
 
@@ -170,7 +168,7 @@ If a specific event in the `behaviors` object has more than one valid behavior d
 #### Legend
 
 * **`legend`** - *Array*  
-  A [[Legend data layer layout|Legend#legend-data-layer-layout]] array. The contents of the array should be objects describing individual elements to be shown in the legend, which the parent panel will aggregate together with legend elements from sibling data layers.  
+  A [Legend data layer layout](legend.md#legend-data-layer-layout) array. The contents of the array should be objects describing individual elements to be shown in the legend, which the parent panel will aggregate together with legend elements from sibling data layers.  
 
 #### Transitions
 

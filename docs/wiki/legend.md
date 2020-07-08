@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Legend**
-
 # Legend
 
 A Legend is an SVG element rendered on a given panel (on top of data layers in terms of z-index) to provide data layer context, such as the meanings behind variations in colors, shapes, or lines.

@@ -4,8 +4,8 @@
 
 Creating a LocusZoom plot requires two pieces of information:
 
-* [[Data Sources]]
-* [[Layout|Layouts]]
+* [Data Sources](data-sources.md)
+* [Layout](layouts.md)
 
 Once defined these values can be passed to the `populate()` method along with a selector to identify a div, like so:
 
@@ -17,25 +17,25 @@ Note that the return value from the `populate()` method, the **plot**, is saved 
 
 ## LocusZoom Structure
 
-### [[Plot]]
+### [Plot](plot.md)
 
-A [[Plot]] is an instance of LocusZoom, returned by the `populate()` method. A plot has a layout and various supported methods.
+A [Plot](plot.md) is an instance of LocusZoom, returned by the `populate()` method. A plot has a layout and various supported methods.
 
-### [[Panel]]
+### [Panel](panel.md)
 
-A [[Panel]] is a subdivided area of a plot. Panels contain graph features such as titles and axes, but not actual data. Panels occupy the full width the of the plot and are stacked vertically along the y-axis in the order they are added unless directed differently by their layouts.
+A [Panel](panel.md) is a subdivided area of a plot. Panels contain graph features such as titles and axes, but not actual data. Panels occupy the full width the of the plot and are stacked vertically along the y-axis in the order they are added unless directed differently by their layouts.
 
-### [[Data Layer]]
+### [Data Layer](data-layer.md)
 
-A [[Data Layer]] is a layer within a panel for representing data. Data layers are stacked depth-wise along the z-axis in the other they are added unless directed differently by their layouts.
+A [Data Layer](data-layer.md) is a layer within a panel for representing data. Data layers are stacked depth-wise along the z-axis in the other they are added unless directed differently by their layouts.
 
-### [[Dashboard]]
+### [Dashboard](dashboard.md)
 
-A [[Dashboard]] is an HTML element that can contain information or user interface components relevant to a plot. Dashboards can be attached to the plot as a whole or to individual panels. They are described with their own layouts nested within the layouts of the parent plot or panel.
+A [Dashboard](dashboard.md) is an HTML element that can contain information or user interface components relevant to a plot. Dashboards can be attached to the plot as a whole or to individual panels. They are described with their own layouts nested within the layouts of the parent plot or panel.
 
-### [[Legend]]
+### [Legend](legend.md)
 
-A [[Legend]] is an SVG element belonging to a panel that annotated categories of data shown on the underlying data layers. Legends are described in general terms as a part of a panel's layout and the specific elements to appear in the legend are described by each of the panel's data layers.
+A [Legend](legend.md) is an SVG element belonging to a panel that annotated categories of data shown on the underlying data layers. Legends are described in general terms as a part of a panel's layout and the specific elements to appear in the legend are described by each of the panel's data layers.
 
 ## Top-level Library Methods
 
@@ -45,8 +45,8 @@ Locuszoom.js creates an global object namespace called `LocusZoom`. This object 
   
   Populate a single DOM element with a LocusZoom plot.  
   * `selector` *string, required* - DOM query selector string.  
-  * `datasource` *object, required* - A valid [[Data Sources]] object that defines the namespaces and methods for retrieving data.  
-  * `layout` *object, optional* - A valid [[Layout|Layouts]] object that defines the geometry and behaviors of the plot. If not provided the standard association plot layout will be used.  
+  * `datasource` *object, required* - A valid [Data Sources](data-sources.md) object that defines the namespaces and methods for retrieving data.  
+  * `layout` *object, optional* - A valid [Layout](layouts.md) object that defines the geometry and behaviors of the plot. If not provided the standard association plot layout will be used.  
 
 * **`LocusZoom.populate(selector, datasource, [layout])`**  
   

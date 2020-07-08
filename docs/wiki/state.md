@@ -1,8 +1,6 @@
-> [[API Reference|Home]] ▸ **State**
-
 # State
 
-At any given time a plot (and subdivisions within the plot such as panels and data layers) have *state*. State can be thought of as a collection of fields and values that describe the current relationship between the [Layout](../Layouts), which describes the appearance/behavior of the plot in general terms, and the [[Data Sources]], which describe how all available data can be requested.
+At any given time a plot (and subdivisions within the plot such as panels and data layers) have *state*. State can be thought of as a collection of fields and values that describe the current relationship between the [Layout](../Layouts), which describes the appearance/behavior of the plot in general terms, and the [Data Sources](data-sources.md), which describe how all available data can be requested.
 
 ## Example: Region Values
 

@@ -1,8 +1,6 @@
-> [[API Reference|Home]] ▸ **Dashboard**
-
 # Dashboard
 
-A Dashboard is an HTML element used for presenting arbitrary user interface components. Dashboards are anchored to either the entire [[Plot]] or to individual [[Panels|Panel]].
+A Dashboard is an HTML element used for presenting arbitrary user interface components. Dashboards are anchored to either the entire [Plot](plot.md) or to individual [Panels](panel.md).
 
 ## Dashboard Methods
 
@@ -32,7 +30,7 @@ dashboard: {
 ### Supported Layout Directives
 
 * **`components`** - *Array*  
-  Array of [[Component layout objects|Dashboard#dashboard-component-types]].
+  Array of [Component layout objects](dashboard.md#dashboard-component-types).
 
 ### Default Dashboard Component Layout Directives
 
@@ -230,7 +228,7 @@ Special version of the generic [Menu](#menu) component used for managing a list 
 
 ##### Covariates Model - Behavior and Methods
 
-Adding this dashboard component to a plot will automatically create a `model` object in the [[State]] that contains an empty array called `covariates`, like so:
+Adding this dashboard component to a plot will automatically create a `model` object in the [State](state.md) that contains an empty array called `covariates`, like so:
 
 ```javascript
 state: {

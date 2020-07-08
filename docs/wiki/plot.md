@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Plot**
-
 # Plot
 
 A Plot is a complete LocusZoom instance. It is the value returned from `LocusZoom.populate()`.
@@ -21,7 +19,7 @@ Once a plot has been created (e.g. the value returned from `LocusZoom.populate()
   Set the total dimensions for the plot. If passed with no arguments will calculate optimal size based on layout directives and the available area on the page. If passed discrete width (*number*) and height (*number*) will attempt to resize the plot to them, but may be limited by minimum dimensions defined on the plot or panels.  
 
 * **`plot.applyState(state)`**  
-  Accepts a state (*object*) to be applied to the plot's layout. Properties of the state argument are merged with the existing [[State]] on the plot. This triggers requests to get new data for the updated state values across all panels and emits a `data_requested` event.  
+  Accepts a state (*object*) to be applied to the plot's layout. Properties of the state argument are merged with the existing [State](state.md) on the plot. This triggers requests to get new data for the updated state values across all panels and emits a `data_requested` event.  
 
 * **`plot.subscribeToData(fields, success_callback, opts)`**: Using the same mechanisms as an LZ data layer, let arbitrary parts of the page listen for new data. When data is received, calls `success_callback` with the resulting payload. This can be used to do things like draw tables or companion visualizations on the page, and have them automatically update to stay in sync as the user clicks or pans across the plot. Allowed options are `onerror` (an error handler callback) and `discrete` (returns the separate responses from each source rather than combining: eg _chain.discrete_ instead of _chain.body_).
 
@@ -174,13 +172,13 @@ var layout = {
 The following layout directives may be arbitrarily complex so have been broken out to their own pages.
 
 * **`state`** - *Object*  
-  The [[State]] object. The state contains information describing the current parameters used to query/filter data and current selections and/or customizations by the end user.
+  The [State](state.md) object. The state contains information describing the current parameters used to query/filter data and current selections and/or customizations by the end user.
 
 * **`dashboard`** - *Object*  
-  A [[Dashboard]] layout object. Will be automatically displayed permanently above the plot if defined with components. 
+  A [Dashboard](dashboard.md) layout object. Will be automatically displayed permanently above the plot if defined with components. 
 
 * **`panels`** - *Array*  
-  An array of [[Panel]] objects. Will automatically be rendered vertically in the order defined here excepting where panel layout defines a `y_index` value.
+  An array of [Panel](panel.md) objects. Will automatically be rendered vertically in the order defined here excepting where panel layout defines a `y_index` value.
 
 ### Using a Pre-Defined Layout
 

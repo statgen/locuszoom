@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Panel**
-
 # Panel
 
 A Panel is a region of a plot, typically occupying the full plot width but only a portion of the vertical space, stacked along the y-axis with other panels.
@@ -227,7 +225,7 @@ panel {
     Static label to appear on the axis.  
 
   * **`axes.{x|y1|y2}.label_function`** - *String*  
-    The name of a `LabelFunction` for creating a dynamic label relative to the values in `state`. See [[Label Functions]] for more details. If set this will override any `label` value.  
+    The name of a `LabelFunction` for creating a dynamic label relative to the values in `state`. See [Label Functions](label-functions.md#label-functions) for more details. If set this will override any `label` value.  
 
   * **`axes.{x|y1|y2}.label_offset`** - *Number*  
     Distance, in pixels, to shift the axis label away from its axis. This value is interpreted differently for each axis ID (e.g. for the `x` axis this value shift the label downward, for `y1` it shifts the label to the left, and for `y2` it shifts the label to the right).  
@@ -312,10 +310,10 @@ x: {
 ### Complex Object Layout Directives
 
 * **`dashboard`** - *Object*  
-  A [[Dashboard layout|Dashboard#dashboard-layout]] object. Will be automatically displayed as a mouse-enabled overlay along the top of the panel if defined with components.
+  A [Dashboard layout](dashboard.md#dashboard-layout) object. Will be automatically displayed as a mouse-enabled overlay along the top of the panel if defined with components.
 
 * **`legend`** - *Object*  
-  A [[Legend layout|Legend#legend-panel-layout]] object. Will be automatically rendered as an SVG object similar to how axes are rendered for a given panel.
+  A [Legend Layout](legend.md#legend-panel-layout) object. Will be automatically rendered as an SVG object similar to how axes are rendered for a given panel.
 
 * **`data_layers`** - *Array*  
-  An array of [[Data Layer layout|Data Layer#data-layer-layout]] objects. Will automatically be rendered bottom-to-top (in terms of page depth) in the order defined here excepting where data layer layout defines a `z_index` value.
+  An array of [Data Layer layout](data-layer.md#data-layer-layout) objects. Will automatically be rendered bottom-to-top (in terms of page depth) in the order defined here excepting where data layer layout defines a `z_index` value.

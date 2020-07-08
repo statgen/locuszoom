@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Scale Functions**
-
 # Scale Functions
 
 A Scale Function can be thought of as a modifier to a layout directive that adds extra logic to how a piece of data can be resolved to a value.

@@ -1,5 +1,3 @@
-> [[API Reference|Home]] ▸ **Data Sources**
-
 # Data Sources
 
 LocusZoom is designed to pull together data from different data sources and merge it together before plotting. LocusZoom is initialized with a `DataSources` object which contains a collection of `DataSource` objects with a unique namespace string. These `DataSource` objects are typically pulled from the `KnownDataSources` collection. Data retrieval is managed by the `DataRequestor` object internally within the LocusZoom object.
@@ -87,7 +85,7 @@ By default, sources are set to work with GET requests and will understand data r
 		return "http://server.com/api/" + state.chromosome
 	}
 	
-You have access to the [[State]] of the plot. This keeps track of things like the current chromosome and position ranges. You also have access to any data from previously executed data sources in the `chain` object. And finally you have access to the list of fields requested from your data source.
+You have access to the [State](state.md) of the plot. This keeps track of things like the current chromosome and position ranges. You also have access to any data from previously executed data sources in the `chain` object. And finally you have access to the list of fields requested from your data source.
 
 The `extend()` method can take three parameters
 
