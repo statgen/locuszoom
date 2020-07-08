@@ -1270,20 +1270,11 @@
                 receive: '{{namespace[access]}}target'
             },
             id_field: '{{namespace[access]}}id',
-            filters: [
-                [
+            filters: [[
                     '{{namespace[access]}}score',
                     '!=',
                     null
-                ],
-                // For coaccessibility, range is 0..1 and sig threshold is 0.5. For other data types (like chromatin
-                //  interaction), this filter may not be appropriate.
-                [
-                    '{{namespace[access]}}score',
-                    '>',
-                    0.5
-                ]
-            ],
+                ]],
             color: [
                 {
                     field: 'lz_highlight_match',

@@ -28,6 +28,7 @@
   },
   "scripts": {
     "build": "gulp build",
+    "docs": "pandoc -s --toc --css css/pandoc.css assets/docs/layout_tutorial.md -o docs/layout_tutorial.html",
     "test": "gulp test",
     "lint": "gulp lint",
     "watch": "gulp watch"
