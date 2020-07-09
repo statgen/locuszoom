@@ -13,7 +13,6 @@ LocusZoom comes with objects that are set up to handle data that conform to our 
 | LocusZoom.Data.LDSource2 | "LDLZ2" |
 | LocusZoom.Data.GeneSource | "GeneLZ" |
 | LocusZoom.Data.RecombinationRateSource | "RecombLZ" |
-| LocusZoom.Data.IntervalSource | "IntervalLZ" |
 | LocusZoom.Data.StaticSource | "StaticJSON" |
 | LocusZoom.Data.PheWASSource | "PheWASLZ" |
 

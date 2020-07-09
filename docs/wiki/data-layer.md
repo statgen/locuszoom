@@ -222,14 +222,22 @@ filters: [
 
 LocusZoom has the following Data Layer types defined in the core:
 
+# [Arcs](#arcs)
 * [Forest](#forest)
 * [Genes](#genes)
-* [Genome Legend](#genome-legend)
-* [Interval](#interval)
 * [Line](#line)
+* [Annotation track](#annotation-track)
 * [Orthogonal Line](#orthogonal-line)
 * [Scatter](#scatter)
 * [Category scatter](#category-scatter)
+
+#### Arcs
+##### Arc-specific directives
+Arcs are symmetric, defined by two endpoints (two x-fields). The `y_axis.field` determines the height of the arc, which peaks at the center point between the two x endpoints. The *color* field is scalable, allowing 
+ 
+- **`x_axis`** - Object 
+  - `field1` - *String* - The name of a field containing one endpoint of the arc
+  - `field2` - *String* - The name of a field containing the second endpoint of the arc
 
 #### Forest
 
@@ -284,60 +292,6 @@ The **`genes`** Data Layer type implements a visualization of gene/transcript/ex
 
 * **`track_vertical_spacing`** - *Number*  
   Vertical space between gene tracks, in pixels, in which nothing will be rendered. Defaults to `10`.  
-
-#### Genome Legend
-
-The **`genome_legend`** Data Layer type implements a visualization of an entire human genome as a one-dimensional extent with alternating light/dark areas representing individual chromosomes (with proportional widths). An example of this data layer can be seen in the middle panel in the [PheWAS Scatter Example](http://statgen.github.io/locuszoom/examples/phewas_scatter.html) where, coupled with a vertical line, indicates where in the entire genome the current locus is. 
-
-##### Genome-Legend-Specific Directives
-
-* **`chromosome_fill_colors`** - *Object*  
-  Object with keys/values defining colors for `"light"` and `"dark"` for chromosome areas on the legend. Default value is `{ light: "rgb(155, 155, 188)", dark: "rgb(95, 95, 128)" }`.  
-
-* **`chromosome_label_colors`** - *Object*  
-  Object with keys/values defining colors for `"light"` and `"dark"` for chromosome area labels on the legend. Default value is `{ light: "rgb(120, 120, 186)", dark: "rgb(0, 0, 66)" }`.  
-
-#### Interval
-
-The **`interval`** Data Layer type implements a visualization of interval annotation track data. These data are expected to be objects with start and end positions that are to be rendered as simple positioned rectangles colored by a key.
-
-##### Interval-Specific Directives
-
-* **`color`** - *See general definition above, Scalable*  
-  Defaults to `"#B8B8B8"`.  
-
-* **`fill_opacity`** - *See general definition above, Scalable*  
-  Defaults to `1`.  
-
-* **`always_hide_legend`** - *Boolean*  
-  Whether or not to always hide the conventional legend. A conventional legend must be defined in the layout in order to generate an annotated y-axis to label tracks in a split-track configuration. By default (when this value is false), merging tracks together will hide any y-axis legend and show a conventional legend. Set this to true, however, to refrain from ever showing that conventional legend while still showing a y-axis-based legend in a split-track configuration. Defaults to `false`.  
-
-* **`bounding_box_padding`** - *Number*  
-  Single value in pixels to be used as top, bottom, left, and right padding from data displayed to represent a given gene to its bounding box. The bounding box is directly displayed when a gene is selected but is otherwise invisible, however it represents the "footprint" of a gene in the data layer when the data layer's render function positions genes on tracks such that none overlap. Thus, a larger `bounding_box_padding` will give genes more space during automatic positioning. Defaults to `2`.  
-
-* **`end_field`** - *String*  
-  Field (as defined in the `fields` array) that represents an interval's end position. Defaults to `"end"`.  
-
-* **`split_tracks`** - *Boolean*  
-  Whether to split tracks apart such that each category represented by the values of `track_split_field` for each interval datum gets its own track (true) or collapse all interval data to as few tracks as possible (false). Defaults to `true`.  
-
-* **`start_field`** - *String*  
-  Field (as defined in the `fields` array) that represents an interval's start position. Defaults to `"start"`.  
-
-* **`track_height`** - *Number*  
-  Height, in pixels, of each track when rendered. Defaults to `15`.  
-
-* **`track_split_field`** - *String*  
-  Field (as defined in the `fields` array) that represents the category in which a distinct interval falls into. This is used as the categorizing factor when splitting tracks by category. Defaults to `"state_id"`.  
-
-* **`track_split_legend_to_y_axis`** - *Number*  
-  Y-axis number to use when splitting tracks and displaying a categorical legend as a y axis. Defaults to `2`.  
-
-* **`track_split_order`** - *String*  
-  Direction to sort tracks when splitting them categorically - "ASC" for ascending and "DESC" for descending. Defaults to `"DESC"`.  
-
-* **`track_vertical_spacing`** - *Number*  
-  Vertical space between tracks, in pixels, in which nothing will be rendered. Defaults to `3`.  
 
 #### Annotation track
 The **`annotation_track`** layer implements a track that identifies specific points of interest. This can be used to help show more types of information than can be conveyed by color or shape alone- for example, it can be used to annotate the members of a credible set alongside a plot that is colored by LD value. Common configuration options such as `fields`, `color`, and `tooltip` are supported.

@@ -56,7 +56,6 @@ LocusZoom has the following Dashboard Components pre-defined:
 * [Move Panel Down](#move-panel-down)
 * [Resize to Data](#resize-to-data)
 * [Menu](#menu)
-* [Covariates Model](#covariates-model)
 * [Display options](#display-options)
 * [Set state](#set-state)
 
@@ -118,7 +117,7 @@ Renders a button to allow for downloading the current plot as an SVG image. Exam
 * **`filename`**- *String*
   The filename to use when saving the plot (default: locuszoom.svg)
 
-### Toggle Legend
+#### Toggle Legend
 Renders a button that toggles display of the legend for the current panel. **Will only work on panel dashboards.**
 
 ```javascript
@@ -204,58 +203,6 @@ Renders button with arbitrary text that, when clicked, toggles the appearance of
 
 * **`menu_html`** - *String*  
   HTML to render inside the menu object which can be toggled to appear below the button (sized to its content) as the button is clicked.  
-
-#### Covariates Model
-
-Special version of the generic [Menu](#menu) component used for managing a list of covariate objects stored in the state. Example:
-
-```javascript
-{
-  type: "covariates_model",
-  button_html: "Model",
-  button_title: "Description to show on mouse over",
-  position: "left"
-}
-```
-
-##### Covariates Model - Additional Layout Directives
-
-* **`button_html`** - *String*  
-  HTML to render inside the button.  
-
-* **`button_title`** - *String*  
-  Value of the title attribute for the button (shown by browsers automatically on hover, i.e. help text).
-
-##### Covariates Model - Behavior and Methods
-
-Adding this dashboard component to a plot will automatically create a `model` object in the [State](state.md) that contains an empty array called `covariates`, like so:
-
-```javascript
-state: {
-  model: {
-    covariates: []
-  },
-  ...
-}
-```
-
-The instantiation of this component will also create a `CovariatesModel` object on the parent plot object. This object provides several reference objects and methods for programmatically interfacing with the component menu and state representations of the model:
-
-* **`plot.CovariatesModel.add(element)`**  
-  Add an element to the model and show a representation of it in the dashboard component menu. The argument `element` can be any value that can be put through `JSON.stringify()` to create a serialized representation of itself. Will compare any passed `element` to the contents of `state.model.covariates` prior to adding to prevent duplicates. Will also automatically trigger requests for new data through the alteration of the state.
-
-* **`plot.CovariatesModel.removeByIdx(idx)`**  
-  Remove an element from `state.model.covariates` (and from the dashboard component menu's representation of the state model) by its index in the `state.model.covariates` array. Will also automatically trigger requests for new data through the alteration of the state.
-
-* **`plot.CovariatesModel.removeAll()`**  
-  Empty the `state.model.covariates` array and dashboard component menu representation thereof of all elements. Will also automatically trigger requests for new data through the alteration of the state.
-
-* **`plot.CovariatesModel.updateComponent()`**  
-  Manually trigger the update methods on the dashboard component's button and menu elements to force display of most up-to-date content. Useful when modifying `state.model.covariates` by some means outside of the methods provided in `plot.CovariatesModel` to force the dashboard component to reflect the changes.
-
-* **`plot.CovariatesModel.button`**  
-  Reference to the button object contained within the dashboard component. The button object contains the menu.  
-
 
 #### Display Options
 This panel-level dashboard widget creates a button that lets the user change between several different (pre-set) display options. For example, points can be colored based on different fields, or the same data can be drawn according to different size or coloring schemes. (solid color, gradient, etc)

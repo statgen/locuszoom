@@ -144,6 +144,12 @@ Function for continuous interpolation of numerical values along a gradient with 
 * **`null_value`** - *Any Type*  
   Value to return if the input value is non-numeric. Optional.  
 
+### ordinal_cycle
+Cycle through a set of options, so that the each element in a set of data receives a value different than the element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+
+Parameters:
+- **`values`** - *Array* - An array of possible return values. The value is chosen based on the position of the element in the data, according to the formula`values[ index % values.length ]`
+
 ## Chaining Scale Functions
 
 As shown in the example above for color Scale Functions may be defined as an array of objects that operate on data in a specific order. The layout interpreter will interpret a `null` value returned from a scale function as a cue to advance to the next scale function in the layout, if there is one. As such, order is important. However scale functions appearing in the same chain are all atomic and do not have to operate on the same data field(s).
