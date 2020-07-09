@@ -209,9 +209,9 @@ class Plot {
          * @member {Object}
          */
         this.event_hooks = {
-            'layout_changed': [],  // Caution: Direct layout mutations will *not* be captured by this event.
-            'data_requested': [],
-            'data_rendered': [],
+            'layout_changed': [],  // Many rerendering operations, including dimensions changed, element highlighted, or rerender on chanegd data. Caution: Direct layout mutations might not be captured by this event.
+            'data_requested': [], // A request has been made for new data from any data source used in the plot
+            'data_rendered': [],  // Data from a request has been received and rendered in the plot
             'element_clicked': [], // Select or unselect
             'element_selection': [], // Element becomes active (only)
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
