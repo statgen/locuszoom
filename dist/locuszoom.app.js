@@ -39,7 +39,7 @@
         }    // ESTemplate: module content goes here
         // ESTemplate: module content goes here
         ;
-        var LocusZoom = { version: '0.11.0-beta.1' };
+        var LocusZoom = { version: '0.11.0' };
         /**
  * Populate a single element with a LocusZoom plot.
  * selector can be a string for a DOM Query or a d3 selector.
@@ -6921,10 +6921,11 @@
             }
             // Call parent constructor
             LocusZoom.Dashboard.Component.apply(this, arguments);
-            // List of layout fields that this button is allowed to control. This ensures that we don't override any other
+            // Whitelist of layout fields that this button is allowed to control. This ensures that we don't override any other
             //  information (like plot height etc) while changing point rendering
             var allowed_fields = layout.fields_whitelist || [
                 'color',
+                'filters',
                 'fill_opacity',
                 'label',
                 'legend',

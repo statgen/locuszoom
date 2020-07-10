@@ -2,7 +2,7 @@
  * @namespace
  */
 var LocusZoom = {
-    version: '0.11.0-beta.1'
+    version: '0.11.0'
 };
 
 /**
