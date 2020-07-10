@@ -43,7 +43,6 @@ LocusZoom.Legend = function(parent) {
      */
     this.hidden = false;
 
-    // TODO Revisit constructor return value; see https://stackoverflow.com/a/3350364/1422268
     return this.render();
 };
 

@@ -69,6 +69,12 @@ describe('LocusZoom Data', function() {
             v.should.be.exactly(123);
             d.should.have.property('foo:bar').which.is.exactly(123);
         });
+        it('should use annotations (extra_fields) by exact field name, iff no value is present in point data', function () {
+            var d = { 'bar': 123, 'foo:my_annotation': 13 };
+            var f = new LocusZoom.Data.Field('my_annotation');
+            var v = f.resolve(d, { 'my_annotation': 12 });
+            assert.equal(v, 12);
+        });
         it('should apply arbitrarily many transformations in the order defined', function() {
             var d = { 'foo:bar': 123 };
             var f = new LocusZoom.Data.Field('foo:bar|herp|derp|herp');
@@ -725,6 +731,19 @@ describe('LocusZoom Data', function() {
                 { body: [{ 'assoc:onefish': 'a', 'assoc:twofish': 'b', log_pvalue: 10 }] }
             );
             assert.equal(dataFields.id, null, 'There is no field matching the requested ID field');
+        });
+
+        it('coerces variant formats to one expected by the LD server', function () {
+            var source = new LocusZoom.Data.LDSource2({url: 'www.fake.test', params: { build: 'GRCh37' }});
+
+            var portal_format = '8:117974679:G:A';
+            var ldserver_format = '8:117974679_G/A';
+            var request_url = source.getURL({ ldrefvar: portal_format }, { header: {}, body: [] }, ['isrefvar', 'state']);
+            assert.equal(
+                request_url,
+                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])
+            );
+            assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
         });
     });
 

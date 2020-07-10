@@ -46,7 +46,10 @@ LocusZoom.DataLayer = function(layout, parent) {
     /** @member {String} */
     this.state_id = null;
 
-    this.setDefaultState();
+    /** @member {Object} */
+    this.layer_state = null;
+    // Create a default state (and set any references to the parent as appropriate)
+    this._setDefaultState();
 
     // Initialize parameters for storing data and tool tips
     /** @member {Array} */
@@ -108,20 +111,25 @@ LocusZoom.DataLayer.prototype.addField = function(fieldName, namespace, transfor
  *   genome region" links), plotting new data that invalidates any previously tracked state.  This hook makes it
  *   possible to reset without destroying the panel entirely. It is used by `Plot.clearPanelData`.
  */
-LocusZoom.DataLayer.prototype.setDefaultState = function() {
-    // Define state parameters specific to this data layer. Within plot state, this will live under a key
-    //  `panel_name.layer_name`.
+LocusZoom.DataLayer.prototype._setDefaultState = function() {
+    // Each datalayer tracks two kinds of status: flags for internal state (highlighted, selected, tooltip),
+    //  and "extra fields" (annotations like "show a tooltip" that are not determined by the server, but need to
+    //  persist across re-render)
+    var layer_state = { status_flags: {}, extra_fields: {} };
+    var status_flags = layer_state.status_flags;
+    LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
+        status_flags[status] = status_flags[status] || [];
+    });
+    // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
+    status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
+
     if (this.parent) {
-        this.state = this.parent.state;
+        // If layer has a parent, store a reference in the overarching plot.state object
         this.state_id = this.parent.id + '.' + this.id;
-        this.state[this.state_id] = this.state[this.state_id] || {};
-        var layer_state = this.state[this.state_id];
-        LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
-            layer_state[status] = layer_state[status] || [];
-        });
-        // Also initialize "internal-only" state fields
-        layer_state['has_tooltip'] = layer_state['has_tooltip'] || [];
+        this.state = this.parent.state;
+        this.state[this.state_id] = layer_state;
     }
+    this.layer_state = layer_state;
 };
 
 /**
@@ -133,7 +141,9 @@ LocusZoom.DataLayer.DefaultLayout = {
     type: '',
     fields: [],
     x_axis: {},
-    y_axis: {}
+    y_axis: {},
+    // Not every layer allows this attribute, but it is available for the default implementation
+    tooltip_positioning: 'horizontal',
 };
 
 /**
@@ -157,7 +167,11 @@ LocusZoom.DataLayer.Statuses = {
  * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
  */
 LocusZoom.DataLayer.prototype.getBaseId = function() {
-    return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+    if (this.parent) {
+        return this.parent_plot.id + '.' + this.parent.id + '.' + this.id;
+    } else {
+        return '';
+    }
 };
 
 /**
@@ -171,15 +185,6 @@ LocusZoom.DataLayer.prototype.getBaseId = function() {
 LocusZoom.DataLayer.prototype.getAbsoluteDataHeight = function() {
     var dataBCR = this.svg.group.node().getBoundingClientRect();
     return dataBCR.height;
-};
-
-/**
- * Whether transitions can be applied to this data layer
- * @returns {boolean}
- */
-LocusZoom.DataLayer.prototype.canTransition = function() {
-    if (!this.layout.transition) { return false; }
-    return !(this.parent_plot.panel_boundaries.dragging || this.parent_plot.interaction.panel_id);
 };
 
 /**
@@ -240,6 +245,7 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function() {
     var field_to_match = (this.layout.match && this.layout.match.receive);
     var broadcast_value = this.parent_plot.state.lz_match_value;
 
+    var self = this;
     this.data.forEach(function(d, i) {
         // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
@@ -249,22 +255,22 @@ LocusZoom.DataLayer.prototype.applyDataMethods = function() {
             d.lz_highlight_match = (d[field_to_match] === broadcast_value);
         }
 
-        this.data[i].toHTML = function() {
-            var id_field = this.layout.id_field || 'id';
+        self.data[i].toHTML = function() {
+            var id_field = self.layout.id_field || 'id';
             var html = '';
-            if (this.data[i][id_field]) { html = this.data[i][id_field].toString(); }
+            if (self.data[i][id_field]) { html = self.data[i][id_field].toString(); }
             return html;
-        }.bind(this);
-        // getDataLayer() method - return a reference to the data layer
-        this.data[i].getDataLayer = function() {
-            return this;
-        }.bind(this);
-        // deselect() method - shortcut method to deselect the element
-        this.data[i].deselect = function() {
-            var data_layer = this.getDataLayer();
-            data_layer.unselectElement(this);
         };
-    }.bind(this));
+        // getDataLayer() method - return a reference to the data layer
+        self.data[i].getDataLayer = function() {
+            return self;
+        };
+        // deselect() method - shortcut method to deselect the element
+        self.data[i].deselect = function() {
+            var data_layer = self.getDataLayer();
+            data_layer.unselectElement(self); // dynamically generated method name. It exists, honest.
+        };
+    });
     this.applyCustomDataMethods();
     return this;
 };
@@ -329,18 +335,23 @@ LocusZoom.DataLayer.prototype.moveDown = function() {
 };
 
 /**
- * Apply scaling functions to an element or parameter as needed, based on its layout and the element's data
+ * Apply scaling functions to an element as needed, based on the layout rules governing display + the element's data
  * If the layout parameter is already a primitive type, simply return the value as given
- * @param {Array|Number|String|Object} layout
- * @param {*} data The value to be used with the filter
+ *
+ * In the future this may be further expanded, so that scaling functions can operate similar to mappers
+ *  (item, index, array). Additional arguments would be added as the need arose.
+ * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
+ *  ("rules for how to choose color based on item value")
+ * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
+ * @param {Number} data_index The array index for the data element
  * @returns {*} The transformed value
  */
-LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) {
+LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, element_data, data_index) {
     var ret = null;
     if (Array.isArray(layout)) {
         var idx = 0;
         while (ret === null && idx < layout.length) {
-            ret = this.resolveScalableParameter(layout[idx], data);
+            ret = this.resolveScalableParameter(layout[idx], element_data, data_index);
             idx++;
         }
     } else {
@@ -353,9 +364,16 @@ LocusZoom.DataLayer.prototype.resolveScalableParameter = function(layout, data) 
             if (layout.scale_function) {
                 if(layout.field) {
                     var f = new LocusZoom.Data.Field(layout.field);
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(data));
+                    var extra;
+                    try {
+                        extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
+                    } catch (e) {
+                        extra = null;
+                    }
+
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, f.resolve(element_data, extra), data_index);
                 } else {
-                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, data);
+                    ret = LocusZoom.ScaleFunctions.get(layout.scale_function, layout.parameters || {}, element_data, data_index);
                 }
             }
             break;
@@ -495,7 +513,7 @@ LocusZoom.DataLayer.prototype.createTooltip = function(data) {
             .attr('class', 'lz-data_layer-tooltip')
             .attr('id', id + '-tooltip')
     };
-    this.state[this.state_id]['has_tooltip'].push(id);
+    this.layer_state.status_flags['has_tooltip'].push(id);
     this.updateTooltip(data);
     return this;
 };
@@ -554,7 +572,7 @@ LocusZoom.DataLayer.prototype.destroyTooltip = function(element_or_id, temporary
     }
     // When a tooltip is removed, also remove the reference from the state
     if (!temporary) {
-        var state = this.state[this.state_id]['has_tooltip'];
+        var state = this.layer_state.status_flags['has_tooltip'];
         var label_mark_position = state.indexOf(id);
         state.splice(label_mark_position, 1);
     }
@@ -574,8 +592,12 @@ LocusZoom.DataLayer.prototype.destroyAllTooltips = function() {
 
 //
 /**
- * Position tool tip - naïve function to place a tool tip to the lower right of the current mouse element
- *   Most data layers reimplement this method to position tool tips specifically for the data they display
+ * Position and then redraw tool tip - naïve function to place a tool tip in the data layer. By default, positions wrt
+ *   the top-left corner of the data layer.
+ *
+ * Each layer type may have more specific logic. Consider overriding the provided hooks `_getTooltipPosition` or
+ *  `_drawTooltip` as appropriate
+ *
  * @param {String} id The identifier of the tooltip to position
  * @returns {LocusZoom.DataLayer}
  */
@@ -583,19 +605,166 @@ LocusZoom.DataLayer.prototype.positionTooltip = function(id) {
     if (typeof id != 'string') {
         throw new Error('Unable to position tooltip: id is not a string');
     }
-    // Position the div itself
-    this.tooltips[id].selector
-        .style('left', (d3.event.pageX) + 'px')
-        .style('top', (d3.event.pageY) + 'px');
-    // Create / update position on arrow connecting tooltip to data
-    if (!this.tooltips[id].arrow) {
-        this.tooltips[id].arrow = this.tooltips[id].selector.append('div')
-            .style('position', 'absolute')
-            .attr('class', 'lz-data_layer-tooltip-arrow_top_left');
+    if (!this.tooltips[id]) {
+        throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
     }
-    this.tooltips[id].arrow
-        .style('left', '-1px')
-        .style('top', '-1px');
+    var tooltip = this.tooltips[id];
+    var coords = this._getTooltipPosition(tooltip);
+
+    if (!coords) {
+        // Special cutout: normally, tooltips are positioned based on the datum element. Some, like lines/curves,
+        //  work better if based on a mouse event. Since not every redraw contains a mouse event, we can just skip
+        //  calculating position when no position information is available.
+        return null;
+    }
+    this._drawTooltip(tooltip, this.layout.tooltip_positioning, coords.x_min, coords.x_max, coords.y_min, coords.y_max);
+};
+
+/**
+ * Determine the coordinates for where to point the tooltip at. Typically, this is the center of a datum element (eg,
+ *  the middle of a scatter plot point). Also provide an offset if the tooltip should not be at that center (most
+ *  elements are not single points, eg a scatter plot point has a radius and a gene is a rectangle).
+ *  The default implementation is quite naive: it places the tooltip at the origin for that layer. Individual layers
+ *    should override this method to position relative to the chosen data element or mouse event.
+ * @param {Object} tooltip A tooltip object (including attribute tooltip.data)
+ * @returns {Object} as {x_min, x_max, y_min, y_max} in px, representing bounding box of a rectangle around the data pt
+ *  Note that these pixels are in the SVG coordinate system
+ */
+LocusZoom.DataLayer.prototype._getTooltipPosition = function(tooltip) {
+    var panel = this.parent;
+
+    var y_scale  = panel['y' + this.layout.y_axis.axis + '_scale'];
+    var y_extent = panel['y' + this.layout.y_axis.axis + '_extent'];
+
+    var x = panel.x_scale(panel.x_extent[0]);
+    var y = y_scale(y_extent[0]);
+
+    return { x_min: x, x_max: x, y_min: y, y_max: y };
+};
+
+/**
+ * Draw a tooltip on the data layer pointed at the specified coordinates, in the specified orientation.
+ *  Tooltip will be drawn on the edge of the major axis, and centered along the minor axis- see diagram.
+ *   v
+ * > o <
+ *   ^
+ *
+ * @param tooltip {Object} The object representing all data for the tooltip to be drawn
+ * @param {'vertical'|'horizontal'|'top'|'bottom'|'left'|'right'} position Where to draw the tooltip relative to
+ *  the data
+ * @param {Number} x_min The min x-coordinate for the bounding box of the data element
+ * @param {Number} x_max The max x-coordinate for the bounding box of the data element
+ * @param {Number} y_min The min y-coordinate for the bounding box of the data element
+ * @param {Number} y_max The max y-coordinate for the bounding box of the data element
+ * @private
+ */
+LocusZoom.DataLayer.prototype._drawTooltip = function (tooltip, position, x_min, x_max, y_min, y_max) {
+    var panel_layout = this.parent.layout;
+    var layer_layout = this.layout;
+
+    // Tooltip position params: as defined in the default stylesheet, used in calculations
+    var arrow_size = 7;
+    var stroke_width = 1;
+    var arrow_total = arrow_size + stroke_width;  // Tooltip pos should account for how much space the arrow takes up
+
+    var tooltip_padding = 6;  // bbox size must account for any internal padding applied between data and border
+
+    var page_origin = this.getPageOrigin();
+    var tooltip_box = tooltip.selector.node().getBoundingClientRect();
+    var data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
+    var data_layer_width = panel_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
+
+    // Clip the edges of the datum to the available plot area
+    x_min = Math.max(x_min, 0);
+    x_max = Math.min(x_max, data_layer_width);
+    y_min = Math.max(y_min, 0);
+    y_max = Math.min(y_max, data_layer_height);
+
+    var x_center = (x_min + x_max) / 2;
+    var y_center = (y_min + y_max) / 2;
+    // Default offsets are the far edge of the datum bounding box
+    var x_offset = x_max - x_center;
+    var y_offset = y_max - y_center;
+    var placement = layer_layout.tooltip_positioning;
+
+    // Coordinate system note: the tooltip is positioned relative to the plot/page; the arrow is positioned relative to
+    //  the tooltip boundaries
+    var tooltip_top, tooltip_left, arrow_type, arrow_top, arrow_left;
+
+    // The user can specify a generic orientation, and LocusZoom will autoselect whether to place the tooltip above or below
+    if (placement === 'vertical') {
+        // Auto-select whether to position above the item, or below
+        x_offset = 0;
+        if (tooltip_box.height + arrow_total > data_layer_height - (y_center + y_offset)) {
+            placement = 'top';
+        } else {
+            placement = 'bottom';
+        }
+    } else if (placement === 'horizontal') {
+        // Auto select whether to position to the left of the item, or to the right
+        y_offset = 0;
+        if (x_center <= panel_layout.width / 2) {
+            placement = 'left';
+        } else {
+            placement = 'right';
+        }
+    }
+
+    if (placement === 'top' || placement === 'bottom') {
+        // Position horizontally centered above the point
+        var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
+        var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
+        tooltip_left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
+        arrow_left =  page_origin.x + x_center - tooltip_left - arrow_size;  // Arrow should be centered over the data
+        // Position vertically above the point unless there's insufficient space, then go below
+        if (placement === 'top') {
+            tooltip_top = page_origin.y + y_center - (y_offset + tooltip_box.height + arrow_total);
+            arrow_type = 'down';
+            arrow_top = tooltip_box.height - stroke_width;
+        } else {
+            tooltip_top = page_origin.y + y_center + y_offset + arrow_total;
+            arrow_type = 'up';
+            arrow_top = 0 - arrow_total;
+        }
+    } else if (placement === 'left' || placement === 'right') {
+        // Position tooltip horizontally on the left or the right depending on which side of the plot the point is on
+        if (placement === 'left') {
+            tooltip_left = page_origin.x + x_center + x_offset + arrow_total;
+            arrow_type = 'left';
+            arrow_left = -1 * (arrow_size + stroke_width);
+        } else {
+            tooltip_left = page_origin.x + x_center - tooltip_box.width - x_offset - arrow_total;
+            arrow_type = 'right';
+            arrow_left = tooltip_box.width - stroke_width;
+        }
+        // Position with arrow vertically centered along tooltip edge unless we're at the top or bottom of the plot
+        if (y_center - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
+            tooltip_top = page_origin.y + y_center - (1.5 * arrow_size) - tooltip_padding;
+            arrow_top = tooltip_padding;
+        } else if (y_center + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
+            tooltip_top = page_origin.y + y_center + arrow_size + tooltip_padding - tooltip_box.height;
+            arrow_top = tooltip_box.height - (2 * arrow_size) - tooltip_padding;
+        } else { // vertically centered
+            tooltip_top = page_origin.y + y_center - (tooltip_box.height / 2);
+            arrow_top = (tooltip_box.height / 2) - arrow_size;
+        }
+    } else {
+        throw new Error('Unrecognized placement value');
+    }
+
+    // Position the div itself, relative to the layer origin
+    tooltip.selector
+        .style('left', tooltip_left + 'px')
+        .style('top', tooltip_top + 'px');
+    // Create / update position on arrow connecting tooltip to data
+    if (!tooltip.arrow) {
+        tooltip.arrow = tooltip.selector.append('div')
+            .style('position', 'absolute');
+    }
+    tooltip.arrow
+        .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
+        .style('left', arrow_left + 'px')
+        .style('top', arrow_top + 'px');
     return this;
 };
 
@@ -679,11 +848,11 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element, first_time) 
     }
 
     // Find all the statuses that apply to just this single element
-    var layer_state = this.state[this.state_id];
+    var layer_state = this.layer_state;
     var statuses = {};  // {status_name: bool}
     LocusZoom.DataLayer.Statuses.adjectives.forEach(function(status) {
         var antistatus = 'un' + status;
-        statuses[status] = (layer_state[status].indexOf(id) !== -1);
+        statuses[status] = (layer_state.status_flags[status].indexOf(id) !== -1);
         statuses[antistatus] = !statuses[status];
     });
 
@@ -694,7 +863,7 @@ LocusZoom.DataLayer.prototype.showOrHideTooltip = function(element, first_time) 
     // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
     // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
     //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-    var has_tooltip = (layer_state['has_tooltip'].indexOf(id) !== -1);
+    var has_tooltip = (layer_state.status_flags['has_tooltip'].indexOf(id) !== -1);
     var tooltip_was_closed = first_time ? false : !has_tooltip;
     if (show_resolved && !tooltip_was_closed && !hide_resolved) {
         this.createTooltip(element);
@@ -810,14 +979,6 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
         //  directly. It is invisible to the official enums.
         return this;
     }
-
-    // Sanity checks
-    if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
-        throw new Error('Invalid status passed to DataLayer.setElementStatus()');
-    }
-    if (typeof element == 'undefined') {
-        throw new Error('Invalid element passed to DataLayer.setElementStatus()');
-    }
     if (typeof active == 'undefined') {
         active = true;
     }
@@ -842,13 +1003,13 @@ LocusZoom.DataLayer.prototype.setElementStatus = function(status, element, activ
     }
 
     // Track element ID in the proper status state array
-    var element_status_idx = this.state[this.state_id][status].indexOf(element_id);
+    var element_status_idx = this.layer_state.status_flags[status].indexOf(element_id);
     var added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
     if (active && added_status) {
-        this.state[this.state_id][status].push(element_id);
+        this.layer_state.status_flags[status].push(element_id);
     }
     if (!active && !added_status) {
-        this.state[this.state_id][status].splice(element_status_idx, 1);
+        this.layer_state.status_flags[status].splice(element_status_idx, 1);
     }
 
     // Trigger tool tip show/hide logic
@@ -890,7 +1051,7 @@ LocusZoom.DataLayer.prototype.setElementStatusByFilters = function(status, toggl
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setElementStatusByFilters()');
     }
-    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; } else { toggle = !!toggle; }
     if (typeof exclusive == 'undefined') { exclusive = false; } else { exclusive = !!exclusive; }
     if (!Array.isArray(filters)) { filters = []; }
@@ -920,29 +1081,53 @@ LocusZoom.DataLayer.prototype.setAllElementStatus = function(status, toggle) {
     if (typeof status == 'undefined' || LocusZoom.DataLayer.Statuses.adjectives.indexOf(status) === -1) {
         throw new Error('Invalid status passed to DataLayer.setAllElementStatus()');
     }
-    if (typeof this.state[this.state_id][status] == 'undefined') { return this; }
+    if (typeof this.layer_state.status_flags[status] == 'undefined') { return this; }
     if (typeof toggle == 'undefined') { toggle = true; }
 
+    var self = this;
     // Apply statuses
     if (toggle) {
         this.data.forEach(function(element) {
-            this.setElementStatus(status, element, true);
-        }.bind(this));
+            self.setElementStatus(status, element, true);
+        });
     } else {
-        var status_ids = this.state[this.state_id][status].slice();
+        var status_ids = this.layer_state.status_flags[status].slice();
         status_ids.forEach(function(id) {
-            var element = this.getElementById(id);
+            var element = self.getElementById(id);
             if (typeof element == 'object' && element !== null) {
-                this.setElementStatus(status, element, false);
+                self.setElementStatus(status, element, false);
             }
-        }.bind(this));
-        this.state[this.state_id][status] = [];
+        });
+        this.layer_state.status_flags[status] = [];
     }
 
     // Update global status flag
     this.global_statuses[status] = toggle;
 
     return this;
+};
+
+/**
+ * Annotations provide a way to save user-driven additions and have them persist across render. They can be referenced
+ *  as a named pseudo-field in any filters and scalable parameters. (template support may be added in the future)
+ * Sample use case: user clicks a tooltip to "label this specific point". (or change any other display property)
+ * @param {String|Object} element The data object or ID string for the element
+ * @param {String} key The name of the annotation to track
+ * @param {*} value The value of the marked field
+ */
+LocusZoom.DataLayer.prototype.setElementAnnotation = function (element, key, value) {
+    var id = this.getElementId(element);
+    if (!this.layer_state.extra_fields[id]) {
+        this.layer_state.extra_fields[id] = {};
+    }
+    this.layer_state.extra_fields[id][key] = value;
+    return this;
+};
+
+LocusZoom.DataLayer.prototype.getElementAnnotation = function (element, key) {
+    var id = this.getElementId(element);
+    var extra = this.layer_state.extra_fields[id];
+    return extra && extra[key];
 };
 
 /**
@@ -977,7 +1162,7 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
         'ctrl': (directive.indexOf('ctrl') !== -1),
         'shift': (directive.indexOf('shift') !== -1)
     };
-
+    var self = this;
     return function(element) {
 
         // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
@@ -993,19 +1178,19 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
 
             // Set a status (set to true regardless of current status, optionally with exclusivity)
             case 'set':
-                this.setElementStatus(behavior.status, element, true, behavior.exclusive);
+                self.setElementStatus(behavior.status, element, true, behavior.exclusive);
                 break;
 
             // Unset a status (set to false regardless of current status, optionally with exclusivity)
             case 'unset':
-                this.setElementStatus(behavior.status, element, false, behavior.exclusive);
+                self.setElementStatus(behavior.status, element, false, behavior.exclusive);
                 break;
 
             // Toggle a status
             case 'toggle':
-                var current_status_boolean = (this.state[this.state_id][behavior.status].indexOf(this.getElementId(element)) !== -1);
+                var current_status_boolean = (self.layer_state.status_flags[behavior.status].indexOf(self.getElementId(element)) !== -1);
                 var exclusive = behavior.exclusive && !current_status_boolean;
-                this.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
+                self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                 break;
 
             // Link to a dynamic URL
@@ -1025,13 +1210,9 @@ LocusZoom.DataLayer.prototype.executeBehaviors = function(directive, behaviors) 
                 break;
 
             }
-
             return;
-
-        }.bind(this));
-
-    }.bind(this);
-
+        });
+    };
 };
 
 /**
@@ -1100,6 +1281,28 @@ LocusZoom.DataLayer.prototype.exportData = function(format) {
         break;
     }
     return ret;
+};
+
+/**
+ * Apply all tracked element statuses. This is primarily intended for re-rendering the plot, in order to preserve
+ *  behaviors when items are updated.
+ */
+LocusZoom.DataLayer.prototype.applyAllElementStatus = function () {
+    var status_flags = this.layer_state.status_flags;
+    var self = this;
+    for (var property in status_flags) {
+        if (!status_flags.hasOwnProperty(property)) { continue; }
+        if (Array.isArray(status_flags[property])) {
+            status_flags[property].forEach(function(element_id) {
+                try {
+                    self.setElementStatus(property, self.getElementById(element_id), true);
+                } catch (e) {
+                    console.warn('Unable to apply state: ' + self.state_id + ', ' + property);
+                    console.error(e);
+                }
+            });
+        }
+    }
 };
 
 /**

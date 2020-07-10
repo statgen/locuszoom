@@ -7,9 +7,12 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
     <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
     <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
-    <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
+
+    <!-- Helpers that use the external library to add functionality to LocusZoom -->
+    <script src="../dist/ext/lz-intervals-track.min.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Interval Annotations Example</title>
 
@@ -52,7 +55,7 @@
 
       <div class="row">
         <footer style="text-align: center;">
-          &copy; Copyright 2019 <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
         </footer>
       </div>
 
@@ -71,22 +74,44 @@
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
-    var mods = {
-      namespace: {
-        default: "assoc",
-        ld: "ld",
-        gene: "gene",
-        recomb: "recomb",
-        intervals: "intervals"
-      }
-    };
-    layout = LocusZoom.Layouts.get("plot", "interval_association", mods);
+    layout = LocusZoom.Layouts.get("plot", "interval_association");
     // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
     //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
     layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
+    // Modify the association panel: custom "label point" tooltip option + add the required filters directive
+    var assoc_layer = layout.panels[0].data_layers[2];
+    assoc_layer.tooltip = LocusZoom.Layouts.get('tooltip', 'standard_association_with_label');
+    assoc_layer.label = {
+        text: '{{assoc:variant}}',
+        spacing: 12,
+        lines: {
+            style: { 'stroke-width': '2px', 'stroke': '#333333', 'stroke-dasharray': '2px 2px' }
+        },
+        filters: [
+            {
+                field: 'lz_show_label',
+                operator: '=',
+                value: true
+            }
+        ],
+        style: {
+            'font-weight': 'bold',
+        }
+    };
+
+    var intervals_panel = layout.panels[1];
+    var intervals_layout = intervals_panel.data_layers[0];
+
+    // Remove the itemRgb field from the default layout, because our demo api does not have this information
+    intervals_layout.fields.pop();
+    // This demo is focused on one track (not many), so show the legend. (the intervals track has additional
+    //  expand/collapse behavior, so this is controlled in two places instead of one)
+    intervals_panel.legend.hidden = false;
+    intervals_layout.always_hide_legend = false;
+
     // Add a track information button to the intervals panel
-    layout.panels[1].dashboard.components.push({
+    intervals_panel.dashboard.components.push({
         type: "menu",
         color: "yellow",
         position: "right",

@@ -29,78 +29,18 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // Apply the arguments to set LocusZoom.DataLayer as the prototype
     LocusZoom.DataLayer.apply(this, arguments);
 
-    // Reimplement the positionTooltip() method to be scatter-specific
-    this.positionTooltip = function(id) {
-        if (typeof id != 'string') {
-            throw new Error('Unable to position tooltip: id is not a string');
-        }
-        if (!this.tooltips[id]) {
-            throw new Error('Unable to position tooltip: id does not point to a valid tooltip');
-        }
-        var top, left, arrow_type, arrow_top, arrow_left;
-        var tooltip = this.tooltips[id];
-        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
-        var offset = Math.sqrt(point_size / Math.PI);
-        var arrow_width = 7; // as defined in the default stylesheet
-        var stroke_width = 1; // as defined in the default stylesheet
-        var border_radius = 6; // as defined in the default stylesheet
-        var page_origin = this.getPageOrigin();
+    // Implement tooltip position to be layer-specific
+    this._getTooltipPosition = function (tooltip) {
         var x_center = this.parent.x_scale(tooltip.data[this.layout.x_axis.field]);
         var y_scale  = 'y' + this.layout.y_axis.axis + '_scale';
         var y_center = this.parent[y_scale](tooltip.data[this.layout.y_axis.field]);
-        var tooltip_box = tooltip.selector.node().getBoundingClientRect();
-        var data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-        var data_layer_width = this.parent.layout.width - (this.parent.layout.margin.left + this.parent.layout.margin.right);
-        if (this.layout.tooltip_positioning === 'vertical') {
-            // Position horizontally centered above the point
-            var offset_right = Math.max((tooltip_box.width / 2) - x_center, 0);
-            var offset_left = Math.max((tooltip_box.width / 2) + x_center - data_layer_width, 0);
-            left = page_origin.x + x_center - (tooltip_box.width / 2) - offset_left + offset_right;
-            arrow_left = (tooltip_box.width / 2) - (arrow_width / 2) + offset_left - offset_right - offset;
-            // Position vertically above the point unless there's insufficient space, then go below
-            if (tooltip_box.height + stroke_width + arrow_width > data_layer_height - (y_center + offset)) {
-                top = page_origin.y + y_center - (offset + tooltip_box.height + stroke_width + arrow_width);
-                arrow_type = 'down';
-                arrow_top = tooltip_box.height - stroke_width;
-            } else {
-                top = page_origin.y + y_center + offset + stroke_width + arrow_width;
-                arrow_type = 'up';
-                arrow_top = 0 - stroke_width - arrow_width;
-            }
-        } else {
-            // Position horizontally on the left or the right depending on which side of the plot the point is on
-            if (x_center <= this.parent.layout.width / 2) {
-                left = page_origin.x + x_center + offset + arrow_width + stroke_width;
-                arrow_type = 'left';
-                arrow_left = -1 * (arrow_width + stroke_width);
-            } else {
-                left = page_origin.x + x_center - tooltip_box.width - offset - arrow_width - stroke_width;
-                arrow_type = 'right';
-                arrow_left = tooltip_box.width - stroke_width;
-            }
-            // Position vertically centered unless we're at the top or bottom of the plot
-            data_layer_height = this.parent.layout.height - (this.parent.layout.margin.top + this.parent.layout.margin.bottom);
-            if (y_center - (tooltip_box.height / 2) <= 0) { // Too close to the top, push it down
-                top = page_origin.y + y_center - (1.5 * arrow_width) - border_radius;
-                arrow_top = border_radius;
-            } else if (y_center + (tooltip_box.height / 2) >= data_layer_height) { // Too close to the bottom, pull it up
-                top = page_origin.y + y_center + arrow_width + border_radius - tooltip_box.height;
-                arrow_top = tooltip_box.height - (2 * arrow_width) - border_radius;
-            } else { // vertically centered
-                top = page_origin.y + y_center - (tooltip_box.height / 2);
-                arrow_top = (tooltip_box.height / 2) - arrow_width;
-            }
-        }
-        // Apply positions to the main div
-        tooltip.selector.style('left', left + 'px').style('top', top + 'px');
-        // Create / update position on arrow connecting tooltip to data
-        if (!tooltip.arrow) {
-            tooltip.arrow = tooltip.selector.append('div').style('position', 'absolute');
-        }
-        tooltip.arrow
-            .attr('class', 'lz-data_layer-tooltip-arrow_' + arrow_type)
-            .style('left', arrow_left + 'px')
-            .style('top', arrow_top + 'px');
+        var point_size = this.resolveScalableParameter(this.layout.point_size, tooltip.data);
+        var offset = Math.sqrt(point_size / Math.PI);
+
+        return {
+            x_min: x_center - offset, x_max: x_center + offset,
+            y_min: y_center - offset, y_max: y_center + offset,
+        };
     };
 
     // Function to flip labels from being anchored at the start of the text to the end
@@ -108,6 +48,7 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
     // pass on recursive separation
     this.flip_labels = function() {
         var data_layer = this;
+        // Base positions on the default point size (which is what resolve scalable param returns if no data provided)
         var point_size = data_layer.resolveScalableParameter(data_layer.layout.point_size, {});
         var spacing = data_layer.layout.label.spacing;
         var handle_lines = Boolean(data_layer.layout.label.lines);
@@ -266,21 +207,26 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
 
     // Implement the main render function
     this.render = function() {
-
+        var self = this;
         var data_layer = this;
         var x_scale = 'x_scale';
         var y_scale = 'y' + this.layout.y_axis.axis + '_scale';
 
         if (this.layout.label) {
             // Apply filters to generate a filtered data set
-            var filtered_data = this.data.filter(function(d) {
-                if (!data_layer.layout.label.filters) {
-                    return true;
-                } else {
-                    // Start by assuming a match, run through all filters to test if not a match on any one
+            var filtered_data;
+            var filters = data_layer.layout.label.filters || [];
+            if (!filters.length) {
+                filtered_data = this.data;
+            } else {
+                filtered_data = this.data.filter(function(d) {
+                    // Start by assuming a match (base case = no filters).
+                    // Test each filters: ALL must be satisfied for match to occur.
                     var match = true;
-                    data_layer.layout.label.filters.forEach(function(filter) {
-                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d);
+                    filters.forEach(function(filter) {
+                        var extra = self.layer_state.extra_fields[self.getElementId(d)];
+                        var field_value = (new LocusZoom.Data.Field(filter.field)).resolve(d, extra);
+
                         if (['!=', '='].indexOf(filter.operator) === -1 && isNaN(field_value)) {
                             // If the filter can only be used with numbers, then the value must be numeric.
                             match = false;
@@ -314,10 +260,10 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
                         }
                     });
                     return match;
-                }
-            });
+                });
+            }
+
             // Render label groups
-            var self = this;
             this.label_groups = this.svg.group
                 .selectAll('g.lz-data_layer-' + this.layout.type + '-label')
                 .data(filtered_data, function(d) { return d[self.layout.id_field]  + '_label'; });
@@ -393,58 +339,46 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
         // Generate main scatter data elements
         var selection = this.svg.group
             .selectAll('path.lz-data_layer-' + this.layout.type)
-            .data(this.data, function(d) { return d[this.layout.id_field]; }.bind(this));
+            .data(this.data, function(d) { return d[self.layout.id_field]; });
 
         // Create elements, apply class, ID, and initial position
         var initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
         selection.enter()
             .append('path')
             .attr('class', 'lz-data_layer-' + this.layout.type)
-            .attr('id', function(d) { return this.getElementId(d); }.bind(this))
+            .attr('id', function(d) { return self.getElementId(d); })
             .attr('transform', 'translate(0,' + initial_y + ')');
 
         // Generate new values (or functions for them) for position, color, size, and shape
         var transform = function(d) {
-            var x = this.parent[x_scale](d[this.layout.x_axis.field]);
-            var y = this.parent[y_scale](d[this.layout.y_axis.field]);
+            var x = self.parent[x_scale](d[self.layout.x_axis.field]);
+            var y = self.parent[y_scale](d[self.layout.y_axis.field]);
             if (isNaN(x)) { x = -1000; }
             if (isNaN(y)) { y = -1000; }
             return 'translate(' + x + ',' + y + ')';
-        }.bind(this);
+        };
 
-        var fill = function(d) { return this.resolveScalableParameter(this.layout.color, d); }.bind(this);
-        var fill_opacity = function(d) { return this.resolveScalableParameter(this.layout.fill_opacity, d); }.bind(this);
+        var fill = function(d, i) { return this.resolveScalableParameter(this.layout.color, d, i); }.bind(this);
+        var fill_opacity = function(d, i) { return this.resolveScalableParameter(this.layout.fill_opacity, d, i); }.bind(this);
 
         var shape = d3.svg.symbol()
-            .size(function(d) { return this.resolveScalableParameter(this.layout.point_size, d); }.bind(this))
-            .type(function(d) { return this.resolveScalableParameter(this.layout.point_shape, d); }.bind(this));
+            .size(function(d, i) { return this.resolveScalableParameter(this.layout.point_size, d, i); }.bind(this))
+            .type(function(d, i) { return this.resolveScalableParameter(this.layout.point_shape, d, i); }.bind(this));
 
-        // Apply position and color, using a transition if necessary
-
-        if (this.canTransition()) {
-            selection
-                .transition()
-                .duration(this.layout.transition.duration || 0)
-                .ease(this.layout.transition.ease || 'cubic-in-out')
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        } else {
-            selection
-                .attr('transform', transform)
-                .attr('fill', fill)
-                .attr('fill-opacity', fill_opacity)
-                .attr('d', shape);
-        }
+        // Apply position and color
+        selection
+            .attr('transform', transform)
+            .attr('fill', fill)
+            .attr('fill-opacity', fill_opacity)
+            .attr('d', shape);
 
         // Remove old elements as needed
         selection.exit().remove();
 
         // Apply default event emitters to selection
         selection.on('click.event_emitter', function(element) {
-            this.parent.emit('element_clicked', element, true);
-        }.bind(this));
+            self.parent.emit('element_clicked', element, true);
+        });
 
         // Apply mouse behaviors
         this.applyBehaviors(selection);
@@ -456,8 +390,8 @@ LocusZoom.DataLayers.add('scatter', function(layout) {
             this.separate_labels();
             // Apply default event emitters to selection
             this.label_texts.on('click.event_emitter', function(element) {
-                this.parent.emit('element_clicked', element, true);
-            }.bind(this));
+                self.parent.emit('element_clicked', element, true);
+            });
             // Extend mouse behaviors to labels
             this.applyBehaviors(this.label_texts);
         }

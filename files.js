@@ -42,8 +42,8 @@ var extensions = ["assets/js/ext/**/*.js"];
 // NOTE: Order of inclusion is important!
 var test_include = [
     "./node_modules/should/should.js",
-    ...app_build,
     ...vendor_build,
+    ...app_build,
     ...extensions
 ];
 // Since this list gets read manually, resolve the globs first
