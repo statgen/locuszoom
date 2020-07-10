@@ -4,6 +4,8 @@ LocusZoom provides some companion functionality to serve common needs, but that 
 
 Each extension must be included separately into your site, after LocusZoom.js has been loaded.
 
+To use an extension, include the relevant file via `<script>` tag in your page, or, if using a modern build pipeline, `import 'locuszoom/dist/ext/*filename*;`'.
+
 ## Dynamic URLs
 
 ### Description

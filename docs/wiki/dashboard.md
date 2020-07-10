@@ -239,7 +239,7 @@ This panel-level dashboard widget creates a button that lets the user change bet
   The display options button automatically captures the original coloring configuration for the data layer, so as to avoid duplication. This option controls what name is used to refer to that coloring configuration on the dropdown with a list of display choices.
 
 * **`fields_whitelist`** - *Array*, Optional
-  By default, the display_options dropdown knows how to control some of the most common display settings used by data layers. If your data layer has custom configuration, you can override the list of known fields, and the button will then attempt to find (or set) layout keys with matching names. If this field is omitted, the default fields that can be controlled are:   `"color", "fill_opacity", "label", "legend", "point_shape", "point_size", "tooltip", "tooltip_positioning"`.
+  By default, the display_options dropdown knows how to control some of the most common display settings used by data layers. If your data layer has custom configuration, you can override the list of known fields, and the button will then attempt to find (or set) layout keys with matching names. If this field is omitted, the default fields that can be controlled are:   `"color", "fill_opacity", "filters", "label", "legend", "point_shape", "point_size", "tooltip", "tooltip_positioning"`.
 
 * **`options`** - *Array*
   Specify a series of ways that the plot can be drawn. Each option is an object with the keys specified below.
