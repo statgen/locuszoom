@@ -1209,9 +1209,9 @@ LocusZoom.Dashboard.Components.add('display_options', function (layout) {
     // Call parent constructor
     LocusZoom.Dashboard.Component.apply(this, arguments);
 
-    // List of layout fields that this button is allowed to control. This ensures that we don't override any other
+    // Whitelist of layout fields that this button is allowed to control. This ensures that we don't override any other
     //  information (like plot height etc) while changing point rendering
-    var allowed_fields = layout.fields_whitelist || ['color', 'fill_opacity', 'label', 'legend',
+    var allowed_fields = layout.fields_whitelist || ['color', 'filters', 'fill_opacity', 'label', 'legend',
         'point_shape', 'point_size', 'tooltip', 'tooltip_positioning'];
 
     var dataLayer = this.parent_panel.data_layers[layout.layer_name];

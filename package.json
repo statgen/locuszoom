@@ -1,6 +1,6 @@
 {
   "name": "locuszoom",
-  "version": "0.11.0-beta.1",
+  "version": "0.11.0",
   "description": "Generate interactive visualizations of statistical genetic data",
   "keywords": [
     "visualization",
@@ -28,6 +28,7 @@
   },
   "scripts": {
     "build": "gulp build",
+    "docs": "pandoc -s --toc --css css/pandoc.css assets/docs/layout_tutorial.md -o docs/layout_tutorial.html",
     "test": "gulp test",
     "lint": "gulp lint",
     "watch": "gulp watch"

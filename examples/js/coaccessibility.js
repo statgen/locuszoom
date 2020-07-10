@@ -7,8 +7,8 @@ function dega_bed_parser(line, index) {
     var fields = line.split('\t');
     var chrom = fields[0].replace('chr', '');
 
-    // assume format chr1:123-456_GENE or chr1:123-456
-    var second_item = fields[3].match(/chr(\d+):(\d+)-(\d+)(_(\w+))?/);
+    // assume format chr1:123-456_GENE or chr1:123-456 (chr prefix optional)
+    var second_item = fields[3].match(/^(?:chr)?(\d+):(\d+)-(\d+)(?:_)?(\S+)?$/);
     var score = fields[4];
     score = (score === '.') ? null : +score;
     return {
