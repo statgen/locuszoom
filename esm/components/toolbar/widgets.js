@@ -1184,7 +1184,7 @@ class DisplayOptions extends BaseWidget {
 
         // List of layout fields that this button is allowed to control. This ensures that we don't override any other
         //  information (like plot height etc) while changing point rendering
-        const allowed_fields = layout.fields_whitelist || ['color', 'fill_opacity', 'label', 'legend',
+        const allowed_fields = layout.fields_whitelist || ['color', 'fill_opacity', 'filters', 'label', 'legend',
             'point_shape', 'point_size', 'tooltip', 'tooltip_positioning'];
 
         const dataLayer = this.parent_panel.data_layers[layout.layer_name];

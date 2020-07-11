@@ -116,6 +116,42 @@
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
     var loop_panel = layout.panels[0];
     loop_panel.title =  { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
+    loop_panel.dashboard.components.push({
+            type: 'display_options',
+            position: 'right',
+            button_html: 'Score Filter',
+            button_title: 'Control how plot items are displayed',
+            layer_name: 'coaccessibility',
+            options: [{
+                display_name: '0 - 0.25',
+                display: {
+                    filters: [
+                        ['access:score', '>=', 0.0],
+                        ['access:score', '<=', 0.25],
+                    ]
+                }
+            },
+            {
+                display_name: '0.25 - 0.5',
+                display: {
+                    filters: [
+                        ['access:score', '>=', 0.25],
+                        ['access:score', '<=', 0.5],
+                    ]
+                }
+            },
+            {
+                display_name: '0.5 - 1.0',
+                display: {
+                    filters: [
+                        ['access:score', '>=', 0.5],
+                        ['access:score', '<=', 1.0],
+                    ]
+                }
+            },
+            ]
+        });
+
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
     window.plot = LocusZoom.populate("#lz-plot", data_sources, layout);
