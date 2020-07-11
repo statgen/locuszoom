@@ -14,8 +14,9 @@
   ],
   "homepage": "http://locuszoom.org",
   "license": "MIT",
-  "author": "Christopher Clark <chriclrk@umich.edu>",
+  "author": "University of Michigan Center for Statistical Genetics",
   "contributors": [
+    "Christopher Clark",
     "Matthew Flickinger",
     "Ryan Welch",
     "Peter VandeHaar",
@@ -29,7 +30,7 @@
     "url": "https://github.com/statgen/locuszoom.git"
   },
   "scripts": {
-    "test": "mocha --recursive test/**/*.js",
+    "test": "mocha --recursive test",
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
