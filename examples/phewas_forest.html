@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
     <!-- Necessary includes for LocusZoom.js -->
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
 
@@ -59,7 +59,7 @@
         LocusZoom.Layouts.add("plot", "phewas_forest", {
             width: 800,
             height: 800,
-            responsive_resize: 'both',
+            responsive_resize: true,
             panels: [
                 {
                     id: "phewasforest",
@@ -68,8 +68,8 @@
                     proportional_width: 1,
                     margin: { top: 35, right: 220, bottom: 50, left: 20 },
                     inner_border: "rgba(210, 210, 210, 0.85)",
-                    dashboard: {
-                        components: [{
+                    toolbar: {
+                        widgets: [{
                             type: "toggle_legend",
                             position: "left"
                         }]

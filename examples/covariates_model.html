@@ -8,11 +8,11 @@
 
     <!-- Necessary includes for LocusZoom.js -->
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
 
     <!-- Helpers that use the external library to add functionality to LocusZoom -->
-    <script src="../dist/ext/lz-dashboard-addons.min.js" type="application/javascript"></script>
+    <script src="../dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Covariates Model Example</title>
 
@@ -68,7 +68,7 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-      .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
@@ -88,15 +88,15 @@
     layout.panels[0].data_layers[2].tooltip.html = "<strong>{{assoc:variant|htmlescape}}</strong><br>"
                                                  + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
                                                  + "Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>"
-                                                 + "<a href=\"javascript:void(0);\" onclick=\"LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));\">Add to Model</a><br>";
+                                                 + "<a href=\"javascript:void(0);\" onclick=\"this.parentNode.__data__.getPlot().CovariatesModel.add(this.parentNode.__data__);\">Add to Model</a><br>";
 
-    // Add covariates model button/menu to the plot-level dashboard
-    layout.dashboard.components.push({
+    // Add covariates model button/menu to the plot-level toolbar
+    layout.toolbar.widgets.push({
         type: "covariates_model",
         button_html: "Model",
         button_title: "Use this feature to interactively build a model using variants from the data set",
         position: "left"
-    }, LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
+    });
 
     // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);

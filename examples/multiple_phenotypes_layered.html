@@ -8,11 +8,11 @@
 
     <!-- Necessary includes for LocusZoom.js -->
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+   <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
 
     <!-- Helpers that use the external library to add functionality to LocusZoom -->
-    <script src="../dist/ext/lz-dashboard-addons.min.js" type="application/javascript"></script>
+    <script src="../dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
 
     <title>LocusZoom.js ~ Multiple Phenotypes (Layered) Example</title>
 
@@ -79,9 +79,9 @@
             LocusZoom.Layouts.get("data_layer", "significance", { name: "Line of GWAS Significance" }),
             LocusZoom.Layouts.get("data_layer", "recomb_rate", { namespace: { "recomb": "recomb" }, name: "Recombination Rate" })
         ],
-        dashboard: LocusZoom.Layouts.get("panel", "association")["dashboard"]
+        toolbar: LocusZoom.Layouts.get("panel", "association")["toolbar"]
     };
-    association_panel_mods.dashboard.components.push({
+    association_panel_mods.toolbar.widgets.push({
         type: "data_layers",
         position: "right",
         statuses: ["faded", "hidden"]
@@ -89,12 +89,12 @@
     layout = {
         width: 800,
         height: 500,
-        responsive_resize: 'both',
+        responsive_resize: true,
         panels: [
             LocusZoom.Layouts.get("panel", "association", association_panel_mods),
             LocusZoom.Layouts.get("panel", "genes", { namespace: { "gene": "gene" } })
         ],
-        dashboard: LocusZoom.Layouts.get("dashboard","region_nav_plot")
+        toolbar: LocusZoom.Layouts.get("toolbar","standard_plot")
     };
 
     // Define a set of studies/phenotypes and loop through them to add a data source and data layer for each one

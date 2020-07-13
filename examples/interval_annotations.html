@@ -8,7 +8,7 @@
 
     <!-- Necessary includes for LocusZoom.js -->
     <link rel="stylesheet" href="../dist/locuszoom.css" type="text/css"/>
-    <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+   <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
     <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
 
     <!-- Helpers that use the external library to add functionality to LocusZoom -->
@@ -67,7 +67,7 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     var data_sources = new LocusZoom.DataSources()
       .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-      .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 19} }])
@@ -75,9 +75,6 @@
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
     layout = LocusZoom.Layouts.get("plot", "interval_association");
-    // Allow users to select custom LD population. This button isn't part of the builtin LocusZoom layouts because not
-    //  everyone uses the UM 1000G LDServer (LDLZ2 datasource)
-    layout.dashboard.components.push(LocusZoom.Layouts.get('dashboard_components', 'ldlz2_pop_selector'));
 
     // Modify the association panel: custom "label point" tooltip option + add the required filters directive
     var assoc_layer = layout.panels[0].data_layers[2];
@@ -111,7 +108,7 @@
     intervals_layout.always_hide_legend = false;
 
     // Add a track information button to the intervals panel
-    intervals_panel.dashboard.components.push({
+    intervals_panel.toolbar.widgets.push({
         type: "menu",
         color: "yellow",
         position: "right",
