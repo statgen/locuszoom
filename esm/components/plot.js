@@ -216,6 +216,7 @@ class Plot {
             'element_selection': [], // Element becomes active (only)
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
             'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
+            'region_changed': [], // The viewing region (chr/start/end) has been changed
             'state_changed': [],  // Only triggered when a state change causes rerender
         };
 
@@ -610,6 +611,17 @@ class Plot {
                 this.emit('layout_changed');
                 this.emit('data_rendered');
                 this.emit('state_changed', state_changes);
+
+                // An interesting quirk of region changing in LZ: the final region is not always the same as the requested region
+                //   (example: zoom out beyond max, or request non-integer position)
+                // Echo the actual plot region as the final source of truth
+                const { chr, start, end } = this.state;
+                const position_changed = Object.keys(state_changes)
+                    .some((key) => ['chr', 'start', 'end'].includes(key));
+
+                if (position_changed) {
+                    this.emit('region_changed', { chr, start, end });
+                }
 
                 this.loading_data = false;
 

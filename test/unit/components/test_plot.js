@@ -551,72 +551,99 @@ describe('LocusZoom.Plot', function() {
         });
     });
 
-    describe('allows communication between layers via match events', function () {
-        beforeEach(function() {
-            this.plot = null;
-            const first_source_data = [{ id: 'a', x: 0, y: false }, { id: 'b', x: 1, y: true }];
-            const data_sources = new DataSources()
-                .add('s', ['StaticJSON', first_source_data]);
-            this.layout = {
-                panels: [
-                    {
-                        id: 'p',
-                        data_layers: [
-                            {
-                                id: 'd1',
-                                id_field: 's:id',
-                                type: 'scatter',
-                                fields: ['s:id', 's:x'],
-                                match: { send: 's:x', receive: 's:x' },
-                            },
-                            {
-                                id: 'd2',
-                                id_field: 's:id',
-                                type: 'scatter',
-                                fields: ['s:id', 's:x', 's:y'],
-                            },
-                            {
-                                id: 'd3',
-                                id_field: 's:id',
-                                type: 'scatter',
-                                fields: ['s:id', 's:y'],
-                                match: { receive: 's:y' },
-                            },
-                        ],
-                    },
-                ],
-            };
+    describe('fires off various events in response to actions', function () {
+        describe('region_changed event describes exact region change', function () {
             d3.select('body').append('div').attr('id', 'plot');
-            this.plot = populate('#plot', data_sources, this.layout);
+            const layout = {
+                panels: [{ id: 'panel0' }],
+            };
+            const data_sources = new DataSources();
+            const plot = populate('#plot', data_sources, layout);
+            // Test should cover a behavior where the requested state is slightly different than the exact state
+            const requested_state = { chr: 'X', start: 1000.1, end: 50000.1, extra_thing: 'hi' };
+            const expected_state = {chr: 'X', start: 1000, end: 50000 };
+
+            const state_spy = sinon.spy((e) => e);
+            const region_spy = sinon.spy((e) => e);
+            plot.on('state_changed', state_spy);
+            plot.on('region_changed', region_spy);
+
+            return plot.applyState(requested_state).then(function() {
+                assert(state_spy.called);
+                assert(state_spy.calledWith(requested_state));
+
+                assert(region_spy.called);
+                assert(region_spy.calledWith(expected_state));
+            });
         });
 
-        afterEach(function() {
-            d3.select('#plot').remove();
-            delete this.plot;
-        });
-
-        it('notifies all layers to find matches when an event fires', function () {
-            // This is the end result of triggering a match event, and lets us test after render promise complete
-            const plot = this.plot;
-            return this.plot.applyState({ lz_match_value: 0 }).then(function() {
-
-                const get_matches = function (data) {
-                    return data.map(function (item) {
-                        return item.lz_highlight_match;
-                    });
+        describe('allows communication between layers via match events', function () {
+            beforeEach(function() {
+                this.plot = null;
+                const first_source_data = [{ id: 'a', x: 0, y: false }, { id: 'b', x: 1, y: true }];
+                const data_sources = new DataSources()
+                    .add('s', ['StaticJSON', first_source_data]);
+                this.layout = {
+                    panels: [
+                        {
+                            id: 'p',
+                            data_layers: [
+                                {
+                                    id: 'd1',
+                                    id_field: 's:id',
+                                    type: 'scatter',
+                                    fields: ['s:id', 's:x'],
+                                    match: { send: 's:x', receive: 's:x' },
+                                },
+                                {
+                                    id: 'd2',
+                                    id_field: 's:id',
+                                    type: 'scatter',
+                                    fields: ['s:id', 's:x', 's:y'],
+                                },
+                                {
+                                    id: 'd3',
+                                    id_field: 's:id',
+                                    type: 'scatter',
+                                    fields: ['s:id', 's:y'],
+                                    match: { receive: 's:y' },
+                                },
+                            ],
+                        },
+                    ],
                 };
-                const d1 = get_matches(plot.panels.p.data_layers.d1.data);
-                const d2 = get_matches(plot.panels.p.data_layers.d2.data);
-                const d3 = get_matches(plot.panels.p.data_layers.d3.data);
+                d3.select('body').append('div').attr('id', 'plot');
+                this.plot = populate('#plot', data_sources, this.layout);
+            });
 
-                assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
-                assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
-                assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+            afterEach(function() {
+                d3.select('#plot').remove();
+                delete this.plot;
+            });
+
+            it('notifies all layers to find matches when an event fires', function () {
+                // This is the end result of triggering a match event, and lets us test after render promise complete
+                const plot = this.plot;
+                return this.plot.applyState({ lz_match_value: 0 }).then(function() {
+
+                    const get_matches = function (data) {
+                        return data.map(function (item) {
+                            return item.lz_highlight_match;
+                        });
+                    };
+                    const d1 = get_matches(plot.panels.p.data_layers.d1.data);
+                    const d2 = get_matches(plot.panels.p.data_layers.d2.data);
+                    const d3 = get_matches(plot.panels.p.data_layers.d3.data);
+
+                    assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
+                    assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
+                    assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+                });
             });
         });
     });
 
-    describe('Update State Positions', function() {
+    describe('Update State Positions (helper function)', function() {
         it('should do nothing if passed a state with no predicted rules / structure', function() {
             let state = { foo: 'bar' };
             state = _updateStatePosition(state);
