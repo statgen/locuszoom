@@ -1,6 +1,8 @@
 /**
  * Optional LocusZoom extension: must be included separately, and after LocusZoom has been loaded
  *
+ * This plugin exports helper functions, but does not modify the global registry. It does not require `LocusZoom.use`.
+ *
  * Demonstrates a mechanism by which the plot can be loaded to a specific initial state based on the URL query string
  *  (and, optionally, to update the URL bar when the plot state changes, with back button support)
  *

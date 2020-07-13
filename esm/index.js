@@ -42,6 +42,9 @@ const LocusZoom = {
  * @param {Object} LocusZoom The global LocusZoom object
  */
 
+
+const INSTALLED_PLUGINS = [];
+
 /**
  *
  * @param {pluginCallback} plugin The plugin should be a module that exports the function as either the default export,
@@ -50,6 +53,11 @@ const LocusZoom = {
  */
 LocusZoom.use = function(plugin, ...args) {
     // Deliberately similar implementation to Vue.js .use() plugin system
+    if (INSTALLED_PLUGINS.includes(plugin)) {
+        // Avoid double-installation of a plugin
+        return;
+    }
+
     args.unshift(LocusZoom); // All plugins are passed a reference to LocusZoom object
     if (typeof plugin.install === 'function') {
         plugin.install.apply(plugin, args);
@@ -58,6 +66,7 @@ LocusZoom.use = function(plugin, ...args) {
     } else {
         throw new Error('Plugin must export a function that receives the LocusZoom object as an argument');
     }
+    INSTALLED_PLUGINS.push(plugin);
 };
 
 
