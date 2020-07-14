@@ -1,15 +1,6 @@
 {
   "env": {
-    "es6": true,
-    "node": true,
+    "browser": true,
     "mocha": true
-  },
-  "globals": {
-    "assert": false,
-    "d3": false,
-    "LocusZoom": false,
-    "Promise": false,
-    "should": false,
-    "sinon": false
   }
 }

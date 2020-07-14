@@ -1,5 +1,11 @@
 {
   "globals": {
     "LocusZoom": false
+  },
+  "rules": {
+    "prefer-template": "off"
+  },
+  "env": {
+    "browser": true
   }
 }
