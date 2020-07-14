@@ -68,7 +68,7 @@ class Line extends BaseDataLayer {
         }
 
         // Apply line and style
-        selection
+        selection.merge(this.path)
             .attr('d', line)
             .call(applyStyles, this.layout.style);
 

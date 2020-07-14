@@ -116,7 +116,7 @@
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
     var loop_panel = layout.panels[0];
     loop_panel.title =  { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
-    loop_panel.dashboard.components.push({
+    loop_panel.toolbar.widgets.push({
             type: 'display_options',
             position: 'right',
             button_html: 'Score Filter',
