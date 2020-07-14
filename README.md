@@ -19,7 +19,7 @@ and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#
 The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory:
 
 * `d3.js`  
-  [D3.js](https://d3js.org/) v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded [via a CDN](`locuszoom.app.min.js`). It must be present before LocusZoom is loaded.
+  [D3.js](https://d3js.org/) v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded [via a CDN](https://cdn.jsdelivr.net/npm/d3@^5.16.0). It must be present before LocusZoom is loaded.
 
 * `locuszoom.app.min.js`  
   This is the primary application logic. It should only be included *after* the vendor dependencies have been included.  
