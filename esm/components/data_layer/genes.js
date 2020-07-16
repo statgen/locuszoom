@@ -252,9 +252,7 @@ class Genes extends BaseDataLayer {
                 const boundary_fill = (d, i) => self.resolveScalableParameter(self.layout.color, d, i);
                 const boundary_stroke = (d, i) => self.resolveScalableParameter(self.layout.stroke, d, i);
                 const boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
-                    .data([gene], (d) => `${d.gene_name}_boundary`)
-                    .style('fill', boundary_fill)
-                    .style('stroke', boundary_stroke);
+                    .data([gene], (d) => `${d.gene_name}_boundary`);
 
                 width = (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 height = 1;
@@ -274,7 +272,9 @@ class Genes extends BaseDataLayer {
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
-                    .attr('y', y);
+                    .attr('y', y)
+                    .style('fill', boundary_fill)
+                    .style('stroke', boundary_stroke);
 
                 boundaries.exit()
                     .remove();

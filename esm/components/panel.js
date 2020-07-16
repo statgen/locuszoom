@@ -1034,9 +1034,7 @@ class Panel {
         // Establish panel background drag interaction mousedown event handler (on the panel background)
         if (this.layout.interaction.drag_background_to_pan) {
             const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
-            const mousedown = () => {
-                this.parent.startDrag(this, 'background');
-            };
+            const mousedown = () => this.parent.startDrag(this, 'background');
             this.svg.container.select('.lz-panel-background')
                 .on(`mousedown${namespace}.background`, mousedown)
                 .on(`touchstart${namespace}.background`, mousedown);
@@ -1403,8 +1401,10 @@ class Panel {
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
                     .on(`mouseover${namespace}`, tick_mouseover)
                     .on(`mouseout${namespace}`, function() {
-                        d3.select(this).style('font-weight', 'normal');
-                        d3.select(this).on(`keydown${namespace}`, null).on(`keyup${namespace}`, null);
+                        d3.select(this)
+                            .style('font-weight', 'normal')
+                            .on(`keydown${namespace}`, null)
+                            .on(`keyup${namespace}`, null);
                     })
                     .on(`mousedown${namespace}`, () => {
                         this.parent.startDrag(this, `${axis}_tick`);

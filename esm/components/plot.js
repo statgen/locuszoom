@@ -199,9 +199,9 @@ class Plot {
         /**
          * Track global event listeners that are used by LZ. This allows cleanup of listeners when plot is destroyed.
          * @private
-         * @member {Map}
+         * @member {Map} A nested hash of entries: { parent: {event_name: [listeners] } }
          */
-        this._window_listeners = new Map();
+        this._external_listeners = new Map();
 
         /**
          * Known event hooks that the panel can respond to
@@ -629,26 +629,41 @@ class Plot {
     }
 
     /**
-     * Keep a record of window-level event listeners used by the plot.
+     * Keep a record of event listeners that are defined outside of the LocusZoom boundary (and therefore would not
+     *  get cleaned up when the plot was removed from the DOM). For example, window resize or mouse events.
      * This allows safe cleanup of the plot on removal from the page
+     * @param {Node} target The node on which the listener has been defined
+     * @param {String} event_name
+     * @param {function} listener The handle for the event listener to be cleaned up
      */
-    trackWindowListener(event_name, listener) {
-        const tracker = this._window_listeners.get(event_name) || [];
+    trackExternalListener(target, event_name, listener) {
+        if (!this._external_listeners.has(target)) {
+            this._external_listeners.set(target, new Map());
+        }
+        const container = this._external_listeners.get(target);
+
+        const tracker = container.get(event_name) || [];
         if (!tracker.includes(listener)) {
             tracker.push(listener);
         }
-        this._window_listeners.set(event_name, tracker);
+        container.set(event_name, tracker);
     }
 
     /**
      * Remove the plot from the page, and clean up any globally registered event listeners
+     *
+     * Internally, the plot retains references to some nodes via selectors; it may be useful to delete the plot
+     *  instance after calling this method
      */
     destroy() {
-        for (let [event_name, listeners] of this._window_listeners.entries()) {
-            for (let listener of listeners) {
-                window.removeEventListener(event_name, listener);
+        for (let [target, registered_events] of this._external_listeners.entries()) {
+            for (let [event_name, listeners] of registered_events) {
+                for (let listener of listeners) {
+                    target.removeEventListener(event_name, listener);
+                }
             }
         }
+
         // Clear the SVG, plus other HTML nodes (like toolbar) that live under the same parent
         const parent = this.svg.node().parentNode;
         if (!parent) {
@@ -663,6 +678,9 @@ class Plot {
         parent.outerHTML = parent.outerHTML;
 
         this.initialized = false;
+
+        this.svg = null;
+        this.panels = null;
     }
 
     /******* The private interface: methods only used by LocusZoom internals */
@@ -800,13 +818,13 @@ class Plot {
         if (this.layout.responsive_resize) {
             const resize_listener = () => this.rescaleSVG();
             window.addEventListener('resize', resize_listener);
-            this.trackWindowListener('resize', resize_listener);
+            this.trackExternalListener(window, 'resize', resize_listener);
 
             // Forcing one additional setDimensions() call after the page is loaded clears up
             // any disagreements between the initial layout and the loaded responsive container's size
             const load_listener = () => this.setDimensions();
             window.addEventListener('load', load_listener);
-            this.trackWindowListener('load', load_listener);
+            this.trackExternalListener(window, 'load', load_listener);
         }
 
         // Add panels
@@ -1143,15 +1161,16 @@ class Plot {
 
         // Show panel boundaries stipulated by the layout (basic toggle, only show on mouse over plot)
         if (this.layout.panel_boundaries) {
-            d3.select(this.svg.node().parentNode).on(`mouseover.${this.id}.panel_boundaries`, () => {
-                clearTimeout(this.panel_boundaries.hide_timeout);
-                this.panel_boundaries.show();
-            });
-            d3.select(this.svg.node().parentNode).on(`mouseout.${this.id}.panel_boundaries`, () => {
-                this.panel_boundaries.hide_timeout = setTimeout(() => {
-                    this.panel_boundaries.hide();
-                }, 300);
-            });
+            d3.select(this.svg.node().parentNode)
+                .on(`mouseover.${this.id}.panel_boundaries`, () => {
+                    clearTimeout(this.panel_boundaries.hide_timeout);
+                    this.panel_boundaries.show();
+                })
+                .on(`mouseout.${this.id}.panel_boundaries`, () => {
+                    this.panel_boundaries.hide_timeout = setTimeout(() => {
+                        this.panel_boundaries.hide();
+                    }, 300);
+                });
         }
 
         // Create the toolbar object and immediately show it
@@ -1204,10 +1223,14 @@ class Plot {
 
         // Add an extra namespaced mouseup handler to the containing body, if there is one
         // This helps to stop interaction events gracefully when dragging outside of the plot element
-        if (!d3.select('body').empty()) {
-            d3.select('body')
-                .on(`mouseup${namespace}`, mouseup)
-                .on(`touchend${namespace}`, mouseup);
+        const body_selector = d3.select('body');
+        const body_node = body_selector.node();
+        if (body_node) {
+            body_node.addEventListener('mouseup', mouseup);
+            body_node.addEventListener('touchend', mouseup);
+
+            this.trackExternalListener(body_node, 'mouseup', mouseup);
+            this.trackExternalListener(body_node, 'touchend', mouseup);
         }
 
         this.on('match_requested', (eventData) => {
@@ -1235,7 +1258,7 @@ class Plot {
      * Register interactions along the specified axis, provided that the target panel allows interaction.
      * @private
      * @param {Panel} panel
-     * @param {('x_tick'|'y1_tick'|'y2_tick')} method The direction (axis) along which dragging is being performed.
+     * @param {('background'|'x_tick'|'y1_tick'|'y2_tick')} method The direction (axis) along which dragging is being performed.
      * @returns {Plot}
      */
     startDrag(panel, method) {
@@ -1325,7 +1348,6 @@ class Plot {
         case 'y1_tick':
         case 'y2_tick':
             if (this.interaction.dragging.dragged_y !== 0) {
-                // TODO: Hardcoded assumption of only two possible axes with single-digit #s (switch/case)
                 const y_axis_number = parseInt(this.interaction.dragging.method[1]);
                 overrideAxisLayout('y', y_axis_number, panel[`y${y_axis_number}_extent`]);
             }
