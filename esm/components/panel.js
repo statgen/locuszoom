@@ -699,8 +699,8 @@ class Panel {
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }, 500);
             };
-            this.zoom_listener = d3.zoom();
-            this.svg.container.call(this.zoom_listener)
+            // FIXME: Consider moving back to d3.zoom and rewriting drag + zoom to use behaviors.
+            this.svg.container
                 .on('wheel.zoom', zoom_handler)
                 .on('mousewheel.zoom', zoom_handler)
                 .on('DOMMouseScroll.zoom', zoom_handler);
