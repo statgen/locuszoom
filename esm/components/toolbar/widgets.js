@@ -909,7 +909,7 @@ class RemovePanel extends BaseWidget {
             .setHtml('×')
             .setTitle('Remove panel')
             .setOnclick(() => {
-                if (!this.layout.suppress_confirm && !confirm('Are you sure you want to remove this panel? This cannot be undone!')) {
+                if (!this.layout.suppress_confirm && !confirm('Are you sure you want to remove this panel? This cannot be undone.')) {
                     return false;
                 }
                 const panel = this.parent_panel;

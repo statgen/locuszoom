@@ -49,9 +49,10 @@ function _updateStatePosition(new_state, layout) {
     // If a "chr", "start", and "end" are present then resolve start and end
     // to numeric values that are not decimal, negative, or flipped
     let validated_region = false;
+    let attempted_midpoint = null;
+    let attempted_scale;
     if (typeof new_state.chr != 'undefined' && typeof new_state.start != 'undefined' && typeof new_state.end != 'undefined') {
         // Determine a numeric scale and midpoint for the attempted region,
-        var attempted_midpoint = null; var attempted_scale;
         new_state.start = Math.max(parseInt(new_state.start), 1);
         new_state.end = Math.max(parseInt(new_state.end), 1);
         if (isNaN(new_state.start) && isNaN(new_state.end)) {
@@ -569,13 +570,13 @@ class Plot {
 
         // Track what parameters will be modified. For bounds checking, we must take some preset values into account.
         let mods = { chr: this.state.chr, start: this.state.start, end: this.state.end };
-        for (var property in state_changes) {
+        for (let property in state_changes) {
             mods[property] = state_changes[property];
         }
         mods = _updateStatePosition(mods, this.layout);
 
         // Apply new state to the actual state
-        for (property in mods) {
+        for (let property in mods) {
             this.state[property] = mods[property];
         }
 
@@ -995,8 +996,10 @@ class Plot {
 
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].setDimensions(this.layout.width * this.panels[panel_id].layout.proportional_width,
-                                                this.layout.height * this.panels[panel_id].layout.proportional_height);
+            this.panels[panel_id].setDimensions(
+                this.layout.width * this.panels[panel_id].layout.proportional_width,
+                this.layout.height * this.panels[panel_id].layout.proportional_height
+            );
         });
 
         return this;
@@ -1246,7 +1249,7 @@ class Plot {
         // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
         // positioning. TODO: make this additional call unnecessary.
         const client_rect = this.svg.node().getBoundingClientRect();
-        var width = client_rect.width ? client_rect.width : this.layout.width;
+        const width = client_rect.width ? client_rect.width : this.layout.width;
         const height = client_rect.height ? client_rect.height : this.layout.height;
         this.setDimensions(width, height);
 

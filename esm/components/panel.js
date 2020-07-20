@@ -1044,7 +1044,7 @@ class Panel {
     }
 
     /**
-     * Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+     * Refresh the sort order of all data layers (called by data layer moveForward and moveBack methods)
      * @private
      */
     resortDataLayers() {

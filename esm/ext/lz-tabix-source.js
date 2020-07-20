@@ -13,6 +13,8 @@ import tabix from 'tabix-reader';
 
 
 function install(LocusZoom) {
+    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+
     /**
      * Custom data source that loads data from a remote Tabix file (if the file host has been configured with proper
      *  CORS and Range header support- most hosts do not do that by default).
@@ -22,8 +24,6 @@ function install(LocusZoom) {
      * @param {String} init.params.fields.log_pvalue The name of the field containing pvalue information
      * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%)
      */
-    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
-
     class TabixUrlSource extends BaseAdapter {
         /**
          * @param {Object} init

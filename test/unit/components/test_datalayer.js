@@ -39,21 +39,21 @@ describe('LocusZoom.DataLayer', function () {
         it('should have a chainable method for moving layers up that stops at the top', function () {
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
-            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            this.plot.panels.panel0.data_layers.layerB.moveForward();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
-            this.plot.panels.panel0.data_layers.layerB.moveUp();
+            this.plot.panels.panel0.data_layers.layerB.moveForward();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 2);
 
-            this.plot.panels.panel0.data_layers.layerB.moveUp().moveUp();
+            this.plot.panels.panel0.data_layers.layerB.moveForward().moveForward();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerD', 'layerB']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 3);
@@ -63,21 +63,21 @@ describe('LocusZoom.DataLayer', function () {
         it('should have a chainable method for moving layers down that stops at the bottom', function () {
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerB', 'layerC', 'layerD']);
 
-            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            this.plot.panels.panel0.data_layers.layerC.moveBack();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerA', 'layerC', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
-            this.plot.panels.panel0.data_layers.layerC.moveDown();
+            this.plot.panels.panel0.data_layers.layerC.moveBack();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);
             assert.equal(this.plot.panels.panel0.data_layers.layerC.layout.z_index, 0);
             assert.equal(this.plot.panels.panel0.data_layers.layerD.layout.z_index, 3);
 
-            this.plot.panels.panel0.data_layers.layerC.moveDown().moveDown();
+            this.plot.panels.panel0.data_layers.layerC.moveBack().moveBack();
             assert.deepEqual(this.plot.panels.panel0.data_layer_ids_by_z_index, ['layerC', 'layerA', 'layerB', 'layerD']);
             assert.equal(this.plot.panels.panel0.data_layers.layerA.layout.z_index, 1);
             assert.equal(this.plot.panels.panel0.data_layers.layerB.layout.z_index, 2);

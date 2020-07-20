@@ -179,11 +179,11 @@ class BaseDataLayer {
     }
 
     /**
-     * Move a data layer up relative to others by z-index
+     * Move a data layer forward relative to others by z-index
      * @public
      * @returns {BaseDataLayer}
      */
-    moveUp() {
+    moveForward() {
         if (this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1]) {
             this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1];
             this.parent.data_layer_ids_by_z_index[this.layout.z_index + 1] = this.id;
@@ -193,11 +193,11 @@ class BaseDataLayer {
     }
 
     /**
-     * Move a data layer down relative to others by z-index
+     * Move a data layer back relative to others by z-index
      * @public
      * @returns {BaseDataLayer}
      */
-    moveDown() {
+    moveBack() {
         if (this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1]) {
             this.parent.data_layer_ids_by_z_index[this.layout.z_index] = this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1];
             this.parent.data_layer_ids_by_z_index[this.layout.z_index - 1] = this.id;
@@ -1384,6 +1384,8 @@ class BaseDataLayer {
 
     /**
      * Re-Map a data layer to reflect changes in the state of a plot (such as viewing region/ chromosome range)
+     *
+     * Whereas .render draws data, this method resets the panel and fetches data
      *
      * @private
      * @return {Promise}
