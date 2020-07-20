@@ -454,7 +454,7 @@ describe('Panel', function() {
             this.plot = populate('#plot', this.datasources, this.layout);
             return Promise.all(this.plot.remap_promises).then(() => {
                 assert.isDefined(this.plot.panels.p.svg.container.node().__on
-                    .find((item) => item.type === 'mousedown' && item.name === 'zoom'));
+                    .find((item) => item.type === 'wheel' && item.name === 'zoom'));
             });
         });
 
