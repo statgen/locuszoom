@@ -48,6 +48,13 @@ class BaseDataLayer {
          * @member {String}
          */
         this.id     = null;
+
+        /**
+         * The function used to filter data for display. May be overridden by an explicit programmatic filter.
+         * @private
+         */
+        this._filter_func = this.filter.bind(this);
+
         /**
          * @protected
          * @member {Panel}
@@ -142,6 +149,14 @@ class BaseDataLayer {
     }
 
     /****** Public interface: methods for external manipulation */
+
+    /**
+     * @public
+     */
+    render() {
+        throw new Error('Method must be implemented');
+    }
+
     /**
      * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
      *
@@ -226,6 +241,14 @@ class BaseDataLayer {
         }
         this.layer_state.extra_fields[id][key] = value;
         return this;
+    }
+
+    /**
+     * Select a filter function to be applied to the data
+     * @param func
+     */
+    setFilter(func) {
+        this._filter_func = func;
     }
 
     /********** Protected methods: useful in subclasses to manipulate data layer behaviors */
@@ -1051,24 +1074,6 @@ class BaseDataLayer {
     }
 
     /**
-     * @private
-     * @param filters
-     * @returns {Array}
-     */
-    filterIndexes(filters) {
-        return this.filter(filters, 'indexes');
-    }
-
-    /**
-     * @private
-     * @param filters
-     * @returns {Array}
-     */
-    filterElements(filters) {
-        return this.filter(filters, 'elements');
-    }
-
-    /**
      * Toggle a status (e.g. highlighted, selected, identified) on an element
      *
      * @private
@@ -1141,52 +1146,6 @@ class BaseDataLayer {
                 true
             );
         }
-        return this;
-    }
-
-    /**
-     * Toggle a status on elements in the data layer based on a set of filters
-     *
-     * @private
-     * @param {String} status
-     * @param {Boolean} toggle
-     * @param {Array} filters
-     * @param {Boolean} exclusive
-     * @returns {BaseDataLayer}
-     */
-    setElementStatusByFilters(status, toggle, filters, exclusive) {
-
-        // Sanity check
-        if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {
-            throw new Error('Invalid status');
-        }
-        if (typeof this.layer_state.status_flags[status] == 'undefined') {
-            return this;
-        }
-        if (typeof toggle == 'undefined') {
-            toggle = true;
-        } else {
-            toggle = !!toggle;
-        }
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        if (!Array.isArray(filters)) {
-            filters = [];
-        }
-
-        // Enforce exclusivity (force all elements to have the opposite of toggle first)
-        if (exclusive) {
-            this.setAllElementStatus(status, !toggle);
-        }
-
-        // Apply statuses
-        this.filterElements(filters).forEach((element) => {
-            this.setElementStatus(status, element, toggle);
-        });
-
         return this;
     }
 
@@ -1461,58 +1420,6 @@ STATUSES.verbs.forEach((verb, idx) => {
         }
         this.setElementStatus(adjective, element, false, exclusive);
         return this;
-    };
-
-
-    /**
-     * @private
-     * @function highlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function selectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function fadeElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function hideElementsByFilters
-     */
-    // Set/unset status for arbitrarily many elements given a set of filters
-    BaseDataLayer.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
-    };
-
-    /**
-     *  @private
-     *  @function unhighlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unselectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unfadeElementsByFilters
-     */
-    /**
-     * @private
-     * @function unhideElementsByFilters
-     */
-    BaseDataLayer.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
     };
 
     /**

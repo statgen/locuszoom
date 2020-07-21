@@ -1448,20 +1448,6 @@ class Panel {
     }
 
     /**
-     * Methods to set/unset element statuses across all data layers
-     * @private
-     * @param {String} status
-     * @param {Boolean} toggle
-     * @param {Array} filters
-     * @param {Boolean} exclusive
-     */
-    setElementStatusByFilters(status, toggle, filters, exclusive) {
-        this.data_layer_ids_by_z_index.forEach((id) => {
-            this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
-        });
-    }
-
-    /**
      * Set/unset element statuses across all data layers
      * @private
      * @param {String} status
@@ -1477,57 +1463,6 @@ class Panel {
 STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
     const antiverb = `un${verb}`;
-    // Set/unset status for arbitrarily many elements given a set of filters
-
-    /**
-     * @private
-     * @function highlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function selectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function fadeElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function hideElementsByFilters
-     */
-    Panel.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
-    };
-
-    /**
-     * @private
-     * @function unhighlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unselectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unfadeElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unhideElementsByFilters
-     */
-    Panel.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
-    };
 
     // Set/unset status for all elements
     /**
