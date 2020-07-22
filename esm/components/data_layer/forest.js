@@ -53,6 +53,8 @@ class Forest extends BaseDataLayer {
 
     // Implement the main render function
     render() {
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
 
         const x_scale = 'x_scale';
         const y_scale = `y${this.layout.y_axis.axis}_scale`;
@@ -64,7 +66,7 @@ class Forest extends BaseDataLayer {
             // Generate a selection for all forest plot confidence intervals
             const ci_selection = this.svg.group
                 .selectAll('rect.lz-data_layer-forest.lz-data_layer-forest-ci')
-                .data(this.data, (d) => {
+                .data(track_data, (d) => {
                     return d[this.layout.id_field];
                 });
 
@@ -103,7 +105,7 @@ class Forest extends BaseDataLayer {
         // Generate a selection for all forest plot points
         const points_selection = this.svg.group
             .selectAll('path.lz-data_layer-forest.lz-data_layer-forest-point')
-            .data(this.data, (d) => {
+            .data(track_data, (d) => {
                 return d[this.layout.id_field];
             });
 

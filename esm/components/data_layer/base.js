@@ -15,11 +15,11 @@ import scalable from '../../registry/scalable';
  */
 const default_layout = {
     type: '',
-    fields: [],
-    x_axis: {},
-    y_axis: {},
-    // Not every layer allows this attribute, but it is available for the default implementation
-    tooltip_positioning: 'horizontal',
+    filters: null,  // Can be an array of {field, operator, value} entries
+    fields: [],  // A list of fields required for this data layer; determines output of `extractFields`
+    x_axis: {},  // Axis options vary based on data layer type
+    y_axis: {},  // Axis options vary based on data layer type
+    tooltip_positioning: 'horizontal',  // Where to draw tooltips relative to the point. Can be "vertical" or "horizontal"
 };
 
 
@@ -48,12 +48,6 @@ class BaseDataLayer {
          * @member {String}
          */
         this.id     = null;
-
-        /**
-         * The function used to filter data for display. May be overridden by an explicit programmatic filter.
-         * @private
-         */
-        this._filter_func = this.filter.bind(this);
 
         /**
          * @protected
@@ -87,6 +81,13 @@ class BaseDataLayer {
         if (this.layout.id) {
             this.id = this.layout.id;
         }
+
+        /**
+         * A user-provided function used to filter data for display. If provided, this will override any declarative
+         *  options in `layout.filters`
+         * @private
+         */
+        this._filter_func = null;
 
         // Ensure any axes defined in the layout have an explicit axis number (default: 1)
         if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') {
@@ -155,42 +156,6 @@ class BaseDataLayer {
      */
     render() {
         throw new Error('Method must be implemented');
-    }
-
-    /**
-     * Instruct this datalayer to begin tracking additional fields from data sources (does not guarantee that such a field actually exists)
-     *
-     * Custom plots can use this to dynamically extend datalayer functionality after the plot is drawn. In practice,
-     * it is usually better to define the required fields up front; this function is rarely used.
-     *
-     *  (since removing core fields may break layer functionality, there is presently no hook for the inverse behavior)
-     * @public
-     * @deprecated
-     * @param fieldName
-     * @param namespace
-     * @param {String|String[]} transformations The name (or array of names) of transformations to apply to this field
-     * @returns {String} The raw string added to the fields array
-     */
-    addField (fieldName, namespace, transformations) {
-        if (!fieldName || !namespace) {
-            throw new Error('Must specify field name and namespace to use when adding field');
-        }
-        let fieldString = `${namespace}:${fieldName}`;
-        if (transformations) {
-            fieldString += '|';
-            if (typeof transformations === 'string') {
-                fieldString += transformations;
-            } else if (Array.isArray(transformations)) {
-                fieldString += transformations.join('|');
-            } else {
-                throw new Error('Must provide transformations as either a string or array of strings');
-            }
-        }
-        const fields = this.layout.fields;
-        if (!fields.includes(fieldString)) {
-            fields.push(fieldString);
-        }
-        return fieldString;
     }
 
     /**
@@ -671,22 +636,20 @@ class BaseDataLayer {
     }
 
     /**
-     * Find the elements (or indices) that match any of a set of provided filters
+     * Determine whether a given data element matches set criteria
+     *
+     * Typically this is used with array.filter (the first argument is curried, `filter.bind(this, options)`
      * @protected
-     * @param {Array[]} filters A list of filter entries: [field, value] (for equivalence testing) or
-     *   [field, operator, value] for other operators
-     * @param {('indexes'|'elements')} [return_type='indexes'] Specify whether to return either the indices of the matching
-     *   elements, or references to the elements themselves
-     * @returns {Array}
+     * @param {Object[]} filters A list of filter entries: {field, value, operator} describing each filter.
+     *  Operator must be from a list of built-in operators
+     * @param {Object} item
+     * @param {Number} index
+     * @param {Array} array
+     * @returns {Boolean} Whether the specified item is a match
      */
-    filter(filters, return_type) {
-        if (typeof return_type == 'undefined' || !['indexes', 'elements'].includes(return_type)) {
-            return_type = 'indexes';
-        }
-        if (!Array.isArray(filters)) {
-            return [];
-        }
+    filter(filters, item, index, array) {
         const test = (element, filter) => {
+            const {field, operator, value: target} = filter;
             const operators = {
                 '=': (a, b) => a === b,
                 // eslint-disable-next-line eqeqeq
@@ -697,31 +660,18 @@ class BaseDataLayer {
                 '>=': (a, b) => a >= b,
                 '%': (a, b) => a % b,
             };
-
-            if (!Array.isArray(filter)) {
-                return false;
-            }
-            if (filter.length === 2) {
-                return element[filter[0]] === filter[1];
-            } else if (filter.length === 3 && operators[filter[1]]) {
-                return operators[filter[1]](element[filter[0]], filter[2]);
-            } else {
-                return false;
-            }
+            const extra = this.layer_state.extra_fields[this.getElementId(element)];
+            const field_value = (new Field(field)).resolve(element, extra);
+            return operators[operator](field_value, target);
         };
-        const matches = [];
-        this.data.forEach((element, idx) => {
-            let match = true;
-            filters.forEach((filter) => {
-                if (!test(element, filter)) {
-                    match = false;
-                }
-            });
-            if (match) {
-                matches.push(return_type === 'indexes' ? idx : element);
+
+        let match = true;
+        filters.forEach((filter) => {
+            if (!test(item, filter)) {
+                match = false;
             }
         });
-        return matches;
+        return match;
     }
 
     /**
@@ -739,6 +689,27 @@ class BaseDataLayer {
     }
 
     /****** Private methods: rarely overridden or modified by external usages */
+
+    /**
+     * Apply filtering options to determine the set of data to render
+     *
+     * This must be applied on rendering, not fetch, so that the axis limits reflect the true range of the dataset
+     *   Otherwise, two stacked panels (same dataset filtered in different ways) might not line up on the x-axis when
+     *   filters are applied.
+     * @param data
+     * @return {*}
+     * @private
+     */
+    _applyFilters(data) {
+        data = data || this.data;
+
+        if (this._filter_func) {
+            data = data.filter(this._filter_func);
+        } else if (this.layout.filters) {
+            data = data.filter(this.filter.bind(this, this.layout.filters));
+        }
+        return data;
+    }
 
     /**
      * Define default state that should get tracked during the lifetime of this layer.
@@ -1344,7 +1315,7 @@ class BaseDataLayer {
     /**
      * Re-Map a data layer to reflect changes in the state of a plot (such as viewing region/ chromosome range)
      *
-     * Whereas .render draws data, this method resets the panel and fetches data
+     * Whereas .render draws whatever data is available, this method resets the view and fetches new data if necessary.
      *
      * @private
      * @return {Promise}
@@ -1354,14 +1325,12 @@ class BaseDataLayer {
         // and then recreated if returning to visibility
 
         // Fetch new data. Datalayers are only given access to the final consolidated data from the chain (not headers or raw payloads)
-        const promise = this.parent_plot.lzd.getData(this.state, this.layout.fields);
-        promise.then((new_data) => {
-            this.data = new_data.body;
-            this.applyDataMethods();
-            this.initialized = true;
-        });
-
-        return promise;
+        return this.parent_plot.lzd.getData(this.state, this.layout.fields)
+            .then((new_data) => {
+                this.data = new_data.body;  // chain.body from datasources
+                this.applyDataMethods();
+                this.initialized = true;
+            });
     }
 }
 

@@ -202,8 +202,8 @@ const coaccessibility_layer = {
     match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
     id_field: '{{namespace[access]}}id',
     filters: [
-        ['{{namespace[access]}}score', '!=', null],
-        // ['{{namespace[access]}}score', '>', 0.5], // Potentially useful but very situational
+        { field: '{{namespace[access]}}score', operator: '!=', value: null },
+        { field: '{{namespace[access]}}score', operator: '>', value: 0.5 }, // Potentially useful but very situational
     ],
     color: [
         {
@@ -374,7 +374,7 @@ const annotation_catalog_layer = {
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
     id: 'annotation_catalog',
     type: 'annotation_track',
-    id_field: '{{namespace[catalog]}}variant',
+    id_field: '{{namespace[assoc]}}variant',
     x_axis: {
         field: '{{namespace[assoc]}}position',
     },
@@ -386,8 +386,8 @@ const annotation_catalog_layer = {
     ],
     filters: [
         // Specify which points to show on the track. Any selection must satisfy ALL filters
-        ['{{namespace[catalog]}}rsid', '!=', null],
-        ['{{namespace[catalog]}}log_pvalue', '>', LZ_SIG_THRESHOLD_LOGP],
+        { field: '{{namespace[catalog]}}rsid', operator: '!=', value: null },
+        { field: '{{namespace[catalog]}}log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
     ],
     behaviors: {
         onmouseover: [
@@ -653,21 +653,9 @@ const association_catalog_panel = function () {
                         filters: [
                             // Only label points if they are significant for some trait in the catalog, AND in high LD
                             //  with the top hit of interest
-                            {
-                                field: '{{namespace[catalog]}}trait',
-                                operator: '!=',
-                                value: null,
-                            },
-                            {
-                                field: '{{namespace[catalog]}}log_pvalue',
-                                operator: '>',
-                                value: LZ_SIG_THRESHOLD_LOGP,
-                            },
-                            {
-                                field: '{{namespace[ld]}}state',
-                                operator: '>',
-                                value: 0.4,
-                            },
+                            { field: '{{namespace[catalog]}}trait', operator: '!=', value: null },
+                            { field: '{{namespace[catalog]}}log_pvalue', operator: '>', value: LZ_SIG_THRESHOLD_LOGP },
+                            { field: '{{namespace[ld]}}state', operator: '>', value: 0.4 },
                         ],
                         style: {
                             'font-size': '10px',

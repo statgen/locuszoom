@@ -1,7 +1,6 @@
 /** @module */
 import * as d3 from 'd3';
 import BaseDataLayer from './base';
-import Field from '../../data/field';
 import {applyStyles} from '../../helpers/common';
 import {parseFields} from '../../helpers/display';
 import {merge, nameToSymbol} from '../../helpers/layouts';
@@ -223,73 +222,23 @@ class Scatter extends BaseDataLayer {
         const x_scale = 'x_scale';
         const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
+
         if (this.layout.label) {
-            // Apply filters to generate a filtered data set
-            let filtered_data;
+            let label_data;
             const filters = data_layer.layout.label.filters || [];
             if (!filters.length) {
-                filtered_data = this.data;
+                label_data = track_data;
             } else {
-                filtered_data = this.data.filter((d) => {
-                    // Start by assuming a match (base case = no filters).
-                    // Test each filters: ALL must be satisfied for match to occur.
-                    let match = true;
-                    filters.forEach((filter) => {
-                        const extra = this.layer_state.extra_fields[this.getElementId(d)];
-                        const field_value = (new Field(filter.field)).resolve(d, extra);
-
-                        if (!['!=', '='].includes(filter.operator) && isNaN(field_value)) {
-                            // If the filter can only be used with numbers, then the value must be numeric.
-                            match = false;
-                        } else {
-                            switch (filter.operator) {
-                            case '<':
-                                if (!(field_value < filter.value)) {
-                                    match = false;
-                                }
-                                break;
-                            case '<=':
-                                if (!(field_value <= filter.value)) {
-                                    match = false;
-                                }
-                                break;
-                            case '>':
-                                if (!(field_value > filter.value)) {
-                                    match = false;
-                                }
-                                break;
-                            case '>=':
-                                if (!(field_value >= filter.value)) {
-                                    match = false;
-                                }
-                                break;
-                            case '=':
-                                if (!(field_value === filter.value)) {
-                                    match = false;
-                                }
-                                break;
-                            case '!=':
-                                // Deliberately allow weak comparisons to test for "anything with a value present" (null or undefined)
-                                // eslint-disable-next-line eqeqeq
-                                if (field_value == filter.value) {
-                                    match = false;
-                                }
-                                break;
-                            default:
-                                // If we got here the operator is not valid, so the filter should fail
-                                match = false;
-                                break;
-                            }
-                        }
-                    });
-                    return match;
-                });
+                const func = this.filter.bind(this, filters);
+                label_data = track_data.filter(func);
             }
 
             // Render label groups
             this.label_groups = this.svg.group
                 .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
-                .data(filtered_data, (d) => `${d[this.layout.id_field]}_label`);
+                .data(label_data, (d) => `${d[this.layout.id_field]}_label`);
 
             const groups_enter = this.label_groups.enter()
                 .append('g')
@@ -378,7 +327,7 @@ class Scatter extends BaseDataLayer {
         // Generate main scatter data elements
         const selection = this.svg.group
             .selectAll(`path.lz-data_layer-${this.layout.type}`)
-            .data(this.data, (d) => d[this.layout.id_field]);
+            .data(track_data, (d) => d[this.layout.id_field]);
 
         // Create elements, apply class, ID, and initial position
         const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;

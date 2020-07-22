@@ -102,7 +102,6 @@ class Genes extends BaseDataLayer {
         this.gene_track_index = { 1: [] };
 
         this.data.map((item) => {
-
             // If necessary, split combined gene id / version fields into discrete fields.
             // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
             if (item.gene_id && item.gene_id.indexOf('.')) {
@@ -206,15 +205,17 @@ class Genes extends BaseDataLayer {
      * Main render function
      */
     render() {
-
         const self = this;
         this.assignTracks();
+
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
 
         let width, height, x, y;
 
         // Render gene groups
         const selection = this.svg.group.selectAll('g.lz-data_layer-genes')
-            .data(this.data, (d) => d.gene_name);
+            .data(track_data, (d) => d.gene_name);
 
         selection.enter()
             .append('g')
