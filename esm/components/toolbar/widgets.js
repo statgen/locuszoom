@@ -2,7 +2,7 @@
 import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
-import {applyStyles} from '../../helpers/common';
+import {applyStyles, debounce} from '../../helpers/common';
 import {deepCopy} from '../../helpers/layouts';
 
 // FIXME: Button creation should occur in the constructors, not in update functions
@@ -406,7 +406,6 @@ class Button {
         return this;
     }
 
-
     /**
      * Allow code to change whether the button is allowed to be `permanent`
      * @param {boolean} bool
@@ -424,6 +423,7 @@ class Button {
         }
         return this;
     }
+
     /**
      * Determine whether the button/menu contents should persist in response to a specific event
      * @returns {Boolean}
@@ -444,7 +444,6 @@ class Button {
         return this;
     }
 
-    //
     /**
      * Method to generate a CSS class string
      * @returns {string}
@@ -453,7 +452,6 @@ class Button {
         const group_position = (['start', 'middle', 'end'].includes(this.parent.layout.group_position) ? ` lz-toolbar-button-group-${this.parent.layout.group_position}` : '');
         return `lz-toolbar-button lz-toolbar-button-${this.color}${this.status ? `-${this.status}` : ''}${group_position}`;
     }
-
 
     /**
      * Change button state
@@ -516,6 +514,7 @@ class Button {
         }
         return this;
     }
+
     /** @member {function} */
     onmouseout () {
     }
@@ -527,6 +526,7 @@ class Button {
         }
         return this;
     }
+
     /** @member {function} */
     onclick () {
     }
@@ -699,6 +699,127 @@ class RegionScale extends BaseWidget {
     }
 }
 
+class FilterField extends BaseWidget {
+    /**
+     * @param {string} layout.layer_name The data layer to control with filtering
+     * @param {string} [layout.filter_id = null] Sometimes we want to define more than one filter with the same operator
+     *  (eg != null, != bacon). The `filter_id` option allows us to identify which filter is controlled by this widget.
+     * @param {string} layout.field The field to be filtered (eg `assoc:log_pvalue`)
+     * @param {string} layout.field_display_html Human-readable label for the field to be filtered (`-log<sub>10</sub>p`)
+     * @param {string} layout.operator The operator to use when filtering. This must be one of the options allowed by data_layer.filter.
+     * @param {('number'|'string')} [layout.data_type='number'] Convert the text box input to the specified type, and warn the
+     *  user if the value would be invalid (eg, not numeric)
+     */
+    constructor(layout, parent) {
+        super(layout, parent);
+
+        if (!this.parent_panel) {
+            throw new Error('Filter widget can only be used in panel toolbars');
+        }
+
+        this._data_layer = this.parent_panel.data_layers[layout.layer_name];
+        if (!this._data_layer) {
+            throw new Error(`Filter widget could not locate the specified layer_name: '${layout.layer_name}'`);
+        }
+
+        this._field = layout.field;
+        this._field_display_html = layout.field_display_html;
+        this._operator = layout.operator;
+        this._filter_id = null;
+        this._data_type = layout.data_type || 'number';
+        if (!['number', 'string'].includes(this._data_type)) {
+            throw new Error('Filter must be either string or number');
+        }
+
+        this._value_selector = null;
+    }
+
+    _getTarget() {
+        // Find the specific filter in layer.layout.filters, and if not present, add one
+        if (!this._data_layer.layout.filters) {
+            this._data_layer.layout.filters = [];
+        }
+        let result = this._data_layer.layout.filters
+            .find((item) => item.field === this._field && item.operator === this._operator && (!this._filter_id || item.id === this.filter_id));
+
+        if (!result) {
+            result = { field: this._field, operator: this._operator, value: null };
+            if (this._filter_id) {
+                result['id'] = this._filter_id;
+            }
+            this._data_layer.layout.filters.push(result);
+        }
+        return result;
+    }
+
+    /** Clear the filter by removing it from the list */
+    _clearFilter() {
+        const index = this._data_layer.layout.filters.indexOf(this._getTarget());
+        this._data_layer.layout.filters.splice(index, 1);
+    }
+
+    /** Set the filter based on a provided value */
+    _setFilter(value) {
+        if (value === null) {
+            // On blank or invalid value, remove the filter & warn
+            this._value_selector
+                .style('border', '1px solid red')
+                .style('color', 'red');
+            this._clearFilter();
+        } else {
+            const filter = this._getTarget();
+            filter.value = value;
+        }
+    }
+
+    /** Get the user-entered value, coercing type if necessary. Returns null for invalid or missing values.
+     * @return {null|number|string}
+     * @private
+     */
+    _getValue() {
+        let value = this._value_selector.property('value');
+        if (value === null || value === '') {
+            return null;
+        }
+        if (this._data_type === 'number') {
+            value = +value;
+            if (Number.isNaN(value)) {
+                return null;
+            }
+        }
+        return value;
+    }
+
+    update() {
+        if (this._value_selector) {
+            return;
+        }
+        this.selector.style('padding', '0 6px');
+
+        // Label
+        this.selector
+            .append('span')
+            .html(this._field_display_html);
+        // Operator label
+        this.selector.append('span')
+            .text(this._operator)
+            .style('padding', '0 3px');
+
+        this._value_selector = this.selector
+            .append('input')
+            .attr('size', 4)
+            .on('input', debounce(() => {
+                // Clear validation state
+                this._value_selector
+                    .style('border', null)
+                    .style('color', null);
+                const value = this._getValue();
+                this._setFilter(value);
+                this.parent_panel.render();
+            }, 750));
+    }
+}
+
 /**
  * Button to export current plot to an SVG image
  */
@@ -860,6 +981,9 @@ class DownloadSVG extends BaseWidget {
     }
 }
 
+/**
+ * Button to export current plot to a PNG image
+ */
 class DownloadPNG extends DownloadSVG {
     constructor(layout, parent) {
         super(...arguments);
@@ -1373,6 +1497,7 @@ export {
     DisplayOptions as display_options,
     DownloadSVG as download,
     DownloadPNG as download_png,
+    FilterField as filter_field,
     Menu as menu,
     MovePanelDown as move_panel_down,
     MovePanelUp as move_panel_up,
