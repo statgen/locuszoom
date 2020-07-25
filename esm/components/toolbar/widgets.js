@@ -740,7 +740,7 @@ class FilterField extends BaseWidget {
             this._data_layer.layout.filters = [];
         }
         let result = this._data_layer.layout.filters
-            .find((item) => item.field === this._field && item.operator === this._operator && (!this._filter_id || item.id === this.filter_id));
+            .find((item) => item.field === this._field && item.operator === this._operator && (!this._filter_id || item.id === this._filter_id));
 
         if (!result) {
             result = { field: this._field, operator: this._operator, value: null };
@@ -754,8 +754,10 @@ class FilterField extends BaseWidget {
 
     /** Clear the filter by removing it from the list */
     _clearFilter() {
-        const index = this._data_layer.layout.filters.indexOf(this._getTarget());
-        this._data_layer.layout.filters.splice(index, 1);
+        if (this._data_layer.layout.filters) {
+            const index = this._data_layer.layout.filters.indexOf(this._getTarget());
+            this._data_layer.layout.filters.splice(index, 1);
+        }
     }
 
     /** Set the filter based on a provided value */

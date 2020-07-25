@@ -203,7 +203,6 @@ const coaccessibility_layer = {
     id_field: '{{namespace[access]}}id',
     filters: [
         { field: '{{namespace[access]}}score', operator: '!=', value: null },
-        { field: '{{namespace[access]}}score', operator: '>', value: 0.5 }, // Potentially useful but very situational
     ],
     color: [
         {
