@@ -814,7 +814,6 @@ class Panel {
             } else {
                 this.layout.axes[axis].render = true;
                 this.layout.axes[axis].label = this.layout.axes[axis].label || null;
-                this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
             }
         });
 
@@ -1372,9 +1371,10 @@ class Panel {
             this.svg[`${axis}_axis_label`]
                 .attr('x', axis_params[axis].label_x)
                 .attr('y', axis_params[axis].label_y)
-                .text(parseFields(this.state, label));
+                .text(parseFields(this.state, label))
+                .attr('fill', 'currentColor');
             if (axis_params[axis].label_rotate !== null) {
-                this.svg[`${axis  }_axis_label`]
+                this.svg[`${axis}_axis_label`]
                     .attr('transform', `rotate(${axis_params[axis].label_rotate} ${axis_params[axis].label_x}, ${axis_params[axis].label_y})`);
             }
         }
