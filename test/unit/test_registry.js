@@ -60,6 +60,28 @@ describe('Registries', function() {
             const instance = registry.create('fake', 12);
             assert.equal(instance.a, 12);
         });
+
+        it('.extend shortcut for quasi-subclassing', function () {
+            const registry = new ClassRegistry();
+            const fake = class {
+                constructor(a) {
+                    this.a = a;
+                }
+
+                b() {
+                    return this.a + 1;
+                }
+            };
+            registry.add('fake', fake);
+
+            const NewChild = registry.extend('fake', 'new_child', { b() {
+                return this.a + 2;
+            }});
+            const child = new NewChild(12);
+            assert.equal(child.a, 12, 'Inherits constructor');
+            assert.equal(child.b(), 14, 'Subclass overrides parent method');
+            assert.ok(registry.get('new_child'));
+        });
     });
 
     describe('Transformation registry special behaviors', function() {
