@@ -237,5 +237,22 @@ function applyStyles(selection, styles) {
     }
 }
 
+/**
+ * Prevent a UI function from being called more than once in a given interval. This allows, eg, search boxes to delay
+ *   expensive operations until the user is done typing
+ * @param {function} func The function to debounce. Returns a wrapper.
+ * @param {number} delay Time to wait after last call (in ms)
+ */
+function debounce(func, delay = 500) {
+    let timer;
+    return () => {
+        clearTimeout(timer);
+        timer = setTimeout(
+            () => func.apply(this, arguments),
+            delay
+        );
+    };
+}
 
-export { applyStyles, generateCurtain, generateLoader };
+
+export { applyStyles, debounce, generateCurtain, generateLoader };

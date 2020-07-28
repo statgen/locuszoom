@@ -89,10 +89,6 @@ class Line extends BaseDataLayer {
         return this.setAllElementStatus(status, toggle);
     }
 
-    setElementStatusByFilters(status, toggle) {
-        return this.setAllElementStatus(status, toggle);
-    }
-
     setAllElementStatus(status, toggle) {
         // Sanity check
         if (typeof status == 'undefined' || !STATUSES.adjectives.includes(status)) {

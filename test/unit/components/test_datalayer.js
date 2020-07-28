@@ -420,72 +420,6 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Layout mutation helpers (public interface)', function () {
-        describe('addField', function () {
-            beforeEach(function () {
-                this.layer = new BaseDataLayer();
-            });
-            afterEach(function () {
-                this.layer = null;
-            });
-
-            it('should require field and namespace to be specified', function () {
-                // TODO: Should there be validation to ensure this is a known namespace?
-                const self = this;
-                assert.throws(function () {
-                    self.layer.addField();
-                }, /Must specify field name and namespace to use when adding field/);
-
-                assert.throws(function () {
-                    self.layer.addField('afield');
-                }, /Must specify field name and namespace to use when adding field/);
-            });
-
-            it('should check type of the transformations argument', function () {
-                const self = this;
-                assert.ok(
-                    this.layer.addField('aman', 'aplan'),
-                    'Transformations are optional'
-                );
-                assert.ok(
-                    this.layer.addField('aman', 'aplan', 'acanal'),
-                    'Transformation can be a string'
-                );
-                assert.ok(
-                    this.layer.addField('aman', 'aplan', ['acanal', 'panama']),
-                    'Transformation can be an array'
-                );
-                assert.throws(function () {
-                    self.layer.addField('aman', 'aplan', 42);
-                }, /Must provide transformations as either a string or array of strings/);
-            });
-            it('should construct an appropriate field name and add it to the internal fields array', function () {
-                const e1 = 'namespace:field';
-                assert.equal(
-                    this.layer.addField('field', 'namespace'),
-                    e1
-                );
-
-                const e2 = 'namespace:field|transformation';
-                assert.equal(
-                    this.layer.addField('field', 'namespace', 'transformation'),
-                    e2
-                );
-
-                const e3 = 'namespace:field|t1|t2';
-                assert.equal(
-                    this.layer.addField('field', 'namespace', ['t1', 't2']),
-                    e3
-                );
-
-                const fields = this.layer.layout.fields;
-                assert.ok(fields.indexOf(e1) !== -1);
-                assert.ok(fields.indexOf(e2) !== -1);
-                assert.ok(fields.indexOf(e3) !== -1);
-            });
-        });
-    });
-
     describe('Highlight functions', function () {
         beforeEach(function () {
             this.plot = null;
@@ -771,6 +705,123 @@ describe('LocusZoom.DataLayer', function () {
             }).then(function () { // Force a re-render to see if zombie items remain
                 assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
                 assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
+            });
+        });
+    });
+
+    describe('Filtering operations', function () {
+        it('can filter numeric data', function () {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a', operator: '>', value: 12 }];
+            const data = [{ a: 12 }, { a: 11 }, { a: 13 }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 1);
+            assert.deepEqual(result, [{ a: 13 }]);
+        });
+
+        it('can apply two filters and both must match', function () {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a', operator: '>', value: 12 }, { field: 'a', operator: '<=', value: 14 }];
+            const data = [{ a: 12 }, { a: 11 }, { a: 13 }, { a: 15 }, { a: 14 }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 2);
+            assert.deepEqual(result, [{ a: 13 }, { a: 14 }]);
+        });
+
+        it('can filter text data', function () {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a', operator: '=', value: 'exact' }];
+            const data = [{ a: 'inexact' }, { a: 'exactly' }, { a: 'exact' }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 1);
+            assert.deepEqual(result, [{ a: 'exact' }]);
+        });
+
+        describe('interaction with data fetching', function () {
+            beforeEach(function () {
+                this.plot = null;
+                const data_sources = new DataSources()
+                    .add('d', ['StaticJSON', [{ id: 1, a: 12 }, { id: 2, a: 11 }, { id: 3, a: 13 }, { id: 4, a: 15 }, { id: 5, a: 14 }]]);
+                const layout = {
+                    panels: [
+                        {
+                            id: 'p',
+                            data_layers: [
+                                {
+                                    id: 'd',
+                                    fields: ['d:id', 'd:a'],
+                                    id_field: 'd:id',
+                                    type: 'scatter',
+                                    filters: null,
+                                },
+                            ],
+                        },
+                    ],
+                };
+                d3.select('body').append('div').attr('id', 'plot');
+                this.plot = populate('#plot', data_sources, layout);
+            });
+
+            afterEach(function () {
+                d3.select('#plot').remove();
+                delete this.plot;
+            });
+
+            it('passes all data when no filters are defined', function () {
+                const layer = this.plot.panels.p.data_layers.d;
+                return layer.parent.reMap()
+                    .then(() => assert.equal(layer.data.length, 5));
+            });
+
+            it('passes modified data when layout filters are used', function () {
+                const filters = [{ field: 'd:a', operator: '>', value: 12 }, { field: 'd:a', operator: '<=', value: 14 }];
+                const layer = this.plot.panels.p.data_layers.d;
+                layer.layout.filters = filters;
+
+                return layer.parent.reMap() // ensures data has been fetched
+                    .then(() => {
+                        const result = layer._applyFilters();
+                        assert.equal(result.length, 2);
+                    });
+            });
+
+            it('passes modified data when explicit filter function is used', function () {
+                const layer = this.plot.panels.p.data_layers.d;
+                layer.setFilter((item) => item['d:a'] === 12);
+                return layer.parent.reMap()
+                    .then(() => {
+                        const result = layer._applyFilters();
+                        assert.equal(result.length, 1);
+                    });
+            });
+
+            it('allows explicit filter function to take precedence over layout-defined filters', function () {
+                const filters = [{ field: 'd:a', operator: '>', value: 12 }, { field: 'd:a', operator: '<=', value: 14 }];
+                const layer = this.plot.panels.p.data_layers.d;
+                layer.layout.filters = filters;
+                layer.setFilter((item) => item['d:a'] === 12);
+                return layer.parent.reMap()
+                    .then(() => {
+                        const result = layer._applyFilters();
+                        assert.equal(result.length, 1);
+                    });
+            });
+
+            it('respects element annotation cache when applying declarative filters to data', function () {
+                const layer = this.plot.panels.p.data_layers.d;
+                const filters = [{ field: 'custom_field', operator: '=', value: 'some_value' }];
+                const inner_datum = { 'd:id': 1, 'd:a': 12 };
+                layer.setElementAnnotation(inner_datum, 'custom_field', 'some_value');
+                layer.layout.filters = filters;
+                return layer.parent.reMap()
+                    .then(() => {
+                        const result = layer._applyFilters();
+                        assert.equal(result.length, 1);
+                        assert.deepEqual(result[0]['d:a'], 12);
+                    });
             });
         });
     });

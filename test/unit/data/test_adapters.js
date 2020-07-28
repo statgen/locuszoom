@@ -501,6 +501,30 @@ describe('Data adapters', function () {
             );
             assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
         });
+
+        it('chooses best 1000G panel for the given build', function () {
+            const source37 = new LDServer({ url: 'www.fake.test', params: { source: '1000G', build: 'GRCh37' } });
+            let request_url = source37.getURL({ ldrefvar: '1:2_A/B' }, {
+                header: {},
+                body: [],
+            }, ['isrefvar', 'state']);
+            assert.equal(
+                request_url,
+                'www.fake.testgenome_builds/GRCh37/references/1000G/populations/ALL/variants?correlation=rsquare&variant=1%3A2_A%2FB&chrom=undefined&start=undefined&stop=undefined',
+                'Build 37 uses 1000G panel (old)'
+            );
+
+            const source38 = new LDServer({ url: 'www.fake.test', params: { source: '1000G', build: 'GRCh38' } });
+            request_url = source38.getURL({ ldrefvar: '1:2_A/B' }, {
+                header: {},
+                body: [],
+            }, ['isrefvar', 'state']);
+            assert.equal(
+                request_url,
+                'www.fake.testgenome_builds/GRCh38/references/1000G-FRZ09/populations/ALL/variants?correlation=rsquare&variant=1%3A2_A%2FB&chrom=undefined&start=undefined&stop=undefined',
+                'Build 38 uses 1000G panel (upgraded)'
+            );
+        });
     });
 
     describe('Static Data Source', function () {
