@@ -167,7 +167,7 @@ function install (LocusZoom) {
         match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         filters: [
             // Specify which points to show on the track. Any selection must satisfy ALL filters
-            ['{{namespace[credset]}}is_member', true],
+            { field: '{{namespace[credset]}}is_member', operator: '=', value: true },
         ],
         behaviors: {
             onmouseover: [

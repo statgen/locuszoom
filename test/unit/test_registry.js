@@ -74,12 +74,21 @@ describe('Registries', function() {
             };
             registry.add('fake', fake);
 
-            const NewChild = registry.extend('fake', 'new_child', { b() {
-                return this.a + 2;
-            }});
+            const NewChild = registry.extend(
+                'fake',
+                'new_child',
+                {
+                    b() {
+                        return this.a + 2;
+                    },
+                    c() {
+                        return this.a * 2;
+                    },
+                });
             const child = new NewChild(12);
             assert.equal(child.a, 12, 'Inherits constructor');
             assert.equal(child.b(), 14, 'Subclass overrides parent method');
+            assert.equal(child.c(), 24, 'Subclass adds its own methods');
             assert.ok(registry.get('new_child'));
         });
     });

@@ -4,7 +4,7 @@ import {merge} from '../../helpers/layouts';
 
 const default_layout = {
     color: '#000000',
-    filters: [],
+    filters: null,
     tooltip_positioning: 'vertical', // Allowed values: top, middle, bottom
     hitarea_width: 8,
 };
@@ -14,13 +14,13 @@ const default_layout = {
  *
  * For example, this can be used to color by membership in a group, alongside information in other panels
  *
- * @param {Object} layout
- * @param {Object|String} [layout.color]
- * @param {Array[]} An array of filter entries specifying which points to draw annotations for.
- *  See `BaseDataLayer.filter` for details
  */
-
 class AnnotationTrack extends BaseDataLayer {
+    /*
+     * @param {Object} layout
+     * @param {Object|String} [layout.color]
+     * @param {Object[]} layout.filters An array of filter entries specifying which points to draw annotations for.
+     */
     constructor(layout) {
         if (!Array.isArray(layout.filters)) {
             throw new Error('Annotation track must specify array of filters for selecting points to annotate');

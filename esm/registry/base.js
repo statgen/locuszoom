@@ -102,7 +102,11 @@ class ClassRegistry extends RegistryBase {
      * @return {*}
      */
     extend(parent_name, source_name, overrides) {
-        console.log('Deprecation warning: .extend method will be removed in future versions in favor of explicit ES6 subclasses');
+        console.warn('Deprecation warning: .extend method will be removed in future versions, in favor of explicit ES6 subclasses');
+        if (arguments.length !== 3) {
+            throw new Error('Invalid arguments to .extend');
+        }
+
         const base = this.get(parent_name);
         class sub extends base {}
         Object.assign(sub.prototype, overrides, base);
