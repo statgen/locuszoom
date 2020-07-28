@@ -664,9 +664,9 @@ class Panel {
             const zoom_handler = () => {
                 // Look for a shift key press while scrolling to execute.
                 // If not present, gracefully raise a notification and allow conventional scrolling
-                if (!d3.event.shiftKey) {
+                if (!(d3.event.shiftKey || d3.event.altKey)) {
                     if (this.parent._canInteract(this.id)) {
-                        this.loader.show('Press <tt>[SHIFT]</tt> while scrolling to zoom').hide(1000);
+                        this.loader.show('Press <tt>[SHIFT]</tt> or <tt>[ALT]</tt> while scrolling to zoom').hide(1000);
                     }
                     return;
                 }
