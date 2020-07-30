@@ -23,7 +23,7 @@
     "Andy Boughton <abought@umich.edu>"
   ],
   "engines": {
-    "node": ">=12.13.0"
+    "node": ">=10.13.0"
   },
   "repository": {
     "type": "git",
