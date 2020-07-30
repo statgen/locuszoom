@@ -707,6 +707,7 @@ class FilterField extends BaseWidget {
      * @param {string} layout.field The field to be filtered (eg `assoc:log_pvalue`)
      * @param {string} layout.field_display_html Human-readable label for the field to be filtered (`-log<sub>10</sub>p`)
      * @param {string} layout.operator The operator to use when filtering. This must be one of the options allowed by data_layer.filter.
+     * @param {number} [layout.input_size=4] The number of characters to allow in the text field
      * @param {('number'|'string')} [layout.data_type='number'] Convert the text box input to the specified type, and warn the
      *  user if the value would be invalid (eg, not numeric)
      */
@@ -801,15 +802,17 @@ class FilterField extends BaseWidget {
         // Label
         this.selector
             .append('span')
-            .html(this._field_display_html);
+            .html(this._field_display_html)
+            .style('background', '#fff');
         // Operator label
         this.selector.append('span')
             .text(this._operator)
-            .style('padding', '0 3px');
+            .style('padding', '0 3px')
+            .style('background', '#fff');
 
         this._value_selector = this.selector
             .append('input')
-            .attr('size', 4)
+            .attr('size', this.layout.input_size || 4)
             .on('input', debounce(() => {
                 // Clear validation state
                 this._value_selector
