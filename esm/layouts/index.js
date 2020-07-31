@@ -690,11 +690,13 @@ const genes_panel = {
     },
     toolbar: (function () {
         const base = deepCopy(standard_panel_toolbar);
-        base.widgets.push({
-            type: 'resize_to_data',
-            position: 'right',
-            button_html: 'Show all genes',
-        });
+        base.widgets.push(
+            {
+                type: 'resize_to_data',
+                position: 'right',
+                button_html: 'Fit all genes',
+            }
+        );
         return base;
     })(),
     data_layers: [
