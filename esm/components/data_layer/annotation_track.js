@@ -4,7 +4,7 @@ import {merge} from '../../helpers/layouts';
 
 const default_layout = {
     color: '#000000',
-    filters: [],
+    filters: null,
     tooltip_positioning: 'vertical', // Allowed values: top, middle, bottom
     hitarea_width: 8,
 };
@@ -14,13 +14,13 @@ const default_layout = {
  *
  * For example, this can be used to color by membership in a group, alongside information in other panels
  *
- * @param {Object} layout
- * @param {Object|String} [layout.color]
- * @param {Array[]} An array of filter entries specifying which points to draw annotations for.
- *  See `BaseDataLayer.filter` for details
  */
-
 class AnnotationTrack extends BaseDataLayer {
+    /*
+     * @param {Object} layout
+     * @param {Object|String} [layout.color]
+     * @param {Object[]} layout.filters An array of filter entries specifying which points to draw annotations for.
+     */
     constructor(layout) {
         if (!Array.isArray(layout.filters)) {
             throw new Error('Annotation track must specify array of filters for selecting points to annotate');
@@ -30,8 +30,8 @@ class AnnotationTrack extends BaseDataLayer {
     }
 
     render() {
-        // Only render points that currently satisfy all provided filter conditions.
-        const trackData = this.filter(this.layout.filters, 'elements');
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
 
         // Put the <g> containing visible lines before the one containing hit areas, so that the hit areas will be on top.
         let visible_lines_group = this.svg.group.select(`g.lz-data_layer-${this.layout.type}-visible_lines`);
@@ -40,7 +40,7 @@ class AnnotationTrack extends BaseDataLayer {
                 .attr('class', `lz-data_layer-${this.layout.type}-visible_lines`);
         }
         const selection = visible_lines_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
-            .data(trackData, (d) => d[this.layout.id_field]);
+            .data(track_data, (d) => d[this.layout.id_field]);
 
         const width = 1;
         // Draw rectangles (visual and tooltip positioning)
@@ -64,14 +64,14 @@ class AnnotationTrack extends BaseDataLayer {
                 .attr('class', `lz-data_layer-${this.layout.type}-hit_areas`);
         }
         const hit_areas_selection = hit_areas_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
-            .data(trackData, (d) => d[this.layout.id_field]);
+            .data(track_data, (d) => d[this.layout.id_field]);
 
         const _getX = (d, i) => { // Helper for position calcs below
             const x_center = this.parent['x_scale'](d[this.layout.x_axis.field]);
             let x_left = x_center - this.layout.hitarea_width / 2;
             if (i >= 1) {
                 // This assumes that the data are in sorted order.
-                const left_node = trackData[i - 1];
+                const left_node = track_data[i - 1];
                 const left_node_x_center = this.parent['x_scale'](left_node[this.layout.x_axis.field]);
                 x_left = Math.max(x_left, (x_center + left_node_x_center) / 2);
             }

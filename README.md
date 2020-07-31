@@ -221,14 +221,14 @@ $ npm install
 
 We recommend using node.js v12 or greater to build the library and run tests.
 
-Once complete run `npm test && npm prod` from the top of the application directory to run all tests and build the LocusZoom library bundle.
+Once complete run `npm run build` from the top of the application directory to run all tests and build the LocusZoom library bundle.
 
 This build process will also write sourcemaps, to help with debugging code even in production environments.
 
 #### Other supported gulp commands:
 * `npm run test` - Run unit tests (optional: `npm run test:coverage` to output a code coverage report)
 * `npm run dev` - Automatically rebuild the library whenever code changes (development mode)
-* `npm run prod` - Build the library for release (production mode)
+* `npm run build` - Run tests, and if they pass, build the library for release
 * `npm run css` - Rebuild the CSS using SASS
 * `npm run docs` - Build the library documentation
 

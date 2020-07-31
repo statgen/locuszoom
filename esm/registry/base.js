@@ -29,7 +29,7 @@ class RegistryBase {
      * Add a new item to the registry
      * @param {String} name The name of the item to add to the registry
      * @param {*} item The item to be added (constructor, value, etc)
-     * @param {boolean} override Allow redefining an existing item?
+     * @param {boolean} [override=false] Allow redefining an existing item?
      * @return {*} The actual object as added to the registry
      */
     add(name, item, override = false) {
@@ -81,6 +81,37 @@ class ClassRegistry extends RegistryBase {
     create(name, ...args) {
         const base = this.get(name);
         return new base(...args);
+    }
+
+    /**
+     * Create a new child class for an item in the registry.
+     *
+     * This is (almost, but not quite) a compatibility layer for old sites that used locuszoom
+     *
+     * This is primarily aimed at low-tooling environments. It is syntactic sugar, roughly equivalent to:
+     *   `registry.get(base); registry.add(name, class A extends base {});`
+     *
+     * Because this bypasses es6 class mechanics, certain things, esp super calls, may not work as well as using the
+     *   "real" class expression. This method is provided solely for convenience.
+     *
+     * This method is a compatibility layer for old versions. Born to be deprecated!
+     * @deprecated
+     * @param {string} parent_name The name of the desired parent class as represented in the registry
+     * @param {string} source_name The desired name of the class to be created, as it will be named in the registry
+     * @param {object} overrides An object
+     * @return {*}
+     */
+    extend(parent_name, source_name, overrides) {
+        console.warn('Deprecation warning: .extend method will be removed in future versions, in favor of explicit ES6 subclasses');
+        if (arguments.length !== 3) {
+            throw new Error('Invalid arguments to .extend');
+        }
+
+        const base = this.get(parent_name);
+        class sub extends base {}
+        Object.assign(sub.prototype, overrides, base);
+        this.add(source_name, sub);
+        return sub;
     }
 }
 

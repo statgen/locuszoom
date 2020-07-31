@@ -664,9 +664,9 @@ class Panel {
             const zoom_handler = () => {
                 // Look for a shift key press while scrolling to execute.
                 // If not present, gracefully raise a notification and allow conventional scrolling
-                if (!d3.event.shiftKey) {
+                if (!(d3.event.shiftKey || d3.event.altKey)) {
                     if (this.parent._canInteract(this.id)) {
-                        this.loader.show('Press <tt>[SHIFT]</tt> while scrolling to zoom').hide(1000);
+                        this.loader.show('Press <tt>[SHIFT]</tt> or <tt>[ALT]</tt> while scrolling to zoom').hide(1000);
                     }
                     return;
                 }
@@ -699,8 +699,8 @@ class Panel {
                     this.parent.applyState({ start: this.x_extent[0], end: this.x_extent[1] });
                 }, 500);
             };
-            this.zoom_listener = d3.zoom();
-            this.svg.container.call(this.zoom_listener)
+            // FIXME: Consider moving back to d3.zoom and rewriting drag + zoom to use behaviors.
+            this.svg.container
                 .on('wheel.zoom', zoom_handler)
                 .on('mousewheel.zoom', zoom_handler)
                 .on('DOMMouseScroll.zoom', zoom_handler);
@@ -814,7 +814,6 @@ class Panel {
             } else {
                 this.layout.axes[axis].render = true;
                 this.layout.axes[axis].label = this.layout.axes[axis].label || null;
-                this.layout.axes[axis].label_function = this.layout.axes[axis].label_function || null;
             }
         });
 
@@ -1034,9 +1033,7 @@ class Panel {
         // Establish panel background drag interaction mousedown event handler (on the panel background)
         if (this.layout.interaction.drag_background_to_pan) {
             const namespace = `.${this.parent.id}.${this.id}.interaction.drag`;
-            const mousedown = () => {
-                this.parent.startDrag(this, 'background');
-            };
+            const mousedown = () => this.parent.startDrag(this, 'background');
             this.svg.container.select('.lz-panel-background')
                 .on(`mousedown${namespace}.background`, mousedown)
                 .on(`touchstart${namespace}.background`, mousedown);
@@ -1046,7 +1043,7 @@ class Panel {
     }
 
     /**
-     * Refresh the sort order of all data layers (called by data layer moveUp and moveDown methods)
+     * Refresh the sort order of all data layers (called by data layer moveForward and moveBack methods)
      * @private
      */
     resortDataLayers() {
@@ -1374,9 +1371,10 @@ class Panel {
             this.svg[`${axis}_axis_label`]
                 .attr('x', axis_params[axis].label_x)
                 .attr('y', axis_params[axis].label_y)
-                .text(parseFields(this.state, label));
+                .text(parseFields(this.state, label))
+                .attr('fill', 'currentColor');
             if (axis_params[axis].label_rotate !== null) {
-                this.svg[`${axis  }_axis_label`]
+                this.svg[`${axis}_axis_label`]
                     .attr('transform', `rotate(${axis_params[axis].label_rotate} ${axis_params[axis].label_x}, ${axis_params[axis].label_y})`);
             }
         }
@@ -1403,8 +1401,10 @@ class Panel {
                     .attr('tabindex', 0) // necessary to make the tick focusable so keypress events can be captured
                     .on(`mouseover${namespace}`, tick_mouseover)
                     .on(`mouseout${namespace}`, function() {
-                        d3.select(this).style('font-weight', 'normal');
-                        d3.select(this).on(`keydown${namespace}`, null).on(`keyup${namespace}`, null);
+                        d3.select(this)
+                            .style('font-weight', 'normal')
+                            .on(`keydown${namespace}`, null)
+                            .on(`keyup${namespace}`, null);
                     })
                     .on(`mousedown${namespace}`, () => {
                         this.parent.startDrag(this, `${axis}_tick`);
@@ -1448,20 +1448,6 @@ class Panel {
     }
 
     /**
-     * Methods to set/unset element statuses across all data layers
-     * @private
-     * @param {String} status
-     * @param {Boolean} toggle
-     * @param {Array} filters
-     * @param {Boolean} exclusive
-     */
-    setElementStatusByFilters(status, toggle, filters, exclusive) {
-        this.data_layer_ids_by_z_index.forEach((id) => {
-            this.data_layers[id].setElementStatusByFilters(status, toggle, filters, exclusive);
-        });
-    }
-
-    /**
      * Set/unset element statuses across all data layers
      * @private
      * @param {String} status
@@ -1477,57 +1463,6 @@ class Panel {
 STATUSES.verbs.forEach((verb, idx) => {
     const adjective = STATUSES.adjectives[idx];
     const antiverb = `un${verb}`;
-    // Set/unset status for arbitrarily many elements given a set of filters
-
-    /**
-     * @private
-     * @function highlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function selectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function fadeElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function hideElementsByFilters
-     */
-    Panel.prototype[`${verb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, true, filters, exclusive);
-    };
-
-    /**
-     * @private
-     * @function unhighlightElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unselectElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unfadeElementsByFilters
-     */
-    /**
-     *  @private
-     *  @function unhideElementsByFilters
-     */
-    Panel.prototype[`${antiverb}ElementsByFilters`] = function(filters, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
-        return this.setElementStatusByFilters(adjective, false, filters, exclusive);
-    };
 
     // Set/unset status for all elements
     /**

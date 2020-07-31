@@ -1,6 +1,6 @@
 {
   "name": "locuszoom",
-  "version": "0.12.0-beta.1",
+  "version": "0.12.0-beta.3",
   "main": "dist/locuszoom.app.min.js",
   "module": "esm/index.js",
   "sideEffects": true,
@@ -23,7 +23,7 @@
     "Andy Boughton <abought@umich.edu>"
   ],
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=10.13.0"
   },
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
-    "prod": "npm run css && webpack --config webpack.prod.cjs",
+    "build": "npm run test && npm run css && webpack --config webpack.prod.cjs",
     "docs": "jsdoc --recurse --readme ./README.md --destination jsdoc esm/ && pandoc -s --toc --css css/pandoc.css assets/docs/layout_tutorial.md -o docs/layout_tutorial.html"
   },
   "dependencies": {

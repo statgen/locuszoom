@@ -196,7 +196,6 @@ function install (LocusZoom) {
             }
         }
 
-
         // After we've loaded interval data interpret it to assign
         // each to a track so that they do not overlap in the view
         assignTracks() {

@@ -237,7 +237,7 @@ function install(LocusZoom) {
                         .attr('class', `lz-toolbar-button lz-toolbar-button-group-start lz-toolbar-button-${this.layout.color}${at_bottom ? '-disabled' : ''}`)
                         .style('margin-left', '0em')
                         .on('click', () => {
-                            data_layer.moveDown(); this.button.menu.populate();
+                            data_layer.moveBack(); this.button.menu.populate();
                         })
                         .html('▾')
                         .attr('title', 'Move layer down (further back)');
@@ -245,7 +245,7 @@ function install(LocusZoom) {
                         .attr('class', `lz-toolbar-button lz-toolbar-button-group-middle lz-toolbar-button-${this.layout.color}${at_top ? '-disabled' : ''}`)
                         .style('margin-left', '0em')
                         .on('click', () => {
-                            data_layer.moveUp(); this.button.menu.populate();
+                            data_layer.moveForward(); this.button.menu.populate();
                         })
                         .html('▴')
                         .attr('title', 'Move layer up (further front)');
@@ -253,7 +253,7 @@ function install(LocusZoom) {
                         .attr('class', 'lz-toolbar-button lz-toolbar-button-group-end lz-toolbar-button-red')
                         .style('margin-left', '0em')
                         .on('click', () => {
-                            if (confirm(`Are you sure you want to remove the ${name} layer? This cannot be undone!`)) {
+                            if (confirm(`Are you sure you want to remove the ${name} layer? This cannot be undone.`)) {
                                 data_layer.parent.removeDataLayer(id);
                             }
                             return this.button.menu.populate();

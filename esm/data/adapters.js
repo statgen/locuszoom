@@ -528,9 +528,14 @@ class LDServer extends RemoteAdapter {
         // - build
         // The LD source/pop can be overridden from plot.state for dynamic layouts
         const build = state.genome_build || this.params.build || 'GRCh37';
-        const source = state.ld_source || this.params.source || '1000G';
+        let source = state.ld_source || this.params.source || '1000G';
         const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
         const method = this.params.method || 'rsquare';
+
+        if (source === '1000G' && build === 'GRCh38') {
+            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
+            source = '1000G-FRZ09';
+        }
 
         validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
 

@@ -35,9 +35,8 @@ class Arcs extends BaseDataLayer {
         const x_scale = self.parent['x_scale'];
         const y_scale = self.parent[`y${layout.y_axis.axis}_scale`];
 
-        // Optionally restrict the data to a specific set of filters
-        const filters = layout.filters || [];
-        const trackData = this.filter(filters, 'elements');
+        // Apply filters to only render a specified set of points
+        const track_data = this._applyFilters();
 
         // Helper: Each individual data point describes a path composed of 3 points, with a spline to smooth the line
         function _make_line(d) {
@@ -60,11 +59,11 @@ class Arcs extends BaseDataLayer {
         // Draw real lines, and also invisible hitareas for easier mouse events
         const selection = this.svg.group
             .selectAll('path.lz-data_layer-arcs')
-            .data(trackData, (d) => this.getElementId(d));
+            .data(track_data, (d) => this.getElementId(d));
 
         const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
-            .data(trackData, (d) => this.getElementId(d));
+            .data(track_data, (d) => this.getElementId(d));
 
         // Add new points as necessary
         selection

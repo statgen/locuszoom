@@ -552,7 +552,7 @@ describe('LocusZoom.Plot', function() {
     });
 
     describe('fires off various events in response to actions', function () {
-        describe('region_changed event describes exact region change', function () {
+        it('region_changed event describes exact region change', function () {
             d3.select('body').append('div').attr('id', 'plot');
             const layout = {
                 panels: [{ id: 'panel0' }],
@@ -569,11 +569,11 @@ describe('LocusZoom.Plot', function() {
             plot.on('region_changed', region_spy);
 
             return plot.applyState(requested_state).then(function() {
-                assert(state_spy.called);
-                assert(state_spy.calledWith(requested_state));
+                assert.ok(state_spy.called);
+                assert.ok(state_spy.calledWith({sourceID: 'plot', data: requested_state}));
 
-                assert(region_spy.called);
-                assert(region_spy.calledWith(expected_state));
+                assert.ok(region_spy.called);
+                assert.ok(region_spy.calledWith({sourceID: 'plot', data: expected_state}));
             });
         });
 

@@ -114,7 +114,7 @@ function plotWatchesUrl(plot, mapping, callback) {
         callback(plot, urlData);
     };
     window.addEventListener('popstate', listener);
-    plot.trackWindowListener('popstate', listener);
+    plot.trackExternalListener(window, 'popstate', listener);
     return listener;
 }
 

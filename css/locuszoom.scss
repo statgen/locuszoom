@@ -580,6 +580,9 @@ div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
   .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
   .#{$namespace}-toolbar-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
 
+  input {
+    line-height: normal;  // override a bootstrap behavior so that text fields look good in toolbar
+  }
 }
 
 .#{$namespace}-panel-toolbar > .#{$namespace}-toolbar-left {
