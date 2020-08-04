@@ -5,7 +5,19 @@
  */
 
 /**
- * Return the -log (base 10)
+ * Return the log10 of a value. Can be composed for, eg, loglog plots.
+ * @param value
+ * @return {null|number}
+ */
+export function log10 (value) {
+    if (isNaN(value) || value <= 0) {
+        return null;
+    }
+    return Math.log(value) / Math.LN10;
+}
+
+/**
+ * Return the -log (base 10), a common means of representing pvalues in locuszoom plots
  * @function neglog10
  */
 export function neglog10 (value) {
