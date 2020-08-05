@@ -350,6 +350,22 @@ const genes_layer = {
     id: 'genes',
     type: 'genes',
     fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
+    // By default this layer doesn't show everything, but a button is added to set filters to `null`- "show all"
+    filters: [
+        {
+            field: 'gene_type',
+            operator: 'in',
+            // A manually curated subset of Gencode biotypes, based on user suggestions
+            //  See full list: https://www.gencodegenes.org/human/stats.html
+            value: [
+                'protein_coding',
+                'IG_C_gene', 'IG_D_gene', 'IG_J_gene', 'IG_V_gene',
+                'TR_C_gene', 'TR_D_gene', 'TR_J_gene', 'TR_V_gene',
+                'rRNA',
+                'Mt_rRNA', 'Mt_tRNA',
+            ],
+        },
+    ],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -428,6 +444,25 @@ const ldlz2_pop_selector_menu = {
         { display_name: 'EAS', value: 'EAS' },
         { display_name: 'EUR', value: 'EUR' },
         { display_name: 'SAS', value: 'SAS' },
+    ],
+};
+
+const gene_selector_menu = {
+    type: 'display_options',
+    position: 'right',
+    color: 'blue',
+    // Below: special config specific to this widget
+    button_html: 'Select...',
+    button_title: 'Choose which genes to show',
+    layer_name: 'genes',
+    default_config_display_name: 'Protein, RNA, or Immune',
+    options: [
+        {
+            display_name: 'All features',
+            display: {
+                filters: null,
+            },
+        },
     ],
 };
 
@@ -695,7 +730,8 @@ const genes_panel = {
                 type: 'resize_to_data',
                 position: 'right',
                 button_html: 'Fit all genes',
-            }
+            },
+            deepCopy(gene_selector_menu)
         );
         return base;
     })(),
@@ -872,6 +908,7 @@ export const tooltip = {
 
 export const toolbar_widgets = {
     ldlz2_pop_selector: ldlz2_pop_selector_menu,
+    gene_selector_menu,
 };
 
 export const toolbar = {
