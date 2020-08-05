@@ -13,7 +13,7 @@
 //  systems may require being told that this file has side effects.
 
 import {helpers} from 'raremetal.js';
-import {RemoteAdapter} from '../data/adapters';
+import {BaseApiAdapter} from '../data/adapters';
 
 
 function install (LocusZoom) {
@@ -27,7 +27,7 @@ function install (LocusZoom) {
     const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
     const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
 
-    class AggregationTestSource extends RemoteAdapter {
+    class AggregationTestSource extends BaseApiAdapter {
         getURL(state, chain, fields) {
             // Unlike most sources, calculations may require access to plot state data even after the initial request
             // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
