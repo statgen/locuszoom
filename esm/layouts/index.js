@@ -452,10 +452,10 @@ const gene_selector_menu = {
     position: 'right',
     color: 'blue',
     // Below: special config specific to this widget
-    button_html: 'Select...',
+    button_html: 'Filter...',
     button_title: 'Choose which genes to show',
     layer_name: 'genes',
-    default_config_display_name: 'Protein, RNA, or Immune',
+    default_config_display_name: 'Functional elements',
     options: [
         {
             display_name: 'All features',

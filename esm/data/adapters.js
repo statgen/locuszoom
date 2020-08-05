@@ -651,7 +651,8 @@ class GwasCatalogLZ extends RemoteAdapter {
         //   But there can be more than one GWAS catalog version available in the same API, for the same build- an
         //   explicit config option will always take
         //   precedence.
-        const default_source = (build_option === 'GRCh38') ? 1 : 2;  // EBI GWAS catalog
+        // See: http://portaldev.sph.umich.edu/api/v1/annotation/gwascatalog/?format=objects
+        const default_source = (build_option === 'GRCh38') ? 5 : 6;  // EBI GWAS catalog
         const source = this.params.source || default_source;
         return `${this.url  }?format=objects&sort=pos&filter=id eq ${source} and chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}`;
     }
@@ -739,8 +740,11 @@ class GeneLZ extends RemoteAdapter {
         let source = this.params.source;
         validateBuildSource(this.constructor.name, build, source);
 
-        if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
-            source = (build === 'GRCh38') ? 1 : 3;
+        if (build) {
+            // If build specified, we auto-select the best current portaldev API dataset for that build
+            // If build is not specified, we use the exact source ID provided by the user.
+            // See: https://portaldev.sph.umich.edu/api/v1/annotation/genes/sources/?format=objects
+            source = (build === 'GRCh38') ? 4 : 5;
         }
         return `${this.url}?filter=source in ${source} and chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
     }
