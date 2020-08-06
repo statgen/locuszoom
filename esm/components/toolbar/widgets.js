@@ -803,7 +803,8 @@ class FilterField extends BaseWidget {
         this.selector
             .append('span')
             .html(this._field_display_html)
-            .style('background', '#fff');
+            .style('background', '#fff')
+            .style('padding-left', '3px');
         // Operator label
         this.selector.append('span')
             .text(this._operator)
