@@ -16,7 +16,7 @@ function validateBuildSource(class_name, build, source) {
 
 
 /**
- * Base class for LocusZoom data sources (any). See also: RemoteAdapter
+ * Base class for LocusZoom data sources (any). See also: BaseApiAdapter
  * @public
  */
 class BaseAdapter {
@@ -327,7 +327,7 @@ class BaseAdapter {
  * Base source for LocusZoom data sources that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
  */
-class RemoteAdapter extends BaseAdapter {
+class BaseApiAdapter extends BaseAdapter {
     parseInit(config) {
         super.parseInit(config);
 
@@ -343,7 +343,7 @@ class RemoteAdapter extends BaseAdapter {
  * Data Source for Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a requesr
  * @public
  */
-class AssociationLZ extends RemoteAdapter {
+class AssociationLZ extends BaseApiAdapter {
     preGetData (state, fields, outnames, trans) {
         // TODO: Modify internals to see if we can go without this method
         const id_field = this.params.id_field || 'id';
@@ -388,7 +388,7 @@ class AssociationLZ extends RemoteAdapter {
  *
  * In older versions of LocusZoom, this was known as "LDServer". A prior source (targeted at older APIs) has been removed.
  */
-class LDServer extends RemoteAdapter {
+class LDServer extends BaseApiAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -635,7 +635,7 @@ class LDServer extends RemoteAdapter {
  * @param {Number} [init.params.source=2] The ID of the chosen catalog. Defaults to EBI GWAS catalog, GRCh37
  * @param {('strict'|'loose')} [init.params.match_type='strict'] Whether to match on exact variant, or just position.
  */
-class GwasCatalogLZ extends RemoteAdapter {
+class GwasCatalogLZ extends BaseApiAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -651,7 +651,8 @@ class GwasCatalogLZ extends RemoteAdapter {
         //   But there can be more than one GWAS catalog version available in the same API, for the same build- an
         //   explicit config option will always take
         //   precedence.
-        const default_source = (build_option === 'GRCh38') ? 1 : 2;  // EBI GWAS catalog
+        // See: http://portaldev.sph.umich.edu/api/v1/annotation/gwascatalog/?format=objects
+        const default_source = (build_option === 'GRCh38') ? 5 : 6;  // EBI GWAS catalog
         const source = this.params.source || default_source;
         return `${this.url  }?format=objects&sort=pos&filter=id eq ${source} and chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}`;
     }
@@ -733,14 +734,17 @@ class GwasCatalogLZ extends RemoteAdapter {
  * Data Source for Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
  */
-class GeneLZ extends RemoteAdapter {
+class GeneLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
         validateBuildSource(this.constructor.name, build, source);
 
-        if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
-            source = (build === 'GRCh38') ? 1 : 3;
+        if (build) {
+            // If build specified, we auto-select the best current portaldev API dataset for that build
+            // If build is not specified, we use the exact source ID provided by the user.
+            // See: https://portaldev.sph.umich.edu/api/v1/annotation/genes/sources/?format=objects
+            source = (build === 'GRCh38') ? 4 : 5;
         }
         return `${this.url}?filter=source in ${source} and chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
     }
@@ -764,7 +768,7 @@ class GeneLZ extends RemoteAdapter {
  *
  * @public
 */
-class GeneConstraintLZ extends RemoteAdapter {
+class GeneConstraintLZ extends BaseApiAdapter {
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -855,7 +859,7 @@ class GeneConstraintLZ extends RemoteAdapter {
  * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
  */
-class RecombLZ extends RemoteAdapter {
+class RecombLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         let source = this.params.source;
@@ -894,7 +898,7 @@ class StaticSource extends BaseAdapter {
  * @param {String[]} init.params.build This datasource expects to be provided the name of the genome build that will
  *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
-class PheWASLZ extends RemoteAdapter {
+class PheWASLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
         if (!build || !Array.isArray(build) || !build.length) {
@@ -999,7 +1003,7 @@ class ConnectorSource extends BaseAdapter {
     }
 }
 
-export { BaseAdapter, RemoteAdapter };
+export { BaseAdapter, BaseApiAdapter };
 
 export {
     AssociationLZ,

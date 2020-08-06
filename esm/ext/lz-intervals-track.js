@@ -12,7 +12,7 @@ import * as d3 from 'd3';
 
 
 function install (LocusZoom) {
-    const RemoteAdapter = LocusZoom.Adapters.get('RemoteAdapter');
+    const BaseApiAdapter = LocusZoom.Adapters.get('BaseApiAdapter');
     const _Button = LocusZoom.Widgets.get('_Button');
     const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
@@ -20,7 +20,7 @@ function install (LocusZoom) {
      * Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
      * @public
      */
-    class IntervalLZ extends RemoteAdapter {
+    class IntervalLZ extends BaseApiAdapter {
         getURL(state, chain, fields) {
             const source = chain.header.bedtracksource || this.params.source;
             const query = `?filter=id in ${source} and chromosome eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;

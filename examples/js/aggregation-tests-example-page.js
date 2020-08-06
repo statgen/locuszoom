@@ -248,8 +248,7 @@ function createDisplayWidgets(label_store, context) {
         columns: [
             {
                 title: 'Gene', field: 'group', formatter: 'link', widthGrow: 3,
-                // TODO: exac gives timeouts if we use https
-                formatterParams: { urlPrefix: 'http://exac.broadinstitute.org/gene/', labelField: 'group_display_name' },
+                formatterParams: { urlPrefix: 'https://gnomad.broadinstitute.org/gene/', labelField: 'group_display_name' },
             },
             { title: 'Mask', field: 'mask_name', headerFilter: true, widthGrow: 8 },
             { title: '# Variants', field: 'variant_count', widthGrow: 2 },

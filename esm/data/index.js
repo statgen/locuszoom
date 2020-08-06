@@ -4,4 +4,4 @@
  * @private
  */
 export { default } from './sources';
-export { BaseAdapter, RemoteAdapter } from './adapters';
+export { BaseAdapter, BaseApiAdapter } from './adapters';

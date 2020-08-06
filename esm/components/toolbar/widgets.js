@@ -803,7 +803,8 @@ class FilterField extends BaseWidget {
         this.selector
             .append('span')
             .html(this._field_display_html)
-            .style('background', '#fff');
+            .style('background', '#fff')
+            .style('padding-left', '3px');
         // Operator label
         this.selector.append('span')
             .text(this._operator)
@@ -1370,7 +1371,8 @@ class DisplayOptions extends BaseWidget {
                     .on('click', () => {
                         // If an option is not specified in these display options, use the original defaults
                         allowed_fields.forEach((field_name) => {
-                            dataLayer.layout[field_name] = display_options[field_name] || defaultConfig[field_name];
+                            const has_option = typeof display_options[field_name] !== 'undefined';
+                            dataLayer.layout[field_name] = has_option ? display_options[field_name] : defaultConfig[field_name];
                         });
 
                         this._selected_item = row_id;

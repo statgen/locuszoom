@@ -659,6 +659,8 @@ class BaseDataLayer {
                 '>': (a, b) => a > b,
                 '>=': (a, b) => a >= b,
                 '%': (a, b) => a % b,
+                'in': (a, b) => b && b.includes(a),  // works for strings or arrays
+                'match': (a, b) => a && a.includes(b),
             };
             const extra = this.layer_state.extra_fields[this.getElementId(element)];
             const field_value = (new Field(field)).resolve(element, extra);

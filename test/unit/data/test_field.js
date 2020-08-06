@@ -64,4 +64,18 @@ describe('Field resolver', function () {
         assert.equal(v, '-2.0899051114393976');
         assert.equal(d['foo:bar|neglog10|htmlescape|urlencode'], '-2.0899051114393976', 'Value is cached for future lookups');
     });
+
+    it('should compose two transformations of the same type', function () {
+        const d = { 'foo:pvalue': 10 };
+        const f = new Field('foo:pvalue|log10|log10');
+        const v = f.resolve(d);
+        assert.equal(v, 0);
+    });
+
+    it('should compose two different numeric transformations left to right', function () {
+        const d = { 'foo:pvalue': 0.5 };
+        const f = new Field('foo:pvalue|neglog10|log10');
+        const v = f.resolve(d);
+        assert.equal(v, -0.5213902276543249);
+    });
 });
