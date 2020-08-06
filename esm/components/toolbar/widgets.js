@@ -1370,7 +1370,8 @@ class DisplayOptions extends BaseWidget {
                     .on('click', () => {
                         // If an option is not specified in these display options, use the original defaults
                         allowed_fields.forEach((field_name) => {
-                            dataLayer.layout[field_name] = display_options[field_name] || defaultConfig[field_name];
+                            const has_option = typeof display_options[field_name] !== 'undefined';
+                            dataLayer.layout[field_name] = has_option ? display_options[field_name] : defaultConfig[field_name];
                         });
 
                         this._selected_item = row_id;

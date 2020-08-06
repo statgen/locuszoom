@@ -74,7 +74,7 @@ class Genes extends BaseDataLayer {
      *   overlap in the view. A track is a row used to vertically separate overlapping genes.
      * @returns {Genes}
      */
-    assignTracks() {
+    assignTracks(data) {
         /**
          * Function to get the width in pixels of a label given the text and layout attributes
          * @param {String} gene_name
@@ -101,7 +101,7 @@ class Genes extends BaseDataLayer {
         this.tracks = 1;
         this.gene_track_index = { 1: [] };
 
-        this.data.map((item) => {
+        data.map((item) => {
             // If necessary, split combined gene id / version fields into discrete fields.
             // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
             if (item.gene_id && item.gene_id.indexOf('.')) {
@@ -206,11 +206,9 @@ class Genes extends BaseDataLayer {
      */
     render() {
         const self = this;
-        this.assignTracks();
-
         // Apply filters to only render a specified set of points
         const track_data = this._applyFilters();
-
+        this.assignTracks(track_data);
         let width, height, x, y;
 
         // Render gene groups

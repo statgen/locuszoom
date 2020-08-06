@@ -318,7 +318,7 @@ describe('Data adapters', function () {
                 // HACK: This is the only part of these tests that differs between sources
                 let pattern;
                 if (source_name === 'GeneLZ') {
-                    pattern = /source in 1/;
+                    pattern = /source in 4/;
                 } else {
                     pattern = /id in 16/;
                 }
