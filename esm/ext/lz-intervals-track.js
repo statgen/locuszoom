@@ -294,7 +294,11 @@ function install (LocusZoom) {
 
         // Implement the main render function
         render() {
+            // Lay out space first
             this.assignTracks();
+
+            // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
+            const track_data = this._applyFilters();
 
             // Remove any shared highlight nodes and re-render them if we're splitting on tracks
             // At most there will only be dozen or so nodes here (one per track) and each time
@@ -319,7 +323,7 @@ function install (LocusZoom) {
 
             // Render interval groups
             const selection = this.svg.group.selectAll('g.lz-data_layer-intervals')
-                .data(this.data, (d) => {
+                .data(track_data, (d) => {
                     return d[this.layout.id_field];
                 });
 
