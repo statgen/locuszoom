@@ -838,7 +838,7 @@ class DownloadSVG extends BaseWidget {
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
-        this._button_html = this.layout.button_html || 'Save as SVG';
+        this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
     }
 
@@ -994,7 +994,7 @@ class DownloadPNG extends DownloadSVG {
     constructor(layout, parent) {
         super(...arguments);
         this._filename = this.layout.filename || 'locuszoom.png';
-        this._button_html = this.layout.button_html || 'Save as PNG';
+        this._button_html = this.layout.button_html || 'Save PNG';
         this._button_title = this.layout.button_title || 'Download image';
     }
 

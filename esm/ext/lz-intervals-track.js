@@ -646,7 +646,7 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'region_nav_plot', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
             LocusZoom.Layouts.get('panel', 'association', {
                 unnamespaced: true,

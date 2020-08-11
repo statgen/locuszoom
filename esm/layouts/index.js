@@ -492,7 +492,7 @@ const standard_panel_toolbar = {
 };
 
 const standard_plot_toolbar = {
-    // Suitable for most any type of plot drawn with LZ
+    // Suitable for most any type of plot drawn with LZ. Title and download buttons.
     widgets: [
         {
             type: 'title',
@@ -503,19 +503,27 @@ const standard_plot_toolbar = {
         {
             type: 'download',
             position: 'right',
+            group_position: 'end',
         },
         {
             type: 'download_png',
             position: 'right',
+            group_position: 'start',
         },
     ],
 };
 
+const standard_association_toolbar = function () {
+    // Suitable for association plots (adds a button for LD data)
+    const base = deepCopy(standard_plot_toolbar);
+    base.widgets.push(deepCopy(ldlz2_pop_selector_menu));
+    return base;
+}();
+
 const region_nav_plot_toolbar = function () {
-    // Useful for most region-based plots
-    const region_nav_plot_toolbar = deepCopy(standard_plot_toolbar);
-    region_nav_plot_toolbar.widgets.push(
-        deepCopy(ldlz2_pop_selector_menu),
+    // Generic region nav buttons
+    const base = deepCopy(standard_plot_toolbar);
+    base.widgets.push(
         {
             type: 'shift_region',
             step: 500000,
@@ -556,7 +564,7 @@ const region_nav_plot_toolbar = function () {
             group_position: 'start',
         }
     );
-    return region_nav_plot_toolbar;
+    return base;
 }();
 
 /**
@@ -802,7 +810,7 @@ const standard_association_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(region_nav_plot_toolbar),
+    toolbar: deepCopy(standard_association_toolbar),
     panels: [
         merge({ proportional_height: 0.5}, deepCopy(association_panel)),
         merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
@@ -816,7 +824,7 @@ const association_catalog_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(region_nav_plot_toolbar),
+    toolbar: deepCopy(standard_association_toolbar),
     panels: [
         deepCopy(annotation_catalog_panel),
         deepCopy(association_catalog_panel),
@@ -914,6 +922,7 @@ export const toolbar_widgets = {
 export const toolbar = {
     standard_panel: standard_panel_toolbar,
     standard_plot: standard_plot_toolbar,
+    standard_association: standard_association_toolbar,
     region_nav_plot: region_nav_plot_toolbar,
 };
 
