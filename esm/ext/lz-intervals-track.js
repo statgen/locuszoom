@@ -386,19 +386,17 @@ function install (LocusZoom) {
                         .attr('width', (d) => d.display_range.width)
                         .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
                         .attr('x', (d) => d.display_range.start)
-                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
+                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()))
+                        // Apply default event emitters to clickareas
+                        .on('click', (element_data) => {
+                            element_data.parent.parent.emit('element_clicked', element_data, true);
+                        })
+                        // Apply mouse behaviors to clickareas
+                        .call(data_layer.applyBehaviors.bind(data_layer));
 
                     // Remove old clickareas as needed
                     clickareas.exit()
                         .remove();
-
-                    // Apply default event emitters to clickareas
-                    clickareas.on('click', (element_data) => {
-                        element_data.parent.parent.emit('element_clicked', element_data, true);
-                    });
-
-                    // Apply mouse behaviors to clickareas
-                    data_layer.applyBehaviors(clickareas);
                 });
 
             // Remove old elements as needed
