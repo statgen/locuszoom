@@ -323,13 +323,13 @@ class Button {
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
                 const height = Math.min(total_content_height, base_max_height);
                 this.menu.outer_selector
-                    .style('top', `${top.toString()}px`)
-                    .style('left', `${left.toString()}px`)
-                    .style('max-width', `${container_max_width.toString()}px`)
-                    .style('max-height', `${base_max_height.toString()}px`)
-                    .style('height', `${height.toString()}px`);
+                    .style('top', `${top}px`)
+                    .style('left', `${left}px`)
+                    .style('max-width', `${container_max_width}px`)
+                    .style('max-height', `${base_max_height}px`)
+                    .style('height', `${height}px`);
                 this.menu.inner_selector
-                    .style('max-width', `${content_max_width.toString()}px`);
+                    .style('max-width', `${content_max_width}px`);
                 this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 return this.menu;
             },
@@ -838,7 +838,7 @@ class DownloadSVG extends BaseWidget {
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
-        this._button_html = this.layout.button_html || 'Save as SVG';
+        this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
     }
 
@@ -994,7 +994,7 @@ class DownloadPNG extends DownloadSVG {
     constructor(layout, parent) {
         super(...arguments);
         this._filename = this.layout.filename || 'locuszoom.png';
-        this._button_html = this.layout.button_html || 'Save as PNG';
+        this._button_html = this.layout.button_html || 'Save PNG';
         this._button_title = this.layout.button_title || 'Download image';
     }
 

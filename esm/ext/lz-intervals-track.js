@@ -294,7 +294,11 @@ function install (LocusZoom) {
 
         // Implement the main render function
         render() {
+            // Lay out space first
             this.assignTracks();
+
+            // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
+            const track_data = this._applyFilters();
 
             // Remove any shared highlight nodes and re-render them if we're splitting on tracks
             // At most there will only be dozen or so nodes here (one per track) and each time
@@ -319,7 +323,7 @@ function install (LocusZoom) {
 
             // Render interval groups
             const selection = this.svg.group.selectAll('g.lz-data_layer-intervals')
-                .data(this.data, (d) => {
+                .data(track_data, (d) => {
                     return d[this.layout.id_field];
                 });
 
@@ -382,19 +386,17 @@ function install (LocusZoom) {
                         .attr('width', (d) => d.display_range.width)
                         .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
                         .attr('x', (d) => d.display_range.start)
-                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
+                        .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()))
+                        // Apply default event emitters to clickareas
+                        .on('click', (element_data) => {
+                            element_data.parent.parent.emit('element_clicked', element_data, true);
+                        })
+                        // Apply mouse behaviors to clickareas
+                        .call(data_layer.applyBehaviors.bind(data_layer));
 
                     // Remove old clickareas as needed
                     clickareas.exit()
                         .remove();
-
-                    // Apply default event emitters to clickareas
-                    clickareas.on('click', (element_data) => {
-                        element_data.parent.parent.emit('element_clicked', element_data, true);
-                    });
-
-                    // Apply mouse behaviors to clickareas
-                    data_layer.applyBehaviors(clickareas);
                 });
 
             // Remove old elements as needed
@@ -642,7 +644,7 @@ function install (LocusZoom) {
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
-        toolbar: LocusZoom.Layouts.get('toolbar', 'region_nav_plot', { unnamespaced: true }),
+        toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
             LocusZoom.Layouts.get('panel', 'association', {
                 unnamespaced: true,

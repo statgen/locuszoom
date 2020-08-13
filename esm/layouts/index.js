@@ -350,22 +350,6 @@ const genes_layer = {
     id: 'genes',
     type: 'genes',
     fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
-    // By default this layer doesn't show everything, but a button is added to set filters to `null`- "show all"
-    filters: [
-        {
-            field: 'gene_type',
-            operator: 'in',
-            // A manually curated subset of Gencode biotypes, based on user suggestions
-            //  See full list: https://www.gencodegenes.org/human/stats.html
-            value: [
-                'protein_coding',
-                'IG_C_gene', 'IG_D_gene', 'IG_J_gene', 'IG_V_gene',
-                'TR_C_gene', 'TR_D_gene', 'TR_J_gene', 'TR_V_gene',
-                'rRNA',
-                'Mt_rRNA', 'Mt_tRNA',
-            ],
-        },
-    ],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -383,6 +367,28 @@ const genes_layer = {
     },
     tooltip: deepCopy(standard_genes_tooltip),
 };
+
+const genes_layer_filtered = merge({
+    // By default this layer doesn't show everything. Often used in tandem with a panel-level toolbar "show all" button.
+    filters: [
+        {
+            field: 'gene_type',
+            operator: 'in',
+            // A manually curated subset of Gencode biotypes, based on user suggestions
+            //  See full list: https://www.gencodegenes.org/human/stats.html
+            // This is approximately intended to cover elements of generally known function, and exclude things
+            //  like pseudogenes.
+            value: [
+                'protein_coding',
+                'IG_C_gene', 'IG_D_gene', 'IG_J_gene', 'IG_V_gene',
+                'TR_C_gene', 'TR_D_gene', 'TR_J_gene', 'TR_V_gene',
+                'rRNA',
+                'Mt_rRNA', 'Mt_tRNA',
+            ],
+        },
+    ],
+}, deepCopy(genes_layer));
+
 
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
@@ -492,7 +498,7 @@ const standard_panel_toolbar = {
 };
 
 const standard_plot_toolbar = {
-    // Suitable for most any type of plot drawn with LZ
+    // Suitable for most any type of plot drawn with LZ. Title and download buttons.
     widgets: [
         {
             type: 'title',
@@ -503,19 +509,27 @@ const standard_plot_toolbar = {
         {
             type: 'download',
             position: 'right',
+            group_position: 'end',
         },
         {
             type: 'download_png',
             position: 'right',
+            group_position: 'start',
         },
     ],
 };
 
+const standard_association_toolbar = function () {
+    // Suitable for association plots (adds a button for LD data)
+    const base = deepCopy(standard_plot_toolbar);
+    base.widgets.push(deepCopy(ldlz2_pop_selector_menu));
+    return base;
+}();
+
 const region_nav_plot_toolbar = function () {
-    // Useful for most region-based plots
-    const region_nav_plot_toolbar = deepCopy(standard_plot_toolbar);
-    region_nav_plot_toolbar.widgets.push(
-        deepCopy(ldlz2_pop_selector_menu),
+    // Generic region nav buttons
+    const base = deepCopy(standard_plot_toolbar);
+    base.widgets.push(
         {
             type: 'shift_region',
             step: 500000,
@@ -556,7 +570,7 @@ const region_nav_plot_toolbar = function () {
             group_position: 'start',
         }
     );
-    return region_nav_plot_toolbar;
+    return base;
 }();
 
 /**
@@ -729,14 +743,14 @@ const genes_panel = {
             {
                 type: 'resize_to_data',
                 position: 'right',
-                button_html: 'Fit all genes',
+                button_html: 'Resize',
             },
             deepCopy(gene_selector_menu)
         );
         return base;
     })(),
     data_layers: [
-        deepCopy(genes_layer),
+        deepCopy(genes_layer_filtered),
     ],
 };
 
@@ -802,7 +816,7 @@ const standard_association_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(region_nav_plot_toolbar),
+    toolbar: deepCopy(standard_association_toolbar),
     panels: [
         merge({ proportional_height: 0.5}, deepCopy(association_panel)),
         merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
@@ -816,7 +830,7 @@ const association_catalog_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(region_nav_plot_toolbar),
+    toolbar: deepCopy(standard_association_toolbar),
     panels: [
         deepCopy(annotation_catalog_panel),
         deepCopy(association_catalog_panel),
@@ -914,6 +928,7 @@ export const toolbar_widgets = {
 export const toolbar = {
     standard_panel: standard_panel_toolbar,
     standard_plot: standard_plot_toolbar,
+    standard_association: standard_association_toolbar,
     region_nav_plot: region_nav_plot_toolbar,
 };
 
@@ -925,6 +940,7 @@ export const data_layer = {
     association_pvalues_catalog: association_pvalues_catalog_layer,
     phewas_pvalues: phewas_pvalues_layer,
     genes: genes_layer,
+    genes_filtered: genes_layer_filtered,
     annotation_catalog: annotation_catalog_layer,
 };
 
