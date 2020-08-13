@@ -350,22 +350,6 @@ const genes_layer = {
     id: 'genes',
     type: 'genes',
     fields: ['{{namespace[gene]}}all', '{{namespace[constraint]}}all'],
-    // By default this layer doesn't show everything, but a button is added to set filters to `null`- "show all"
-    filters: [
-        {
-            field: 'gene_type',
-            operator: 'in',
-            // A manually curated subset of Gencode biotypes, based on user suggestions
-            //  See full list: https://www.gencodegenes.org/human/stats.html
-            value: [
-                'protein_coding',
-                'IG_C_gene', 'IG_D_gene', 'IG_J_gene', 'IG_V_gene',
-                'TR_C_gene', 'TR_D_gene', 'TR_J_gene', 'TR_V_gene',
-                'rRNA',
-                'Mt_rRNA', 'Mt_tRNA',
-            ],
-        },
-    ],
     id_field: 'gene_id',
     behaviors: {
         onmouseover: [
@@ -383,6 +367,28 @@ const genes_layer = {
     },
     tooltip: deepCopy(standard_genes_tooltip),
 };
+
+const genes_layer_filtered = merge({
+    // By default this layer doesn't show everything. Often used in tandem with a panel-level toolbar "show all" button.
+    filters: [
+        {
+            field: 'gene_type',
+            operator: 'in',
+            // A manually curated subset of Gencode biotypes, based on user suggestions
+            //  See full list: https://www.gencodegenes.org/human/stats.html
+            // This is approximately intended to cover elements of generally known function, and exclude things
+            //  like pseudogenes.
+            value: [
+                'protein_coding',
+                'IG_C_gene', 'IG_D_gene', 'IG_J_gene', 'IG_V_gene',
+                'TR_C_gene', 'TR_D_gene', 'TR_J_gene', 'TR_V_gene',
+                'rRNA',
+                'Mt_rRNA', 'Mt_tRNA',
+            ],
+        },
+    ],
+}, deepCopy(genes_layer));
+
 
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
@@ -737,14 +743,14 @@ const genes_panel = {
             {
                 type: 'resize_to_data',
                 position: 'right',
-                button_html: 'Fit all genes',
+                button_html: 'Resize',
             },
             deepCopy(gene_selector_menu)
         );
         return base;
     })(),
     data_layers: [
-        deepCopy(genes_layer),
+        deepCopy(genes_layer_filtered),
     ],
 };
 
@@ -934,6 +940,7 @@ export const data_layer = {
     association_pvalues_catalog: association_pvalues_catalog_layer,
     phewas_pvalues: phewas_pvalues_layer,
     genes: genes_layer,
+    genes_filtered: genes_layer_filtered,
     annotation_catalog: annotation_catalog_layer,
 };
 

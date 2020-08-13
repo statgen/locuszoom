@@ -323,13 +323,13 @@ class Button {
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
                 const height = Math.min(total_content_height, base_max_height);
                 this.menu.outer_selector
-                    .style('top', `${top.toString()}px`)
-                    .style('left', `${left.toString()}px`)
-                    .style('max-width', `${container_max_width.toString()}px`)
-                    .style('max-height', `${base_max_height.toString()}px`)
-                    .style('height', `${height.toString()}px`);
+                    .style('top', `${top}px`)
+                    .style('left', `${left}px`)
+                    .style('max-width', `${container_max_width}px`)
+                    .style('max-height', `${base_max_height}px`)
+                    .style('height', `${height}px`);
                 this.menu.inner_selector
-                    .style('max-width', `${content_max_width.toString()}px`);
+                    .style('max-width', `${content_max_width}px`);
                 this.menu.inner_selector.node().scrollTop = this.menu.scroll_position;
                 return this.menu;
             },
