@@ -1112,7 +1112,7 @@ class Plot {
                         this.dragging = false;
                     });
                     corner_drag.on('drag', () => {
-                        this.parent.setDimensions(this.layout.width + d3.event.dx, this.layout.height + d3.event.dy);
+                        this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent.layout.height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
                     this.parent.panel_boundaries.corner_selector = corner_selector;
