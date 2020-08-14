@@ -461,7 +461,7 @@ const gene_selector_menu = {
     button_html: 'Filter...',
     button_title: 'Choose which genes to show',
     layer_name: 'genes',
-    default_config_display_name: 'Functional elements',
+    default_config_display_name: 'Coding genes & rRNA',
     options: [
         {
             display_name: 'All features',
