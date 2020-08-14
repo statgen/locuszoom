@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "lts/carbon"
   - "lts/erbium"
+  - "lts/dubnium"
 cache:
   yarn: true
   directories:
@@ -9,6 +9,7 @@ cache:
 before_script:
   - npm install
 script:
+  - eslint .
   - npm test
 branches:
   only:

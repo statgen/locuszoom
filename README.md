@@ -18,18 +18,18 @@ and [statgen.github.io/locuszoom/#examples](http://statgen.github.io/locuszoom/#
 
 The page you build that embeds the LocusZoom plugin must include the following resources, found in the `dist` directory:
 
-* `locuszoom.vendor.min.js`  
-  This file contains the concatenated vendor libraries. You can alternatively include [d3](http://d3js.org/)
-  from other sources, so long as it is included **before including LocusZoom files**. This bundle also contains a 
-  polyfill for ES6 `Promise`, which you may need if your site supports certain older browsers such as Internet Explorer.
+* `d3.js`  
+  [D3.js](https://d3js.org/) v5.16.0 is used to draw graphics in LocusZoom plots. It may be loaded [via a CDN](https://cdn.jsdelivr.net/npm/d3@^5.16.0). It must be present before LocusZoom is loaded.
 
-* `locuszoom.app.js` OR `locuszoom.app.min.js`  
+* `locuszoom.app.min.js`  
   This is the primary application logic. It should only be included *after* the vendor dependencies have been included.  
 
 * `locuszoom.css`  
   This is the primary stylesheet. It is namespaced so as not to conflict with any other styles defined on the same page.
 
-CDN links are available for these resources (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
+Instead of copying the files to your project, we recommend using CDN links are for these resources (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
+
+*The above instructions describe using LocusZoom with pure JS and HTML. If you are using a module build system, LocusZoom supports usage via ES6 imports, eg `import LocusZoom from 'locuszoom';` and `import 'locuszoom/dist/locuszoom.css';`* 
 
 ### 2. Define Data Sources
 
@@ -41,7 +41,7 @@ Here's an example of defining a data sources object for a remote API:
 
 ```javascript
 var data_sources = new LocusZoom.DataSources();
-data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/" }]);
+data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/", params: {source: 1} }]);
 ```
 
 The above example adds an "AssociationLZ" data source (a predefined data source designed to make requests for 
@@ -102,15 +102,14 @@ A basic example may then look like this:
 ```html
 <html>
   <head>
-    <script src="locuszoom.vendor.min.js" type="text/javascript"></script>
-    <script src="locuszoom.app.js" type="text/javascript"></script>
+    <script src="locuszoom.app.min.js" type="text/javascript"></script>
     <link rel="stylesheet" type="text/css" href="locuszoom.css"/>
   </head>
   <body>
     <div id="plot"></div>
     <script type="text/javascript">
       var data_sources = new LocusZoom.DataSources();
-      data_sources.add("trait", ["AssociationLZ", { url: "http://server.com/api/single/" }]);
+      data_sources.add("trait", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
       var layout = {
         width: 500,
         height: 500,
@@ -140,19 +139,16 @@ A basic example may then look like this:
 #### Use a Predefined Layout
 
 The core LocusZoom library comes equipped with several predefined layouts, organized by type ("plot", "panel", 
-"data_layer", and "dashboard"). You can see what layouts are predefined by reading the contents of 
+"data_layer", and "toolbar"). You can see what layouts are predefined by reading the contents of 
 `assets/js/app/Layouts.js` or in the browser by entering `LocusZoom.Layouts.list()` (or to list one specific type: 
 `LocusZoom.Layouts.list(type)`).
 
 Get any predefined layout by type and name using `LocusZoom.Layouts.get(type, name)`.
   
-If no layout is passed to `LocusZoom.populate()` the Standard GWAS plot layout is used (requiring appropriate data 
-sources to be configured).
-
 #### Build a Layout Using Some Predefined Pieces
 
 `LocusZoom.Layouts.get(type, name)` can also be used to pull predefined layouts of smaller pieces, like data layers or 
-dashboards, into a custom layout:
+toolbars, into a custom layout:
 
 ```javascript
 var layout = {
@@ -191,7 +187,7 @@ interactions with the layout. This can include a specific query against various 
  can be predefined at initialization as a top-level parameter in the layout. For example:
 
 ```javascript
-var layout = LocusZoom.Layouts.merge({ state: { chr: 6, start: 20379709, end: 20979709 } }, LocusZoom.StandardLayout);
+var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
 ```
 
 #### Predefining State With `data-region`
@@ -206,20 +202,6 @@ You can also describe the locus query aspect of the State (chromosome, start, an
 When `LocusZoom.populate()` is executed on the element defined above it will automatically parse any `data-region` 
 parameter to convert those values into the initial state.
 
-#### Making Many LocusZoom Plots at Once
-
-`LocusZoom.populate()` will only populate the first matching HTML element for the provided selector string. To populate 
-all matching elements for a single selector string use `LocusZoom.populateAll()` like so:
-
-```html
-<div class="plot" id="plot_1"></div>
-<div class="plot" id="plot_2"></div>
-<div class="plot" id="plot_3"></div>
-<script type="text/javascript">
-  var plots = LocusZoom.populateAll(".plot", data_source, layout);
-</script>
-```
-
 ## Development Setup
 
 ### Dependencies
@@ -231,60 +213,33 @@ LocusZoom is an entirely client-side application designed to plug into arbitrary
 
 ### Build System and Automated Testing
 
-The application is built using [Gulp](http://gulpjs.com/). Gulp and all necessary dev dependencies can be installed for
- this project from the top-level directory using the following commands:
+LocusZoom is bundled using Webpack. To install all necessary dependencies for a development environment, run:
 
 ```
 $ npm install
 ```
 
-Once complete run `npx gulp build` from the top of the application directory to run all tests and build the 
-following files (in the `dist` folder):
+We recommend using node.js v12 or greater to build the library and run tests.
 
-* `locuszoom.app.js` - A concatenated app file suitable for use in development
-* `locuszoom.app.min.js` - A concatenated and minified app file suitable for use in production
-* `locuszoom.vendor.min.js` - A concatenated vendor file suitable for use as a single vendor include in either 
-development or production (contains d3)
-* `locuszoom.css` - A generated CSS file for all LocusZoom styles
+Once complete run `npm run build` from the top of the application directory to run all tests and build the LocusZoom library bundle.
 
 This build process will also write sourcemaps, to help with debugging code even in production environments.
 
 #### Other supported gulp commands:
-* `npx gulp build` - Build app and vendor js files (runs tests and aborts if tests fail)
-* `npx gulp watch` - Watch for any changes to app .js, .scss, or test source files to trigger another full build
-* `npx gulp test` - Just run the tests
-* `npx gulp app_js` - Build app js files (does not run tests)
-* `npx gulp ext_js` - Build extensions (features that are not part of LocusZoom core)
-* `npx gulp vendor_js` - Build vendor js file
-* `npx gulp css` - Build CSS file
+* `npm run test` - Run unit tests (optional: `npm run test:coverage` to output a code coverage report)
+* `npm run dev` - Automatically rebuild the library whenever code changes (development mode)
+* `npm run build` - Run tests, and if they pass, build the library for release
+* `npm run css` - Rebuild the CSS using SASS
+* `npm run docs` - Build the library documentation
 
-#### The `--force` Flag
-
-Append `--force` to the end of any gulp command that runs the automated testing suite to force the creation of 
-`locuszoom.app.js` and `locuszoom.app.min.js` **even when the tests fail**. This can be useful during active 
-development as sometimes debugging can be led from either the output of automated tests or inspection of 
-an active plugin.
-
-This flag is particularly useful with the watch command:
-
-`$ npx gulp watch --force`
-
-The above command with enter forced-watch-mode, which will detect any changes to app .js or .scss files, as well as 
-test files, and run a new build. If errors are encountered in the tests they will be reported, but `locuszoom.app.js`
- and `locuszoom.app.min.js` will still be generated and gulp will not exit but return to watch mode. **This is an 
- effective way to have automatic continuous builds while developing both the application and its tests.**
 
 #### Automated Testing
 
-LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory, with 
-a one-to-one mapping of test files to app files.
+LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory.
 
-**Note that the build and test process requires Node.js version 6 LTS or higher.**
-
-### Linting and Strict Mode
-
-All app-specific javascript files should be developed in **strict mode**. LocusZoom is also linted using 
-[ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`.
+### Linting
+LocusZoom is also linted using 
+[ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`. This will run automatically as part of all new code commits, and during every build. 
 
 ## Help and Support
 

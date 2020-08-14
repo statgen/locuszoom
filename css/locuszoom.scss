@@ -1,0 +1,957 @@
+$namespace: "lz";
+$default_black: "rgb(24, 24, 24)";
+$default_black_opacity: "1";
+$default_white: "rgb(232, 232, 232)";
+$default_white_opacity: "1";
+$default_black_shadow: "rgb(24, 24, 24)";
+$default_black_shadow_opacity: "0.4";
+$default_black_shadow_rgba: "rgba(24, 24, 24, 0.4)";
+
+$tooltip_arrow_width: "7";
+$tooltip_padding: "6";
+
+svg.#{$namespace}-locuszoom  {
+
+  background-color: #FFFFFF;
+  border: none;
+  cursor: crosshair;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 10px;
+
+  rect.#{$namespace}-clickarea {
+    fill: rgb(0,0,0);
+    fill-opacity: 0;
+    cursor: pointer;
+  }
+
+  .#{$namespace}-mouse_guide {
+    rect {
+      fill: rgb(210,210,210);
+      fill-opacity: 0.85;
+    }
+    rect.#{$namespace}-mouse_guide-vertical {
+      width: 1px;
+      height: 100%;
+    }
+    rect.#{$namespace}-mouse_guide-horizontal {
+      width: 100%;
+      height: 1px;
+    }
+  }
+
+  .#{$namespace}-panel-title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .#{$namespace}-panel-background {
+    fill: rgb(255,255,255);
+    fill-opacity: 0.01;
+  }
+
+  .#{$namespace}-axis path,
+  .#{$namespace}-axis line {
+  	fill: none;
+  	stroke: #{$default_black};
+  	stroke-opacity: #{$default_black_opacity};
+  	shape-rendering: crispEdges;
+  }
+
+  .#{$namespace}-axis .#{$namespace}-label {
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .tick text:focus {
+    outline-style: dotted;
+    outline-width: 1px;
+    outline-color: rgb(66,66,66);
+    outline-offset: 2px;
+  }
+
+  .#{$namespace}-legend-background {
+    fill: rgb(245,245,245);
+    fill-opacity: 1;
+    stroke: #{$default_black};
+  	stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+  }
+
+  path.#{$namespace}-data_layer-scatter, path.#{$namespace}-data_layer-category_scatter {
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
+    stroke-width: 1px;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-scatter-highlighted, path.#{$namespace}-data_layer-category_scatter-highlighted  {
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-scatter-selected, path.#{$namespace}-data_layer-category_scatter-selected {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-scatter-faded, path.#{$namespace}-data_layer-category_scatter-faded {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1;
+  }
+
+  path.#{$namespace}-data_layer-scatter-hidden, path.#{$namespace}-data_layer-category_scatter-hidden {
+    display: none;
+  }
+
+  text.#{$namespace}-data_layer-scatter-label, text.#{$namespace}-data_layer-category_scatter-label  {
+    fill: #{$default_black};
+    fill-opacity: #{$default_black_opacity};
+    alignment-baseline: middle;
+  }
+
+  line.#{$namespace}-data_layer-scatter-label, line.#{$namespace}-data_layer-category_scatter-label {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-annotation_track {
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-annotation_track-highlighted, path.#{$namespace}-data_layer-annotation_track-selected {
+    stroke-opacity: #{$default_black_opacity};
+  }
+
+  path.#{$namespace}-data_layer-line {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-line-faded {
+    stroke-opacity: 0.2;
+  }
+
+  path.#{$namespace}-data_layer-line-hidden {
+    display: none;
+  }
+
+  path.#{$namespace}-data_layer-line-hitarea {
+    fill: none;
+    stroke: none;
+    cursor: pointer;
+  }
+
+  g.#{$namespace}-data_layer-genes {
+    cursor: pointer;
+  }
+
+  g.#{$namespace}-data_layer-genes-faded {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-genes-hidden {
+    display: none;
+  }
+
+  text.#{$namespace}-data_layer-genes.#{$namespace}-label {
+    font-style: italic;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode-highlighted {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.1;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-data_layer-genes-statusnode-selected {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.15;
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-boundary {
+    stroke-opacity: 1;
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-genes.#{$namespace}-exon {
+    stroke-opacity: 1;
+    stroke-width: 1px;
+  }
+
+  g.#{$namespace}-data_layer-intervals-faded {
+    opacity: 0.1;
+  }
+
+  g.#{$namespace}-data_layer-intervals-hidden {
+    display: none;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode-highlighted {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.2;
+    stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-data_layer-intervals-statusnode-selected {
+    fill: rgb(54, 54, 150);
+    fill-opacity: 0.35;
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals.#{$namespace}-interval_rect {
+    stroke-width: 0px;
+  }
+
+  path.#{$namespace}-data_layer-forest {
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
+    stroke-width: 1px;
+    cursor: pointer;
+  }
+
+  path.#{$namespace}-data_layer-forest-highlighted {
+    stroke: #{$default_black_shadow};
+    stroke-opacity: #{$default_black_shadow_opacity};
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-forest-selected {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 4px;
+  }
+
+  path.#{$namespace}-data_layer-forest-faded {
+    fill-opacity: 0.1;
+    stroke-opacity: 0.1;
+  }
+
+  path.#{$namespace}-data_layer-forest-hidden {
+    display: none;
+  }
+
+  rect.#{$namespace}-data_layer-forest.#{$namespace}-data_layer-ci {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
+  }
+
+}
+
+// Styles for HTML elements
+div.#{$namespace}-data_layer-tooltip {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: #{$tooltip_padding}px;
+  background: rgba(235,235,235,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
+
+  h1, h2, h3, h4, h5, h6 {
+    margin-top: 0.1em;
+    margin-bottom: 0.3em;
+  }
+
+  h1 { font-size: 200%; }
+  h2 { font-size: 175%; }
+  h3 { font-size: 150%; }
+  h4 { font-size: 135%; }
+  h5 { font-size: 125%; }
+  h6 { font-size: 110%; }
+
+  table {
+    display: table;
+    border-collapse: separate;
+    border-spacing: 1px;
+    margin-bottom: 0.2em;
+  }
+  th:first-child, td:first-child {
+    padding-left: 0px;
+  }
+  th, td {
+    padding: 6px;
+    text-align: left;
+    border-bottom: 1px solid #E1E1E1;
+  }
+
+  button {
+    text-decoration: none;
+    height: auto;
+    line-height: inherit;
+    padding: 0.2em 0.5em 0.2em 0.5em;
+    background-color: rgba(216,216,216,1);
+    color: #{$default_black};
+    border: 1px solid #{$default_black};
+    border-radius: 4px;
+    pointer-events: auto;
+    outline: none;
+  }
+  button:hover {
+    cursor: pointer;
+    background-color: #{$default_black};
+    color: #{$default_white};
+  }
+
+  .#{$namespace}-tooltip-close-button {
+    color: #{$default_black_shadow_rgba};
+    border: 1px solid #{$default_black_shadow_rgba};
+    background-color: rgba(235,235,235,0.4);
+    float: right;
+    position: relative;
+    top: -#{$tooltip_padding}px;
+    right: -#{$tooltip_padding}px;
+    margin: 0px 0px #{$tooltip_padding}px #{$tooltip_padding}px;
+  }
+
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_up {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_down {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_right {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_left {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_left {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_top_right {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid transparent;
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_left {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-right: #{$tooltip_arrow_width}px solid transparent;
+}
+
+div.#{$namespace}-data_layer-tooltip-arrow_bottom_right {
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  border-top: #{$tooltip_arrow_width}px solid transparent;
+  border-left: #{$tooltip_arrow_width}px solid transparent;
+  border-bottom: #{$tooltip_arrow_width}px solid #{$default_black};
+  border-right: #{$tooltip_arrow_width}px solid #{$default_black};
+}
+
+.#{$namespace}-container {
+  display: inline-block;
+  overflow: hidden;
+}
+
+.#{$namespace}-container-responsive {
+  width: 100%;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.#{$namespace}-curtain {
+
+  position: absolute;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(216,216,216,0.8);
+
+  .#{$namespace}-curtain-content {
+    position: absolute;
+    display: block;
+    width: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 auto;
+    padding: 0px 20px;
+    overflow-y: auto;
+  }
+
+  .#{$namespace}-curtain-dismiss {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 2px 4px;
+    font-size: 10px;
+    font-weight: 300;
+    background-color: #D8D8D8;
+    color: #333333;
+    border: 1px solid #333333;
+    border-radius: 0px 0px 0px 4px;
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
+  .#{$namespace}-curtain-dismiss:hover {
+    background-color: #333333;
+    color: #D8D8D8;
+  }
+
+}
+
+.#{$namespace}-loader {
+
+  position: absolute;
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  padding: 6px;
+  background: rgba(240,235,228,1);
+  border: 1px solid #{$default_black};
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
+
+  .#{$namespace}-loader-content {
+    position: relative;
+    display: block;
+    width: 100%;
+  }
+
+  .#{$namespace}-loader-progress-container {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 2px;
+    padding-top: 6px;
+  }
+
+  .#{$namespace}-loader-progress {
+    position: absolute;
+    left: 0%;
+    width: 0%;
+    height: 2px;
+    background-color: #{$default_black_shadow_rgba};
+  }
+
+  .#{$namespace}-loader-progress-animated {
+    animation-name: #{$namespace}-loader-animate;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-in-out;
+  }
+
+}
+
+@keyframes #{$namespace}-loader-animate {
+  0%   { width: 0%;   left: 0%;   }
+  50%  { width: 100%; left: 0%;   }
+  100% { width: 0%;   left: 100%; }
+}
+
+.#{$namespace}-plot-toolbar {
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-top: 4px;
+  padding-bottom: 3px;
+
+  .#{$namespace}-toolbar-button {
+    text-decoration: none;
+    padding: 3px 7px 3px 7px;
+    height: auto;
+    line-height: inherit;
+    border-radius: 4px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
+  }
+
+  .#{$namespace}-toolbar-button-group-start { border-radius: 4px 0px 0px 4px !important; }
+  .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-end { border-radius: 0px 4px 4px 0px !important; border-left-width: 0px !important; }
+
+}
+
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-left {
+  float: left;
+  margin-right: 1.5em;
+}
+
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-right {
+  float: right;
+  margin-left: 1.5em;
+}
+
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-start {
+  margin-right: 0em !important;
+}
+
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-middle {
+  margin-left: 0em !important;
+  margin-right: 0em !important;
+}
+
+.#{$namespace}-plot-toolbar > .#{$namespace}-toolbar-group-end {
+  margin-left: 0em !important;
+}
+
+.#{$namespace}-panel-toolbar {
+  padding-left: 2px;
+  padding-right: 2px;
+  padding-top: 2px;
+  padding-bottom: 0px;
+
+  .#{$namespace}-toolbar-button {
+    text-decoration: none;
+    padding: 2px 6px 2px 6px;
+    height: auto;
+    line-height: inherit;
+    border-radius: 3px;
+    pointer-events: auto;
+    outline: none;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    align-items: flex-start;
+    text-align: center;
+  }
+
+  .#{$namespace}-toolbar-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+  .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+  .#{$namespace}-toolbar-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+
+  input {
+    line-height: normal;  // override a bootstrap behavior so that text fields look good in toolbar
+  }
+}
+
+.#{$namespace}-panel-toolbar > .#{$namespace}-toolbar-left {
+  float: left;
+  margin-right: 0px;
+}
+
+.#{$namespace}-panel-toolbar > .#{$namespace}-toolbar-right {
+  float: right;
+  margin-left: 0px;
+}
+
+.#{$namespace}-toolbar {
+
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 80%;
+
+  .#{$namespace}-toolbar-title {
+    margin-bottom: 0.3em;
+    h3 {
+      font-size: 150%;
+      font-weight: bold;
+      margin: 0em;
+    }
+    small {
+      font-size: 80%;
+      font-weight: normal;
+    }
+  }
+
+}
+
+div.#{$namespace}-toolbar-menu {
+  font-family: "Helvetica Neue", Helvetica, Aria, sans-serif;
+  font-size: 12px;
+  position: absolute;
+  padding: 6px;
+  border-radius: 4px;
+  box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
+  overflow: hidden;
+
+  .#{$namespace}-toolbar-menu-content {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 20px;
+
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 0.1em;
+      margin-bottom: 0.3em;
+    }
+
+    h1 { font-size: 200%; }
+    h2 { font-size: 175%; }
+    h3 { font-size: 150%; }
+    h4 { font-size: 135%; }
+    h5 { font-size: 125%; }
+    h6 { font-size: 110%; }
+
+    .#{$namespace}-toolbar-button {
+      text-decoration: none;
+      padding: 2px 6px 2px 6px;
+      height: auto;
+      line-height: inherit;
+      border-radius: 3px;
+      pointer-events: auto;
+      outline: none;
+      white-space: nowrap;
+      cursor: pointer;
+      box-sizing: border-box;
+      align-items: flex-start;
+      text-align: center;
+      font-weight: 300;
+      letter-spacing: 0;
+      text-transform: none;
+      margin: 0;
+    }
+
+    .#{$namespace}-toolbar-button-group-start { border-radius: 3px 0px 0px 3px !important; }
+    .#{$namespace}-toolbar-button-group-middle { border-radius: 0px !important; border-left-width: 0px !important; }
+    .#{$namespace}-toolbar-button-group-end { border-radius: 0px 3px 3px 0px !important; border-left-width: 0px !important; }
+
+  }
+
+  table {
+    display: table;
+    border-collapse: collapse;
+    border-spacing: 0px;
+    margin-bottom: 0.4em;
+    width: 100%;
+  }
+  th:first-child, td:first-child {
+    vertical-align: top;
+  }
+  tr:nth-child(odd) {
+    background-color: rgba(0,0,0,0.08);
+  }
+  th, td {
+    padding: 4px;
+    text-align: left;
+    vertical-align: middle;
+    border: none;
+    line-height: 1;
+  }
+}
+
+.#{$namespace}-toolbar-button-gray {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(51,51,51,0.6);
+  color: rgba(51,51,51,0.6);
+}
+.#{$namespace}-toolbar-button-gray:not(.#{$namespace}-toolbar-button-gray-disabled):not(.#{$namespace}-toolbar-button-gray-highlighted):hover {
+  background-color: rgba(216,216,216,1);
+  border: 1px solid rgba(51,51,51,1);
+  color: rgba(51,51,51,1);
+}
+.#{$namespace}-toolbar-button-gray-highlighted {
+  border: 1px solid rgba(51,51,51,1);
+  background-color: rgba(51,51,51,1);
+  color: rgba(216,216,216,1) !important;
+}
+.#{$namespace}-toolbar-button-gray-disabled {
+  background-color: rgba(216,216,216,0.6);
+  border: 1px solid rgba(153,153,153,0.6);
+  color: rgba(153,153,153,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-red {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(89,49,49,0.6);
+  color: rgba(89,49,49,0.6);
+}
+.#{$namespace}-toolbar-button-red:not(.#{$namespace}-toolbar-button-red-disabled):not(.#{$namespace}-toolbar-button-red-highlighted):hover {
+  background-color: rgba(230,195,195,1);
+  border: 1px solid rgba(89,49,49,1);
+  color: rgba(89,49,49,1);
+}
+.#{$namespace}-toolbar-button-red-highlighted {
+  border: 1px solid rgba(89,49,49,1);
+  background-color: rgba(89,49,49,1);
+  color: rgba(230,195,195,1) !important;
+}
+.#{$namespace}-toolbar-button-red-disabled {
+  background-color: rgba(230,195,195,0.6);
+  border: 1px solid rgba(179,134,134,0.6);
+  color: rgba(179,134,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-orange {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(89,69,49,0.6);
+  color: rgba(89,69,49,0.6);
+}
+.#{$namespace}-toolbar-button-orange:not(.#{$namespace}-toolbar-button-orange-disabled):not(.#{$namespace}-toolbar-button-orange-highlighted):hover {
+  background-color: rgba(230,213,195,1);
+  border: 1px solid rgba(89,69,49,1);
+  color: rgba(89,69,49,1);
+}
+.#{$namespace}-toolbar-button-orange-highlighted {
+  border: 1px solid rgba(89,69,49,1);
+  background-color: rgba(89,69,49,1);
+  color: rgba(230,213,195,1) !important;
+}
+.#{$namespace}-toolbar-button-orange-disabled {
+  background-color: rgba(230,213,195,0.6);
+  border: 1px solid rgba(179,156,134,0.6);
+  color: rgba(179,156,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-yellow {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(89,89,49,0.6);
+  color: rgba(89,89,49,0.6);
+}
+.#{$namespace}-toolbar-button-yellow:not(.#{$namespace}-toolbar-button-yellow-disabled):not(.#{$namespace}-toolbar-button-yellow-highlighted):hover {
+  background-color: rgba(230,230,195,1);
+  border: 1px solid rgba(89,89,49,1);
+  color: rgba(89,89,49,1);
+}
+.#{$namespace}-toolbar-button-yellow-highlighted {
+  border: 1px solid rgba(89,89,49,1);
+  background-color: rgba(89,89,49,1);
+  color: rgba(230,230,195,1) !important;
+}
+.#{$namespace}-toolbar-button-yellow-disabled {
+  background-color: rgba(230,230,195,0.6);
+  border: 1px solid rgba(179,179,134,0.6);
+  color: rgba(179,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-green {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(59,89,49,0.6);
+  color: rgba(59,89,49,0.6);
+}
+.#{$namespace}-toolbar-button-green:not(.#{$namespace}-toolbar-button-green-disabled):not(.#{$namespace}-toolbar-button-green-highlighted):hover {
+  background-color: rgba(204,230,195,1);
+  border: 1px solid rgba(59,89,49,1);
+  color: rgba(59,89,49,1);
+}
+.#{$namespace}-toolbar-button-green-highlighted {
+  border: 1px solid rgba(59,89,49,1);
+  background-color: rgba(59,89,49,1);
+  color: rgba(204,230,195,1) !important;
+}
+.#{$namespace}-toolbar-button-green-disabled {
+  background-color: rgba(204,230,195,0.6);
+  border: 1px solid rgba(145,179,134,0.6);
+  color: rgba(145,179,134,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-blue {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(49,66,89,0.6);
+  color: rgba(49,66,89,0.6);
+}
+.#{$namespace}-toolbar-button-blue:not(.#{$namespace}-toolbar-button-blue-disabled):not(.#{$namespace}-toolbar-button-blue-highlighted):hover {
+  background-color: rgba(195,210,230,1);
+  border: 1px solid rgba(49,66,89,1);
+  color: rgba(49,66,89,1);
+}
+.#{$namespace}-toolbar-button-blue-highlighted {
+  border: 1px solid rgba(49,66,89,1);
+  background-color: rgba(49,66,89,1);
+  color: rgba(195,210,230,1) !important;
+}
+.#{$namespace}-toolbar-button-blue-disabled {
+  background-color: rgba(195,210,230,0.6);
+  border: 1px solid rgba(134,153,179,0.6);
+  color: rgba(134,153,179,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-button-purple {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(80,49,89,0.6);
+  color: rgba(80,49,89,0.6);
+}
+.#{$namespace}-toolbar-button-purple:not(.#{$namespace}-toolbar-button-purple-disabled):not(.#{$namespace}-toolbar-button-purple-highlighted):hover {
+  background-color: rgba(221,195,230,1);
+  border: 1px solid rgba(80,49,89,1);
+  color: rgba(80,49,89,1);
+}
+.#{$namespace}-toolbar-button-purple-highlighted {
+  border: 1px solid rgba(80,49,89,1);
+  background-color: rgba(80,49,89,1);
+  color: rgba(221,195,230,1) !important;
+}
+.#{$namespace}-toolbar-button-purple-disabled {
+  background-color: rgba(221,195,230,0.6);
+  border: 1px solid rgba(167,134,179,0.6);
+  color: rgba(167,134,179,0.6);
+  pointer-events: none;
+  cursor: wait;
+}
+
+.#{$namespace}-toolbar-menu-gray {
+  background-color: rgba(232,232,232,1);
+  border: 1px solid rgba(51,51,51,1);
+}
+
+.#{$namespace}-toolbar-menu-red {
+  background: rgba(240,228,228,1);
+  border: 1px solid rgba(89,49,49,1);
+}
+
+.#{$namespace}-toolbar-menu-orange {
+  background: rgba(240,234,228,1);
+  border: 1px solid rgba(89,69,49,1);
+}
+
+.#{$namespace}-toolbar-menu-yellow {
+  background: rgba(240,240,228,1);
+  border: 1px solid rgba(89,89,49,1);
+}
+
+.#{$namespace}-toolbar-menu-green {
+  background: rgba(231,240,228,1);
+  border: 1px solid rgba(59,89,49,1);
+}
+
+.#{$namespace}-toolbar-menu-blue {
+  background: rgba(228,233,240,1);
+  border: 1px solid rgba(49,66,89,1);
+}
+
+.#{$namespace}-toolbar-menu-purple {
+  background: rgba(237,228,240,1);
+  border: 1px solid rgba(80,49,89,1);
+}
+
+div.#{$namespace}-panel-boundary {
+  position: absolute;
+  height: 3px;
+  cursor: row-resize;
+  display: block;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+div.#{$namespace}-panel-boundary span {
+  display: block;
+  border-radius: 1px;
+  background: rgba(216,216,216,0);
+  border: 1px solid rgba(216,216,216,0);
+  height: 3px;
+}
+
+div.#{$namespace}-panel-boundary:hover span {
+  background: rgba(216,216,216,1);
+  border: 1px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-boundary:active span {
+  background: rgba(166,166,166,1);
+  border: 1px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-corner-boundary {
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  cursor: nwse-resize;
+  display: block;
+  padding: 10px;
+}
+
+div.#{$namespace}-panel-corner-boundary span.#{$namespace}-panel-corner-boundary-outer {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 16px solid transparent;
+  border-left: 16px solid transparent;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}
+
+div.#{$namespace}-panel-corner-boundary span.#{$namespace}-panel-corner-boundary-inner {
+  display: block;
+  width: 0px;
+  height: 0px;
+  border-bottom: 13px solid transparent;
+  border-left: 13px solid transparent;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+}
+
+div.#{$namespace}-panel-corner-boundary:hover span.#{$namespace}-panel-corner-boundary-outer {
+  border-bottom: 16px solid #{$default_black};
+}
+
+div.#{$namespace}-panel-corner-boundary:hover span.#{$namespace}-panel-corner-boundary-inner {
+  border-bottom: 13px solid rgb(216,216,216);
+}
+
+div.#{$namespace}-panel-corner-boundary:active span.#{$namespace}-panel-corner-boundary-inner {
+  border-bottom: 13px solid rgb(166,166,166);
+}

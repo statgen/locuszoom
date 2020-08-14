@@ -1,0 +1,8 @@
+{
+  "file": "./test/setup.js",
+  "require": ["chai", "@babel/register"],
+  "ui": "bdd",
+  "reporter": "spec",
+  "growl": false,
+  "timeout": 20000
+}

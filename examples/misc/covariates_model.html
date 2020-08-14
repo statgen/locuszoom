@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
+
+    <!-- Necessary includes for LocusZoom.js -->
+    <link rel="stylesheet" href="../../dist/locuszoom.css" type="text/css"/>
+    <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+    <script src="../../dist/locuszoom.app.min.js" type="text/javascript"></script>
+
+    <!-- Helpers that use the external library to add functionality to LocusZoom -->
+    <script src="../../dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
+
+    <title>LocusZoom.js ~ Covariates Model Example</title>
+
+    <style>
+      body {
+        background-color: #FAFAFA;
+        margin: 0px 20px;
+      }
+      img {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
+
+  </head>
+
+  <body style="background-color: #FAFAFA; margin-left: 20px; margin-right: 20px;">
+    <div class="container">
+
+      <h1 style="margin-top: 1em;"><strong>LocusZoom.js</strong></h1>
+
+      <h3 style="float: left; color: #777">Covariates Model Example</h3>
+      <h6 style="float: right;"><a href="../../index.html">&lt; return home</a></h6>
+
+      <hr style="clear: both;">
+
+      <p>This example shows a LocusZoom plot with the ability to add arbitrarily many variants as covariates to a model. When paired to a data source capable of performing on-the-fly multivariate conditional analysis this would become a highly interactive analysis tool.</p>
+      <p>Select any variant in the association panel and in the tooltip select "Add to Model". The variants in the model can then be managed using the "Model" menu at the top of the plot.</p>
+      <div class="row">
+        <div class="two columns">
+          <h4>Top Hits</h4>
+          <style>ul.top_hits li { margin-bottom: 0rem; }</style>
+          <ul class="top_hits" style="padding-left: 0.2rem; min-width: 110px;"></ul>
+        </div>
+        <div class="ten columns">
+          <div id="plot" data-region="10:114550452-115067678"></div>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="row">
+        <footer style="text-align: center;">
+          &copy; Copyright <script>document.write(new Date().getFullYear())</script> <a href="https://github.com/statgen">The University of Michigan Center for Statistical Genetics</a><br>
+        </footer>
+      </div>
+
+    </div>
+
+    <script type="text/javascript">
+
+    // Define Data Sources
+    var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
+    var data_sources = new LocusZoom.DataSources()
+      .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
+      .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+      .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
+      .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
+      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
+
+    // Get the standard assocation plot layout from LocusZoom's built-in layouts
+    var mods = {
+      namespace: {
+        default: "assoc",
+        ld: "ld",
+        gene: "gene",
+        recomb: "recomb"
+      }
+    };
+    layout = LocusZoom.Layouts.get("plot", "standard_association", mods);
+
+    // Update HTML for variant tooltip to include "Add to Model" link
+    layout.panels[0].data_layers[2].tooltip.html = "<strong>{{assoc:variant|htmlescape}}</strong><br>"
+                                                 + "P Value: <strong>{{assoc:log_pvalue|logtoscinotation|htmlescape}}</strong><br>"
+                                                 + "Ref. Allele: <strong>{{assoc:ref_allele|htmlescape}}</strong><br>"
+                                                 + "<a href=\"javascript:void(0);\" onclick=\"this.parentNode.__data__.getPlot().CovariatesModel.add(this.parentNode.__data__);\">Add to Model</a><br>";
+
+    // Add covariates model button/menu to the plot-level toolbar
+    layout.toolbar.widgets.push({
+        type: "covariates_model",
+        button_html: "Model",
+        button_title: "Use this feature to interactively build a model using variants from the data set",
+        position: "left"
+    });
+
+    // Generate the LocusZoom plot
+    var plot = LocusZoom.populate("#plot", data_sources, layout);
+
+    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
+    plot.layout.panels.forEach(function(panel){
+      plot.panels[panel.id].addBasicLoader();
+    });
+
+    // Create a method to parse a region string into a 600Kb genome range and load it
+    function jumpTo(region) {
+      var target = region.split(":");
+      var chr = target[0];
+      var pos = target[1];
+      var start = 0;
+      var end = 0;
+      if (!pos.match(/[-+]/)) {
+        start = +pos - 300000
+        end = +pos + 300000
+      }
+      plot.applyState({ chr: chr, start: start, end: end, ldrefvar: "" });
+      return false;
+    }
+
+    // Populate a list of top hits links for the plot
+    var top_hits = [
+      ["16:53819169", "FTO"],
+      ["9:22051670", "CDKN2A/B"],
+      ["7:28196413", "JAZF1"],
+      ["12:71433293", "TSPAN8"],
+      ["10:114758349", "TCF7L2"],
+      ["8:95937502", "TP53INP1"],
+      ["6:20679709", "CDKAL1"],
+      ["2:161346447", "RBMS1"],
+      ["16:75247245", "BCAR1"],
+      ["15:77832762", "HMG20A"],
+      ["7:15052860", "DGKB"]
+    ];
+    top_hits.forEach(function(hit){
+      d3.select("ul.top_hits").append("li")
+        .html("<a href=\"javascript:void(0);\" onclick=\"javascript:jumpTo('" + hit[0] + "');\">" + hit[1] + "</a>");
+    });
+
+  </script>
+
+  </body>
+</html>

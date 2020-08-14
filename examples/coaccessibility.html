@@ -7,7 +7,7 @@
   <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css"/>
 
   <!-- Necessary includes for LocusZoom.js -->
-  <script src="../dist/locuszoom.vendor.min.js" type="text/javascript"></script>
+ <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
   <script src="../dist/locuszoom.app.min.js" type="text/javascript"></script>
   <script type="application/javascript" src="../dist/ext/lz-dynamic-urls.min.js"></script>
 
@@ -85,7 +85,7 @@
     var apiBase = "https://portaldev.sph.umich.edu/api/v1/";
     data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "statistic/single/", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDLZ2", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
+        .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
         .add("access", ["TabixUrlSource", {
             /// CHROMATIN INTERACTIONS (scale != 0-1)
@@ -109,48 +109,24 @@
     // Get the standard association plot layout from LocusZoom's built-in layouts
     var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };
     // Fetch initial position from the URL, or use some defaults
-    var initialState = LocusZoom.ext.DynamicUrls.paramsFromUrl(stateUrlMapping);
+    var initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
     if (!Object.keys(initialState).length) {
         initialState = { chr: 11, start: 2182049, end: 2904920 };
     }
     layout = LocusZoom.Layouts.get("plot", "coaccessibility", { state: initialState });
     var loop_panel = layout.panels[0];
-    loop_panel.title =  { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
-    loop_panel.dashboard.components.push({
-            type: 'display_options',
+    loop_panel.title = { text: 'Pancreatic Islet alpha cells from snATAC-seq' };
+    loop_panel.toolbar.widgets.push(
+        {
+            type: 'filter_field',
             position: 'right',
-            button_html: 'Score Filter',
-            button_title: 'Control how plot items are displayed',
             layer_name: 'coaccessibility',
-            options: [{
-                display_name: '0 - 0.25',
-                display: {
-                    filters: [
-                        ['access:score', '>=', 0.0],
-                        ['access:score', '<=', 0.25],
-                    ]
-                }
-            },
-            {
-                display_name: '0.25 - 0.5',
-                display: {
-                    filters: [
-                        ['access:score', '>=', 0.25],
-                        ['access:score', '<=', 0.5],
-                    ]
-                }
-            },
-            {
-                display_name: '0.5 - 1.0',
-                display: {
-                    filters: [
-                        ['access:score', '>=', 0.5],
-                        ['access:score', '<=', 1.0],
-                    ]
-                }
-            },
-            ]
-        });
+            field: 'access:score',
+            field_display_html: 'Score',
+            operator: '>=',
+            data_type: 'number',
+        }
+    );
 
 
     // Generate the LocusZoom plot, and reflect the initial plot state in url
@@ -158,8 +134,8 @@
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)
-    LocusZoom.ext.DynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
-    LocusZoom.ext.DynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+    LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
 
     // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
     plot.layout.panels.forEach(function (panel) {

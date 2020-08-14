@@ -222,10 +222,7 @@ panel {
 ```
 
   * **`axes.{x|y1|y2}.label`** - *String*  
-    Static label to appear on the axis.  
-
-  * **`axes.{x|y1|y2}.label_function`** - *String*  
-    The name of a `LabelFunction` for creating a dynamic label relative to the values in `state`. See [Label Functions](label-functions.md#label-functions) for more details. If set this will override any `label` value.  
+    Static label to appear on the axis.
 
   * **`axes.{x|y1|y2}.label_offset`** - *Number*  
     Distance, in pixels, to shift the axis label away from its axis. This value is interpreted differently for each axis ID (e.g. for the `x` axis this value shift the label downward, for `y1` it shifts the label to the left, and for `y2` it shifts the label to the right).  

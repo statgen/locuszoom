@@ -1,9 +1,0 @@
-{
-  "globals": {
-    "d3": false,
-    "Promise": false
-  },
-  "env": {
-    "browser": true
-  }
-}
