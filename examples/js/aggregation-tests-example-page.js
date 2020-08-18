@@ -207,7 +207,7 @@ function createDisplayWidgets(label_store, context) {
         }])
         .add('recomb', ['RecombLZ', { url: apiBase + 'annotation/recomb/results/', params: { build: 'GRCh37' } }])
         .add('constraint', ['GeneConstraintLZ', {
-            url: 'https://gnomad.broadinstitute.org/api',
+            url: 'https://gnomad.broadinstitute.org/api/',
             params: { build: 'GRCh37' },
         }]);
 
