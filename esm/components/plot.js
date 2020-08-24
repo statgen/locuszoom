@@ -907,14 +907,9 @@ class Plot {
             // The viewBox must always be specified in order for "save as image" button to work
             this.svg.attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`);
 
-            if (this.layout.responsive_resize) {
-                this.svg
-                    .attr('preserveAspectRatio', 'xMinYMin meet');
-            } else {
-                this.svg
-                    .attr('width', this.layout.width)
-                    .attr('height', this.layout.height);
-            }
+            this.svg
+                .attr('width', this.layout.width)
+                .attr('height', this.layout.height);
         }
 
         // If the plot has been initialized then trigger some necessary render functions
