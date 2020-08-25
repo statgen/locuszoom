@@ -4,6 +4,19 @@
  */
 import * as d3 from 'd3';
 
+const sqrt3 = Math.sqrt(3);
+// D3 v5 does not provide a triangle down symbol shape, but it is very useful for showing direction of effect.
+//  Modified from https://github.com/d3/d3-shape/blob/master/src/symbol/triangle.js
+const triangledown = {
+    draw(context, size) {
+        const y = -Math.sqrt(size / (sqrt3 * 3));
+        context.moveTo(0, -y * 2);
+        context.lineTo(-sqrt3 * y, y);
+        context.lineTo(sqrt3 * y, y);
+        context.closePath();
+    },
+};
+
 
 /**
  * Apply namespaces to layout, recursively
@@ -108,13 +121,17 @@ function deepCopy(item) {
 /**
  * Convert name to symbol
  * Layout objects accept symbol names as strings (circle, triangle, etc). Convert to symbol objects.
- * @return {d3.symbol|null}
+ * @return {object|null} An object that implements a draw method (eg d3-shape symbols or extra LZ items)
  */
 function nameToSymbol(shape) {
-    // Legend shape names are strings; need to connect this to factory. Eg circle --> d3.symbolCircle
     if (!shape) {
         return null;
     }
+    if (shape === 'triangledown') {
+        // D3 does not provide this symbol natively
+        return triangledown;
+    }
+    // Legend shape names are strings; need to connect this to factory. Eg circle --> d3.symbolCircle
     const factory_name = `symbol${shape.charAt(0).toUpperCase() + shape.slice(1)}`;
     return d3[factory_name] || null;
 }
