@@ -821,12 +821,14 @@ class GeneConstraintLZ extends BaseApiAdapter {
         const body = JSON.stringify({ query: query });
         const headers = { 'Content-Type': 'application/json' };
 
+        // FIXME: The gnomAD API sometimes has temporary CORS changes that temporarily break the genes track
+        // If request blocked, return  a fake "no data" signal so the genes track can still render w/o constraint info
         return fetch(url, { method: 'POST', body, headers }).then((response) => {
             if (!response.ok) {
-                throw new Error(response.statusText);
+                return [];
             }
             return response.text();
-        });
+        }).catch((err) => []);
     }
 
     combineChainBody(data, chain, fields, outnames, trans) {

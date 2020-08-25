@@ -95,7 +95,7 @@
           .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: { build: 'GRCh37' }}])
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' }}])
-          .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
+          .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
 
       /*
         Define and render the plot

@@ -104,7 +104,7 @@
             params: { overfetch: 0.25 }
         }])
         .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
-        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
+        .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
 
     // Get the standard association plot layout from LocusZoom's built-in layouts
     var stateUrlMapping = { chr: "chrom", start: "start", end: "end" };

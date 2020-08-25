@@ -71,7 +71,7 @@
       .add("gene", ["GeneLZ", { url: apiBase + "annotation/genes/", params: { build: 'GRCh37' } }])
       .add("recomb", ["RecombLZ", { url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' } }])
       .add("intervals", ["IntervalLZ", { url: apiBase + "annotation/intervals/results/", params: {source: 19} }])
-      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api", params: { build: 'GRCh37' } }]);
+      .add("constraint", ["GeneConstraintLZ", { url: "https://gnomad.broadinstitute.org/api/", params: { build: 'GRCh37' } }]);
 
     // Get the standard assocation plot layout from LocusZoom's built-in layouts
     layout = LocusZoom.Layouts.get("plot", "interval_association");
