@@ -63,7 +63,7 @@ function install (LocusZoom) {
 
                 // Use scores to mark the credible set in various ways (depending on your visualization preferences,
                 //   some of these may not be needed)
-                const credibleSet = marking.findCredibleSet(scores, threshold);
+                const credibleSet = marking.findCredibleSet(posteriorProbabilities, threshold);
                 const credSetScaled = marking.rescaleCredibleSet(credibleSet);
                 const credSetBool = marking.markBoolean(credibleSet);
 
