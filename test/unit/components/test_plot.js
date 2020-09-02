@@ -570,10 +570,10 @@ describe('LocusZoom.Plot', function() {
 
             return plot.applyState(requested_state).then(function() {
                 assert.ok(state_spy.called);
-                assert.ok(state_spy.calledWith({sourceID: 'plot', data: requested_state}));
+                assert.ok(state_spy.calledWith({sourceID: 'plot', target: plot, data: requested_state}));
 
                 assert.ok(region_spy.called);
-                assert.ok(region_spy.calledWith({sourceID: 'plot', data: expected_state}));
+                assert.ok(region_spy.calledWith({sourceID: 'plot', target: plot, data: expected_state}));
             });
         });
 

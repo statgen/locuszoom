@@ -46,6 +46,11 @@ function install (LocusZoom) {
         }
 
         fetchRequest(state, chain) {
+            if (!chain.body.length) {
+                // No credible set can be calculated because there is no association data for this region
+                return Promise.resolve([]);
+            }
+
             const self = this;
             // The threshold can be overridden dynamically via `plot.state`, or set when the source is created
             const threshold = state.credible_set_threshold || this.params.threshold;
@@ -63,7 +68,7 @@ function install (LocusZoom) {
 
                 // Use scores to mark the credible set in various ways (depending on your visualization preferences,
                 //   some of these may not be needed)
-                const credibleSet = marking.findCredibleSet(scores, threshold);
+                const credibleSet = marking.findCredibleSet(posteriorProbabilities, threshold);
                 const credSetScaled = marking.rescaleCredibleSet(credibleSet);
                 const credSetBool = marking.markBoolean(credibleSet);
 
@@ -84,12 +89,14 @@ function install (LocusZoom) {
 
         combineChainBody(data, chain, fields, outnames, trans) {
             // At this point namespacing has been applied; add the calculated fields for this source to the chain
-            for (let i = 0; i < data.length; i++) {
-                const src = data[i];
-                const dest = chain.body[i];
-                Object.keys(src).forEach(function (attr) {
-                    dest[attr] = src[attr];
-                });
+            if (chain.body.length && data.length) {
+                for (let i = 0; i < data.length; i++) {
+                    const src = data[i];
+                    const dest = chain.body[i];
+                    Object.keys(src).forEach(function (attr) {
+                        dest[attr] = src[attr];
+                    });
+                }
             }
             return chain.body;
         }
