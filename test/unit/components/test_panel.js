@@ -661,6 +661,7 @@ describe('Panel', function() {
 
             assert.ok(spy.calledWith({
                 sourceID: 'plot.panel0',
+                target: this.panel,
                 data: {something:1},
             }));
         });
@@ -674,7 +675,7 @@ describe('Panel', function() {
 
             this.panel.emit('element_clicked', {something: 1}, true);
 
-            const expectedEvent = { sourceID: 'plot.panel0', data: { something: 1 } };
+            const expectedEvent = { sourceID: 'plot.panel0', target: this.panel, data: { something: 1 } };
 
             assert.ok(plot_spy.calledOnce, 'Plot event was fired');
             assert.ok(plot_spy.calledWith(expectedEvent), 'Plot called with expected event');
@@ -692,7 +693,7 @@ describe('Panel', function() {
             // When only two arguments are specified, with last one a boolean
             this.panel.emit('element_clicked', true);
 
-            const expectedEvent = { sourceID: 'plot.panel0', data: null };
+            const expectedEvent = { sourceID: 'plot.panel0', target: this.panel, data: null };
 
             assert.ok(plot_spy.calledOnce, 'Plot event was fired');
             assert.ok(plot_spy.calledWith(expectedEvent), 'Plot called with expected event');
@@ -710,7 +711,7 @@ describe('Panel', function() {
 
             this.panel.emit('element_clicked', false);
 
-            const expectedEvent = { sourceID: 'plot.panel0', data: null };
+            const expectedEvent = { sourceID: 'plot.panel0', target: this.panel, data: null };
 
             assert.ok(plot_nodata_spy.notCalled, 'Plot event should not be fired');
             assert.ok(panel_nodata_spy.calledOnce, 'Panel event was fired');
@@ -722,7 +723,7 @@ describe('Panel', function() {
             this.panel.on('element_clicked', panel_withdata_spy);
             this.panel.emit('element_clicked', {something: 1}, false);
 
-            const expectedDataEvent = { sourceID: 'plot.panel0', data: { something: 1 } };
+            const expectedDataEvent = { sourceID: 'plot.panel0', target: this.panel, data: { something: 1 } };
 
             assert.ok(plot_withdata_spy.notCalled, 'Plot event (with data) should not be not fired');
             assert.ok(panel_withdata_spy.calledOnce, 'Panel event (with data) was fired');

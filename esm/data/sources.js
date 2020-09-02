@@ -36,7 +36,7 @@ class DataSources extends RegistryBase {
         }
 
         if (namespace.match(/[^A-Za-z0-9_]/)) {
-            throw new Error(`Data source namespace names can only contain alphanumeric characters or underscores`);
+            throw new Error(`Data source namespace names can only contain alphanumeric characters or underscores. Invalid name: ${namespace}`);
         }
         if (Array.isArray(item)) {
             const [type, options] = item;

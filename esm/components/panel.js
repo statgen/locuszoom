@@ -331,7 +331,7 @@ class Panel {
             eventData = null;
         }
         const sourceID = this.getBaseId();
-        const eventContext = { sourceID: sourceID, data: eventData || null };
+        const eventContext = { sourceID: sourceID, target: this, data: eventData || null };
         this.event_hooks[event].forEach((hookToRun) => {
             // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
             // registered as a handler, the previously bound `this` will override anything provided to `call` below.
