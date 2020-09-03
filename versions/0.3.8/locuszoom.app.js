@@ -3122,3 +3122,4 @@ LocusZoom.DataLayers.add("genes", function(id, layout, parent){
     }
 
 }();
+console.warn("You are loading LocusZoom from GitHub. These files will be removed in the future; please see documentation for information about using an official CDN.");
