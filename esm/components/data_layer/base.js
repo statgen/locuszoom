@@ -43,11 +43,18 @@ class BaseDataLayer {
         this.layout_idx = null;
 
         /**
-         * The unique identifier for this layer. Should be unique within this layer.
+         * The unique identifier for this layer. Should be unique within this panel.
          * @public
          * @member {String}
          */
         this.id     = null;
+
+        /**
+         * The fully qualified identifier for the data layer, prefixed by any parent or container elements.
+         * @type {string}
+         * @private
+         */
+        this._base_id = null;
 
         /**
          * @protected
@@ -240,21 +247,26 @@ class BaseDataLayer {
      * Fetch the fully qualified ID to be associated with a specific visual element, based on the data to which that
      *   element is bound. In general this element ID will be unique, allowing it to be addressed directly via selectors.
      * @protected
-     * @param {String|Object} element
+     * @param {Object} element
      * @returns {String}
      */
     getElementId (element) {
-        let element_id = 'element';
-        if (typeof element == 'string') {
-            element_id = element;
-        } else if (typeof element == 'object') {
-            const id_field = this.layout.id_field || 'id';
-            if (typeof element[id_field] == 'undefined') {
-                throw new Error('Unable to generate element ID');
-            }
-            element_id = element[id_field].toString().replace(/\W/g, '');
+        // Use a cached value if possible
+        const id_key = Symbol.for('lzID');
+        if (element[id_key]) {
+            return element[id_key];
         }
-        return (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
+
+        const id_field = this.layout.id_field || 'id';
+        if (typeof element[id_field] == 'undefined') {
+            throw new Error('Unable to generate element ID');
+        }
+        const element_id = element[id_field].toString().replace(/\W/g, '');
+
+        // Cache ID value for future calls
+        const key = (`${this.getBaseId()}-${element_id}`).replace(/([:.[\],])/g, '_');
+        element[id_key] = key;
+        return key;
     }
 
     /**
@@ -749,10 +761,14 @@ class BaseDataLayer {
      * @returns {string} A dot-delimited string of the format <plot>.<panel>.<data_layer>
      */
     getBaseId () {
+        if (this._base_id) {
+            return this._base_id;
+        }
+
         if (this.parent) {
             return `${this.parent_plot.id}.${this.parent.id}.${this.id}`;
         } else {
-            return '';
+            return (this.id || '').toString();
         }
     }
 
@@ -775,6 +791,7 @@ class BaseDataLayer {
      * @returns {BaseDataLayer}
      */
     initialize() {
+        this._base_id = this.getBaseId();
 
         // Append a container group element to house the main data layer group element and the clip path
         const base_id = this.getBaseId();

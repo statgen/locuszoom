@@ -30,7 +30,7 @@
     "url": "https://github.com/statgen/locuszoom.git"
   },
   "scripts": {
-    "test": "mocha --recursive test",
+    "test": "eslint esm/ test/ && mocha --recursive test",
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
