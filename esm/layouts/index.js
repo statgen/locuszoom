@@ -187,9 +187,6 @@ const association_pvalues_layer = {
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
         ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
-        ],
     },
     tooltip: deepCopy(standard_association_tooltip),
 };
@@ -247,9 +244,6 @@ const coaccessibility_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(coaccessibility_tooltip),
@@ -316,9 +310,6 @@ const phewas_pvalues_layer = {
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
         ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
-        ],
     },
     label: {
         text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
@@ -360,9 +351,6 @@ const genes_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(standard_genes_tooltip),
@@ -419,9 +407,6 @@ const annotation_catalog_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(catalog_variant_tooltip),
