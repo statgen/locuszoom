@@ -86,9 +86,7 @@ class Arcs extends BaseDataLayer {
             .style('stroke-width', layout.hitarea_width)
             .style('stroke-opacity', 0)
             .style('stroke', 'transparent')
-            .attr('d', (d) => _make_line(d))
-            // Apply mouse behaviors to hitareas
-            .call(this.applyBehaviors.bind(this));
+            .attr('d', (d) => _make_line(d));
 
         // Remove old elements as needed
         selection.exit()
@@ -96,6 +94,11 @@ class Arcs extends BaseDataLayer {
 
         hitareas.exit()
             .remove();
+
+        // Apply mouse behaviors to arcs
+        this.svg.group
+            .call(this.applyBehaviors.bind(this));
+
         return this;
     }
 

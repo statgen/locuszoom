@@ -358,10 +358,7 @@ class Scatter extends BaseDataLayer {
             .attr('transform', transform)
             .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
             .attr('fill-opacity', (d, i) => this.resolveScalableParameter(this.layout.fill_opacity, d, i))
-            .attr('d', shape)
-            // Apply default event emitters & mouse behaviors to selection
-            .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
-            .call(this.applyBehaviors.bind(this));
+            .attr('d', shape);
 
         // Remove old elements as needed
         selection.exit()
@@ -372,11 +369,17 @@ class Scatter extends BaseDataLayer {
             this.flip_labels();
             this.seperate_iterations = 0;
             this.separate_labels();
-            // Apply default event emitters to selection, and extend mouse behaviors to labels
-            this.label_texts
-                .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
-                .call(this.applyBehaviors.bind(this));
         }
+
+        // Apply default event emitters & mouse behaviors. Apply to the container, not per element,
+        // to reduce number of event listeners. These events will apply to both scatter points and labels.
+        this.svg.group
+            .on('click.event_emitter', () => {
+                // D3 doesn't natively support bubbling very well; we need to find the data for the bubbled event
+                const item_data = d3.select(d3.event.target).datum();
+                this.parent.emit('element_clicked', item_data, true);
+            })
+            .call(this.applyBehaviors.bind(this));
     }
 
     // Method to set a passed element as the LD reference in the plot-level state

@@ -358,10 +358,7 @@ class Genes extends BaseDataLayer {
                     .attr('width', width)
                     .attr('height', height)
                     .attr('x', x)
-                    .attr('y', y)
-                    // Apply mouse behaviors & events to clickareas
-                    .on('click.event_emitter', (element) => element.parent.parent.emit('element_clicked', element, true))
-                    .call(data_layer.applyBehaviors.bind(data_layer));
+                    .attr('y', y);
 
                 // Remove old clickareas as needed
                 clickareas.exit()
@@ -371,6 +368,11 @@ class Genes extends BaseDataLayer {
         // Remove old elements as needed
         selection.exit()
             .remove();
+
+        // Apply mouse behaviors & events to clickareas
+        this.svg.group
+            .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
+            .call(this.applyBehaviors.bind(this));
     }
 
     _getTooltipPosition(tooltip) {

@@ -1222,6 +1222,10 @@ class BaseDataLayer {
         };
         const self = this;
         return function(element) {
+            // This method may be used on two kinds of events: directly attached, or bubbled.
+            // D3 doesn't natively support bubbling very well; if no data is bound on the currentTarget, check to see
+            //  if there is data available at wherever the event was initiated from
+            element = d3.select(d3.event.target).datum();
 
             // Do nothing if the required control and shift key presses (or lack thereof) doesn't match the event
             if (requiredKeyStates.ctrl !== !!d3.event.ctrlKey || requiredKeyStates.shift !== !!d3.event.shiftKey) {

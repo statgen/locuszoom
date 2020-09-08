@@ -141,15 +141,17 @@ class Forest extends BaseDataLayer {
             .attr('transform', transform)
             .attr('fill', fill)
             .attr('fill-opacity', fill_opacity)
-            .attr('d', shape)
-            // Apply behaviors to points
-            .on('click.event_emitter', (element_data) => {
-                this.parent.emit('element_clicked', element_data, true);
-            }).call(this.applyBehaviors.bind(this));
+            .attr('d', shape);
 
         // Remove old elements as needed
         points_selection.exit()
             .remove();
+
+        // Apply behaviors to points
+        this.svg.group
+            .on('click.event_emitter', (element_data) => {
+                this.parent.emit('element_clicked', element_data, true);
+            }).call(this.applyBehaviors.bind(this));
     }
 }
 
