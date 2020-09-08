@@ -240,17 +240,19 @@ class Scatter extends BaseDataLayer {
                 .selectAll(`g.lz-data_layer-${this.layout.type}-label`)
                 .data(label_data, (d) => `${d[this.layout.id_field]}_label`);
 
+            const style_class = `lz-data_layer-${this.layout.type}-label`;
             const groups_enter = this.label_groups.enter()
                 .append('g')
-                .attr('class', `lz-data_layer-${this.layout.type}-label`);
+                .attr('class', style_class);
 
             // Render label texts
             if (this.label_texts) {
                 this.label_texts.remove();
             }
+
             this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
-                .attr('class', `lz-data_layer-${this.layout.type}-label`)
+                .attr('class', style_class)
                 .text((d) => parseFields(d, data_layer.layout.label.text || ''))
                 .attr('x', (d) => {
                     let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
@@ -330,8 +332,6 @@ class Scatter extends BaseDataLayer {
             .data(track_data, (d) => d[this.layout.id_field]);
 
         // Create elements, apply class, ID, and initial position
-        const initial_y = isNaN(this.parent.layout.height) ? 0 : this.parent.layout.height;
-
         // Generate new values (or functions for them) for position, color, size, and shape
         const transform = (d) => {
             let x = this.parent[x_scale](d[this.layout.x_axis.field]);
@@ -349,11 +349,11 @@ class Scatter extends BaseDataLayer {
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
             .type((d, i) => nameToSymbol(this.resolveScalableParameter(this.layout.point_shape, d, i)));
 
+        const style_class = `lz-data_layer-${this.layout.type}`;
         selection.enter()
             .append('path')
-            .attr('class', `lz-data_layer-${this.layout.type}`)
+            .attr('class', style_class)
             .attr('id', (d) => this.getElementId(d))
-            .attr('transform', `translate(0, ${initial_y})`)
             .merge(selection)
             .attr('transform', transform)
             .attr('fill', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
