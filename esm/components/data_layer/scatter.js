@@ -245,7 +245,6 @@ class Scatter extends BaseDataLayer {
                 .append('g')
                 .attr('class', style_class);
 
-            // Render label texts
             if (this.label_texts) {
                 this.label_texts.remove();
             }
@@ -318,11 +317,14 @@ class Scatter extends BaseDataLayer {
                 .remove();
         } else {
             // If the layout definition has changed (& no longer specifies labels), strip any previously rendered
-            if (this.label_groups) {
-                this.label_groups.remove();
+            if (this.label_texts) {
+                this.label_texts.remove();
             }
             if (this.label_lines) {
                 this.label_lines.remove();
+            }
+            if (this.label_groups) {
+                this.label_groups.remove();
             }
         }
 
