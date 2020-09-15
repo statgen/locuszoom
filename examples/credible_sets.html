@@ -91,7 +91,7 @@
               url: apiBase + "statistic/single/",
               params: { source: 45, id_field: "variant" }
           }])
-          .add("credset", ["CredibleSetLZ", { params: { fields: { log_pvalue: 'assoc:log_pvalue' }, threshold: 0.95 } }])
+          .add("credset", ["CredibleSetLZ", { params: { fields: { log_pvalue: 'assoc:log_pvalue' }, threshold: 0.95, significance_threshold: 7.301 } }])
           .add("ld", ["LDServer", { url: "https://portaldev.sph.umich.edu/ld/", params: { source: '1000G', build: 'GRCh37', population: 'ALL' } }])
           .add("gene", ["GeneLZ", {url: apiBase + "annotation/genes/", params: { build: 'GRCh37' }}])
           .add("recomb", ["RecombLZ", {url: apiBase + "annotation/recomb/results/", params: { build: 'GRCh37' }}])

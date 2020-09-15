@@ -20,9 +20,13 @@ function install (LocusZoom) {
      *
      * @param {Object} init.params
      * @param {Object} init.params.fields
-     * @param {String} init.params.fields.log_pvalue The name of the field containing pvalue information
-     * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%)
-     *
+     * @param {String} init.params.fields.log_pvalue The name of the field containing -log10 pvalue information
+     * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
+     *  until the posterior probabilities add up to at least this fraction of the total.
+     * @param {Number} [init.params.significance_threshold=7.301] Do not perform a credible set calculation for this
+     *  region unless AT LEAST ONE SNP (as -log10p) exceeds the line of GWAS signficance. Otherwise we are declaring a
+     *  credible set when there is no evidence of anything being significant at all. If one snp is significant, it will
+     *  create a credible set for the entire region; the resulting set may include things below the line of significance.
      */
     class CredibleSetLZ extends BaseAdapter {
         constructor(config) {
@@ -35,9 +39,12 @@ function install (LocusZoom) {
             if (!(this.params.fields && this.params.fields.log_pvalue)) {
                 throw new Error(`Source config for ${this.constructor.SOURCE_NAME} must specify how to find 'fields.log_pvalue'`);
             }
-            if (!this.params.threshold) {
-                this.params.threshold = 0.95;
-            }
+
+            // Set defaults. Default sig threshold is the line of GWAS significance. (as -log10p)
+            this.params = Object.assign(
+                { threshold: 0.95, significance_threshold: 7.301 },
+                this.params
+            );
         }
 
         getCacheKey (state, chain, fields) {
@@ -58,9 +65,14 @@ function install (LocusZoom) {
             if (typeof chain.body[0][self.params.fields.log_pvalue] === 'undefined') {
                 throw new Error('Credible set source could not locate the required fields from a previous request.');
             }
-            const nlogpvals = chain.body.map(function (item) {
-                return item[self.params.fields.log_pvalue];
-            });
+            const nlogpvals = chain.body.map((item) => item[self.params.fields.log_pvalue]);
+
+            if (!nlogpvals.some((val) => val >= self.params.significance_threshold)) {
+                // If NO points have evidence of significance, define the credible set to be empty
+                //  (rather than make a credible set that we don't think is meaningful)
+                return Promise.resolve([]);
+            }
+
             const credset_data = [];
             try {
                 const scores = scoring.bayesFactors(nlogpvals);
@@ -109,7 +121,7 @@ function install (LocusZoom) {
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
         const l = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        l.html += '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>';
+        l.html += '{{#if {{namespace[credset]}}posterior_prob}}<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>{{/if}}';
         return l;
     }());
 
