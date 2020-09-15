@@ -251,7 +251,6 @@ class Scatter extends BaseDataLayer {
 
             this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
-                .attr('class', style_class)
                 .text((d) => parseFields(d, data_layer.layout.label.text || ''))
                 .attr('x', (d) => {
                     let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
@@ -279,7 +278,6 @@ class Scatter extends BaseDataLayer {
                 }
                 this.label_lines = this.label_groups.merge(groups_enter)
                     .append('line')
-                    .attr('class', `lz-data_layer-${this.layout.type}-label`)
                     .attr('x1', (d) => {
                         let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
                         if (isNaN(x)) {
