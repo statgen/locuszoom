@@ -222,6 +222,9 @@ class Scatter extends BaseDataLayer {
         const x_scale = 'x_scale';
         const y_scale = `y${this.layout.y_axis.axis}_scale`;
 
+        const xcs = Symbol.for('lzX');
+        const ycs = Symbol.for('lzY');
+
         // Apply filters to only render a specified set of points
         const track_data = this._applyFilters();
 
