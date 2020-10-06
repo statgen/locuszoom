@@ -12,7 +12,7 @@ describe('Coordinate coalescing', function () {
     function _addSymbols(data) {
         // internally the coalescing logic depends on a special JS symbol (pixel position) that doesn't collide with
         //  data fields (data value). These symbols don't show up in debug output, so this function adds them to test
-        //  data to aid debugging.
+        //  data to aid debugging. (eg x is human readable, but Symbol(x) is what the code uses)
         data.forEach((item) => {
             item[xcs] = item.x;
             item[ycs] = item.y;

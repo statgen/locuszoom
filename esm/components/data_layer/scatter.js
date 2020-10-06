@@ -4,6 +4,7 @@ import BaseDataLayer from './base';
 import {applyStyles} from '../../helpers/common';
 import {parseFields} from '../../helpers/display';
 import {merge, nameToSymbol} from '../../helpers/layouts';
+import {coalesce_scatter_points} from '../../helpers/render';
 
 
 const default_layout = {
@@ -11,6 +12,20 @@ const default_layout = {
     point_shape: 'circle',
     tooltip_positioning: 'horizontal',
     color: '#888888',
+    coalesce: {
+        // Should we try to combine adjacent insignificant ("some region of interest") points
+        //  to improve rendering performance?
+        active: true,
+        max_points: 800, // Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width
+        // These are expressed in terms of data value and will be converted to pixels internally.
+        x_min: '-Infinity',
+        x_max: 'Infinity',
+        y_min: 0,
+        y_max: 2.0,
+        // Expressed in units of px apart. For circular points, point area 40 = radius ~3.5.
+        x_gap: 4,
+        y_gap: 4,
+    },
     fill_opacity: 1,
     y_axis: {
         axis: 1,
@@ -219,14 +234,39 @@ class Scatter extends BaseDataLayer {
     // Implement the main render function
     render() {
         const data_layer = this;
-        const x_scale = 'x_scale';
-        const y_scale = `y${this.layout.y_axis.axis}_scale`;
+        const x_scale = this.parent['x_scale'];
+        const y_scale = this.parent[`y${this.layout.y_axis.axis}_scale`];
 
         const xcs = Symbol.for('lzX');
         const ycs = Symbol.for('lzY');
 
         // Apply filters to only render a specified set of points
-        const track_data = this._applyFilters();
+        let track_data = this._applyFilters();
+
+        // Add coordinates before rendering, so we can coalesce
+        track_data.forEach((item) => {
+            let x = x_scale(item[this.layout.x_axis.field]);
+            let y = y_scale(item[this.layout.y_axis.field]);
+            if (isNaN(x)) {
+                x = -1000;
+            }
+            if (isNaN(y)) {
+                y = -1000;
+            }
+            item[xcs] = x;
+            item[ycs] = y;
+        });
+
+        if (this.layout.coalesce.active && track_data.length > this.layout.coalesce.max_points) {
+            let { x_min, x_max, y_min, y_max, x_gap, y_gap } = this.layout.coalesce;
+            // Convert x and y "significant region" range from data values to pixels
+            const x_min_px = isFinite(x_min) ? x_scale(+x_min) : -Infinity;
+            const x_max_px = isFinite(x_max) ? x_scale(+x_max) : Infinity;
+            // For y px, we flip the data min/max b/c in SVG coord system +y is down: smaller data y = larger px y
+            const y_min_px = isFinite(y_max) ? y_scale(+y_max) : -Infinity;
+            const y_max_px = isFinite(y_min) ? y_scale(+y_min) : Infinity;
+            track_data = coalesce_scatter_points(track_data, x_min_px, x_max_px, x_gap, y_min_px, y_max_px, y_gap);
+        }
 
         if (this.layout.label) {
             let label_data;
@@ -256,21 +296,11 @@ class Scatter extends BaseDataLayer {
                 .append('text')
                 .text((d) => parseFields(d, data_layer.layout.label.text || ''))
                 .attr('x', (d) => {
-                    let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                    return d[xcs]
                         + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                         + data_layer.layout.label.spacing;
-                    if (isNaN(x)) {
-                        x = -1000;
-                    }
-                    return x;
                 })
-                .attr('y', (d) => {
-                    let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                    if (isNaN(y)) {
-                        y = -1000;
-                    }
-                    return y;
-                })
+                .attr('y', (d) => d[ycs])
                 .attr('text-anchor', 'start')
                 .call(applyStyles, data_layer.layout.label.style || {});
 
@@ -281,36 +311,14 @@ class Scatter extends BaseDataLayer {
                 }
                 this.label_lines = this.label_groups.merge(groups_enter)
                     .append('line')
-                    .attr('x1', (d) => {
-                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field]);
-                        if (isNaN(x)) {
-                            x = -1000;
-                        }
-                        return x;
-                    })
-                    .attr('y1', (d) => {
-                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) {
-                            y = -1000;
-                        }
-                        return y;
-                    })
+                    .attr('x1', (d) => d[xcs])
+                    .attr('y1', (d) => d[ycs])
                     .attr('x2', (d) => {
-                        let x = data_layer.parent[x_scale](d[data_layer.layout.x_axis.field])
+                        return d[xcs]
                             + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
                             + (data_layer.layout.label.spacing / 2);
-                        if (isNaN(x)) {
-                            x = -1000;
-                        }
-                        return x;
                     })
-                    .attr('y2', (d) => {
-                        let y = data_layer.parent[y_scale](d[data_layer.layout.y_axis.field]);
-                        if (isNaN(y)) {
-                            y = -1000;
-                        }
-                        return y;
-                    })
+                    .attr('y2', (d) => d[ycs])
                     .call(applyStyles, data_layer.layout.label.lines.style || {});
             }
             // Remove labels when they're no longer in the filtered data set
@@ -336,17 +344,7 @@ class Scatter extends BaseDataLayer {
 
         // Create elements, apply class, ID, and initial position
         // Generate new values (or functions for them) for position, color, size, and shape
-        const transform = (d) => {
-            let x = this.parent[x_scale](d[this.layout.x_axis.field]);
-            let y = this.parent[y_scale](d[this.layout.y_axis.field]);
-            if (isNaN(x)) {
-                x = -1000;
-            }
-            if (isNaN(y)) {
-                y = -1000;
-            }
-            return `translate(${x}, ${y})`;
-        };
+        const transform = (d) => `translate(${d[xcs]}, ${d[ycs]})`;
 
         const shape = d3.symbol()
             .size((d, i) => this.resolveScalableParameter(this.layout.point_size, d, i))
