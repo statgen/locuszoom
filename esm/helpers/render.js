@@ -6,6 +6,10 @@
 /**
  * A very simple function aimed at scatter plots: attempts to coalesce "low-significance" SNPs that are too close to
  *  visually distinguish, thus creating a dataset with fewer points that can be rendered more quickly.
+ *
+ *  This depends on the strong and explicit assumption that points are ordered (typically in x position), so that
+ *    nearby points can be grouped by iterating over the data in sequence.
+ *
  * @param {Object[]} data Plot data, annotated with calculated `xc` and `yc` symbols for x and y coordinates (in px).
  * @param {Number} x_min The smallest x value of an "insignificant region" rectangle
  * @param {Number} x_max The largest x value of an "insignificant region" rectangle

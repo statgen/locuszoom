@@ -19,13 +19,13 @@ const default_layout = {
         max_points: 800, // Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width
         // Define the "region of interest", like "bottom half of plot"; any points outside this region are taken as is
         //   Values are expressed in terms of data value and will be converted to pixels internally.
-        x_min: '-Infinity',
+        x_min: '-Infinity',  // JSON doesn't handle some valid JS numbers. Kids, don't get a career in computers.
         x_max: 'Infinity',
         y_min: 0,
-        y_max: 2.0,
-        // Expressed in units of px apart. For circular points, point area 40 = radius ~3.5.
-        x_gap: 4,
-        y_gap: 4,
+        y_max: 3.0,
+        // Expressed in units of px apart. For circles, area 40 = radius ~3.5; aim for ~1 diameter distance.
+        x_gap: 7,
+        y_gap: 7,
     },
     fill_opacity: 1,
     y_axis: {
