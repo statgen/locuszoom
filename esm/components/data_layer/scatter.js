@@ -13,11 +13,12 @@ const default_layout = {
     tooltip_positioning: 'horizontal',
     color: '#888888',
     coalesce: {
-        // Should we try to combine adjacent insignificant ("some region of interest") points
+        // Options to control whether and how to combine adjacent insignificant ("within region of interest") points
         //  to improve rendering performance?
-        active: true,
+        active: false,
         max_points: 800, // Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width
-        // These are expressed in terms of data value and will be converted to pixels internally.
+        // Define the "region of interest", like "bottom half of plot"; any points outside this region are taken as is
+        //   Values are expressed in terms of data value and will be converted to pixels internally.
         x_min: '-Infinity',
         x_max: 'Infinity',
         y_min: 0,

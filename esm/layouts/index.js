@@ -117,6 +117,9 @@ const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
+    coalesce: {
+        active: true,
+    },
     point_shape: {
         scale_function: 'if',
         field: '{{namespace[ld]}}isrefvar',
