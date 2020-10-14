@@ -315,7 +315,7 @@ const phewas_pvalues_layer = {
         ],
     },
     label: {
-        text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
+        text: '{{{{namespace[phewas]}}trait_label}}',
         spacing: 6,
         lines: {
             style: {
@@ -677,7 +677,7 @@ const association_catalog_panel = function () {
                 display_name: 'Label catalog traits',  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
                     label: {
-                        text: '{{{{namespace[catalog]}}trait|htmlescape}}',
+                        text: '{{{{namespace[catalog]}}trait}}',
                         spacing: 6,
                         lines: {
                             style: {
