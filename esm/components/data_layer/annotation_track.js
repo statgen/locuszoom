@@ -93,8 +93,10 @@ class AnnotationTrack extends BaseDataLayer {
             }).attr('width', (d, i) => {
                 const crds = _getX(d, i);
                 return (crds[1] - crds[0]) + this.layout.hitarea_width / 2;
-            })
-            // Set up tooltips and mouse interaction
+            });
+
+        // Set up tooltips and mouse interaction
+        this.svg.group
             .call(this.applyBehaviors.bind(this));
 
         // Remove unused elements

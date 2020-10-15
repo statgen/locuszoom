@@ -117,6 +117,9 @@ const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
+    coalesce: {
+        active: true,
+    },
     point_shape: {
         scale_function: 'if',
         field: '{{namespace[ld]}}isrefvar',
@@ -187,9 +190,6 @@ const association_pvalues_layer = {
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
         ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
-        ],
     },
     tooltip: deepCopy(standard_association_tooltip),
 };
@@ -247,9 +247,6 @@ const coaccessibility_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(coaccessibility_tooltip),
@@ -316,12 +313,9 @@ const phewas_pvalues_layer = {
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
         ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
-        ],
     },
     label: {
-        text: '{{{{namespace[phewas]}}trait_label|htmlescape}}',
+        text: '{{{{namespace[phewas]}}trait_label}}',
         spacing: 6,
         lines: {
             style: {
@@ -360,9 +354,6 @@ const genes_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(standard_genes_tooltip),
@@ -419,9 +410,6 @@ const annotation_catalog_layer = {
         ],
         onclick: [
             { action: 'toggle', status: 'selected', exclusive: true },
-        ],
-        onshiftclick: [
-            { action: 'toggle', status: 'selected' },
         ],
     },
     tooltip: deepCopy(catalog_variant_tooltip),
@@ -689,7 +677,7 @@ const association_catalog_panel = function () {
                 display_name: 'Label catalog traits',  // Human readable representation of field name
                 display: {  // Specify layout directives that control display of the plot for this option
                     label: {
-                        text: '{{{{namespace[catalog]}}trait|htmlescape}}',
+                        text: '{{{{namespace[catalog]}}trait}}',
                         spacing: 6,
                         lines: {
                             style: {

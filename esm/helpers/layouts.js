@@ -17,7 +17,6 @@ const triangledown = {
     },
 };
 
-
 /**
  * Apply namespaces to layout, recursively
  * @private
