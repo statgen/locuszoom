@@ -190,13 +190,12 @@ class Genes extends BaseDataLayer {
                 }
             }
 
-            // Stash parent references on all genes, trascripts, and exons
+            // Stash parent references on all genes, transcripts, and exons
             item.parent = this;
             item.transcripts.map((d, t) => {
                 item.transcripts[t].parent = item;
                 item.transcripts[t].exons.map((d, e) => item.transcripts[t].exons[e].parent = item.transcripts[t]);
             });
-
         });
         return this;
     }
@@ -209,7 +208,7 @@ class Genes extends BaseDataLayer {
         // Apply filters to only render a specified set of points
         const track_data = this._applyFilters();
         this.assignTracks(track_data);
-        let width, height, x, y;
+        let height;
 
         // Render gene groups
         const selection = this.svg.group.selectAll('g.lz-data_layer-genes')
@@ -227,10 +226,7 @@ class Genes extends BaseDataLayer {
                 const bboxes = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-data_layer-genes-statusnode')
                     .data([gene], (d) => data_layer.getElementStatusNodeId(d));
 
-                width = (d) => d.display_range.width;
                 height = data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                x = (d) => d.display_range.start;
-                y = (d) => ((d.track - 1) * data_layer.getTrackHeight());
 
                 bboxes.enter()
                     .append('rect')
@@ -239,41 +235,35 @@ class Genes extends BaseDataLayer {
                     .attr('id', (d) => data_layer.getElementStatusNodeId(d))
                     .attr('rx', data_layer.layout.bounding_box_padding)
                     .attr('ry', data_layer.layout.bounding_box_padding)
-                    .attr('width', width)
+                    .attr('width', (d) => d.display_range.width)
                     .attr('height', height)
-                    .attr('x', x)
-                    .attr('y', y);
+                    .attr('x', (d) => d.display_range.start)
+                    .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
 
                 bboxes.exit()
                     .remove();
 
                 // Render gene boundaries
-                const boundary_fill = (d, i) => self.resolveScalableParameter(self.layout.color, d, i);
-                const boundary_stroke = (d, i) => self.resolveScalableParameter(self.layout.stroke, d, i);
                 const boundaries = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-boundary')
                     .data([gene], (d) => `${d.gene_name}_boundary`);
 
-                width = (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 height = 1;
-                x = (d) => data_layer.parent.x_scale(d.start);
-                y = function(d) {
-                    return ((d.track - 1) * data_layer.getTrackHeight())
-                        + data_layer.layout.bounding_box_padding
-                        + data_layer.layout.label_font_size
-                        + data_layer.layout.label_exon_spacing
-                        + (Math.max(data_layer.layout.exon_height, 3) / 2);
-                };
-
                 boundaries.enter()
                     .append('rect')
                     .attr('class', 'lz-data_layer-genes lz-boundary')
                     .merge(boundaries)
-                    .attr('width', width)
+                    .attr('width', (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start))
                     .attr('height', height)
-                    .attr('x', x)
-                    .attr('y', y)
-                    .style('fill', boundary_fill)
-                    .style('stroke', boundary_stroke);
+                    .attr('x', (d) => data_layer.parent.x_scale(d.start))
+                    .attr('y', (d) => {
+                        return ((d.track - 1) * data_layer.getTrackHeight())
+                            + data_layer.layout.bounding_box_padding
+                            + data_layer.layout.label_font_size
+                            + data_layer.layout.label_exon_spacing
+                            + (Math.max(data_layer.layout.exon_height, 3) / 2);
+                    })
+                    .style('fill', (d, i) => self.resolveScalableParameter(self.layout.color, d, i))
+                    .style('stroke', (d, i) => self.resolveScalableParameter(self.layout.stroke, d, i));
 
                 boundaries.exit()
                     .remove();
@@ -282,19 +272,6 @@ class Genes extends BaseDataLayer {
                 const labels = d3.select(this).selectAll('text.lz-data_layer-genes.lz-label')
                     .data([gene], (d) => `${d.gene_name}_label`);
 
-                x = (d) => {
-                    if (d.display_range.text_anchor === 'middle') {
-                        return d.display_range.start + (d.display_range.width / 2);
-                    } else if (d.display_range.text_anchor === 'start') {
-                        return d.display_range.start + data_layer.layout.bounding_box_padding;
-                    } else if (d.display_range.text_anchor === 'end') {
-                        return d.display_range.end - data_layer.layout.bounding_box_padding;
-                    }
-                };
-                y = (d) => ((d.track - 1) * data_layer.getTrackHeight())
-                    + data_layer.layout.bounding_box_padding
-                    + data_layer.layout.label_font_size;
-
                 labels.enter()
                     .append('text')
                     .attr('class', 'lz-data_layer-genes lz-label')
@@ -302,40 +279,45 @@ class Genes extends BaseDataLayer {
                     .attr('text-anchor', (d) => d.display_range.text_anchor)
                     .text((d) => (d.strand === '+') ? `${d.gene_name}→` : `←${d.gene_name}`)
                     .style('font-size', gene.parent.layout.label_font_size)
-                    .attr('x', x)
-                    .attr('y', y);
+                    .attr('x', (d) => {
+                        if (d.display_range.text_anchor === 'middle') {
+                            return d.display_range.start + (d.display_range.width / 2);
+                        } else if (d.display_range.text_anchor === 'start') {
+                            return d.display_range.start + data_layer.layout.bounding_box_padding;
+                        } else if (d.display_range.text_anchor === 'end') {
+                            return d.display_range.end - data_layer.layout.bounding_box_padding;
+                        }
+                    })
+                    .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight())
+                        + data_layer.layout.bounding_box_padding
+                        + data_layer.layout.label_font_size
+                    );
 
                 labels.exit()
                     .remove();
 
                 // Render exon rects (first transcript only, for now)
                 // Exons: by default color on gene properties for consistency with the gene boundary track- hence color uses d.parent.parent
-                const exon_fill = (d, i) => self.resolveScalableParameter(self.layout.color, d.parent.parent, i);
-                const exon_stroke = (d, i) => self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i);
-
                 const exons = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-exon')
                     .data(gene.transcripts[gene.parent.transcript_idx].exons, (d) => d.exon_id);
 
-                width = (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start);
                 height = data_layer.layout.exon_height;
-                x = (d) => data_layer.parent.x_scale(d.start);
-                y = function() {
-                    return ((gene.track - 1) * data_layer.getTrackHeight())
-                        + data_layer.layout.bounding_box_padding
-                        + data_layer.layout.label_font_size
-                        + data_layer.layout.label_exon_spacing;
-                };
 
                 exons.enter()
                     .append('rect')
                     .attr('class', 'lz-data_layer-genes lz-exon')
                     .merge(exons)
-                    .style('fill', exon_fill)
-                    .style('stroke', exon_stroke)
-                    .attr('width', width)
+                    .style('fill', (d, i) => self.resolveScalableParameter(self.layout.color, d.parent.parent, i))
+                    .style('stroke', (d, i) => self.resolveScalableParameter(self.layout.stroke, d.parent.parent, i))
+                    .attr('width', (d) => data_layer.parent.x_scale(d.end) - data_layer.parent.x_scale(d.start))
                     .attr('height', height)
-                    .attr('x', x)
-                    .attr('y', y);
+                    .attr('x', (d) => data_layer.parent.x_scale(d.start))
+                    .attr('y', () => {
+                        return ((gene.track - 1) * data_layer.getTrackHeight())
+                            + data_layer.layout.bounding_box_padding
+                            + data_layer.layout.label_font_size
+                            + data_layer.layout.label_exon_spacing;
+                    });
 
                 exons.exit()
                     .remove();
@@ -344,10 +326,7 @@ class Genes extends BaseDataLayer {
                 const clickareas = d3.select(this).selectAll('rect.lz-data_layer-genes.lz-clickarea')
                     .data([gene], (d) => `${d.gene_name}_clickarea`);
 
-                width = (d) => d.display_range.width;
                 height = data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing;
-                x = (d) => d.display_range.start;
-                y = (d) => ((d.track - 1) * data_layer.getTrackHeight());
                 clickareas.enter()
                     .append('rect')
                     .attr('class', 'lz-data_layer-genes lz-clickarea')
@@ -355,13 +334,10 @@ class Genes extends BaseDataLayer {
                     .attr('id', (d) => `${data_layer.getElementId(d)}_clickarea`)
                     .attr('rx', data_layer.layout.bounding_box_padding)
                     .attr('ry', data_layer.layout.bounding_box_padding)
-                    .attr('width', width)
+                    .attr('width', (d) => d.display_range.width)
                     .attr('height', height)
-                    .attr('x', x)
-                    .attr('y', y)
-                    // Apply mouse behaviors & events to clickareas
-                    .on('click.event_emitter', (element) => element.parent.parent.emit('element_clicked', element, true))
-                    .call(data_layer.applyBehaviors.bind(data_layer));
+                    .attr('x', (d) => d.display_range.start)
+                    .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
 
                 // Remove old clickareas as needed
                 clickareas.exit()
@@ -371,6 +347,11 @@ class Genes extends BaseDataLayer {
         // Remove old elements as needed
         selection.exit()
             .remove();
+
+        // Apply mouse behaviors & events to clickareas
+        this.svg.group
+            .on('click.event_emitter', (element) => this.parent.emit('element_clicked', element, true))
+            .call(this.applyBehaviors.bind(this));
     }
 
     _getTooltipPosition(tooltip) {

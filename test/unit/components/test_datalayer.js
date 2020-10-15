@@ -195,7 +195,7 @@ describe('LocusZoom.DataLayer', function () {
                 ],
             };
             const datalayer = new BaseDataLayer(layout);
-            datalayer.setElementAnnotation('toto', 'custom_field', 'little_dog');
+            datalayer.setElementAnnotation({id: 'toto'}, 'custom_field', 'little_dog');
             assert.equal(datalayer.resolveScalableParameter(layout.scale, { id: 'toto' }), 'too');
         });
     });
@@ -711,7 +711,7 @@ describe('LocusZoom.DataLayer', function () {
 
     describe('Filtering operations', function () {
         it('can filter numeric data', function () {
-            const layer = new BaseDataLayer({id_field: 'a'});
+            const layer = new BaseDataLayer({id: 'test', id_field: 'a'});
             const options = [{ field: 'a', operator: '>', value: 12 }];
             const data = [{ a: 12 }, { a: 11 }, { a: 13 }];
 
@@ -858,16 +858,16 @@ describe('LocusZoom.DataLayer', function () {
         it('can store user-defined marks for points that persist across re-renders', function () {
             const data_layer = this.plot.panels.p.data_layers.d;
             // Set the annotation for a point with id value of "a"
-            data_layer.setElementAnnotation('a', 'custom_field', 'some_value');
+            data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', 'some_value');
 
             // Find the element annotation for this point via several different ways
             assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
-            assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
-            assert.equal(data_layer.getElementAnnotation('b', 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
+            assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
+            assert.equal(data_layer.getElementAnnotation({'d:id': 'b'}, 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
             assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
 
             return this.plot.applyState().then(function() {
-                assert.equal(data_layer.getElementAnnotation('a', 'custom_field'), 'some_value', 'Annotations persist across renderings');
+                assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Annotations persist across renderings');
             });
         });
 
@@ -875,12 +875,12 @@ describe('LocusZoom.DataLayer', function () {
             const self = this;
             const data_layer = this.plot.panels.p.data_layers.d;
             assert.equal(data_layer.label_groups, undefined, 'No labels on first render');
-            data_layer.setElementAnnotation('a', 'custom_field', true);
+            data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', true);
 
             return this.plot.applyState().then(function () {
                 assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn because of annotations');
                 // After turning labels on, confirm that we can cycle them off and influence rendering
-                data_layer.setElementAnnotation('a', 'custom_field', false);
+                data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', false);
                 return self.plot.applyState();
             }).then(function () {
                 assert.equal(data_layer.label_groups.size(), 0, 'Labels are removed because of annotations');
@@ -896,7 +896,7 @@ describe('LocusZoom.DataLayer', function () {
             return this.plot.applyState().then(function () {
                 assert.equal(data_layer.label_groups.size(), 1, 'Labels are drawn on first render because field value says to');
                 // Introduce an annotation that conflicts with the data field from the API
-                data_layer.setElementAnnotation('b', 'd:some_field', false);
+                data_layer.setElementAnnotation({'d:id': 'b'}, 'd:some_field', false);
                 return self.plot.applyState();
             }).then(function () {
                 assert.equal(data_layer.label_groups.size(), 1, 'Real fields says to label, annotation says no. Real field wins.');

@@ -80,6 +80,7 @@ const categorical_bin = (parameters, value) => {
         return parameters.values[parameters.categories.indexOf(value)];
     }
 };
+
 /**
  * Cycle through a set of options, so that the each element in a set of data receives a value different than the
  *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
@@ -91,6 +92,7 @@ const ordinal_cycle = (parameters, value, index) => {
     var options = parameters.values;
     return options[index % options.length];
 };
+
 /**
  * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.
  * @function interpolate

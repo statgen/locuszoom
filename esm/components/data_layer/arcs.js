@@ -65,6 +65,9 @@ class Arcs extends BaseDataLayer {
             .selectAll('path.lz-data_layer-arcs-hitarea')
             .data(track_data, (d) => this.getElementId(d));
 
+        this.svg.group
+            .call(applyStyles, layout.style);
+
         // Add new points as necessary
         selection
             .enter()
@@ -73,8 +76,7 @@ class Arcs extends BaseDataLayer {
             .attr('id', (d) => this.getElementId(d))
             .merge(selection)
             .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
-            .attr('d', (d, i) => _make_line(d))
-            .call(applyStyles, layout.style);
+            .attr('d', (d, i) => _make_line(d));
 
         hitareas
             .enter()
@@ -86,9 +88,7 @@ class Arcs extends BaseDataLayer {
             .style('stroke-width', layout.hitarea_width)
             .style('stroke-opacity', 0)
             .style('stroke', 'transparent')
-            .attr('d', (d) => _make_line(d))
-            // Apply mouse behaviors to hitareas
-            .call(this.applyBehaviors.bind(this));
+            .attr('d', (d) => _make_line(d));
 
         // Remove old elements as needed
         selection.exit()
@@ -96,6 +96,11 @@ class Arcs extends BaseDataLayer {
 
         hitareas.exit()
             .remove();
+
+        // Apply mouse behaviors to arcs
+        this.svg.group
+            .call(this.applyBehaviors.bind(this));
+
         return this;
     }
 

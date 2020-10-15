@@ -1,4 +1,7 @@
-/** @module */
+/**
+ * Helpers that control the display of individual points and field values
+ * @module
+ */
 import * as d3 from 'd3';
 
 import Field from '../data/field';
