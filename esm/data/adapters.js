@@ -548,8 +548,15 @@ class LDServer extends BaseApiAdapter {
         if (!match) {
             throw new Error('Could not request LD for a missing or incomplete marker format');
         }
-        refVar = [match[1], ':', match[2], '_', match[3], '/', match[4]].join('');
-        chain.header.ldrefvar = refVar;
+        const [original, chrom, pos, ref, alt] = match;
+        // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
+        //  a partial match at most leaves room for potential future features.
+        refVar = `${chrom}:${pos}`;
+        if (ref && alt) {
+            refVar += `_${ref}/${alt}`;
+        }
+        // Preserve the user-provided variant spec for use when matching to assoc data
+        chain.header.ldrefvar = original;
 
         return  [
             this.url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',

@@ -76,7 +76,7 @@
           <h6><strong>CSS</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.1/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.1/dist/locuszoom.css</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.2/dist/locuszoom.css">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.2/dist/locuszoom.css</a></tt>
           <br>
           <small><i>All CSS classes are namespaced to avoid collisions</i></small>
         </div>
@@ -96,7 +96,7 @@
           <h6><strong>Javascript</strong></h6>
         </div>
         <div class="nine columns">
-          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.1/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.1</a></tt>
+          <tt><a href="https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.2/dist/locuszoom.app.min.js">https://cdn.jsdelivr.net/npm/locuszoom@0.13.0-beta.2</a></tt>
           <br>
         </div>
       </div>
@@ -211,7 +211,7 @@
       apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.lastIndexOf("/") + 1) + "staticdata/";
       data_sources = new LocusZoom.DataSources()
         .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: { source: 45, id_field: "variant" }}])
-        .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
+        .add("ld", ["LDServer", { url: apiBase + "ld_10_114550452-115067678.json?" }])
         .add("gene", ["GeneLZ", { url: apiBase + "genes_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("recomb", ["RecombLZ", { url: apiBase + "recomb_10_114550452-115067678.json?", params: { build: 'GRCh37' } }])
         .add("constraint", ["GeneConstraintLZ", {  url: apiBase + "constraint_10_114550452-115067678.json?", params: { build: 'GRCh37' } }]);

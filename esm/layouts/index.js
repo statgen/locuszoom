@@ -4,7 +4,7 @@
  * @private
  */
 
-import { version } from '../../package.json';
+import version from '../version';
 import {deepCopy, merge} from '../helpers/layouts';
 
 const LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
