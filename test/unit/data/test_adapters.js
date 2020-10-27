@@ -502,6 +502,21 @@ describe('Data adapters', function () {
             assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
         });
 
+        it('coerces variant formats, omitting ref-alt if not provided', function () {
+            const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
+            const norefvar_topmed = '8-117974679';
+            const ldserver_format = '8:117974679';
+            const request_url = source.getURL({ ldrefvar: norefvar_topmed }, {
+                header: {},
+                body: [],
+            }, ['isrefvar', 'state']);
+            assert.equal(
+                request_url,
+                source.getURL({ ldrefvar: ldserver_format }, { header: {}, body: [] }, ['isrefvar', 'state'])
+            );
+            assert.ok(request_url.includes(encodeURIComponent(ldserver_format)));
+        });
+
         it('chooses best 1000G panel for the given build', function () {
             const source37 = new LDServer({ url: 'www.fake.test', params: { source: '1000G', build: 'GRCh37' } });
             let request_url = source37.getURL({ ldrefvar: '1:2_A/B' }, {
