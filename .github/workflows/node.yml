@@ -1,4 +1,4 @@
-name: JS unit tests
+name: Unit tests
 
 on:
   push:
