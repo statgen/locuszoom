@@ -272,26 +272,38 @@ function install(LocusZoom) {
 
     const covariates_model_tooltip = function () {
         const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
-        covariates_model_association.html += '<a href="javascript:void(0);" onclick="LocusZoom.getToolTipPlot(this).CovariatesModel.add(LocusZoom.getToolTipData(this));">Condition on Variant</a><br>';
+        covariates_model_association.html += `<br><a href="javascript:void(0);" 
+                                              onclick="this.parentNode.__data__.getPlot().CovariatesModel.add(this.parentNode.__data__);">Add to Model</a><br>`;
         return covariates_model_association;
     }();
 
-    const covariates_model_plot = function () {
+    const covariates_model_toolbar = function () {
         const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true });
         covariates_model_plot_toolbar.widgets.push({
             type: 'covariates_model',
             button_html: 'Model',
-            button_title: 'Show and edit covariates currently in model',
+            button_title: 'Use this feature to interactively build a model using variants from the data set',
             position: 'left',
         });
         return covariates_model_plot_toolbar;
+    }();
+
+    const covariates_model_plot = function () {
+        // Create a new JSON object based on
+        const base = LocusZoom.Layouts.get('plot', 'standard_association', { unnamespaced: true });
+        base.toolbar = covariates_model_toolbar;
+        const assoc_layer = base.panels[0].data_layers[2];
+        assoc_layer.tooltip = covariates_model_tooltip;
+        return base;
     }();
 
     LocusZoom.Widgets.add('covariates_model', CovariatesModel);
     LocusZoom.Widgets.add('data_layers', DataLayersWidget);
 
     LocusZoom.Layouts.add('tooltip', 'covariates_model_association', covariates_model_tooltip);
-    LocusZoom.Layouts.add('toolbar', 'covariates_model_plot', covariates_model_plot);
+    LocusZoom.Layouts.add('toolbar', 'covariates_model_toolbar', covariates_model_toolbar);
+
+    LocusZoom.Layouts.add('plot', 'covariates_association', covariates_model_plot);
 }
 
 if (typeof LocusZoom !== 'undefined') {
