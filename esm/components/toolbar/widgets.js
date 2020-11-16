@@ -1055,7 +1055,7 @@ class RemovePanel extends BaseWidget {
 
 /**
  * Button to move panel up relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel widgets.
+ *   NOTE: Will only work on panel toolbars.
  */
 class MovePanelUp extends BaseWidget {
     update () {
@@ -1079,7 +1079,7 @@ class MovePanelUp extends BaseWidget {
 
 /**
  * Button to move panel down relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel widgets.
+ *   NOTE: Will only work on panel toolbars.
  */
 class MovePanelDown extends BaseWidget {
     update () {

@@ -212,6 +212,7 @@ class BaseDataLayer {
             this.layer_state.extra_fields[id] = {};
         }
         this.layer_state.extra_fields[id][key] = value;
+        this.parent.emit('element_annotation', { element: element, field: key, value }, true);
         return this;
     }
 

@@ -222,7 +222,7 @@ class Panel {
         this.zoom_timeout = null;
 
         /**
-         * Known event hooks that the panel can respond to
+         * Known event hooks that the panel can respond to. See documentation of `on` for details.
          * @protected
          * @member {Object}
          */
@@ -232,6 +232,7 @@ class Panel {
             'data_rendered': [],
             'element_clicked': [],
             'element_selection': [],
+            'element_annotation': [],
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
         };
 
@@ -252,6 +253,9 @@ class Panel {
      *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
      *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
      *        whether the element is being selected or deselected.
+     *   - `element_annotation` - Triggered when a point is annotated with a user-specified value (information that
+     *      doesn't come from the server, and can modify display in a way that is preserved across re-render).
+     *      Identifies the current value of the annotation.
      *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *

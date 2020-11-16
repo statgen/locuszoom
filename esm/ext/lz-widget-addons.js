@@ -9,9 +9,6 @@
  *    space is hard to read. (see "multiple phenotypes layered" demo)
  * @module
  */
-import {deepCopy} from '../helpers/layouts';
-
-// In order to work in a UMD context, this module imports the top-level LocusZoom symbol
 
 const STATUS_VERBS = ['highlight', 'select', 'fade', 'hide'];
 const STATUS_ADJECTIVES = ['highlighted', 'selected', 'faded', 'hidden'];
@@ -28,89 +25,77 @@ function install(LocusZoom) {
     /**
      * Special button/menu to allow model building by tracking individual covariants. Will track a list of covariate
      *   objects and store them in the special `model.covariates` field of plot `state`.
+     *
+     * Note: will only work on `panel` toolbars, and must be associated with a specific data layer to function.
+     *
      * @param {object} layout
      * @param {string} layout.button_html The HTML to render inside the button
      * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
      */
     class CovariatesModel extends _BaseWidget {
+        // What info is needed to control this button?
+        // - data_layer (for two way communication, so that rendering and menu can stay in sync)
+        // - variant_field (so we know which variant ID to report to the LD server when asking for covariance data).
+        //   Defaults to data_layer.id_field, on the assumption that it's easiest if the two things stay in sync.
+
+        // FIXME: Bad button positioning- dropdown is detached from button location, fix
+        // FIXME: implement add custom add covariate logic + display options for results + lock scroll once model building starts + "suggest best" option
+        constructor(layout, parent) {
+            super(layout, parent);
+            this._covariates = []; // List of variant IDs (in a format compatible with the LD server)
+
+            if (!this.parent_panel) {
+                throw new Error('Covariates model can only be used on panel toolbars');
+            }
+
+            this._data_layer = this.parent_panel.data_layers[layout.data_layer];
+            if (!this._data_layer) {
+                throw new Error('Covariates model must specify where to find the association results');
+            }
+
+            this._variant_field = layout.variant_field || this._data_layer.layout.id_field;
+            if (!this._variant_field) {
+                throw new Error('Must specify how to find the variant ID that will be used for calculations');
+            }
+        }
+
         initialize() {
-            // Initialize state.model.covariates
-            this.parent_plot.state.model = this.parent_plot.state.model || {};
-            this.parent_plot.state.model.covariates = this.parent_plot.state.model.covariates || [];
-            // Create an object at the plot level for easy access to interface methods in custom client-side JS
-            /**
-             * When a covariates model toolbar element is present, create (one) object at the plot level that exposes
-             *   widget data and state for custom interactions with other plot elements.
-             * @class CovariatesModel
-             */
-            this.parent_plot.CovariatesModel = {
-                /** @member {Button} */
-                button: this,
-                /**
-                 * Add an element to the model and show a representation of it in the toolbar widget menu. If the
-                 *   element is already part of the model, do nothing (to avoid adding duplicates).
-                 * When plot state is changed, this will automatically trigger requests for new data accordingly.
-                 * @param {string|object} element_reference Can be any value that can be put through JSON.stringify()
-                 *   to create a serialized representation of itself.
-                 */
-                add: (element_reference) => {
-                    const plot = this.parent_plot;
-                    const element = deepCopy(element_reference);
-                    if (typeof element_reference == 'object' && typeof element.html != 'string') {
-                        element.html = ( (typeof element_reference.toHTML == 'function') ? element_reference.toHTML() : element_reference.toString());
-                    }
-                    // Check if the element is already in the model covariates array and return if it is.
-                    for (let i = 0; i < plot.state.model.covariates.length; i++) {
-                        if (JSON.stringify(plot.state.model.covariates[i]) === JSON.stringify(element)) {
-                            return plot;
-                        }
-                    }
-                    plot.state.model.covariates.push(element);
-                    plot.applyState();
-                    plot.CovariatesModel.updateWidget();
-                    return plot;
-                },
-                /**
-                 * Remove an element from `state.model.covariates` (and from the toolbar widget menu's
-                 *  representation of the state model). When plot state is changed, this will automatically trigger
-                 *  requests for new data accordingly.
-                 * @param {number} idx Array index of the element, in the `state.model.covariates array`.
-                 */
-                removeByIdx: (idx) => {
-                    const plot = this.parent_plot;
-                    if (typeof plot.state.model.covariates[idx] == 'undefined') {
-                        throw new Error(`Unable to remove model covariate, invalid index: ${idx.toString()}`);
-                    }
-                    plot.state.model.covariates.splice(idx, 1);
-                    plot.applyState();
-                    plot.CovariatesModel.updateWidget();
-                    return plot;
-                },
-                /**
-                 * Empty the `state.model.covariates` array (and toolbar widget menu representation thereof) of all
-                 *  elements. When plot state is changed, this will automatically trigger requests for new data accordingly
-                 */
-                removeAll: () => {
-                    const plot = this.parent_plot;
-                    plot.state.model.covariates = [];
-                    plot.applyState();
-                    plot.CovariatesModel.updateWidget();
-                    return plot;
-                },
-                /**
-                 * Manually trigger the update methods on the toolbar widget's button and menu elements to force
-                 *   display of most up-to-date content. Can be used to force the toolbar to reflect changes made, eg if
-                 *   modifying `state.model.covariates` directly instead of via `plot.CovariatesModel`
-                 */
-                updateWidget: () => {
-                    this.button.update();
-                    this.button.menu.update();
-                },
-            };
+            // Add a panel event listener that will be responsible for reading the list of covariates
+            this.parent_panel.on('element_annotation', (event) => {
+                const {element, field, value} = event.data;
+                if (field !== 'lz_is_covariate') {
+                    // Only respond to a specific kind of annotation
+                    return;
+                }
+
+                const variant_id = element[this._variant_field];
+                // For `lz_is_covariate`, we know there are two values: true (add) and false (remove) an annotation
+                // All changes will be initiated via a data layer annotation, and the internal state will only be
+                //  mutated in response to external events. This one way data flow helps to avoid the button updating
+                //  in response to events it initiated
+                if (value) {
+                    this._covariates.push(variant_id);
+                } else {
+                    // We are removing an annotation. Mutate in place to remove the item.
+                    this._covariates.splice(this._covariates.indexOf(variant_id), 1);
+                }
+                // Re-render the widget after receiving new values
+                this.updateWidget();
+            });
+        }
+
+        updateWidget() {
+            this.button.update();
+            this.button.menu.update();
+        }
+
+        removeAll() {
+            this._covariates = [];
+            this.parent_plot.applyState();
+            this.updateWidget();
         }
 
         update() {
-
             if (this.button) {
                 return this;
             }
@@ -125,39 +110,41 @@ function install(LocusZoom) {
 
             this.button.menu.setPopulate(() => {
                 const selector = this.button.menu.inner_selector;
+                // Reset content on every render
                 selector.html('');
-                // General model HTML representation
-                if (typeof this.parent_plot.state.model.html != 'undefined') {
-                    selector.append('div').html(this.parent_plot.state.model.html);
-                }
                 // Model covariates table
-                if (!this.parent_plot.state.model.covariates.length) {
-                    selector.append('i').html('no covariates in model');
+                if (!this._covariates.length) {
+                    selector.append('i')
+                        .text('no covariates in model');
                 } else {
-                    selector.append('h5').html(`Model Covariates (${this.parent_plot.state.model.covariates.length})`);
+                    selector.append('h5')
+                        .text(`Model Covariates (${this._covariates.length})`);
                     const table = selector.append('table');
-                    this.parent_plot.state.model.covariates.forEach((covariate, idx) => {
-                        const html = ((typeof covariate == 'object' && typeof covariate.html == 'string') ? covariate.html : covariate.toString());
+                    this._covariates.forEach((covariate_id) => {
                         const row = table.append('tr');
                         row.append('td').append('button')
                             .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                             .style('margin-left', '0em')
-                            .on('click', () => this.parent_plot.CovariatesModel.removeByIdx(idx))
-                            .html('×');
+                            // TODO : The display name is not the same as the element id- make _covariates a list of data instead of strings
+                            .on('click', () => this._data_layer.setElementAnnotation('lz_is_covariate', covariate_id, false))
+                            .text('×');
                         row.append('td')
-                            .html(html);
+                            .text(covariate_id);
                     });
                     selector.append('button')
                         .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                         .style('margin-left', '4px')
                         .html('× Remove All Covariates')
-                        .on('click', () => this.parent_plot.CovariatesModel.removeAll());
+                        .on('click', () => {
+                            this._covariates = [];
+                            this.updateWidget();
+                        });
                 }
             });
 
             this.button.preUpdate = () => {
                 let html = 'Model';
-                const count = this.parent_plot.state.model.covariates.length;
+                const count = this._covariates.length;
                 if (count) {
                     const noun = count > 1 ? 'covariates' : 'covariate';
                     html += ` (${count} ${noun})`;
@@ -273,26 +260,78 @@ function install(LocusZoom) {
     const covariates_model_tooltip = function () {
         const covariates_model_association = LocusZoom.Layouts.get('tooltip', 'standard_association', { unnamespaced: true });
         covariates_model_association.html += `<br><a href="javascript:void(0);" 
-                                              onclick="this.parentNode.__data__.getPlot().CovariatesModel.add(this.parentNode.__data__);">Add to Model</a><br>`;
+                                              onclick="var item = this.parentNode.__data__, layer = item.getDataLayer(); 
+                                              var current = layer.getElementAnnotation(item, 'lz_is_covariate');
+                                              layer.setElementAnnotation(item, 'lz_is_covariate', !current );
+                                              plot.applyState();">Add/remove covariate</a><br>`;
         return covariates_model_association;
     }();
 
     const covariates_model_toolbar = function () {
-        const covariates_model_plot_toolbar = LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true });
-        covariates_model_plot_toolbar.widgets.push({
+        const base = LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true });
+        const base_toolbar = base.toolbar;
+        base_toolbar.widgets.unshift({
             type: 'covariates_model',
             button_html: 'Model',
             button_title: 'Use this feature to interactively build a model using variants from the data set',
             position: 'left',
+            data_layer: 'associationpvalues',
         });
-        return covariates_model_plot_toolbar;
+        return base_toolbar;
     }();
 
     const covariates_model_plot = function () {
-        // Create a new JSON object based on
+        // Throughout the covariates plot, actions and display are coordinated by adding a special value
+        //  `lz_is_covariate` to each datum. This is communicated to an external widget (like the dropdown menu) via
+        //  the `element_annotation` event. The plot handles display, and the external widget handles what to do with
+        //  the list of covariates.
+
+        // Create a new JSON object based on a standard association plot
         const base = LocusZoom.Layouts.get('plot', 'standard_association', { unnamespaced: true });
-        base.toolbar = covariates_model_toolbar;
-        const assoc_layer = base.panels[0].data_layers[2];
+        const assoc_panel = base.panels[0];
+        assoc_panel.toolbar = covariates_model_toolbar;
+        const assoc_layer = assoc_panel.data_layers[2];
+
+        // If a point is tagged as a covariate, make it larger, with a special symbol
+        assoc_layer.point_shape = [
+            {
+                scale_function: 'if',
+                field: 'lz_is_covariate',
+                parameters: {
+                    field_value: true,
+                    then: 'cross',
+                },
+            },
+            {
+                scale_function: 'if',
+                field: '{{namespace[ld]}}isrefvar',
+                parameters: {
+                    field_value: 1,
+                    then: 'diamond',
+                    else: 'circle',
+                },
+            },
+        ];
+        assoc_layer.point_size = [
+            {
+                scale_function: 'if',
+                field: 'lz_is_covariate',
+                parameters: {
+                    field_value: true,
+                    then: '70',
+                },
+            },
+            {
+                scale_function: 'if',
+                field: '{{namespace[ld]}}isrefvar',
+                parameters: {
+                    field_value: 1,
+                    then: 80,
+                    else: 40,
+                },
+            },
+        ];
+        // Add an action link to control whether this point is a covariate
         assoc_layer.tooltip = covariates_model_tooltip;
         return base;
     }();

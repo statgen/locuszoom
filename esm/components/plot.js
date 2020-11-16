@@ -205,7 +205,7 @@ class Plot {
         this._external_listeners = new Map();
 
         /**
-         * Known event hooks that the panel can respond to
+         * Known event hooks that the panel can respond to. See documentation of `.on` for details.
          * @protected
          * @member {Object}
          */
@@ -214,7 +214,8 @@ class Plot {
             'data_requested': [], // A request has been made for new data from any data source used in the plot
             'data_rendered': [],  // Data from a request has been received and rendered in the plot
             'element_clicked': [], // Select or unselect
-            'element_selection': [], // Element becomes active (only)
+            'element_selection': [],
+            'element_annotation': [],
             'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
             'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
             'region_changed': [], // The viewing region (chr/start/end) has been changed
@@ -256,7 +257,7 @@ class Plot {
      *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
      *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
      *        whether the element is being selected or deselected.
-     *
+     *   - `element_annotation` - See description on `panel` (this event is bubbled up)
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
      * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
