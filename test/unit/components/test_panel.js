@@ -182,7 +182,7 @@ describe('Panel', function() {
                 width: 800,
                 height: 400,
                 panels: [
-                    { id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1 },
+                    { id: 'panel0', width: 800, height: 400, proportional_height: 1 },
                 ],
             };
             d3.select('body').append('div').attr('id', 'plot');

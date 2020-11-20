@@ -571,7 +571,6 @@ const association_panel = {
     height: 225,
     min_width: 400,
     min_height: 200,
-    proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: (function () {
@@ -624,7 +623,6 @@ const coaccessibility_panel = {
     height: 225,
     min_width: 400,
     min_height: 100,
-    proportional_width: 1,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -717,7 +715,6 @@ const genes_panel = {
     height: 225,
     min_width: 400,
     min_height: 112.5,
-    proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -748,7 +745,6 @@ const phewas_panel = {
     height: 300,
     min_width: 800,
     min_height: 300,
-    proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     axes: {
@@ -779,7 +775,6 @@ const annotation_catalog_panel = {
     width: 800,
     height: 45,
     min_height: 45,
-    proportional_width: 1,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),

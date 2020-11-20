@@ -88,8 +88,8 @@ describe('LocusZoom.Plot', function() {
             const responsive_layout = LAYOUTS.get('plot', 'standard_association', {
                 responsive_resize: true,
                 panels: [
-                    { id: 'positions', proportional_width: 1, proportional_height: 0.6, min_height: 60 },
-                    { id: 'genes', proportional_width: 1, proportional_height: 0.4, min_height: 40 },
+                    { id: 'positions', proportional_height: 0.6, min_height: 60 },
+                    { id: 'genes', proportional_height: 0.4, min_height: 40 },
                 ],
             });
             responsive_layout.state = { chr: '1', start: 1, end: 100000 };

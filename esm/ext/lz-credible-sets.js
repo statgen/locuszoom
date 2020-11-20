@@ -212,7 +212,6 @@ function install (LocusZoom) {
         width: 800,
         height: 45,
         min_height: 45,
-        proportional_width: 1,
         margin: { top: 25, right: 50, bottom: 0, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),

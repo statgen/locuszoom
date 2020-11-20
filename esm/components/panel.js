@@ -23,9 +23,8 @@ const default_layout = {
     origin: { x: 0, y: null },
     min_width: 1,
     min_height: 1,
-    proportional_width: null,
     proportional_height: null,
-    proportional_origin: { x: 0, y: null },
+    proportional_origin: { y: null }, // Panels can stack within plot (along y), but not side by side (along x)
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
     toolbar: {
@@ -777,13 +776,6 @@ class Panel {
      * @returns {Panel}
      */
     initializeLayout() {
-
-        // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
-        // This will default the panel to taking up the full width of the plot.
-        if (this.layout.width === 0 && this.layout.proportional_width === null) {
-            this.layout.proportional_width = 1;
-        }
-
         // If the layout is missing BOTH height and proportional height then set the proportional height to
         // an equal share of the plot's current height.
         if (this.layout.height === 0 && this.layout.proportional_height === null) {
@@ -842,9 +834,6 @@ class Panel {
                 this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             }
         } else {
-            if (this.layout.proportional_width !== null) {
-                this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
-            }
             if (this.layout.proportional_height !== null) {
                 this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
             }

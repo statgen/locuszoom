@@ -884,7 +884,6 @@ class Plot {
                 const panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
                 this.panels[panel_id].setDimensions(panel_width, panel_height);
                 this.panels[panel_id].setOrigin(0, y_offset);
-                this.panels[panel_id].layout.proportional_origin.x = 0;
                 this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
                 y_offset += panel_height;
                 this.panels[panel_id].toolbar.update();
@@ -946,9 +945,6 @@ class Plot {
             if (this.panels[id].layout.proportional_height === null) {
                 this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
             }
-            if (this.panels[id].layout.proportional_width === null) {
-                this.panels[id].layout.proportional_width = 1;
-            }
             if (this.panels[id].layout.interaction.x_linked) {
                 x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
                 x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
@@ -970,7 +966,6 @@ class Plot {
         let y_offset = 0;
         this.panel_ids_by_y_index.forEach((panel_id) => {
             this.panels[panel_id].setOrigin(0, y_offset);
-            this.panels[panel_id].layout.proportional_origin.x = 0;
             y_offset += this.panels[panel_id].layout.height;
             if (this.panels[panel_id].layout.interaction.x_linked) {
                 const delta = Math.max(x_linked_margins.left - this.panels[panel_id].layout.margin.left, 0)
@@ -992,7 +987,7 @@ class Plot {
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
             this.panels[panel_id].setDimensions(
-                this.layout.width * this.panels[panel_id].layout.proportional_width,
+                this.layout.width,
                 this.layout.height * this.panels[panel_id].layout.proportional_height
             );
         });
