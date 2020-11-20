@@ -116,6 +116,10 @@ function install(LocusZoom) {
                 if (!this._covariates.length) {
                     selector.append('i')
                         .text('no covariates in model');
+                    selector.append('br');
+                    selector.append('button')
+                        .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
+                        .text('Select top variant');
                 } else {
                     selector.append('h5')
                         .text(`Model Covariates (${this._covariates.length})`);
@@ -126,7 +130,7 @@ function install(LocusZoom) {
                             .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                             .style('margin-left', '0em')
                             // TODO : The display name is not the same as the element id- make _covariates a list of data instead of strings
-                            .on('click', () => this._data_layer.setElementAnnotation('lz_is_covariate', covariate_id, false))
+                            .on('click', () => this._data_layer.setElementAnnotation(covariate_id, 'lz_is_covariate', false))
                             .text('×');
                         row.append('td')
                             .text(covariate_id);
@@ -134,12 +138,24 @@ function install(LocusZoom) {
                     selector.append('button')
                         .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
                         .style('margin-left', '4px')
-                        .html('× Remove All Covariates')
+                        .text('× Remove All Covariates')
                         .on('click', () => {
+                            // FIXME: clear annotations from the plot so that states remain in sync
+                            //  (add and remove covariate methods)
+                            // FIXME: make sure re-rendering happens after annos in a controlled fashion
+                            // FIXME: unlock plot x scroll when cleared
                             this._covariates = [];
                             this.updateWidget();
                         });
                 }
+                const add_variant = selector.append('div');
+                add_variant.append('input')
+                    .attr('placeholder', 'Add a variant');
+                add_variant.append('button')
+                    // FIXME: validation, trigger plot re-render, and clear text field. Possible tie to keyboard events (enter)
+                    // FIXME: Lock plot x-scroll when at least one covariate is selected
+                    .attr('class', `lz-toolbar-button lz-toolbar-button-${this.layout.color}`)
+                    .text('Add');
             });
 
             this.button.preUpdate = () => {

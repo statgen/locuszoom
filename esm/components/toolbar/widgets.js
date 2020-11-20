@@ -311,6 +311,7 @@ class Button {
                 let top;
                 let left;
                 if (this.parent_toolbar.type === 'panel') {
+                    // FIXME: Logic seems to be buggy somewhere
                     top = (page_origin.y + toolbar_client_rect.height + (2 * padding));
                     left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
                 } else {
