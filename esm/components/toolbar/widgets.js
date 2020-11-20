@@ -311,6 +311,7 @@ class Button {
                 let top;
                 let left;
                 if (this.parent_toolbar.type === 'panel') {
+                    // FIXME: Logic seems to be buggy somewhere
                     top = (page_origin.y + toolbar_client_rect.height + (2 * padding));
                     left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
                 } else {
@@ -1055,7 +1056,7 @@ class RemovePanel extends BaseWidget {
 
 /**
  * Button to move panel up relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel widgets.
+ *   NOTE: Will only work on panel toolbars.
  */
 class MovePanelUp extends BaseWidget {
     update () {
@@ -1079,7 +1080,7 @@ class MovePanelUp extends BaseWidget {
 
 /**
  * Button to move panel down relative to other panels (in terms of y-index on the page)
- *   NOTE: Will only work on panel widgets.
+ *   NOTE: Will only work on panel toolbars.
  */
 class MovePanelDown extends BaseWidget {
     update () {
