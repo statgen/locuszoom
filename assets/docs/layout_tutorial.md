@@ -71,20 +71,20 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
     state: {},
     width: 800,
     height: 450,
-    responsive_resize: 'width_only',
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
+        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, height: 225 }),
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, height: 225 })
     ]
 });
 ```
 
 In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this 
 plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
-we control how the total space is allocated between two panels (`proportional_height`). The actual details of what to 
+we ask for 450 px in height, and each panel gets half that space (225 px). The actual details of what to 
 render are defined as nested layouts (association and genes panels), and the registry also contains predefined options 
 for this piece- `LocusZoom.Layouts.get(...)` returns a JSON object.  
 
@@ -310,7 +310,7 @@ data_sources
 //   layout ready for use in drawing a plot with specific data sets. 
 const plot_layout = LocusZoom.Layouts.get('plot', 'standard_association', { // Override select fields of a pre-made layout 
     height: 1200, // The default plot was sized for two panels. Make sure to allocate enough room for the extra panel. 
-    responsive_resize: 'width_only',  // This makes height calculations more reliable. Will become the default in the future.
+    responsive_resize: true,
     panels: [
         LocusZoom.Layouts.get('panel', 'association', {
             namespace: { assoc: 'assoc_study1' }, // This is the key piece. It says "for this panel, and its child data layers, look for the association data in a datasource called "assoc_study1".

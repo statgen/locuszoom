@@ -1062,13 +1062,11 @@ class Plot {
                             const original_panel_height = this_panel.layout.height;
                             this_panel.setDimensions(this_panel.layout.width, this_panel.layout.height + d3.event.dy);
                             const panel_height_change = this_panel.layout.height - original_panel_height;
-                            const new_calculated_plot_height = this.parent.layout.height + panel_height_change;
                             // Next loop through all panels.
                             // Update proportional dimensions for all panels including the one we've resized using discrete heights.
                             // Reposition panels with a greater y-index than this panel to their appropriate new origin.
                             this.parent.panel_ids_by_y_index.forEach((loop_panel_id, loop_panel_idx) => {
                                 const loop_panel = this.parent.panels[this.parent.panel_ids_by_y_index[loop_panel_idx]];
-                                loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                                 if (loop_panel_idx > panel_idx) {
                                     loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
                                     loop_panel.toolbar.position();
