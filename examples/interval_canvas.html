@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interval track demo: Canvas!</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="text/javascript"></script>
+</head>
+<body>
+<canvas id="lz-intervals" width="800"></canvas>
+
+<script src="js/intervals_canvas_prototype.js" type="application/javascript"></script>
+<script>
+  const split = false;
+  fetch('../staticdata/intervals-accchrom-macs2.json').then((resp) => {
+      if (resp.ok) {
+          return resp.json();
+      }
+      throw new Error('Could not fetch data');
+  }).then((data) => {
+      draw_intervals('lz-intervals', data, split);
+  });
+</script>
+</body>
+</html>

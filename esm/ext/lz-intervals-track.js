@@ -277,6 +277,7 @@ function install (LocusZoom) {
                             this.data[i].track = potential_track;
                             this.interval_track_index[potential_track].push(this.data[i]);
                         } else {
+                            // FIXME BUG: This puts it on the first track after the first collision is detected, eg if it collides on tracks 1 and 2, this puts it on track 2 (instead of track 3)
                             potential_track++;
                             if (potential_track > this.tracks) {
                                 this.tracks = potential_track;
