@@ -12,6 +12,23 @@ const REGION_START = 21940000;
 const REGION_END = 22190000;
 
 
+function _detectHit(grouped_data, x, y) {
+    // Detect whether a given item overlaps a given interval
+    y = Math.floor(y);
+    const search_row = grouped_data[y];
+    if (!search_row) {
+        return null;
+    }
+
+    for (let i = 0; i < search_row.length; i++) {
+        const item = search_row[i];
+        if (item[start_field] <= x && item[end_field] >= x) {
+            return item;
+        }
+    }
+}
+
+
 function _arrangeTrackSplit(data) {
     // Split data into tracks such that anything with a common grouping field is in the same track
     const result = {};
@@ -80,16 +97,16 @@ function draw_intervals(selector_id, data, split_tracks = true) {
         .domain([0, n_rows])
         .range([0, target_height]);
 
-    // // Rescale canvas to accommodate the data. Adjust for high res on retina screens
-    // const scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
-    // canvas.style.width = `800px`;
-    // canvas.style.height = `${target_height}px`;
-    //
-    // canvas.width = Math.floor(800 * scale);
-    // canvas.height = Math.floor(target_height * scale);
-    //
-    // // Normalize coordinate system to use css pixels.
-    // context.scale(scale, scale);
+    // Rescale canvas to accommodate the data. Adjust for high res on retina screens
+    const scale = window.devicePixelRatio; // Change to 1 on retina screens to see blurry canvas.
+    canvas.style.width = `800px`;
+    canvas.style.height = `${target_height}px`;
+
+    canvas.width = Math.floor(800 * scale);
+    canvas.height = Math.floor(target_height * scale);
+
+    // Normalize coordinate system to use css pixels.
+    context.scale(scale, scale);
 
     canvas.height = target_height;
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -104,5 +121,15 @@ function draw_intervals(selector_id, data, split_tracks = true) {
                 ROW_HEIGHT
             );
         });
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+        const {offsetX: x, offsetY: y} = event;
+        // Convert the x and y coordinates to data x and y
+        const dataX = x_scale.invert(x);
+        const dataY = y_scale.invert(y - ROW_SPACING);
+
+        const hit_data = _detectHit(grouped_data, dataX, dataY);
+        console.log('hit found!', hit_data);
     });
 }
