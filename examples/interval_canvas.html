@@ -18,7 +18,8 @@
       }
       throw new Error('Could not fetch data');
   }).then((data) => {
-      draw_intervals('lz-intervals', data, split);
+      const plot = new IntervalPlot('lz-intervals', data, split)
+      plot.render();
   });
 </script>
 </body>
