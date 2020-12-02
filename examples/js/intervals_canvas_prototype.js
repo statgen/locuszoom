@@ -39,11 +39,27 @@ function _detectHit(grouped_data, x, y) {
         return null;
     }
 
+    // Once we've found a row, find the item that overlaps the x position
+    let soft_match;
     for (let i = 0; i < search_row.length; i++) {
-        // Once we've found a row, scan all items and return the first one that overlaps the mouse position.
+        // There are two kinds of overlap: hard match (exactly overlaps mouse pointer), and soft match (within hit area-
+        //  don't return until we've checked adjacent points for a better match
+        // We only do this in the x direction, b/c tracks are always tall enough to click, but not always wide enough
         const item = search_row[i];
         if (item[XCS] <= x && item[XCE] >= x) {
+            // Hard (exact) match: return immediately; this is the point we want!
             return item;
+        }
+        if ((item[XCS] - HITAREA_SIZE) <= x && (item[XCE] + HITAREA_SIZE) >= x) {
+            // Soft match: keep track of it, but consider adjacent items to see if the next point has better overlap
+            // This is equivalent to the "rightmost/last point added to DOM wins" behavior we'd see with SVG hitareas
+            soft_match = item;
+            continue;
+        }
+        if (soft_match) {
+            // If this item wasn't any kind of match, return the previous soft match- it's the best we're going to get
+            //  (this assumes that dataset is sorted in x direction, eg "we tested everything nearby")
+            return soft_match;
         }
     }
     return null;
