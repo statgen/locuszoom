@@ -1097,7 +1097,7 @@ class BaseDataLayer {
             this.setAllElementStatus(status, !active);
         }
 
-        // Set/unset the proper status class on the appropriate DOM element(s)
+        // Set/unset the proper status class on the appropriate DOM element(s), *and* potentially an additional element
         d3.select(`#${element_id}`).classed(`lz-data_layer-${this.layout.type}-${status}`, active);
         const element_status_node_id = this.getElementStatusNodeId(element);
         if (element_status_node_id !== null) {
