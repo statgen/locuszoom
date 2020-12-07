@@ -384,65 +384,6 @@ function install (LocusZoom) {
             this._datanodes_group
                 .call(this.applyBehaviors.bind(this));
 
-            ////////
-            // LEGACY BELOW THIS LINE; REMOVE
-
-
-            //
-            // // // Remove any shared highlight nodes and re-render them if we're splitting on tracks
-            // // // At most there will only be dozen or so nodes here (one per track) and each time
-            // // // we render data we may have new tracks, so wiping/redrawing all is reasonable.
-            // // this.svg.group.selectAll('.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-shared').remove();
-            // Object.keys(this.track_split_field_index).forEach((key) => {
-            //     // Make a psuedo-element so that we can generate an id for the shared node
-            //     const pseudoElement = {};
-            //     pseudoElement[this.layout.track_split_field] = key;
-            //     // Insert the shared node
-            //     this.svg.group.insert('rect', ':first-child')
-            //         .attr('id', this.getElementStatusNodeId(pseudoElement))
-            //         .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared')
-            //         .attr('rx', this.layout.bounding_box_padding)
-            //         .attr('ry', this.layout.bounding_box_padding)
-            //         .attr('width', this.parent.layout.cliparea.width)
-            //         .attr('height', this.getTrackHeight() - this.layout.track_vertical_spacing)
-            //         .attr('x', 0)
-            //         .attr('y', (this.track_split_field_index[key] - 1) * this.getTrackHeight())
-            //         .style('display', (this.layout.split_tracks ? null : 'none'));
-            // });
-            //
-
-            //
-            // const data_layer = this;
-            // selection.enter()
-            //     .append('g')
-            //     .attr('class', 'lz-data_layer-intervals')
-            //     .merge(selection)
-            //     .attr('id', (d) => this.getElementId(d))
-            //     .each(function(interval) {
-            //
-            //         // Render interval status nodes (displayed behind intervals to show highlight
-            //         // without needing to modify interval display element(s))
-            //         const statusnodes = d3.select(this).selectAll('rect.lz-data_layer-intervals.lz-data_layer-intervals-statusnode.lz-data_layer-intervals-statusnode-discrete')
-            //             .data([interval], (d) => `${data_layer.getElementId(d)}-statusnode`);
-            //         statusnodes.enter()
-            //             .insert('rect', ':first-child')
-            //             .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-statusnode-discrete')
-            //             .merge(statusnodes)
-            //             .attr('id', (d) => `${data_layer.getElementId(d)}-statusnode`)
-            //             .attr('rx', data_layer.layout.bounding_box_padding)
-            //             .attr('ry', data_layer.layout.bounding_box_padding)
-            //             .style('display', data_layer.layout.split_tracks ? 'none' : null)
-            //             .attr('width', (d) => d.display_range.width + (2 * data_layer.layout.bounding_box_padding))
-            //             .attr('height', data_layer.getTrackHeight() - data_layer.layout.track_vertical_spacing)
-            //             .attr('x', (d) => d.display_range.start - data_layer.layout.bounding_box_padding)
-            //             .attr('y', (d) => ((d.track - 1) * data_layer.getTrackHeight()));
-            //
-            //         statusnodes.exit()
-            //             .remove();
-            //     });
-            //
-
-            //
             // The intervals track allows legends to be dynamically generated, in which case space can only be
             //  allocated after the panel has been rendered.
             if (this.parent && this.parent.legend) {
