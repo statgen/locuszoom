@@ -64,6 +64,9 @@ function install (LocusZoom) {
                     .setTitle('Toggle whether tracks are split apart or merged together')
                     .setOnclick(() => {
                         data_layer.toggleSplitTracks();
+                        // FIXME: the timeout calls to scale and position (below) cause full ~5 additional re-renders
+                        //  If we can remove these it will greatly speed up re-rendering.
+                        // The key problem here is that the height is apparently not known in advance and is determined after re-render.
                         if (this.scale_timeout) {
                             clearTimeout(this.scale_timeout);
                         }
@@ -135,7 +138,6 @@ function install (LocusZoom) {
 
         /**
          * Split data into tracks such that anything with a common grouping field is in the same track
-         * TODO: replace this code with d3.group on item field?
          * @param data
          * @return {unknown[]}
          * @private
@@ -150,8 +152,7 @@ function install (LocusZoom) {
                 }
                 result[item_key].push(item);
             });
-            // FIXME: Preserve intended order of fields (appearance, or text keys), including any "reverse" options
-            return Object.values(result);
+            return result;
         }
 
         /**
@@ -159,17 +160,22 @@ function install (LocusZoom) {
          * Assumes that the data are sorted so item1.start always <= item2.start.
          *
          * This function can also simply return all data on a single row. This functionality may become configurable
-         *  in the future but for now reflects a lack of clarity in the requirements/spec.
-          */
-        _arrangeTracksLinear(data, allow_overlap = false) {
+         *  in the future but for now reflects a lack of clarity in the requirements/spec. The code to split
+         *  overlapping items is present but may not see direct use.
+         */
+        _arrangeTracksLinear(data, allow_overlap = true) {
             if (allow_overlap) {
                 // If overlap is allowed, then all the data can live on a single row
                 return [data];
             }
 
-            // Data is sorted by start position to facilitate grouping
+            // ASSUMPTION: Data is given to us already sorted by start position to facilitate grouping.
+            // We do not sort here because JS "sort" is not stable- if there are many intervals that overlap, then we
+            //   can get different layouts (number/order of rows) on each call to "render".
+            //
+            // At present, we decide how to update the y-axis based on whether current and former number of rows are
+            //  the same. An unstable sort leads to layout thrashing/too many re-renders. FIXME: don't rely on counts
             const {start_field, end_field} = this.layout;
-            data.sort((a, b) => a[start_field] - b[end_field]);
 
             const grouped_data = [[]]; // Prevent two items from colliding by rendering them to different rows, like genes
             data.forEach((item, index) => {
@@ -195,7 +201,7 @@ function install (LocusZoom) {
          * Annotate each item with the track number, and return.
          * @param {Object[]}data
          * @private
-         * @return [Array, Number] Return the data array and the number of groups
+         * @return [String[], Object[]] Return the categories and the data array
          */
         _assignTracks(data) {
             // Store the previous number of groups, which is used by the rendering process as a signal of when
@@ -206,9 +212,14 @@ function install (LocusZoom) {
             const {x_scale} = this.parent;
             const {start_field, end_field, bounding_box_padding, track_height} = this.layout;
 
-            const grouped_data = this.split_tracks ? this._arrangeTrackSplit(data) : this._arrangeTracksLinear(data, true);
+            const grouped_data = this.layout.split_tracks ? this._arrangeTrackSplit(data) : this._arrangeTracksLinear(data, true);
+            const categories = Object.keys(grouped_data);
+            if (this.layout.track_split_order === 'DESC') {
+                categories.reverse();
+            }
 
-            grouped_data.forEach((row, row_index) => {
+            categories.forEach((key, row_index) => {
+                const row = grouped_data[key];
                 row.forEach((item) => {
                     item[XCS] = x_scale(item[start_field]);
                     item[XCE] = x_scale(item[end_field]);
@@ -223,11 +234,11 @@ function install (LocusZoom) {
             // WARNING: In rare edge cases (esp tissue-based tracks), row count is a poor proxy for distinct categories,
             //  eg two regions might have 10 categories each, but not the same 10
             // FIXME if the spec calls for an unstable/dynamic set of categories. Track was originally designed for chromHMM
-            this._current_rows = grouped_data.length;
+            this._current_rows = categories.length;
 
             // We're mutating elements of the original data array as a side effect: the return value here is
             //  interchangeable with `this.data` for subsequent usages
-            return grouped_data.flat();
+            return [categories, Object.values(grouped_data).flat()];
         }
 
         /**
@@ -243,7 +254,10 @@ function install (LocusZoom) {
          */
         getElementStatusNodeId(element) {
             if (this.layout.split_tracks) {
-                return `${this.getBaseId()}-statusnode-${element.track}`;
+                // Data nodes are bound to data objects, but the "status_nodes" selection is bound to numeric row IDs
+                const track = typeof element === 'object' ? element.track : element;
+                const base = `${this.getBaseId()}-statusnode-${track}`;
+                return base.replace(/[^\w]/g, '_');
             }
             // In merged tracks mode, there is no separate status node
             return null;
@@ -317,20 +331,19 @@ function install (LocusZoom) {
             this._applyLayoutOptions();
 
             // Determine the appropriate layout for tracks.
-            const assigned_data = this._assignTracks(this.data);
-
-
+            const [categories, assigned_data] = this._assignTracks(this.data);
+            this._categories = categories;
             // Update the legend axis if the number of ticks changed
             if (this._current_rows !== this._previous_rows) {
-                // FIXME: Guaranteed at least one immediate re-render (panel.render calls layer.render)
-                this.updateSplitTrackAxis();
+                // FIXME: this is not a good check when the categories are not fixed in advance- 1 split or 1 merged = diff things!
+                this.updateSplitTrackAxis(categories);
                 return;
             }
 
             // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
             const track_data = this._applyFilters(assigned_data);
-
-            const status_nodes = this._statusnodes_group.selectAll('rect');
+            const status_nodes = this._statusnodes_group.selectAll('rect')
+                .data(d3.range(this._current_rows));
             if (this.layout.split_tracks) {
                 // Status nodes: a big highlight box around all items of the same type. Used in split tracks mode,
                 //  because everything on the same row is the same category and a group makes sense
@@ -338,23 +351,18 @@ function install (LocusZoom) {
                 // Status nodes are 1 per row, so "data" can just be a dummy list of possible row IDs
                 // Each status node is a box that runs the length of the panel and receives a special "colored box" css
                 //  style when selected
-                status_nodes
-                    .data(d3.range(this._current_rows));
-
+                const height = this.getTrackHeight();
                 status_nodes.enter()
                     .append('rect')
-                    .attr('id', (d) => this.getElementStatusNodeId(d))
                     .attr('class', 'lz-data_layer-intervals lz-data_layer-intervals-statusnode lz-data_layer-intervals-shared')
                     .attr('rx', this.layout.bounding_box_padding)
                     .attr('ry', this.layout.bounding_box_padding)
                     .merge(status_nodes)
+                    .attr('id', (d) => this.getElementStatusNodeId(d))
                     .attr('x', 0)
-                    .attr('y', (d) => (d * this.getTrackHeight()))
+                    .attr('y', (d) => (d * height))
                     .attr('width', this.parent.layout.cliparea.width)
-                    .attr('height', this.getTrackHeight() - this.layout.track_vertical_spacing)
-                    // Disable mouse events here: user must interact with a data element, not just the row
-                    // FIXME: is this necessary/accurate?
-                    .style('display', 'none');
+                    .attr('height', height - this.layout.track_vertical_spacing);
             } else {
                 // There are no status rows in merged tracks mode, because not everything on the same row is the same category
                 status_nodes.remove();
@@ -366,7 +374,6 @@ function install (LocusZoom) {
             const data_nodes = this._datanodes_group.selectAll('rect')
                 .data(track_data, (d) => d[this.layout.id_field]);
 
-            // TODO: Add
             data_nodes.enter()
                 .append('rect')
                 .merge(data_nodes)
@@ -402,10 +409,10 @@ function install (LocusZoom) {
 
         // Redraw split track axis or hide it, and show/hide the legend, as determined
         // by current layout parameters and data
-        updateSplitTrackAxis() {
+        updateSplitTrackAxis(categories) {
             const legend_axis = this.layout.track_split_legend_to_y_axis ? `y${this.layout.track_split_legend_to_y_axis}` : false;
             if (this.layout.split_tracks) {
-                const tracks = +this.tracks || 0;
+                const tracks = +this._current_rows || 0;
                 const track_height = +this.layout.track_height || 0;
                 const track_spacing = 2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
                 const target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);
@@ -423,16 +430,15 @@ function install (LocusZoom) {
                     // There is a very tight coupling between the display directives: each legend item must identify a key
                     //  field for unique tracks. (Typically this is `state_id`, the same key field used to assign unique colors)
                     // The list of unique keys corresponds to the order along the y-axis
-                    // FIXME: check ordering here- deprecate split field
                     this.layout.legend.forEach((element) => {
                         const key = element[this.layout.track_split_field];
-                        let track = this.track_split_field_index[key];
-                        if (track) {
+                        let track = categories.findIndex((item) => item === key);
+                        if (track !== -1) {
                             if (this.layout.track_split_order === 'DESC') {
                                 track = Math.abs(track - tracks - 1);
                             }
                             this.parent.layout.axes[legend_axis].ticks.push({
-                                y: track,
+                                y: track - 1,
                                 text: element.label,
                             });
                         }
@@ -442,8 +448,8 @@ function install (LocusZoom) {
                         floor: 1,
                         ceiling: tracks,
                     };
-                    this.parent.render();
                 }
+                // This will trigger a re-render
                 this.parent_plot.positionPanels();
             } else {
                 if (legend_axis && this.parent.legend) {
@@ -465,7 +471,6 @@ function install (LocusZoom) {
                 this.parent.layout.margin.bottom = 5 + (this.layout.split_tracks ? 0 : this.parent.legend.layout.height + 5);
             }
             this.render();
-            this.updateSplitTrackAxis();
             return this;
         }
 
