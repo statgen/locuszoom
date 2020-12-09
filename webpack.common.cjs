@@ -1,8 +1,11 @@
 /* eslint-env node */
 const path = require('path');
 const webpack = require('webpack');
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const ESLintPlugin = require('eslint-webpack-plugin');
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
+
 
 const PACKAGE = require('./package.json');
 
@@ -39,6 +42,7 @@ module.exports = {
         }),
         new webpack.BannerPlugin(`Locuszoom ${PACKAGE.version}`), // add after uglify step
         new FriendlyErrorsWebpackPlugin(),
+        new ESLintPlugin(),
     ],
     resolve: {
         modules: [
@@ -47,14 +51,6 @@ module.exports = {
     },
     module: {
         rules: [
-            {
-                test: /\.m?js$/,
-                exclude: (file) => (/node_modules/.test(file)),
-                use: [
-                    { loader: 'babel-loader', options: { presets: ['@babel/preset-env'] } },
-                    'eslint-loader'
-                ]
-            },
             {
                 test: /\.js$/,
                 use: ['source-map-loader'],

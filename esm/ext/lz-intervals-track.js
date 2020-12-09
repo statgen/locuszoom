@@ -227,7 +227,8 @@ function install (LocusZoom) {
             });
             // We're mutating elements of the original data array as a side effect: the return value here is
             //  interchangeable with `this.data` for subsequent usages
-            return [categories, Object.values(grouped_data).flat()];
+            // TODO: Can replace this with array.flat once polyfill support improves
+            return [categories, Object.values(grouped_data).reduce((acc, val) => acc.concat(val), [])];
         }
 
         /**
