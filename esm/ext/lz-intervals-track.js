@@ -124,8 +124,8 @@ function install (LocusZoom) {
         constructor(layout) {
             LocusZoom.Layouts.merge(layout, default_layout);
             super(...arguments);
-            this._previous_rows = 1;
-            this._current_rows = 1;
+            this._previous_categories = [];
+            this._categories = [];
         }
 
         initialize() {
@@ -204,10 +204,6 @@ function install (LocusZoom) {
          * @return [String[], Object[]] Return the categories and the data array
          */
         _assignTracks(data) {
-            // Store the previous number of groups, which is used by the rendering process as a signal of when
-            //  to re-draw the y-axis
-            this._previous_rows = this._current_rows;
-
             // Flatten the grouped data.
             const {x_scale} = this.parent;
             const {start_field, end_field, bounding_box_padding, track_height} = this.layout;
@@ -229,13 +225,6 @@ function install (LocusZoom) {
                     item.track = row_index;
                 });
             });
-
-            // Set a flag used for y-axis rendering
-            // WARNING: In rare edge cases (esp tissue-based tracks), row count is a poor proxy for distinct categories,
-            //  eg two regions might have 10 categories each, but not the same 10
-            // FIXME if the spec calls for an unstable/dynamic set of categories. Track was originally designed for chromHMM
-            this._current_rows = categories.length;
-
             // We're mutating elements of the original data array as a side effect: the return value here is
             //  interchangeable with `this.data` for subsequent usages
             return [categories, Object.values(grouped_data).flat()];
@@ -330,12 +319,14 @@ function install (LocusZoom) {
             //// Autogenerate layout options if not provided
             this._applyLayoutOptions();
 
-            // Determine the appropriate layout for tracks.
+            // Determine the appropriate layout for tracks. Store the previous categories (y axis ticks) to decide
+            //   whether the axis needs to be re-rendered.
+            this._previous_categories = this._categories;
             const [categories, assigned_data] = this._assignTracks(this.data);
             this._categories = categories;
             // Update the legend axis if the number of ticks changed
-            if (this._current_rows !== this._previous_rows) {
-                // FIXME: this is not a good check when the categories are not fixed in advance- 1 split or 1 merged = diff things!
+            const labels_changed = !categories.every( (item, index) => item === this._previous_categories[index]);
+            if (labels_changed) {
                 this.updateSplitTrackAxis(categories);
                 return;
             }
@@ -343,7 +334,7 @@ function install (LocusZoom) {
             // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
             const track_data = this._applyFilters(assigned_data);
             const status_nodes = this._statusnodes_group.selectAll('rect')
-                .data(d3.range(this._current_rows));
+                .data(d3.range(categories.length));
             if (this.layout.split_tracks) {
                 // Status nodes: a big highlight box around all items of the same type. Used in split tracks mode,
                 //  because everything on the same row is the same category and a group makes sense
@@ -412,7 +403,7 @@ function install (LocusZoom) {
         updateSplitTrackAxis(categories) {
             const legend_axis = this.layout.track_split_legend_to_y_axis ? `y${this.layout.track_split_legend_to_y_axis}` : false;
             if (this.layout.split_tracks) {
-                const tracks = +this._current_rows || 0;
+                const tracks = +categories.length || 0;
                 const track_height = +this.layout.track_height || 0;
                 const track_spacing = 2 * (+this.layout.bounding_box_padding || 0) + (+this.layout.track_vertical_spacing || 0);
                 const target_height = (tracks * track_height) + ((tracks - 1) * track_spacing);

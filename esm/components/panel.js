@@ -1438,6 +1438,7 @@ class Panel {
         }
         if (+target_height) {
             target_height += +this.layout.margin.top + +this.layout.margin.bottom;
+            // FIXME: plot.setDimensions calls panel.setDimensions (though without arguments)
             this.setDimensions(this.layout.width, target_height);
             this.parent.setDimensions();
             this.parent.panel_ids_by_y_index.forEach((id) => {
