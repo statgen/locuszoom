@@ -17,6 +17,7 @@ const FILENAMES = {
     LocusZoom: 'locuszoom.app.min.js',
     LzDynamicUrls: 'ext/lz-dynamic-urls.min.js',
     LzWidgetAddons: 'ext/lz-widget-addons.min.js',
+    LzForestTrack: 'ext/lz-forest-track.min.js',
     LzIntervalsTrack: 'ext/lz-intervals-track.min.js',
     LzCredibleSets: 'ext/lz-credible-sets.min.js',
     LzTabix: 'ext/lz-tabix-source.min.js',
@@ -30,6 +31,7 @@ module.exports = {
         LocusZoom: path.resolve(srcPath, 'index.js'),
         LzDynamicUrls: path.resolve(srcPath, 'ext', 'lz-dynamic-urls.js'),
         LzWidgetAddons: path.resolve(srcPath, 'ext', 'lz-widget-addons.js'),
+        LzForestTrack: path.resolve(srcPath, 'ext', 'lz-forest-track.js'),
         LzIntervalsTrack: path.resolve(srcPath, 'ext', 'lz-intervals-track.js'),
         LzCredibleSets: path.resolve(srcPath, 'ext', 'lz-credible-sets.js'),
         LzTabix: path.resolve(srcPath, 'ext', 'lz-tabix-source.js'),
@@ -46,7 +48,7 @@ module.exports = {
     ],
     resolve: {
         modules: [
-            'node_modules'
+            'node_modules',
         ],
     },
     module: {
@@ -56,7 +58,7 @@ module.exports = {
                 use: ['source-map-loader'],
                 enforce: 'pre',
             },
-        ]
+        ],
     },
     output: {
         path: outputPath,
@@ -79,5 +81,5 @@ module.exports = {
         'gwas-credible-sets': 'gwasCredibleSets',
         'tabix-reader': 'tabix',
         'raremetal.js': 'raremetal',
-    }
+    },
 };
