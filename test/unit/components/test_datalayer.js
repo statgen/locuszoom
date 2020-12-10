@@ -1,5 +1,6 @@
 import {assert} from 'chai';
 import * as d3 from 'd3';
+import sinon from 'sinon';
 
 import { SCALABLE } from '../../../esm/registry';
 import BaseDataLayer from '../../../esm/components/data_layer/base';
@@ -584,9 +585,8 @@ describe('LocusZoom.DataLayer', function () {
         });
     });
 
-    describe('Tool tip functions', function () {
+    describe('Tool tip display', function () {
         beforeEach(function () {
-            this.plot = null;
             this.layout = {
                 panels: [
                     {
@@ -671,7 +671,6 @@ describe('LocusZoom.DataLayer', function () {
             d.unselectElement(b);
             assert.isUndefined(d.tooltips[b_id]);
         });
-
         it('should allow tooltip open/close state to be tracked separately from element selection', function () {
             // Regression test for zombie tooltips returning after re-render
             const layer = this.plot.panels.p.data_layers.d;
@@ -706,6 +705,96 @@ describe('LocusZoom.DataLayer', function () {
                 assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
                 assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
             });
+        });
+    });
+
+    describe('data element behaviors', function () {
+        beforeEach(function() {
+            const data_sources = new DataSources()
+                .add('d', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 2, y:0 }, { id: 'c', x: 3, y:1 }]]);
+
+            const layout = {
+                panels: [
+                    {
+                        id: 'p',
+                        data_layers: [
+                            {
+                                id: 'd',
+                                type: 'scatter',
+                                fields: ['d:id', 'd:x', 'd:y'],
+                                id_field: 'd:id',
+                                x_axis: { field:  'd:x' },
+                                y_axis: { field: 'd:y'},
+                                behaviors: {
+                                    onclick: [{ action: 'link', href: 'https://dev.example/{{d:id}}', target: '_blank' }],
+                                    onmouseover: [{ action: 'set', status: 'highlighted', exclusive: true }],
+                                    onmouseout: [{ action: 'unset', status: 'highlighted' }],
+                                    onshiftclick: [{ action: 'toggle', status: 'selected' }],
+                                },
+                            },
+                        ],
+                    },
+                ],
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = populate('#plot', data_sources, layout);
+        });
+        it('can link to an external website', function () {
+            // NOTE: Not all variants of this behavior are tested. This only tests opening links in another window.
+            //  This is because JSDom sometimes has issues mocking window.location.
+            return this.plot.applyState().then(() => {
+                const openStub = sinon.stub(window, 'open');
+
+                // Select the first data element
+                const datapoint = this.plot.panels.p.data_layers.d.svg.group.select('.lz-data_layer-scatter');
+
+                assert.notEqual(datapoint.size(), 0, 'nodes are rendered');
+                datapoint.dispatch('click', { bubbles: true} );
+
+                assert.ok(openStub.calledOnce, 'window.open was called with the specified location and target');
+                assert.ok(openStub.calledWith('https://dev.example/a', '_blank'), 'The URL can incorporate parameters from the specified data element');
+            });
+        });
+        it('applies status-based styles when an item receives mouse events', function () {
+            // Since sequence is important, this test exercises multiple scenarios in a specific order
+            return this.plot.applyState().then(() => {
+                // Select the first and second data points
+                const first = this.plot.panels.p.data_layers.d.svg.group.select('.lz-data_layer-scatter');
+                const second = this.plot.panels.p.data_layers.d.svg.group.selectAll('.lz-data_layer-scatter').filter((d, i) => i === 1);
+
+                assert.notEqual(first.size(), 0, 'nodes are rendered');
+                assert.notEqual(second.size(), 0, 'nodes are rendered');
+                first.dispatch('mouseover', { bubbles: true} );
+
+                assert.ok(first.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is applied appropriately');
+                assert.notOk(second.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is only applied to the requested node');
+
+                // When a different element receives mouseover, check that exclusivity and styling are applied correctly
+                second.dispatch('mouseover', { bubbles: true} );
+                assert.notOk(first.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is removed from other nodes');
+                assert.ok(second.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is applied to the new mouseover node');
+
+                // On mouse out, styles are removed
+                second.dispatch('mouseout', { bubbles: true} );
+                assert.notOk(second.node().classList.contains('lz-data_layer-scatter-highlighted'), 'Style is removed on mouseout');
+            });
+        });
+        it('recognizes keyboard modifiers as distinct events', function () {
+            return this.plot.applyState().then(() => {
+                const openStub = sinon.stub(window, 'open');
+
+                // Select the first data element
+                const datapoint = this.plot.panels.p.data_layers.d.svg.group.select('.lz-data_layer-scatter');
+
+                assert.notEqual(datapoint.size(), 0, 'nodes are rendered');
+                datapoint.node().dispatchEvent(new MouseEvent('click', {bubbles: true, shiftKey: true}));
+
+                assert.ok(openStub.notCalled, 'The basic click event did not fire because a modifier key was used');
+                assert.ok(datapoint.node().classList.contains('lz-data_layer-scatter-selected'), 'Style is applied appropriately');
+            });
+        });
+        afterEach(function () {
+            sinon.restore();
         });
     });
 
