@@ -1,6 +1,6 @@
 {
   "name": "locuszoom",
-  "version": "0.13.0-beta.2",
+  "version": "0.13.0-beta.3",
   "main": "dist/locuszoom.app.min.js",
   "module": "esm/index.js",
   "sideEffects": true,
