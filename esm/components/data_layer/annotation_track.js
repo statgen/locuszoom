@@ -45,6 +45,21 @@ class AnnotationTrack extends BaseDataLayer {
         const hit_areas_selection = this._hitareas_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
             .data(track_data, (d) => d[this.layout.id_field]);
 
+
+        const _getX = (d, i) => {
+            // Helper for hitarea position calcs: ensures that a hitarea never overlaps the space allocated
+            // for a real data element. Helps to avoid mouse jitter when selecting tooltips in crowded areas.
+            const x_center = this.parent['x_scale'](d[this.layout.x_axis.field]);
+            let x_left = x_center - this.layout.hitarea_width / 2;
+            if (i >= 1) {
+                // This assumes that the data are in sorted order.
+                const left_node = track_data[i - 1];
+                const left_node_x_center = this.parent['x_scale'](left_node[this.layout.x_axis.field]);
+                x_left = Math.max(x_left, (x_center + left_node_x_center) / 2);
+            }
+            return [x_left, x_center];
+        };
+
         // Draw hitareas under real data elements, so that real data elements always take precedence
         hit_areas_selection.enter()
             .append('rect')
@@ -54,8 +69,14 @@ class AnnotationTrack extends BaseDataLayer {
             .attr('id', (d) => this.getElementId(d))
             .attr('height', this.parent.layout.height)
             .attr('opacity', 0)
-            .attr('x', (d) => this.parent['x_scale'](d[this.layout.x_axis.field]) - this.layout.hitarea_width / 2)
-            .attr('width', (d, i) => this.layout.hitarea_width);
+            .attr('x', (d, i) => {
+                const crds = _getX(d, i);
+                return crds[0];
+            })
+            .attr('width', (d, i) => {
+                const crds = _getX(d, i);
+                return (crds[1] - crds[0]) + this.layout.hitarea_width / 2;
+            });
 
         const width = 1;
         const selection = this._visible_lines_group.selectAll(`rect.lz-data_layer-${this.layout.type}`)

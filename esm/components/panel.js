@@ -725,16 +725,12 @@ class Panel {
      * @param {Boolean} show_immediately
      * @returns {Panel}
      */
-    addBasicLoader(show_immediately) {
+    addBasicLoader(show_immediately = true) {
         if (this.layout.show_loading_indicator && this.initialized) {
             // Prior to LZ 0.13, this function was called only after the plot was first rendered. Now, it is run by default.
             //   Some older pages could thus end up adding a loader twice: to avoid duplicate render events,
             //   short-circuit if a loader is already present after the first render has finished.
             return this;
-        }
-
-        if (typeof show_immediately != 'undefined') {
-            show_immediately = true;
         }
         if (show_immediately) {
             this.loader.show('Loading...').animate();
