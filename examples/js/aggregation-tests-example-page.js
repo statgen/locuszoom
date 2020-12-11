@@ -221,10 +221,6 @@ function createDisplayWidgets(label_store, context) {
     layout = customizePlotLayout(layout);
 
     const plot = LocusZoom.populate('#lz-plot', data_sources, layout);
-    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
-    plot.layout.panels.forEach(function(panel) {
-        plot.panels[panel.id].addBasicLoader();
-    });
 
     // Changes in the plot can be reflected in the URL, and vice versa (eg browser back button can go back to
     //   a previously viewed region)

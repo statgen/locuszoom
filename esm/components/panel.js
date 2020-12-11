@@ -52,6 +52,7 @@ const default_layout = {
         y1_linked: false,
         y2_linked: false,
     },
+    show_loading_indicator: true, // On by default as of LZ 0.13
     data_layers: [],
 };
 
@@ -725,6 +726,13 @@ class Panel {
      * @returns {Panel}
      */
     addBasicLoader(show_immediately) {
+        if (this.layout.show_loading_indicator && this.initialized) {
+            // Prior to LZ 0.13, this function was called only after the plot was first rendered. Now, it is run by default.
+            //   Some older pages could thus end up adding a loader twice: to avoid duplicate render events,
+            //   short-circuit if a loader is already present after the first render has finished.
+            return this;
+        }
+
         if (typeof show_immediately != 'undefined') {
             show_immediately = true;
         }
@@ -737,6 +745,9 @@ class Panel {
         this.on('data_rendered', () => {
             this.loader.hide();
         });
+
+        // Update layout to reflect new option
+        this.layout.show_loading_indicator = true;
         return this;
     }
 
@@ -963,11 +974,16 @@ class Panel {
             .attr('id', `${base_id}.panel`)
             .attr('clip-path', `url(#${base_id}.clip)`);
 
-        // Add curtain and loader prototypes to the panel
+        // Add curtain and loader to the panel
         /** @member {Object} */
         this.curtain = generateCurtain.call(this);
         /** @member {Object} */
         this.loader = generateLoader.call(this);
+
+        if (this.layout.show_loading_indicator) {
+            // Activate the loading indicator prior to first render, and only show when data is loading
+            this.addBasicLoader(false);
+        }
 
         /**
          * Create the toolbar object and hang widgets on it as defined by panel layout
@@ -1438,6 +1454,7 @@ class Panel {
         }
         if (+target_height) {
             target_height += +this.layout.margin.top + +this.layout.margin.bottom;
+            // FIXME: plot.setDimensions calls panel.setDimensions (though without arguments)
             this.setDimensions(this.layout.width, target_height);
             this.parent.setDimensions();
             this.parent.panel_ids_by_y_index.forEach((id) => {

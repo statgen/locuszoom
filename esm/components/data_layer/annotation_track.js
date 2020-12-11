@@ -47,8 +47,8 @@ class AnnotationTrack extends BaseDataLayer {
         selection.enter()
             .append('rect')
             .attr('class', `lz-data_layer-${this.layout.type}`)
-            .attr('id', (d) => this.getElementId(d))
             .merge(selection)
+            .attr('id', (d) => this.getElementId(d))
             .attr('x', (d) => this.parent['x_scale'](d[this.layout.x_axis.field]) - width / 2)
             .attr('width', width)
             .attr('height', this.parent.layout.height)
@@ -82,9 +82,9 @@ class AnnotationTrack extends BaseDataLayer {
         hit_areas_selection.enter()
             .append('rect')
             .attr('class', `lz-data_layer-${this.layout.type}`)
-            .attr('id', (d) => this.getElementId(d))
             // Update the set of elements to reflect new data
             .merge(hit_areas_selection)
+            .attr('id', (d) => this.getElementId(d))
             .attr('height', this.parent.layout.height)
             .attr('opacity', 0)
             .attr('x', (d, i) => {

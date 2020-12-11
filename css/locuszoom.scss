@@ -220,8 +220,14 @@ svg.#{$namespace}-locuszoom  {
     stroke-width: 1px;
   }
 
-  rect.#{$namespace}-data_layer-intervals.#{$namespace}-interval_rect {
+  g.#{$namespace}-data_layer-intervals {
     stroke-width: 0px;
+  }
+
+  rect.#{$namespace}-data_layer-intervals-highlighted, rect.#{$namespace}-data_layer-intervals-selected  {
+    stroke: #{$default_black};
+    stroke-opacity: #{$default_black_opacity};
+    stroke-width: 1px;
   }
 
   path.#{$namespace}-data_layer-forest {
