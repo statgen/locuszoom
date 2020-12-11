@@ -974,7 +974,7 @@ class Panel {
             .attr('id', `${base_id}.panel`)
             .attr('clip-path', `url(#${base_id}.clip)`);
 
-        // Add curtain and loader prototypes to the panel
+        // Add curtain and loader to the panel
         /** @member {Object} */
         this.curtain = generateCurtain.call(this);
         /** @member {Object} */

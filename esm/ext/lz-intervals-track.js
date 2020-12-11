@@ -334,11 +334,22 @@ function install (LocusZoom) {
 
             // Apply filters to only render a specified set of points. Hidden fields will still be given space to render, but not shown.
             const track_data = this._applyFilters(assigned_data);
+
+            // Clear before every render so that, eg, highlighting doesn't persist if we load a region with different
+            //  categories (row 2 might be a different category and it's confusing if the row stays highlighted but changes meaning)
+            // Highlighting will automatically get added back if it actually makes sense, courtesy of setElementStatus,
+            //  if a selected item is still in view after the new region loads.
+            this._statusnodes_group.selectAll('rect')
+                .remove();
+
+            // Reselect in order to add new data
             const status_nodes = this._statusnodes_group.selectAll('rect')
                 .data(d3.range(categories.length));
+
             if (this.layout.split_tracks) {
                 // Status nodes: a big highlight box around all items of the same type. Used in split tracks mode,
                 //  because everything on the same row is the same category and a group makes sense
+                // There are no status nodes in merged mode, because the same row contains many kinds of things
 
                 // Status nodes are 1 per row, so "data" can just be a dummy list of possible row IDs
                 // Each status node is a box that runs the length of the panel and receives a special "colored box" css
@@ -355,9 +366,6 @@ function install (LocusZoom) {
                     .attr('y', (d) => (d * height))
                     .attr('width', this.parent.layout.cliparea.width)
                     .attr('height', height - this.layout.track_vertical_spacing);
-            } else {
-                // There are no status rows in merged tracks mode, because not everything on the same row is the same category
-                status_nodes.remove();
             }
             status_nodes.exit()
                 .remove();
