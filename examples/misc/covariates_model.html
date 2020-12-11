@@ -101,11 +101,6 @@
     // Generate the LocusZoom plot
     var plot = LocusZoom.populate("#plot", data_sources, layout);
 
-    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
-    plot.layout.panels.forEach(function(panel){
-      plot.panels[panel.id].addBasicLoader();
-    });
-
     // Create a method to parse a region string into a 600Kb genome range and load it
     function jumpTo(region) {
       var target = region.split(":");

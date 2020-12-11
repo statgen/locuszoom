@@ -132,7 +132,7 @@ function install (LocusZoom) {
         hide: { and: ['unhighlighted', 'unselected'] },
         html: '<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>'
             + 'P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>' +
-            '<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>',
+            '{{#if {{namespace[credset]}}posterior_prob}}<br>Posterior probability: <strong>{{{{namespace[credset]}}posterior_prob|scinotation|htmlescape}}</strong>{{/if}}',
     });
 
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {

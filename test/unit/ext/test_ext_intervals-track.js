@@ -1,8 +1,12 @@
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 import LocusZoom from 'locuszoom';
 import {DATA_LAYERS, LAYOUTS} from '../../../esm/registry';
 import intervals_plugin from '../../../esm/ext/lz-intervals-track';
+import DataSources from '../../../esm/data';
+import * as d3 from 'd3';
+import {populate} from '../../../esm/helpers/display';
 
 /**
  * Interval annotation track
@@ -120,6 +124,84 @@ describe('Interval annotation track', function () {
                 ],
                 'Legend items map the correct stateID and colors together'
             );
+        });
+    });
+
+    describe('collision detection and category grouping', function () {
+        beforeEach(function() {
+            this.plot = null;
+            const data_sources = new DataSources()
+                .add('intervals', ['StaticJSON', [
+                    { start: 100, end: 200, state_id: 'thing1', state_name: 'redfish', itemRgb: '255,0,0' },
+                ]]);
+
+            const layout = {
+                panels: [ LAYOUTS.get('panel', 'intervals') ],
+                state: { chr: 'X', start: 1, end: 500 },
+                width: 800, height: 550,
+            };
+            layout.panels[0].data_layers[0].split_tracks = true;
+
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = populate('#plot', data_sources, layout);
+            this._intervals_source = data_sources.get('intervals');
+            this._intervals_layer = this.plot.panels.intervals.data_layers.intervals;
+        });
+
+        it('re-renders the y-axis when categories change', function () {
+            return this.plot.applyState().then(() => {
+                assert.deepEqual(this._intervals_layer._categories, ['redfish'], 'Correct initial categories');
+
+                const renderSpy = sinon.spy(this._intervals_layer, 'updateSplitTrackAxis');
+
+                // Replace the original data and trigger a synchronous re-render (no new data fetching)
+                this._intervals_layer.data = [{ 'intervals:start': 100, 'intervals:end': 200, 'intervals:state_id': 'thing1', 'intervals:state_name': 'bluefish', 'intervals:itemRgb': '0,0,255' }];
+                this._intervals_layer.render();
+
+                assert.ok(renderSpy.called, 'Axis was updated');
+                assert.ok(renderSpy.calledWith(['bluefish']), 'Correct new categories were received');
+                assert.deepEqual(this._intervals_layer._categories, ['bluefish'], 'Correct final categories');
+            });
+        });
+
+        it('does not re-render the y-axis when categories stay the same', function () {
+            return this.plot.applyState().then(() => {
+                assert.deepEqual(this._intervals_layer._categories, ['redfish'], 'Correct initial categories');
+
+                const renderSpy = sinon.spy(this._intervals_layer, 'updateSplitTrackAxis');
+
+                // Replace the original data and trigger a synchronous re-render (no new data fetching)
+                this._intervals_layer.data = [ // Same number of categories as original, different # of items
+                    { 'intervals:start': 100, 'intervals:end': 200, 'intervals:state_id': 'thing1', 'intervals:state_name': 'redfish', 'intervals:itemRgb': '255,0,0' },
+                    { 'intervals:start': 101, 'intervals:end': 201, 'intervals:state_id': 'thing2', 'intervals:state_name': 'redfish', 'intervals:itemRgb': '255,0,0' },
+                ];
+                this._intervals_layer.render();
+
+                assert.ok(renderSpy.notCalled, 'Axis was not updated');
+                assert.deepEqual(this._intervals_layer._categories, ['redfish'], 'Correct final categories');
+            });
+        });
+
+        it('draw status nodes only when relevant', function () {
+            return this.plot.applyState().then(() => {
+                const status_nodes = this._intervals_layer._statusnodes_group.node();
+                assert.equal(status_nodes.childElementCount, 1, 'In split mode, 1 category means 1 status node');
+
+                // Selecting an element should also trigger a nice display for the associated "status node" background rectangle
+                const element = this._intervals_layer.data[0];
+                assert.notOk(status_nodes.children[0].classList.contains('lz-data_layer-intervals-statusnode-selected'), 'Unselected elements are not styled as highlighted');
+                this._intervals_layer.setElementStatus('selected', element, true, true);
+                assert.ok(status_nodes.children[0].classList.contains('lz-data_layer-intervals-statusnode-selected'), 'Selected elements get a highlighted style');
+
+                // Switch to merged tracks mode and count again
+                this._intervals_layer.layout.split_tracks = false;
+                this._intervals_layer.render();
+                assert.equal(status_nodes.childElementCount, 0, 'No status nodes are rendered in merged tracks mode');
+            });
+        });
+
+        afterEach(function () {
+            sinon.restore();
         });
     });
 });

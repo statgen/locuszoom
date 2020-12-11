@@ -1097,7 +1097,7 @@ class BaseDataLayer {
             this.setAllElementStatus(status, !active);
         }
 
-        // Set/unset the proper status class on the appropriate DOM element(s)
+        // Set/unset the proper status class on the appropriate DOM element(s), *and* potentially an additional element
         d3.select(`#${element_id}`).classed(`lz-data_layer-${this.layout.type}-${status}`, active);
         const element_status_node_id = this.getElementStatusNodeId(element);
         if (element_status_node_id !== null) {
@@ -1240,9 +1240,6 @@ class BaseDataLayer {
                     return;
                 }
 
-                const current_status_boolean = (self.layer_state.status_flags[behavior.status].includes(self.getElementId(element)));
-                const exclusive = behavior.exclusive && !current_status_boolean;
-
                 switch (behavior.action) {
 
                 // Set a status (set to true regardless of current status, optionally with exclusivity)
@@ -1257,6 +1254,9 @@ class BaseDataLayer {
 
                 // Toggle a status
                 case 'toggle':
+                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].includes(self.getElementId(element)));
+                    var exclusive = behavior.exclusive && !current_status_boolean;
+
                     self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
                     break;
 
