@@ -12,6 +12,7 @@ import {
     DATA_LAYERS as DataLayers,
     WIDGETS as Widgets,
     LAYOUTS as Layouts,
+    FILTERS as FilterFunctions,
     SCALABLE as ScaleFunctions,
     TRANSFORMS as TransformationFunctions,
 } from './registry';
@@ -26,6 +27,7 @@ const LocusZoom = {
     Adapters,
     DataLayers,
     Layouts,
+    FilterFunctions,
     ScaleFunctions,
     TransformationFunctions,
     Widgets,

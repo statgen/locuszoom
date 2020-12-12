@@ -5,6 +5,7 @@ import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
 import {deepCopy, merge} from '../../helpers/layouts';
+import filters from '../../registry/filters';
 import scalable from '../../registry/scalable';
 
 
@@ -93,6 +94,7 @@ class BaseDataLayer {
          * A user-provided function used to filter data for display. If provided, this will override any declarative
          *  options in `layout.filters`
          * @private
+         * @deprecated
          */
         this._filter_func = null;
 
@@ -216,10 +218,13 @@ class BaseDataLayer {
     }
 
     /**
-     * Select a filter function to be applied to the data
+     * Select a filter function to be applied to the data. DEPRECATED: Please use the FilterFunctions registry
+     *  and reference via declarative filters.
      * @param func
+     * @deprecated
      */
     setFilter(func) {
+        console.warn('The setFilter method is deprecated and will be removed in the future; please use the layout API with a custom filter function instead');
         this._filter_func = func;
     }
 
@@ -650,38 +655,24 @@ class BaseDataLayer {
     /**
      * Determine whether a given data element matches set criteria
      *
-     * Typically this is used with array.filter (the first argument is curried, `filter.bind(this, options)`
+     * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
      * @protected
-     * @param {Object[]} filters A list of filter entries: {field, value, operator} describing each filter.
+     * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
      *  Operator must be from a list of built-in operators
      * @param {Object} item
      * @param {Number} index
      * @param {Array} array
      * @returns {Boolean} Whether the specified item is a match
      */
-    filter(filters, item, index, array) {
-        const test = (element, filter) => {
-            const {field, operator, value: target} = filter;
-            const operators = {
-                '=': (a, b) => a === b,
-                // eslint-disable-next-line eqeqeq
-                '!=': (a, b) => a != b, // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
-                '<': (a, b) => a < b,
-                '<=': (a, b) => a <= b,
-                '>': (a, b) => a > b,
-                '>=': (a, b) => a >= b,
-                '%': (a, b) => a % b,
-                'in': (a, b) => b && b.includes(a),  // works for strings or arrays
-                'match': (a, b) => a && a.includes(b),
-            };
-            const extra = this.layer_state.extra_fields[this.getElementId(element)];
-            const field_value = (new Field(field)).resolve(element, extra);
-            return operators[operator](field_value, target);
-        };
-
+    filter(filter_rules, item, index, array) {
         let match = true;
-        filters.forEach((filter) => {
-            if (!test(item, filter)) {
+        filter_rules.forEach((filter) => { // Try each filter on this item, in sequence
+            const {field, operator, value: target} = filter;
+            const test_func = filters.get(operator);
+
+            const extra = this.layer_state.extra_fields[this.getElementId(item)];
+            const field_value = (new Field(field)).resolve(item, extra);
+            if (!test_func(field_value, target)) {
                 match = false;
             }
         });
