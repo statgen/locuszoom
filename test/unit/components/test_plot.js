@@ -621,16 +621,16 @@ describe('LocusZoom.Plot', function() {
                 delete this.plot;
             });
 
+            const get_matches = function (data) {
+                return data.map(function (item) {
+                    return item.lz_highlight_match;
+                });
+            };
+
             it('notifies all layers to find matches when an event fires', function () {
                 // This is the end result of triggering a match event, and lets us test after render promise complete
                 const plot = this.plot;
                 return this.plot.applyState({ lz_match_value: 0 }).then(function() {
-
-                    const get_matches = function (data) {
-                        return data.map(function (item) {
-                            return item.lz_highlight_match;
-                        });
-                    };
                     const d1 = get_matches(plot.panels.p.data_layers.d1.data);
                     const d2 = get_matches(plot.panels.p.data_layers.d2.data);
                     const d3 = get_matches(plot.panels.p.data_layers.d3.data);
@@ -638,6 +638,38 @@ describe('LocusZoom.Plot', function() {
                     assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
                     assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
                     assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+                });
+            });
+
+            it('allows matching rules to use transforms (on send)', function (done) {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.send = 's:x|scinotation';
+
+                // We can validate the send rule by checking what value gets broadcast
+                layer1.parent.on('match_requested', (event) => {
+                    assert.equal(event.data.value, '0', 'The item value was converted from a number to a string before being broadcast to other panels');
+                    done();
+                });
+
+                // Trigger the match event on datapoint 1 from layer 1
+                layer1.setElementStatus('selected', { 's:id': 'a', 's:x': 0, 's:y': false }, true, true);
+            });
+
+            it('allows matching rules to use transforms (on receive)', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.receive = 's:x|scinotation';
+                return this.plot.applyState({lz_match_value: '1.000'}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'The broadcast value is compared to the modified value for a data item');
+                });
+            });
+
+            it('allows matching rules to use any match operators from the registry', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.operator = '>=';
+                return this.plot.applyState({lz_match_value: 0.5}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'Can match on a rule other than exact match');
                 });
             });
         });

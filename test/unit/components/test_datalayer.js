@@ -2,7 +2,7 @@ import {assert} from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import { FILTERS, SCALABLE } from '../../../esm/registry';
+import { MATCHERS, SCALABLE } from '../../../esm/registry';
 import BaseDataLayer from '../../../esm/components/data_layer/base';
 import {populate} from '../../../esm/helpers/display';
 import DataSources from '../../../esm/data';
@@ -830,7 +830,7 @@ describe('LocusZoom.DataLayer', function () {
         });
 
         it('can work with user-specified filters', function () {
-            FILTERS.add('near_to', (a, b) => a < (b + 100) && a > (b - 100));
+            MATCHERS.add('near_to', (a, b) => a < (b + 100) && a > (b - 100));
             const layer = new BaseDataLayer({id_field: 'a'});
             const options = [{ field: 'a', operator: 'near_to', value: 200 }];
             const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
@@ -839,7 +839,7 @@ describe('LocusZoom.DataLayer', function () {
             assert.equal(result.length, 2);
             assert.deepEqual(result, [{ a: 200 }, {a: 250 }]);
 
-            FILTERS.remove('near_to');
+            MATCHERS.remove('near_to');
         });
 
         it('throws an error when an unrecognized filter is specified', function () {

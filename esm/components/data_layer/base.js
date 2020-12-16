@@ -5,8 +5,8 @@ import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
 import {deepCopy, merge} from '../../helpers/layouts';
-import filters from '../../registry/filters';
-import scalable from '../../registry/scalable';
+import MATCHERS from '../../registry/matchers';
+import SCALABLE from '../../registry/scalable';
 
 
 /**
@@ -17,6 +17,7 @@ import scalable from '../../registry/scalable';
 const default_layout = {
     type: '',
     filters: null,  // Can be an array of {field, operator, value} entries
+    match: {}, // Object with 3 keys, all optional: { send: fieldname_to_send, receive: fieldname_to_compare, operator: name_of_match_function}
     fields: [],  // A list of fields required for this data layer; determines output of `extractFields`
     x_axis: {},  // Axis options vary based on data layer type
     y_axis: {},  // Axis options vary based on data layer type
@@ -307,21 +308,27 @@ class BaseDataLayer {
 
     /**
      * Basic method to apply arbitrary methods and properties to data elements.
-     *   This is called on all data immediately after being fetched.
+     *   This is called on all data immediately after being fetched. (requires reMap, not just re-render)
+     *
+     * Allowing a data element to access its parent enables interactive functionality, such as tooltips that modify
+     *  the parent plot. This is also used for system-derived fields like "matching" behavior".
+     *
      * @protected
      * @returns {BaseDataLayer}
      */
     applyDataMethods() {
         const field_to_match = (this.layout.match && this.layout.match.receive);
+        const match_function = MATCHERS.get(this.layout.match && this.layout.match.operator || '=');
         const broadcast_value = this.parent_plot.state.lz_match_value;
-
+        // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
+        const field_resolver = field_to_match ? new Field(field_to_match) : null;
         this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_highlight_match = (item[field_to_match] === broadcast_value);
+                item.lz_highlight_match = (match_function(field_resolver.resolve(item), broadcast_value));
             }
 
             item.toHTML = () => {
@@ -389,7 +396,7 @@ class BaseDataLayer {
                 break;
             case 'object':
                 if (layout.scale_function) {
-                    const func = scalable.get(layout.scale_function);
+                    const func = SCALABLE.get(layout.scale_function);
                     if (layout.field) {
                         const f = new Field(layout.field);
                         let extra;
@@ -668,7 +675,7 @@ class BaseDataLayer {
         let match = true;
         filter_rules.forEach((filter) => { // Try each filter on this item, in sequence
             const {field, operator, value: target} = filter;
-            const test_func = filters.get(operator);
+            const test_func = MATCHERS.get(operator);
 
             const extra = this.layer_state.extra_fields[this.getElementId(item)];
             const field_value = (new Field(field)).resolve(item, extra);
@@ -1120,10 +1127,11 @@ class BaseDataLayer {
         }
 
         const value_to_broadcast = (this.layout.match && this.layout.match.send);
-        if (is_selected && value_to_broadcast && (added_status || !active)) {
+        if (is_selected && (typeof value_to_broadcast !== 'undefined') && (added_status || !active)) {
             this.parent.emit(
+                // The broadcast value can use transforms to "clean up value before sending broadcasting"
                 'match_requested',
-                { value: element[value_to_broadcast], active: active },
+                { value: new Field(value_to_broadcast).resolve(element), active: active },
                 true
             );
         }

@@ -1,9 +1,12 @@
 /**
- * Filter functions that govern whether to render a particular point. Most datalayers support filter syntax.
+ * "Match" test functions used to compare two values for filtering (what to render) and matching
+ *  (comparison and finding related points across data layers)
  *
- * All filter functions have the call signature (item_value, target_value) => {boolean}
- * This call signature reflects the heritage of many filters as simple comparison operators, but the registry allows
- *  any arbitrary function (with a field value as the first argument)
+ * All "matcher" functions have the call signature (item_value, target_value) => {boolean}
+ * Both filtering and matching depend on asking "is this field interesting to me", which is inherently a problem of
+ *  making comparisons. The registry allows any arbitrary function (with a field value as the first argument), but that
+ *  function doesn't have to use either argument.
+ *
  */
 import {RegistryBase} from './base';
 
