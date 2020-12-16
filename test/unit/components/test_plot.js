@@ -672,6 +672,23 @@ describe('LocusZoom.Plot', function() {
                     assert.deepEqual(matches, [false, true], 'Can match on a rule other than exact match');
                 });
             });
+
+            it('allows a match event to trigger filtering behavior', function () {
+                // Example use case: click a data layer element, and other layers update to only render items that match that point
+                // Originally, match functionality was only used to change HOW something was shown. This allows
+                //  matching to also change IF something is shown. Here we capture that this works, but to be honest,
+                //  it's not often recommended- the user could get into a situation where they hid all their points, and
+                //  have no way to "reset/clear" the match rule to show things again.
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                // In a real use, we could trigger "only filter on match" with a custom function that returned true
+                //  if EITHER a match occurred, OR lz_highlight_match was undefined (eg, no match had been attempted).
+                layer1.layout.filters = [{field: 'lz_highlight_match', operator: '=', value: true}];
+                return this.plot.applyState({lz_match_value: 1}).then(() => {
+                    // layer.data contains everything; select only filtered data elements
+                    const filtered = layer1._applyFilters();
+                    assert.equal(filtered.length, 1, 'Only one data item is shown, eg the one that satisfies the matching rules');
+                });
+            });
         });
     });
 
