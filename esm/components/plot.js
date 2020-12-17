@@ -18,7 +18,6 @@ const default_layout = {
     state: {},
     width: 1,
     height: 1,
-    min_width: 1,
     min_height: 1,
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
@@ -479,8 +478,6 @@ class Plot {
         if (this.initialized) {
             // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
             this.layout.min_height = this._base_layout.min_height;
-            this.layout.min_width = this._base_layout.min_width;
-
             this.positionPanels();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
@@ -851,30 +848,27 @@ class Plot {
         let id;
 
         // Update minimum allowable width and height by aggregating minimums from panels, then apply minimums to containing element.
-        let min_width = parseFloat(this.layout.min_width) || 0;
         let min_height = parseFloat(this.layout.min_height) || 0;
         for (id in this.panels) {
-            min_width = Math.max(min_width, this.panels[id].layout.min_width);
             if (parseFloat(this.panels[id].layout.min_height) > 0 && parseFloat(this.panels[id].layout.proportional_height) > 0) {
                 min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
             }
         }
-        this.layout.min_width = Math.max(min_width, 1);
         this.layout.min_height = Math.max(min_height, 1);
-        d3.select(this.svg.node().parentNode)
-            .style('min-width', `${this.layout.min_width}px`)
-            .style('min-height', `${this.layout.min_height}px`);
+        // d3.select(this.svg.node().parentNode)
+        // .style('min-width', `${this.layout.width}px`)
+        // .style('min-height', `${this.layout.min_height}px`);
 
         // If width and height arguments were passed then adjust them against plot minimums if necessary.
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
-            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+            this.layout.width = Math.round(+width);
             this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
                 if (this.svg) {
-                    this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
+                    this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.width);
                 }
             }
             // Resize/reposition panels to fit, update proportional origins if necessary
@@ -897,7 +891,6 @@ class Plot {
                 this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
                 this.layout.height += this.panels[id].layout.height;
             }
-            this.layout.width = Math.max(this.layout.width, this.layout.min_width);
             this.layout.height = Math.max(this.layout.height, this.layout.min_height);
         }
 

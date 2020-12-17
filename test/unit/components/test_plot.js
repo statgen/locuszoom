@@ -15,7 +15,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_width: 1,
                 min_height: 1,
                 panels: [],
             };
@@ -72,16 +71,13 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.height, 681);
 
             this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.width, this.plot.layout.min_width);
             assert.equal(this.plot.layout.height, this.plot.layout.min_height);
         });
         it('should enforce minimum dimensions based on its panels', function() {
-            this.plot.addPanel({ id: 'p1', width: 50, height: 30, min_width: 50, min_height: 30 });
-            this.plot.addPanel({ id: 'p2', width: 20, height: 10, min_width: 20, min_height: 10 });
+            this.plot.addPanel({ id: 'p1', width: 50, height: 30, min_height: 30 });
+            this.plot.addPanel({ id: 'p2', width: 20, height: 10, min_height: 10 });
             this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.min_width, 50);
             assert.equal(this.plot.layout.min_height, 40);
-            assert.equal(this.plot.layout.width, this.plot.layout.min_width);
             assert.equal(this.plot.layout.height, this.plot.layout.min_height);
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function() {
@@ -161,7 +157,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_width: 100,
                 min_height: 100,
                 panels: [],
             };
@@ -230,7 +225,6 @@ describe('LocusZoom.Plot', function() {
             this.plot.layout.min_height = this.plot._base_layout.min_height = 600;
             this.plot.layout.height = this.plot._base_layout.height = 600;
             this.plot.layout.width = this.plot._base_layout.width = 800;
-            this.plot.layout.min_width = this.plot._base_layout.min_width = 800;
             this.plot.layout.responsive_resize = this.plot._base_layout.responsive_resize = true;
 
             // These numbers are based on a real plot. Expected behavior is chosen to match behavior of a layout where
@@ -333,7 +327,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_width: 100,
                 min_height: 100,
                 panels: [],
             };

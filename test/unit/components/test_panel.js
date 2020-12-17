@@ -79,15 +79,12 @@ describe('Panel', function() {
         });
 
         it('should enforce minimum dimensions', function() {
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
             assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
 
-            this.association_panel.setDimensions(this.association_panel.layout.min_width / 2, 0);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
+            this.association_panel.setDimensions(this.association_panel.layout.width / 2, 0);
             assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
 
             this.association_panel.setDimensions(0, this.association_panel.layout.min_height / 2);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
             assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
         });
 
@@ -233,7 +230,6 @@ describe('Panel', function() {
             this.layout = {
                 width: 100,
                 height: 100,
-                min_width: 100,
                 min_height: 100,
                 resizable: false,
                 panels: [

@@ -18,10 +18,9 @@ import data_layers from '../registry/data_layers';
 const default_layout = {
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
-    width:  0,
-    height: 0,
+    width:  1,
+    height: 1,
     origin: { x: 0, y: null },
-    min_width: 1,
     min_height: 1,
     proportional_height: null,
     proportional_origin: { y: null }, // Panels can stack within plot (along y), but not side by side (along x)
@@ -837,7 +836,7 @@ class Panel {
     setDimensions(width, height) {
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
-                this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+                this.layout.width = Math.round(+width);
                 this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             }
         } else {
@@ -908,6 +907,7 @@ class Panel {
         if (!isNaN(left)   && left   >= 0) {
             this.layout.margin.left = Math.max(Math.round(+left), 0);
         }
+        // If the specified margins are greater than the available width, then shrink the margins.
         if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
             extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
             this.layout.margin.top -= extra;

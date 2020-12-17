@@ -590,7 +590,6 @@ function install (LocusZoom) {
         id: 'intervals',
         width: 1000,
         height: 50,
-        min_width: 500,
         min_height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
