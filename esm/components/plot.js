@@ -19,6 +19,7 @@ const default_layout = {
     width: 1,
     height: 1,
     min_height: 1,
+    min_width: 400,
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
     toolbar: {
@@ -855,9 +856,6 @@ class Plot {
             }
         }
         this.layout.min_height = Math.max(min_height, 1);
-        // d3.select(this.svg.node().parentNode)
-        // .style('min-width', `${this.layout.width}px`)
-        // .style('min-height', `${this.layout.min_height}px`);
 
         // If width and height arguments were passed then adjust them against plot minimums if necessary.
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
@@ -868,7 +866,7 @@ class Plot {
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
                 if (this.svg) {
-                    this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.width);
+                    this.layout.width = Math.max(this.svg.node().parentNode.getBoundingClientRect().width, this.layout.min_width);
                 }
             }
             // Resize/reposition panels to fit, update proportional origins if necessary
