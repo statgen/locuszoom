@@ -842,6 +842,18 @@ describe('LocusZoom.DataLayer', function () {
             MATCHERS.remove('near_to');
         });
 
+        it('can use transformed field values with filter rules', function() {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a|scinotation', operator: '=', value: '1.000' }];
+            const data = [{ a: 1 }, { a: 0 }, { a: 1 }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 2);
+            // Note that transform results are cached, so they will show up in the internal representation of the data
+            //  after fetching
+            assert.deepEqual(result, [{ a: 1, 'a|scinotation': '1.000' }, { a: 1, 'a|scinotation': '1.000' }]);
+        });
+
         it('throws an error when an unrecognized filter is specified', function () {
             const layer = new BaseDataLayer({id_field: 'a'});
             const options = [{ field: 'a', operator: 'doesnotexist', value: 200 }];
