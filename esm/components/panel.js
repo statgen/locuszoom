@@ -21,7 +21,6 @@ const default_layout = {
     width:  1,
     height: 1,
     origin: { x: 0, y: null },
-    min_height: 1,
     proportional_height: null,
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
@@ -836,11 +835,11 @@ class Panel {
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
                 this.layout.width = Math.round(+width);
-                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+                this.layout.height = Math.round(+height);
             }
         } else {
             if (this.layout.proportional_height !== null) {
-                this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
+                this.layout.height = this.layout.proportional_height * this.parent.layout.height;
             }
         }
         this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);

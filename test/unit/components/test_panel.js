@@ -78,16 +78,6 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.height, 560);
         });
 
-        it('should enforce minimum dimensions', function() {
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(this.association_panel.layout.width / 2, 0);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(0, this.association_panel.layout.min_height / 2);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-        });
-
         it('should allow setting origin irrespective of plot dimensions', function() {
             this.plot.setDimensions(500, 600);
             this.association_panel.setOrigin(20, 50);
@@ -230,7 +220,6 @@ describe('Panel', function() {
             this.layout = {
                 width: 100,
                 height: 100,
-                min_height: 100,
                 resizable: false,
                 panels: [
                     {

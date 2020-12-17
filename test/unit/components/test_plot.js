@@ -15,7 +15,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_height: 1,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -57,7 +56,7 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.layout.panels[0].id, 'panelB');
             assert.equal(this.plot.panels[panelB.id].layout_idx, 0);
         });
-        it('should allow setting dimensions, bounded by layout minimums', function() {
+        it('should allow setting dimensions', function() {
             this.plot.setDimensions(563, 681);
             assert.equal(this.plot.layout.width, 563);
             assert.equal(this.plot.layout.height, 681);
@@ -69,23 +68,13 @@ describe('LocusZoom.Plot', function() {
             this.plot.setDimensions('q', 0);
             assert.equal(this.plot.layout.width, 563);
             assert.equal(this.plot.layout.height, 681);
-
-            this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.height, this.plot.layout.min_height);
-        });
-        it('should enforce minimum dimensions based on its panels', function() {
-            this.plot.addPanel({ id: 'p1', width: 50, height: 30, min_height: 30 });
-            this.plot.addPanel({ id: 'p2', width: 20, height: 10, min_height: 10 });
-            this.plot.setDimensions(1, 1);
-            assert.equal(this.plot.layout.min_height, 40);
-            assert.equal(this.plot.layout.height, this.plot.layout.min_height);
         });
         it('should allow for responsively positioning panels using a proportional dimensions', function() {
             const responsive_layout = LAYOUTS.get('plot', 'standard_association', {
                 responsive_resize: true,
                 panels: [
-                    { id: 'positions', proportional_height: 0.6, min_height: 60 },
-                    { id: 'genes', proportional_height: 0.4, min_height: 40 },
+                    { id: 'positions', proportional_height: 0.6 },
+                    { id: 'genes', proportional_height: 0.4 },
                 ],
             });
             responsive_layout.state = { chr: '1', start: 1, end: 100000 };
@@ -157,22 +146,21 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_height: 100,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, layout);
         });
-        it('Should adjust the size of the panel if a single panel is added that does not completely fill min_height', function() {
+        it('Should allocate the space requested by the panel, even if less than plot height', function() {
             const panelA = { id: 'panelA', width: 100, height: 50 };
             this.plot.addPanel(panelA);
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 100);
+            assert.equal(this.plot.layout.height, 50);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 100);
+            assert.equal((+svg.attr('height')), 50);
             assert.equal(this.plot.panels.panelA.layout.width, 100);
-            assert.equal(this.plot.panels.panelA.layout.height, 100);
+            assert.equal(this.plot.panels.panelA.layout.height, 50);
             assert.equal(this.plot.panels.panelA.layout.proportional_height, 1);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
             assert.equal(this.plot.sumProportional('height'), 1);
@@ -184,11 +172,11 @@ describe('LocusZoom.Plot', function() {
             this.plot.addPanel(panelB);
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 160);
+            assert.equal(this.plot.layout.height, 120);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 160);
+            assert.equal((+svg.attr('height')), 120);
             assert.equal(this.plot.panels.panelA.layout.width, 100);
-            assert.equal(this.plot.panels.panelA.layout.height, 100);
+            assert.equal(this.plot.panels.panelA.layout.height, 60);
             assert.equal(this.plot.panels.panelA.layout.proportional_height, 0.625);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
             assert.equal(this.plot.panels.panelB.layout.width, 100);
@@ -205,29 +193,29 @@ describe('LocusZoom.Plot', function() {
             this.plot.removePanel('panelA');
             const svg = d3.select('#plot svg');
             assert.equal(this.plot.layout.width, 100);
-            assert.equal(this.plot.layout.height, 100);
+            assert.equal(this.plot.layout.height, 60);
             assert.equal((+svg.attr('width')), 100);
-            assert.equal((+svg.attr('height')), 100);
+            assert.equal((+svg.attr('height')), 60);
             assert.equal(this.plot.panels.panelB.layout.width, 100);
-            assert.equal(this.plot.panels.panelB.layout.height, 100);
+            assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.proportional_height, 1);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 0);
             assert.equal(this.plot.sumProportional('height'), 1);
         });
         it('Should resize the plot as panels are removed, when panels specify min_height', function() {
+            // FIXME: revise test calcs
             // Regression test for a reported edge case where `min_height` caused resizing logic to work differently
 
             // Small hack; resize the plot after it was created
-            this.plot.layout.min_height = this.plot._base_layout.min_height = 600;
             this.plot.layout.height = this.plot._base_layout.height = 600;
             this.plot.layout.width = this.plot._base_layout.width = 800;
             this.plot.layout.responsive_resize = this.plot._base_layout.responsive_resize = true;
 
             // These numbers are based on a real plot. Expected behavior is chosen to match behavior of a layout where
             //   panels had no min_height specified.
-            const panelA = { id: 'panelA', width: 800, height: 300, min_height: 300 };
-            const panelB = { id: 'panelB', width: 800, height: 50, min_height: 50 };
-            const panelC = { id: 'panelC', width: 800, height: 225, min_height: 112.5 };
+            const panelA = { id: 'panelA', width: 800, height: 300 };
+            const panelB = { id: 'panelB', width: 800, height: 50 };
+            const panelC = { id: 'panelC', width: 800, height: 225 };
 
             // Set up the scenario
             this.plot.addPanel(panelA);
@@ -237,7 +225,7 @@ describe('LocusZoom.Plot', function() {
             this.plot.removePanel('panelC');
             // Check dimensions. Some checks are approximate due to floating point rounding issues.
             // assert.equal(this.plot.layout.width, 800, 'Plot width is incorrect');
-            assert.approximately(this.plot.layout.height, 650, 0.000001, 'Plot height is incorrect');
+            assert.approximately(this.plot.layout.height, 350, 0.000001, 'Plot height is incorrect');
 
             // assert.equal(this.plot.panels.panelB.layout.width, 800, 'Panel B width is incorrect');
             assert.equal(this.plot.panels.panelB.layout.height, 50, 'Panel B height is incorrect');
@@ -255,9 +243,10 @@ describe('LocusZoom.Plot', function() {
             //   min_height is larger than any one panel, the space actually gets reallocated, and the remaining
             //   panels stretch or shrink.
             // This test ensures that we will see the desired behavior when plot min_height isn't dominant.
-            const panelA = { id: 'panelA', width: 800, height: 300, min_height: 300 };
-            const panelB = { id: 'panelB', width: 800, height: 50, min_height: 50 };
-            const panelC = { id: 'panelC', width: 800, height: 225, min_height: 112.5 };
+            // FIXME: revise text to reflect that min_height is removed
+            const panelA = { id: 'panelA', width: 800, height: 300 };
+            const panelB = { id: 'panelB', width: 800, height: 50 };
+            const panelC = { id: 'panelC', width: 800, height: 225 };
 
             // Set up the scenario
             this.plot.addPanel(panelA);
@@ -321,7 +310,6 @@ describe('LocusZoom.Plot', function() {
             const layout = {
                 width: 100,
                 height: 100,
-                min_height: 100,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');

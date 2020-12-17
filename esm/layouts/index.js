@@ -569,7 +569,6 @@ const association_panel = {
     id: 'association',
     width: 800,
     height: 225,
-    min_height: 200,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: (function () {
@@ -620,7 +619,6 @@ const coaccessibility_panel = {
     id: 'coaccessibility',
     width: 800,
     height: 225,
-    min_height: 100,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -711,7 +709,6 @@ const genes_panel = {
     id: 'genes',
     width: 800,
     height: 225,
-    min_height: 112.5,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -740,7 +737,6 @@ const phewas_panel = {
     id: 'phewas',
     width: 800,
     height: 300,
-    min_height: 300,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     axes: {
@@ -770,7 +766,6 @@ const annotation_catalog_panel = {
     id: 'annotationcatalog',
     width: 800,
     height: 45,
-    min_height: 45,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -820,7 +815,6 @@ const association_catalog_plot = {
 const standard_phewas_plot = {
     width: 800,
     height: 600,
-    min_height: 600,
     responsive_resize: true,
     toolbar: deepCopy(standard_plot_toolbar),
     panels: [

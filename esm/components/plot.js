@@ -18,7 +18,6 @@ const default_layout = {
     state: {},
     width: 1,
     height: 1,
-    min_height: 1,
     min_width: 400,
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
@@ -477,8 +476,6 @@ class Plot {
 
         // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
         if (this.initialized) {
-            // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
-            this.layout.min_height = this._base_layout.min_height;
             this.positionPanels();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
@@ -845,23 +842,11 @@ class Plot {
      * @returns {Plot}
      */
     setDimensions(width, height) {
-
-        let id;
-
-        // Update minimum allowable width and height by aggregating minimums from panels, then apply minimums to containing element.
-        let min_height = parseFloat(this.layout.min_height) || 0;
-        for (id in this.panels) {
-            if (parseFloat(this.panels[id].layout.min_height) > 0 && parseFloat(this.panels[id].layout.proportional_height) > 0) {
-                min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
-            }
-        }
-        this.layout.min_height = Math.max(min_height, 1);
-
         // If width and height arguments were passed then adjust them against plot minimums if necessary.
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
             this.layout.width = Math.round(+width);
-            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
+            this.layout.height = Math.round(+height);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
@@ -884,11 +869,10 @@ class Plot {
             // by making it conform to panel dimensions, assuming panels are already positioned correctly.
             this.layout.width = 0;
             this.layout.height = 0;
-            for (id in this.panels) {
+            for (let id in this.panels) {
                 this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
                 this.layout.height += this.panels[id].layout.height;
             }
-            this.layout.height = Math.max(this.layout.height, this.layout.min_height);
         }
 
         // Apply layout width and height as discrete values or viewbox values
