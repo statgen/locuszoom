@@ -57,38 +57,38 @@ class Arcs extends BaseDataLayer {
         }
 
         // Draw real lines, and also invisible hitareas for easier mouse events
-        const selection = this.svg.group
-            .selectAll('path.lz-data_layer-arcs')
-            .data(track_data, (d) => this.getElementId(d));
-
         const hitareas = this.svg.group
             .selectAll('path.lz-data_layer-arcs-hitarea')
             .data(track_data, (d) => this.getElementId(d));
 
+        const selection = this.svg.group
+            .selectAll('path.lz-data_layer-arcs')
+            .data(track_data, (d) => this.getElementId(d));
+
         this.svg.group
             .call(applyStyles, layout.style);
+
+        hitareas
+            .enter()
+            .append('path')
+            .attr('class', 'lz-data_layer-arcs-hitarea')
+            .merge(hitareas)
+            .attr('id', (d) => this.getElementId(d))
+            .style('fill', 'none')
+            .style('stroke-width', layout.hitarea_width)
+            .style('stroke-opacity', 0)
+            .style('stroke', 'transparent')
+            .attr('d', (d) => _make_line(d));
 
         // Add new points as necessary
         selection
             .enter()
             .append('path')
             .attr('class', 'lz-data_layer-arcs')
-            .attr('id', (d) => this.getElementId(d))
             .merge(selection)
+            .attr('id', (d) => this.getElementId(d))
             .attr('stroke', (d, i) => this.resolveScalableParameter(this.layout.color, d, i))
             .attr('d', (d, i) => _make_line(d));
-
-        hitareas
-            .enter()
-            .append('path')
-            .attr('class', 'lz-data_layer-arcs-hitarea')
-            .attr('id', (d) => this.getElementId(d))
-            .merge(hitareas)
-            .style('fill', 'none')
-            .style('stroke-width', layout.hitarea_width)
-            .style('stroke-opacity', 0)
-            .style('stroke', 'transparent')
-            .attr('d', (d) => _make_line(d));
 
         // Remove old elements as needed
         selection.exit()

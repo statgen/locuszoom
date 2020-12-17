@@ -882,8 +882,10 @@ class RecombLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for static blobs of data as raw JS objects. This does not perform additional parsing, and it bypasses
- * namespaces. Therefore it is the responsibility of the user to pass information in a format that can be read and
+ * Data Source for static blobs of data as raw JS objects. This does not perform additional parsing, which is required
+ *  for some sources (eg when joining together LD and association data).
+ *
+ * Therefore it is the responsibility of the user to pass information in a format that can be read and
  * understood by the chosen plot- a StaticJSON source is rarely a drop-in replacement.
  *
  * This source is largely here for legacy reasons. More often, a convenient way to serve static data is as separate

@@ -84,13 +84,46 @@ const categorical_bin = (parameters, value) => {
 /**
  * Cycle through a set of options, so that the each element in a set of data receives a value different than the
  *  element before it. For example: "use this palette of 10 colors to visually distinguish 100 adjacent items"
+ * This is useful when ADJACENT items must be guaranteed to yield a different result, but it leads to unstable color
+ *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
+ *
+ *  See also: stable_choice.
  *  @param {Object} parameters
  *  @param {Array} parameters.values A list of option values
  * @return {*}
  */
 const ordinal_cycle = (parameters, value, index) => {
-    var options = parameters.values;
+    const options = parameters.values;
     return options[index % options.length];
+};
+
+/**
+ * A scale function that chooses a random-looking color scheme, but makes the same choice every time given the same
+ *  value, regardless of ordering or other data
+ *
+ * This is useful when categories must be stable (same color, every time). But sometimes it will assign adjacent values
+ *  the same color due to hash collisions.
+ *
+ *  CAVEAT: Some data sources do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
+ *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data.
+ * @param parameters
+ *  @param {Array} parameters.values A list of option values
+ * @param value
+ * @param index
+ */
+const stable_choice = (parameters, value, index) => {
+    const options = parameters.values;
+    // Simple JS hashcode implementation, from:
+    //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+    let hash = 0;
+    value = String(value);
+    for (let i = 0; i < value.length; i++) {
+        let chr = value.charCodeAt(i);
+        hash  = ((hash << 5) - hash) + chr;
+        hash |= 0; // Convert to 32bit integer
+    }
+    // Convert 32 bit integer to be within the range of options allowed
+    return options[Math.abs(hash) % options.length];
 };
 
 /**
@@ -144,4 +177,4 @@ const interpolate = (parameters, input) => {
 };
 
 
-export { categorical_bin, if_value, interpolate, numerical_bin, ordinal_cycle };
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };

@@ -113,7 +113,7 @@
       var layout_assoc_layer = layout.panels[1].data_layers[2];
       layout_assoc_layer.match = { send: 'assoc:position', receive: 'assoc:position' };
       layout_assoc_layer.color.unshift({
-          field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+          field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
           scale_function: 'if',
           parameters: {
               field_value: true,
@@ -125,7 +125,7 @@
       layout_annotation_track.match = { send: 'catalog:pos', receive: 'catalog:pos' };
       layout_annotation_track.color = [
           {
-              field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+              field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
               scale_function: 'if',
               parameters: {
                   field_value: true,

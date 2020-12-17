@@ -621,16 +621,14 @@ describe('LocusZoom.Plot', function() {
                 delete this.plot;
             });
 
+            const get_matches = function (data) {
+                return data.map((item) => item.lz_is_match);
+            };
+
             it('notifies all layers to find matches when an event fires', function () {
                 // This is the end result of triggering a match event, and lets us test after render promise complete
                 const plot = this.plot;
                 return this.plot.applyState({ lz_match_value: 0 }).then(function() {
-
-                    const get_matches = function (data) {
-                        return data.map(function (item) {
-                            return item.lz_highlight_match;
-                        });
-                    };
                     const d1 = get_matches(plot.panels.p.data_layers.d1.data);
                     const d2 = get_matches(plot.panels.p.data_layers.d2.data);
                     const d3 = get_matches(plot.panels.p.data_layers.d3.data);
@@ -638,6 +636,60 @@ describe('LocusZoom.Plot', function() {
                     assert.deepEqual(d1, [true, false], 'layer 1 responded to match event');
                     assert.deepEqual(d2, [undefined, undefined], 'layer 2 ignored match event so no flag present');
                     assert.deepEqual(d3, [false, false], 'layer 3 saw match event but no values matched');
+                });
+            });
+
+            it('allows matching rules to use transforms (on send)', function (done) {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.send = 's:x|scinotation';
+
+                // We can validate the send rule by checking what value gets broadcast
+                layer1.parent.on('match_requested', (event) => {
+                    assert.equal(event.data.value, '0', 'The item value was converted from a number to a string before being broadcast to other panels');
+                    done();
+                });
+
+                // Trigger the match event on datapoint 1 from layer 1
+                layer1.setElementStatus('selected', { 's:id': 'a', 's:x': 0, 's:y': false }, true, true);
+            });
+
+            it('allows matching rules to use transforms (on receive)', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.receive = 's:x|scinotation';
+                return this.plot.applyState({lz_match_value: '1.000'}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'The broadcast value is compared to the modified value for a data item');
+                });
+            });
+
+            it('allows matching rules to use any match operators from the registry', function () {
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                layer1.layout.match.operator = '>=';
+                return this.plot.applyState({lz_match_value: 0.5}).then(() => {
+                    const matches = get_matches(layer1.data);
+                    assert.deepEqual(matches, [false, true], 'Can match on a rule other than exact match');
+                });
+            });
+
+            it('allows a match event to trigger filtering behavior', function () {
+                // Example use case: click a data layer element, and other layers update to only render items that match that point
+                // Originally, match functionality was only used to change HOW something was shown. This allows
+                //  matching to also change IF something is shown. Here we capture that this works, but to be honest,
+                //  it's not often recommended- the user could get into a situation where they hid all their points, and
+                //  have no way to "reset/clear" the match rule to show things again.
+                const layer1 = this.plot.panels.p.data_layers.d1;
+                // In a real use, we could trigger "only filter on match" with a custom function that returned true
+                //  if EITHER a match occurred, OR lz_is_match was undefined (eg, no match had been attempted).
+                layer1.layout.filters = [{field: 'lz_is_match', operator: '=', value: true}];
+                return this.plot.applyState({lz_match_value: 1}).then(() => {
+                    // layer.data contains everything; select only filtered data elements
+                    const filtered = layer1._applyFilters();
+                    assert.equal(filtered.length, 1, 'Only one data item is shown');
+                    assert.equal(
+                        filtered[0]['s:id'],
+                        'b',
+                        'This item displayed is the one that satisfies matching rules'
+                    );
                 });
             });
         });

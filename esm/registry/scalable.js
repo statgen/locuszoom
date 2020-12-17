@@ -1,4 +1,8 @@
 /**
+ * Functions that control "scalable" layout directives: given a value (like a number) return another value
+ *  (like a color, size, or shape) that governs how something is displayed
+ *
+ *  All scale functions have the call signature `(layout_parameters, input) => result|null`
  * @module
  * @private
  */

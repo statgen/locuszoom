@@ -364,7 +364,6 @@ existing_datasources
   .add("assoc_study3", ["AssociationLZ", {url: "/api/association/", params: { source: 3 }}]);
 
 const new_panel = existing_plot.addPanel(extra_panel_layout); // Adds the panel and redraws plot
-new_panel.addBasicLoader(); // Add a nice "loading" indicator for UI
 ```
 
 ### Common issues

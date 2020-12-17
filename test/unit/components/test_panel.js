@@ -280,32 +280,36 @@ describe('Panel', function() {
         });
 
         it('should have a loader object with show/update/animate/setPercentCompleted/hide methods, a showing boolean, and selectors', function() {
-            const loader = this.panel.loader;
-            assert.isObject(this.panel.loader);
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+            return this.plot.applyState().then(() => {
+                const loader = this.panel.loader;
+                assert.isObject(this.panel.loader);
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
+            });
         });
 
         it('should show/hide/update on command and track shown status', function() {
-            const loader = this.panel.loader;
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+            return this.plot.applyState().then(() => {
+                const loader = this.panel.loader;
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
 
-            loader.show('test content');
-            assert.isTrue(loader.showing);
-            assert.isFalse(loader.selector.empty());
-            assert.isFalse(loader.content_selector.empty());
-            assert.equal(loader.content_selector.html(), 'test content');
-            assert.isFalse(loader.progress_selector.empty());
-            loader.hide();
-            assert.isFalse(loader.showing);
-            assert.isNull(loader.selector);
-            assert.isNull(loader.content_selector);
-            assert.isNull(loader.progress_selector);
+                loader.show('test content');
+                assert.isTrue(loader.showing);
+                assert.isFalse(loader.selector.empty());
+                assert.isFalse(loader.content_selector.empty());
+                assert.equal(loader.content_selector.html(), 'test content');
+                assert.isFalse(loader.progress_selector.empty());
+                loader.hide();
+                assert.isFalse(loader.showing);
+                assert.isNull(loader.selector);
+                assert.isNull(loader.content_selector);
+                assert.isNull(loader.progress_selector);
+            });
         });
 
         it('should allow for animating or showing discrete percentages of completion', function() {

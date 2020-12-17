@@ -136,11 +136,6 @@
     //   a previously viewed region)
     LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
     LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
-
-    // Add a basic loader to each panel (one that shows when data is requested and hides when one rendering)
-    plot.layout.panels.forEach(function (panel) {
-        plot.panels[panel.id].addBasicLoader();
-    });
 </script>
 </body>
 </html>

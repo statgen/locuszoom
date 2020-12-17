@@ -153,7 +153,7 @@ function install (LocusZoom) {
             match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         });
         base.color.unshift({
-            field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+            field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
             scale_function: 'if',
             parameters: {
                 field_value: true,
@@ -173,7 +173,7 @@ function install (LocusZoom) {
         },
         color: [
             {
-                field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+                field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
                 scale_function: 'if',
                 parameters: {
                     field_value: true,
