@@ -206,7 +206,7 @@ const coaccessibility_layer = {
     ],
     color: [
         {
-            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            field: 'lz_is_match', // Special field name whose presence triggers custom rendering
             scale_function: 'if',
             parameters: {
                 field_value: true,
@@ -214,7 +214,7 @@ const coaccessibility_layer = {
             },
         },
         {
-            field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+            field: 'lz_is_match', // Special field name whose presence triggers custom rendering
             scale_function: 'if',
             parameters: {
                 field_value: false,
@@ -875,7 +875,7 @@ const coaccessibility_plot = {
             layer.match = { send: 'gene_name', receive: 'gene_name' };
             const color_config = [
                 {
-                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    field: 'lz_is_match', // Special field name whose presence triggers custom rendering
                     scale_function: 'if',
                     parameters: {
                         field_value: true,
@@ -883,7 +883,7 @@ const coaccessibility_plot = {
                     },
                 },
                 {
-                    field: 'lz_highlight_match', // Special field name whose presence triggers custom rendering
+                    field: 'lz_is_match', // Special field name whose presence triggers custom rendering
                     scale_function: 'if',
                     parameters: {
                         field_value: false,

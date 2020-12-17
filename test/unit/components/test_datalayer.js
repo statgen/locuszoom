@@ -2,7 +2,7 @@ import {assert} from 'chai';
 import * as d3 from 'd3';
 import sinon from 'sinon';
 
-import { SCALABLE } from '../../../esm/registry';
+import { MATCHERS, SCALABLE } from '../../../esm/registry';
 import BaseDataLayer from '../../../esm/components/data_layer/base';
 import {populate} from '../../../esm/helpers/display';
 import DataSources from '../../../esm/data';
@@ -827,6 +827,41 @@ describe('LocusZoom.DataLayer', function () {
             const result = data.filter(layer.filter.bind(layer, options));
             assert.equal(result.length, 1);
             assert.deepEqual(result, [{ a: 'exact' }]);
+        });
+
+        it('can work with user-specified filters', function () {
+            MATCHERS.add('near_to', (a, b) => a < (b + 100) && a > (b - 100));
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a', operator: 'near_to', value: 200 }];
+            const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 2);
+            assert.deepEqual(result, [{ a: 200 }, {a: 250 }]);
+
+            MATCHERS.remove('near_to');
+        });
+
+        it('can use transformed field values with filter rules', function() {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a|scinotation', operator: '=', value: '1.000' }];
+            const data = [{ a: 1 }, { a: 0 }, { a: 1 }];
+
+            const result = data.filter(layer.filter.bind(layer, options));
+            assert.equal(result.length, 2);
+            // Note that transform results are cached, so they will show up in the internal representation of the data
+            //  after fetching
+            assert.deepEqual(result, [{ a: 1, 'a|scinotation': '1.000' }, { a: 1, 'a|scinotation': '1.000' }]);
+        });
+
+        it('throws an error when an unrecognized filter is specified', function () {
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ field: 'a', operator: 'doesnotexist', value: 200 }];
+            const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
+
+            assert.throws(() => {
+                data.filter(layer.filter.bind(layer, options));
+            }, 'Item not found: doesnotexist');
         });
 
         describe('interaction with data fetching', function () {

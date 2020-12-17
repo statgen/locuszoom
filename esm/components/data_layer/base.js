@@ -5,7 +5,8 @@ import {STATUSES} from '../constants';
 import Field from '../../data/field';
 import {parseFields} from '../../helpers/display';
 import {deepCopy, merge} from '../../helpers/layouts';
-import scalable from '../../registry/scalable';
+import MATCHERS from '../../registry/matchers';
+import SCALABLE from '../../registry/scalable';
 
 
 /**
@@ -16,6 +17,7 @@ import scalable from '../../registry/scalable';
 const default_layout = {
     type: '',
     filters: null,  // Can be an array of {field, operator, value} entries
+    match: {}, // Object with 3 keys, all optional: { send: fieldname_to_send, receive: fieldname_to_compare, operator: name_of_match_function}
     fields: [],  // A list of fields required for this data layer; determines output of `extractFields`
     x_axis: {},  // Axis options vary based on data layer type
     y_axis: {},  // Axis options vary based on data layer type
@@ -93,6 +95,7 @@ class BaseDataLayer {
          * A user-provided function used to filter data for display. If provided, this will override any declarative
          *  options in `layout.filters`
          * @private
+         * @deprecated
          */
         this._filter_func = null;
 
@@ -216,10 +219,13 @@ class BaseDataLayer {
     }
 
     /**
-     * Select a filter function to be applied to the data
+     * Select a filter function to be applied to the data. DEPRECATED: Please use the FilterFunctions registry
+     *  and reference via declarative filters.
      * @param func
+     * @deprecated
      */
     setFilter(func) {
+        console.warn('The setFilter method is deprecated and will be removed in the future; please use the layout API with a custom filter function instead');
         this._filter_func = func;
     }
 
@@ -302,21 +308,27 @@ class BaseDataLayer {
 
     /**
      * Basic method to apply arbitrary methods and properties to data elements.
-     *   This is called on all data immediately after being fetched.
+     *   This is called on all data immediately after being fetched. (requires reMap, not just re-render)
+     *
+     * Allowing a data element to access its parent enables interactive functionality, such as tooltips that modify
+     *  the parent plot. This is also used for system-derived fields like "matching" behavior".
+     *
      * @protected
      * @returns {BaseDataLayer}
      */
     applyDataMethods() {
         const field_to_match = (this.layout.match && this.layout.match.receive);
+        const match_function = MATCHERS.get(this.layout.match && this.layout.match.operator || '=');
         const broadcast_value = this.parent_plot.state.lz_match_value;
-
+        // Match functions are allowed to use transform syntax on field values, but not (yet) UI "annotations"
+        const field_resolver = field_to_match ? new Field(field_to_match) : null;
         this.data.forEach((item, i) => {
             // Basic toHTML() method - return the stringified value in the id_field, if defined.
 
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_highlight_match = (item[field_to_match] === broadcast_value);
+                item.lz_is_match = (match_function(field_resolver.resolve(item), broadcast_value));
             }
 
             item.toHTML = () => {
@@ -384,7 +396,7 @@ class BaseDataLayer {
                 break;
             case 'object':
                 if (layout.scale_function) {
-                    const func = scalable.get(layout.scale_function);
+                    const func = SCALABLE.get(layout.scale_function);
                     if (layout.field) {
                         const f = new Field(layout.field);
                         let extra;
@@ -650,38 +662,24 @@ class BaseDataLayer {
     /**
      * Determine whether a given data element matches set criteria
      *
-     * Typically this is used with array.filter (the first argument is curried, `filter.bind(this, options)`
+     * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
      * @protected
-     * @param {Object[]} filters A list of filter entries: {field, value, operator} describing each filter.
+     * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
      *  Operator must be from a list of built-in operators
      * @param {Object} item
      * @param {Number} index
      * @param {Array} array
      * @returns {Boolean} Whether the specified item is a match
      */
-    filter(filters, item, index, array) {
-        const test = (element, filter) => {
-            const {field, operator, value: target} = filter;
-            const operators = {
-                '=': (a, b) => a === b,
-                // eslint-disable-next-line eqeqeq
-                '!=': (a, b) => a != b, // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
-                '<': (a, b) => a < b,
-                '<=': (a, b) => a <= b,
-                '>': (a, b) => a > b,
-                '>=': (a, b) => a >= b,
-                '%': (a, b) => a % b,
-                'in': (a, b) => b && b.includes(a),  // works for strings or arrays
-                'match': (a, b) => a && a.includes(b),
-            };
-            const extra = this.layer_state.extra_fields[this.getElementId(element)];
-            const field_value = (new Field(field)).resolve(element, extra);
-            return operators[operator](field_value, target);
-        };
-
+    filter(filter_rules, item, index, array) {
         let match = true;
-        filters.forEach((filter) => {
-            if (!test(item, filter)) {
+        filter_rules.forEach((filter) => { // Try each filter on this item, in sequence
+            const {field, operator, value: target} = filter;
+            const test_func = MATCHERS.get(operator);
+
+            const extra = this.layer_state.extra_fields[this.getElementId(item)];
+            const field_value = (new Field(field)).resolve(item, extra);
+            if (!test_func(field_value, target)) {
                 match = false;
             }
         });
@@ -1129,10 +1127,11 @@ class BaseDataLayer {
         }
 
         const value_to_broadcast = (this.layout.match && this.layout.match.send);
-        if (is_selected && value_to_broadcast && (added_status || !active)) {
+        if (is_selected && (typeof value_to_broadcast !== 'undefined') && (added_status || !active)) {
             this.parent.emit(
+                // The broadcast value can use transforms to "clean up value before sending broadcasting"
                 'match_requested',
-                { value: element[value_to_broadcast], active: active },
+                { value: new Field(value_to_broadcast).resolve(element), active: active },
                 true
             );
         }
