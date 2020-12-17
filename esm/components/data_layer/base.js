@@ -328,7 +328,7 @@ class BaseDataLayer {
             // When this layer receives data, mark whether points match (via a synthetic boolean field)
             //   Any field-based layout directives (color, size, shape) can then be used to control display
             if (field_to_match && broadcast_value !== null && broadcast_value !== undefined) {
-                item.lz_highlight_match = (match_function(field_resolver.resolve(item), broadcast_value));
+                item.lz_is_match = (match_function(field_resolver.resolve(item), broadcast_value));
             }
 
             item.toHTML = () => {

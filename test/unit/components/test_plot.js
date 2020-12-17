@@ -622,7 +622,7 @@ describe('LocusZoom.Plot', function() {
             });
 
             const get_matches = function (data) {
-                return data.map((item) => item.lz_highlight_match);
+                return data.map((item) => item.lz_is_match);
             };
 
             it('notifies all layers to find matches when an event fires', function () {
@@ -679,8 +679,8 @@ describe('LocusZoom.Plot', function() {
                 //  have no way to "reset/clear" the match rule to show things again.
                 const layer1 = this.plot.panels.p.data_layers.d1;
                 // In a real use, we could trigger "only filter on match" with a custom function that returned true
-                //  if EITHER a match occurred, OR lz_highlight_match was undefined (eg, no match had been attempted).
-                layer1.layout.filters = [{field: 'lz_highlight_match', operator: '=', value: true}];
+                //  if EITHER a match occurred, OR lz_is_match was undefined (eg, no match had been attempted).
+                layer1.layout.filters = [{field: 'lz_is_match', operator: '=', value: true}];
                 return this.plot.applyState({lz_match_value: 1}).then(() => {
                     // layer.data contains everything; select only filtered data elements
                     const filtered = layer1._applyFilters();

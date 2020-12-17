@@ -51,7 +51,7 @@ function coalesce_scatter_points (data, x_min, x_max, x_gap, y_min, y_max, y_gap
         const y = item[ycs];
 
         const in_combine_region = (x >= x_min && x <= x_max && y >= y_min && y <= y_max);
-        if (item.lz_highlight_match || !in_combine_region) {
+        if (item.lz_is_match || !in_combine_region) {
             // If an item is marked as interesting in some way, always render it explicitly
             // (and coalesce the preceding points if a run was in progress, to preserve ordering)
             _combine();

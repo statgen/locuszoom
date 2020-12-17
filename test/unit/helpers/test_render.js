@@ -119,9 +119,9 @@ describe('Coordinate coalescing', function () {
 
         it('always adds points that are explicitly marked significant', function () {
             const sample_data = _addSymbols([
-                { x: 0, y: 0.5, lz_highlight_match: true },
-                { x: 1, y: 0.9, lz_highlight_match: true },
-                { x: 2, y: 0.999, lz_highlight_match: true },
+                { x: 0, y: 0.5, lz_is_match: true },
+                { x: 1, y: 0.9, lz_is_match: true },
+                { x: 2, y: 0.999, lz_is_match: true },
             ]);
             const actual = coalesce_scatter_points(
                 sample_data,
