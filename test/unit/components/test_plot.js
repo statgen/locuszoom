@@ -622,9 +622,7 @@ describe('LocusZoom.Plot', function() {
             });
 
             const get_matches = function (data) {
-                return data.map(function (item) {
-                    return item.lz_highlight_match;
-                });
+                return data.map((item) => item.lz_highlight_match);
             };
 
             it('notifies all layers to find matches when an event fires', function () {
@@ -686,7 +684,12 @@ describe('LocusZoom.Plot', function() {
                 return this.plot.applyState({lz_match_value: 1}).then(() => {
                     // layer.data contains everything; select only filtered data elements
                     const filtered = layer1._applyFilters();
-                    assert.equal(filtered.length, 1, 'Only one data item is shown, eg the one that satisfies the matching rules');
+                    assert.equal(filtered.length, 1, 'Only one data item is shown');
+                    assert.equal(
+                        filtered[0]['s:id'],
+                        'b',
+                        'This item displayed is the one that satisfies matching rules'
+                    );
                 });
             });
         });
