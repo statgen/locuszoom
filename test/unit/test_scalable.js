@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import {categorical_bin, if_value, hash_to_choice, interpolate, numerical_bin, ordinal_cycle} from '../../esm/helpers/scalable';
+import {categorical_bin, if_value, stable_choice, interpolate, numerical_bin, ordinal_cycle} from '../../esm/helpers/scalable';
 
 describe('Scale Functions', function() {
     describe('if', function() {
@@ -77,40 +77,40 @@ describe('Scale Functions', function() {
             assert.equal(categorical_bin(parameters), 'null_value');
         });
     });
-    describe('hash_to_choice', function () {
+    describe('stable_choice', function () {
         it('will choose the same options from a set given the same value, regardless of data order', function () {
             const parameters = { values: Array.from({length: 20}, (x, i) => i) };
-            assert.equal(hash_to_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14);
-            assert.equal(hash_to_choice(parameters, 'MODERN_MAJOR_GENERAL', 99), 14);
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14);
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 99), 14);
         });
         it('the number of options will influence the outcome', function () {
             // This produces the same option from the same hash, BUT ONLY GIVEN THE SAME OPTIONS.
             // We actually check HASH % LENGTH. So adding one new option to the array will choose a different result.
             let parameters = { values: Array.from({length: 20}, (x, i) => i) };
-            assert.equal(hash_to_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14, 'Shorter options array makes one choice');
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14, 'Shorter options array makes one choice');
 
             parameters = { values: Array.from({length: 50}, (x, i) => i) };
-            assert.equal(hash_to_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 24, 'Longer options array = different choice for same input value');
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 24, 'Longer options array = different choice for same input value');
         });
         it('handles various datatypes', function () {
             const parameters = { values: Array.from({length: 20}, (x, i) => i) };
             // Look, user data is messy, ok? Sometimes values just... wander off... in otherwise good data
-            assert.equal(hash_to_choice(parameters, undefined), 4, 'Should handle undefined');
-            assert.equal(hash_to_choice(parameters, null), 3, 'Should handle null');
+            assert.equal(stable_choice(parameters, undefined), 4, 'Should handle undefined');
+            assert.equal(stable_choice(parameters, null), 3, 'Should handle null');
             // "Normal" types of data (including edge cases)
-            assert.equal(hash_to_choice(parameters, true), 18, 'Should handle booleans');
-            assert.equal(hash_to_choice(parameters, 12), 9, 'Should handle integers');
-            assert.equal(hash_to_choice(parameters, Infinity), 16, 'Should handle infinity');
-            assert.equal(hash_to_choice(parameters, NaN), 3, 'Should handle NaNs');
-            assert.equal(hash_to_choice(parameters, 'Hi!'), 0, 'Should handle strings');
-            assert.equal(hash_to_choice(parameters, ''), 0, 'Should handle empty strings');
-            assert.equal(hash_to_choice(parameters, 'a🐙b'), 17, 'Should handle strings with unicode');
+            assert.equal(stable_choice(parameters, true), 18, 'Should handle booleans');
+            assert.equal(stable_choice(parameters, 12), 9, 'Should handle integers');
+            assert.equal(stable_choice(parameters, Infinity), 16, 'Should handle infinity');
+            assert.equal(stable_choice(parameters, NaN), 3, 'Should handle NaNs');
+            assert.equal(stable_choice(parameters, 'Hi!'), 0, 'Should handle strings');
+            assert.equal(stable_choice(parameters, ''), 0, 'Should handle empty strings');
+            assert.equal(stable_choice(parameters, 'a🐙b'), 17, 'Should handle strings with unicode');
             // Container types with the same string representation will receive the same hash.
             //  Oh good, you know that two arrays aren't === in JS. Congrats on your CS degree but not relevant here.
-            assert.equal(hash_to_choice(parameters, ['a', 'b', 'c']), 2, 'Should handle arrays that serialize to a string');
+            assert.equal(stable_choice(parameters, ['a', 'b', 'c']), 2, 'Should handle arrays that serialize to a string');
             // Document that the string representation of an object is useless for comparison (always [object Object])
-            assert.equal(hash_to_choice(parameters, {}), 8, 'An empty object will yield a hash value...');
-            assert.equal(hash_to_choice(parameters, {}), 8, '...same value returned regardless of object contents');
+            assert.equal(stable_choice(parameters, {}), 8, 'An empty object will yield a hash value...');
+            assert.equal(stable_choice(parameters, {}), 8, '...same value returned regardless of object contents');
         });
     });
     describe('ordinal_cycle', function () {

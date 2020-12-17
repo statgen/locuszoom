@@ -557,7 +557,7 @@ function install (LocusZoom) {
                 scale_function: 'to_rgb',
             },
             {
-                // TODO: Consider changing this to hash_to_choice in the future, for more stable coloring
+                // TODO: Consider changing this to stable_choice in the future, for more stable coloring
                 field: '{{namespace[intervals]}}state_name',
                 scale_function: 'categorical_bin',
                 parameters: {

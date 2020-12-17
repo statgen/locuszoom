@@ -87,7 +87,7 @@ const categorical_bin = (parameters, value) => {
  * This is useful when ADJACENT items must be guaranteed to yield a different result, but it leads to unstable color
  *  choices if the user pans to a region with a different number/order of items. (the same item is assigned a different color)
  *
- *  See also: hash_to_choice.
+ *  See also: stable_choice.
  *  @param {Object} parameters
  *  @param {Array} parameters.values A list of option values
  * @return {*}
@@ -111,7 +111,7 @@ const ordinal_cycle = (parameters, value, index) => {
  * @param value
  * @param index
  */
-const hash_to_choice = (parameters, value, index) => {
+const stable_choice = (parameters, value, index) => {
     const options = parameters.values;
     // Simple JS hashcode implementation, from:
     //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
@@ -177,4 +177,4 @@ const interpolate = (parameters, input) => {
 };
 
 
-export { categorical_bin, hash_to_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
+export { categorical_bin, stable_choice, if_value, interpolate, numerical_bin, ordinal_cycle };
