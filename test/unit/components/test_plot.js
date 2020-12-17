@@ -174,7 +174,6 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.width, 100);
             assert.equal(this.plot.panels.panelA.layout.height, 100);
             assert.equal(this.plot.panels.panelA.layout.proportional_height, 1);
-            assert.equal(this.plot.panels.panelA.layout.proportional_origin.y, 0);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
             assert.equal(this.plot.sumProportional('height'), 1);
         });
@@ -191,12 +190,10 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelA.layout.width, 100);
             assert.equal(this.plot.panels.panelA.layout.height, 100);
             assert.equal(this.plot.panels.panelA.layout.proportional_height, 0.625);
-            assert.equal(this.plot.panels.panelA.layout.proportional_origin.y, 0);
             assert.equal(this.plot.panels.panelA.layout.origin.y, 0);
             assert.equal(this.plot.panels.panelB.layout.width, 100);
             assert.equal(this.plot.panels.panelB.layout.height, 60);
             assert.equal(this.plot.panels.panelB.layout.proportional_height, 0.375);
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 0.625);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 100);
             assert.equal(this.plot.sumProportional('height'), 1);
         });
@@ -214,7 +211,6 @@ describe('LocusZoom.Plot', function() {
             assert.equal(this.plot.panels.panelB.layout.width, 100);
             assert.equal(this.plot.panels.panelB.layout.height, 100);
             assert.equal(this.plot.panels.panelB.layout.proportional_height, 1);
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 0);
             assert.equal(this.plot.panels.panelB.layout.origin.y, 0);
             assert.equal(this.plot.sumProportional('height'), 1);
         });
@@ -250,7 +246,6 @@ describe('LocusZoom.Plot', function() {
             //   after panel C is removed.
             assert.approximately(this.plot.panels.panelA.layout.proportional_height, 600 / 650, 0.000001, 'Panel A proportional height is incorrect');
             assert.approximately(this.plot.panels.panelB.layout.proportional_height, 50 / 650, 0.000001, 'Panel B proportional height is incorrect');
-            assert.equal(this.plot.panels.panelB.layout.proportional_origin.y, 1 - 50 / 650, 'Panel B proportional_origin.y is incorrect');
             assert.equal(this.plot.panels.panelB.layout.origin.y, 600, 'Panel B origin.y is incorrect');
             assert.approximately(this.plot.sumProportional('height'), 1, 0.000001, 'Total height should be 1');
         });
@@ -285,7 +280,6 @@ describe('LocusZoom.Plot', function() {
 
             assert.approximately(this.plot.panels.panelA.layout.proportional_height, 300 / 350, 0.000001, 'Panel A proportional height is incorrect');
             assert.approximately(this.plot.panels.panelB.layout.proportional_height, 50 / 350, 0.000001, 'Panel B proportional height is incorrect');
-            assert.approximately(this.plot.panels.panelB.layout.proportional_origin.y, 1 - 50 / 350, 0.000001, 'Panel B proportional_origin.y is incorrect');
             assert.equal(this.plot.panels.panelB.layout.origin.y, 300, 'Panel B origin.y is incorrect');
             assert.approximately(this.plot.sumProportional('height'), 1, 0.000001, 'Total proportional height should be 1');
         });

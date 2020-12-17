@@ -878,7 +878,6 @@ class Plot {
                 const panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
                 this.panels[panel_id].setDimensions(panel_width, panel_height);
                 this.panels[panel_id].setOrigin(0, y_offset);
-                this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
                 y_offset += panel_height;
                 this.panels[panel_id].toolbar.update();
             });
@@ -968,10 +967,6 @@ class Plot {
                 this.panels[panel_id].layout.margin.right = x_linked_margins.right;
                 this.panels[panel_id].layout.cliparea.origin.x = x_linked_margins.left;
             }
-        });
-        const calculated_plot_height = y_offset;
-        this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
         });
 
         // Update dimensions on the plot to accommodate repositioned panels

@@ -23,7 +23,6 @@ const default_layout = {
     origin: { x: 0, y: null },
     min_height: 1,
     proportional_height: null,
-    proportional_origin: { y: null }, // Panels can stack within plot (along y), but not side by side (along x)
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
     toolbar: {
