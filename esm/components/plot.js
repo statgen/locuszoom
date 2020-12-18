@@ -16,8 +16,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
  */
 const default_layout = {
     state: {},
-    width: 1,
-    height: 1,
+    width: 800,
     min_width: 400,
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
@@ -391,6 +390,7 @@ class Plot {
             this.panels[panel.id].reMap();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
+            // TODO: Get correct height as sum of panels
             this.setDimensions(this.layout.width, this.layout.height);
         }
         return this.panels[panel.id];
@@ -479,6 +479,7 @@ class Plot {
             this.positionPanels();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
+            // TODO: Get correct total height as sum of panels
             this.setDimensions(this.layout.width, this.layout.height);
         }
 
@@ -761,27 +762,6 @@ class Plot {
     }
 
     /**
-     * Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
-     * @private
-     * @param {('Height'|'Width')} dimension
-     * @returns {number}
-     */
-    sumProportional(dimension) {
-        if (dimension !== 'height' && dimension !== 'width') {
-            throw new Error('Bad dimension value passed to sumProportional');
-        }
-        let total = 0;
-        for (let id in this.panels) {
-            // Ensure every panel contributing to the sum has a non-zero proportional dimension
-            if (!this.panels[id].layout[`proportional_${dimension}`]) {
-                this.panels[id].layout[`proportional_${dimension}`] = 1 / Object.keys(this.panels).length;
-            }
-            total += this.panels[id].layout[`proportional_${dimension}`];
-        }
-        return total;
-    }
-
-    /**
      * Resize the plot to fit the bounding container
      * @private
      * @returns {Plot}
@@ -801,9 +781,6 @@ class Plot {
 
         // Sanity check layout values
         if (isNaN(this.layout.width) || this.layout.width <= 0) {
-            throw new Error('Plot layout parameter `width` must be a positive number');
-        }
-        if (isNaN(this.layout.height) || this.layout.height <= 0) {
             throw new Error('Plot layout parameter `width` must be a positive number');
         }
 
@@ -846,7 +823,6 @@ class Plot {
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
             this.layout.width = Math.round(+width);
-            this.layout.height = Math.round(+height);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
@@ -857,32 +833,29 @@ class Plot {
             // Resize/reposition panels to fit, update proportional origins if necessary
             let y_offset = 0;
             this.panel_ids_by_y_index.forEach((panel_id) => {
+                const panel = this.panels[panel_id];
                 const panel_width = this.layout.width;
-                const panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
-                this.panels[panel_id].setDimensions(panel_width, panel_height);
-                this.panels[panel_id].setOrigin(0, y_offset);
+                const panel_height = panel.layout.height;
+                panel.setDimensions(panel_width, panel_height);
+                panel.setOrigin(0, y_offset);
                 y_offset += panel_height;
-                this.panels[panel_id].toolbar.update();
+                panel.toolbar.update();
             });
         } else if (Object.keys(this.panels).length) {
-            // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
-            // by making it conform to panel dimensions, assuming panels are already positioned correctly.
-            this.layout.width = 0;
-            this.layout.height = 0;
+            height = 0;
             for (let id in this.panels) {
-                this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
-                this.layout.height += this.panels[id].layout.height;
+                height += this.panels[id].layout.height;
             }
         }
 
         // Apply layout width and height as discrete values or viewbox values
         if (this.svg !== null) {
             // The viewBox must always be specified in order for "save as image" button to work
-            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`);
+            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${height}`);
 
             this.svg
                 .attr('width', this.layout.width)
-                .attr('height', this.layout.height);
+                .attr('height', height);
         }
 
         // If the plot has been initialized then trigger some necessary render functions
@@ -916,49 +889,38 @@ class Plot {
         // proportional heights for all panels with a null value from discretely set dimensions.
         // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
         for (id in this.panels) {
-            if (this.panels[id].layout.proportional_height === null) {
-                this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
-            }
             if (this.panels[id].layout.interaction.x_linked) {
                 x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
                 x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
             }
         }
 
-        // Sum the proportional heights and then adjust all proportionally so that the sum is exactly 1
-        const total_proportional_height = this.sumProportional('height');
-        if (!total_proportional_height) {
-            return this;
-        }
-        const proportional_adjustment = 1 / total_proportional_height;
-        for (id in this.panels) {
-            this.panels[id].layout.proportional_height *= proportional_adjustment;
-        }
-
         // Update origins on all panels without changing plot-level dimensions yet
         // Also apply x-linked margins to x-linked panels, updating widths as needed
         let y_offset = 0;
         this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].setOrigin(0, y_offset);
+            const panel = this.panels[panel_id];
+            panel.setOrigin(0, y_offset);
             y_offset += this.panels[panel_id].layout.height;
-            if (this.panels[panel_id].layout.interaction.x_linked) {
-                const delta = Math.max(x_linked_margins.left - this.panels[panel_id].layout.margin.left, 0)
-                    + Math.max(x_linked_margins.right - this.panels[panel_id].layout.margin.right, 0);
-                this.panels[panel_id].layout.width += delta;
-                this.panels[panel_id].layout.margin.left = x_linked_margins.left;
-                this.panels[panel_id].layout.margin.right = x_linked_margins.right;
-                this.panels[panel_id].layout.cliparea.origin.x = x_linked_margins.left;
+            if (panel.layout.interaction.x_linked) {
+                const delta = Math.max(x_linked_margins.left - panel.layout.margin.left, 0)
+                    + Math.max(x_linked_margins.right - panel.layout.margin.right, 0);
+                panel.layout.width += delta;
+                panel.layout.margin.left = x_linked_margins.left;
+                panel.layout.margin.right = x_linked_margins.right;
+                panel.layout.cliparea.origin.x = x_linked_margins.left;
             }
         });
 
-        // Update dimensions on the plot to accommodate repositioned panels
-        this.setDimensions();
+        // // Update dimensions on the plot to accommodate repositioned panels
+        // this.setDimensions();
 
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
+            const panel = this.panels[panel_id];
             this.panels[panel_id].setDimensions(
                 this.layout.width,
-                this.layout.height * this.panels[panel_id].layout.proportional_height
+                panel.layout.height
             );
         });
 
@@ -1070,6 +1032,7 @@ class Plot {
                         this.dragging = false;
                     });
                     corner_drag.on('drag', () => {
+                        // FIXME: Get the correct plot height as sum of panels
                         this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent.layout.height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
@@ -1084,9 +1047,10 @@ class Plot {
                 // Position panel boundaries
                 const plot_page_origin = this.parent._getPageOrigin();
                 this.selectors.forEach((selector, panel_idx) => {
-                    const panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]]._getPageOrigin();
+                    const panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
+                    const panel_page_origin = panel._getPageOrigin();
                     const left = plot_page_origin.x;
-                    const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
+                    const top = panel_page_origin.y + panel.layout.height - 12;
                     const width = this.parent.layout.width - 1;
                     selector
                         .style('top', `${top}px`)
@@ -1099,6 +1063,7 @@ class Plot {
                 const corner_padding = 10;
                 const corner_size = 16;
                 this.corner_selector
+                    // TODO: get correct plot height as sum of panel layout heights
                     .style('top', `${plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size}px`)
                     .style('left', `${plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size}px`);
                 return this;
@@ -1208,6 +1173,7 @@ class Plot {
         // positioning. TODO: make this additional call unnecessary.
         const client_rect = this.svg.node().getBoundingClientRect();
         const width = client_rect.width ? client_rect.width : this.layout.width;
+        // TODO: Get correct total height
         const height = client_rect.height ? client_rect.height : this.layout.height;
         this.setDimensions(width, height);
 

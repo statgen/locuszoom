@@ -786,21 +786,19 @@ const annotation_catalog_panel = {
 const standard_association_plot = {
     state: {},
     width: 800,
-    height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
     toolbar: deepCopy(standard_association_toolbar),
     panels: [
-        merge({ proportional_height: 0.5}, deepCopy(association_panel)),
-        merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
+        merge({ height: 225 }, deepCopy(association_panel)),
+        merge({ height: 225 }, deepCopy(genes_panel)),
     ],
 };
 
 const association_catalog_plot = {
     state: {},
     width: 800,
-    height: 500,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
@@ -814,13 +812,12 @@ const association_catalog_plot = {
 
 const standard_phewas_plot = {
     width: 800,
-    height: 600,
     responsive_resize: true,
     toolbar: deepCopy(standard_plot_toolbar),
     panels: [
-        merge({proportional_height: 0.5}, deepCopy(phewas_panel)),
+        merge({ height: 300 }, deepCopy(phewas_panel)),
         merge({
-            proportional_height: 0.5,
+            height: 300,
             margin: { bottom: 40 },
             axes: {
                 x: {
@@ -838,21 +835,20 @@ const standard_phewas_plot = {
 const coaccessibility_plot = {
     state: {},
     width: 800,
-    height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
     toolbar: deepCopy(standard_plot_toolbar),
     panels: [
         Object.assign(
-            { proportional_height: 0.4 },
+            { height: 180 },
             deepCopy(coaccessibility_panel)
         ),
         function () {
             // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
             // This is a companion to the "match" directive in the coaccessibility panel
             const base = Object.assign(
-                { proportional_height: 0.6 },
+                { height: 270 },
                 deepCopy(genes_panel)
             );
             const layer = base.data_layers[0];

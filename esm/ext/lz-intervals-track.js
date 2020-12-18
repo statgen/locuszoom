@@ -618,7 +618,6 @@ function install (LocusZoom) {
     const intervals_plot_layout = {
         state: {},
         width: 800,
-        height: 550,
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
@@ -627,13 +626,13 @@ function install (LocusZoom) {
             LocusZoom.Layouts.get('panel', 'association', {
                 unnamespaced: true,
                 width: 800,
-                proportional_height: (225 / 570),
+                height: 225,
             }),
             Object.assign(
-                { unnamespaced: true, proportional_height: (120 / 570) },
+                { unnamespaced: true, height: 120 },
                 intervals_panel_layout
             ),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
+            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, height: 225 }),
         ],
     };
 
