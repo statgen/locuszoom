@@ -391,7 +391,7 @@ class Plot {
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
             // TODO: Get correct height as sum of panels
-            this.setDimensions(this.layout.width, this.layout.height);
+            this.setDimensions(this.layout.width, this._total_height);
         }
         return this.panels[panel.id];
     }
@@ -480,7 +480,7 @@ class Plot {
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
             // TODO: Get correct total height as sum of panels
-            this.setDimensions(this.layout.width, this.layout.height);
+            this.setDimensions(this.layout.width, this._total_height);
         }
 
         this.emit('panel_removed', id);
@@ -1033,7 +1033,7 @@ class Plot {
                     });
                     corner_drag.on('drag', () => {
                         // FIXME: Get the correct plot height as sum of panels
-                        this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent.layout.height + d3.event.dy);
+                        this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent._total_height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
                     this.parent.panel_boundaries.corner_selector = corner_selector;
@@ -1064,7 +1064,7 @@ class Plot {
                 const corner_size = 16;
                 this.corner_selector
                     // TODO: get correct plot height as sum of panel layout heights
-                    .style('top', `${plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size}px`)
+                    .style('top', `${plot_page_origin.y + this.parent._total_height - corner_padding - corner_size}px`)
                     .style('left', `${plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size}px`);
                 return this;
             },
@@ -1174,7 +1174,7 @@ class Plot {
         const client_rect = this.svg.node().getBoundingClientRect();
         const width = client_rect.width ? client_rect.width : this.layout.width;
         // TODO: Get correct total height
-        const height = client_rect.height ? client_rect.height : this.layout.height;
+        const height = client_rect.height ? client_rect.height : this._total_height;
         this.setDimensions(width, height);
 
         return this;
@@ -1286,6 +1286,11 @@ class Plot {
 
         return this;
 
+    }
+
+    get _total_height() {
+        // The plot height is a calculated property, derived from the sum of its panels
+        return this.layout.panels.reduce((acc, item) => item.height + acc, 0);
     }
 }
 
