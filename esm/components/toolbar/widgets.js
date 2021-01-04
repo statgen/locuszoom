@@ -312,12 +312,12 @@ class Button {
                 let left;
                 if (this.parent_toolbar.type === 'panel') {
                     top = (page_origin.y + toolbar_client_rect.height + (2 * padding));
-                    left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
+                    left = Math.max(page_origin.x + this.parent_plot.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
                 } else {
                     top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
                     left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
                 }
-                const base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
+                const base_max_width = Math.max(this.parent_plot.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
                 const container_max_width = base_max_width;
                 const content_max_width = (base_max_width - (4 * padding));
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);

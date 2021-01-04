@@ -588,7 +588,7 @@ function install (LocusZoom) {
 
     const intervals_panel_layout = {
         id: 'intervals',
-        width: 1000,
+        min_height: 50,
         height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
@@ -623,16 +623,9 @@ function install (LocusZoom) {
         max_region_scale: 1000000,
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association', {
-                unnamespaced: true,
-                width: 800,
-                height: 225,
-            }),
-            Object.assign(
-                { unnamespaced: true, height: 120 },
-                intervals_panel_layout
-            ),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, height: 225 }),
+            LocusZoom.Layouts.get('panel', 'association'),
+            LocusZoom.Layouts.merge({ unnamespaced: true, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
 

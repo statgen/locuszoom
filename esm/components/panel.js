@@ -18,7 +18,8 @@ import data_layers from '../registry/data_layers';
 const default_layout = {
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
-    height: 1,
+    min_height: 1,  // When resizing, do not allow height to go below this value
+    height: 1, // The actual height allocated to the panel (>= min_height)
     origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
@@ -822,7 +823,8 @@ class Panel {
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
                 this.parent.layout.width = Math.round(+width);
-                this.layout.height = Math.round(+height);
+                // Ensure that the requested height satisfies all minimum values
+                this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             }
         }
         this.layout.cliparea.width = Math.max(this.parent.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);

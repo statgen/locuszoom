@@ -209,7 +209,7 @@ function install (LocusZoom) {
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
         id: 'annotationcredibleset',
         title: { text: 'SNPs in 95% credible set', x: 50, style: { 'font-size': '14px' } },
-        width: 800,
+        min_height: 45,
         height: 45,
         margin: { top: 25, right: 50, bottom: 0, left: 50 },
         inner_border: 'rgb(210, 210, 210)',

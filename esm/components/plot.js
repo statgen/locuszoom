@@ -479,7 +479,6 @@ class Plot {
             this.positionPanels();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
-            // TODO: Get correct total height as sum of panels
             this.setDimensions(this.layout.width, this._total_height);
         }
 
@@ -812,16 +811,20 @@ class Plot {
      * Set the dimensions for a plot, and ensure that panels are sized and positioned correctly.
      *
      * If dimensions are provided, resizes each panel proportionally to match the new plot dimensions. Otherwise,
-     *   calculates the appropriate plot dimensions based on all panels.
+     *   calculates the appropriate plot dimensions based on all panels, and ensures that panels are placed and
+     *   rendered in the correct relative positions.
      * @private
-     * @param {Number} [width] If provided and larger than minimum size, set plot to this width
-     * @param {Number} [height] If provided and larger than minimum size, set plot to this height
+     * @param {Number} [width] If provided, set plot to this width
+     * @param {Number} [height] If provided, set plot to this height
      * @returns {Plot}
      */
     setDimensions(width, height) {
-        // If width and height arguments were passed then adjust them against plot minimums if necessary.
+        // If width and height arguments were passed, then adjust plot dimensions to fit all panels
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
+            // Resize operations may ask for a different amount of space than that used by panels.
+            const height_scaling_factor = height / this._total_height;
+
             this.layout.width = Math.round(+width);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
@@ -835,27 +838,26 @@ class Plot {
             this.panel_ids_by_y_index.forEach((panel_id) => {
                 const panel = this.panels[panel_id];
                 const panel_width = this.layout.width;
-                const panel_height = panel.layout.height;
+                // In this block, we are passing explicit dimensions that might require rescaling all panels at once
+                const panel_height = panel.layout.height * height_scaling_factor;
                 panel.setDimensions(panel_width, panel_height);
                 panel.setOrigin(0, y_offset);
                 y_offset += panel_height;
                 panel.toolbar.update();
             });
-        } else if (Object.keys(this.panels).length) {
-            height = 0;
-            for (let id in this.panels) {
-                height += this.panels[id].layout.height;
-            }
         }
+
+        // Set the plot height to the sum of all panels (using the "real" height values accounting for panel.min_height)
+        const final_height = this._total_height;
 
         // Apply layout width and height as discrete values or viewbox values
         if (this.svg !== null) {
             // The viewBox must always be specified in order for "save as image" button to work
-            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${height}`);
+            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${final_height}`);
 
             this.svg
                 .attr('width', this.layout.width)
-                .attr('height', height);
+                .attr('height', final_height);
         }
 
         // If the plot has been initialized then trigger some necessary render functions
@@ -918,7 +920,7 @@ class Plot {
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
             const panel = this.panels[panel_id];
-            this.panels[panel_id].setDimensions(
+            panel.setDimensions(
                 this.layout.width,
                 panel.layout.height
             );
@@ -1032,7 +1034,6 @@ class Plot {
                         this.dragging = false;
                     });
                     corner_drag.on('drag', () => {
-                        // FIXME: Get the correct plot height as sum of panels
                         this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent._total_height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
@@ -1178,7 +1179,6 @@ class Plot {
         this.setDimensions(width, height);
 
         return this;
-
     }
 
     /**
@@ -1289,7 +1289,7 @@ class Plot {
     }
 
     get _total_height() {
-        // The plot height is a calculated property, derived from the sum of its panels
+        // The plot height is a calculated property, derived from the sum of its panel layout objects
         return this.layout.panels.reduce((acc, item) => item.height + acc, 0);
     }
 }

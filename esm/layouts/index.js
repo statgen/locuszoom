@@ -567,7 +567,7 @@ const region_nav_plot_toolbar = function () {
 
 const association_panel = {
     id: 'association',
-    width: 800,
+    min_height: 200,
     height: 225,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
@@ -617,8 +617,8 @@ const association_panel = {
 
 const coaccessibility_panel = {
     id: 'coaccessibility',
-    width: 800,
-    height: 225,
+    min_height: 150,
+    height: 180,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -707,7 +707,7 @@ const association_catalog_panel = function () {
 
 const genes_panel = {
     id: 'genes',
-    width: 800,
+    min_height: 150,
     height: 225,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
@@ -735,7 +735,7 @@ const genes_panel = {
 
 const phewas_panel = {
     id: 'phewas',
-    width: 800,
+    min_height: 300,
     height: 300,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
@@ -764,7 +764,7 @@ const phewas_panel = {
 
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
-    width: 800,
+    min_height: 45,
     height: 45,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
@@ -789,10 +789,10 @@ const standard_association_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_association_toolbar),
+    toolbar: standard_association_toolbar,
     panels: [
-        merge({ height: 225 }, deepCopy(association_panel)),
-        merge({ height: 225 }, deepCopy(genes_panel)),
+        deepCopy(association_panel),
+        deepCopy(genes_panel),
     ],
 };
 
@@ -802,20 +802,20 @@ const association_catalog_plot = {
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_association_toolbar),
+    toolbar: standard_association_toolbar,
     panels: [
-        deepCopy(annotation_catalog_panel),
-        deepCopy(association_catalog_panel),
-        deepCopy(genes_panel),
+        annotation_catalog_panel,
+        association_catalog_panel,
+        genes_panel,
     ],
 };
 
 const standard_phewas_plot = {
     width: 800,
     responsive_resize: true,
-    toolbar: deepCopy(standard_plot_toolbar),
+    toolbar: standard_plot_toolbar,
     panels: [
-        merge({ height: 300 }, deepCopy(phewas_panel)),
+        deepCopy(phewas_panel),
         merge({
             height: 300,
             margin: { bottom: 40 },
@@ -840,10 +840,7 @@ const coaccessibility_plot = {
     max_region_scale: 1000000,
     toolbar: deepCopy(standard_plot_toolbar),
     panels: [
-        Object.assign(
-            { height: 180 },
-            deepCopy(coaccessibility_panel)
-        ),
+        deepCopy(coaccessibility_panel),
         function () {
             // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
             // This is a companion to the "match" directive in the coaccessibility panel
