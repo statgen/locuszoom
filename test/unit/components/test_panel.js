@@ -114,7 +114,7 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.y, 0);
 
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.layout.width - (12 + 4));
+            assert.equal(this.association_panel.layout.cliparea.width, this.plot.layout.width - (12 + 4));
             assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (0 + 3));
         });
 
