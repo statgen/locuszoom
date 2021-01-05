@@ -173,7 +173,9 @@ class Plot {
         merge(this.layout, default_layout); // TODO: evaluate how the default layout is applied
 
         /**
-         * Values in the layout object may change during rendering etc. Retain a copy of the original plot options
+         * Values in the layout object may change during rendering etc. Retain a copy of the original plot options.
+         * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
+         * loaded: it contains the "defaults", not just the result of a calculated value.
          * @protected
          * @member {Object}
          */

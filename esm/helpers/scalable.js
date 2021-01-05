@@ -6,6 +6,7 @@
  */
 
 import * as d3 from 'd3';
+import {memoize} from './common';
 
 /**
  * Basic conditional function to evaluate the value of the input field and return based on equality.
@@ -111,7 +112,7 @@ const ordinal_cycle = (parameters, value, index) => {
  * @param value
  * @param index
  */
-const stable_choice = (parameters, value, index) => {
+let stable_choice = (parameters, value, index) => {
     const options = parameters.values;
     // Simple JS hashcode implementation, from:
     //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
@@ -125,6 +126,9 @@ const stable_choice = (parameters, value, index) => {
     // Convert 32 bit integer to be within the range of options allowed
     return options[Math.abs(hash) % options.length];
 };
+
+// Internal detail: memoize this function to reduce performance impact of hashing
+stable_choice = memoize(stable_choice, (...args) => args[1]);
 
 /**
  * Function for continuous interpolation of numerical values along a gradient with arbitrarily many break points.

@@ -186,9 +186,9 @@ describe('LocusZoom.Plot', function() {
         });
         it('Should resize the plot as panels are removed, when panels specify min_height', function() {
             // Small hack; resize the plot after it was created
-            this.plot.layout.height = this.plot._base_layout.height = 600;
-            this.plot.layout.width = this.plot._base_layout.width = 800;
-            this.plot.layout.responsive_resize = this.plot._base_layout.responsive_resize = true;
+            this.plot.layout.height = 600;
+            this.plot.layout.width = 800;
+            this.plot.layout.responsive_resize = true;
 
             // These numbers are based on a real plot. Expected behavior is chosen to match behavior of a layout where
             //   panels had no min_height specified.
