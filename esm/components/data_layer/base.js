@@ -595,7 +595,7 @@ class BaseDataLayer {
         } else if (placement === 'horizontal') {
             // Auto select whether to position to the left of the item, or to the right
             y_offset = 0;
-            if (x_center <= panel_layout.width / 2) {
+            if (x_center <= plot_layout.width / 2) {
                 placement = 'left';
             } else {
                 placement = 'right';

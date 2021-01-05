@@ -390,7 +390,6 @@ class Plot {
             this.panels[panel.id].reMap();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
-            // TODO: Get correct height as sum of panels
             this.setDimensions(this.layout.width, this._total_height);
         }
         return this.panels[panel.id];
@@ -814,8 +813,8 @@ class Plot {
      *   calculates the appropriate plot dimensions based on all panels, and ensures that panels are placed and
      *   rendered in the correct relative positions.
      * @private
-     * @param {Number} [width] If provided, set plot to this width
-     * @param {Number} [height] If provided, set plot to this height
+     * @param {Number} [width] If provided and larger than minimum allowed size, set plot to this width
+     * @param {Number} [height] If provided and larger than minimum allowed size, set plot to this height
      * @returns {Plot}
      */
     setDimensions(width, height) {
@@ -879,9 +878,6 @@ class Plot {
      * @private
      */
     positionPanels() {
-
-        let id;
-
         // We want to enforce that all x-linked panels have consistent horizontal margins
         // (to ensure that aligned items stay aligned despite inconsistent initial layout parameters)
         // NOTE: This assumes panels have consistent widths already. That should probably be enforced too!
@@ -890,7 +886,7 @@ class Plot {
         // Proportional heights for newly added panels default to null unless explicitly set, so determine appropriate
         // proportional heights for all panels with a null value from discretely set dimensions.
         // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
-        for (id in this.panels) {
+        for (let id in this.panels) {
             if (this.panels[id].layout.interaction.x_linked) {
                 x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
                 x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
@@ -914,8 +910,9 @@ class Plot {
             }
         });
 
-        // // Update dimensions on the plot to accommodate repositioned panels
-        // this.setDimensions();
+        // Update dimensions on the plot to accommodate repositioned panels (eg when resizing one panel,
+        //  also must update the plot dimensions)
+        this.setDimensions();
 
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
@@ -927,7 +924,6 @@ class Plot {
         });
 
         return this;
-
     }
 
     /**
@@ -994,7 +990,7 @@ class Plot {
                             // First set the dimensions on the panel we're resizing
                             const this_panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
                             const original_panel_height = this_panel.layout.height;
-                            this_panel.setDimensions(this_panel.layout.width, this_panel.layout.height + d3.event.dy);
+                            this_panel.setDimensions(this.parent.layout.width, this_panel.layout.height + d3.event.dy);
                             const panel_height_change = this_panel.layout.height - original_panel_height;
                             // Next loop through all panels.
                             // Update proportional dimensions for all panels including the one we've resized using discrete heights.

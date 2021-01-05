@@ -73,7 +73,7 @@ class Scatter extends BaseDataLayer {
         const spacing = data_layer.layout.label.spacing;
         const handle_lines = Boolean(data_layer.layout.label.lines);
         const min_x = 2 * spacing;
-        const max_x = this.parent.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
+        const max_x = this.parent_plot.layout.width - this.parent.layout.margin.left - this.parent.layout.margin.right - (2 * spacing);
 
         const flip = (dn, dnl) => {
             const dnx = +dn.attr('x');

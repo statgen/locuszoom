@@ -59,13 +59,13 @@
 
         // Define a reusable layout, and then retrieve it so that the namespaces get filled in
         LocusZoom.Layouts.add("plot", "phewas_forest", {
+            min_width: 400,
             width: 800,
-            height: 800,
             responsive_resize: true,
             panels: [
                 {
                     id: "phewasforest",
-                    width: 800,
+                    min_height: 400,
                     height: 800,
                     margin: { top: 35, right: 220, bottom: 50, left: 20 },
                     inner_border: "rgba(210, 210, 210, 0.85)",

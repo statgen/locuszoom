@@ -502,14 +502,14 @@ class Panel {
 
         // Set size on the clip rect
         this.svg.clipRect
-            .attr('width', this.parent.layout.width)
+            .attr('width', this.parent_plot.layout.width)
             .attr('height', this.layout.height);
 
         // Set and position the inner border, style if necessary
         this.inner_border
             .attr('x', this.layout.margin.left)
             .attr('y', this.layout.margin.top)
-            .attr('width', this.parent.layout.width - (this.layout.margin.left + this.layout.margin.right))
+            .attr('width', this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr('height', this.layout.height - (this.layout.margin.top + this.layout.margin.bottom));
         if (this.layout.inner_border) {
             this.inner_border
@@ -827,7 +827,7 @@ class Panel {
                 this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             }
         }
-        this.layout.cliparea.width = Math.max(this.parent.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         if (this.svg.clipRect) {
             this.svg.clipRect
@@ -896,15 +896,15 @@ class Panel {
             this.layout.margin.top -= extra;
             this.layout.margin.bottom -= extra;
         }
-        if (this.layout.margin.left + this.layout.margin.right > this.parent.layout.width) {
-            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.parent.layout.width) / 2);
+        if (this.layout.margin.left + this.layout.margin.right > this.parent_plot.layout.width) {
+            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.parent_plot.layout.width) / 2);
             this.layout.margin.left -= extra;
             this.layout.margin.right -= extra;
         }
         ['top', 'right', 'bottom', 'left'].forEach((m) => {
             this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
         });
-        this.layout.cliparea.width = Math.max(this.parent.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         this.layout.cliparea.origin.x = this.layout.margin.left;
         this.layout.cliparea.origin.y = this.layout.margin.top;
@@ -934,7 +934,7 @@ class Panel {
         const clipPath = this.svg.container.append('clipPath')
             .attr('id', `${base_id}.clip`);
         this.svg.clipRect = clipPath.append('rect')
-            .attr('width', this.parent.layout.width)
+            .attr('width', this.parent_plot.layout.width)
             .attr('height', this.layout.height);
 
         // Append svg group for rendering all panel child elements, clipped by the clip path
@@ -1273,7 +1273,7 @@ class Panel {
                 label_rotate: -90,
             },
             y2: {
-                position: `translate(${this.parent.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
+                position: `translate(${this.parent_plot.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
                 orientation: 'right',
                 label_x: (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
@@ -1423,7 +1423,7 @@ class Panel {
         if (+target_height) {
             target_height += +this.layout.margin.top + +this.layout.margin.bottom;
             // FIXME: plot.setDimensions calls panel.setDimensions (though without arguments)
-            this.setDimensions(this.parent.layout.width, target_height);
+            this.setDimensions(this.parent_plot.layout.width, target_height);
             this.parent.setDimensions();
             this.parent.positionPanels();
         }

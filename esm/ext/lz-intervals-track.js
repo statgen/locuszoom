@@ -624,7 +624,7 @@ function install (LocusZoom) {
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
             LocusZoom.Layouts.get('panel', 'association'),
-            LocusZoom.Layouts.merge({ unnamespaced: true, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.merge({ unnamespaced: true, min_height: 120, height: 120 }, intervals_panel_layout),
             LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
