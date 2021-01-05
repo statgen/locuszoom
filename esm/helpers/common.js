@@ -254,31 +254,4 @@ function debounce(func, delay = 500) {
     };
 }
 
-/**
- * Memoize an expensive function so that it will only be called once for the same arguments.
- * @param func The function to memoize
- * @param resolver A function that defines the cache key. Default to picking the first argument.
- * @param [max_cache_size=500] An upper bound on the allowed cache size. When this cap is hit, all cached items will
- *  be evicted.
- * @return {function(...[*]): *}
- */
-function memoize(func, resolver, max_cache_size = 500) {
-    const memoized = (...args) => {
-        const cache_key = resolver ? resolver.apply(this, args) : args[0];
-        if (memoized._cache.has(cache_key)) {
-            return memoized._cache[cache_key];
-        } else {
-            if (max_cache_size && memoized._cache.size === max_cache_size) {
-                memoized._cache.clear();
-            }
-
-            const result = func(...args);
-            memoized._cache.set(cache_key, result);
-            return result;
-        }
-    };
-    memoized._cache = new Map();
-    return memoized;
-}
-
-export { applyStyles, debounce, generateCurtain, generateLoader, memoize };
+export { applyStyles, debounce, generateCurtain, generateLoader };
