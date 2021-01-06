@@ -16,10 +16,8 @@ import {generateCurtain, generateLoader} from '../helpers/common';
  */
 const default_layout = {
     state: {},
-    width: 1,
-    height: 1,
-    min_width: 1,
-    min_height: 1,
+    width: 800,
+    min_width: 400,
     responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
     panels: [],
     toolbar: {
@@ -175,7 +173,9 @@ class Plot {
         merge(this.layout, default_layout); // TODO: evaluate how the default layout is applied
 
         /**
-         * Values in the layout object may change during rendering etc. Retain a copy of the original plot options
+         * Values in the layout object may change during rendering etc. Retain a copy of the original plot options.
+         * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
+         * loaded: it contains the "defaults", not just the result of a calculated value.
          * @protected
          * @member {Object}
          */
@@ -392,7 +392,7 @@ class Plot {
             this.panels[panel.id].reMap();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
-            this.setDimensions(this.layout.width, this.layout.height);
+            this.setDimensions(this.layout.width, this._total_height);
         }
         return this.panels[panel.id];
     }
@@ -477,14 +477,10 @@ class Plot {
 
         // Call positionPanels() to keep panels from overlapping and ensure filling all available vertical space
         if (this.initialized) {
-            // Allow the plot to shrink when panels are removed, by forcing it to recalculate min dimensions from scratch
-            this.layout.min_height = this._base_layout.min_height;
-            this.layout.min_width = this._base_layout.min_width;
-
             this.positionPanels();
             // An extra call to setDimensions with existing discrete dimensions fixes some rounding errors with tooltip
             // positioning. TODO: make this additional call unnecessary.
-            this.setDimensions(this.layout.width, this.layout.height);
+            this.setDimensions(this.layout.width, this._total_height);
         }
 
         this.emit('panel_removed', id);
@@ -766,27 +762,6 @@ class Plot {
     }
 
     /**
-     * Helper method to sum the proportional dimensions of panels, a value that's checked often as panels are added/removed
-     * @private
-     * @param {('Height'|'Width')} dimension
-     * @returns {number}
-     */
-    sumProportional(dimension) {
-        if (dimension !== 'height' && dimension !== 'width') {
-            throw new Error('Bad dimension value passed to sumProportional');
-        }
-        let total = 0;
-        for (let id in this.panels) {
-            // Ensure every panel contributing to the sum has a non-zero proportional dimension
-            if (!this.panels[id].layout[`proportional_${dimension}`]) {
-                this.panels[id].layout[`proportional_${dimension}`] = 1 / Object.keys(this.panels).length;
-            }
-            total += this.panels[id].layout[`proportional_${dimension}`];
-        }
-        return total;
-    }
-
-    /**
      * Resize the plot to fit the bounding container
      * @private
      * @returns {Plot}
@@ -806,9 +781,6 @@ class Plot {
 
         // Sanity check layout values
         if (isNaN(this.layout.width) || this.layout.width <= 0) {
-            throw new Error('Plot layout parameter `width` must be a positive number');
-        }
-        if (isNaN(this.layout.height) || this.layout.height <= 0) {
             throw new Error('Plot layout parameter `width` must be a positive number');
         }
 
@@ -840,36 +812,21 @@ class Plot {
      * Set the dimensions for a plot, and ensure that panels are sized and positioned correctly.
      *
      * If dimensions are provided, resizes each panel proportionally to match the new plot dimensions. Otherwise,
-     *   calculates the appropriate plot dimensions based on all panels.
+     *   calculates the appropriate plot dimensions based on all panels, and ensures that panels are placed and
+     *   rendered in the correct relative positions.
      * @private
-     * @param {Number} [width] If provided and larger than minimum size, set plot to this width
-     * @param {Number} [height] If provided and larger than minimum size, set plot to this height
+     * @param {Number} [width] If provided and larger than minimum allowed size, set plot to this width
+     * @param {Number} [height] If provided and larger than minimum allowed size, set plot to this height
      * @returns {Plot}
      */
     setDimensions(width, height) {
-
-        let id;
-
-        // Update minimum allowable width and height by aggregating minimums from panels, then apply minimums to containing element.
-        let min_width = parseFloat(this.layout.min_width) || 0;
-        let min_height = parseFloat(this.layout.min_height) || 0;
-        for (id in this.panels) {
-            min_width = Math.max(min_width, this.panels[id].layout.min_width);
-            if (parseFloat(this.panels[id].layout.min_height) > 0 && parseFloat(this.panels[id].layout.proportional_height) > 0) {
-                min_height = Math.max(min_height, (this.panels[id].layout.min_height / this.panels[id].layout.proportional_height));
-            }
-        }
-        this.layout.min_width = Math.max(min_width, 1);
-        this.layout.min_height = Math.max(min_height, 1);
-        d3.select(this.svg.node().parentNode)
-            .style('min-width', `${this.layout.min_width}px`)
-            .style('min-height', `${this.layout.min_height}px`);
-
-        // If width and height arguments were passed then adjust them against plot minimums if necessary.
+        // If width and height arguments were passed, then adjust plot dimensions to fit all panels
         // Then resize the plot and proportionally resize panels to fit inside the new plot dimensions.
         if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
+            // Resize operations may ask for a different amount of space than that used by panels.
+            const height_scaling_factor = height / this._total_height;
+
             this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
-            this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
@@ -880,36 +837,28 @@ class Plot {
             // Resize/reposition panels to fit, update proportional origins if necessary
             let y_offset = 0;
             this.panel_ids_by_y_index.forEach((panel_id) => {
+                const panel = this.panels[panel_id];
                 const panel_width = this.layout.width;
-                const panel_height = this.panels[panel_id].layout.proportional_height * this.layout.height;
-                this.panels[panel_id].setDimensions(panel_width, panel_height);
-                this.panels[panel_id].setOrigin(0, y_offset);
-                this.panels[panel_id].layout.proportional_origin.x = 0;
-                this.panels[panel_id].layout.proportional_origin.y = y_offset / this.layout.height;
+                // In this block, we are passing explicit dimensions that might require rescaling all panels at once
+                const panel_height = panel.layout.height * height_scaling_factor;
+                panel.setDimensions(panel_width, panel_height);
+                panel.setOrigin(0, y_offset);
                 y_offset += panel_height;
-                this.panels[panel_id].toolbar.update();
+                panel.toolbar.update();
             });
-        } else if (Object.keys(this.panels).length) {
-            // If width and height arguments were NOT passed (and panels exist) then determine the plot dimensions
-            // by making it conform to panel dimensions, assuming panels are already positioned correctly.
-            this.layout.width = 0;
-            this.layout.height = 0;
-            for (id in this.panels) {
-                this.layout.width = Math.max(this.panels[id].layout.width, this.layout.width);
-                this.layout.height += this.panels[id].layout.height;
-            }
-            this.layout.width = Math.max(this.layout.width, this.layout.min_width);
-            this.layout.height = Math.max(this.layout.height, this.layout.min_height);
         }
+
+        // Set the plot height to the sum of all panels (using the "real" height values accounting for panel.min_height)
+        const final_height = this._total_height;
 
         // Apply layout width and height as discrete values or viewbox values
         if (this.svg !== null) {
             // The viewBox must always be specified in order for "save as image" button to work
-            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${this.layout.height}`);
+            this.svg.attr('viewBox', `0 0 ${this.layout.width} ${final_height}`);
 
             this.svg
                 .attr('width', this.layout.width)
-                .attr('height', this.layout.height);
+                .attr('height', final_height);
         }
 
         // If the plot has been initialized then trigger some necessary render functions
@@ -931,9 +880,6 @@ class Plot {
      * @private
      */
     positionPanels() {
-
-        let id;
-
         // We want to enforce that all x-linked panels have consistent horizontal margins
         // (to ensure that aligned items stay aligned despite inconsistent initial layout parameters)
         // NOTE: This assumes panels have consistent widths already. That should probably be enforced too!
@@ -942,63 +888,44 @@ class Plot {
         // Proportional heights for newly added panels default to null unless explicitly set, so determine appropriate
         // proportional heights for all panels with a null value from discretely set dimensions.
         // Likewise handle default nulls for proportional widths, but instead just force a value of 1 (full width)
-        for (id in this.panels) {
-            if (this.panels[id].layout.proportional_height === null) {
-                this.panels[id].layout.proportional_height = this.panels[id].layout.height / this.layout.height;
-            }
-            if (this.panels[id].layout.proportional_width === null) {
-                this.panels[id].layout.proportional_width = 1;
-            }
+        for (let id in this.panels) {
             if (this.panels[id].layout.interaction.x_linked) {
                 x_linked_margins.left = Math.max(x_linked_margins.left, this.panels[id].layout.margin.left);
                 x_linked_margins.right = Math.max(x_linked_margins.right, this.panels[id].layout.margin.right);
             }
         }
 
-        // Sum the proportional heights and then adjust all proportionally so that the sum is exactly 1
-        const total_proportional_height = this.sumProportional('height');
-        if (!total_proportional_height) {
-            return this;
-        }
-        const proportional_adjustment = 1 / total_proportional_height;
-        for (id in this.panels) {
-            this.panels[id].layout.proportional_height *= proportional_adjustment;
-        }
-
         // Update origins on all panels without changing plot-level dimensions yet
         // Also apply x-linked margins to x-linked panels, updating widths as needed
         let y_offset = 0;
         this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].setOrigin(0, y_offset);
-            this.panels[panel_id].layout.proportional_origin.x = 0;
+            const panel = this.panels[panel_id];
+            panel.setOrigin(0, y_offset);
             y_offset += this.panels[panel_id].layout.height;
-            if (this.panels[panel_id].layout.interaction.x_linked) {
-                const delta = Math.max(x_linked_margins.left - this.panels[panel_id].layout.margin.left, 0)
-                    + Math.max(x_linked_margins.right - this.panels[panel_id].layout.margin.right, 0);
-                this.panels[panel_id].layout.width += delta;
-                this.panels[panel_id].layout.margin.left = x_linked_margins.left;
-                this.panels[panel_id].layout.margin.right = x_linked_margins.right;
-                this.panels[panel_id].layout.cliparea.origin.x = x_linked_margins.left;
+            if (panel.layout.interaction.x_linked) {
+                const delta = Math.max(x_linked_margins.left - panel.layout.margin.left, 0)
+                    + Math.max(x_linked_margins.right - panel.layout.margin.right, 0);
+                panel.layout.width += delta;
+                panel.layout.margin.left = x_linked_margins.left;
+                panel.layout.margin.right = x_linked_margins.right;
+                panel.layout.cliparea.origin.x = x_linked_margins.left;
             }
         });
-        const calculated_plot_height = y_offset;
-        this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].layout.proportional_origin.y = this.panels[panel_id].layout.origin.y / calculated_plot_height;
-        });
 
-        // Update dimensions on the plot to accommodate repositioned panels
+        // Update dimensions on the plot to accommodate repositioned panels (eg when resizing one panel,
+        //  also must update the plot dimensions)
         this.setDimensions();
 
         // Set dimensions on all panels using newly set plot-level dimensions and panel-level proportional dimensions
         this.panel_ids_by_y_index.forEach((panel_id) => {
-            this.panels[panel_id].setDimensions(
-                this.layout.width * this.panels[panel_id].layout.proportional_width,
-                this.layout.height * this.panels[panel_id].layout.proportional_height
+            const panel = this.panels[panel_id];
+            panel.setDimensions(
+                this.layout.width,
+                panel.layout.height
             );
         });
 
         return this;
-
     }
 
     /**
@@ -1065,15 +992,13 @@ class Plot {
                             // First set the dimensions on the panel we're resizing
                             const this_panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
                             const original_panel_height = this_panel.layout.height;
-                            this_panel.setDimensions(this_panel.layout.width, this_panel.layout.height + d3.event.dy);
+                            this_panel.setDimensions(this.parent.layout.width, this_panel.layout.height + d3.event.dy);
                             const panel_height_change = this_panel.layout.height - original_panel_height;
-                            const new_calculated_plot_height = this.parent.layout.height + panel_height_change;
                             // Next loop through all panels.
                             // Update proportional dimensions for all panels including the one we've resized using discrete heights.
                             // Reposition panels with a greater y-index than this panel to their appropriate new origin.
                             this.parent.panel_ids_by_y_index.forEach((loop_panel_id, loop_panel_idx) => {
                                 const loop_panel = this.parent.panels[this.parent.panel_ids_by_y_index[loop_panel_idx]];
-                                loop_panel.layout.proportional_height = loop_panel.layout.height / new_calculated_plot_height;
                                 if (loop_panel_idx > panel_idx) {
                                     loop_panel.setOrigin(loop_panel.layout.origin.x, loop_panel.layout.origin.y + panel_height_change);
                                     loop_panel.toolbar.position();
@@ -1107,7 +1032,7 @@ class Plot {
                         this.dragging = false;
                     });
                     corner_drag.on('drag', () => {
-                        this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent.layout.height + d3.event.dy);
+                        this.parent.setDimensions(this.parent.layout.width + d3.event.dx, this.parent._total_height + d3.event.dy);
                     });
                     corner_selector.call(corner_drag);
                     this.parent.panel_boundaries.corner_selector = corner_selector;
@@ -1121,9 +1046,10 @@ class Plot {
                 // Position panel boundaries
                 const plot_page_origin = this.parent._getPageOrigin();
                 this.selectors.forEach((selector, panel_idx) => {
-                    const panel_page_origin = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]]._getPageOrigin();
+                    const panel = this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]];
+                    const panel_page_origin = panel._getPageOrigin();
                     const left = plot_page_origin.x;
-                    const top = panel_page_origin.y + this.parent.panels[this.parent.panel_ids_by_y_index[panel_idx]].layout.height - 12;
+                    const top = panel_page_origin.y + panel.layout.height - 12;
                     const width = this.parent.layout.width - 1;
                     selector
                         .style('top', `${top}px`)
@@ -1136,7 +1062,7 @@ class Plot {
                 const corner_padding = 10;
                 const corner_size = 16;
                 this.corner_selector
-                    .style('top', `${plot_page_origin.y + this.parent.layout.height - corner_padding - corner_size}px`)
+                    .style('top', `${plot_page_origin.y + this.parent._total_height - corner_padding - corner_size}px`)
                     .style('left', `${plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size}px`);
                 return this;
             },
@@ -1245,11 +1171,10 @@ class Plot {
         // positioning. TODO: make this additional call unnecessary.
         const client_rect = this.svg.node().getBoundingClientRect();
         const width = client_rect.width ? client_rect.width : this.layout.width;
-        const height = client_rect.height ? client_rect.height : this.layout.height;
+        const height = client_rect.height ? client_rect.height : this._total_height;
         this.setDimensions(width, height);
 
         return this;
-
     }
 
     /**
@@ -1357,6 +1282,11 @@ class Plot {
 
         return this;
 
+    }
+
+    get _total_height() {
+        // The plot height is a calculated property, derived from the sum of its panel layout objects
+        return this.layout.panels.reduce((acc, item) => item.height + acc, 0);
     }
 }
 

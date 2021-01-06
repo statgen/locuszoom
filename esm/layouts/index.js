@@ -117,6 +117,8 @@ const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
+    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
+    id_field: '{{namespace[assoc]}}variant',
     coalesce: {
         active: true,
     },
@@ -167,8 +169,6 @@ const association_pvalues_layer = {
         { shape: 'circle', color: '#B8B8B8', size: 40, label: 'no r² data', class: 'lz-data_layer-scatter' },
     ],
     label: null,
-    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
-    id_field: '{{namespace[assoc]}}variant',
     z_index: 2,
     x_axis: {
         field: '{{namespace[assoc]}}position',
@@ -567,11 +567,8 @@ const region_nav_plot_toolbar = function () {
 
 const association_panel = {
     id: 'association',
-    width: 800,
-    height: 225,
-    min_width: 400,
     min_height: 200,
-    proportional_width: 1,
+    height: 225,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: (function () {
@@ -620,11 +617,8 @@ const association_panel = {
 
 const coaccessibility_panel = {
     id: 'coaccessibility',
-    width: 800,
-    height: 225,
-    min_width: 400,
-    min_height: 100,
-    proportional_width: 1,
+    min_height: 150,
+    height: 180,
     margin: { top: 35, right: 50, bottom: 40, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -713,11 +707,8 @@ const association_catalog_panel = function () {
 
 const genes_panel = {
     id: 'genes',
-    width: 800,
+    min_height: 150,
     height: 225,
-    min_width: 400,
-    min_height: 112.5,
-    proportional_width: 1,
     margin: { top: 20, right: 50, bottom: 20, left: 50 },
     axes: {},
     interaction: {
@@ -744,11 +735,8 @@ const genes_panel = {
 
 const phewas_panel = {
     id: 'phewas',
-    width: 800,
-    height: 300,
-    min_width: 800,
     min_height: 300,
-    proportional_width: 1,
+    height: 300,
     margin: { top: 20, right: 50, bottom: 120, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     axes: {
@@ -776,10 +764,8 @@ const phewas_panel = {
 
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
-    width: 800,
-    height: 45,
     min_height: 45,
-    proportional_width: 1,
+    height: 45,
     margin: { top: 25, right: 50, bottom: 0, left: 50 },
     inner_border: 'rgb(210, 210, 210)',
     toolbar: deepCopy(standard_panel_toolbar),
@@ -800,43 +786,38 @@ const annotation_catalog_panel = {
 const standard_association_plot = {
     state: {},
     width: 800,
-    height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_association_toolbar),
+    toolbar: standard_association_toolbar,
     panels: [
-        merge({ proportional_height: 0.5}, deepCopy(association_panel)),
-        merge({ proportional_height: 0.5}, deepCopy(genes_panel)),
+        deepCopy(association_panel),
+        deepCopy(genes_panel),
     ],
 };
 
 const association_catalog_plot = {
     state: {},
     width: 800,
-    height: 500,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
-    toolbar: deepCopy(standard_association_toolbar),
+    toolbar: standard_association_toolbar,
     panels: [
-        deepCopy(annotation_catalog_panel),
-        deepCopy(association_catalog_panel),
-        deepCopy(genes_panel),
+        annotation_catalog_panel,
+        association_catalog_panel,
+        genes_panel,
     ],
 };
 
 const standard_phewas_plot = {
     width: 800,
-    height: 600,
-    min_width: 800,
-    min_height: 600,
     responsive_resize: true,
-    toolbar: deepCopy(standard_plot_toolbar),
+    toolbar: standard_plot_toolbar,
     panels: [
-        merge({proportional_height: 0.5}, deepCopy(phewas_panel)),
+        deepCopy(phewas_panel),
         merge({
-            proportional_height: 0.5,
+            height: 300,
             margin: { bottom: 40 },
             axes: {
                 x: {
@@ -854,21 +835,17 @@ const standard_phewas_plot = {
 const coaccessibility_plot = {
     state: {},
     width: 800,
-    height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
     toolbar: deepCopy(standard_plot_toolbar),
     panels: [
-        Object.assign(
-            { proportional_height: 0.4 },
-            deepCopy(coaccessibility_panel)
-        ),
+        deepCopy(coaccessibility_panel),
         function () {
             // Take the default genes panel, and add a custom feature to highlight gene tracks based on short name
             // This is a companion to the "match" directive in the coaccessibility panel
             const base = Object.assign(
-                { proportional_height: 0.6 },
+                { height: 270 },
                 deepCopy(genes_panel)
             );
             const layer = base.data_layers[0];

@@ -254,5 +254,4 @@ function debounce(func, delay = 500) {
     };
 }
 
-
 export { applyStyles, debounce, generateCurtain, generateLoader };

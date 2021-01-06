@@ -108,7 +108,9 @@ class BaseDataLayer {
         }
 
         /**
-         * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state
+         * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state.
+         * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
+         * loaded: it contains the "defaults", not just the result of a calculated value.
          * @protected
          * @member {Object}
          */
@@ -551,6 +553,7 @@ class BaseDataLayer {
      */
     _drawTooltip(tooltip, position, x_min, x_max, y_min, y_max) {
         const panel_layout = this.parent.layout;
+        const plot_layout = this.parent_plot.layout;
         const layer_layout = this.layout;
 
         // Tooltip position params: as defined in the default stylesheet, used in calculations
@@ -563,7 +566,7 @@ class BaseDataLayer {
         const page_origin = this._getPageOrigin();
         const tooltip_box = tooltip.selector.node().getBoundingClientRect();
         const data_layer_height = panel_layout.height - (panel_layout.margin.top + panel_layout.margin.bottom);
-        const data_layer_width = panel_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
+        const data_layer_width = plot_layout.width - (panel_layout.margin.left + panel_layout.margin.right);
 
         // Clip the edges of the datum to the available plot area
         x_min = Math.max(x_min, 0);
@@ -594,7 +597,7 @@ class BaseDataLayer {
         } else if (placement === 'horizontal') {
             // Auto select whether to position to the left of the item, or to the right
             y_offset = 0;
-            if (x_center <= panel_layout.width / 2) {
+            if (x_center <= plot_layout.width / 2) {
                 placement = 'left';
             } else {
                 placement = 'right';

@@ -12,7 +12,7 @@ describe('LocusZoom.Toolbar', function() {
             var layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'dimensions' },
+                        { type: 'title', title: 'LocusZoom' },
                     ],
                 },
                 panels: [
@@ -85,7 +85,7 @@ describe('LocusZoom.Toolbar', function() {
             var datasources = new DataSources();
             var layout = {
                 panels: [
-                    { id: 'test', width: 100, height: 100 },
+                    { id: 'test', height: 100 },
                 ],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -98,11 +98,11 @@ describe('LocusZoom.Toolbar', function() {
             var layout = {
                 toolbar: {
                     widgets: [
-                        { type: 'dimensions' },
+                        { type: 'title', title: 'LocusZoom' },
                     ],
                 },
                 panels: [
-                    { id: 'test', width: 100, height: 100 },
+                    { id: 'test', height: 100 },
                 ],
             };
             d3.select('body').append('div').attr('id', 'plot');

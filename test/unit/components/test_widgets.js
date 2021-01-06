@@ -5,35 +5,6 @@ import {assert} from 'chai';
 
 
 describe('Toolbar widgets', function () {
-    describe('Dimensions Widget', function() {
-        beforeEach(function() {
-            var datasources = new DataSources();
-            var layout = {
-                toolbar: {
-                    widgets: [
-                        { type: 'dimensions' },
-                    ],
-                },
-                panels: [
-                    { id: 'test', width: 100, height: 100 },
-                ],
-            };
-            d3.select('body').append('div').attr('id', 'plot');
-            this.plot = populate('#plot', datasources, layout);
-        });
-        afterEach(function() {
-            d3.select('#plot').remove();
-            this.plot = null;
-        });
-        it('Should show initial plot dimensions', function() {
-            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '100px × 100px');
-        });
-        it('Should show updated plot dimensions automatically as dimensions change', function() {
-            this.plot.setDimensions(220, 330);
-            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '220px × 330px');
-        });
-    });
-
     describe('Region Scale Widget', function() {
         beforeEach(function() {
             var datasources = new DataSources();

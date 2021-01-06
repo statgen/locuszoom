@@ -66,29 +66,13 @@ describe('Panel', function() {
         it('should allow changing dimensions', function() {
             // TODO: What, exactly, is this testing?
             this.association_panel.setDimensions(840, 560);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
 
             this.association_panel.setDimensions(9000, -50);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
 
             this.association_panel.setDimensions('q', 942);
-            assert.equal(this.association_panel.layout.width, 840);
             assert.equal(this.association_panel.layout.height, 560);
-        });
-
-        it('should enforce minimum dimensions', function() {
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(this.association_panel.layout.min_width / 2, 0);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
-
-            this.association_panel.setDimensions(0, this.association_panel.layout.min_height / 2);
-            assert.ok(this.association_panel.layout.width >= this.association_panel.layout.min_width);
-            assert.ok(this.association_panel.layout.height >= this.association_panel.layout.min_height);
         });
 
         it('should allow setting origin irrespective of plot dimensions', function() {
@@ -119,7 +103,7 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.margin.left, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.y, 1);
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.layout.width - (2 + 4));
+            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.parent.layout.width - (2 + 4));
             assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (1 + 3));
 
             this.association_panel.setMargin(0, '12', -17, {foo: 'bar'});
@@ -130,7 +114,7 @@ describe('Panel', function() {
             assert.equal(this.association_panel.layout.cliparea.origin.x, 4);
             assert.equal(this.association_panel.layout.cliparea.origin.y, 0);
 
-            assert.equal(this.association_panel.layout.cliparea.width, this.association_panel.layout.width - (12 + 4));
+            assert.equal(this.association_panel.layout.cliparea.width, this.plot.layout.width - (12 + 4));
             assert.equal(this.association_panel.layout.cliparea.height, this.association_panel.layout.height - (0 + 3));
         });
 
@@ -180,9 +164,8 @@ describe('Panel', function() {
         beforeEach(function() {
             const layout = {
                 width: 800,
-                height: 400,
                 panels: [
-                    { id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1 },
+                    { id: 'panel0', height: 400 },
                 ],
             };
             d3.select('body').append('div').attr('id', 'plot');
@@ -232,17 +215,8 @@ describe('Panel', function() {
             const datasources = new DataSources();
             this.layout = {
                 width: 100,
-                height: 100,
-                min_width: 100,
-                min_height: 100,
                 resizable: false,
-                panels: [
-                    {
-                        id: 'test',
-                        width: 100,
-                        height: 100,
-                    },
-                ],
+                panels: [{ id: 'test', height: 100 }],
             };
             d3.select('body').append('div').attr('id', 'plot');
             this.plot = populate('#plot', datasources, this.layout);
@@ -339,11 +313,9 @@ describe('Panel', function() {
                 .add('static', ['StaticJSON', [{ id: 'a', x: 1, y: 2 }, { id: 'b', x: 3, y: 4 }, { id: 'c', x: 5, y: 6 }] ]);
             this.layout = {
                 width: 100,
-                height: 100,
                 panels: [
                     {
                         id: 'p',
-                        width: 100,
                         height: 100,
                         axes: {
                             x: { label: 'x' },
@@ -384,7 +356,6 @@ describe('Panel', function() {
             d3.select('body').append('div').attr('id', 'plot');
             const layout = {
                 width: 100,
-                height: 100,
                 panels: [
                     { id: 'p1', interaction: { x_linked: true } },
                     { id: 'p2', interaction: { y1_linked: true } },

@@ -17,10 +17,10 @@ describe('LocusZoom.DataLayer', function () {
         beforeEach(function () {
             const layout = {
                 width: 800,
-                height: 400,
                 panels: [
                     {
-                        id: 'panel0', width: 800, proportional_width: 1, height: 400, proportional_height: 1,
+                        id: 'panel0',
+                        height: 400,
                         data_layers: [
                             { id: 'layerA', type: 'line' },
                             { id: 'layerB', type: 'line' },

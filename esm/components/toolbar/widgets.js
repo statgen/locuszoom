@@ -312,12 +312,12 @@ class Button {
                 let left;
                 if (this.parent_toolbar.type === 'panel') {
                     top = (page_origin.y + toolbar_client_rect.height + (2 * padding));
-                    left = Math.max(page_origin.x + this.parent_svg.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
+                    left = Math.max(page_origin.x + this.parent_plot.layout.width - menu_client_rect.width - padding, page_origin.x + padding);
                 } else {
                     top = button_client_rect.bottom + page_scroll_top + padding - container_offset.top;
                     left = Math.max(button_client_rect.left + button_client_rect.width - menu_client_rect.width - container_offset.left, page_origin.x + padding);
                 }
-                const base_max_width = Math.max(this.parent_svg.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
+                const base_max_width = Math.max(this.parent_plot.layout.width - (2 * padding) - scrollbar_padding, scrollbar_padding);
                 const container_max_width = base_max_width;
                 const content_max_width = (base_max_width - (4 * padding));
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
@@ -654,24 +654,6 @@ class Title extends BaseWidget {
             title += ` <small>${this.layout.subtitle}</small>`;
         }
         this.title_selector.html(title);
-        return this;
-    }
-}
-
-/**
- * Renders text to display the current dimensions of the plot. Automatically updated as plot dimensions change
- */
-class Dimensions extends BaseWidget {
-    update() {
-        const display_width = !this.parent_plot.layout.width.toString().includes('.') ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
-        const display_height = !this.parent_plot.layout.height.toString().includes('.') ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
-        this.selector.html(`${display_width}px × ${display_height}px`);
-        if (this.layout.class) {
-            this.selector.attr('class', this.layout.class);
-        }
-        if (this.layout.style) {
-            applyStyles(this.selector, this.layout.style);
-        }
         return this;
     }
 }
@@ -1500,7 +1482,6 @@ class SetState extends BaseWidget {
 export {
     BaseWidget,  // This is used to create subclasses
     Button as _Button, // This is used to create Widgets that contain a button. It actually shouldn't be in the registry because it's not usable directly..
-    Dimensions as dimensions,
     DisplayOptions as display_options,
     DownloadSVG as download,
     DownloadPNG as download_png,

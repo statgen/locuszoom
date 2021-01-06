@@ -98,21 +98,42 @@ const ordinal_cycle = (parameters, value, index) => {
 };
 
 /**
- * A scale function that chooses a random-looking color scheme, but makes the same choice every time given the same
- *  value, regardless of ordering or other data
+ * A scale function that auto-chooses something (like color) from a preset scheme, and makes the same choice every
+ * time given the same value, regardless of ordering or what other data is in the region
  *
  * This is useful when categories must be stable (same color, every time). But sometimes it will assign adjacent values
  *  the same color due to hash collisions.
  *
+ * For performance reasons, this is memoized once per instance. Eg, each scalable color parameter has its own cache.
+ *  This function is therefore slightly less amenable to layout mutations like "changing the options after scaling
+ *  function is used", but this is not expected to be a common use case.
+ *
  *  CAVEAT: Some data sources do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
- *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data.
+ *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
+ *    like a category or gene name.
  * @param parameters
- *  @param {Array} parameters.values A list of option values
+ * @param {Array} parameters.values A list of option values
+ * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
+ *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
+ *  discrete categories.
  * @param value
  * @param index
  */
-const stable_choice = (parameters, value, index) => {
+let stable_choice = (parameters, value, index) => {
     const options = parameters.values;
+    // Each place the function gets used has its own parameters object. This function thus memoizes per usage
+    //  ("association point color") rather than globally
+    const cache = parameters._cache = parameters._cache || new Map();
+    const max_cache_size = parameters.max_cache_size || 500;
+
+    if (cache.size >= max_cache_size) {
+        // Prevent cache from growing out of control (eg as user moves between regions a lot)
+        cache.clear();
+    }
+    if (cache.has(value)) {
+        return cache.get(value);
+    }
+
     // Simple JS hashcode implementation, from:
     //  https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
     let hash = 0;
@@ -123,7 +144,9 @@ const stable_choice = (parameters, value, index) => {
         hash |= 0; // Convert to 32bit integer
     }
     // Convert 32 bit integer to be within the range of options allowed
-    return options[Math.abs(hash) % options.length];
+    const result = options[Math.abs(hash) % options.length];
+    cache.set(value, result);
+    return result;
 };
 
 /**

@@ -138,7 +138,7 @@ describe('Interval annotation track', function () {
             const layout = {
                 panels: [ LAYOUTS.get('panel', 'intervals') ],
                 state: { chr: 'X', start: 1, end: 500 },
-                width: 800, height: 550,
+                width: 800,
             };
             layout.panels[0].data_layers[0].split_tracks = true;
 

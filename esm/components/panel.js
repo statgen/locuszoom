@@ -18,14 +18,9 @@ import data_layers from '../registry/data_layers';
 const default_layout = {
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
-    width:  0,
-    height: 0,
+    min_height: 1,  // When resizing, do not allow height to go below this value
+    height: 1, // The actual height allocated to the panel (>= min_height)
     origin: { x: 0, y: null },
-    min_width: 1,
-    min_height: 1,
-    proportional_width: null,
-    proportional_height: null,
-    proportional_origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
     toolbar: {
@@ -507,14 +502,14 @@ class Panel {
 
         // Set size on the clip rect
         this.svg.clipRect
-            .attr('width', this.layout.width)
+            .attr('width', this.parent_plot.layout.width)
             .attr('height', this.layout.height);
 
         // Set and position the inner border, style if necessary
         this.inner_border
             .attr('x', this.layout.margin.left)
             .attr('y', this.layout.margin.top)
-            .attr('width', this.layout.width - (this.layout.margin.left + this.layout.margin.right))
+            .attr('width', this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right))
             .attr('height', this.layout.height - (this.layout.margin.top + this.layout.margin.bottom));
         if (this.layout.inner_border) {
             this.inner_border
@@ -784,24 +779,6 @@ class Panel {
      * @returns {Panel}
      */
     initializeLayout() {
-
-        // If the layout is missing BOTH width and proportional width then set the proportional width to 1.
-        // This will default the panel to taking up the full width of the plot.
-        if (this.layout.width === 0 && this.layout.proportional_width === null) {
-            this.layout.proportional_width = 1;
-        }
-
-        // If the layout is missing BOTH height and proportional height then set the proportional height to
-        // an equal share of the plot's current height.
-        if (this.layout.height === 0 && this.layout.proportional_height === null) {
-            const panel_count = Object.keys(this.parent.panels).length;
-            if (panel_count > 0) {
-                this.layout.proportional_height = (1 / panel_count);
-            } else {
-                this.layout.proportional_height = 1;
-            }
-        }
-
         // Set panel dimensions, origin, and margin
         this.setDimensions();
         this.setOrigin();
@@ -845,22 +822,16 @@ class Panel {
     setDimensions(width, height) {
         if (typeof width != 'undefined' && typeof height != 'undefined') {
             if (!isNaN(width) && width >= 0 && !isNaN(height) && height >= 0) {
-                this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
+                this.parent.layout.width = Math.round(+width);
+                // Ensure that the requested height satisfies all minimum values
                 this.layout.height = Math.max(Math.round(+height), this.layout.min_height);
             }
-        } else {
-            if (this.layout.proportional_width !== null) {
-                this.layout.width = Math.max(this.layout.proportional_width * this.parent.layout.width, this.layout.min_width);
-            }
-            if (this.layout.proportional_height !== null) {
-                this.layout.height = Math.max(this.layout.proportional_height * this.parent.layout.height, this.layout.min_height);
-            }
         }
-        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         if (this.svg.clipRect) {
             this.svg.clipRect
-                .attr('width', this.layout.width)
+                .attr('width', this.parent.layout.width)
                 .attr('height', this.layout.height);
         }
         if (this.initialized) {
@@ -919,20 +890,21 @@ class Panel {
         if (!isNaN(left)   && left   >= 0) {
             this.layout.margin.left = Math.max(Math.round(+left), 0);
         }
+        // If the specified margins are greater than the available width, then shrink the margins.
         if (this.layout.margin.top + this.layout.margin.bottom > this.layout.height) {
             extra = Math.floor(((this.layout.margin.top + this.layout.margin.bottom) - this.layout.height) / 2);
             this.layout.margin.top -= extra;
             this.layout.margin.bottom -= extra;
         }
-        if (this.layout.margin.left + this.layout.margin.right > this.layout.width) {
-            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.layout.width) / 2);
+        if (this.layout.margin.left + this.layout.margin.right > this.parent_plot.layout.width) {
+            extra = Math.floor(((this.layout.margin.left + this.layout.margin.right) - this.parent_plot.layout.width) / 2);
             this.layout.margin.left -= extra;
             this.layout.margin.right -= extra;
         }
         ['top', 'right', 'bottom', 'left'].forEach((m) => {
             this.layout.margin[m] = Math.max(this.layout.margin[m], 0);
         });
-        this.layout.cliparea.width = Math.max(this.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
+        this.layout.cliparea.width = Math.max(this.parent_plot.layout.width - (this.layout.margin.left + this.layout.margin.right), 0);
         this.layout.cliparea.height = Math.max(this.layout.height - (this.layout.margin.top + this.layout.margin.bottom), 0);
         this.layout.cliparea.origin.x = this.layout.margin.left;
         this.layout.cliparea.origin.y = this.layout.margin.top;
@@ -962,7 +934,7 @@ class Panel {
         const clipPath = this.svg.container.append('clipPath')
             .attr('id', `${base_id}.clip`);
         this.svg.clipRect = clipPath.append('rect')
-            .attr('width', this.layout.width)
+            .attr('width', this.parent_plot.layout.width)
             .attr('height', this.layout.height);
 
         // Append svg group for rendering all panel child elements, clipped by the clip path
@@ -1301,7 +1273,7 @@ class Panel {
                 label_rotate: -90,
             },
             y2: {
-                position: `translate(${this.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
+                position: `translate(${this.parent_plot.layout.width - this.layout.margin.right}, ${this.layout.margin.top})`,
                 orientation: 'right',
                 label_x: (this.layout.axes[axis].label_offset || 0),
                 label_y: this.layout.cliparea.height / 2,
@@ -1451,11 +1423,8 @@ class Panel {
         if (+target_height) {
             target_height += +this.layout.margin.top + +this.layout.margin.bottom;
             // FIXME: plot.setDimensions calls panel.setDimensions (though without arguments)
-            this.setDimensions(this.layout.width, target_height);
+            this.setDimensions(this.parent_plot.layout.width, target_height);
             this.parent.setDimensions();
-            this.parent.panel_ids_by_y_index.forEach((id) => {
-                this.parent.panels[id].layout.proportional_height = null;
-            });
             this.parent.positionPanels();
         }
     }
