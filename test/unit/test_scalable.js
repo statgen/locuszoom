@@ -110,7 +110,30 @@ describe('Scale Functions', function() {
             assert.equal(stable_choice(parameters, ['a', 'b', 'c']), 2, 'Should handle arrays that serialize to a string');
             // Document that the string representation of an object is useless for comparison (always [object Object])
             assert.equal(stable_choice(parameters, {}), 8, 'An empty object will yield a hash value...');
-            assert.equal(stable_choice(parameters, {}), 8, '...same value returned regardless of object contents');
+            assert.equal(stable_choice(parameters, { afield: 'avalue' }), 8, '...same value returned regardless of object contents');
+        });
+        it('memoizes repeated calls', function () {
+            const parameters = { values: ['a', 'b', 'c'] };
+            assert.equal(stable_choice(parameters, 'avalue'), 'c', 'First call returns expected result');
+            assert.exists(parameters._cache, 'A cache is created on the parameters object');
+            assert.hasAllKeys(parameters._cache, ['avalue'], 'Result is cached');
+
+            // To test that we're returning a cached value, we'll reach in and modify the cache
+            parameters._cache.set('avalue', 42);
+            assert.equal(stable_choice(parameters, 'avalue'), 42, 'Second call uses the cached result');
+        });
+        it('allows setting a max cache size, after which all old keys are evicted', function () {
+            const parameters = { values: ['a', 'b', 'c'], max_cache_size: 2 };
+
+            stable_choice(parameters, 1);
+            stable_choice(parameters, 2);
+            assert.hasAllKeys(parameters._cache, ['1', '2'], 'First two calls are cached');
+
+            stable_choice(parameters, 3);
+            assert.hasAllKeys(parameters._cache, ['3'], 'At third call, prior two keys are evicted.');
+
+            stable_choice(parameters, 4);
+            assert.hasAllKeys(parameters._cache, ['3', '4'], 'Fourth call is added to cache');
         });
     });
     describe('ordinal_cycle', function () {

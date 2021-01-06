@@ -117,6 +117,8 @@ const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
     type: 'scatter',
+    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
+    id_field: '{{namespace[assoc]}}variant',
     coalesce: {
         active: true,
     },
@@ -167,8 +169,6 @@ const association_pvalues_layer = {
         { shape: 'circle', color: '#B8B8B8', size: 40, label: 'no r² data', class: 'lz-data_layer-scatter' },
     ],
     label: null,
-    fields: ['{{namespace[assoc]}}variant', '{{namespace[assoc]}}position', '{{namespace[assoc]}}log_pvalue', '{{namespace[assoc]}}log_pvalue|logtoscinotation', '{{namespace[assoc]}}ref_allele', '{{namespace[ld]}}state', '{{namespace[ld]}}isrefvar'],
-    id_field: '{{namespace[assoc]}}variant',
     z_index: 2,
     x_axis: {
         field: '{{namespace[assoc]}}position',
