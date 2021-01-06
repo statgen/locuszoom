@@ -659,25 +659,6 @@ class Title extends BaseWidget {
 }
 
 /**
- * Renders text to display the current dimensions of the plot. Automatically updated as plot dimensions change
- * FIXME: Move this to an extension
- */
-class Dimensions extends BaseWidget {
-    update() {
-        const display_width = !this.parent_plot.layout.width.toString().includes('.') ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
-        const display_height = !this.parent_plot.layout.height.toString().includes('.') ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
-        this.selector.html(`${display_width}px × ${display_height}px`);
-        if (this.layout.class) {
-            this.selector.attr('class', this.layout.class);
-        }
-        if (this.layout.style) {
-            applyStyles(this.selector, this.layout.style);
-        }
-        return this;
-    }
-}
-
-/**
  * Display the current scale of the genome region displayed in the plot, as defined by the difference between
  *  `state.end` and `state.start`.
  */
@@ -1501,7 +1482,6 @@ class SetState extends BaseWidget {
 export {
     BaseWidget,  // This is used to create subclasses
     Button as _Button, // This is used to create Widgets that contain a button. It actually shouldn't be in the registry because it's not usable directly..
-    Dimensions as dimensions,
     DisplayOptions as display_options,
     DownloadSVG as download,
     DownloadPNG as download_png,
