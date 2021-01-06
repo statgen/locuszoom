@@ -70,7 +70,6 @@ are defined. Consider the `standard_association` plot:
 LocusZoom.Layouts.add('plot', 'standard_association', {
     state: {},
     width: 800,
-    height: 450,
     responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
@@ -84,9 +83,10 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
 
 In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this 
 plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
-we ask for 450 px in height, and each panel gets half that space (225 px). The actual details of what to 
-render are defined as nested layouts (association and genes panels), and the registry also contains predefined options 
-for this piece- `LocusZoom.Layouts.get(...)` returns a JSON object.  
+each panel is 225px high, so the total plot height will be the sum of panels (450 px); if more panels are added, 
+the plot height will increase to match. The actual details of what to render are defined as nested layouts 
+(association and genes panels), and the registry also contains predefined options for this piece- 
+`LocusZoom.Layouts.get(...)` returns a JSON object.  
 
 Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in 
 terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
