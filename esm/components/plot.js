@@ -826,7 +826,7 @@ class Plot {
             // Resize operations may ask for a different amount of space than that used by panels.
             const height_scaling_factor = height / this._total_height;
 
-            this.layout.width = Math.round(+width);
+            this.layout.width = Math.max(Math.round(+width), this.layout.min_width);
             // Override discrete values if resizing responsively
             if (this.layout.responsive_resize) {
                 // All resize modes will affect width
@@ -1062,7 +1062,6 @@ class Plot {
                 const corner_padding = 10;
                 const corner_size = 16;
                 this.corner_selector
-                    // TODO: get correct plot height as sum of panel layout heights
                     .style('top', `${plot_page_origin.y + this.parent._total_height - corner_padding - corner_size}px`)
                     .style('left', `${plot_page_origin.x + this.parent.layout.width - corner_padding - corner_size}px`);
                 return this;
@@ -1172,7 +1171,6 @@ class Plot {
         // positioning. TODO: make this additional call unnecessary.
         const client_rect = this.svg.node().getBoundingClientRect();
         const width = client_rect.width ? client_rect.width : this.layout.width;
-        // TODO: Get correct total height
         const height = client_rect.height ? client_rect.height : this._total_height;
         this.setDimensions(width, height);
 

@@ -142,6 +142,7 @@ describe('LocusZoom.Plot', function() {
             const datasources = new DataSources();
             const layout = {
                 width: 100,
+                min_width: 100,
                 panels: [],
             };
             d3.select('body').append('div').attr('id', 'plot');

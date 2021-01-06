@@ -665,7 +665,6 @@ class Title extends BaseWidget {
 class Dimensions extends BaseWidget {
     update() {
         const display_width = !this.parent_plot.layout.width.toString().includes('.') ? this.parent_plot.layout.width : this.parent_plot.layout.width.toFixed(2);
-        // FIXME: Height
         const display_height = !this.parent_plot.layout.height.toString().includes('.') ? this.parent_plot.layout.height : this.parent_plot.layout.height.toFixed(2);
         this.selector.html(`${display_width}px × ${display_height}px`);
         if (this.layout.class) {
