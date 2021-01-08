@@ -28,6 +28,11 @@ class BaseAdapter {
         this._enableCache = true;
         this._cachedKey = null;
 
+        // Almost all LZ sources are "region based". Cache the region requested and use it to determine whether
+        //   the cache would satisfy the request.
+        this._cache_pos_start = null;
+        this._cache_pos_end = null;
+
         /**
          * Whether this data source type is dependent on previous requests- for example, the LD source cannot annotate
          *  association data if no data was found for that region.
@@ -54,16 +59,34 @@ class BaseAdapter {
 
     /**
      * A unique identifier that indicates whether cached data is valid for this request. For most sources using GET
-     *  requests to a REST API, this is usually the URL.
+     *  requests to a REST API, this is usually the region requested. Some sources will append additional params to define the request.
+     *
+     *  This means that to change caching behavior, both the URL and the cache key may need to be updated. However,
+     *      it allows most datasources to skip an extra network request when zooming in.
      * @protected
      * @param {Object} state Information available in plot.state (chr, start, end). Sometimes used to inject globally
      *  available information that influences the request being made.
      * @param {Object} chain The data chain from previous requests made in a sequence.
      * @param fields
-     * @returns {String|undefined}
+     * @returns {String}
      */
     getCacheKey(state, chain, fields) {
-        return this.getURL(state, chain, fields);
+        // Most region sources, by default, will cache the largest region that satisfies the request: zooming in
+        //  should be satisfied via the cache, but pan or region change operations will cause a network request
+
+        // Some data source rely on values set in chain.header during the getURL call. (eg, the LD source uses
+        //  this to find the LD refvar) Calling this method is a backwards-compatible way of ensuring that value is set,
+        //  even on a cache hit in which getURL otherwise wouldn't be called.
+        // Some of the data sources that rely on this behavior are user-defined, hence compatibility hack
+        this.getURL(state, chain, fields);
+
+        const cache_pos_chr = state.chr;
+        const {_cache_pos_start, _cache_pos_end} = this;
+        if (_cache_pos_start && state.start >= _cache_pos_start && _cache_pos_end && state.end <= _cache_pos_end ) {
+            return `${cache_pos_chr}_${_cache_pos_start}_${_cache_pos_end}`;
+        } else {
+            return `${state.chr}_${state.start}_${state.end}`;
+        }
     }
 
     /**
@@ -99,16 +122,20 @@ class BaseAdapter {
      * For most use cases, it is better to override `fetchRequest` instead, to avoid bypassing the cache mechanism
      * by accident.
      * @protected
+     * @return {Promise}
      */
     getRequest(state, chain, fields) {
         let req;
         const cacheKey = this.getCacheKey(state, chain, fields);
+
         if (this._enableCache && typeof(cacheKey) !== 'undefined' && cacheKey === this._cachedKey) {
             req = Promise.resolve(this._cachedResponse);  // Resolve to the value of the current promise
         } else {
             req = this.fetchRequest(state, chain, fields);
             if (this._enableCache) {
                 this._cachedKey = cacheKey;
+                this._cache_pos_start = state.start;
+                this._cache_pos_end = state.end;
                 this._cachedResponse = req;
             }
         }
@@ -468,7 +495,9 @@ class LDServer extends BaseApiAdapter {
     /**
      * Get the LD reference variant, which by default will be the most significant hit in the assoc results
      *   This will be used in making the original query to the LD server for pairwise LD information
-     * @returns {*|string} The marker id (expected to be in `chr:pos_ref/alt` format) of the reference variant
+     * @returns String[] Two strings: 1) the marker id (expected to be in `chr:pos_ref/alt` format) of the reference
+     *  variant, and 2) the marker ID as it appears in the original dataset that we are joining to, so that the exact
+     *  refvar can be marked when plotting the data..
      */
     getRefvar(state, chain, fields) {
         let findExtremeValue = function(records, pval_field) {
@@ -517,29 +546,6 @@ class LDServer extends BaseApiAdapter {
             }
             refVar = chain.body[findExtremeValue(chain.body, keys.pvalue)][keys.id];
         }
-        return refVar;
-    }
-
-    getURL(state, chain, fields) {
-        // Accept the following params in this.params:
-        // - method (r, rsquare, cov)
-        // - source (aka panel)
-        // - population (ALL, AFR, EUR, etc)
-        // - build
-        // The LD source/pop can be overridden from plot.state for dynamic layouts
-        const build = state.genome_build || this.params.build || 'GRCh37';
-        let source = state.ld_source || this.params.source || '1000G';
-        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
-        const method = this.params.method || 'rsquare';
-
-        if (source === '1000G' && build === 'GRCh38') {
-            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
-            source = '1000G-FRZ09';
-        }
-
-        validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
-
-        let refVar = this.getRefvar(state, chain, fields);
         // Some datasets, notably the Portal, use a different marker format.
         //  Coerce it into one that will work with the LDServer API. (CHROM:POS_REF/ALT)
         const REGEX_MARKER = /^(?:chr)?([a-zA-Z0-9]+?)[_:-](\d+)[_:|-]?(\w+)?[/_:|-]?([^_]+)?_?(.*)?/;
@@ -551,21 +557,54 @@ class LDServer extends BaseApiAdapter {
         const [original, chrom, pos, ref, alt] = match;
         // Currently, the LD server only accepts full variant specs; it won't return LD w/o ref+alt. Allowing
         //  a partial match at most leaves room for potential future features.
-        refVar = `${chrom}:${pos}`;
+        let refVar_formatted = `${chrom}:${pos}`;
         if (ref && alt) {
-            refVar += `_${ref}/${alt}`;
+            refVar_formatted += `_${ref}/${alt}`;
         }
+
+        return [refVar_formatted, original];
+    }
+
+    getURL(state, chain, fields) {
+        // Accept the following params in this.params:
+        // - method (r, rsquare, cov)
+        // - source (aka panel)
+        // - population (ALL, AFR, EUR, etc)
+        // - build
+        // The LD source/pop can be overridden from plot.state for dynamic layouts
+        const build = state.genome_build || this.params.build || 'GRCh37'; // This isn't expected to change after the data is plotted.
+        let source = state.ld_source || this.params.source || '1000G';
+        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
+        const method = this.params.method || 'rsquare';
+
+        if (source === '1000G' && build === 'GRCh38') {
+            // For build 38 (only), there is a newer/improved 1000G LD panel available that uses WGS data. Auto upgrade by default.
+            source = '1000G-FRZ09';
+        }
+
+        validateBuildSource(this.constructor.name, build, null);  // LD doesn't need to validate `source` option
+
+        const [refVar_formatted, refVar_raw] = this.getRefvar(state, chain, fields);
+
         // Preserve the user-provided variant spec for use when matching to assoc data
-        chain.header.ldrefvar = original;
+        chain.header.ldrefvar = refVar_raw;
 
         return  [
             this.url, 'genome_builds/', build, '/references/', source, '/populations/', population, '/variants',
             '?correlation=', method,
-            '&variant=', encodeURIComponent(refVar),
+            '&variant=', encodeURIComponent(refVar_formatted),
             '&chrom=', encodeURIComponent(state.chr),
             '&start=', encodeURIComponent(state.start),
             '&stop=', encodeURIComponent(state.end),
         ].join('');
+    }
+
+    getCacheKey(state, chain, fields) {
+        const base = super.getCacheKey(state, chain, fields);
+        let source = state.ld_source || this.params.source || '1000G';
+        const population = state.ld_pop || this.params.population || 'ALL';  // LDServer panels will always have an ALL
+        const [refVar, _] = this.getRefvar(state, chain, fields);
+        return `${base}_${refVar}_${source}_${population}`;
     }
 
     combineChainBody(data, chain, fields, outnames, trans) {
@@ -688,7 +727,7 @@ class GwasCatalogLZ extends BaseApiAdapter {
             return chain.body;
         }
 
-        //  TODO: Better reuse options in the future. This source is very specifically tied to the PortalDev API, where
+        //  TODO: Better reuse options in the future. This source is very specifically tied to the UM PortalDev API, where
         //   the field name is always "log_pvalue". Relatively few sites will write their own gwas-catalog endpoint.
         const decider = 'log_pvalue';
         const decider_out = outnames[fields.indexOf(decider)];
@@ -784,12 +823,6 @@ class GeneConstraintLZ extends BaseApiAdapter {
         // GraphQL API: request details are encoded in the body, not the URL
         return this.url;
     }
-    getCacheKey(state, chain, fields) {
-        const build = state.genome_build || this.params.build;
-        // GraphQL API: request not defined solely by the URL
-        // Gather the state params that govern constraint query for a given region.
-        return `${this.url} ${state.chr} ${state.start} ${state.end} ${build}`;
-    }
 
     normalizeResponse(data) {
         return data;
@@ -828,7 +861,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
         const body = JSON.stringify({ query: query });
         const headers = { 'Content-Type': 'application/json' };
 
-        // FIXME: The gnomAD API sometimes has temporary CORS changes that temporarily break the genes track
+        // Note: The gnomAD API sometimes fails randomly.
         // If request blocked, return  a fake "no data" signal so the genes track can still render w/o constraint info
         return fetch(url, { method: 'POST', body, headers }).then((response) => {
             if (!response.ok) {
@@ -923,6 +956,11 @@ class PheWASLZ extends BaseApiAdapter {
             }).join('&'),
         ];
         return url.join('');
+    }
+
+    getCacheKey(state, chain, fields) {
+        // This is not a region-based source; it doesn't make sense to cache by a region
+        return this.getURL(state, chain, fields);
     }
 }
 

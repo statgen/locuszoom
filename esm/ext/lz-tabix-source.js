@@ -64,12 +64,6 @@ function install(LocusZoom) {
             });
         }
 
-        getCacheKey(state /*, chain, fields*/) {
-            // In generic form, Tabix queries are based on chr, start, and end. The cache is thus controlled by the query,
-            //  not the URL
-            return [state.chr, state.start, state.end, this._overfetch].join('_');
-        }
-
         fetchRequest(state /*, chain, fields */) {
             return new Promise((resolve, reject) => {
                 // Ensure that the reader is fully created (and index available), then make a query
