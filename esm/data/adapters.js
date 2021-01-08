@@ -73,6 +73,13 @@ class BaseAdapter {
     getCacheKey(state, chain, fields) {
         // Most region sources, by default, will cache the largest region that satisfies the request: zooming in
         //  should be satisfied via the cache, but pan or region change operations will cause a network request
+
+        // Some data source rely on values set in chain.header during the getURL call. (eg, the LD source uses
+        //  this to find the LD refvar) Calling this method is a backwards-compatible way of ensuring that value is set,
+        //  even on a cache hit in which getURL otherwise wouldn't be called.
+        // Some of the data sources that rely on this behavior are user-defined, hence compatibility hack
+        this.getURL(state, chain, fields);
+
         const cache_pos_chr = state.chr;
         const {_cache_pos_start, _cache_pos_end} = this;
         if (_cache_pos_start && state.start >= _cache_pos_start && _cache_pos_end && state.end <= _cache_pos_end ) {
