@@ -115,7 +115,9 @@ const ordinal_cycle = (parameters, value, index) => {
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
  * @param parameters
- * @param {Array} parameters.values A list of option values
+ * @param {Array} [parameters.values] A list of option values for exact chosen values
+ * @param {String} [parameters.d3_interpolator] The name of a builtin d3 interpolator to use- eg, a builtin color
+ *   scheme. This option is mutually exclusive with values.
  * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
  *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
  *  discrete categories.
@@ -123,9 +125,8 @@ const ordinal_cycle = (parameters, value, index) => {
  * @param index
  */
 let stable_choice = (parameters, value, index) => {
-    const options = parameters.values;
     // Each place the function gets used has its own parameters object. This function thus memoizes per usage
-    //  ("association point color") rather than globally
+    //  ("association - point color - directive 1") rather than globally ("all properties/panels")
     const cache = parameters._cache = parameters._cache || new Map();
     const max_cache_size = parameters.max_cache_size || 500;
 
@@ -146,8 +147,19 @@ let stable_choice = (parameters, value, index) => {
         hash  = ((hash << 5) - hash) + chr;
         hash |= 0; // Convert to 32bit integer
     }
-    // Convert 32 bit integer to be within the range of options allowed
-    const result = options[Math.abs(hash) % options.length];
+    // Convert signed 32 bit integer to be within the range of options allowed
+    hash = Math.abs(hash);
+    let result;
+    if (parameters.values) {
+        const options = parameters.values;
+        result = options[hash % options.length];
+    } else if (parameters.d3_interpolator) {
+        const interpolator = d3[parameters.d3_interpolator];
+        // Java hashcode generates values in range of a 32 bit int & normalize on 0..1 range for interpolators
+        result = interpolator(hash / 2147483647);
+    } else {
+        throw new Error('stable_choice must specify either discrete "values", or a named "d3_interpolator"');
+    }
     cache.set(value, result);
     return result;
 };
