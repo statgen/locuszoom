@@ -69,9 +69,6 @@ function install (LocusZoom) {
             const y_axis_name = `y${this.layout.y_axis.axis}_scale`;
             const {x_scale, [y_axis_name]: y_scale} = this.parent;
 
-            // FIXME
-            y_scale(1);
-
             // Calculate coordinates for each point
             track_data.forEach((item) => {
                 item[XCS] = x_scale(item[start_field]);
@@ -80,8 +77,16 @@ function install (LocusZoom) {
                 item[YCE] = item[YCS] + track_height;
             });
 
+            track_data.sort((a, b) => {
+                // Simplistic layout algorithm that adds wide rectangles to the DOM first, so that small rectangles
+                //  in the same space are clickable (SVG element order determines z-index)
+                const aspan = a[XCE] - a[XCS];
+                const bspan = b[XCE] - b[XCS];
+                return bspan - aspan;
+            });
+
             const selection = this.svg.group.selectAll('rect')
-                .data(track_data); // TODO: should we add an explicit id field or always assume index is fine?
+                .data(track_data);
 
             selection.enter()
                 .append('rect')
@@ -113,21 +118,20 @@ function install (LocusZoom) {
 
     const intervals_tooltip_layout = {
         namespace: { 'intervals': 'intervals' },
-        closable: false,
+        closable: true,
         show: { or: ['highlighted', 'selected'] },
         hide: { and: ['unhighlighted', 'unselected'] },
-        // FIXME: Diagnose filter chaining bug for neglog10|scinotation|htmlescape showing bad values
         html: `<b>Tissue</b>: {{{{namespace[intervals]}}tissueId|htmlescape}}<br>
                <b>Range</b>: {{{{namespace[intervals]}}chromosome|htmlescape}}: {{{{namespace[intervals]}}start|htmlescape}}-{{{{namespace[intervals]}}end|htmlescape}}<br>
-               <b>-log10 p</b>: {{{{namespace[intervals]}}pValue|neglog10|htmlescape}}<br>
-               <b>Enrichment (n-fold)</b>: {{{{namespace[intervals]}}fold|scinotation}}`,
+               <b>-log10 p</b>: {{{{namespace[intervals]}}pValue|neglog10|scinotation|htmlescape}}<br>
+               <b>Enrichment (n-fold)</b>: {{{{namespace[intervals]}}fold|scinotation|htmlescape}}`,
     };
 
     const intervals_layer_layout =  {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
         type: 'intervals_enrichment',
-        fields: ['{{namespace[intervals]}}chromosome', '{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}pValue|neglog10', '{{namespace[intervals]}}fold', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
+        fields: ['{{namespace[intervals]}}chromosome', '{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}pValue', '{{namespace[intervals]}}fold', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
         id_field: '{{namespace[intervals]}}start', // not a good ID field for overlapping intervals
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
@@ -141,6 +145,7 @@ function install (LocusZoom) {
             upper_buffer: 0.10,
             min_extent: [0, 10],
         },
+        fill_opacity: 0.5, // Many intervals overlap: show all, even if the ones below can't be clicked
         color: [
             {
                 field: '{{namespace[intervals]}}tissueId',

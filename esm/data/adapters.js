@@ -1107,6 +1107,8 @@ class RecombLZ extends BaseApiAdapter {
  *
  * This source is largely here for legacy reasons. More often, a convenient way to serve static data is as separate
  *  JSON files to an existing source (with the JSON url in place of an API).
+ *
+ *  Note: The name is a bit misleading. It receives JS objects, not strings serialized as "json".
  * @public
  * @see module:LocusZoom_Adapters~BaseAdapter
  * @param {object} data The data to be returned by this source (subject to namespacing rules)
