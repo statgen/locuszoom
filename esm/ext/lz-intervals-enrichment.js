@@ -151,9 +151,7 @@ function install (LocusZoom) {
                 field: '{{namespace[intervals]}}tissueId',
                 scale_function: 'stable_choice',
                 parameters: {
-                    // In practice, exact values provide more separation between nearby items, while an interpolator function can be used if reuse of colors is absolutely forbidden.
                     values: ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'],
-                    // d3_interpolator: 'interpolateMagma',
                 },
             },
         ],

@@ -148,18 +148,8 @@ let stable_choice = (parameters, value, index) => {
         hash |= 0; // Convert to 32bit integer
     }
     // Convert signed 32 bit integer to be within the range of options allowed
-    hash = Math.abs(hash);
-    let result;
-    if (parameters.values) {
-        const options = parameters.values;
-        result = options[hash % options.length];
-    } else if (parameters.d3_interpolator) {
-        const interpolator = d3[parameters.d3_interpolator];
-        // Java hashcode generates values in range of a 32 bit int & normalize on 0..1 range for interpolators
-        result = interpolator(hash / 2147483647);
-    } else {
-        throw new Error('stable_choice must specify either discrete "values", or a named "d3_interpolator"');
-    }
+    const options = parameters.values;
+    const result = options[Math.abs(hash) % options.length];
     cache.set(value, result);
     return result;
 };
