@@ -131,12 +131,14 @@ function install (LocusZoom) {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
         type: 'intervals_enrichment',
+        match: { send: '{{namespace[intervals]}}tissueId' },
         fields: ['{{namespace[intervals]}}chromosome', '{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}pValue', '{{namespace[intervals]}}fold', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
         id_field: '{{namespace[intervals]}}start', // not a good ID field for overlapping intervals
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
         filters: [
             {field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU'},
+            {field: '{{namespace[intervals]}}tissueId', operator: '=', value: 'EFO:0002071' },
         ],
         y_axis: {
             axis: 1,
@@ -170,6 +172,28 @@ function install (LocusZoom) {
             ],
         },
         tooltip: intervals_tooltip_layout,
+    };
+
+    const intervals_highlight_layout = {
+        id: 'interval_matches',
+        type: 'highlight_regions',
+        namespace: { intervals: 'intervals' },
+        match: { receive: '{{namespace[intervals]}}tissueId' },
+        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
+        start_field: '{{namespace[intervals]}}start',
+        end_field: '{{namespace[intervals]}}end',
+        filters: [
+            { field: 'lz_is_match', operator: '=', value: true },
+            {field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU'},
+        ],
+        color: [{
+            field: '{{namespace[intervals]}}tissueId',
+            scale_function: 'stable_choice',
+            parameters: {
+                values: ['#1f77b4', '#aec7e8', '#ff7f0e', '#ffbb78', '#2ca02c', '#98df8a', '#d62728', '#ff9896', '#9467bd', '#c5b0d5', '#8c564b', '#c49c94', '#e377c2', '#f7b6d2', '#7f7f7f', '#c7c7c7', '#bcbd22', '#dbdb8d', '#17becf', '#9edae5'],
+            },
+        }],
+        fill_opacity: 0.1,
     };
 
     const intervals_panel_layout = {
@@ -208,7 +232,11 @@ function install (LocusZoom) {
         max_region_scale: 1000000,
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association'),
+            function () {
+                const base = LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true });
+                base.data_layers.unshift(intervals_highlight_layout);
+                return base;
+            }(),
             intervals_panel_layout,
             LocusZoom.Layouts.get('panel', 'genes'),
         ],
