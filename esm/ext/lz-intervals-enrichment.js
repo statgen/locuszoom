@@ -1,13 +1,13 @@
 /**
-Interval annotation track that groups annotations by enrichment value (a fixed y-axis) rather than by merged/split tracks.
+ Interval annotation track that groups annotations by enrichment value (a fixed y-axis) rather than by merged/split tracks.
 
-This is not part of the core LocusZoom library, but can be included as a standalone file.
+ This is not part of the core LocusZoom library, but can be included as a standalone file.
 
-The page must incorporate and load all libraries before this file can be used, including:
+ The page must incorporate and load all libraries before this file can be used, including:
  - Vendor assets
  - LocusZoom
  @module
-*/
+ */
 
 // Coordinates (start, end) are cached to facilitate rendering
 const XCS = Symbol.for('lzXCS');
@@ -16,7 +16,7 @@ const XCE = Symbol.for('lzXCE');
 const YCE = Symbol.for('lzYCE');
 
 
-function install (LocusZoom) {
+function install(LocusZoom) {
     const default_layout = {
         start_field: 'start',
         end_field: 'end',
@@ -44,6 +44,7 @@ function install (LocusZoom) {
      * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
      */
     const BaseLayer = LocusZoom.DataLayers.get('BaseDataLayer');
+
     class LzIntervalsEnrichment extends BaseLayer {
         constructor(layout) {
             LocusZoom.Layouts.merge(layout, default_layout);
@@ -67,7 +68,7 @@ function install (LocusZoom) {
             const {start_field, end_field, bounding_box_padding, track_height} = this.layout;
             const y_field = this.layout.y_axis.field;
             const y_axis_name = `y${this.layout.y_axis.axis}_scale`;
-            const {x_scale, [y_axis_name]: y_scale} = this.parent;
+            const { x_scale, [y_axis_name]: y_scale } = this.parent;
 
             // Calculate coordinates for each point
             track_data.forEach((item) => {
@@ -127,7 +128,7 @@ function install (LocusZoom) {
                <b>Enrichment (n-fold)</b>: {{{{namespace[intervals]}}fold|scinotation|htmlescape}}`,
     };
 
-    const intervals_layer_layout =  {
+    const intervals_layer_layout = {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
         type: 'intervals_enrichment',
@@ -137,8 +138,7 @@ function install (LocusZoom) {
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
         filters: [
-            {field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU'},
-            {field: '{{namespace[intervals]}}tissueId', operator: '=', value: 'EFO:0002071' },
+            { field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU' },
         ],
         y_axis: {
             axis: 1,
@@ -182,9 +182,10 @@ function install (LocusZoom) {
         fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
+        merge_field: '{{namespace[intervals]}}tissueId',
         filters: [
             { field: 'lz_is_match', operator: '=', value: true },
-            {field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU'},
+            { field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU' },
         ],
         color: [{
             field: '{{namespace[intervals]}}tissueId',
