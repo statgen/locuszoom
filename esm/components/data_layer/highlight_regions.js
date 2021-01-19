@@ -46,7 +46,11 @@ class HighlightRegions extends BaseDataLayer {
     constructor(layout) {
         merge(layout, default_layout);
         if (layout.interaction || layout.behaviors) {
-            throw new Error('Highlight regions layer does not support mouse events');
+            throw new Error('highlight_regions layer does not support mouse events');
+        }
+
+        if (layout.regions && layout.regions.length && layout.fields && layout.fields.length) {
+            throw new Error('highlight_regions layer can specify "regions" in layout, OR external data "fields", but not both');
         }
         super(...arguments);
     }
@@ -95,7 +99,7 @@ class HighlightRegions extends BaseDataLayer {
 
         // Pseudo identifier for internal use only (regions have no semantic or transition meaning)
         track_data.forEach((d, i) => d.id || (d.id = i));
-        track_data = this._applyFilters();
+        track_data = this._applyFilters(track_data);
         track_data = this._mergeNodes(track_data);
 
         const selection = this.svg.group.selectAll(`rect.lz-data_layer-${this.layout.type}`)
