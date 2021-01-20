@@ -245,10 +245,11 @@ function parseFields(data, html) {
 /**
  * Populate a single element with a LocusZoom plot. This is the primary means of generating a new plot, and is part
  *  of the public interface for LocusZoom.
+ * @alias module:LocusZoom~populate
  * @public
  * @param {String|d3.selection} selector CSS selector for the container element where the plot will be mounted. Any pre-existing
  *   content in the container will be completely replaced.
- * @param {DataSources} datasource Ensemble of data providers used by the plot
+ * @param {module:LocusZoom~DataSources} datasource Ensemble of data providers used by the plot
  * @param {Object} layout A JSON-serializable object of layout configuration parameters
  * @returns {Plot} The newly created plot instance
  */

@@ -9,6 +9,7 @@ import * as d3 from 'd3';
 
 /**
  * Basic conditional function to evaluate the value of the input field and return based on equality.
+ * @alias module:LocusZoom_ScaleFunctions~if
  * @param {Object} parameters
  * @param {*} parameters.field_value The value against which to test the input value.
  * @param {*} parameters.then The value to return if the input value matches the field value
