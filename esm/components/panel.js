@@ -145,8 +145,9 @@ class Panel {
         }
 
         /**
-         * @protected
-         * @member {Object}
+         * Direct access to data layer instances, keyed by data layer ID. Used primarily for introspection/ development.
+         * @public
+         * @member {Object.<String, BaseDataLayer>}
          */
         this.data_layers = {};
         /**
@@ -381,9 +382,11 @@ class Panel {
      * Create a new data layer from a provided layout object. Should have the keys specified in `DefaultLayout`
      * Will automatically add at the top (depth/z-index) of the panel unless explicitly directed differently
      *   in the layout provided.
+     *
+     * **NOTE**: It is very rare that new data layers are added after a panel is rendered.
      * @public
      * @param {object} layout
-     * @returns {*}
+     * @returns {BaseDataLayer}
      */
     addDataLayer(layout) {
 
@@ -711,12 +714,14 @@ class Panel {
     }
 
     /**
-     * Add a "basic" loader to a panel
+     * Add a "basic" loader to a panel. This is rarely used directly: the `show_loading_indicator` panel layout
+     *   directive is the preferred way to trigger this function. The imperative form is useful if for some reason a
+     *   loading indicator needs to be added only after first render.
      * This method is just a shortcut for adding the most commonly used type of loading indicator, which appears when
      *   data is requested, animates (e.g. shows an infinitely cycling progress bar as opposed to one that loads from
      *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
      *
-     * @public
+     * @protected
      * @param {Boolean} show_immediately
      * @returns {Panel}
      */
@@ -943,9 +948,15 @@ class Panel {
             .attr('clip-path', `url(#${base_id}.clip)`);
 
         // Add curtain and loader to the panel
-        /** @member {Object} */
+        /**
+         * @protected
+         * @member {Object}
+         */
         this.curtain = generateCurtain.call(this);
-        /** @member {Object} */
+        /**
+         * @protected
+         * @member {Object}
+         */
         this.loader = generateLoader.call(this);
 
         if (this.layout.show_loading_indicator) {
@@ -955,6 +966,7 @@ class Panel {
 
         /**
          * Create the toolbar object and hang widgets on it as defined by panel layout
+         * @protected
          * @member {Toolbar}
          */
         this.toolbar = new Toolbar(this);
@@ -969,7 +981,10 @@ class Panel {
             });
 
         // Add the title
-        /** @member {Element} */
+        /**
+         * @private
+         * @member {Element}
+         */
         this.title = this.svg.group.append('text').attr('class', 'lz-panel-title');
         if (typeof this.layout.title != 'undefined') {
             this.setTitle();
@@ -1007,6 +1022,7 @@ class Panel {
 
         /**
          * Legend object, as defined by panel layout and child data layer layouts
+         * @protected
          * @member {Legend}
          * */
         this.legend = null;

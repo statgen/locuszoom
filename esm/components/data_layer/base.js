@@ -32,10 +32,12 @@ const default_layout = {
 /**
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
- * @param {Object} layout A JSON-serializable object describing the layout for this layer
- * @param {Panel|null} parent Where this layout is used
 */
 class BaseDataLayer {
+    /**
+     * @param {Object} layout A JSON-serializable object describing the layout for this layer
+     * @param {Panel|null} parent Where this layout is used
+     */
     constructor(layout, parent) {
         /**
          * @private
@@ -115,6 +117,7 @@ class BaseDataLayer {
          * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state.
          * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
          * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -225,7 +228,7 @@ class BaseDataLayer {
     }
 
     /**
-     * Select a filter function to be applied to the data. DEPRECATED: Please use the FilterFunctions registry
+     * Select a filter function to be applied to the data. DEPRECATED: Please use the LocusZoom.MatchFunctions registry
      *  and reference via declarative filters.
      * @param func
      * @deprecated
@@ -283,11 +286,11 @@ class BaseDataLayer {
 
     /**
      * Fetch an ID that may bind a data element to a separate visual node for displaying status
-     * Examples of this might be seperate visual nodes to show select/highlight statuses, or
+     * Examples of this might be separate visual nodes to show select/highlight statuses, or
      * even a common/shared node to show status across many elements in a set.
      * Abstract method. It should be overridden by data layers that implement seperate status
      * nodes specifically to the use case of the data layer type.
-     * @protected
+     * @private
      * @param {String|Object} element
      * @returns {String|null}
      */
@@ -299,6 +302,7 @@ class BaseDataLayer {
      * Returns a reference to the underlying data associated with a single visual element in the data layer, as
      *   referenced by the unique identifier for the element
      *
+     * @ignore
      * @protected
      * @param {String} id The unique identifier for the element, as defined by `getElementId`
      * @returns {Object|null} The data bound to that element
@@ -364,7 +368,8 @@ class BaseDataLayer {
     }
 
     /**
-     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed
+     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed.
+     * Most data layers will never need to use this.
      * @protected
      * @returns {BaseDataLayer}
      */
@@ -379,7 +384,7 @@ class BaseDataLayer {
      * In the future this may be further expanded, so that scaling functions can operate similar to mappers
      *  (item, index, array). Additional arguments would be added as the need arose.
      *
-     * @protected
+     * @private
      * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
      *  ("rules for how to choose color based on item value")
      * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
@@ -424,6 +429,7 @@ class BaseDataLayer {
 
     /**
      * Generate dimension extent function based on layout parameters
+     * @ignore
      * @protected
      * @param {('x'|'y')} dimension
      */
@@ -667,10 +673,10 @@ class BaseDataLayer {
     }
 
     /**
-     * Determine whether a given data element matches set criteria
+     * Determine whether a given data element matches all predefined filter criteria, usually as specified in a layout directive.
      *
      * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
-     * @protected
+     * @private
      * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
      *  Operator must be from a list of built-in operators
      * @param {Object} item

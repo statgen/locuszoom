@@ -145,7 +145,7 @@ class Plot {
         /**
          * Direct access to panel instances, keyed by panel ID. Used primarily for introspection/ development.
          *  @public
-         *  @member {Object.<String, Number>}
+         *  @member {Object.<String, Panel>}
          */
         this.panels = {};
         /**
@@ -158,6 +158,7 @@ class Plot {
         /**
          * Track update operations (reMap) performed on all child panels, and notify the parent plot when complete
          * TODO: Reconsider whether we need to be tracking this as global state outside of context of specific operations
+         * @ignore
          * @protected
          * @member {Promise[]}
          */
@@ -177,6 +178,7 @@ class Plot {
          * Values in the layout object may change during rendering etc. Retain a copy of the original plot options.
          * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
          * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -403,10 +405,12 @@ class Plot {
      *
      * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
      *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
-     *   @public
-     *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
-     *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
-     *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+     * TODO: Is this method still necessary in modern usage? Hide from docs for now.
+     * @public
+     * @ignore
+     * @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+     * @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+     *   and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
      * @returns {Plot}
      */
     clearPanelData(panelId, mode) {
@@ -556,7 +560,7 @@ class Plot {
     /**
      * Update state values and trigger a pull for fresh data on all data sources for all data layers
      * @public
-     * @param state_changes
+     * @param {Object} state_changes
      * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
      */
     applyState(state_changes) {
@@ -629,7 +633,7 @@ class Plot {
     /**
      * Keep a record of event listeners that are defined outside of the LocusZoom boundary (and therefore would not
      *  get cleaned up when the plot was removed from the DOM). For example, window resize or mouse events.
-     * This allows safe cleanup of the plot on removal from the page
+     * This allows safe cleanup of the plot on removal from the page. This method is useful for authors of LocusZoom plugins.
      * @param {Node} target The node on which the listener has been defined
      * @param {String} event_name
      * @param {function} listener The handle for the event listener to be cleaned up
