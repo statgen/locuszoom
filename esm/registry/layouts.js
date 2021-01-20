@@ -86,12 +86,19 @@ class LayoutRegistry extends RegistryBase {
     /**
      * Static alias to a helper method. Preserved for backwards compatibility, so that UMD users can access this method.
      * @static
+     * @private
      */
     merge(custom_layout, default_layout) {
         return merge(custom_layout, default_layout);
     }
 }
 
+/**
+ * A plugin registry that allows plots to use both pre-defined and user-provided data adapters.
+ * @see {module:LocusZoom_Layouts}
+ * @alias module:LocusZoom~Layouts
+ * @type {LayoutRegistry}
+ */
 const registry = new LayoutRegistry();
 
 for (let [type, entries] of Object.entries(layouts)) {

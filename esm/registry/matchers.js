@@ -10,6 +10,12 @@
  */
 import {RegistryBase} from './base';
 
+/**
+ * A plugin registry that allows plots to use both pre-defined and user-provided "match" functions, used by filtering and matching behavior.
+ * @see {module:LocusZoom_MatchFunctions}
+ * @alias module:LocusZoom~MatchFunctions
+ * @type {module:registry/base~RegistryBase}
+ */
 const registry = new RegistryBase();
 
 // Most of the filter syntax uses things that are JS reserved operators. Instead of exporting symbols from another

@@ -17,12 +17,9 @@ function install(LocusZoom) {
 
     /**
      * Custom data source that loads data from a remote Tabix file (if the file host has been configured with proper
-     *  CORS and Range header support- most hosts do not do that by default).
-     *
-     * @param {Object} init.params
-     * @param {Object} init.params.fields
-     * @param {String} init.params.fields.log_pvalue The name of the field containing pvalue information
-     * @param {Number} [init.params.threshold=0.95] The credible set threshold (eg 95%)
+     *  CORS and Range header support). For instructions on how to configure a remote file host such as S3 or
+     *  Google Cloud storage to serve files in the manner required, see:
+     *  https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS
      */
     class TabixUrlSource extends BaseAdapter {
         /**

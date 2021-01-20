@@ -73,6 +73,7 @@ function applyNamespaces(element, namespace, default_namespace) {
  *
  * Frequently used for preparing custom layouts. Both objects should be JSON-serializable.
  *
+ * @alias LayoutRegistry.merge
  * @param {object} custom_layout An object containing configuration parameters that override or add to defaults
  * @param {object} default_layout An object containing default settings.
  * @returns {object} The custom layout is modified in place and also returned from this method.

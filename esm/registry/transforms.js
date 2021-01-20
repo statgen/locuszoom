@@ -1,18 +1,21 @@
-/**
- * @module
- * @private
- */
 import {RegistryBase} from './base';
 import * as transforms from '../helpers/transforms';
 
 /**
  * Registry of transformation functions that may be applied to template values to control how values are rendered.
  * Provides syntactic sugar atop a standard registry.
- * @private
+ * @public
+ * @extends module:registry/base:RegistryBase
+ * @inheritDoc
  */
-class TransformationFunctions extends RegistryBase {
+class TransformationFunctionsRegistry extends RegistryBase {
+    /**
+     * Helper function that turns a sequence of function names into a single callable
+     * @param template_string
+     * @return {function(*=): *}
+     * @private
+     */
     _collectTransforms(template_string) {
-        // Helper function that turns a sequence of function names into a single callable
         const funcs = template_string
             .match(/\|([^|]+)/g)
             .map((item) => super.get(item.substring(1)));
@@ -49,7 +52,16 @@ class TransformationFunctions extends RegistryBase {
     }
 }
 
-const registry = new TransformationFunctions();
+
+/**
+ * A plugin registry that allows plots to use both pre-defined and user-provided transformation functions, which
+ *  can be used to modify a value in the input data in a predefined way. For example, these can be used to let APIs
+ *  that return p_values work with plots that display -log10(p)
+ * @see {module:LocusZoom_TransformationFunctions}
+ * @alias module:LocusZoom~TransformationFunctions
+ * @type {TransformationFunctionsRegistry}
+ */
+const registry = new TransformationFunctionsRegistry();
 for (let [name, type] of Object.entries(transforms)) {
     registry.add(name, type);
 }
@@ -57,4 +69,4 @@ for (let [name, type] of Object.entries(transforms)) {
 
 export default registry;
 // Export helper class for unit testing
-export { TransformationFunctions as _TransformationFunctions };
+export { TransformationFunctionsRegistry as _TransformationFunctions };
