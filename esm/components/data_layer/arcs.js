@@ -1,12 +1,13 @@
-/**
- * @module LocusZoom_DataLayers
- */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 import {applyStyles} from '../../helpers/common';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~arcs
+ * @type {{color: string, hitarea_width: string, tooltip_positioning: string, style: {'stroke-opacity': string, 'stroke-width': string, fill: string}}}
+ */
 const default_layout = {
     color: 'seagreen',
     hitarea_width: '10px',
@@ -23,6 +24,7 @@ const default_layout = {
  * Implements a data layer that will render chromatin accessibility tracks.
  * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
  *  with a height determined by y.field.
+ * @alias module:LocusZoom_DataLayers~arcs
  */
 class Arcs extends BaseDataLayer {
     constructor(layout) {

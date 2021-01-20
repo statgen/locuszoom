@@ -1,4 +1,3 @@
-/** @module LocusZoom */
 import * as d3 from 'd3';
 
 import {STATUSES} from './constants';
@@ -12,7 +11,7 @@ import data_layers from '../registry/data_layers';
 
 /**
  * Default panel layout
- * @memberof module:LocusZoom~Panel
+ * @memberof Panel
  * @static
  * @type {Object}
  */

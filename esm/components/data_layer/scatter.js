@@ -1,6 +1,3 @@
-/**
- * @module LocusZoom_DataLayers
- */
 import * as d3 from 'd3';
 import BaseDataLayer from './base';
 import {applyStyles} from '../../helpers/common';
@@ -8,7 +5,10 @@ import {parseFields} from '../../helpers/display';
 import {merge, nameToSymbol} from '../../helpers/layouts';
 import {coalesce_scatter_points} from '../../helpers/render';
 
-
+/**
+ * @memberof module:LocusZoom_DataLayers~scatter
+ * @type {{id_field: string, color: string, y_axis: {axis: number}, tooltip_positioning: string, coalesce: {max_points: number, y_gap: number, x_gap: number, active: boolean, y_min: number, x_max: string, y_max: number, x_min: string}, fill_opacity: number, point_size: number, point_shape: string}}
+ */
 const default_layout = {
     point_size: 40,
     point_shape: 'circle',
@@ -38,6 +38,7 @@ const default_layout = {
 /**
  * Scatter Data Layer
  * Implements a standard scatter plot
+ * @alias module:LocusZoom_DataLayers~scatter
  */
 class Scatter extends BaseDataLayer {
     constructor(layout) {
@@ -410,7 +411,7 @@ class Scatter extends BaseDataLayer {
  * A scatter plot in which the x-axis represents categories, rather than individual positions.
  * For example, this can be used by PheWAS plots to show related groups. This plot allows the categories to be
  *   determined dynamically when data is first loaded.
- *
+ * @alias module:LocusZoom_DataLayers~category_scatter
  */
 class CategoryScatter extends Scatter {
     constructor(layout) {

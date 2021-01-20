@@ -1,9 +1,10 @@
-/**
- * @module LocusZoom_DataLayers
- */
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~annotation_track
+ * @type {{color: string, hitarea_width: number, tooltip_positioning: string, filters: null}}
+ */
 const default_layout = {
     color: '#000000',
     filters: null,
@@ -15,7 +16,7 @@ const default_layout = {
  * Create a single continuous 2D track that provides information about each datapoint
  *
  * For example, this can be used to color by membership in a group, alongside information in other panels
- * @memberof DataLayers
+ * @alias module:LocusZoom_DataLayers~annotation_track
  */
 class AnnotationTrack extends BaseDataLayer {
     /*

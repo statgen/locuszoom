@@ -1,11 +1,12 @@
-/**
- * @module LocusZoom_DataLayers
- */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~genes
+ * @type {{track_vertical_spacing: number, bounding_box_padding: number, color: string, tooltip_positioning: string, exon_height: number, label_font_size: number, label_exon_spacing: number, stroke: string}}
+ */
 const default_layout = {
     // Optionally specify different fill and stroke properties
     stroke: 'rgb(54, 54, 150)',
@@ -19,9 +20,10 @@ const default_layout = {
 };
 
 
-/*********************
+/**
  * Genes Data Layer
  * Implements a data layer that will render gene tracks
+ * @alias module:LocusZoom_DataLayers~genes
 */
 class Genes extends BaseDataLayer {
     constructor(layout) {

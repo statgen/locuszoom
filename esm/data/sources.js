@@ -1,4 +1,3 @@
-/** @module LocusZoom */
 import {RegistryBase} from '../registry/base';
 import { ADAPTERS } from '../registry';
 
@@ -8,6 +7,9 @@ import { ADAPTERS } from '../registry';
  *  public interface for LocusZoom.
  *
  * @public
+ * @alias module:LocusZoom~DataSources
+ * @extends module:registry/base~RegistryBase
+ * @inheritDoc
  */
 class DataSources extends RegistryBase {
     /**

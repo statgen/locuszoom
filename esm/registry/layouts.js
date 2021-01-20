@@ -9,9 +9,8 @@ import * as layouts from '../layouts';
  *
  * Each layout object that is added or retrieved here is a deep copy and totally independent from any other object
  * @public
- * @extends esm/registry/base:RegistryBase
- * @alias LocusZoom.Layouts
- * @inheritdoc
+ * @extends module:registry/base:RegistryBase
+ * @inheritDoc
  */
 class LayoutRegistry extends RegistryBase {
     // Implemented as a "registry of registries"- one lookup each for panels, plots, etc...

@@ -1,5 +1,6 @@
 /**
  * Rollup module that defines all known datalayers. Used to create the registry.
+ * @private
  */
 
 export { default as BaseDataLayer } from './base';

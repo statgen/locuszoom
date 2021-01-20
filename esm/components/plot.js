@@ -1,4 +1,3 @@
-/** @module LocusZoom */
 import * as d3 from 'd3';
 
 import {deepCopy, merge} from '../helpers/layouts';
@@ -10,7 +9,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
 /**
  * Default/ expected configuration parameters for basic plotting; most plots will override
  *
- * @memberof module:LocusZoom~Plot
+ * @memberof Plot
  * @protected
  * @static
  * @type {Object}

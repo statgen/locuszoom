@@ -1,6 +1,3 @@
-/**
- * @module LocusZoom_DataLayers
- */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
@@ -8,6 +5,10 @@ import {merge} from '../../helpers/layouts';
 import {STATUSES} from '../constants';
 import {applyStyles} from '../../helpers/common';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~line
+ * @type {{y_axis: {field: string, axis: number}, hitarea_width: number, x_axis: {field: string}, interpolate: string, style: {'stroke-width': string, fill: string}}}
+ */
 const default_layout = {
     style: {
         fill: 'none',
@@ -22,6 +23,7 @@ const default_layout = {
 /*********************
  * Line Data Layer
  * Implements a standard line plot, representing either a trace or a filled curve.
+ * @alias module:LocusZoom_DataLayers~line
 */
 class Line extends BaseDataLayer {
     constructor(layout) {
@@ -121,6 +123,10 @@ class Line extends BaseDataLayer {
     }
 }
 
+/**
+ * @memberof module:LocusZoom_DataLayers~orthogonal_line
+ * @type {{orientation: string, y_axis: {decoupled: boolean, axis: number}, offset: number, tooltip_positioning: string, x_axis: {decoupled: boolean, axis: number}, style: {'stroke-dasharray': string, 'stroke-width': string, stroke: string}}}
+ */
 const default_orthogonal_layout = {
     style: {
         'stroke': '#D3D3D3',
@@ -141,10 +147,11 @@ const default_orthogonal_layout = {
 };
 
 
-/***************************
+/**
  *  Orthogonal Line Data Layer
  *  Implements a horizontal or vertical line given an orientation and an offset in the layout
  *  Does not require a data source
+ *  @alias module:LocusZoom_DataLayers~orthogonal_line
 */
 class OrthogonalLine extends BaseDataLayer {
     constructor(layout) {

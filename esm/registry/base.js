@@ -1,11 +1,14 @@
 /**
+ * @module
+ */
+
+/**
  * Base class for all registries
  *
  * LocusZoom is plugin-extensible, and layouts are string-based and JSON serializable. This is achieved through the use
  *  of a central registry that holds a reference to each possible feature.
  *
  * Each registry has some syntactical sugar, with common elements are defined in a base class
- * @ignore
  */
 class RegistryBase {
     constructor() {
