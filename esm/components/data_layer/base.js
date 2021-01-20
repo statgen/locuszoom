@@ -1,4 +1,7 @@
-/** @module */
+/**
+ * @module LocusZoom_DataLayers
+ */
+
 import * as d3 from 'd3';
 
 import {STATUSES} from '../constants';
@@ -10,7 +13,8 @@ import SCALABLE from '../../registry/scalable';
 
 
 /**
- * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
+ * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
+ * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
  * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */

@@ -1,4 +1,4 @@
-/** @module */
+/** @module LocusZoom */
 import {RegistryBase} from '../registry/base';
 import { ADAPTERS } from '../registry';
 

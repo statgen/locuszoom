@@ -1,5 +1,7 @@
 /**
- Helper functions targeted at rendering operations
+ * Helper functions targeted at rendering operations
+ * @module
+ * @private
 */
 
 

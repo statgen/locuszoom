@@ -1,11 +1,10 @@
-/** @module */
+/** @module LocusZoom_Widgets */
 import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
 import {applyStyles, debounce} from '../../helpers/common';
 import {deepCopy} from '../../helpers/layouts';
 
-// FIXME: Button creation should occur in the constructors, not in update functions
 
 /**
  *

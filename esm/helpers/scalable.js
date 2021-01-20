@@ -2,7 +2,7 @@
  * Define functions used by Scalable Layout Directives.
  *
  * These "scaling functions" are used during rendering to return output (eg color) based on input value
- * @module
+ * @module LocusZoom_ScaleFunctions
  */
 
 import * as d3 from 'd3';

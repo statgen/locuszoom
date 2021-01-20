@@ -1,7 +1,7 @@
 /**
  * Transformation functions: used to transform a raw value from the API. For example, a template or axis label
  *  can convert from pvalue to -log10pvalue
- * @module
+ * @module LocusZoom_TransformationFunctions
  */
 
 /**

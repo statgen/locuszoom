@@ -1,10 +1,11 @@
-/** @module */
+/** @module LocusZoom */
 import * as d3 from 'd3';
 import {applyStyles} from '../helpers/common';
 import {merge, nameToSymbol} from '../helpers/layouts';
 
 /**
  * The default layout used by legends (used internally)
+ * @memberof module:LocusZoom~Legend
  * @protected
  * @member {Object}
  */

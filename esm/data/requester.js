@@ -1,7 +1,3 @@
-/**
- *  @module
- *  @private
- */
 import { TRANSFORMS } from '../registry';
 
 /**

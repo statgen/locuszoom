@@ -1,4 +1,6 @@
-/** @module */
+/**
+ * @module LocusZoom_DataLayers
+ */
 import * as d3 from 'd3';
 import BaseDataLayer from './base';
 import {applyStyles} from '../../helpers/common';

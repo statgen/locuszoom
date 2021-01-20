@@ -1,9 +1,5 @@
 /**
- * Arc Data Layer
- * Implements a data layer that will render chromatin accessibility tracks.
- * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
- *  with a height determined by y.field.
- * @module
+ * @module LocusZoom_DataLayers
  */
 import * as d3 from 'd3';
 
@@ -22,6 +18,12 @@ const default_layout = {
     tooltip_positioning: 'top',
 };
 
+/**
+ * Arc Data Layer
+ * Implements a data layer that will render chromatin accessibility tracks.
+ * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
+ *  with a height determined by y.field.
+ */
 class Arcs extends BaseDataLayer {
     constructor(layout) {
         layout = merge(layout, default_layout);

@@ -1,7 +1,3 @@
-/**
- * @module
- * @private
- */
 import {RegistryBase} from './base';
 import {applyNamespaces, deepCopy, merge} from '../helpers/layouts';
 import * as layouts from '../layouts';
@@ -13,6 +9,9 @@ import * as layouts from '../layouts';
  *
  * Each layout object that is added or retrieved here is a deep copy and totally independent from any other object
  * @public
+ * @extends esm/registry/base:RegistryBase
+ * @alias LocusZoom.Layouts
+ * @inheritdoc
  */
 class LayoutRegistry extends RegistryBase {
     // Implemented as a "registry of registries"- one lookup each for panels, plots, etc...
@@ -46,10 +45,10 @@ class LayoutRegistry extends RegistryBase {
 
     /**
      * Add a type of layout to the registry
-     * @param {String} type
-     * @param {String} name
-     * @param {Object} item
-     * @param {boolean} override
+     * @param {String} type The type of layout to add (plot, panel, data_layer, toolbar, toolbar_widgets, or tooltip)
+     * @param {String} name The name of the layout object to add
+     * @param {Object} item The layout object describing parameters
+     * @param {boolean} override Whether to replace an existing item by that name
      * @return {*}
      */
     add(type, name, item, override = false) {

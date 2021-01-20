@@ -1,7 +1,6 @@
 /**
  * Predefined base layouts used to populate the LZ registry
- * @module
- * @private
+ * @module LocusZoom_Layouts
  */
 
 import version from '../version';

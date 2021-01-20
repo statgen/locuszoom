@@ -114,7 +114,6 @@ function install (LocusZoom) {
         }
     }
 
-
     LocusZoom.Adapters.add('CredibleSetLZ', CredibleSetLZ);
 
     // Add related layouts to the central global registry

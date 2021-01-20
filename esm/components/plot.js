@@ -1,4 +1,4 @@
-/** @module */
+/** @module LocusZoom */
 import * as d3 from 'd3';
 
 import {deepCopy, merge} from '../helpers/layouts';
@@ -10,6 +10,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
 /**
  * Default/ expected configuration parameters for basic plotting; most plots will override
  *
+ * @memberof module:LocusZoom~Plot
  * @protected
  * @static
  * @type {Object}
@@ -32,6 +33,7 @@ const default_layout = {
  *  any constraints specified by the layout
  *
  * This function has side effects; it mutates the proposed state in order to meet certain bounds checks etc.
+ * @private
  * @param {Object} new_state
  * @param {Number} new_state.chr
  * @param {Number} new_state.start

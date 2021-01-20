@@ -1,6 +1,7 @@
 /**
  * Helpers that control the display of individual points and field values
  * @module
+ * @private
  */
 import * as d3 from 'd3';
 

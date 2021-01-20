@@ -1,6 +1,7 @@
 /**
  * Utilities for modifying or working with layout objects
- *  @module
+ * @module
+ * @private
  */
 import * as d3 from 'd3';
 

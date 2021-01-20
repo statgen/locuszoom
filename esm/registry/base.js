@@ -1,5 +1,3 @@
-/** @module */
-
 /**
  * Base class for all registries
  *
@@ -7,6 +5,7 @@
  *  of a central registry that holds a reference to each possible feature.
  *
  * Each registry has some syntactical sugar, with common elements are defined in a base class
+ * @ignore
  */
 class RegistryBase {
     constructor() {
@@ -70,6 +69,7 @@ class RegistryBase {
 /**
  * A specialized registry whose members are class constructors. Contains helper methods for creating instances
  *  and subclasses.
+ * @ignore
  */
 class ClassRegistry extends RegistryBase {
     /**

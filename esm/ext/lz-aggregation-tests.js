@@ -15,18 +15,18 @@
 import {helpers} from 'raremetal.js';
 import {BaseApiAdapter} from '../data/adapters';
 
-
 function install (LocusZoom) {
+    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+    const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
+
     /**
      * Data Source that calculates gene or region-based tests based on provided data
      *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
      *   another source (like genes). Using a separate connector allows us to add caching and run this front-end
      *   calculation only once, while using it in many different places
      * @public
+     * @alias AggregationTestSourceLZ
      */
-    const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
-    const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
-
     class AggregationTestSource extends BaseApiAdapter {
         getURL(state, chain, fields) {
             // Unlike most sources, calculations may require access to plot state data even after the initial request
@@ -154,6 +154,10 @@ function install (LocusZoom) {
 
     }
 
+    /**
+     * Restructure RAREMETAL-SERVER data used to calculate aggregation tests into a format that can be used to
+     *  display a GWAS scatter plot
+     */
     class AssocFromAggregationLZ extends BaseAdapter {
         constructor(config) {
             if (!config || !config.from) {

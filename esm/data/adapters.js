@@ -1,6 +1,6 @@
 /**
  * Define standard data adapters used to retrieve data (usually from REST APIs)
- * @module
+ * @module LocusZoom_Adapters
  */
 
 function validateBuildSource(class_name, build, source) {
