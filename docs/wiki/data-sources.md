@@ -132,7 +132,7 @@ The default `parseResponse` logic assumes that the server response is a JSON-ser
 A simple approach to consuming data from local files is to use a local file path as the `url` parameter in any data source. For an example of this refer to this block in [index.html](https://github.com/statgen/locuszoom/blob/v0.5.6/index.html#L194-L200):
 
 ```javascript
-apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length) + "staticdata/";
+apiBase = window.location.origin + window.location.pathname.substr(0, window.location.pathname.length - "demo.html".length) + "data/";
 data_sources = new LocusZoom.DataSources()
     .add("assoc", ["AssociationLZ", {url: apiBase + "assoc_10_114550452-115067678.json?", params: {analysis: 3, id_field: "variant"}}])
     .add("ld", ["LDLZ", { url: apiBase + "ld_10_114550452-115067678.json?" }])
