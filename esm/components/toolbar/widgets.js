@@ -173,6 +173,7 @@ class BaseWidget {
  * Plots and panels may have a "toolbar" element suited for showing HTML widgets that may be interactive.
  *   When widgets need to incorporate a generic button, or additionally a button that generates a menu, this
  *   class provides much of the necessary framework.
+ * @alias module:LocusZoom_Widgets~_Button
  * @param {BaseWidget} parent
  */
 class Button {
@@ -634,6 +635,7 @@ class Button {
 
 /**
  * Renders arbitrary text with title formatting
+ * @alias module:LocusZoom_Widgets~title
  * @param {object} layout
  * @param {string} layout.title Text to render
  */
@@ -660,6 +662,7 @@ class Title extends BaseWidget {
 /**
  * Display the current scale of the genome region displayed in the plot, as defined by the difference between
  *  `state.end` and `state.start`.
+ * @alias module:LocusZoom_Widgets~region_scale
  */
 class RegionScale extends BaseWidget {
     update() {
@@ -680,6 +683,9 @@ class RegionScale extends BaseWidget {
     }
 }
 
+/**
+ * @alias module:LocusZoom_Widgets~filter_field
+ */
 class FilterField extends BaseWidget {
     /**
      * @param {string} layout.layer_name The data layer to control with filtering
@@ -809,6 +815,7 @@ class FilterField extends BaseWidget {
 
 /**
  * Button to export current plot to an SVG image
+ * @alias module:LocusZoom_Widgets~download_svg
  */
 class DownloadSVG extends BaseWidget {
     /**
@@ -970,6 +977,9 @@ class DownloadSVG extends BaseWidget {
 
 /**
  * Button to export current plot to a PNG image
+ * @alias module:LocusZoom_Widgets~download_png
+ * @extends module:LocusZoom_Widgets~download_svg
+ * @inheritDoc
  */
 class DownloadPNG extends DownloadSVG {
     constructor(layout, parent) {
@@ -979,6 +989,9 @@ class DownloadPNG extends DownloadSVG {
         this._button_title = this.layout.button_title || 'Download image';
     }
 
+    /**
+     * @private
+     */
     _getBlobUrl() {
         return super._getBlobUrl().then((svg_url) => {
             const canvas = document.createElement('canvas');
@@ -1008,6 +1021,7 @@ class DownloadPNG extends DownloadSVG {
 /**
  * Button to remove panel from plot.
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~remove_panel
  * @param {Boolean} [layout.suppress_confirm=false] If true, removes the panel without prompting user for confirmation
  */
 class RemovePanel extends BaseWidget {
@@ -1037,6 +1051,7 @@ class RemovePanel extends BaseWidget {
 /**
  * Button to move panel up relative to other panels (in terms of y-index on the page)
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~move_panel_up
  */
 class MovePanelUp extends BaseWidget {
     update () {
@@ -1061,6 +1076,7 @@ class MovePanelUp extends BaseWidget {
 /**
  * Button to move panel down relative to other panels (in terms of y-index on the page)
  *   NOTE: Will only work on panel widgets.
+ * @alias module:LocusZoom_Widgets~move_panel_down
  */
 class MovePanelDown extends BaseWidget {
     update () {
@@ -1084,6 +1100,7 @@ class MovePanelDown extends BaseWidget {
 
 /**
  * Button to shift plot region forwards or back by a `step` increment provided in the layout
+ * @alias module:LocusZoom_Widgets~shift_region
  * @param {object} layout
  * @param {number} [layout.step=50000] The stepsize to change the region by
  * @param {string} [layout.button_html]
@@ -1130,6 +1147,7 @@ class ShiftRegion extends BaseWidget {
 
 /**
  * Zoom in or out on the plot, centered on the middle of the plot region, by the specified amount
+ * @alias module:LocusZoom_Widgets~zoom_region
  * @param {object} layout
  * @param {number} [layout.step=0.2] The amount to zoom in by (where 1 indicates 100%)
  */
@@ -1192,6 +1210,7 @@ class ZoomRegion extends BaseWidget {
 /**
  * Renders button with arbitrary text that, when clicked, shows a dropdown containing arbitrary HTML
  *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
+ * @alias module:LocusZoom_Widgets~menu
  * @param {object} layout
  * @param {string} layout.button_html The HTML to render inside the button
  * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
@@ -1216,10 +1235,17 @@ class Menu extends BaseWidget {
 
 /**
  * Button to resize panel height to fit available data (eg when showing a list of tracks)
- * @param {string} [layout.button_html="Resize to Data"]
- * @param {string} [layout.button_title]
+ * @alias module:LocusZoom_Widgets~resize_to_data
  */
 class ResizeToData extends BaseWidget {
+    /**
+     * @param {object} layout
+     * @param {string} [layout.button_html="Resize to Data"]
+     * @param {string} [layout.button_title]
+     */
+    constructor(layout) {
+        super(...arguments);
+    }
     update() {
         if (this.button) {
             return this;
@@ -1239,6 +1265,7 @@ class ResizeToData extends BaseWidget {
 
 /**
  * Button to toggle legend
+ * @alias module:LocusZoom_Widgets~toggle_legend
  */
 class ToggleLegend extends BaseWidget {
     update() {
@@ -1270,20 +1297,23 @@ class ToggleLegend extends BaseWidget {
  * This button intentionally limits display options it can control to those available on common plot types.
  *   Although the list of options it sets can be overridden (to control very special custom plot types), this
  *   capability should be used sparingly if at all.
- *
- * @param {object} layout
- * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
- * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
- * @param {string} layout.layer_name Specify the datalayer that this button should affect
- * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
- *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
- * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
- *  This can be overridden if this button needs to be used on a custom layer type with special options.
- * @typedef {{display_name: string, display: Object}} DisplayOptionsButtonConfigField
- * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
- *  with this `display` option. Display field should include all changes to datalayer presentation options.
+ * @alias module:LocusZoom_Widgets~display_options
  */
 class DisplayOptions extends BaseWidget {
+    /**
+     * @param {object} layout
+     * @param {String} [layout.button_html="Display options..."] Text to display on the toolbar button
+     * @param {String} [layout.button_title="Control how plot items are displayed"] Hover text for the toolbar button
+     * @param {string} layout.layer_name Specify the datalayer that this button should affect
+     * @param {string} [layout.default_config_display_name] Store the default configuration for this datalayer
+     *  configuration, and show a button to revert to the "default" (listing the human-readable display name provided)
+     * @param {Array} [layout.fields_whitelist='see code'] The list of presentation fields that this button can control.
+     *  This can be overridden if this button needs to be used on a custom layer type with special options.
+     * @typedef {{display_name: string, display: Object}} DisplayOptionsButtonConfigField
+     * @param {DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
+     *  with this `display` option. Display field should include all changes to datalayer presentation options.
+     * @param parent
+     */
     constructor(layout, parent) {
         if (typeof layout.button_html != 'string') {
             layout.button_html = 'Display options...';
@@ -1388,6 +1418,7 @@ class DisplayOptions extends BaseWidget {
  *
  * For example, the LDServer data source can use it to change LD reference population (for all panels) after render
  *
+ * @alias module:LocusZoom_Widgets~set_state
  * @param {object} layout
  * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button
  * @param {String} [layout.button_title="Choose an option to customize the plot"] Hover text for the toolbar button

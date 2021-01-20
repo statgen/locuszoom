@@ -418,7 +418,8 @@ class CategoryScatter extends Scatter {
         super(...arguments);
         /**
          * Define category names and extents (boundaries) for plotting.
-         * @member {Object.<String, Number[]>} Category names and extents, in the form {category_name: [min_x, max_x]}
+         * In the form {category_name: [min_x, max_x]}
+         * @member {Object.<String, Number[]>}
          */
         this._categories = {};
     }
