@@ -3,26 +3,29 @@ import {merge} from '../../helpers/layouts';
 
 /**
  * @memberof module:LocusZoom_DataLayers~annotation_track
- * @type {{color: string, hitarea_width: number, tooltip_positioning: string, filters: null}}
  */
 const default_layout = {
     color: '#000000',
     filters: null,
-    tooltip_positioning: 'vertical', // Allowed values: top, middle, bottom
+    tooltip_positioning: 'vertical',
     hitarea_width: 8,
 };
 
 /**
  * Create a single continuous 2D track that provides information about each datapoint
  *
- * For example, this can be used to color by membership in a group, alongside information in other panels
+ * For example, this can be used to mark items by membership in a group, alongside information in other panels
  * @alias module:LocusZoom_DataLayers~annotation_track
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
  */
 class AnnotationTrack extends BaseDataLayer {
-    /*
+    /**
      * @param {Object} layout
-     * @param {Object|String} [layout.color]
-     * @param {Object[]} layout.filters An array of filter entries specifying which points to draw annotations for.
+     * @param {String|Object[]} [layout.color] **Scalable** Specify how to choose the fill color for each tick mark
+     * @param {number} [layout.hitarea_width=8] The width (in pixels) of hitareas. Annotation marks are typically 1 px wide,
+     *   so a hit area of 4px on each side can make it much easier to select an item for a tooltip. Hitareas will not interfere
+     *   with selecting adjacent points.
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='vertical'] Where to draw the tooltip relative to the datum.
      */
     constructor(layout) {
         if (!Array.isArray(layout.filters)) {
@@ -108,6 +111,12 @@ class AnnotationTrack extends BaseDataLayer {
             .remove();
     }
 
+    /**
+     * Render tooltip at the center of each tick mark
+     * @param tooltip
+     * @return {{y_min: number, x_max: *, y_max: *, x_min: number}}
+     * @private
+     */
     _getTooltipPosition(tooltip) {
         const panel = this.parent;
         const data_layer_height = panel.layout.height - (panel.layout.margin.top + panel.layout.margin.bottom);

@@ -6,7 +6,6 @@ import {applyStyles} from '../../helpers/common';
 
 /**
  * @memberof module:LocusZoom_DataLayers~arcs
- * @type {{color: string, hitarea_width: string, tooltip_positioning: string, style: {'stroke-opacity': string, 'stroke-width': string, fill: string}}}
  */
 const default_layout = {
     color: 'seagreen',
@@ -25,8 +24,23 @@ const default_layout = {
  * This layer draws arcs (one per datapoint) that connect two endpoints (x.field1 and x.field2) by means of an arc,
  *  with a height determined by y.field.
  * @alias module:LocusZoom_DataLayers~arcs
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
  */
 class Arcs extends BaseDataLayer {
+    /**
+     * @param {object} layout
+     * @param {String|Object[]} [layout.color='seagreen'] **Scalable** Specify how to choose the stroke color for each arc
+     * @param {number} [layout.hitarea_width='10px'] The width (in pixels) of hitareas. Arcs are only as wide as the stroke,
+     *   so a hit area of 5px on each side can make it much easier to select an item for a tooltip.
+     * @param {object} [layout.style] CSS style properties and values to be applied to all arcs
+     * @param {string} [layout.style.fill='none'] The fill color under the area of the arc
+     * @param {string} [layout.style.stroke-width='1px']
+     * @param {string} [layout.style.stroke_opacity='100%']
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
+     * @param {string} [layout.x_axis.field1] The field to use for one end of the arc; creates a point at (x1, 0)
+     * @param {string} [layout.x_axis.field2] The field to use for the other end of the arc; creates a point at (x2, 0)
+     * @param {string} [layout.y_axis.field] The height at the midpoint of the arc, (xmid, y)
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
         super(...arguments);

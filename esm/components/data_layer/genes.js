@@ -24,8 +24,20 @@ const default_layout = {
  * Genes Data Layer
  * Implements a data layer that will render gene tracks
  * @alias module:LocusZoom_DataLayers~genes
-*/
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
 class Genes extends BaseDataLayer {
+    /**
+     * @param {object} layout
+     * @param {string|object[]} [layout.stroke='rgb(54, 54, 150)'] **scalable** The stroke color for each intron and exon
+     * @param {string|object[]} [layout.color='#363696'] **scalable** The fill color for each intron and exon
+     * @param {number} [layout.label_font_size]
+     * @param {number} [layout.label_exon_spacing] The number of px padding between exons and the gene label
+     * @param {string|object[]} [layout.exon_height=10] The height of each exon (vertical line) when drawing the gene
+     * @param {string|object[]} [layout.bounding_box_padding=3] Padding around edges of the bounding box, as shown when highlighting a selected gene
+     * @param {string|object[]} [layout.track_vertical_spacing=5] Vertical spacing between each row of genes
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
         super(...arguments);
