@@ -29,13 +29,13 @@ const default_layout = {
 class Genes extends BaseDataLayer {
     /**
      * @param {object} layout
-     * @param {string|object[]} [layout.stroke='rgb(54, 54, 150)'] **scalable** The stroke color for each intron and exon
-     * @param {string|object[]} [layout.color='#363696'] **scalable** The fill color for each intron and exon
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.stroke='rgb(54, 54, 150)'] The stroke color for each intron and exon
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#363696'] The fill color for each intron and exon
      * @param {number} [layout.label_font_size]
      * @param {number} [layout.label_exon_spacing] The number of px padding between exons and the gene label
-     * @param {string|object[]} [layout.exon_height=10] The height of each exon (vertical line) when drawing the gene
-     * @param {string|object[]} [layout.bounding_box_padding=3] Padding around edges of the bounding box, as shown when highlighting a selected gene
-     * @param {string|object[]} [layout.track_vertical_spacing=5] Vertical spacing between each row of genes
+     * @param {number} [layout.exon_height=10] The height of each exon (vertical line) when drawing the gene
+     * @param {number} [layout.bounding_box_padding=3] Padding around edges of the bounding box, as shown when highlighting a selected gene
+     * @param {number} [layout.track_vertical_spacing=5] Vertical spacing between each row of genes
      * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
      */
     constructor(layout) {

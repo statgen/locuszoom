@@ -21,7 +21,7 @@ const default_layout = {
 class AnnotationTrack extends BaseDataLayer {
     /**
      * @param {Object} layout
-     * @param {String|Object[]} [layout.color] **Scalable** Specify how to choose the fill color for each tick mark
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color] Specify how to choose the fill color for each tick mark
      * @param {number} [layout.hitarea_width=8] The width (in pixels) of hitareas. Annotation marks are typically 1 px wide,
      *   so a hit area of 4px on each side can make it much easier to select an item for a tooltip. Hitareas will not interfere
      *   with selecting adjacent points.

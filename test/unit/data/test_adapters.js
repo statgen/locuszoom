@@ -681,7 +681,7 @@ describe('Data adapters', function () {
                 function () {
                     new source();
                 },
-                /Connectors must specify the data they require as init.sources = {internal_name: chain_source_id}} pairs/
+                /Connectors must specify the data they require as config.sources = {internal_name: chain_source_id}} pairs/
             );
             assert.ok(
                 new source(this.basic_config),

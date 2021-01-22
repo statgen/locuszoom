@@ -29,7 +29,7 @@ const default_layout = {
 class Arcs extends BaseDataLayer {
     /**
      * @param {object} layout
-     * @param {String|Object[]} [layout.color='seagreen'] **Scalable** Specify how to choose the stroke color for each arc
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='seagreen'] Specify how to choose the stroke color for each arc
      * @param {number} [layout.hitarea_width='10px'] The width (in pixels) of hitareas. Arcs are only as wide as the stroke,
      *   so a hit area of 5px on each side can make it much easier to select an item for a tooltip.
      * @param {object} [layout.style] CSS style properties and values to be applied to all arcs

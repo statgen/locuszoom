@@ -13,6 +13,25 @@ import SCALABLE from '../../registry/scalable';
 
 
 /**
+ * @typedef {object} ScalableParameter
+ * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
+ *  datum element will be passed to the scale function.
+ * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run
+ * @property {object} parameters A set of parameters that configure the desired scale function (options very by function)
+ */
+
+
+/**
+ * @typedef {Object} module:LocusZoom_DataLayers~behavior
+ * @property {'set'|'unset'|'toggle'|'link'} action
+ * @property {'highlighted'|'selected'|'faded'|'hidden'} status An element display status to set/unset/toggle
+ * @property {boolean} exclusive Whether an element status should be exclusive (eg only allow one point to be selected at a time)
+ * @property {string} href For links, the URL to visit when clicking
+ * @property {string} target For links, the `target` attribute (eg, name of a window or tab in which to open this link)
+ */
+
+
+/**
  * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
  * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
@@ -26,20 +45,10 @@ const default_layout = {
     match: {}, // Object with 3 keys, all optional: { send: fieldname_to_send, receive: fieldname_to_compare, operator: name_of_match_function}
     x_axis: {},
     y_axis: {},  // Axis options vary based on data layer type
-    tooltip: null,
+    tooltip: {},
     tooltip_positioning: 'horizontal',  // Where to draw tooltips relative to the point. Can be "vertical" or "horizontal"
-    behaviors: null,
+    behaviors: {},
 };
-
-/**
- * @typedef {Object} module:LocusZoom_DataLayers~behavior
- * @property {'set'|'unset'|'toggle'|'link'} action
- * @property {'highlighted'|'selected'|'faded'|'hidden'} status An element display status to set/unset/toggle
- * @property {boolean} exclusive Whether an element status should be exclusive (eg only allow one point to be selected at a time)
- * @property {string} href For links, the URL to visit when clicking
- * @property {string} target For links, the `target` attribute (eg, name of a window or tab in which to open this link)
- */
-
 
 /**
  * A data layer is an abstract class representing a data set and its graphical representation within a panel

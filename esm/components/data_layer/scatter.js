@@ -40,9 +40,9 @@ const default_layout = {
 class Scatter extends BaseDataLayer {
     /**
      * @param {object} layout
-     * @param {number|Object[]} [layout.point_size] **scalable** The size (area) of the point for each datum
-     * @param {string|Object[]} [layout.point_shape='circle'] **scalable** Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown". Defaults to "circle".
-     * @param {string|Object[]} [layout.color] **scalable** The color of the point for each datum
+     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size] The size (area) of the point for each datum
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='circle'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown". Defaults to "circle".
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color] The color of the point for each datum
      * @param {object} [layout.coalesce] Options to control whether and how to combine adjacent insignificant ("within region of interest") points
      *   to improve rendering performance. These options are primarily aimed at GWAS region plots. Within a specified
      *   rectangle area (eg "insignificant point cutoff"), we choose only points far enough part to be seen.
@@ -52,14 +52,14 @@ class Scatter extends BaseDataLayer {
      * @param {number} [layout.coalesce.max_points=800] Only attempt to reduce DOM size if there are at least this many
      *  points. Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width. For more
      *  sparse datasets, all points will be faithfully rendered even if coalesce.active=true.
-     * @param {number} [layout.coalesce.x_min='-Infinity']
-     * @param {number} [layout.coalesce.x_max='Infinity']
-     * @param {number} [layout.coalesce.y_min=0]
-     * @param {number} [layout.coalesce.y_max=3.0]
+     * @param {number} [layout.coalesce.x_min='-Infinity'] Min x coordinate of the region where points will be coalesced
+     * @param {number} [layout.coalesce.x_max='Infinity'] Max x coordinate of the region where points will be coalesced
+     * @param {number} [layout.coalesce.y_min=0] Min y coordinate of the region where points will be coalesced.
+     * @param {number} [layout.coalesce.y_max=3.0] Max y coordinate of the region where points will be coalesced
      * @param {number} [layout.coalesce.x_gap=7] Max number of pixels between the center of two points that can be
      *   coalesced. For circles, area 40 = radius ~3.5; aim for ~1 diameter distance.
      * @param {number} [layout.coalesce.y_gap=7]
-     * @param {number|Object[]} [layout.fill_opacity=1] **scalable** Opacity (0..1) for each datum point
+     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1] Opacity (0..1) for each datum point
      * @param {string} [layout.labels.text] Similar to tooltips: a template string that can reference datum fields for label text.
      * @param {number} [layout.labels.spacing] Distance (in px) between the label and the center of the datum.
      * @param {object} [layout.labels.lines] Controls display of lines between label text and the datum
