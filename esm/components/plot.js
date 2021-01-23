@@ -18,7 +18,9 @@ const default_layout = {
     state: {},
     width: 800,
     min_width: 400,
-    responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
+    min_region_scale: null,
+    max_region_scale: null,
+    responsive_resize: false,
     panels: [],
     toolbar: {
         widgets: [],
@@ -109,8 +111,20 @@ class Plot {
      * @param {String} id The ID of the plot. Often corresponds to the ID of the container element on the page
      *   where the plot is rendered..
      * @param {DataSources} datasource Ensemble of data providers used by the plot
-     * @param {Object} layout A JSON-serializable object of layout configuration parameters
-    */
+     * @param {object} [layout.state] Initial state parameters; the most common options are 'chr', 'start', and 'end'
+     *   to specify initial region view
+     * @param {number} [layout.width=800] The width of the plot and all child panels
+     * @param {number} [layout.min_width=400] Do not allow the panel to be resized below this width
+     * @param {number} [layout.min_region_scale] The minimum region width (do not allow the user to zoom smaller than this region size)
+     * @param {number} [layout.max_region_scale] The maximum region width (do not allow the user to zoom wider than this region size)
+     * @param {boolean} [layout.responsive_resize=false] Whether to resize plot width as the screen is resized
+     * @param {Object[]} [layout.panels] Configuration options for each panel to be added
+     * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each widget to place on the
+     *   plot-level toolbar
+     * @param {boolean} [layout.panel_boundaries=true] Whether to show interactive resize handles to change panel dimensions
+     * @param {boolean} [layout.mouse_guide=true] Whether to show a mouse guide as the user mouses over the plot-
+     *   this line spans all area and is especially useful for plots with multiple panels.
+     */
     constructor(id, datasource, layout) {
         /**
          * @private

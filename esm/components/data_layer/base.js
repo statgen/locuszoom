@@ -32,6 +32,36 @@ import SCALABLE from '../../registry/scalable';
 
 
 /**
+ * @typedef {object} FilterOption
+ * @property {string} field The name of a field found within each datapoint datum
+ * @property {module:LocusZoom_MatchFunctions} operator The name of a comparison function to use when deciding if the
+ *   field satisfies this filter
+ * @property value The target value to compare to
+ */
+
+
+/**
+ * @typedef {object} LegendItem
+ * @property [shape] This is optional (e.g. a legend element could just be a textual label).
+ *   Supported values are the standard d3 3.x symbol types (i.e. "circle", "cross", "diamond", "square",
+ *   "triangle-down", and "triangle-up"), as well as "rect" for an arbitrary square/rectangle or line for a path.
+ * @property {string} color The point color (hexadecimal, rgb, etc)
+ * @property {string} label The human-readable label of the legend item
+ * @property {string} [class] The name of a CSS class used to style the point in the legend
+ * @property {number} [size] The point area for each element (if the shape is a d3 symbol). Eg, for a 40 px area,
+ *  a circle would be ~7..14 px in diameter.
+ * @property {number} [length] Length (in pixels) for the path rendered as the graphical portion of the legend element
+ *  if the value of the shape parameter is "line".
+ * @property {number} [width] Width (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {number} [height] Height (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {object} style CSS styles object to be applied to the DOM element representing the graphical portion of
+ *   the legend element.
+ */
+
+
+/**
  * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
  * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
@@ -42,10 +72,11 @@ const default_layout = {
     type: '',
     fields: [],
     id_field: 'id',
-    filters: null,  // Can be an array of {field, operator, value} entries
-    match: {}, // Object with 3 keys, all optional: { send: fieldname_to_send, receive: fieldname_to_compare, operator: name_of_match_function}
+    filters: null,
+    match: {},
     x_axis: {},
     y_axis: {},  // Axis options vary based on data layer type
+    legend: null,
     tooltip: {},
     tooltip_positioning: 'horizontal',  // Where to draw tooltips relative to the point. Can be "vertical" or "horizontal"
     behaviors: {},
@@ -66,7 +97,7 @@ class BaseDataLayer {
      *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
      * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
      *   events, etc. This should be unique to the specified datum.
-     * @param {array} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
+     * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
      *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
      *  details vary from one layer to the next. See the Interactivity Tutorial for details.
      * @param {object} [layout.match] An object describing how to connect this data layer to other data layers in the
@@ -104,6 +135,7 @@ class BaseDataLayer {
      * @param {object} [layout.behaviors] LocusZoom data layers support the binding of mouse events to one or more
      *   layout-definable behaviors. Some examples of behaviors include highlighting an element on mouseover, or
      *   linking to a dynamic URL on click, etc.
+     * @param {module:LocusZoom_DataLayers~LegendItem[]} [layout.legend] Tick marks found in the panel legend
      * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onclick]
      * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlclick]
      * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlshiftclick]

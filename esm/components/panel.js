@@ -66,6 +66,19 @@ class Panel {
      * @param {number} [layout.title.style] CSS options to apply to the title
      * @param {number} [layout.title.x=10] x-offset for title position
      * @param {number} [layout.title.y=22] y-offset for title position
+     * @param {'vertical'|'horizontal'} [layout.legend.orientation='vertical']  Orientation with which elements in the legend should be arranged.
+     *   Presently only "vertical" and "horizontal" are supported values. When using the horizontal orientation
+     *   elements will automatically drop to a new line if the width of the legend would exceed the right edge of the
+     *   containing panel. Defaults to "vertical".
+     * @param {number} [layout.legend.origin.x=0]  X-offset, in pixels, for the top-left corner of the legend (relative to the top left corner of the panel).
+     * @param {number} [layout.legend.origin.y=0] Y-offset, in pixels, for the top-left corner of the legend (relative to the top left corner of the panel).
+     *   NOTE: SVG y values go from the top down, so the SVG origin of (0,0) is in the top left corner.
+     * @param {number} [layout.legend.padding=5]  Value in pixels to pad between the legend's outer border and the
+     *   elements within the legend. This value is also used for spacing between elements in the legend on different
+     *   lines (e.g. in a vertical orientation) and spacing between element shapes and labels, as well as between
+     *   elements in a horizontal orientation, are defined as a function of this value. Defaults to 5.
+     * @param {number} [layout.legend.label_size=12]  Font size for element labels in the legend (loosely analogous to the height of full-height letters, in pixels). Defaults to 12.
+     * @param {boolean} [layout.legend.hidden=false] Whether to hide the legend by default
      * @param {number} [layout.y_index] The position of the panel (above or below other panels). This is usually set
      *  automatically when the panel is added, and rarely controlled directly.
      * @param {number} [layout.min_height=1] When resizing, do not allow height to go below this value
