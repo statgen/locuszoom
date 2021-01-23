@@ -38,6 +38,7 @@ import SCALABLE from '../../registry/scalable';
  * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 const default_layout = {
+    id: '',
     type: '',
     fields: [],
     id_field: 'id',
@@ -56,6 +57,7 @@ const default_layout = {
 */
 class BaseDataLayer {
     /**
+     * @param {string} [layout.id=''] An identifier string that must be unique across all layers within the same panel
      * @param {string} [layout.type=''] The type of data layer. This parameter is used in layouts to specify which class
      *   (from the registry) is created; it is also used in CSS class names.
      * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only

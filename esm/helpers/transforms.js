@@ -18,7 +18,8 @@ export function log10 (value) {
 
 /**
  * Return the -log (base 10), a common means of representing pvalues in locuszoom plots
- * @function neglog10
+ * @param value
+ * @return {number}
  */
 export function neglog10 (value) {
     if (isNaN(value) || value <= 0) {
@@ -29,7 +30,8 @@ export function neglog10 (value) {
 
 /**
  * Convert a number from logarithm to scientific notation. Useful for, eg, a datasource that returns -log(p) by default
- * @function logtoscinotation
+ * @param value
+ * @return {string}
  */
 export function logtoscinotation (value) {
     if (isNaN(value)) {
@@ -52,7 +54,6 @@ export function logtoscinotation (value) {
 
 /**
  * Represent a number in scientific notation
- * @function scinotation
  * @param {Number} value
  * @returns {String}
  */
@@ -82,8 +83,8 @@ export function scinotation (value) {
  * HTML-escape user entered values for use in constructed HTML fragments
  *
  * For example, this filter can be used on tooltips with custom HTML display
- * @function htmlescape
  * @param {String} value HTML-escape the provided value
+ * @return {string}
  */
 export function htmlescape (value) {
     if (!value) {
@@ -111,8 +112,8 @@ export function htmlescape (value) {
 
 /**
  * URL-encode the provided text, eg for constructing hyperlinks
- * @function urlencode
  * @param {String} value
+ * @return {string}
  */
 export function urlencode (value) {
     return encodeURIComponent(value);

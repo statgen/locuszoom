@@ -25,17 +25,17 @@ const registry = new RegistryBase();
  * Check if two values are (strictly) equal
  * @function
  * @name '='
- * @param a
- * @param b
+ * @param item_value
+ * @param target_value
  */
-registry.add('=', (a, b) => a === b);
+registry.add('=', (item_value, target_value) => item_value === target_value);
 
 /**
  * Check if two values are not equal. This allows weak comparisons (eg undefined/null), so it can also be used to test for the absence of a value
  * @function
  * @name '!='
- * @param a
- * @param b
+ * @param item_value
+ * @param target_value
  */
 // eslint-disable-next-line eqeqeq
 registry.add('!=', (a, b) => a != b); // For absence of a value, deliberately allow weak comparisons (eg undefined/null)
@@ -44,8 +44,8 @@ registry.add('!=', (a, b) => a != b); // For absence of a value, deliberately al
  * Less-than comparison
  * @function
  * @name '<'
- * @param {Number} a
- * @param {Number} b
+ * @param item_value
+ * @param target_value
  */
 registry.add('<', (a, b) => a < b);
 
@@ -53,8 +53,8 @@ registry.add('<', (a, b) => a < b);
  * Less than or equals to comparison
  * @function
  * @name '<='
- * @param {Number} a
- * @param {Number} b
+ * @param item_value
+ * @param target_value
  */
 registry.add('<=', (a, b) => a <= b);
 
@@ -62,8 +62,8 @@ registry.add('<=', (a, b) => a <= b);
  * Greater-than comparison
  * @function
  * @name '>'
- * @param {Number} a
- * @param {Number} b
+ * @param item_value
+ * @param target_value
  */
 registry.add('>', (a, b) => a > b);
 
@@ -71,8 +71,8 @@ registry.add('>', (a, b) => a > b);
  * Greater than or equals to comparison
  * @function
  * @name '>='
- * @param {Number} a
- * @param {Number} b
+ * @param item_value
+ * @param target_value
  */
 registry.add('>=', (a, b) => a >= b);
 
@@ -80,8 +80,8 @@ registry.add('>=', (a, b) => a >= b);
  * Modulo: tests for whether the remainder a % b is nonzero
  * @function
  * @name '%'
- * @param {Number} a
- * @param {Number} b
+ * @param item_value
+ * @param target_value
  */
 registry.add('%', (a, b) => a % b);
 
@@ -92,8 +92,8 @@ registry.add('%', (a, b) => a % b);
  *  Eg, `gene_type` is one of the allowed types of interest
  * @function
  * @name 'in'
- * @param a A scalar value
- * @param {String|Array} b A container that implements the `includes` method
+ * @param item_value A scalar value
+ * @param {String|Array} target_value A container that implements the `includes` method
  */
 registry.add('in', (a, b) => b && b.includes(a));
 
@@ -101,8 +101,8 @@ registry.add('in', (a, b) => b && b.includes(a));
  * Partial-match function. Can be used for free text search ("find all gene names that contain the user-entered string 'TCF'")
  * @function
  * @name 'match'
- * @param {String|Array} a A container (like a string) that implements the `includes` method
- * @param b A scalar value, like a string
+ * @param {String|Array} item_value A container (like a string) that implements the `includes` method
+ * @param target_value A scalar value, like a string
  */
 registry.add('match', (a, b) => a && a.includes(b)); // useful for text search: "find all gene names that contain the user-entered value HLA"
 

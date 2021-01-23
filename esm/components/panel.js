@@ -16,10 +16,11 @@ import data_layers from '../registry/data_layers';
  * @type {Object}
  */
 const default_layout = {
+    id: '',
     title: { text: '', style: {}, x: 10, y: 22 },
     y_index: null,
-    min_height: 1,  // When resizing, do not allow height to go below this value
-    height: 1, // The actual height allocated to the panel (>= min_height)
+    min_height: 1,
+    height: 1,
     origin: { x: 0, y: null },
     margin: { top: 0, right: 0, bottom: 0, left: 0 },
     background_click: 'clear_selections',
@@ -47,7 +48,7 @@ const default_layout = {
         y1_linked: false,
         y2_linked: false,
     },
-    show_loading_indicator: true, // On by default as of LZ 0.13
+    show_loading_indicator: true,
     data_layers: [],
 };
 
@@ -57,9 +58,50 @@ const default_layout = {
  */
 class Panel {
     /**
-     * @param {Object} layout
+     * @param {string} [layout.id=''] An identifier string that must be unique across all panels in the plot
+     * @param {boolean} [layout.show_loading_indicator=true] Whether to show a "loading indicator" while data is being fetched
+     * @param {module:LocusZoom_DataLayers[]} [layout.data_layers] Data layer layout objects
+     * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each toolbar widget; {@link module:LocusZoom_Widgets}
+     * @param {number} [layout.title.text] Text to show in panel title
+     * @param {number} [layout.title.style] CSS options to apply to the title
+     * @param {number} [layout.title.x=10] x-offset for title position
+     * @param {number} [layout.title.y=22] y-offset for title position
+     * @param {number} [layout.y_index] The position of the panel (above or below other panels). This is usually set
+     *  automatically when the panel is added, and rarely controlled directly.
+     * @param {number} [layout.min_height=1] When resizing, do not allow height to go below this value
+     * @param {number} [layout.height=1] The actual height allocated to the panel (>= min_height)
+     * @param {number} [layout.margin.top=0] The margin (space between top of panel and edge of viewing area)
+     * @param {number} [layout.margin.right=0] The margin (space between right side of panel and edge of viewing area)
+     * @param {number} [layout.margin.bottom=0] The margin (space between bottom of panel and edge of viewing area)
+     * @param {number} [layout.margin.left=0] The margin (space between left side of panel and edge of viewing area)
+     * @param {'clear_selections'|null} [layout.background_click='clear_selections'] What happens when the background of the panel is clicked
+     * @param {'state'|null} [layout.axes.x.extent] If 'state', the x extent will be determined from plot.state (a
+     *   shared region). Otherwise it will be determined based on data later ranges.
+     * @param {string} [layout.axes.x.label] Label text for the provided axis
+     * @param {number} [layout.axes.x.label_offset]
+     * @param {boolean} [layout.axes.x.render] Whether to render this axis
+     * @param {'region'|null} [layout.axes.x.tick_format] If 'region', format ticks in a concise way suitable for
+     *   genomic coordinates, eg 23423456 => 23.42 (Mb)
+     * @param {Array} [layout.axes.x.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {string} [layout.axes.y1.label] Label text for the provided axis
+     * @param {number} [layout.axes.y1.label_offset]
+     * @param {boolean} [layout.axes.y1.render=false] Whether to render this axis
+     * @param {Array} [layout.axes.y1.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {string} [layout.axes.y2.label] Label text for the provided axis
+     * @param {number} [layout.axes.y2.label_offset]
+     * @param {boolean} [layout.axes.y2.render=false] Whether to render this axis
+     * @param {Array} [layout.axes.y2.ticks] An array of custom ticks that will override any automatically generated)
+     * @param {boolean} [layout.interaction.drag_background_to_pan=false] Allow the user to drag the panel background to pan
+     *   the plot to another genomic region.
+     * @param {boolean} [layout.interaction.drag_x_ticks_to_scale=false] Allow the user to rescale the x axis by dragging x ticks
+     * @param {boolean}  [layout.interaction.drag_y1_ticks_to_scale=false] Allow the user to rescale the y1 axis by dragging y1 ticks
+     * @param {boolean} [layout.interaction.drag_y2_ticks_to_scale=false] Allow the user to rescale the y2 axis by dragging y2 ticks
+     * @param {boolean} [layout.interaction.scroll_to_zoom=false] Allow the user to rescale the plot by mousewheel-scrolling
+     * @param {boolean} [layout.interaction.x_linked=false] Whether this panel should change regions to match all other linked panels
+     * @param {boolean} [layout.interaction.y1_linked=false] Whether this panel should rescale to match all other linked panels
+     * @param {boolean} [layout.interaction.y2_linked=false] Whether this panel should rescale to match all other linked panels
      * @param {Plot|null} parent
-    */
+     */
     constructor(layout, parent) {
         if (typeof layout !== 'object') {
             throw new Error('Unable to create panel, invalid layout');
@@ -1180,9 +1222,7 @@ class Panel {
         if (this.layout.axes.x && this.layout.axes.x.extent === 'state') {
             this.x_extent = [ this.state.start, this.state.end ];
         }
-
         return this;
-
     }
 
     /**
