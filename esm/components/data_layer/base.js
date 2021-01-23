@@ -56,7 +56,6 @@ const default_layout = {
 */
 class BaseDataLayer {
     /**
-     * @param {Object} layout A JSON-serializable object describing the layout for this layer
      * @param {string} [layout.type=''] The type of data layer. This parameter is used in layouts to specify which class
      *   (from the registry) is created; it is also used in CSS class names.
      * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only
@@ -72,7 +71,6 @@ class BaseDataLayer {
      *   same plot. Specifies keys `send` and `receive` containing the names of fields with data to be matched;
      *   `operator` specifies the name of a MatchFunction to use. If a datum matches the broadcast value, it will be
      *   marked with the special field `lz_is_match=true`, which can be used in any scalable layout directive to control how the item is rendered.
-     * @param {object} [layout.x_axis] Configuration options for the x-axis; fields vary depending on layer type.
      * @param {boolean} [layout.x_axis.decoupled=false] If true, the data in this layer will not influence the x-extent of the panel.
      * @param {'state'|null} [layout.x_axis.extent] If provided, the region plot x-extent will be determined from
      *   `plot.state` rather than from the range of the data. This is the most common way of setting x-extent,
@@ -83,7 +81,6 @@ class BaseDataLayer {
      * @param {number} [layout.x_axis.field] The datum field to look at when determining data extent along the x-axis.
      * @param {number} [layout.x_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
      * @param {number} [layout.x_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
-     * @param {object} [layout.y_axis] Configuration options for the y-axis; fields vary depending on layer type.
      * @param {boolean} [layout.y_axis.decoupled=false] If true, the data in this layer will not influence the y-extent of the panel.
      * @param {object} [layout.y_axis.axis=1] Which y axis to use for this data layer (left=1, right=2)
      * @param {number} [layout.y_axis.floor] The low end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
@@ -92,7 +89,6 @@ class BaseDataLayer {
      * @param {number} [layout.y_axis.field] The datum field to look at when determining data extent along the y-axis.
      * @param {number} [layout.y_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
      * @param {number} [layout.y_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
-     * @param {object} [layout.tooltip] Configuration options for the tooltip shown when interacting with a data element (if any)
      * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
      * @param {object} [layout.tooltip.hide] Define when to hide a tooltip in terms of interaction states, eg, `{ and: ['unhighlighted', 'unselected'] }`
      * @param {boolean} [layout.tooltip.closable] Whether a tool tip should render a "close" button in the upper right corner.

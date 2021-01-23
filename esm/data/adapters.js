@@ -371,7 +371,6 @@ class BaseAdapter {
  * Base source for LocusZoom data sources that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
  * @extends module:LocusZoom_Adapters~BaseAdapter
- * @param {object} config
  * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
  * @inheritDoc
  */
@@ -395,9 +394,8 @@ class BaseApiAdapter extends BaseAdapter {
  *  to a specific REST API.
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} config Configuration options
  * @param {string} config.url The base URL for the remote data.
- * @param {object} [config.params]
+ * @param {object} config.params
  * @param [config.params.sort=false] Whether to sort the association data (by an assumed field named "position"). This
  *   is primarily a site-specific workaround for a particular LZ usage; we encourage apis to sort by position before returning
  *   data to the browser.
@@ -464,7 +462,6 @@ class AssociationLZ extends BaseApiAdapter {
  */
 class LDServer extends BaseApiAdapter {
     /**
-     * @param {object} config Configuration options
      * @param {string} config.url The base URL for the remote data.
      * @param {object} config.params
      * @param [config.params.build='GRCh37'] The genome build to use when calculating LD relative to a specified reference variant.
@@ -772,15 +769,16 @@ class LDServer extends BaseApiAdapter {
  *
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} config Configuration options
- * @param {string} config.url The base URL for the remote data.
- * @param {Object} [config.params] Optional parameters
- * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
- *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
- * @param {Number} [config.params.source=6] The ID of the chosen catalog. Most usages should omit this parameter and
- *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
  */
 class GwasCatalogLZ extends BaseApiAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data.
+     * @param {Object} config.params
+     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+     *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     * @param {Number} [config.params.source=6] The ID of the chosen catalog. Most usages should omit this parameter and
+     *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
+     */
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -886,9 +884,8 @@ class GwasCatalogLZ extends BaseApiAdapter {
  * Data Source for Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} Configuration options
  * @param {string} config.url The base URL for the remote data
- * @param {Object} [config.params] Optional parameters
+ * @param {Object} config.params
  * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
  * @param {Number} [config.params.source=5] The ID of the chosen gene dataset. Most usages should omit this parameter and
@@ -941,13 +938,14 @@ class GeneLZ extends BaseApiAdapter {
  *
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} Configuration options
- * @param {string} config.url The base URL for the remote data
- * @param {Object} [config.params] Optional parameters
- * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
- *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
  */
 class GeneConstraintLZ extends BaseApiAdapter {
+    /**
+     * @param {string} config.url The base URL for the remote data
+     * @param {Object} config.params
+     * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
+     *   May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
+     */
     constructor(config) {
         super(config);
         this.__dependentSource = true;
@@ -1045,9 +1043,8 @@ class GeneConstraintLZ extends BaseApiAdapter {
  * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} Configuration options
  * @param {string} config.url The base URL for the remote data
- * @param {Object} [config.params] Optional parameters
+ * @param {Object} config.params
  * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
  * @param {Number} [config.params.source=15] The ID of the chosen dataset. Most usages should omit this parameter and
@@ -1098,9 +1095,8 @@ class StaticSource extends BaseAdapter {
  * Data source for PheWAS data retrieved from a LocusZoom/PortalDev compatible API
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
- * @param {object} Configuration options
  * @param {string} config.url The base URL for the remote data
- * @param {Object} [config.params] Optional parameters
+ * @param {Object} config.params
  * @param {String[]} config.params.build This datasource expects to be provided the name of the genome build that will
  *   be used to provide pheWAS results for this position. Note positions may not translate between builds.
  */
@@ -1142,8 +1138,7 @@ class PheWASLZ extends BaseApiAdapter {
  */
 class ConnectorSource extends BaseAdapter {
     /**
-     * @param {Object} config Configuration for this source
-     * @param {Object} [config.params] Optional parameters
+     * @param {Object} config.params Additional parameters
      * @param {Object} config.params.sources Specify how the hard-coded logic should find the data it relies on in the chain,
      *  as {internal_name: chain_source_id} pairs. This allows writing a reusable connector that does not need to make
      *  assumptions about what namespaces a source is using.     *

@@ -28,7 +28,6 @@ const default_layout = {
  */
 class Genes extends BaseDataLayer {
     /**
-     * @param {object} layout
      * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.stroke='rgb(54, 54, 150)'] The stroke color for each intron and exon
      * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#363696'] The fill color for each intron and exon
      * @param {number} [layout.label_font_size]

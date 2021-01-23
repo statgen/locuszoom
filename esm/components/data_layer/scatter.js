@@ -33,40 +33,43 @@ const default_layout = {
 };
 
 /**
+ * Options that control point-coalescing in scatter plots
+ * @typedef {object} module:LocusZoom_DataLayers~scatter~coalesce_options
+ * @property {boolean} [active=false] Whether to use this feature. Typically used for GWAS plots, but
+ *   not other scatter plots such as PheWAS.
+ * @property {number} [max_points=800] Only attempt to reduce DOM size if there are at least this many
+ *  points. Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width. For more
+ *  sparse datasets, all points will be faithfully rendered even if coalesce.active=true.
+ * @property {number} [x_min='-Infinity'] Min x coordinate of the region where points will be coalesced
+ * @property {number} [x_max='Infinity'] Max x coordinate of the region where points will be coalesced
+ * @property {number} [y_min=0] Min y coordinate of the region where points will be coalesced.
+ * @property {number} [y_max=3.0] Max y coordinate of the region where points will be coalesced
+ * @property {number} [x_gap=7] Max number of pixels between the center of two points that can be
+ *   coalesced. For circles, area 40 = radius ~3.5; aim for ~1 diameter distance.
+ * @property {number} [y_gap=7]
+ */
+
+/**
  * Scatter Data Layer
  * Implements a standard scatter plot
  * @alias module:LocusZoom_DataLayers~scatter
  */
 class Scatter extends BaseDataLayer {
     /**
-     * @param {object} layout
-     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size] The size (area) of the point for each datum
+     * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size=40] The size (area) of the point for each datum
      * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='circle'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown". Defaults to "circle".
-     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color] The color of the point for each datum
-     * @param {object} [layout.coalesce] Options to control whether and how to combine adjacent insignificant ("within region of interest") points
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#888888'] The color of the point for each datum
+     * @param {module:LocusZoom_DataLayers~scatter~coalesce_options} [layout.coalesce] Options to control whether and how to combine adjacent insignificant ("within region of interest") points
      *   to improve rendering performance. These options are primarily aimed at GWAS region plots. Within a specified
      *   rectangle area (eg "insignificant point cutoff"), we choose only points far enough part to be seen.
      *   The defaults are specifically tuned for GWAS plots with -log(p) on the y-axis.
-     * @param {boolean} [layout.coalesce.active=false] Whether to use this feature. Typically used for GWAS plots, but
-     *   not other scatter plots such as PheWAS.
-     * @param {number} [layout.coalesce.max_points=800] Only attempt to reduce DOM size if there are at least this many
-     *  points. Many plots are 800-2400 px wide, so, more than 1 datum per pixel of average region width. For more
-     *  sparse datasets, all points will be faithfully rendered even if coalesce.active=true.
-     * @param {number} [layout.coalesce.x_min='-Infinity'] Min x coordinate of the region where points will be coalesced
-     * @param {number} [layout.coalesce.x_max='Infinity'] Max x coordinate of the region where points will be coalesced
-     * @param {number} [layout.coalesce.y_min=0] Min y coordinate of the region where points will be coalesced.
-     * @param {number} [layout.coalesce.y_max=3.0] Max y coordinate of the region where points will be coalesced
-     * @param {number} [layout.coalesce.x_gap=7] Max number of pixels between the center of two points that can be
-     *   coalesced. For circles, area 40 = radius ~3.5; aim for ~1 diameter distance.
-     * @param {number} [layout.coalesce.y_gap=7]
      * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=1] Opacity (0..1) for each datum point
-     * @param {string} [layout.labels.text] Similar to tooltips: a template string that can reference datum fields for label text.
-     * @param {number} [layout.labels.spacing] Distance (in px) between the label and the center of the datum.
-     * @param {object} [layout.labels.lines] Controls display of lines between label text and the datum
-     * @param {object} [layout.labels.lines.style] CSS style options for how the line is rendered
-     * @param {number} [layout.labels.filters] Filters that describe which points to label. For performance reasons,
+     * @param {string} [layout.label.text] Similar to tooltips: a template string that can reference datum fields for label text.
+     * @param {number} [layout.label.spacing] Distance (in px) between the label and the center of the datum.
+     * @param {object} [layout.label.lines.style] CSS style options for how the line is rendered
+     * @param {number} [layout.label.filters] Filters that describe which points to label. For performance reasons,
      *   we recommend labeling only a small subset of most interesting points.
-     * @param {object} [layout.labels.style] CSS style options for label text
+     * @param {object} [layout.label.style] CSS style options for label text
      */
     constructor(layout) {
         layout = merge(layout, default_layout);
@@ -442,7 +445,6 @@ class Scatter extends BaseDataLayer {
  */
 class CategoryScatter extends Scatter {
     /**
-     * @param {object} layout
      * @param {string} layout.x_axis.category_field The datum field to use in auto-generating tick marks, color scheme, and point ordering.
      */
     constructor(layout) {

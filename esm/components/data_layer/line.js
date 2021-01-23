@@ -27,7 +27,6 @@ const default_layout = {
 */
 class Line extends BaseDataLayer {
     /**
-     * @param {object} layout
      * @param {object} [layout.style] CSS properties to control how the line is drawn
      * @param {string} [layout.style.fill='none'] Fill color for the area under the curve
      * @param {string} [layout.style.stroke]
@@ -164,8 +163,6 @@ const default_orthogonal_layout = {
  */
 class OrthogonalLine extends BaseDataLayer {
     /**
-     * @param {object} layout
-     * @param {object} [layout.style] CSS properties to control how the line is drawn
      * @param {string} [layout.style.stroke='#D3D3D3']
      * @param {string} [layout.style.stroke-width='3px']
      * @param {string} [layout.style.stroke-dasharray='10px 10px']
