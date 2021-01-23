@@ -777,6 +777,8 @@ class Panel {
      *   0-100% based on actual load progress), and disappears when new data is loaded and rendered.
      *
      * @protected
+     * @listens event:data_requested
+     * @listens event:data_rendered
      * @param {Boolean} show_immediately
      * @returns {Panel}
      */
@@ -1170,6 +1172,9 @@ class Panel {
      * When the parent plot changes state, adjust the panel accordingly. For example, this may include fetching new data
      *   from the API as the viewing region changes
      * @private
+     * @fires event:data_requested
+     * @fires event:layout_changed
+     * @fires event:data_rendered
      * @returns {Promise}
      */
     reMap() {

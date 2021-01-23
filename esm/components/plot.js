@@ -29,6 +29,76 @@ const default_layout = {
     mouse_guide: true,
 };
 
+
+/**
+ * Fields common to every event emitted by LocusZoom.
+ * @event lzEvent
+ * @type {object}
+ * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
+ * @property {Plot|Panel} target A reference to the plot or panel instance that originated the event.
+ * @property {object|null} data Additional data provided. (see event-specific documentation)
+ */
+
+/**
+ * A panel was removed from the plot.
+ * @event panel_removed
+ * @property {string} data The id of the panel that was removed (eg 'genes')
+ * @see event:lzEvent
+ */
+
+/**
+ * A request for data was initiated. This can be used for, eg, showing data loading indicators.
+ * @event data_requested
+ * @see event:lzEvent
+ */
+
+/**
+ * A request for new data has completed, and all data has been rendered.
+ * @event data_rendered
+ * @see event:lzEvent
+ */
+
+/**
+ * An action occurred that changed, or could change, the layout
+ * @event layout_changed
+ * @deprecated
+ * @see event:lzEvent
+ */
+
+/**
+ * The user has requested state changes, eg via `plot.applyState`. This reports the original requested values even
+ *  if they are overridden by plot logic.
+ * @event state_changed
+ * @property {object} data The set of all state changes requested
+ * @deprecated
+ * @see event:lzEvent
+ * @see region_changed
+ */
+
+/**
+ * The plot region has changed. Reports the actual coordinates of the plot after the zoom event. If plot.applyState is
+ *  called with an invalid region, this reports the actual final coordinates subject to region min/max, etc.
+ * @event region_changed
+ * @property {object} data The {chr, start, end} coordinates of the requested region.
+ * @see event:lzEvent
+ */
+
+/**
+ * Indicate whether the element was selected (or unselected)
+ * @event element_selection
+ * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
+ *   selection status (boolean)
+ * @see event:lzEvent
+ */
+
+/**
+ * Indicate whether a match was requested from within the data layer.
+ * @event match_requested
+ * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
+ *   being initiated or canceled
+ * @see event:lzEvent
+ */
+
 /**
  * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within
  *  any constraints specified by the layout
@@ -456,6 +526,7 @@ class Plot {
     /**
      * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
      * @public
+     * @fires event:panel_removed
      * @param {String} id
      * @returns {Plot}
      */
@@ -537,6 +608,7 @@ class Plot {
      *  using the same fields syntax and underlying methods as data layers.
      *
      * @public
+     * @listens event:data_rendered
      * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
      *  Different data sources should be prefixed by the source name.
      * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
@@ -576,6 +648,12 @@ class Plot {
      * @public
      * @param {Object} state_changes
      * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+     * @listen event:match_requested
+     * @fires event:data_requested
+     * @fires event:layout_changed
+     * @fires event:data_rendered
+     * @fires event:state_changed
+     * @fires event:region_changed
      */
     applyState(state_changes) {
         state_changes = state_changes || {};
@@ -640,7 +718,6 @@ class Plot {
                 }
 
                 this.loading_data = false;
-
             });
     }
 
@@ -837,6 +914,7 @@ class Plot {
      * @param {Number} [width] If provided and larger than minimum allowed size, set plot to this width
      * @param {Number} [height] If provided and larger than minimum allowed size, set plot to this height
      * @returns {Plot}
+     * @fires event:layout_changed
      */
     setDimensions(width, height) {
         // If width and height arguments were passed, then adjust plot dimensions to fit all panels

@@ -1185,7 +1185,9 @@ class BaseDataLayer {
      * Toggle a status (e.g. highlighted, selected, identified) on an element
      *
      * @private
-     *
+     * @fires event:layout_changed
+     * @fires event:element_selection
+     * @fires event:match_requested
      * @param {String} status The name of a recognized status to be added/removed on an appropriate element
      * @param {String|Object} element The data bound to the element of interest
      * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it
