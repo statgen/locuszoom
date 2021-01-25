@@ -148,9 +148,6 @@ var layout = {
 * **`min_width`** - *Number*  
   Minimum discrete width, in pixels, allowable for the LocusZoom plot. May automatically increase to the greatest **`panels.{$panel_id}.min_width`** for each **`$panel_id`**.  
 
-* **`min_height`** - *Number*  
-  Minimum discrete height, in pixels, allowable for the LocusZoom plot. May automatically increase based on **`panels.{$panel_id}.min_height`** and **`panels.{$panel_id}.proportional_height`** for each **`$panel_id`**.  
-
 * **`min_region_scale`** - *Number*  
   Minimum allowable domain, in bases, for the x dimension of any panels whose x dimension resembles a genomic region (e.g. connected to `state.start` and `state.end`). Enforced by all actions that can reduce the x domain of a child panel, including zoom interactions. Effective default is 1.  
 

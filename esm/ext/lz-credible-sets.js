@@ -153,7 +153,7 @@ function install (LocusZoom) {
             match: { send: '{{namespace[assoc]}}variant', receive: '{{namespace[assoc]}}variant' },
         });
         base.color.unshift({
-            field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+            field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
             scale_function: 'if',
             parameters: {
                 field_value: true,
@@ -173,7 +173,7 @@ function install (LocusZoom) {
         },
         color: [
             {
-                field: 'lz_highlight_match',  // Special field name whose presence triggers custom rendering
+                field: 'lz_is_match',  // Special field name whose presence triggers custom rendering
                 scale_function: 'if',
                 parameters: {
                     field_value: true,
@@ -209,10 +209,8 @@ function install (LocusZoom) {
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
         id: 'annotationcredibleset',
         title: { text: 'SNPs in 95% credible set', x: 50, style: { 'font-size': '14px' } },
-        width: 800,
-        height: 45,
         min_height: 45,
-        proportional_width: 1,
+        height: 45,
         margin: { top: 25, right: 50, bottom: 0, left: 50 },
         inner_border: 'rgb(210, 210, 210)',
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true }),

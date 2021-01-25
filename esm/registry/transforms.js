@@ -6,7 +6,7 @@ import {RegistryBase} from './base';
 import * as transforms from '../helpers/transforms';
 
 /**
- * Registry of transformation functions that may be applied to template values.
+ * Registry of transformation functions that may be applied to template values to control how values are rendered.
  * Provides syntactic sugar atop a standard registry.
  * @private
  */

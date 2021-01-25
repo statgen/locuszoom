@@ -138,13 +138,7 @@ var panel_layout = {
   Discrete width, in pixels, of the panel. Subject to being limited by **`panel.min_width`**.  
 
 * **`height`** - *Number*  
-  Discrete height, in pixels, of the panel. Subject to being limited by **`panel.min_height`**.  
-
-* **`min_width`** - *Number*  
-  Minimum discrete width, in pixels, allowable for the panel. Able influence the **`min_width`** value on the parent layout.  
-
-* **`min_height`** - *Number*  
-  Minimum discrete height, in pixels, allowable for the panel. Able influence the **`min_height`** value on the parent layout.  
+  Discrete height, in pixels, of the panel.
 
 * **`origin`** - *Object*  
   An object that defines where the panel will be positioned in the plot (by the panel's top left corner) expressed as discrete pixel coordinates.  
@@ -155,21 +149,6 @@ var panel_layout = {
   * **`origin.y`** - *Number*  
     Y-offset, in pixels, for the top-left corner of the panel (relative to the LocusZoom plot).  
     **NOTE:** SVG y values go from the top down, so the SVG origin of (0,0) is in the top left corner.  
-
-* **`proportional_width`** - *Number*  
-  Width of the panel expressed as a proportion of the available width of the LocusZoom plot. Value should be a number in the range of `0.0` to `1.0`, with `1.0` meaning 100%.  
-
-* **`proportional_height`** - *Number*  
-  Height of the panel expressed as a proportion of the available height of the LocusZoom plot. Value should be a number in the range of `0.0` to `1.0`, with `1.0` meaning 100%.  
-
-* **`proportional_origin`** - *Object*  
-  An object that defines where the panel will be positioned in the plot (by the panel's top left corner) expressed as proportions of the plot's dimensions.  
-
-  * **`proportional_origin.x`** - *Number*  
-    X-offset, as a proportion of the plot's width, for the top-left corner of the panel (for example, 50% would be expressed as `0.5`).  
-
-  * **`proportional_origin.y`** - *Number*  
-    Y-offset, as a proportion of the plot's height, for the top-left corner of the panel (for example, 25% would be expressed as `0.25`).  
 
 * **`margin`** - *Object*  
   An object that defines the margins between a panel's boundaries and its content.  

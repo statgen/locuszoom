@@ -557,6 +557,7 @@ function install (LocusZoom) {
                 scale_function: 'to_rgb',
             },
             {
+                // TODO: Consider changing this to stable_choice in the future, for more stable coloring
                 field: '{{namespace[intervals]}}state_name',
                 scale_function: 'categorical_bin',
                 parameters: {
@@ -587,10 +588,8 @@ function install (LocusZoom) {
 
     const intervals_panel_layout = {
         id: 'intervals',
-        width: 1000,
-        height: 50,
-        min_width: 500,
         min_height: 50,
+        height: 50,
         margin: { top: 25, right: 150, bottom: 5, left: 50 },
         toolbar: (function () {
             const l = LocusZoom.Layouts.get('toolbar', 'standard_panel', { unnamespaced: true });
@@ -619,22 +618,14 @@ function install (LocusZoom) {
     const intervals_plot_layout = {
         state: {},
         width: 800,
-        height: 550,
         responsive_resize: true,
         min_region_scale: 20000,
         max_region_scale: 1000000,
         toolbar: LocusZoom.Layouts.get('toolbar', 'standard_association', { unnamespaced: true }),
         panels: [
-            LocusZoom.Layouts.get('panel', 'association', {
-                unnamespaced: true,
-                width: 800,
-                proportional_height: (225 / 570),
-            }),
-            Object.assign(
-                { unnamespaced: true, proportional_height: (120 / 570) },
-                intervals_panel_layout
-            ),
-            LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, width: 800, proportional_height: (225 / 570) }),
+            LocusZoom.Layouts.get('panel', 'association'),
+            LocusZoom.Layouts.merge({ unnamespaced: true, min_height: 120, height: 120 }, intervals_panel_layout),
+            LocusZoom.Layouts.get('panel', 'genes'),
         ],
     };
 

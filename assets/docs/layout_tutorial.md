@@ -70,23 +70,23 @@ are defined. Consider the `standard_association` plot:
 LocusZoom.Layouts.add('plot', 'standard_association', {
     state: {},
     width: 800,
-    height: 450,
-    responsive_resize: 'width_only',
+    responsive_resize: true,
     min_region_scale: 20000,
     max_region_scale: 1000000,
     dashboard: LocusZoom.Layouts.get('dashboard', 'standard_plot', { unnamespaced: true }),
     panels: [
-        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, proportional_height: 0.5 }),
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.5 })
+        LocusZoom.Layouts.get('panel', 'association', { unnamespaced: true, height: 225 }),
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, height: 225 })
     ]
 });
 ```
 
 In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this 
 plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
-we control how the total space is allocated between two panels (`proportional_height`). The actual details of what to 
-render are defined as nested layouts (association and genes panels), and the registry also contains predefined options 
-for this piece- `LocusZoom.Layouts.get(...)` returns a JSON object.  
+each panel is 225px high, so the total plot height will be the sum of panels (450 px); if more panels are added, 
+the plot height will increase to match. The actual details of what to render are defined as nested layouts 
+(association and genes panels), and the registry also contains predefined options for this piece- 
+`LocusZoom.Layouts.get(...)` returns a JSON object.  
 
 Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in 
 terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
@@ -309,23 +309,22 @@ data_sources
 // This outer call to Layouts.get() will ensure that namespaces are applied, and the returned result is a concrete 
 //   layout ready for use in drawing a plot with specific data sets. 
 const plot_layout = LocusZoom.Layouts.get('plot', 'standard_association', { // Override select fields of a pre-made layout 
-    height: 1200, // The default plot was sized for two panels. Make sure to allocate enough room for the extra panel. 
-    responsive_resize: 'width_only',  // This makes height calculations more reliable. Will become the default in the future.
+    responsive_resize: true,
     panels: [
         LocusZoom.Layouts.get('panel', 'association', {
             namespace: { assoc: 'assoc_study1' }, // This is the key piece. It says "for this panel, and its child data layers, look for the association data in a datasource called "assoc_study1".
-            proportional_height: 0.33,
+            height: 400,
             id: 'assoc_study1', // Give each panel a unique ID
             title: { text: 'Study 1' },
         }),
         LocusZoom.Layouts.get('panel', 'association', {
             namespace: { assoc: 'assoc_study2' },
-            proportional_height: 0.33, // Modifies the default so that all three panels get enough space
+            height: 400,
             id: 'assoc_study2',
             title: { text: 'Study 2' },
         }),
         // Even though genes are part of the original "standard association plot" layout, overriding the panels array means replacing *all* of the panels.
-        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, proportional_height: 0.33 })  // "unnamespaced" when using as a generic building block
+        LocusZoom.Layouts.get('panel', 'genes', { unnamespaced: true, height: 400 })  // "unnamespaced" when using as a generic building block
     ]
 });
 ```
@@ -347,8 +346,7 @@ Object.keys(layer_data[0]); // See the field names used by the data for a single
 ### Adding panels
 The above example demonstrates how to add multiple studies at the time of plot creation. However, sites like the T2D 
 Portal have many datasets, and it can be helpful to let the user interactively choose which other panels to show after
- first render. New panels can be added dynamically! When doing so, the plot will grow to accommodate the new panel;
-  dynamic panels do not require specifying `proportional_height` etc.
+ first render. New panels can be added dynamically! When doing so, the plot will grow to accommodate the new panel.
 
 ```js
 // This creates a new configuration object

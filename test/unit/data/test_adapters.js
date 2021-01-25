@@ -54,6 +54,70 @@ describe('Data adapters', function () {
             });
         });
 
+        describe('Source.getRequest', function () {
+            it('uses cached data when zooming in', function () {
+                const source = new BaseAdapter({});
+
+                const fetchStub = sinon.stub(source, 'fetchRequest').returns(Promise.resolve());
+
+                let state = { chr: 1, start: 500, end: 1500 };
+                let chain = {};
+                let fields = [];
+                const first_key = source.getCacheKey({ chr: 1, start: 500, end: 1500 });
+
+                // The flags that control cache are set in getRequest (eg, cache miss --> nework request --> update flags)
+                // Thus the testing plan involves calling getRequest, then checking the expected cache key based on those updated parameters
+                return source.getRequest(state, chain, fields)
+                    .then(() => {
+                        // Cache hits from the same key
+                        assert.equal(
+                            source.getCacheKey({ chr: 1, start: 750, end: 1250 }),
+                            first_key,
+                            'Zooming in triggers a cache hit'
+                        );
+                        assert.equal(
+                            source.getCacheKey({ chr: 1, start: 625, end: 1125 }),
+                            first_key,
+                            'Panning left inside cached area triggers a cache hit'
+                        );
+                        assert.equal(
+                            source.getCacheKey({ chr: 1, start: 750, end: 1250 }),
+                            first_key,
+                            'Panning right inside cached area triggers a cache hit'
+                        );
+
+                        // Prepare for the second request, a cache miss
+                        state = { chr: 1, start: 250, end: 1250 };
+                        return source.getRequest(state);
+                    }).then(() => {
+                        const second_key = source.getCacheKey(state);
+                        assert.notEqual(
+                            second_key,
+                            first_key,
+                            'Panning left outside the original zoom area triggers a cache miss'
+                        );
+                        assert.equal(
+                            second_key,
+                            source.getCacheKey({ chr: 1, start: 400, end: 900 }),
+                            'After a cache miss, cache hits are relative to the newly fetched data'
+                        );
+
+                        // Slightly weak in that most of the asserts don't actually use getRequest, but...
+                        assert.ok(fetchStub.calledTwice, 'Two fetches triggered by cache miss');
+
+                        assert.notEqual(
+                            source.getCacheKey({ chr: 2, start: 250, end: 1250 }),
+                            second_key,
+                            'A change in chromosome ALWAYS triggers a cache miss, even if position is the same'
+                        );
+                    });
+            });
+
+            afterEach(function () {
+                sinon.restore();
+            });
+        });
+
         describe('Source.parseResponse', function () {
             // Parse response is a wrapper for a set of helper methods. Test them individually, and combined.
             afterEach(function () {
@@ -416,46 +480,46 @@ describe('Data adapters', function () {
 
         it('will prefer a refvar in plot.state if one is provided', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const ref = source.getRefvar(
-                { ldrefvar: 'Something' },
+            const [ref, _] = source.getRefvar(
+                { ldrefvar: '12:100_A/C' },
                 { header: {}, body: [{ id: 'a', pvalue: 0 }] },
                 ['ldrefvar', 'state']
             );
-            assert.equal(ref, 'Something');
+            assert.equal(ref, '12:100_A/C');
         });
 
         it('auto-selects the best reference variant (lowest pvalue)', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const ref = source.getRefvar(
+            const [ref, _] = source.getRefvar(
                 {},
                 {
                     header: {},
                     body: [
-                        { id: 'a', pvalue: 0.5 },
-                        { id: 'b', pvalue: 0.05 },
-                        { id: 'c', pvalue: 0.1 },
+                        { id: '12:100_A/A', pvalue: 0.5 },
+                        { id: '12:100_A/B', pvalue: 0.05 },
+                        { id: '12:100_A/C', pvalue: 0.1 },
                     ],
                 },
                 ['isrefvar', 'state']
             );
-            assert.equal(ref, 'b');
+            assert.equal(ref, '12:100_A/B');
         });
 
         it('auto-selects the best reference variant (largest nlog_pvalue)', function () {
             const source = new LDServer({ url: 'www.fake.test', params: { build: 'GRCh37' } });
-            const ref = source.getRefvar(
+            const [ref, _] = source.getRefvar(
                 {},
                 {
                     header: {},
                     body: [
-                        { id: 'a', log_pvalue: 10 },
-                        { id: 'b', log_pvalue: 50 },
-                        { id: 'c', log_pvalue: 7 },
+                        { id: '12:100_A/A', log_pvalue: 10 },
+                        { id: '12:100_A/B', log_pvalue: 50 },
+                        { id: '12:100_A/C', log_pvalue: 7 },
                     ],
                 },
                 ['isrefvar', 'state']
             );
-            assert.equal(ref, 'b');
+            assert.equal(ref, '12:100_A/B');
         });
 
         it('correctly identifies the variant-marker field', function () {

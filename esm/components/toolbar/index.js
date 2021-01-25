@@ -169,7 +169,7 @@ class Toolbar {
             const page_origin = this.parent._getPageOrigin();
             const top = `${(page_origin.y + 3.5).toString()}px`;
             const left = `${page_origin.x.toString()}px`;
-            const width = `${(this.parent.layout.width - 4).toString()}px`;
+            const width = `${(this.parent_plot.layout.width - 4).toString()}px`;
             this.selector
                 .style('position', 'absolute')
                 .style('top', top)

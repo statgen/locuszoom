@@ -166,7 +166,7 @@ class Legend {
                         // Ensure this element does not exceed the panel width
                         // (E.g. drop to the next line if it does, but only if it's not the only element on this line)
                         const right_x = this.layout.origin.x + x + bcr.width;
-                        if (x > padding && right_x > this.parent.layout.width) {
+                        if (x > padding && right_x > this.parent.parent.layout.width) {
                             y += line_height;
                             x = padding;
                             selector.attr('transform', `translate(${x}, ${y})`);
@@ -209,7 +209,7 @@ class Legend {
             this.layout.origin.y = this.parent.layout.height - bcr.height - +this.layout.pad_from_bottom;
         }
         if (!isNaN(+this.layout.pad_from_right)) {
-            this.layout.origin.x = this.parent.layout.width - bcr.width - +this.layout.pad_from_right;
+            this.layout.origin.x = this.parent.parent.layout.width - bcr.width - +this.layout.pad_from_right;
         }
         this.selector.attr('transform', `translate(${this.layout.origin.x}, ${this.layout.origin.y})`);
     }

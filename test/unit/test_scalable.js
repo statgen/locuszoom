@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 
-import {categorical_bin, if_value, interpolate, numerical_bin, ordinal_cycle} from '../../esm/helpers/scalable';
+import {categorical_bin, if_value, stable_choice, interpolate, numerical_bin, ordinal_cycle} from '../../esm/helpers/scalable';
 
 describe('Scale Functions', function() {
     describe('if', function() {
@@ -75,6 +75,65 @@ describe('Scale Functions', function() {
             assert.equal(categorical_bin(parameters, 'CAT'), 'null_value');
             assert.equal(categorical_bin(parameters, 53), 'null_value');
             assert.equal(categorical_bin(parameters), 'null_value');
+        });
+    });
+    describe('stable_choice', function () {
+        it('will choose the same options from a set given the same value, regardless of data order', function () {
+            const parameters = { values: Array.from({length: 20}, (x, i) => i) };
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14);
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 99), 14);
+        });
+        it('the number of options will influence the outcome', function () {
+            // This produces the same option from the same hash, BUT ONLY GIVEN THE SAME OPTIONS.
+            // We actually check HASH % LENGTH. So adding one new option to the array will choose a different result.
+            let parameters = { values: Array.from({length: 20}, (x, i) => i) };
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 14, 'Shorter options array makes one choice');
+
+            parameters = { values: Array.from({length: 50}, (x, i) => i) };
+            assert.equal(stable_choice(parameters, 'MODERN_MAJOR_GENERAL', 0), 24, 'Longer options array = different choice for same input value');
+        });
+        it('handles various datatypes', function () {
+            const parameters = { values: Array.from({length: 20}, (x, i) => i) };
+            // Look, user data is messy, ok? Sometimes values just... wander off... in otherwise good data
+            assert.equal(stable_choice(parameters, undefined), 4, 'Should handle undefined');
+            assert.equal(stable_choice(parameters, null), 3, 'Should handle null');
+            // "Normal" types of data (including edge cases)
+            assert.equal(stable_choice(parameters, true), 18, 'Should handle booleans');
+            assert.equal(stable_choice(parameters, 12), 9, 'Should handle integers');
+            assert.equal(stable_choice(parameters, Infinity), 16, 'Should handle infinity');
+            assert.equal(stable_choice(parameters, NaN), 3, 'Should handle NaNs');
+            assert.equal(stable_choice(parameters, 'Hi!'), 0, 'Should handle strings');
+            assert.equal(stable_choice(parameters, ''), 0, 'Should handle empty strings');
+            assert.equal(stable_choice(parameters, 'a🐙b'), 17, 'Should handle strings with unicode');
+            // Container types with the same string representation will receive the same hash.
+            //  Oh good, you know that two arrays aren't === in JS. Congrats on your CS degree but not relevant here.
+            assert.equal(stable_choice(parameters, ['a', 'b', 'c']), 2, 'Should handle arrays that serialize to a string');
+            // Document that the string representation of an object is useless for comparison (always [object Object])
+            assert.equal(stable_choice(parameters, {}), 8, 'An empty object will yield a hash value...');
+            assert.equal(stable_choice(parameters, { afield: 'avalue' }), 8, '...same value returned regardless of object contents');
+        });
+        it('memoizes repeated calls', function () {
+            const parameters = { values: ['a', 'b', 'c'] };
+            assert.equal(stable_choice(parameters, 'avalue'), 'c', 'First call returns expected result');
+            assert.exists(parameters._cache, 'A cache is created on the parameters object');
+            assert.hasAllKeys(parameters._cache, ['avalue'], 'Result is cached');
+
+            // To test that we're returning a cached value, we'll reach in and modify the cache
+            parameters._cache.set('avalue', 42);
+            assert.equal(stable_choice(parameters, 'avalue'), 42, 'Second call uses the cached result');
+        });
+        it('allows setting a max cache size, after which all old keys are evicted', function () {
+            const parameters = { values: ['a', 'b', 'c'], max_cache_size: 2 };
+
+            stable_choice(parameters, 1);
+            stable_choice(parameters, 2);
+            assert.hasAllKeys(parameters._cache, ['1', '2'], 'First two calls are cached');
+
+            stable_choice(parameters, 3);
+            assert.hasAllKeys(parameters._cache, ['3'], 'At third call, prior two keys are evicted.');
+
+            stable_choice(parameters, 4);
+            assert.hasAllKeys(parameters._cache, ['3', '4'], 'Fourth call is added to cache');
         });
     });
     describe('ordinal_cycle', function () {
