@@ -1,22 +1,37 @@
-/** @module */
-/*
+/**
  * LocusZoom extensions used to calculate and render aggregation test results. Because these calculations depend on an
  *   external library, the special data sources are defined here, rather than in LocusZoom core code.
  *
- *     The page must incorporate and load all libraries before this file can be used, including:
- *    - Vendor assets
+ * This extension provides a number of features that are closely tied to the aggregation tests demo,
+ *  and thus the specific UI and data operations are less of a drop-in generic addon than most other extensions.
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
  *    - LocusZoom
  *    - raremetal.js (available via NPM or a related CDN)
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-aggregation-tests.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import aggTests from 'locuszoom/esm/ext/lz-aggregation-tests';
+ * LocusZoom.use(aggTests);
+ * ```
+ * @module
  */
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
 // Arcane build note: everything defined here gets registered globally. This is not a "pure" module, and some build
 //  systems may require being told that this file has side effects.
 
 import {helpers} from 'raremetal.js';
-import {BaseApiAdapter} from '../data/adapters';
 
 function install (LocusZoom) {
     const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
+    const BaseApiAdapter = LocusZoom.Adapters.get('BaseApiAdapter');
     const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
 
     /**
@@ -25,9 +40,10 @@ function install (LocusZoom) {
      *   another source (like genes). Using a separate connector allows us to add caching and run this front-end
      *   calculation only once, while using it in many different places
      * @public
-     * @alias AggregationTestSourceLZ
+     * @see module:ext/lz-aggregation-tests
+     * @see module:LocusZoom_Adapters
      */
-    class AggregationTestSource extends BaseApiAdapter {
+    class AggregationTestSourceLZ extends BaseApiAdapter {
         getURL(state, chain, fields) {
             // Unlike most sources, calculations may require access to plot state data even after the initial request
             // This example source REQUIRES that the external UI widget would store the needed test definitions in a plot state
@@ -157,6 +173,8 @@ function install (LocusZoom) {
     /**
      * Restructure RAREMETAL-SERVER data used to calculate aggregation tests into a format that can be used to
      *  display a GWAS scatter plot
+     * @see module:ext/lz-aggregation-tests
+     * @see module:LocusZoom_Adapters
      */
     class AssocFromAggregationLZ extends BaseAdapter {
         constructor(config) {
@@ -215,6 +233,8 @@ function install (LocusZoom) {
      *  To use this source, one must specify a fields array that calls first the genes source, then a dummy field from
      *      this source. The output will be to transparently add several new fields to the genes data.
      * @public
+     * @see module:ext/lz-aggregation-tests
+     * @see module:LocusZoom_Adapters
      */
     class GeneAggregationConnectorLZ extends ConnectorSource {
         _getRequiredSources() {
@@ -254,7 +274,7 @@ function install (LocusZoom) {
     }
 
 
-    LocusZoom.Adapters.add('AggregationTestSourceLZ', AggregationTestSource);
+    LocusZoom.Adapters.add('AggregationTestSourceLZ', AggregationTestSourceLZ);
     LocusZoom.Adapters.add('AssocFromAggregationLZ', AssocFromAggregationLZ);
     LocusZoom.Adapters.add('GeneAggregationConnectorLZ', GeneAggregationConnectorLZ);
 }

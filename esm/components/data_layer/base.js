@@ -13,7 +13,14 @@ import SCALABLE from '../../registry/scalable';
 
 
 /**
- * @typedef {object} ScalableParameter
+ * "Scalable" parameters indicate that a datum can be rendered in custom ways based on its value. (color, size, shape, etc)
+ *
+ * This means that if the value of this property is a scalar, it is used directly (`color: '#FF0000'`). But if the
+ *  value is an array of options, each will be evaluated in turn until the first non-null result is found. The syntax
+ *  below describes how each member of the array should specify the field and scale function to be used.
+ * Often, the last item in the list is a string, providing a "default" value if all scale functions evaluate to null.
+ *
+ * @typedef {object|string} ScalableParameter
  * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
  *  datum element will be passed to the scale function.
  * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run

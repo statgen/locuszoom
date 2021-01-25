@@ -70,7 +70,6 @@ const default_layout = {
  *  if they are overridden by plot logic.
  * @event state_changed
  * @property {object} data The set of all state changes requested
- * @deprecated
  * @see event:lzEvent
  * @see region_changed
  */
@@ -155,13 +154,13 @@ function _updateStatePosition(new_state, layout) {
     }
 
     // Constrain w/r/t layout-defined minimum region scale
-    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale) {
+    if (layout.min_region_scale && validated_region && attempted_scale < layout.min_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;
     }
 
     // Constrain w/r/t layout-defined maximum region scale
-    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale) {
+    if (layout.max_region_scale && validated_region && attempted_scale > layout.max_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
         new_state.end = new_state.start + layout.max_region_scale;
     }

@@ -3,8 +3,9 @@
  *   This is not part of the core LocusZoom library, but can be included as a standalone file.
  *
  * The page must incorporate and load all libraries before this file can be used, including:
- * - Vendor assets
  * - LocusZoom
+
+* TODO: Document loading and usage; left off here
  * @module
  */
 import * as d3 from 'd3';

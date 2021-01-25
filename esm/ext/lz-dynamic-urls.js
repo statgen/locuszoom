@@ -9,6 +9,38 @@
  * This makes it possible to create "direct links" to a particular plot of interest (and go back to a previous state
  *  as the user interacts with the page). Optionally, there is support for custom callbacks to connect the URL to
  *  arbitrarily complex plot behaviors.
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-aggregation-tests.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, import the helper functions and use them with your layout:
+ *
+ * ```
+ * import LzDynamicUrls from 'locuszoom/esm/ext/lz-dynamic-urls';
+ * ```
+ *
+ * After loading, bind the plot and URL as follows:
+ * ```
+ * // Declares which fields in plot.state will be mapped to and from the URL, eg `plot.state.chr` -> `example.com?chrom=X`
+ * const stateUrlMapping = {chr: "chrom", start: "start", end: "end"};
+ * // Fetch initial position from the URL, or use some defaults
+ * let initialState = LzDynamicUrls.paramsFromUrl(stateUrlMapping);
+ * if (!Object.keys(initialState).length) {
+ *     initialState = {chr: 10, start: 114550452, end: 115067678};
+ * }
+ * layout = LocusZoom.Layouts.get("plot", "standard_association", {state: initialState});
+ * const plot = LocusZoom.populate("#lz-plot", data_sources, layout);
+ * // Once the plot has been created, we can bind it to the URL as follows. This will cause the URL to change whenever
+ * //  the plot region changes, or, clicking the back button in your browser will reload the last region viewed
+ * LzDynamicUrls.plotUpdatesUrl(plot, stateUrlMapping);
+ * LzDynamicUrls.plotWatchesUrl(plot, stateUrlMapping);
+ *
+ * // NOTE: If you are building a page that adds/removes plots on the fly, event listeners will be cleaned up when
+ * //   the destructor `plot.destroy()` is called
+ * ```
+ *
  *  @module
  */
 
@@ -127,6 +159,7 @@ function plotWatchesUrl(plot, mapping, callback) {
  *   The default behavior is to extract all the URL params from plot.state as the only source.
  *   Signature is function(plot, mapping, eventContext)
  * @returns {function} The function handle for the new listener (allows cleanup if plot is removed later)
+ * @listens event:state_changed
  */
 function plotUpdatesUrl(plot, mapping, callback) {
     callback = callback || _setUrlFromStateHandler;
