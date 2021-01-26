@@ -6,7 +6,26 @@
  *    with information by selecting points on the plot (see "covariates model" demo)
  *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
  *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
- *    space is hard to read. (see "multiple phenotypes layered" demo)
+ *    space makes data hard to see. (see "multiple phenotypes layered" demo)
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * ```
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ * ```
+ * import LocusZoom from 'locuszoom';
+ * import WidgetAddons from 'locuszoom/esm/ext/lz-widget-addons';
+ * LocusZoom.use(WidgetAddons);
+ * ```
+ *
+ * Then use the features made available by this extension. (see demos and documentation for guidance)
+ *
  * @module
  */
 import {deepCopy} from '../helpers/layouts';
@@ -28,6 +47,11 @@ function install(LocusZoom) {
     /**
      * Special button/menu to allow model building by tracking individual covariants. Will track a list of covariate
      *   objects and store them in the special `model.covariates` field of plot `state`.
+     *
+     * This is a prototype widget for building a conditional analysis model, but it performs no calculation
+     *  functionality beyond building a list of items.
+     * @alias module:ext/lz-widget-addons~covariates_model
+     * @see module:LocusZoom_Widgets~BaseWidget
      * @param {object} layout
      * @param {string} layout.button_html The HTML to render inside the button
      * @param {string} layout.button_title Text to display as a tooltip when hovering over the button
@@ -41,7 +65,6 @@ function install(LocusZoom) {
             /**
              * When a covariates model toolbar element is present, create (one) object at the plot level that exposes
              *   widget data and state for custom interactions with other plot elements.
-             * @class CovariatesModel
              */
             this.parent_plot.CovariatesModel = {
                 /** @member {Button} */
@@ -174,6 +197,8 @@ function install(LocusZoom) {
 
     /**
      * Menu for manipulating multiple data layers in a single panel: show/hide, change order, etc.
+     * @alias module:ext/lz-widget-addons~data_layers
+     * @see module:LocusZoom_Widgets~BaseWidget
      */
     class DataLayersWidget extends _BaseWidget {
         update() {

@@ -1,14 +1,17 @@
 /**
- * Define functions used by Scalable Layout Directives.
+ * Plugin registry of available functions that can be used in scalable layout directives.
  *
- * These "scaling functions" are used during rendering to return output (eg color) based on input value
- * @module
+ * These "scale functions" are used during rendering to return output (eg color) based on input value
+ *
+ * @module LocusZoom_ScaleFunctions
+ * @see {@link module:LocusZoom_DataLayers~ScalableParameter} for details on how scale functions are used by datalayers
  */
 
 import * as d3 from 'd3';
 
 /**
  * Basic conditional function to evaluate the value of the input field and return based on equality.
+ * @alias module:LocusZoom_ScaleFunctions~if
  * @param {Object} parameters
  * @param {*} parameters.field_value The value against which to test the input value.
  * @param {*} parameters.then The value to return if the input value matches the field value
@@ -108,7 +111,7 @@ const ordinal_cycle = (parameters, value, index) => {
  *  This function is therefore slightly less amenable to layout mutations like "changing the options after scaling
  *  function is used", but this is not expected to be a common use case.
  *
- *  CAVEAT: Some data sources do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
+ *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
  * @param parameters

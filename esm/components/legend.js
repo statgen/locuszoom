@@ -1,8 +1,12 @@
-/** @module */
+/**
+ * @module
+ * @private
+ */
 import * as d3 from 'd3';
 import {applyStyles} from '../helpers/common';
 import {merge, nameToSymbol} from '../helpers/layouts';
 
+// FIXME: Document legend options
 /**
  * The default layout used by legends (used internally)
  * @protected

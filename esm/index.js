@@ -1,6 +1,10 @@
 /**
- * Compatibility layer: expose symbols via UMD module to match the old LocusZoom API
- * A library using this file will need to load `locuszoom.css` separately.
+ * Whether imported (ES6 modules) or loaded via script tag (UMD), this module represents
+ *  the "public interface" via which core LocusZoom features and plugins are exposed for programmatic usage.
+ *
+ * A library using this file will need to load `locuszoom.css` separately in order for styles to appear.
+ *
+ * @module LocusZoom
  */
 import version from './version';
 
@@ -42,13 +46,14 @@ const LocusZoom = {
 /**
  * @callback pluginCallback
  * @param {Object} LocusZoom The global LocusZoom object
+ * @param args Any additional arguments passed to LocusZoom.use will be passed to the function when the plugin is loaded
  */
 
 
 const INSTALLED_PLUGINS = [];
 
 /**
- *
+ * @alias module:LocusZoom.use
  * @param {pluginCallback} plugin The plugin should be a module that exports the function as either the default export,
  *  or as a member named "install"
  * @param args Additional options to be passed when creating the plugin

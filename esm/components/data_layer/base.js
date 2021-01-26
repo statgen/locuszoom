@@ -1,4 +1,13 @@
-/** @module */
+/**
+ * Data layers represent instructions for how to render common types of information.
+ *  (GWAS scatter plot, nearby genes, straight lines and filled curves, etc)
+ *
+ * Each rendering type also provides helpful functionality such as filtering, matching, and interactive tooltip
+ *  display. Predefined layers can be extended or customized, with many configurable options.
+ *
+ * @module LocusZoom_DataLayers
+ */
+
 import * as d3 from 'd3';
 
 import {STATUSES} from '../constants';
@@ -10,28 +19,144 @@ import SCALABLE from '../../registry/scalable';
 
 
 /**
- * A basic description of keys expected in a layout. Not intended to be directly used or modified by an end user.
+ * "Scalable" parameters indicate that a datum can be rendered in custom ways based on its value. (color, size, shape, etc)
+ *
+ * This means that if the value of this property is a scalar, it is used directly (`color: '#FF0000'`). But if the
+ *  value is an array of options, each will be evaluated in turn until the first non-null result is found. The syntax
+ *  below describes how each member of the array should specify the field and scale function to be used.
+ * Often, the last item in the list is a string, providing a "default" value if all scale functions evaluate to null.
+ *
+ * @typedef {object|string} ScalableParameter
+ * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
+ *  datum element will be passed to the scale function.
+ * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run
+ * @property {object} parameters A set of parameters that configure the desired scale function (options very by function)
+ */
+
+
+/**
+ * @typedef {Object} module:LocusZoom_DataLayers~behavior
+ * @property {'set'|'unset'|'toggle'|'link'} action
+ * @property {'highlighted'|'selected'|'faded'|'hidden'} status An element display status to set/unset/toggle
+ * @property {boolean} exclusive Whether an element status should be exclusive (eg only allow one point to be selected at a time)
+ * @property {string} href For links, the URL to visit when clicking
+ * @property {string} target For links, the `target` attribute (eg, name of a window or tab in which to open this link)
+ */
+
+
+/**
+ * @typedef {object} FilterOption
+ * @property {string} field The name of a field found within each datapoint datum
+ * @property {module:LocusZoom_MatchFunctions} operator The name of a comparison function to use when deciding if the
+ *   field satisfies this filter
+ * @property value The target value to compare to
+ */
+
+
+/**
+ * @typedef {object} LegendItem
+ * @property [shape] This is optional (e.g. a legend element could just be a textual label).
+ *   Supported values are the standard d3 3.x symbol types (i.e. "circle", "cross", "diamond", "square",
+ *   "triangle-down", and "triangle-up"), as well as "rect" for an arbitrary square/rectangle or line for a path.
+ * @property {string} color The point color (hexadecimal, rgb, etc)
+ * @property {string} label The human-readable label of the legend item
+ * @property {string} [class] The name of a CSS class used to style the point in the legend
+ * @property {number} [size] The point area for each element (if the shape is a d3 symbol). Eg, for a 40 px area,
+ *  a circle would be ~7..14 px in diameter.
+ * @property {number} [length] Length (in pixels) for the path rendered as the graphical portion of the legend element
+ *  if the value of the shape parameter is "line".
+ * @property {number} [width] Width (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {number} [height] Height (in pixels) for the rect rendered as the graphical portion of the legend element if
+ *   the value of the shape parameter is "rect".
+ * @property {object} style CSS styles object to be applied to the DOM element representing the graphical portion of
+ *   the legend element.
+ */
+
+
+/**
+ * A basic description of keys expected in all data layer layouts. Not intended to be directly used or modified by an end user.
+ * @memberof module:LocusZoom_DataLayers~BaseDataLayer
  * @protected
  * @type {{type: string, fields: Array, x_axis: {}, y_axis: {}}}
  */
 const default_layout = {
+    id: '',
     type: '',
-    filters: null,  // Can be an array of {field, operator, value} entries
-    match: {}, // Object with 3 keys, all optional: { send: fieldname_to_send, receive: fieldname_to_compare, operator: name_of_match_function}
-    fields: [],  // A list of fields required for this data layer; determines output of `extractFields`
-    x_axis: {},  // Axis options vary based on data layer type
+    fields: [],
+    id_field: 'id',
+    filters: null,
+    match: {},
+    x_axis: {},
     y_axis: {},  // Axis options vary based on data layer type
+    legend: null,
+    tooltip: {},
     tooltip_positioning: 'horizontal',  // Where to draw tooltips relative to the point. Can be "vertical" or "horizontal"
+    behaviors: {},
 };
-
 
 /**
  * A data layer is an abstract class representing a data set and its graphical representation within a panel
  * @public
- * @param {Object} layout A JSON-serializable object describing the layout for this layer
- * @param {Panel|null} parent Where this layout is used
 */
 class BaseDataLayer {
+    /**
+     * @param {string} [layout.id=''] An identifier string that must be unique across all layers within the same panel
+     * @param {string} [layout.type=''] The type of data layer. This parameter is used in layouts to specify which class
+     *   (from the registry) is created; it is also used in CSS class names.
+     * @param {String[]} layout.fields A list of (namespaced) fields specifying what data is used by the layer. Only
+     *  these fields will be made available to the data layer, and only data sources (namespaces) referred to in
+     *  this array will be fetched. This represents the "contract" between what data is returned and what data is rendered.
+     *  This fields array works in concert with the data retrieval method BaseAdapter.extractFields.
+     * @param {string} [layout.id_field] The datum field used for unique element IDs when addressing DOM elements, mouse
+     *   events, etc. This should be unique to the specified datum.
+     * @param {module:LocusZoom_DataLayers~FilterOption[]} [layout.filters] If present, restricts the list of data elements to be displayed. Typically, filters
+     *  hide elements, but arrange the layer so as to leave the space those elements would have occupied. The exact
+     *  details vary from one layer to the next. See the Interactivity Tutorial for details.
+     * @param {object} [layout.match] An object describing how to connect this data layer to other data layers in the
+     *   same plot. Specifies keys `send` and `receive` containing the names of fields with data to be matched;
+     *   `operator` specifies the name of a MatchFunction to use. If a datum matches the broadcast value, it will be
+     *   marked with the special field `lz_is_match=true`, which can be used in any scalable layout directive to control how the item is rendered.
+     * @param {boolean} [layout.x_axis.decoupled=false] If true, the data in this layer will not influence the x-extent of the panel.
+     * @param {'state'|null} [layout.x_axis.extent] If provided, the region plot x-extent will be determined from
+     *   `plot.state` rather than from the range of the data. This is the most common way of setting x-extent,
+     *   as it is useful for drawing a set of panels to reflect a particular genomic region.
+     * @param {number} [layout.x_axis.floor] The low end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {number} [layout.x_axis.ceiling] The high end of the x-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {Number[]} [layout.x_axis.min_extent] The smallest possible range [min, max] of the x-axis. If the actual values lie outside the extent, the actual data takes precedence.
+     * @param {number} [layout.x_axis.field] The datum field to look at when determining data extent along the x-axis.
+     * @param {number} [layout.x_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
+     * @param {number} [layout.x_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
+     * @param {boolean} [layout.y_axis.decoupled=false] If true, the data in this layer will not influence the y-extent of the panel.
+     * @param {object} [layout.y_axis.axis=1] Which y axis to use for this data layer (left=1, right=2)
+     * @param {number} [layout.y_axis.floor] The low end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {number} [layout.y_axis.ceiling] The high end of the y-extent, which overrides any actual data range, min_extent, or buffer options.
+     * @param {Number[]} [layout.y_axis.min_extent] The smallest possible range [min, max] of the y-axis. Actual lower or higher data values will take precedence.
+     * @param {number} [layout.y_axis.field] The datum field to look at when determining data extent along the y-axis.
+     * @param {number} [layout.y_axis.lower_buffer] Amount to expand (pad) the lower end of an axis as a proportion of the extent of the data.
+     * @param {number} [layout.y_axis.upper_buffer] Amount to expand (pad) the higher end of an axis as a proportion of the extent of the data.
+     * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
+     * @param {object} [layout.tooltip.hide] Define when to hide a tooltip in terms of interaction states, eg, `{ and: ['unhighlighted', 'unselected'] }`
+     * @param {boolean} [layout.tooltip.closable] Whether a tool tip should render a "close" button in the upper right corner.
+     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax is
+     *   inspired by Mustache, including `{{sourcename:fieldname}} to insert a field value from the datum associated with
+     *   the tooltip/element. Conditional tags are also supported using the format:
+     *   `{{#if sourcename:fieldname}}render text here{{/if}}`.
+     *  This only checks if the value is present; it does not check if the value is truthy.
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='horizontal'] Where to draw the tooltip relative to the datum.
+     *  Typically tooltip positions are centered around the midpoint of the data element, subject to overflow off the edge of the plot.
+     * @param {object} [layout.behaviors] LocusZoom data layers support the binding of mouse events to one or more
+     *   layout-definable behaviors. Some examples of behaviors include highlighting an element on mouseover, or
+     *   linking to a dynamic URL on click, etc.
+     * @param {module:LocusZoom_DataLayers~LegendItem[]} [layout.legend] Tick marks found in the panel legend
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onctrlshiftclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onshiftclick]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onmouseover]
+     * @param {module:LocusZoom_DataLayers~behavior[]} [layout.behaviors.onmouseout]
+     * @param {Panel|null} parent Where this layout is used
+     */
     constructor(layout, parent) {
         /**
          * @private
@@ -101,6 +226,7 @@ class BaseDataLayer {
 
         // Ensure any axes defined in the layout have an explicit axis number (default: 1)
         if (this.layout.x_axis !== {} && typeof this.layout.x_axis.axis !== 'number') {
+            // TODO: Example of x2? if none remove
             this.layout.x_axis.axis = 1;
         }
         if (this.layout.y_axis !== {} && typeof this.layout.y_axis.axis !== 'number') {
@@ -111,6 +237,7 @@ class BaseDataLayer {
          * Values in the layout object may change during rendering etc. Retain a copy of the original data layer state.
          * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
          * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -221,7 +348,7 @@ class BaseDataLayer {
     }
 
     /**
-     * Select a filter function to be applied to the data. DEPRECATED: Please use the FilterFunctions registry
+     * Select a filter function to be applied to the data. DEPRECATED: Please use the LocusZoom.MatchFunctions registry
      *  and reference via declarative filters.
      * @param func
      * @deprecated
@@ -279,11 +406,11 @@ class BaseDataLayer {
 
     /**
      * Fetch an ID that may bind a data element to a separate visual node for displaying status
-     * Examples of this might be seperate visual nodes to show select/highlight statuses, or
+     * Examples of this might be separate visual nodes to show select/highlight statuses, or
      * even a common/shared node to show status across many elements in a set.
      * Abstract method. It should be overridden by data layers that implement seperate status
      * nodes specifically to the use case of the data layer type.
-     * @protected
+     * @private
      * @param {String|Object} element
      * @returns {String|null}
      */
@@ -295,6 +422,7 @@ class BaseDataLayer {
      * Returns a reference to the underlying data associated with a single visual element in the data layer, as
      *   referenced by the unique identifier for the element
      *
+     * @ignore
      * @protected
      * @param {String} id The unique identifier for the element, as defined by `getElementId`
      * @returns {Object|null} The data bound to that element
@@ -360,7 +488,8 @@ class BaseDataLayer {
     }
 
     /**
-     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed
+     * Hook that allows custom datalayers to apply additional methods and properties to data elements as needed.
+     * Most data layers will never need to use this.
      * @protected
      * @returns {BaseDataLayer}
      */
@@ -375,41 +504,41 @@ class BaseDataLayer {
      * In the future this may be further expanded, so that scaling functions can operate similar to mappers
      *  (item, index, array). Additional arguments would be added as the need arose.
      *
-     * @protected
-     * @param {Array|Number|String|Object} layout Either a scalar ("color is red") or a configuration object
+     * @private
+     * @param {Array|Number|String|Object} option_layout Either a scalar ("color is red") or a configuration object
      *  ("rules for how to choose color based on item value")
      * @param {*} element_data The value to be used with the filter. May be a primitive value, or a data object for a single item
      * @param {Number} data_index The array index for the data element
      * @returns {*} The transformed value
      */
-    resolveScalableParameter (layout, element_data, data_index) {
+    resolveScalableParameter (option_layout, element_data, data_index) {
         let ret = null;
-        if (Array.isArray(layout)) {
+        if (Array.isArray(option_layout)) {
             let idx = 0;
-            while (ret === null && idx < layout.length) {
-                ret = this.resolveScalableParameter(layout[idx], element_data, data_index);
+            while (ret === null && idx < option_layout.length) {
+                ret = this.resolveScalableParameter(option_layout[idx], element_data, data_index);
                 idx++;
             }
         } else {
-            switch (typeof layout) {
+            switch (typeof option_layout) {
             case 'number':
             case 'string':
-                ret = layout;
+                ret = option_layout;
                 break;
             case 'object':
-                if (layout.scale_function) {
-                    const func = SCALABLE.get(layout.scale_function);
-                    if (layout.field) {
-                        const f = new Field(layout.field);
+                if (option_layout.scale_function) {
+                    const func = SCALABLE.get(option_layout.scale_function);
+                    if (option_layout.field) {
+                        const f = new Field(option_layout.field);
                         let extra;
                         try {
                             extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
                         } catch (e) {
                             extra = null;
                         }
-                        ret = func(layout.parameters || {}, f.resolve(element_data, extra), data_index);
+                        ret = func(option_layout.parameters || {}, f.resolve(element_data, extra), data_index);
                     } else {
-                        ret = func(layout.parameters || {}, element_data, data_index);
+                        ret = func(option_layout.parameters || {}, element_data, data_index);
                     }
                 }
                 break;
@@ -420,6 +549,7 @@ class BaseDataLayer {
 
     /**
      * Generate dimension extent function based on layout parameters
+     * @ignore
      * @protected
      * @param {('x'|'y')} dimension
      */
@@ -663,10 +793,10 @@ class BaseDataLayer {
     }
 
     /**
-     * Determine whether a given data element matches set criteria
+     * Determine whether a given data element matches all predefined filter criteria, usually as specified in a layout directive.
      *
      * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
-     * @protected
+     * @private
      * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
      *  Operator must be from a list of built-in operators
      * @param {Object} item
@@ -1068,7 +1198,9 @@ class BaseDataLayer {
      * Toggle a status (e.g. highlighted, selected, identified) on an element
      *
      * @private
-     *
+     * @fires event:layout_changed
+     * @fires event:element_selection
+     * @fires event:match_requested
      * @param {String} status The name of a recognized status to be added/removed on an appropriate element
      * @param {String|Object} element The data bound to the element of interest
      * @param {Boolean} active True to add the status (and associated CSS styles); false to remove it

@@ -1,4 +1,3 @@
-/** @module */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
@@ -6,6 +5,9 @@ import {merge} from '../../helpers/layouts';
 import {STATUSES} from '../constants';
 import {applyStyles} from '../../helpers/common';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~line
+ */
 const default_layout = {
     style: {
         fill: 'none',
@@ -19,9 +21,19 @@ const default_layout = {
 
 /*********************
  * Line Data Layer
- * Implements a standard line plot, representing either a trace or a filled curve.
+ * Implements a standard line plot, representing either a trace or a filled curve. Only one line is drawn per layer used.
+ * @alias module:LocusZoom_DataLayers~line
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
 */
 class Line extends BaseDataLayer {
+    /**
+     * @param {object} [layout.style] CSS properties to control how the line is drawn
+     * @param {string} [layout.style.fill='none'] Fill color for the area under the curve
+     * @param {string} [layout.style.stroke]
+     * @param {string} [layout.style.stroke-width='2px']
+     * @param {string} [layout.interpolate='curveLinear'] The name of the d3 interpolator to use. This determines how to smooth the line in between data points.
+     * @param {number} [layout.hitarea_width=5] The size of mouse event hitareas to use. If tooltips are not used, hitareas are not very important.
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
         if (layout.tooltip) {
@@ -83,7 +95,6 @@ class Line extends BaseDataLayer {
      * @param {String} status A member of `LocusZoom.DataLayer.Statuses.adjectives`
      * @param {String|Object} element
      * @param {Boolean} toggle
-     * @returns {Line}
      */
     setElementStatus(status, element, toggle) {
         return this.setAllElementStatus(status, toggle);
@@ -119,6 +130,9 @@ class Line extends BaseDataLayer {
     }
 }
 
+/**
+ * @memberof module:LocusZoom_DataLayers~orthogonal_line
+ */
 const default_orthogonal_layout = {
     style: {
         'stroke': '#D3D3D3',
@@ -139,12 +153,24 @@ const default_orthogonal_layout = {
 };
 
 
-/***************************
+/**
  *  Orthogonal Line Data Layer
- *  Implements a horizontal or vertical line given an orientation and an offset in the layout
- *  Does not require a data source
-*/
+ *  Draw a horizontal or vertical line given an orientation and an offset in the layout
+ *  Does not require a data source or fields.
+ * @alias module:LocusZoom_DataLayers~orthogonal_line
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
 class OrthogonalLine extends BaseDataLayer {
+    /**
+     * @param {string} [layout.style.stroke='#D3D3D3']
+     * @param {string} [layout.style.stroke-width='3px']
+     * @param {string} [layout.style.stroke-dasharray='10px 10px']
+     * @param {'horizontal'|'vertical'} [layout.orientation] The orientation of the horizontal line
+     * @param {boolean} [layout.x_axis.decoupled=true] If true, the data in this layer will not influence the x-extent of the panel.
+     * @param {boolean} [layout.y_axis.decoupled=true] If true, the data in this layer will not influence the y-extent of the panel.
+     * @param {'horizontal'|'vertical'} [layout.tooltip_positioning='vertical'] Where to draw the tooltip relative to the mouse pointer.
+     * @param {number} [layout.offset=0] Where the line intercepts the orthogonal axis (eg, the y coordinate for a horizontal line, or x for a vertical line)
+     */
     constructor(layout) {
         layout = merge(layout, default_orthogonal_layout);
         // Require that orientation be "horizontal" or "vertical" only
@@ -167,7 +193,6 @@ class OrthogonalLine extends BaseDataLayer {
      * Implement the main render function
      */
     render() {
-
         // Several vars needed to be in scope
         const panel = this.parent;
         const x_scale = 'x_scale';

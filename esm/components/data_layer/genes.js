@@ -1,9 +1,12 @@
-/** @module */
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~genes
+ * @type {{track_vertical_spacing: number, bounding_box_padding: number, color: string, tooltip_positioning: string, exon_height: number, label_font_size: number, label_exon_spacing: number, stroke: string}}
+ */
 const default_layout = {
     // Optionally specify different fill and stroke properties
     stroke: 'rgb(54, 54, 150)',
@@ -17,11 +20,23 @@ const default_layout = {
 };
 
 
-/*********************
+/**
  * Genes Data Layer
  * Implements a data layer that will render gene tracks
-*/
+ * @alias module:LocusZoom_DataLayers~genes
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+ */
 class Genes extends BaseDataLayer {
+    /**
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.stroke='rgb(54, 54, 150)'] The stroke color for each intron and exon
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#363696'] The fill color for each intron and exon
+     * @param {number} [layout.label_font_size]
+     * @param {number} [layout.label_exon_spacing] The number of px padding between exons and the gene label
+     * @param {number} [layout.exon_height=10] The height of each exon (vertical line) when drawing the gene
+     * @param {number} [layout.bounding_box_padding=3] Padding around edges of the bounding box, as shown when highlighting a selected gene
+     * @param {number} [layout.track_vertical_spacing=5] Vertical spacing between each row of genes
+     * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='top'] Where to draw the tooltip relative to the datum.
+     */
     constructor(layout) {
         layout = merge(layout, default_layout);
         super(...arguments);
@@ -107,7 +122,7 @@ class Genes extends BaseDataLayer {
             .filter((item) => !(item.end < this.state.start) && !(item.start > this.state.end))
             .map((item) => {
                 // If necessary, split combined gene id / version fields into discrete fields.
-                // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
+                // NOTE: this may be an issue with CSG's genes data API that may eventually be solved upstream.
                 if (item.gene_id && item.gene_id.indexOf('.')) {
                     const split = item.gene_id.split('.');
                     item.gene_id = split[0];

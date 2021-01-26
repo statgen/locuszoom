@@ -1,7 +1,17 @@
 /**
- * Predefined base layouts used to populate the LZ registry
- * @module
- * @private
+ * Predefined layouts that describe how to draw common types of data, as well as what interactive features to use.
+ *  Each plot contains multiple panels (rows), and each row can stack several kinds of data in layers
+ *  (eg scatter plot and line of significance). Layouts provide the building blocks to provide interactive experiences
+ *  and user-friendly tooltips for common kinds of genetic data.
+ *
+ * Many of these layouts (like the standard association plot) assume that field names are the same as those provided
+ *  in the UMich [portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/). Although layouts can be used on many
+ *  kinds of data, it is often less work to write an adapter that uses the same field names, rather than to modify
+ *  every single reference to a field anywhere in the layout.
+ *
+ * See the Layouts Tutorial for details on how to customize nested layouts.
+ *
+ * @module LocusZoom_Layouts
  */
 
 import version from '../version';
@@ -9,7 +19,7 @@ import {deepCopy, merge} from '../helpers/layouts';
 
 const LZ_SIG_THRESHOLD_LOGP = 7.301; // -log10(.05/1e6)
 
-/**
+/*
  * Tooltip Layouts
  */
 const standard_association_tooltip = {
@@ -81,10 +91,15 @@ const coaccessibility_tooltip = {
         '<strong>Score</strong>: {{{{namespace[access]}}score|htmlescape}}',
 };
 
-/**
- * Data Layer Layouts: represent specific information from a data source
+/*
+ * Data Layer Layouts: represent specific information given provided data.
  */
 
+/**
+ * A horizontal line of GWAS significance at the standard threshold of p=5e-8
+ * @name significance
+ * @type data_layer
+ */
 const significance_layer = {
     id: 'significance',
     type: 'orthogonal_line',
@@ -92,6 +107,11 @@ const significance_layer = {
     offset: LZ_SIG_THRESHOLD_LOGP,
 };
 
+/**
+ * A simple curve representing the genetic recombination rate, drawn from the UM API
+ * @name recomb_rate
+ * @type data_layer
+ */
 const recomb_rate_layer = {
     namespace: { 'recomb': 'recomb' },
     id: 'recombrate',
@@ -113,6 +133,11 @@ const recomb_rate_layer = {
     },
 };
 
+/**
+ * A scatter plot of GWAS association summary statistics, with preset field names matching the UM portaldev api
+ * @name association_pvalues
+ * @type data_layer
+ */
 const association_pvalues_layer = {
     namespace: { 'assoc': 'assoc', 'ld': 'ld' },
     id: 'associationpvalues',
@@ -194,6 +219,11 @@ const association_pvalues_layer = {
     tooltip: deepCopy(standard_association_tooltip),
 };
 
+/**
+ * An arc track that shows arcs representing chromatic coaccessibility
+ * @name coaccessibility
+ * @type data_layer
+ */
 const coaccessibility_layer = {
     namespace: { 'access': 'access' },
     id: 'coaccessibility',
@@ -252,16 +282,26 @@ const coaccessibility_layer = {
     tooltip: deepCopy(coaccessibility_tooltip),
 };
 
+/**
+ * A scatter plot of GWAS summary statistics, with additional tooltip fields showing GWAS catalog annotations
+ * @name association_pvalues_catalog
+ * @type data_layer
+ */
 const association_pvalues_catalog_layer = function () {
     // Slightly modify an existing layout
     let base = deepCopy(association_pvalues_layer);
-    base = merge({ id: 'associationpvaluescatalog', fill_opacity: 0.7}, base);
+    base = merge({ id: 'associationpvaluescatalog', fill_opacity: 0.7 }, base);
     base.tooltip.html += '{{#if {{namespace[catalog]}}rsid}}<br><a href="https://www.ebi.ac.uk/gwas/search?query={{{{namespace[catalog]}}rsid|htmlescape}}" target="_blank" rel="noopener">See hits in GWAS catalog</a>{{/if}}';
     base.namespace.catalog = 'catalog';
     base.fields.push('{{namespace[catalog]}}rsid', '{{namespace[catalog]}}trait', '{{namespace[catalog]}}log_pvalue');
     return base;
 }();
 
+/**
+ * A scatter plot of PheWAS pvalues, with preset field names matching the UM Portaldev API
+ * @name phewas_pvalues
+ * @type data_layer
+ */
 const phewas_pvalues_layer = {
     namespace: { 'phewas': 'phewas' },
     id: 'phewaspvalues',
@@ -339,6 +379,10 @@ const phewas_pvalues_layer = {
     },
 };
 
+/**
+ * Shows genes in the specified region, with names and formats drawn from the UM Portaldev API and GENCODE datasource
+ * @type data_layer
+ */
 const genes_layer = {
     namespace: { 'gene': 'gene', 'constraint': 'constraint' },
     id: 'genes',
@@ -359,8 +403,14 @@ const genes_layer = {
     tooltip: deepCopy(standard_genes_tooltip),
 };
 
+/**
+ * A genes data layer that uses filters to limit what information is shown by default. This layer hides a curated
+ *  list of  GENCODE gene_types that are of less interest to most analysts.
+ * Often used in tandem with a panel-level toolbar "show all" button so that the user can toggle to a full view.
+ * @name genes_filtered
+ * @type data_layer
+ */
 const genes_layer_filtered = merge({
-    // By default this layer doesn't show everything. Often used in tandem with a panel-level toolbar "show all" button.
     filters: [
         {
             field: 'gene_type',
@@ -380,7 +430,11 @@ const genes_layer_filtered = merge({
     ],
 }, deepCopy(genes_layer));
 
-
+/**
+ * An annotation / rug track that shows tick marks for each position in which a variant is present in the provided
+ *  association data, *and* has a significant claim in the EBI GWAS catalog.
+ * @type data_layer
+ */
 const annotation_catalog_layer = {
     // Identify GWAS hits that are present in the GWAS catalog
     namespace: { 'assoc': 'assoc', 'catalog': 'catalog' },
@@ -416,8 +470,15 @@ const annotation_catalog_layer = {
     tooltip_positioning: 'top',
 };
 
-/**
+/*
  * Individual toolbar buttons
+ */
+
+/**
+ * A dropdown menu that can be used to control the LD population used with the LDServer Adapter. Population
+ *  names are provided for the 1000G dataset that is used by the offical UM LD Server.
+ * @name ldlz2_pop_selector
+ * @type toolbar_widgets
  */
 const ldlz2_pop_selector_menu = {
     // **Note**: this widget is aimed at the LDServer datasource, and the UM 1000G LDServer
@@ -441,6 +502,11 @@ const ldlz2_pop_selector_menu = {
     ],
 };
 
+/**
+ * A dropdown menu that selects which types of genes to show in the plot. The provided options are curated sets of
+ *   interesting gene types based on the GENCODE dataset.
+ * @type toolbar_widgets
+ */
 const gene_selector_menu = {
     type: 'display_options',
     position: 'right',
@@ -460,8 +526,14 @@ const gene_selector_menu = {
     ],
 };
 
-/**
+/*
  * Toolbar Layouts: Collections of toolbar buttons etc
+ */
+
+/**
+ * Basic options to remove and reorder panels
+ * @name standard_panel
+ * @type toolbar
  */
 const standard_panel_toolbar = {
     widgets: [
@@ -485,6 +557,11 @@ const standard_panel_toolbar = {
     ],
 };
 
+/**
+ * A simple plot toolbar with buttons to download as image
+ * @name standard_plot
+ * @type toolbar
+ */
 const standard_plot_toolbar = {
     // Suitable for most any type of plot drawn with LZ. Title and download buttons.
     widgets: [
@@ -507,6 +584,11 @@ const standard_plot_toolbar = {
     ],
 };
 
+/**
+ * A plot toolbar that adds a button for controlling LD population. This is useful for plots intended to show
+ *  GWAS summary stats, which is one of the most common usages of LocusZoom.
+ * @type toolbar
+ */
 const standard_association_toolbar = function () {
     // Suitable for association plots (adds a button for LD data)
     const base = deepCopy(standard_plot_toolbar);
@@ -514,6 +596,11 @@ const standard_association_toolbar = function () {
     return base;
 }();
 
+/**
+ * A basic plot toolbar with buttons to scroll sideways or zoom in. Useful for all region-based plots.
+ * @name region_nav_plot
+ * @type toolbar
+ */
 const region_nav_plot_toolbar = function () {
     // Generic region nav buttons
     const base = deepCopy(standard_plot_toolbar);
@@ -561,10 +648,17 @@ const region_nav_plot_toolbar = function () {
     return base;
 }();
 
-/**
+/*
  * Panel Layouts
  */
 
+
+/**
+ * A panel that describes the most common kind of LocusZoom plot, with line of GWAS significance, recombination rate,
+ *  and a scatter plot superimposed.
+ * @name association
+ * @type panel
+ */
 const association_panel = {
     id: 'association',
     min_height: 200,
@@ -615,6 +709,10 @@ const association_panel = {
     ],
 };
 
+/**
+ * A panel showing chromatin coaccessibility arcs with some common display options
+ * @type panel
+ */
 const coaccessibility_panel = {
     id: 'coaccessibility',
     min_height: 150,
@@ -647,6 +745,10 @@ const coaccessibility_panel = {
     ],
 };
 
+/**
+ * A panel showing GWAS summary statistics, plus annotations for connecting it to the EBI GWAS catalog
+ * @type panel
+ */
 const association_catalog_panel = function () {
     let base = deepCopy(association_panel);
     base = merge({
@@ -705,6 +807,10 @@ const association_catalog_panel = function () {
     return base;
 }();
 
+/**
+ * A panel showing genes in the specified region. This panel lets the user choose which genes are shown.
+ * @type panel
+ */
 const genes_panel = {
     id: 'genes',
     min_height: 150,
@@ -733,6 +839,10 @@ const genes_panel = {
     ],
 };
 
+/**
+ * A pael that displays PheWAS scatter plots and automatically generates a color scheme
+ * @type panel
+ */
 const phewas_panel = {
     id: 'phewas',
     min_height: 300,
@@ -762,6 +872,11 @@ const phewas_panel = {
     ],
 };
 
+/**
+ * A panel that shows a simple annotation track connecting GWAS results
+ * @name annotation_catalog
+ * @type panel
+ */
 const annotation_catalog_panel = {
     id: 'annotationcatalog',
     min_height: 45,
@@ -779,10 +894,15 @@ const annotation_catalog_panel = {
     ],
 };
 
-/**
+/*
  * Plot Layouts
  */
 
+/**
+ * Describes how to fetch and draw each part of the most common LocusZoom plot (with field names that reference the portaldev API)
+ * @name standard_association
+ * @type plot
+ */
 const standard_association_plot = {
     state: {},
     width: 800,
@@ -796,6 +916,11 @@ const standard_association_plot = {
     ],
 };
 
+/**
+ * A modified version of the standard LocusZoom plot, which adds a track that shows which SNPs in the plot also have claims in the EBI GWAS catalog.
+ * @name association_catalog
+ * @type plot
+ */
 const association_catalog_plot = {
     state: {},
     width: 800,
@@ -810,6 +935,11 @@ const association_catalog_plot = {
     ],
 };
 
+/**
+ * A PheWAS scatter plot with an additional track showing nearby genes, to put the region in biological context.
+ * @name standard_phewas
+ * @type plot
+ */
 const standard_phewas_plot = {
     width: 800,
     responsive_resize: true,
@@ -832,6 +962,11 @@ const standard_phewas_plot = {
     mouse_guide: false,
 };
 
+/**
+ * Show chromatin coaccessibility arcs, with additional features that connect these arcs to nearby genes to show regulatory interactions.
+ * @name coaccessibility
+ * @type plot
+ */
 const coaccessibility_plot = {
     state: {},
     width: 800,

@@ -1,4 +1,3 @@
-/** @module */
 import * as d3 from 'd3';
 
 import {deepCopy, merge} from '../helpers/layouts';
@@ -10,6 +9,7 @@ import {generateCurtain, generateLoader} from '../helpers/common';
 /**
  * Default/ expected configuration parameters for basic plotting; most plots will override
  *
+ * @memberof Plot
  * @protected
  * @static
  * @type {Object}
@@ -18,7 +18,9 @@ const default_layout = {
     state: {},
     width: 800,
     min_width: 400,
-    responsive_resize: false, // Allowed values: false, "width_only" (synonym for true)
+    min_region_scale: null,
+    max_region_scale: null,
+    responsive_resize: false,
     panels: [],
     toolbar: {
         widgets: [],
@@ -27,11 +29,89 @@ const default_layout = {
     mouse_guide: true,
 };
 
+
+/**
+ * Fields common to every event emitted by LocusZoom.
+ * @event baseLZEvent
+ * @type {object}
+ * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
+ * @property {Plot|Panel} target A reference to the plot or panel instance that originated the event.
+ * @property {object|null} data Additional data provided. (see event-specific documentation)
+ */
+
+/**
+ * A panel was removed from the plot.
+ * @event panel_removed
+ * @property {string} data The id of the panel that was removed (eg 'genes')
+ * @see event:baseLZEvent
+ */
+
+/**
+ * A request for data was initiated. This can be used for, eg, showing data loading indicators.
+ * @event data_requested
+ * @see event:baseLZEvent
+ */
+
+/**
+ * A request for new data has completed, and all data has been rendered.
+ * @event data_rendered
+ * @see event:baseLZEvent
+ */
+
+/**
+ * An action occurred that changed, or could change, the layout
+ * @event layout_changed
+ * @deprecated
+ * @see event:baseLZEvent
+ */
+
+/**
+ * The user has requested state changes, eg via `plot.applyState`. This reports the original requested values even
+ *  if they are overridden by plot logic.
+ * @event state_changed
+ * @property {object} data The set of all state changes requested
+ * @see event:baseLZEvent
+ * @see region_changed
+ */
+
+/**
+ * The plot region has changed. Reports the actual coordinates of the plot after the zoom event. If plot.applyState is
+ *  called with an invalid region (eg zooming in or out too far), this reports the actual final coordinates, not what was requested.
+ *  The actual coordinates are subject to region min/max, etc.
+ * @event region_changed
+ * @property {object} data The {chr, start, end} coordinates of the requested region.
+ * @see event:baseLZEvent
+ */
+
+/**
+ * Indicate whether the element was selected (or unselected)
+ * @event element_selection
+ * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
+ *   selection status (boolean)
+ * @see event:baseLZEvent
+ */
+
+/**
+ * Indicates whether an element was clicked.
+ * @event element_clicked
+ * @see {@link event:element_selection} for a more specific and frequently useful event
+ * @see event:baseLZEvent
+ */
+
+/**
+ * Indicate whether a match was requested from within the data layer.
+ * @event match_requested
+ * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
+ *   being initiated or canceled
+ * @see event:baseLZEvent
+ */
+
 /**
  * Check that position fields (chr, start, end) are provided where appropriate, and ensure that the plot fits within
  *  any constraints specified by the layout
  *
  * This function has side effects; it mutates the proposed state in order to meet certain bounds checks etc.
+ * @private
  * @param {Object} new_state
  * @param {Number} new_state.chr
  * @param {Number} new_state.start
@@ -82,13 +162,13 @@ function _updateStatePosition(new_state, layout) {
     }
 
     // Constrain w/r/t layout-defined minimum region scale
-    if (!isNaN(layout.min_region_scale) && validated_region && attempted_scale < layout.min_region_scale) {
+    if (layout.min_region_scale && validated_region && attempted_scale < layout.min_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.min_region_scale / 2), 1);
         new_state.end = new_state.start + layout.min_region_scale;
     }
 
     // Constrain w/r/t layout-defined maximum region scale
-    if (!isNaN(layout.max_region_scale) && validated_region && attempted_scale > layout.max_region_scale) {
+    if (layout.max_region_scale && validated_region && attempted_scale > layout.max_region_scale) {
         new_state.start = Math.max(attempted_midpoint - Math.floor(layout.max_region_scale / 2), 1);
         new_state.end = new_state.start + layout.max_region_scale;
     }
@@ -108,8 +188,20 @@ class Plot {
      * @param {String} id The ID of the plot. Often corresponds to the ID of the container element on the page
      *   where the plot is rendered..
      * @param {DataSources} datasource Ensemble of data providers used by the plot
-     * @param {Object} layout A JSON-serializable object of layout configuration parameters
-    */
+     * @param {object} [layout.state] Initial state parameters; the most common options are 'chr', 'start', and 'end'
+     *   to specify initial region view
+     * @param {number} [layout.width=800] The width of the plot and all child panels
+     * @param {number} [layout.min_width=400] Do not allow the panel to be resized below this width
+     * @param {number} [layout.min_region_scale] The minimum region width (do not allow the user to zoom smaller than this region size)
+     * @param {number} [layout.max_region_scale] The maximum region width (do not allow the user to zoom wider than this region size)
+     * @param {boolean} [layout.responsive_resize=false] Whether to resize plot width as the screen is resized
+     * @param {Object[]} [layout.panels] Configuration options for each panel to be added
+     * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each widget to place on the
+     *   plot-level toolbar
+     * @param {boolean} [layout.panel_boundaries=true] Whether to show interactive resize handles to change panel dimensions
+     * @param {boolean} [layout.mouse_guide=true] Whether to show a mouse guide as the user mouses over the plot-
+     *   this line spans all area and is especially useful for plots with multiple panels.
+     */
     constructor(id, datasource, layout) {
         /**
          * @private
@@ -144,7 +236,7 @@ class Plot {
         /**
          * Direct access to panel instances, keyed by panel ID. Used primarily for introspection/ development.
          *  @public
-         *  @member {Object.<String, Number>}
+         *  @member {Object.<String, Panel>}
          */
         this.panels = {};
         /**
@@ -157,6 +249,7 @@ class Plot {
         /**
          * Track update operations (reMap) performed on all child panels, and notify the parent plot when complete
          * TODO: Reconsider whether we need to be tracking this as global state outside of context of specific operations
+         * @ignore
          * @protected
          * @member {Promise[]}
          */
@@ -176,6 +269,7 @@ class Plot {
          * Values in the layout object may change during rendering etc. Retain a copy of the original plot options.
          * This is useful for, eg, dynamically generated color schemes that need to start from scratch when new data is
          * loaded: it contains the "defaults", not just the result of a calculated value.
+         * @ignore
          * @protected
          * @member {Object}
          */
@@ -211,7 +305,7 @@ class Plot {
          */
         this.event_hooks = {
             'layout_changed': [],  // Many rerendering operations, including dimensions changed, element highlighted, or rerender on chanegd data. Caution: Direct layout mutations might not be captured by this event.
-            'data_requested': [], // A request has been made for new data from any data source used in the plot
+            'data_requested': [], // A request has been made for new data from any data adapter used in the plot
             'data_rendered': [],  // Data from a request has been received and rendered in the plot
             'element_clicked': [], // Select or unselect
             'element_selection': [], // Element becomes active (only)
@@ -402,10 +496,12 @@ class Plot {
      *
      * This is useful when reloading an existing plot with new data, eg "click for genome region" links.
      *   This is a utility method for custom usage. It is not fired automatically during normal rerender of existing panels
-     *   @public
-     *   @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
-     *   @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
-     *     and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
+     * TODO: Is this method still necessary in modern usage? Hide from docs for now.
+     * @public
+     * @ignore
+     * @param {String} [panelId] If provided, clear state for only this panel. Otherwise, clear state for all panels.
+     * @param {('wipe'|'reset')} [mode='wipe'] Optionally specify how state should be cleared. `wipe` deletes all data
+     *   and is useful for when the panel is being removed; `reset` is best when the panel will be reused in place.
      * @returns {Plot}
      */
     clearPanelData(panelId, mode) {
@@ -437,6 +533,7 @@ class Plot {
     /**
      * Remove the panel from the plot, and clear any state, tooltips, or other visual elements belonging to nested content
      * @public
+     * @fires event:panel_removed
      * @param {String} id
      * @returns {Plot}
      */
@@ -518,8 +615,9 @@ class Plot {
      *  using the same fields syntax and underlying methods as data layers.
      *
      * @public
+     * @listens event:data_rendered
      * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
-     *  Different data sources should be prefixed by the source name.
+     *  Different data sources should be prefixed by the namespace name.
      * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
      *  new data is received by the plot. Receives two arguments: (data, plot).
      * @param {Object} [opts] Options
@@ -555,8 +653,14 @@ class Plot {
     /**
      * Update state values and trigger a pull for fresh data on all data sources for all data layers
      * @public
-     * @param state_changes
+     * @param {Object} state_changes
      * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
+     * @listen event:match_requested
+     * @fires event:data_requested
+     * @fires event:layout_changed
+     * @fires event:data_rendered
+     * @fires event:state_changed
+     * @fires event:region_changed
      */
     applyState(state_changes) {
         state_changes = state_changes || {};
@@ -621,14 +725,13 @@ class Plot {
                 }
 
                 this.loading_data = false;
-
             });
     }
 
     /**
      * Keep a record of event listeners that are defined outside of the LocusZoom boundary (and therefore would not
      *  get cleaned up when the plot was removed from the DOM). For example, window resize or mouse events.
-     * This allows safe cleanup of the plot on removal from the page
+     * This allows safe cleanup of the plot on removal from the page. This method is useful for authors of LocusZoom plugins.
      * @param {Node} target The node on which the listener has been defined
      * @param {String} event_name
      * @param {function} listener The handle for the event listener to be cleaned up
@@ -818,6 +921,7 @@ class Plot {
      * @param {Number} [width] If provided and larger than minimum allowed size, set plot to this width
      * @param {Number} [height] If provided and larger than minimum allowed size, set plot to this height
      * @returns {Plot}
+     * @fires event:layout_changed
      */
     setDimensions(width, height) {
         // If width and height arguments were passed, then adjust plot dimensions to fit all panels

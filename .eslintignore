@@ -5,7 +5,7 @@ dist/
 docs/
 jsdoc/
 node_modules/
-staticdata/
+examples/data/
 package.json
 
 # ESLint seems to ignore env overrides on single files (for the es6 parser) in same directory
