@@ -57,7 +57,7 @@ const default_layout = {
 class Scatter extends BaseDataLayer {
     /**
      * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_size=40] The size (area) of the point for each datum
-     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='circle'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown". Defaults to "circle".
+     * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.point_shape='circle'] Shape of the point for each datum. Supported values map to the d3 SVG Symbol Types (i.e.: "circle", "cross", "diamond", "square", "triangle", "star", and "wye"), plus "triangledown".
      * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#888888'] The color of the point for each datum
      * @param {module:LocusZoom_DataLayers~scatter~coalesce_options} [layout.coalesce] Options to control whether and how to combine adjacent insignificant ("within region of interest") points
      *   to improve rendering performance. These options are primarily aimed at GWAS region plots. Within a specified

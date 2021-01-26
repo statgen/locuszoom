@@ -4,7 +4,6 @@
  *
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
- * The page must incorporate and load all libraries before this file can be used, including:
  *  - LocusZoom
  *  - gwas-credible-sets (available via NPM or a related CDN)
  *
@@ -32,11 +31,10 @@ function install (LocusZoom) {
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
      *  for the calculation. (usually, it follows a request for GWAS summary statistics)
      * @see module:LocusZoom_Adapters
+     * @see module:ext/lz-credible-sets
      */
     class CredibleSetLZ extends BaseAdapter {
         /**
-         * @param {Object} config.params
-         * @param {Object} config.params.fields
          * @param {String} config.params.fields.log_pvalue The name of the field containing -log10 pvalue information
          * @param {Number} [config.params.threshold=0.95] The credible set threshold (eg 95%). Will continue selecting SNPs
          *  until the posterior probabilities add up to at least this fraction of the total.
@@ -137,6 +135,7 @@ function install (LocusZoom) {
      * Tooltip layout that appends credible set posterior probability to the default association tooltip (for SNPs in the credible set)
      * @name association_credible_set_tooltip
      * @type tooltip
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('tooltip', 'association_credible_set', function () {
         // Extend a known tooltip with an extra row of info showing posterior probabilities
@@ -149,6 +148,7 @@ function install (LocusZoom) {
      * A tooltip layout for annotation (rug) tracks that provides information about credible set members
      * @name annotation_credible_set_tooltip
      * @type tooltip
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('tooltip', 'annotation_credible_set', {
         namespace: { 'assoc': 'assoc', 'credset': 'credset' },
@@ -164,6 +164,7 @@ function install (LocusZoom) {
      * A data layer layout that shows GWAS summary statistics overlaid with credible set membership information
      * @name association_credible_set
      * @type data_layer
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('data_layer', 'association_credible_set', function () {
         const base = LocusZoom.Layouts.get('data_layer', 'association_pvalues', {
@@ -197,6 +198,7 @@ function install (LocusZoom) {
      * A data layer layout that shows a vertical mark whenever a SNP is a member of the credible set
      * @name annotation_credible_set_layer
      * @type data_layer
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('data_layer', 'annotation_credible_set', {
         namespace: { 'assoc': 'assoc', 'credset': 'credset' },
@@ -245,6 +247,7 @@ function install (LocusZoom) {
      * A panel layout that shows a vertical mark whenever a SNP is a member of the credible set
      * @name annotation_credible_set
      * @type panel
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('panel', 'annotation_credible_set', {
         id: 'annotationcredibleset',
@@ -268,6 +271,7 @@ function install (LocusZoom) {
      * A panel layout that shows GWAS summary statistics in a standard LocusZoom view, overlaid with credible set membership information
      * @name association_credible_set
      * @type panel
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('panel', 'association_credible_set', function () {
         const l = LocusZoom.Layouts.get('panel', 'association', {
@@ -385,6 +389,7 @@ function install (LocusZoom) {
      * A standard LocusZoom plot layout, with additional credible set information.
      * @name association_credible_set_plot
      * @type plot
+     * @see module:ext/lz-credible-sets
      */
     LocusZoom.Layouts.add('plot', 'association_credible_set', {
         state: {},

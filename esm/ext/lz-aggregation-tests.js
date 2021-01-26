@@ -21,6 +21,8 @@
  * import aggTests from 'locuszoom/esm/ext/lz-aggregation-tests';
  * LocusZoom.use(aggTests);
  * ```
+ *
+ * Then use the layouts and data adapters made available by this extension. (see demos and documentation for guidance)
  * @module
  */
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
@@ -41,7 +43,7 @@ function install (LocusZoom) {
      *   calculation only once, while using it in many different places
      * @public
      * @see module:ext/lz-aggregation-tests
-     * @see module:LocusZoom_Adapters
+
      */
     class AggregationTestSourceLZ extends BaseApiAdapter {
         getURL(state, chain, fields) {

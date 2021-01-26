@@ -91,6 +91,13 @@ const default_layout = {
  */
 
 /**
+ * Indicates whether an element was clicked.
+ * @event element_clicked
+ * @see {@link event:element_selection} for a more specific and frequently useful event
+ * @see event:lzEvent
+ */
+
+/**
  * Indicate whether a match was requested from within the data layer.
  * @event match_requested
  * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is

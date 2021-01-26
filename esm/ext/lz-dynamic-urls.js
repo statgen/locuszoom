@@ -12,7 +12,7 @@
  *
  * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
  * ```
- * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-aggregation-tests.min.js" type="application/javascript"></script>
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-dynamic-urls.min.js" type="application/javascript"></script>
  * ```
  *
  * To use with ES6 modules, import the helper functions and use them with your layout:
