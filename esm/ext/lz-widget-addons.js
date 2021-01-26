@@ -6,7 +6,7 @@
  *    with information by selecting points on the plot (see "covariates model" demo)
  *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
  *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
- *    space is hard to read. (see "multiple phenotypes layered" demo)
+ *    space makes data hard to see. (see "multiple phenotypes layered" demo)
  *
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:

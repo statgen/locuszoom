@@ -1,8 +1,10 @@
 /**
- * Define functions used by Scalable Layout Directives.
+ * Plugin registry of available functions that can be used in scalable layout directives.
  *
- * These "scaling functions" are used during rendering to return output (eg color) based on input value
+ * These "scale functions" are used during rendering to return output (eg color) based on input value
+ *
  * @module LocusZoom_ScaleFunctions
+ * @see {@link module:LocusZoom_DataLayers~ScalableParameter} for details on how scale functions are used by datalayers
  */
 
 import * as d3 from 'd3';

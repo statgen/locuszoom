@@ -4,6 +4,7 @@
  *
  * This extension provides a number of features that are closely tied to the aggregation tests demo,
  *  and thus the specific UI and data operations are less of a drop-in generic addon than most other extensions.
+ *  This tool also depends on a calculation tool (like RAREMETAL-server) with access to sample specific genotypes.
  *
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
@@ -23,6 +24,7 @@
  * ```
  *
  * Then use the layouts and data adapters made available by this extension. (see demos and documentation for guidance)
+ * @private
  * @module
  */
 // This is defined as a UMD module, to work with multiple different module systems / bundlers
@@ -41,7 +43,6 @@ function install (LocusZoom) {
      *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
      *   another source (like genes). Using a separate connector allows us to add caching and run this front-end
      *   calculation only once, while using it in many different places
-     * @public
      * @see module:ext/lz-aggregation-tests
 
      */
@@ -234,7 +235,6 @@ function install (LocusZoom) {
      *
      *  To use this source, one must specify a fields array that calls first the genes source, then a dummy field from
      *      this source. The output will be to transparently add several new fields to the genes data.
-     * @public
      * @see module:ext/lz-aggregation-tests
      * @see module:LocusZoom_Adapters
      */

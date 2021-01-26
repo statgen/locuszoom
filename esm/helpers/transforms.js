@@ -1,6 +1,7 @@
 /**
- * Transformation functions: used to transform a raw value from the API. For example, a template or axis label
- *  can convert from pvalue to -log10pvalue by specifying the following field name:
+ * Transformation functions: used to transform a raw data value. For example, a template or axis label
+ *  can convert from pvalue to -log10pvalue by specifying the following field name (the `|funcname` syntax
+ *  indicates applying a function):
  *
  * `{{assoc:pvalue|neglog10}}`
  *

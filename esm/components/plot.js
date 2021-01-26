@@ -32,7 +32,7 @@ const default_layout = {
 
 /**
  * Fields common to every event emitted by LocusZoom.
- * @event lzEvent
+ * @event baseLZEvent
  * @type {object}
  * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
  * @property {Plot|Panel} target A reference to the plot or panel instance that originated the event.
@@ -43,26 +43,26 @@ const default_layout = {
  * A panel was removed from the plot.
  * @event panel_removed
  * @property {string} data The id of the panel that was removed (eg 'genes')
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
  * A request for data was initiated. This can be used for, eg, showing data loading indicators.
  * @event data_requested
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
  * A request for new data has completed, and all data has been rendered.
  * @event data_rendered
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
  * An action occurred that changed, or could change, the layout
  * @event layout_changed
  * @deprecated
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
@@ -70,16 +70,17 @@ const default_layout = {
  *  if they are overridden by plot logic.
  * @event state_changed
  * @property {object} data The set of all state changes requested
- * @see event:lzEvent
+ * @see event:baseLZEvent
  * @see region_changed
  */
 
 /**
  * The plot region has changed. Reports the actual coordinates of the plot after the zoom event. If plot.applyState is
- *  called with an invalid region, this reports the actual final coordinates subject to region min/max, etc.
+ *  called with an invalid region (eg zooming in or out too far), this reports the actual final coordinates, not what was requested.
+ *  The actual coordinates are subject to region min/max, etc.
  * @event region_changed
  * @property {object} data The {chr, start, end} coordinates of the requested region.
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
@@ -87,14 +88,14 @@ const default_layout = {
  * @event element_selection
  * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
  *   selection status (boolean)
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
  * Indicates whether an element was clicked.
  * @event element_clicked
  * @see {@link event:element_selection} for a more specific and frequently useful event
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**
@@ -102,7 +103,7 @@ const default_layout = {
  * @event match_requested
  * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
  *   being initiated or canceled
- * @see event:lzEvent
+ * @see event:baseLZEvent
  */
 
 /**

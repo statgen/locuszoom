@@ -1,6 +1,9 @@
 /**
  * A datasource that fetches data from a remote Tabix file, instead of a RESTful API.
- * Requires a generic user-specified parser.
+ * Requires a generic user-specified parser function.
+ *
+ * ### Features provided
+ * * {@link module:LocusZoom_Adapters~TabixUrlSource}
  *
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
@@ -37,6 +40,8 @@ function install(LocusZoom) {
      *  Google Cloud storage to serve files in the manner required, see:
      *  https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS
      *
+     * @alias module:LocusZoom_Adapters~TabixUrlSource
+     * @see {@link module:ext/lz-tabix-source} for required extension and installation instructions
      * @see module:LocusZoom_Adapters~BaseApiAdapter
      * @param {function} config.parser_func A function that parses a single line of text and returns (usually) a
      *  structured object of data fields

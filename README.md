@@ -27,7 +27,7 @@ The page you build that embeds the LocusZoom plugin must include the following r
 * `locuszoom.css`  
   This is the primary stylesheet. It is namespaced so as not to conflict with any other styles defined on the same page.
 
-Instead of copying the files to your project, we recommend using CDN links are for these resources (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
+Instead of copying the files to your project, **we recommend using CDN links are for these resources** (see [statgen.github.io/locuszoom/](http://statgen.github.io/locuszoom/)).
 
 *The above instructions describe using LocusZoom with pure JS and HTML. If you are using a module build system, LocusZoom supports usage via ES6 imports, eg `import LocusZoom from 'locuszoom';` and `import 'locuszoom/dist/locuszoom.css';`* 
 
@@ -151,7 +151,7 @@ Get any predefined layout by type and name using `LocusZoom.Layouts.get(type, na
 toolbars, into a custom layout:
 
 ```javascript
-var layout = {
+const layout = {
   width: 1000,
   height: 500,
   panels: [
@@ -161,7 +161,7 @@ var layout = {
       ...
     },
     LocusZoom.Layouts.get("panel","genes")
-  ]
+  ],
   ...
 };
 ```
@@ -172,7 +172,7 @@ The `get()` function also accepts a partial layout to be merged with the predefi
 providing the ability to use predefined layouts as starting points for custom layouts with only minor differences. Example:
 
 ```javascript
-var changes = {
+const changes = {
   label_font_size: 20,
   transition: false
 };
@@ -187,7 +187,7 @@ interactions with the layout. This can include a specific query against various 
  can be predefined at initialization as a top-level parameter in the layout. For example:
 
 ```javascript
-var layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
+const layout = LocusZoom.Layouts.get('plot', 'standard_association', { state: { chr: 6, start: 20379709, end: 20979709 } })
 ```
 
 #### Predefining State With `data-region`
@@ -209,7 +209,7 @@ parameter to convert those values into the initial state.
 LocusZoom is an entirely client-side application designed to plug into arbitrary data sets, be they local files, APIs,
  or something else entirely. It has the following vendor dependencies:
 
-* [d3](http://d3js.org/) for a data visualization framework
+* [d3](http://d3js.org/) for data visualization
 
 ### Build System and Automated Testing
 
@@ -225,7 +225,7 @@ Once complete run `npm run build` from the top of the application directory to r
 
 This build process will also write sourcemaps, to help with debugging code even in production environments.
 
-#### Other supported gulp commands:
+#### Other supported build commands:
 * `npm run test` - Run unit tests (optional: `npm run test:coverage` to output a code coverage report)
 * `npm run dev` - Automatically rebuild the library whenever code changes (development mode)
 * `npm run build` - Run tests, and if they pass, build the library for release
@@ -235,11 +235,10 @@ This build process will also write sourcemaps, to help with debugging code even 
 
 #### Automated Testing
 
-LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory.
+LocusZoom uses [Mocha](https://mochajs.org/) for unit testing. Tests are located in the `test` subdirectory. Use `npm run test`.
 
-### Linting
-LocusZoom is also linted using 
-[ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`. This will run automatically as part of all new code commits, and during every build. 
+### Static analysis and code style
+LocusZoom runs code quality checks via [ESLint](http://eslint.org/), the rules for which can be found in `.eslintrc`. This will run automatically as part of all new code commits, and during every build. 
 
 ## Help and Support
 
