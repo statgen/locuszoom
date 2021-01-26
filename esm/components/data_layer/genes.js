@@ -116,103 +116,107 @@ class Genes extends BaseDataLayer {
         this.tracks = 1;
         this.gene_track_index = { 1: [] };
 
-        data.map((item) => {
-            // If necessary, split combined gene id / version fields into discrete fields.
-            // NOTE: this may be an issue with CSG's genes data API that may eventually be solved upstream.
-            if (item.gene_id && item.gene_id.indexOf('.')) {
-                const split = item.gene_id.split('.');
-                item.gene_id = split[0];
-                item.gene_version = split[1];
-            }
+        return data
+            // Filter out any genes that are fully outside the region of interest. This allows us to use cached data
+            //  when zooming in, without breaking the layout by allocating space for genes that are not visible.
+            .filter((item) => !(item.end < this.state.start) && !(item.start > this.state.end))
+            .map((item) => {
+                // If necessary, split combined gene id / version fields into discrete fields.
+                // NOTE: this may be an issue with CSG's genes data API that may eventually be solved upstream.
+                if (item.gene_id && item.gene_id.indexOf('.')) {
+                    const split = item.gene_id.split('.');
+                    item.gene_id = split[0];
+                    item.gene_version = split[1];
+                }
 
-            // Stash the transcript ID on the parent gene
-            item.transcript_id = item.transcripts[this.transcript_idx].transcript_id;
+                // Stash the transcript ID on the parent gene
+                item.transcript_id = item.transcripts[this.transcript_idx].transcript_id;
 
-            // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
-            // (range: values in terms of pixels on the screen)
-            item.display_range = {
-                start: this.parent.x_scale(Math.max(item.start, this.state.start)),
-                end:   this.parent.x_scale(Math.min(item.end, this.state.end)),
-            };
-            item.display_range.label_width = _getLabelWidth(item.gene_name, this.layout.label_font_size);
-            item.display_range.width = item.display_range.end - item.display_range.start;
-            // Determine label text anchor (default to middle)
-            item.display_range.text_anchor = 'middle';
-            if (item.display_range.width < item.display_range.label_width) {
-                if (item.start < this.state.start) {
-                    item.display_range.end = item.display_range.start
-                        + item.display_range.label_width
-                        + this.layout.label_font_size;
-                    item.display_range.text_anchor = 'start';
-                } else if (item.end > this.state.end) {
-                    item.display_range.start = item.display_range.end
-                        - item.display_range.label_width
-                        - this.layout.label_font_size;
-                    item.display_range.text_anchor = 'end';
-                } else {
-                    const centered_margin = ((item.display_range.label_width - item.display_range.width) / 2)
-                        + this.layout.label_font_size;
-                    if ((item.display_range.start - centered_margin) < this.parent.x_scale(this.state.start)) {
-                        item.display_range.start = this.parent.x_scale(this.state.start);
-                        item.display_range.end = item.display_range.start + item.display_range.label_width;
+                // Determine display range start and end, based on minimum allowable gene display width, bounded by what we can see
+                // (range: values in terms of pixels on the screen)
+                item.display_range = {
+                    start: this.parent.x_scale(Math.max(item.start, this.state.start)),
+                    end:   this.parent.x_scale(Math.min(item.end, this.state.end)),
+                };
+                item.display_range.label_width = _getLabelWidth(item.gene_name, this.layout.label_font_size);
+                item.display_range.width = item.display_range.end - item.display_range.start;
+                // Determine label text anchor (default to middle)
+                item.display_range.text_anchor = 'middle';
+                if (item.display_range.width < item.display_range.label_width) {
+                    if (item.start < this.state.start) {
+                        item.display_range.end = item.display_range.start
+                            + item.display_range.label_width
+                            + this.layout.label_font_size;
                         item.display_range.text_anchor = 'start';
-                    } else if ((item.display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
-                        item.display_range.end = this.parent.x_scale(this.state.end);
-                        item.display_range.start = item.display_range.end - item.display_range.label_width;
+                    } else if (item.end > this.state.end) {
+                        item.display_range.start = item.display_range.end
+                            - item.display_range.label_width
+                            - this.layout.label_font_size;
                         item.display_range.text_anchor = 'end';
                     } else {
-                        item.display_range.start -= centered_margin;
-                        item.display_range.end += centered_margin;
-                    }
-                }
-                item.display_range.width = item.display_range.end - item.display_range.start;
-            }
-            // Add bounding box padding to the calculated display range start, end, and width
-            item.display_range.start -= this.layout.bounding_box_padding;
-            item.display_range.end   += this.layout.bounding_box_padding;
-            item.display_range.width += 2 * this.layout.bounding_box_padding;
-            // Convert and stash display range values into domain values
-            // (domain: values in terms of the data set, e.g. megabases)
-            item.display_domain = {
-                start: this.parent.x_scale.invert(item.display_range.start),
-                end:   this.parent.x_scale.invert(item.display_range.end),
-            };
-            item.display_domain.width = item.display_domain.end - item.display_domain.start;
-
-            // Using display range/domain data generated above cast each gene to tracks such that none overlap
-            item.track = null;
-            let potential_track = 1;
-            while (item.track === null) {
-                let collision_on_potential_track = false;
-                this.gene_track_index[potential_track].map((placed_gene) => {
-                    if (!collision_on_potential_track) {
-                        const min_start = Math.min(placed_gene.display_range.start, item.display_range.start);
-                        const max_end = Math.max(placed_gene.display_range.end, item.display_range.end);
-                        if ((max_end - min_start) < (placed_gene.display_range.width + item.display_range.width)) {
-                            collision_on_potential_track = true;
+                        const centered_margin = ((item.display_range.label_width - item.display_range.width) / 2)
+                            + this.layout.label_font_size;
+                        if ((item.display_range.start - centered_margin) < this.parent.x_scale(this.state.start)) {
+                            item.display_range.start = this.parent.x_scale(this.state.start);
+                            item.display_range.end = item.display_range.start + item.display_range.label_width;
+                            item.display_range.text_anchor = 'start';
+                        } else if ((item.display_range.end + centered_margin) > this.parent.x_scale(this.state.end)) {
+                            item.display_range.end = this.parent.x_scale(this.state.end);
+                            item.display_range.start = item.display_range.end - item.display_range.label_width;
+                            item.display_range.text_anchor = 'end';
+                        } else {
+                            item.display_range.start -= centered_margin;
+                            item.display_range.end += centered_margin;
                         }
                     }
-                });
-                if (!collision_on_potential_track) {
-                    item.track = potential_track;
-                    this.gene_track_index[potential_track].push(item);
-                } else {
-                    potential_track++;
-                    if (potential_track > this.tracks) {
-                        this.tracks = potential_track;
-                        this.gene_track_index[potential_track] = [];
+                    item.display_range.width = item.display_range.end - item.display_range.start;
+                }
+                // Add bounding box padding to the calculated display range start, end, and width
+                item.display_range.start -= this.layout.bounding_box_padding;
+                item.display_range.end   += this.layout.bounding_box_padding;
+                item.display_range.width += 2 * this.layout.bounding_box_padding;
+                // Convert and stash display range values into domain values
+                // (domain: values in terms of the data set, e.g. megabases)
+                item.display_domain = {
+                    start: this.parent.x_scale.invert(item.display_range.start),
+                    end:   this.parent.x_scale.invert(item.display_range.end),
+                };
+                item.display_domain.width = item.display_domain.end - item.display_domain.start;
+
+                // Using display range/domain data generated above cast each gene to tracks such that none overlap
+                item.track = null;
+                let potential_track = 1;
+                while (item.track === null) {
+                    let collision_on_potential_track = false;
+                    this.gene_track_index[potential_track].map((placed_gene) => {
+                        if (!collision_on_potential_track) {
+                            const min_start = Math.min(placed_gene.display_range.start, item.display_range.start);
+                            const max_end = Math.max(placed_gene.display_range.end, item.display_range.end);
+                            if ((max_end - min_start) < (placed_gene.display_range.width + item.display_range.width)) {
+                                collision_on_potential_track = true;
+                            }
+                        }
+                    });
+                    if (!collision_on_potential_track) {
+                        item.track = potential_track;
+                        this.gene_track_index[potential_track].push(item);
+                    } else {
+                        potential_track++;
+                        if (potential_track > this.tracks) {
+                            this.tracks = potential_track;
+                            this.gene_track_index[potential_track] = [];
+                        }
                     }
                 }
-            }
 
-            // Stash parent references on all genes, transcripts, and exons
-            item.parent = this;
-            item.transcripts.map((d, t) => {
-                item.transcripts[t].parent = item;
-                item.transcripts[t].exons.map((d, e) => item.transcripts[t].exons[e].parent = item.transcripts[t]);
+                // Stash parent references on all genes, transcripts, and exons
+                item.parent = this;
+                item.transcripts.map((d, t) => {
+                    item.transcripts[t].parent = item;
+                    item.transcripts[t].exons.map((d, e) => item.transcripts[t].exons[e].parent = item.transcripts[t]);
+                });
+                return item;
             });
-        });
-        return this;
     }
 
     /**
@@ -221,8 +225,8 @@ class Genes extends BaseDataLayer {
     render() {
         const self = this;
         // Apply filters to only render a specified set of points
-        const track_data = this._applyFilters();
-        this.assignTracks(track_data);
+        let track_data = this._applyFilters();
+        track_data = this.assignTracks(track_data);
         let height;
 
         // Render gene groups
