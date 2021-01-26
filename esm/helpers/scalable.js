@@ -111,7 +111,7 @@ const ordinal_cycle = (parameters, value, index) => {
  *  This function is therefore slightly less amenable to layout mutations like "changing the options after scaling
  *  function is used", but this is not expected to be a common use case.
  *
- *  CAVEAT: Some data sources do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
+ *  CAVEAT: Some datasets do not return true datum ids, but instead append synthetic ID fields ("item 1, item2"...)
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
  * @param parameters

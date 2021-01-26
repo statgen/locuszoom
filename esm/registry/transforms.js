@@ -57,7 +57,6 @@ class TransformationFunctionsRegistry extends RegistryBase {
  * A plugin registry that allows plots to use both pre-defined and user-provided transformation functions, which
  *  can be used to modify a value in the input data in a predefined way. For example, these can be used to let APIs
  *  that return p_values work with plots that display -log10(p)
- * @see {module:LocusZoom_TransformationFunctions}
  * @alias module:LocusZoom~TransformationFunctions
  * @type {TransformationFunctionsRegistry}
  */

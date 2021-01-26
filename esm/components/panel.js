@@ -299,7 +299,7 @@ class Panel {
      *
      * The following panel-level events are currently supported:
      *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
-     *   - `data_requested` - context: panel - A request for new data from any data source used in the panel has been made.
+     *   - `data_requested` - context: panel - A request for new data from any data adapter used in the panel has been made.
      *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
      *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
      *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies

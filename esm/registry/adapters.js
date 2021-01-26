@@ -1,6 +1,6 @@
 /**
- * A registry of known data sources. Can be used to find sources by name, either from predefined
- *  classes, or plugins.
+ * A registry of known data adapters. Can be used to find adapters by name. It will search predefined classes
+ *  as well as those registered by plugins.
  *  @module
  *  @private
  */
@@ -9,10 +9,10 @@ import {ClassRegistry} from './base';
 import * as adapters from '../data/adapters';
 
 
-// KnownDataSources is a basic registry with no special behavior.
+// LocusZoom.Adapters is a basic registry with no special behavior.
 /**
- * A plugin registry that allows plots to use both pre-defined and user-provided data adapters.
- * @see {module:LocusZoom_Adapters}
+ * A plugin registry that allows plots to use both pre-defined and user-provided data adapters (responsible for
+ *  controlling the retrieval and harmonization of data).
  * @alias module:LocusZoom~Adapters
  * @type {module:registry/base~ClassRegistry}
  */

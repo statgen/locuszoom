@@ -95,7 +95,6 @@ class Line extends BaseDataLayer {
      * @param {String} status A member of `LocusZoom.DataLayer.Statuses.adjectives`
      * @param {String|Object} element
      * @param {Boolean} toggle
-     * @returns {Line}
      */
     setElementStatus(status, element, toggle) {
         return this.setAllElementStatus(status, toggle);

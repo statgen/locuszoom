@@ -1,5 +1,16 @@
 /**
- * Predefined base layouts used to populate the LZ registry
+ * Predefined layouts that describe how to draw common types of data, as well as what interactive features to use.
+ *  Each plot contains multiple panels (rows), and each row can stack several kinds of data in layers
+ *  (eg scatter plot and line of significance). Layouts provide the building blocks to provide interactive experiences
+ *  and user-friendly tooltips for common kinds of genetic data.
+ *
+ * Many of these layouts (like the standard association plot) assume that field names are the same as those provided
+ *  in the UMich [portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/). Although layouts can be used on many
+ *  kinds of data, it is often less work to write an adapter that uses the same field names, rather than to modify
+ *  every single reference to a field anywhere in the layout.
+ *
+ * See the Layouts Tutorial for details on how to customize nested layouts.
+ *
  * @module LocusZoom_Layouts
  */
 
@@ -81,7 +92,7 @@ const coaccessibility_tooltip = {
 };
 
 /*
- * Data Layer Layouts: represent specific information from a data source
+ * Data Layer Layouts: represent specific information given provided data.
  */
 
 /**

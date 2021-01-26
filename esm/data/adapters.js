@@ -1,5 +1,34 @@
 /**
  * Define standard data adapters used to retrieve data (usually from REST APIs)
+ *
+ * ## Adapters are responsible for retrieving data
+ * In LocusZoom, the act of fetching data (from API, JSON file, or Tabix) is separate from the act of rendering data.
+ * Adapters are used to handle retrieving from different sources, and can provide various advanced functionality such
+ *  as caching, data harmonization, and annotating API responses with calculated fields. They can also be used to join
+ *  two data sources, such as annotating association summary statistics with LD information.
+ *
+ * Most of LocusZoom's builtin layouts and adapters are written for the field names and data formats of the
+ *  UMich [PortalDev API](https://portaldev.sph.umich.edu/docs/api/v1/#introduction):
+ *  if your data is in a different format, an adapter can be used to coerce or rename fields.
+ *  Although it is possible to change every part of a rendering layout to expect different fields, this is often much
+ *  more work than providing data in the expected format.
+ *
+ * ## Creating data adapters
+ * The documentation in this section describes the available data types and adapters. Real LocusZoom usage almost never
+ *  creates these classes directly: rather, they are defined from configuration objects that ask for a source by name.
+ *
+ * The below example creates an object responsible for fetching two different GWAS summary statistics datasets from two different API endpoints, for any data
+ *  layer that asks for fields from `trait1:fieldname` or `trait2:fieldname`.
+ *
+ *  ```
+ *  const data_sources = new LocusZoom.DataSources();
+ *  data_sources.add("trait1", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 1}}]);
+ *  data_sources.add("trait2", ["AssociationLZ", {url: "http://server.com/api/single/", params: {analysis: 2}}]);
+ *  ```
+ *
+ *  These data sources are then passed to the plot when data is to be rendered:
+ *  `const plot = LocusZoom.populate("#lz-plot", data_sources, layout);`
+ *
  * @module LocusZoom_Adapters
  */
 
@@ -30,7 +59,7 @@ class BaseAdapter {
      */
     constructor(config) {
         /**
-         * Whether this source should enable caching (true for most data sources)
+         * Whether to enable caching (true for most data adapters)
          * @private
          * @member {Boolean}
          */
@@ -43,7 +72,7 @@ class BaseAdapter {
         this._cache_pos_end = null;
 
         /**
-         * Whether this data source type is dependent on previous requests- for example, the LD source cannot annotate
+         * Whether this adapter type is dependent on previous requests- for example, the LD source cannot annotate
          *  association data if no data was found for that region.
          * @private
          * @member {boolean}
@@ -55,7 +84,7 @@ class BaseAdapter {
     }
 
     /**
-     * Parse configuration used to create the data source. Many custom sources will override this method to suit their
+     * Parse configuration used to create the instance. Many custom sources will override this method to suit their
      *  needs (eg specific config options, or for sources that do not retrieve data from a URL)
      * @protected
      * @param {String|Object} config Basic configuration- either a url, or a config object
@@ -87,10 +116,10 @@ class BaseAdapter {
         // Most region sources, by default, will cache the largest region that satisfies the request: zooming in
         //  should be satisfied via the cache, but pan or region change operations will cause a network request
 
-        // Some data source rely on values set in chain.header during the getURL call. (eg, the LD source uses
+        // Some adapters rely on values set in chain.header during the getURL call. (eg, the LD source uses
         //  this to find the LD refvar) Calling this method is a backwards-compatible way of ensuring that value is set,
         //  even on a cache hit in which getURL otherwise wouldn't be called.
-        // Some of the data sources that rely on this behavior are user-defined, hence compatibility hack
+        // Some of the adapters that rely on this behavior are user-defined, hence compatibility hack
         this.getURL(state, chain, fields);
 
         const cache_pos_chr = state.chr;
@@ -161,7 +190,7 @@ class BaseAdapter {
      *
      * Does not apply namespacing, transformations, or field extraction.
      *
-     * May be overridden by data sources that inherently return more complex payloads, or that exist to annotate other
+     * May be overridden by data adapters that inherently return more complex payloads, or that exist to annotate other
      *  sources (eg, if the payload provides extra data rather than a series of records).
      * @protected
      * @param {Object[]|Object} data The original parsed server response
@@ -328,14 +357,14 @@ class BaseAdapter {
     }
 
     /**
-     * Fetch the data from the specified data source, and apply transformations requested by an external consumer.
-     * This is the public-facing datasource method that will most be called by the plot, but custom data sources will
+     * Fetch the data from the specified data adapter, and apply transformations requested by an external consumer.
+     * This is the public-facing datasource method that will most be called by the plot, but custom data adapters will
      *  almost never want to override this method directly- more specific hooks are provided to control individual pieces
      *  of the request lifecycle.
      *
      * @private
      * @param {Object} state The current "state" of the plot, such as chromosome and start/end positions
-     * @param {String[]} fields Array of field names that the plot has requested from this data source. (without the "namespace" prefix)
+     * @param {String[]} fields Array of field names that the plot has requested from this data adapter. (without the "namespace" prefix)
      * @param {String[]} outnames  Array describing how the output data should refer to this field. This represents the
      *     originally requested field name, including the namespace. This must be an array with the same length as `fields`
      * @param {Function[]} trans The collection of transformation functions to be run on selected fields.
@@ -368,7 +397,7 @@ class BaseAdapter {
 }
 
 /**
- * Base source for LocusZoom data sources that receive their data over the web. Adds default config parameters
+ * Base class for LocusZoom data adapters that receive their data over the web. Adds default config parameters
  *  (and potentially other behavior) that are relevant to URL-based requests.
  * @extends module:LocusZoom_Adapters~BaseAdapter
  * @param {string} config.url The URL for the remote dataset. By default, most adapters perform a GET request.
@@ -390,7 +419,7 @@ class BaseApiAdapter extends BaseAdapter {
 }
 
 /**
- * Data Source for Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a request
+ * Retrieve Association Data from the LocusZoom/ Portaldev API (or compatible). Defines how to make a request
  *  to a specific REST API.
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
@@ -526,7 +555,7 @@ class LDServer extends BaseApiAdapter {
             const names = Object.keys(chain.body[0]);
             const nameMatch = exactMatch(names);
             // Internally, fields are generally prefixed with the name of the source they come from.
-            // If the user provides an id_field (like `variant`), it should work across data sources( `assoc1:variant`,
+            // If the user provides an id_field (like `variant`), it should work across data sources (`assoc1:variant`,
             //  assoc2:variant), but not match fragments of other field names (assoc1:variant_thing)
             // Note: these lookups hard-code a couple of common fields that will work based on known APIs in the wild
             const id_match = dataFields.id && nameMatch(new RegExp(`${dataFields.id}\\b`));
@@ -881,7 +910,7 @@ class GwasCatalogLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
+ * Retrieve Gene Data, as fetched from the LocusZoom/Portaldev API server (or compatible format)
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
  * @param {string} config.url The base URL for the remote data
@@ -930,7 +959,7 @@ class GeneLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for Gene Constraint Data, as fetched from the gnomAD server (or compatible graphQL api endpoint)
+ * Retrieve Gene Constraint Data, as fetched from the gnomAD server (or compatible graphQL api endpoint)
  *
  * This is intended to be the second request in a chain, with special logic that connects it to Genes data
  *  already fetched. It assumes that the genes data is returned from the UM API, and thus the logic involves
@@ -969,7 +998,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
     fetchRequest(state, chain, fields) {
         const build = state.genome_build || this.params.build;
         if (!build) {
-            throw new Error(`Data source ${this.constructor.name} must specify a 'genome_build' option`);
+            throw new Error(`Adapter ${this.constructor.name} must specify a 'genome_build' option`);
         }
 
         const unique_gene_names = chain.body.reduce(
@@ -1040,7 +1069,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
+ * Retrieve Recombination Rate Data, as fetched from the LocusZoom API server (or compatible)
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
  * @param {string} config.url The base URL for the remote data
@@ -1067,7 +1096,7 @@ class RecombLZ extends BaseApiAdapter {
 }
 
 /**
- * Data Source for static blobs of data as raw JS objects. This does not perform additional parsing, which is required
+ * Retrieve static blobs of data as raw JS objects. This does not perform additional parsing, which is required
  *  for some sources (eg it does not know how to join together LD and association data).
  *
  * Therefore it is the responsibility of the user to pass information in a format that can be read and
@@ -1092,7 +1121,7 @@ class StaticSource extends BaseAdapter {
 
 
 /**
- * Data source for PheWAS data retrieved from a LocusZoom/PortalDev compatible API
+ * Retrieve PheWAS data retrieved from a LocusZoom/PortalDev compatible API
  * @public
  * @see module:LocusZoom_Adapters~BaseApiAdapter
  * @param {string} config.url The base URL for the remote data
@@ -1104,7 +1133,7 @@ class PheWASLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         const build = (state.genome_build ? [state.genome_build] : null) || this.params.build;
         if (!build || !Array.isArray(build) || !build.length) {
-            throw new Error(['Data source', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
+            throw new Error(['Adapter', this.constructor.SOURCE_NAME, 'requires that you specify array of one or more desired genome build names'].join(' '));
         }
         const url = [
             this.url,

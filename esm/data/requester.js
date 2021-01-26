@@ -8,7 +8,7 @@ import { TRANSFORMS } from '../registry';
  *
  * It is also responsible for constructing a "chain" of dependent requests, by requesting each datasource
  *   sequentially in the order specified in the datalayer `fields` array. Data sources are only chained within a
- *   data layer, and only if that layer requests more than one kind of data source.
+ *   data layer, and only if that layer requests more than one source of data.
  * @param {DataSources} sources A set of data sources used specifically by this plot instance
  * @private
  */

@@ -1,6 +1,6 @@
 /**
  * LocusZoom extensions used to calculate and render aggregation test results. Because these calculations depend on an
- *   external library, the special data sources are defined here, rather than in LocusZoom core code.
+ *   external library, the special data adapters are defined here, rather than in LocusZoom core code.
  *
  * This extension provides a number of features that are closely tied to the aggregation tests demo,
  *  and thus the specific UI and data operations are less of a drop-in generic addon than most other extensions.
@@ -39,12 +39,12 @@ function install (LocusZoom) {
     const ConnectorSource = LocusZoom.Adapters.get('ConnectorSource');
 
     /**
-     * Data Source that calculates gene or region-based tests based on provided data
+     * Calculates gene or region-based tests based on provided data, using the raremetal.js library.
      *   It will rarely be used by itself, but rather using a connector that attaches the results to data from
      *   another source (like genes). Using a separate connector allows us to add caching and run this front-end
-     *   calculation only once, while using it in many different places
+     *   calculation only once, while using it in many different places.
      * @see module:ext/lz-aggregation-tests
-
+     * @private
      */
     class AggregationTestSourceLZ extends BaseApiAdapter {
         getURL(state, chain, fields) {
@@ -175,9 +175,10 @@ function install (LocusZoom) {
 
     /**
      * Restructure RAREMETAL-SERVER data used to calculate aggregation tests into a format that can be used to
-     *  display a GWAS scatter plot
+     *  display a GWAS scatter plot.
      * @see module:ext/lz-aggregation-tests
      * @see module:LocusZoom_Adapters
+     * @private
      */
     class AssocFromAggregationLZ extends BaseAdapter {
         constructor(config) {
@@ -237,6 +238,7 @@ function install (LocusZoom) {
      *      this source. The output will be to transparently add several new fields to the genes data.
      * @see module:ext/lz-aggregation-tests
      * @see module:LocusZoom_Adapters
+     * @private
      */
     class GeneAggregationConnectorLZ extends ConnectorSource {
         _getRequiredSources() {

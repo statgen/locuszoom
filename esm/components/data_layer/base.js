@@ -1,4 +1,10 @@
 /**
+ * Data layers represent instructions for how to render common types of information.
+ *  (GWAS scatter plot, nearby genes, straight lines and filled curves, etc)
+ *
+ * Each rendering type also provides helpful functionality such as filtering, matching, and interactive tooltip
+ *  display. Predefined layers can be extended or customized, with many configurable options.
+ *
  * @module LocusZoom_DataLayers
  */
 

@@ -35,7 +35,7 @@ function install(LocusZoom) {
     const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
 
     /**
-     * Custom data source that loads data from a remote Tabix file (if the file host has been configured with proper
+     * Loads data from a remote Tabix file (if the file host has been configured with proper
      *  CORS and Range header support). For instructions on how to configure a remote file host such as S3 or
      *  Google Cloud storage to serve files in the manner required, see:
      *  https://docs.cancergenomicscloud.org/docs/enabling-cross-origin-resource-sharing-cors#CORS

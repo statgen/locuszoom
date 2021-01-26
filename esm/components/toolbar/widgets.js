@@ -1,4 +1,9 @@
-/** @module LocusZoom_Widgets */
+/**
+ * Interactive toolbar widgets that allow users to control the plot. These can be used to modify element display:
+ *  adding contextual information, rearranging/removing panels, or toggling between sets of rendering options like
+ *  different LD populations.
+ * @module LocusZoom_Widgets
+ */
 import * as d3 from 'd3';
 
 import {positionIntToString} from '../../helpers/display';
@@ -1227,7 +1232,7 @@ class ZoomRegion extends BaseWidget {
 
 /**
  * Renders button with arbitrary text that, when clicked, shows a dropdown containing arbitrary HTML. This is usually
- *   used as part of coding a custom a button, rather than as a standalone widget.
+ *   used as part of coding a custom button, rather than as a standalone widget.
  * NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
  * @alias module:LocusZoom_Widgets~menu
  * @param {string} layout.button_html The HTML to render inside the button
@@ -1449,7 +1454,7 @@ class DisplayOptions extends BaseWidget {
  * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
  * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
  *
- * For example, the LDServer data source can use it to change LD reference population (for all panels) after render
+ * For example, the LDServer data adapter can use it to change LD reference population (for all panels) after render
  *
  * @alias module:LocusZoom_Widgets~set_state
  * @param {String} [layout.button_html="Set option..."] Text to display on the toolbar button

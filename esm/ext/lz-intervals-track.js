@@ -48,7 +48,7 @@ function install (LocusZoom) {
     const _BaseWidget = LocusZoom.Widgets.get('BaseWidget');
 
     /**
-     * (**extension**) Data Source for Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
+     * (**extension**) Retrieve Interval Annotation Data (e.g. BED Tracks), as fetched from the LocusZoom API server (or compatible)
      * @public
      * @alias module:LocusZoom_Adapters~IntervalLZ
      * @see module:LocusZoom_Adapters~BaseApiAdapter

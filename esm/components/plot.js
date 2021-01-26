@@ -305,7 +305,7 @@ class Plot {
          */
         this.event_hooks = {
             'layout_changed': [],  // Many rerendering operations, including dimensions changed, element highlighted, or rerender on chanegd data. Caution: Direct layout mutations might not be captured by this event.
-            'data_requested': [], // A request has been made for new data from any data source used in the plot
+            'data_requested': [], // A request has been made for new data from any data adapter used in the plot
             'data_rendered': [],  // Data from a request has been received and rendered in the plot
             'element_clicked': [], // Select or unselect
             'element_selection': [], // Element becomes active (only)
@@ -617,7 +617,7 @@ class Plot {
      * @public
      * @listens event:data_rendered
      * @param {String[]} fields An array of field names and transforms, in the same syntax used by a data layer.
-     *  Different data sources should be prefixed by the source name.
+     *  Different data sources should be prefixed by the namespace name.
      * @param {externalDataCallback} success_callback Used defined function that is automatically called any time that
      *  new data is received by the plot. Receives two arguments: (data, plot).
      * @param {Object} [opts] Options

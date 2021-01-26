@@ -37,7 +37,7 @@ function install (LocusZoom) {
     const BaseAdapter = LocusZoom.Adapters.get('BaseAdapter');
 
     /**
-     * (**extension**) Custom data source that calculates the 95% credible set based on provided data.
+     * (**extension**) Custom data adapter that calculates the 95% credible set based on provided association data.
      * This source must be requested as the second step in a chain, after a previous step that returns fields required
      *  for the calculation. (usually, it follows a request for GWAS summary statistics)
      * @alias module:LocusZoom_Adapters~CredibleSetLZ

@@ -68,7 +68,7 @@ class LayoutRegistry extends RegistryBase {
 
     /**
      * List all available types of layout (eg toolbar, panel, etc). If a specific type name is provided, list the
-     *  layouts for that widget type.
+     *  layouts for that type of element ("just predefined panels").
      * @param {String} [type] The type of layout (eg toolbar, panel, etc)
      * @return {String[]|Object}
      */
@@ -95,7 +95,6 @@ class LayoutRegistry extends RegistryBase {
 
 /**
  * A plugin registry that allows plots to use both pre-defined and user-provided data adapters.
- * @see {module:LocusZoom_Layouts}
  * @alias module:LocusZoom~Layouts
  * @type {LayoutRegistry}
  */

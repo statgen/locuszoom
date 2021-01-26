@@ -118,7 +118,7 @@ class Genes extends BaseDataLayer {
 
         data.map((item) => {
             // If necessary, split combined gene id / version fields into discrete fields.
-            // NOTE: this may be an issue with CSG's genes data source that may eventually be solved upstream.
+            // NOTE: this may be an issue with CSG's genes data API that may eventually be solved upstream.
             if (item.gene_id && item.gene_id.indexOf('.')) {
                 const split = item.gene_id.split('.');
                 item.gene_id = split[0];

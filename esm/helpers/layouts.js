@@ -68,7 +68,7 @@ function applyNamespaces(element, namespace, default_namespace) {
 }
 
 /**
- * A helper method used for merging two objects. If a key is present in both, takes the value from the first object
+ * A helper method used for merging two objects. If a key is present in both, takes the value from the first object.
  *   Values from `default_layout` will be cleanly copied over, ensuring no references or shared state.
  *
  * Frequently used for preparing custom layouts. Both objects should be JSON-serializable.
