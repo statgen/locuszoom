@@ -369,23 +369,19 @@ describe('Data adapters', function () {
                 }, /must provide a parameter specifying either/, `Bad configuration should raise an exception in ${source_type}`);
 
                 source = new source_type({ url: 'www.fake.test', params: { source: 'a' } });
-                assert.ok(source.getURL({}), `Works when specifying source ID for ${source_name}`);
+                let url = source.getURL({});
+                assert.ok(url.match(/ in a/), `Works when specifying source ID for ${source_name}`);
 
                 source = new source_type({ url: 'www.fake.test' });
-                assert.ok(source.getURL({ genome_build: 'GRCh37' }), `Works when specifying build name for ${source_name}`);
+                url = source.getURL({ genome_build: 'GRCh37' });
+                assert.ok(url.match(/GRCh37/), `Works when specifying build name for ${source_name}`);
             });
 
             it('gives precedence to state.genome_build over its own config', function () {
                 const source = new source_type({ url: 'www.fake.test', params: { build: 'GRCh37' } });
                 const url = source.getURL({ genome_build: 'GRCh38' });
 
-                // HACK: This is the only part of these tests that differs between sources
-                let pattern;
-                if (source_name === 'GeneLZ') {
-                    pattern = /source in 4/;
-                } else {
-                    pattern = /id in 16/;
-                }
+                let pattern = /build=GRCh38/;
                 assert.ok(url.match(pattern), `${source_name} produced formed URL: ${url}`);
             });
 
@@ -415,10 +411,13 @@ describe('Data adapters', function () {
             };
         });
 
-        it('will respect a specific source ID over the global build param', function () {
+        it('will warn if conflicting build and source options are provided', function () {
             const source = new GwasCatalogLZ({ url: 'www.fake.test', params: { source: 'fjord' } });
-            const url = source.getURL({ genome_build: 'GRCh37' });
-            assert.ok(url.match('fjord'));
+            assert.throws(
+                () => source.getURL({ genome_build: 'GRCh37' }),
+                /not specify both/,
+                'Warns if conflicting options are used'
+            );
         });
 
         it('aligns records based on loose position match', function () {
