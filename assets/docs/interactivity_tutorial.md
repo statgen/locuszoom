@@ -41,15 +41,17 @@ The most common mechanism for this to happen is to provide the new information a
 This is a surprisingly common operation. For example, to change the  genetic region shown in the plot, we often write the following code:
 `plot.applyState({chr:'1', start: 100, end: 500})`
 
+It is also possible to call `plot.applyState()` without arguments, and the plot will still re-render as needed. This is used with techniques like layout mutations (below): something about the plot is changed, and then the plot is re-rendered.
+
 ### Not all data operations happen on the server
-Although *state*  can be used to influence how a network request is performed, this is by no means the only option. For example, a data source could be written to perform a calculation (rather than a network request), and the state parameters could contain the results of the calculation.
+Although *state*  can be used to influence how a network request is performed, this is by no means the only option. For example, a data source could be written to perform a calculation (rather than a network request), and the state parameters could contain inputs that affect how the calculation is run.
 
 ## Maintaining consistency
 When using a LocusZoom plot to communicate with other parts of the page, it is a good idea to practice separation of concerns. This means allowing LocusZoom to handle its own internals, and using the provided mechanisms (like events) to understand when changes occur.
 
-For example, consider a LocusZoom plot that shows two datasets as stacked panels, on a page with a "dataset picker" that showed which tracks were added. A user could remove one track by clicking either the "dataset picker" or the "remove panel" button inside LocusZoom: either way, the dataset picker should always accurately reflect whether or not the panel is really being shown.
+For example, consider a LocusZoom plot that shows two datasets as stacked panels, on a page with an external "dataset picker" that showed which tracks were added. A user could remove one track by clicking either the "dataset picker" (outside LocusZoom) or the "remove panel" button (inside LocusZoom): either way, the dataset picker should always accurately reflect whether or not the panel is really being shown.
 
-Rather than tracking the list of shown panels in both widgets, use provided LocusZoom events (like `panel_removed`) to track events that could be initiated from within the plot. Thus, LocusZoom can communicate changes to the external dataset picker, and both widgets can accurately reflect what the user sees.
+Rather than tracking the list of shown panels in two places, use provided LocusZoom events (like `panel_removed`) to respond to events that could be initiated from within the plot. Thus, LocusZoom can communicate changes to the outside world, and both widgets can accurately reflect what the user sees.
 
 > Currently, there is no `panel_added` event in LocusZoom, because at present this action cannot be initiated from a user action within the plot. The list of events is not exhaustive, but efforts are made to reflect scenarios where communication is useful.
 
@@ -66,6 +68,8 @@ In practice, this is the key idea behind the `display_options` widget, a built-i
 	* Make it semantically clear which item is being modified, in case the array changes later:  `const assoc_panel_layout = panel_layouts[0]`
 	* Instead of hard-coding position in an array, consider dynamically locating the desired section by a property that may change less often: `const assoc_layer = assoc_panel_layout.data_layers.find(item => item.id === 'association')`
 * Be conservative in how many fields you allow to be changed. Layouts allow almost any aspect of the plot to be customized, but it can be difficult to test every possible combination. It's generally easier to code and maintain controlled options (like a list of preset views).
+
+After re-defining the layout, be sure to call `plot.applyState()` (also known as `plot.refresh()`) to trigger a re-render, so that the changes to the layout take effect. 
 
 ## Events communicate with the outside world
 Each time that a LocusZoom plot is modified, it fires an *event* that notifies any listeners of the change.
@@ -86,7 +90,7 @@ Each time that an event callback is fired, it will receive one function argument
 * `target` : the place where the event originated. This is a reference to either the `Plot` or `Panel` object.
 * `data` : Each type of event may optionally provide additional information describing itself (such as "what point was clicked" or "was this point selected, or de-selected?"). The allowed fields are unique to each event type.
 
-Below is a partial list of interesting events; consult the documentation for a full guide to events and the data they emit.  (TODO: Add a link to the official docs)
+Below is a partial list of interesting events; consult the documentation for a full guide to events and the data they emit.
 
 * `element_selection`
 * `element_annotation`
@@ -189,12 +193,22 @@ The following filters are available:
 
 Filters can be modified interactively by the user after first render: see the `filter_field` widget for details.
 
-### Imperative API (provisional)
-In the vast majority of cases, we strongly recommend using the declarative syntax for setting filters.
+### Adding your own custom filter
+In some cases, a developer may wish to control the filter logic via a bit of custom code, if the built-in filters are too restrictive. Like many aspects of LocusZoom, the set of allowed filters can be extended via a plugin mechanism: you may use any filter operator defined in `LocusZoom.MatchFunctions.list()`.
 
-In very rare cases, a developer may wish to control the filter logic via a bit of custom code, if the built-in filters are too restrictive.  Each data layer provides a `data_layer.setFilter(callback)` method that can be used to define the filter function explicitly. The callback will have the same arguments as the standard javascript method `Array.filter()`, and will override any declarative layout options.
+To add your own comparison function, use: `LocusZoom.MatchFunctions.add('my_function', (item_value, target_value) => item_value === target_value)`. Custom filters can then be mixed and matched alongside the built-in filters.
 
-> *WARNING*: The imperative syntax is provisional. We reserve the right to remove or change this interface at any time, and replace it with another syntax that is more consistent with other mechanisms in LocusZoom (such as declarative filters or plugins).
+### Filters can transform the value before comparing
+Sometimes, it is useful to transform a value before filtering. For example, many datasets store values in terms of `pvalue`, but you may wish to show significant hits in terms of `-log10 (pvalue)`. Filter syntax works with any transformation/template string function in LocusZoom:
+
+```
+{
+  ...options,
+  filters: [
+    { field: '{{namespace[assoc]}}pvalue|neglog10', operator: '>=', value: 7.301 },
+  ],
+}
+```
 
 ## Annotations preserve custom options across re-render
 LocusZoom typically maintains a separation of concerns, in which data layers are responsible for rendering the data provided by an adapter. For the most part, the display layer is not responsible for changing data, and it does not preserve state across renderings
@@ -247,7 +261,7 @@ It works as follows:
 1. In the layout, a directive is specified to opt in to this behavior: `match: {send: field_to_be_broadcast , receive: field_to_be_checked }`
 2. If a datalayer specifies `match.send`, then when any element is selected, the value of the specified field for that data element is broadcast to other layers. Eg if the user clicks on a scatter plot point, the variant ID for that point could be sent.
 3. Whenever a match event is initiated, any data layer that specifies `match.receive` will examine each data point, and tag any point where the specified field value is the same as the broadcast value.
-4. The special tag added to these points (`lz_highlight_match`) is treated as an extra field, and can be used in any scalable layout directive to control point size, shape, color, filters, etc. This field doesn't come from the API or data adapter- it is an internal value that is checked on every render.
+4. The special tag added to these points (`ls_is_match`) is treated as an extra field, and can be used in any scalable layout directive to control point size, shape, color, filters, etc. This field doesn't come from the API or data adapter- it is an internal value that is checked on every render.
 
 Usage example:
 ```javascript
@@ -257,7 +271,7 @@ Usage example:
   match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
   color: [
     {
-      field: 'lz_highlight_match', // When a match is detected, it is tagged with a special field name that can be used to trigger custom rendering
+      field: 'ls_is_match', // When a match is detected, it is tagged with a special field name that can be used to trigger custom rendering
       scale_function: 'if',
       parameters: {
         field_value: true,
@@ -271,6 +285,18 @@ Usage example:
 > `plot.applyState({lz_match_value: your_value_here })`
 
 > *NOTE:* For performance reasons, this feature is currently limited to exact value match. Only a single value may be broadcast across all data layers at one time.
+
+### Matching rules can be customized
+Matching is not limited to exact value equality. Using a third parameter ("operator"), matching rules can use any of the comparison functions in `LocusZoom.MatchFunctions`. As described in the description of filtering rules above, match rules can also take into account transforms that modify the field value before it is broadcast, or, how the broadcast value is compared to a specific field. Custom logic (operators) can also be added via MatchFunctions and accessed via name.
+
+```javascript
+{
+    ...options,
+    match: { send: '{{namespace[access]}}target|htmlescape', receive: '{{namespace[access]}}target|htmlescape', operator: '!=' },
+}
+```
+
+> NOTE: Remember that the template transforms are also extensible! Each `|templatefunction` refers to a function in `LocusZoom.TransformationFunctions`. Add your own via `LocusZoom.TransformationFunctions.add('my_function', (value) => othervalue)`. Custom plugins allow you to create very powerful custom presentations.
 
 ### You cannot be more clever than your underlying data
 In order to draw connections between two datapoints in different tracks, the two points must have some information in common. 
