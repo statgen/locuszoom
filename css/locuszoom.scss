@@ -77,6 +77,18 @@ svg.#{$namespace}-locuszoom  {
     stroke-width: 1px;
   }
 
+  path.#{$namespace}-data_layer-arcs-selected {
+    stroke: #{$default_black} !important;
+    stroke-opacity: #{$default_black_opacity} !important;
+    stroke-width: 2px !important;
+  }
+
+  path.#{$namespace}-data_layer-arcs-highlighted {
+    stroke: #{$default_black_shadow} !important;
+    stroke-opacity: #{$default_black_shadow_opacity} !important;
+    stroke-width: 2px !important;
+  }
+
   path.#{$namespace}-data_layer-scatter, path.#{$namespace}-data_layer-category_scatter {
     stroke: #{$default_black_shadow};
     stroke-opacity: #{$default_black_shadow_opacity};
