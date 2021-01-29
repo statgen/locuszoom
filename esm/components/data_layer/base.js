@@ -805,7 +805,7 @@ class BaseDataLayer {
      * @returns {Boolean} Whether the specified item is a match
      */
     filter(filter_rules, item, index, array) {
-        let match = true;
+        let is_match = true;
         filter_rules.forEach((filter) => { // Try each filter on this item, in sequence
             const {field, operator, value: target} = filter;
             const test_func = MATCHERS.get(operator);
@@ -813,10 +813,10 @@ class BaseDataLayer {
             const extra = this.layer_state.extra_fields[this.getElementId(item)];
             const field_value = (new Field(field)).resolve(item, extra);
             if (!test_func(field_value, target)) {
-                match = false;
+                is_match = false;
             }
         });
-        return match;
+        return is_match;
     }
 
     /**

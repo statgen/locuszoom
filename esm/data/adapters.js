@@ -1017,8 +1017,11 @@ class GeneConstraintLZ extends BaseApiAdapter {
             return `${alias}: gene(gene_symbol: "${gene_name}", reference_genome: ${build}) { gnomad_constraint { exp_syn obs_syn syn_z oe_syn oe_syn_lower oe_syn_upper exp_mis obs_mis mis_z oe_mis oe_mis_lower oe_mis_upper exp_lof obs_lof pLI oe_lof oe_lof_lower oe_lof_upper } } `;
         });
 
-        if (!query.length) {
-            // If there are no genes, skip the network request
+        if (!query.length || query.length > 25 || build === 'GRCh38') {
+            // Skip the API request when it would make no sense:
+            // - Build 38 (gnomAD supports build GRCh37 only; don't hit server when invalid. This isn't future proof, but we try to be good neighbors.)
+            // - Too many genes (gnomAD appears max cost ~25 genes)
+            // - No genes in region (hence no constraint info)
             return Promise.resolve({ data: null });
         }
 
