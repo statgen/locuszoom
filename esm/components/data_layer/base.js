@@ -875,10 +875,10 @@ class BaseDataLayer {
         const layer_state = { status_flags: {}, extra_fields: {} };
         const status_flags = layer_state.status_flags;
         STATUSES.adjectives.forEach((status) => {
-            status_flags[status] = status_flags[status] || [];
+            status_flags[status] = status_flags[status] || new Set();
         });
         // Also initialize "internal-only" state fields (things that are tracked, but not set directly by external events)
-        status_flags['has_tooltip'] = status_flags['has_tooltip'] || [];
+        status_flags['has_tooltip'] = status_flags['has_tooltip'] || new Set();
 
         if (this.parent) {
             // If layer has a parent, store a reference in the overarching plot.state object
@@ -969,7 +969,7 @@ class BaseDataLayer {
                 .attr('class', 'lz-data_layer-tooltip')
                 .attr('id', `${id}-tooltip`),
         };
-        this.layer_state.status_flags['has_tooltip'].push(id);
+        this.layer_state.status_flags['has_tooltip'].add(id);
         this.updateTooltip(data);
         return this;
     }
@@ -1034,9 +1034,8 @@ class BaseDataLayer {
         }
         // When a tooltip is removed, also remove the reference from the state
         if (!temporary) {
-            const state = this.layer_state.status_flags['has_tooltip'];
-            const label_mark_position = state.indexOf(id);
-            state.splice(label_mark_position, 1);
+            const tooltip_state = this.layer_state.status_flags['has_tooltip'];
+            tooltip_state.delete(id);
         }
         return this;
     }
@@ -1047,9 +1046,9 @@ class BaseDataLayer {
      * @private
      * @returns {BaseDataLayer}
      */
-    destroyAllTooltips() {
+    destroyAllTooltips(temporary = true) {
         for (let id in this.tooltips) {
-            this.destroyTooltip(id, true);
+            this.destroyTooltip(id, temporary);
         }
         return this;
     }
@@ -1176,7 +1175,7 @@ class BaseDataLayer {
         var status_flags = {};  // {status_name: bool}
         STATUSES.adjectives.forEach((status) => {
             const antistatus = `un${status}`;
-            status_flags[status] = (layer_state.status_flags[status].includes(id));
+            status_flags[status] = (layer_state.status_flags[status].has(id));
             status_flags[antistatus] = !status_flags[status];
         });
 
@@ -1187,7 +1186,7 @@ class BaseDataLayer {
         // Most of the tooltip display logic depends on behavior layouts: was point (un)selected, (un)highlighted, etc.
         // But sometimes, a point is selected, and the user then closes the tooltip. If the panel is re-rendered for
         //  some outside reason (like state change), we must track this in the create/destroy events as tooltip state.
-        const has_tooltip = (layer_state.status_flags['has_tooltip'].includes(id));
+        const has_tooltip = (layer_state.status_flags['has_tooltip'].has(id));
         const tooltip_was_closed = first_time ? false : !has_tooltip;
         if (show_resolved && !tooltip_was_closed && !hide_resolved) {
             this.createTooltip(element);
@@ -1242,13 +1241,12 @@ class BaseDataLayer {
         }
 
         // Track element ID in the proper status state array
-        const element_status_idx = this.layer_state.status_flags[status].indexOf(element_id);
-        const added_status = (element_status_idx === -1);  // On a re-render, existing statuses will be reapplied.
+        const added_status = !this.layer_state.status_flags[status].has(element_id);  // On a re-render, existing statuses will be reapplied.
         if (active && added_status) {
-            this.layer_state.status_flags[status].push(element_id);
+            this.layer_state.status_flags[status].add(element_id);
         }
         if (!active && !added_status) {
-            this.layer_state.status_flags[status].splice(element_status_idx, 1);
+            this.layer_state.status_flags[status].delete(element_id);
         }
 
         // Trigger tool tip show/hide logic
@@ -1302,14 +1300,14 @@ class BaseDataLayer {
         if (toggle) {
             this.data.forEach((element) => this.setElementStatus(status, element, true));
         } else {
-            const status_ids = this.layer_state.status_flags[status].slice();
+            const status_ids = new Set(this.layer_state.status_flags[status]); // copy so that we don't mutate while iterating
             status_ids.forEach((id) => {
                 const element = this.getElementById(id);
                 if (typeof element == 'object' && element !== null) {
                     this.setElementStatus(status, element, false);
                 }
             });
-            this.layer_state.status_flags[status] = [];
+            this.layer_state.status_flags[status] = new Set();
         }
 
         // Update global status flag
@@ -1392,7 +1390,7 @@ class BaseDataLayer {
 
                 // Toggle a status
                 case 'toggle':
-                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].includes(self.getElementId(element)));
+                    var current_status_boolean = (self.layer_state.status_flags[behavior.status].has(self.getElementId(element)));
                     var exclusive = behavior.exclusive && !current_status_boolean;
 
                     self.setElementStatus(behavior.status, element, !current_status_boolean, exclusive);
@@ -1445,16 +1443,15 @@ class BaseDataLayer {
             if (!Object.prototype.hasOwnProperty.call(status_flags, property)) {
                 continue;
             }
-            if (Array.isArray(status_flags[property])) {
-                status_flags[property].forEach((element_id) => {
-                    try {
-                        this.setElementStatus(property, this.getElementById(element_id), true);
-                    } catch (e) {
-                        console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
-                        console.error(e);
-                    }
-                });
-            }
+            status_flags[property].forEach((element_id) => {
+                try {
+                    this.setElementStatus(property, this.getElementById(element_id), true);
+                } catch (e) {
+                    console.warn(`Unable to apply state: ${self.state_id}, ${property}`);
+                    console.error(e);
+                }
+            });
+
         }
     }
 
@@ -1516,12 +1513,8 @@ STATUSES.verbs.forEach((verb, idx) => {
      *  @private
      *  @function hideElement
      */
-    BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive) {
-        if (typeof exclusive == 'undefined') {
-            exclusive = false;
-        } else {
-            exclusive = !!exclusive;
-        }
+    BaseDataLayer.prototype[`${verb}Element`] = function(element, exclusive = false) {
+        exclusive = !!exclusive;
         this.setElementStatus(adjective, element, true, exclusive);
         return this;
     };

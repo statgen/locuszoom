@@ -1266,6 +1266,17 @@ class Plot {
             //  to look for that value. Whenever a point is de-selected, it clears the match.
             const data = eventData.data;
             const to_send = (data.active ? data.value : null);
+            const emitted_by = eventData.target.id;
+            // When a match is initiated, hide all tooltips from other panels (prevents zombie tooltips from reopening)
+            // TODO: This is a bit hacky. Right now, selection and matching are tightly coupled, and hence tooltips
+            //   reappear somewhat aggressively. A better solution depends on designing alternative behavior, and
+            //   applying tooltips post (instead of pre) render.
+            Object.values(this.panels).forEach((panel) => {
+                if (panel.id !== emitted_by) {
+                    Object.values(panel.data_layers).forEach((layer) => layer.destroyAllTooltips(false));
+                }
+            });
+
             this.applyState({ lz_match_value: to_send });
         });
 

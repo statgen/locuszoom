@@ -460,25 +460,26 @@ describe('LocusZoom.DataLayer', function () {
                     const b = d.data[1];
                     const c = d.data[2];
                     const c_id = d.getElementId(c);
-                    assert.isArray(layer_state.status_flags.highlighted);
-                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+
+                    const highlight_flags = layer_state.status_flags.highlighted;
+                    assert.equal(highlight_flags.size, 0);
 
                     this.plot.panels.p.data_layers.d.highlightElement(a);
-                    assert.equal(layer_state.status_flags.highlighted.length, 1);
-                    assert.equal(layer_state.status_flags.highlighted[0], a_id);
+                    assert.equal(highlight_flags.size, 1);
+                    assert.ok(highlight_flags.has(a_id));
 
                     this.plot.panels.p.data_layers.d.unhighlightElement(a);
-                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+                    assert.equal(highlight_flags.size, 0);
 
                     this.plot.panels.p.data_layers.d.highlightElement(c);
-                    assert.equal(layer_state.status_flags.highlighted.length, 1);
-                    assert.equal(layer_state.status_flags.highlighted[0], c_id);
+                    assert.equal(highlight_flags.size, 1);
+                    assert.ok(highlight_flags.has(c_id));
 
                     this.plot.panels.p.data_layers.d.unhighlightElement(b);
-                    assert.equal(layer_state.status_flags.highlighted.length, 1);
+                    assert.equal(highlight_flags.size, 1);
 
                     this.plot.panels.p.data_layers.d.unhighlightElement(c);
-                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+                    assert.equal(highlight_flags.size, 0);
                 });
         });
         it('should allow for highlighting and unhighlighting all elements', function () {
@@ -492,13 +493,14 @@ describe('LocusZoom.DataLayer', function () {
                     const c_id = d.getElementId(d.data[2]);
 
                     this.plot.panels.p.data_layers.d.highlightAllElements();
-                    assert.equal(layer_state.status_flags.highlighted.length, 3);
-                    assert.equal(layer_state.status_flags.highlighted[0], a_id);
-                    assert.equal(layer_state.status_flags.highlighted[1], b_id);
-                    assert.equal(layer_state.status_flags.highlighted[2], c_id);
+                    const highlight_flags = layer_state.status_flags.highlighted;
+                    assert.equal(highlight_flags.size, 3);
+                    assert.ok(highlight_flags.has(a_id));
+                    assert.ok(highlight_flags.has(b_id));
+                    assert.ok(highlight_flags.has(c_id));
 
                     this.plot.panels.p.data_layers.d.unhighlightAllElements();
-                    assert.equal(layer_state.status_flags.highlighted.length, 0);
+                    assert.equal(layer_state.status_flags.highlighted.size, 0);
                 });
         });
     });
@@ -542,25 +544,26 @@ describe('LocusZoom.DataLayer', function () {
                     const b = d.data[1];
                     const c = d.data[2];
                     const c_id = d.getElementId(c);
-                    assert.isArray(layer_state.status_flags.selected);
-                    assert.equal(layer_state.status_flags.selected.length, 0);
+
+                    const selected_flags = layer_state.status_flags.selected;
+                    assert.equal(selected_flags.size, 0);
 
                     this.plot.panels.p.data_layers.d.selectElement(a);
-                    assert.equal(layer_state.status_flags.selected.length, 1);
-                    assert.equal(layer_state.status_flags.selected[0], a_id);
+                    assert.equal(selected_flags.size, 1);
+                    assert.ok(selected_flags.has(a_id));
 
                     this.plot.panels.p.data_layers.d.unselectElement(a);
-                    assert.equal(layer_state.status_flags.selected.length, 0);
+                    assert.equal(selected_flags.size, 0);
 
                     this.plot.panels.p.data_layers.d.selectElement(c);
-                    assert.equal(layer_state.status_flags.selected.length, 1);
-                    assert.equal(layer_state.status_flags.selected[0], c_id);
+                    assert.equal(selected_flags.size, 1);
+                    assert.ok(selected_flags.has(c_id));
 
                     this.plot.panels.p.data_layers.d.unselectElement(b);
-                    assert.equal(layer_state.status_flags.selected.length, 1);
+                    assert.equal(selected_flags.size, 1);
 
                     this.plot.panels.p.data_layers.d.unselectElement(c);
-                    assert.equal(layer_state.status_flags.selected.length, 0);
+                    assert.equal(selected_flags.size, 0);
                 });
         });
         it('should allow for selecting and unselecting all elements', function () {
@@ -574,13 +577,14 @@ describe('LocusZoom.DataLayer', function () {
                     const c_id = d.getElementId(d.data[2]);
 
                     this.plot.panels.p.data_layers.d.selectAllElements();
-                    assert.equal(layer_state.status_flags.selected.length, 3);
-                    assert.equal(layer_state.status_flags.selected[0], a_id);
-                    assert.equal(layer_state.status_flags.selected[1], b_id);
-                    assert.equal(layer_state.status_flags.selected[2], c_id);
+                    const selected_flags = layer_state.status_flags.selected;
+                    assert.equal(selected_flags.size, 3);
+                    assert.ok(selected_flags.has(a_id));
+                    assert.ok(selected_flags.has(b_id));
+                    assert.ok(selected_flags.has(c_id));
 
                     this.plot.panels.p.data_layers.d.unselectAllElements();
-                    assert.equal(layer_state.status_flags.selected.length, 0);
+                    assert.equal(layer_state.status_flags.selected.size, 0);
                 });
         });
     });
@@ -692,18 +696,18 @@ describe('LocusZoom.DataLayer', function () {
                 const internal_id = layer.getElementId(item_a);
 
                 assert.ok(layer.tooltips[internal_id], 'Tooltip created on selection');
-                assert.ok(status_flags['selected'].includes(internal_id), 'Item was initially selected');
+                assert.ok(status_flags['selected'].has(internal_id), 'Item was initially selected');
 
                 layer.destroyTooltip(item_a);
                 assert.ok(!layer.tooltips[internal_id], 'Tooltip was destroyed by user close event');
 
-                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after closing tooltip');
-                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip was destroyed by user close event');
+                assert.ok(status_flags['selected'].has(internal_id), 'Point remains selected after closing tooltip');
+                assert.ok(!status_flags['has_tooltip'].has(internal_id), 'Tooltip was destroyed by user close event');
 
                 return self.plot.applyState();
             }).then(function () { // Force a re-render to see if zombie items remain
-                assert.ok(status_flags['selected'].includes(internal_id), 'Point remains selected after re-render');
-                assert.ok(!status_flags['has_tooltip'].includes(internal_id), 'Tooltip remains destroyed after re-render');
+                assert.ok(status_flags['selected'].has(internal_id), 'Point remains selected after re-render');
+                assert.ok(!status_flags['has_tooltip'].has(internal_id), 'Tooltip remains destroyed after re-render');
             });
         });
     });
