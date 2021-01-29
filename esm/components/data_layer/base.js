@@ -798,7 +798,8 @@ class BaseDataLayer {
      * Typically this is used with array.filter (the first argument is curried, `this.filter.bind(this, options)`
      * @private
      * @param {Object[]} filter_rules A list of rule entries: {field, value, operator} describing each filter.
-     *  Operator must be from a list of built-in operators
+     *  Operator must be from a list of built-in operators. If the field is omitted, the entire datum object will be
+     *  passed to the filter, rather than a single scalar value. (this is only useful with custom `MatchFunctions` as operator)
      * @param {Object} item
      * @param {Number} index
      * @param {Array} array
@@ -810,8 +811,11 @@ class BaseDataLayer {
             const {field, operator, value: target} = filter;
             const test_func = MATCHERS.get(operator);
 
+            // Return the field value or annotation. If no `field` is specified, the filter function will operate on
+            //  the entire data object. This behavior is only really useful with custom functions, because the
+            //  builtin ones expect to receive a scalar value
             const extra = this.layer_state.extra_fields[this.getElementId(item)];
-            const field_value = (new Field(field)).resolve(item, extra);
+            const field_value = field ? (new Field(field)).resolve(item, extra) : item;
             if (!test_func(field_value, target)) {
                 is_match = false;
             }

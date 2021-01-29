@@ -842,6 +842,18 @@ describe('LocusZoom.DataLayer', function () {
             MATCHERS.remove('near_to');
         });
 
+        it('can pass the entire data object to a filter function, if syntax ', function () {
+            const spy = sinon.spy();
+            MATCHERS.add('filter_spy', spy);
+            const layer = new BaseDataLayer({id_field: 'a'});
+            const options = [{ operator: 'filter_spy', value: 'anything' }];
+            const data = [{ a: 50 }, { a: 200 }, { a: 250 }];
+
+            data.filter(layer.filter.bind(layer, options));
+            assert.deepEqual(spy.firstCall.args[0], { a: 50 }, 'Filter was called with object instead of scalar');
+            MATCHERS.remove('filter_spy');
+        });
+
         it('can use transformed field values with filter rules', function() {
             const layer = new BaseDataLayer({id_field: 'a'});
             const options = [{ field: 'a|scinotation', operator: '=', value: '1.000' }];
