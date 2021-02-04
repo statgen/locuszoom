@@ -326,7 +326,7 @@ class Button {
                 const container_max_width = base_max_width;
                 const content_max_width = (base_max_width - (4 * padding));
                 const base_max_height = Math.max(this.parent_svg.layout.height - (10 * padding) - menu_height_padding, menu_height_padding);
-                const height = Math.min(total_content_height, base_max_height);
+                const height = Math.min(total_content_height + menu_height_padding, base_max_height);
                 this.menu.outer_selector
                     .style('top', `${top}px`)
                     .style('left', `${left}px`)

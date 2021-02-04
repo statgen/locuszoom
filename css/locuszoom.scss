@@ -640,6 +640,7 @@ div.#{$namespace}-toolbar-menu {
   padding: 6px;
   border-radius: 4px;
   box-shadow: 2px 2px 2px #{$default_black_shadow_rgba};
+  box-sizing: border-box;
   overflow: hidden;
 
   .#{$namespace}-toolbar-menu-content {
@@ -647,7 +648,6 @@ div.#{$namespace}-toolbar-menu {
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    padding-right: 20px;
 
     h1, h2, h3, h4, h5, h6 {
       margin-top: 0.1em;

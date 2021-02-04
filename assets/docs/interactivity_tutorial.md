@@ -198,6 +198,8 @@ In some cases, a developer may wish to control the filter logic via a bit of cus
 
 To add your own comparison function, use: `LocusZoom.MatchFunctions.add('my_function', (item_value, target_value) => item_value === target_value)`. Custom filters can then be mixed and matched alongside the built-in filters.
 
+A rarely used feature of filters is that it is possible to omit the `field` name, in which case the entire datum object of all fields is passed to the filter function: `{operator: 'my_other_function'}`. This is only useful with custom operators, because the built in `MatchFunctions` are all designed to operate on a single scalar value. Also, if used in this way, the custom filter function will need to know how to deal with namespacing in order to find the fields of interest.  (each datum element will look like `{'assoc:log_pvalue': 12, 'assoc:variant': '1:23_A/C'}`) Still, in some rare cases, it can be useful to have a single filter function that examines more than one field at once.
+
 ### Filters can transform the value before comparing
 Sometimes, it is useful to transform a value before filtering. For example, many datasets store values in terms of `pvalue`, but you may wish to show significant hits in terms of `-log10 (pvalue)`. Filter syntax works with any transformation/template string function in LocusZoom:
 
