@@ -112,10 +112,10 @@ A basic example may then look like this:
       data_sources.add("trait", ["AssociationLZ", { url: "https://server.com/api/single/", params: {source: 1} }]);
       var layout = {
         width: 500,
-        height: 500,
         panels: [
           {
             id : "association",
+            height: 500,
             data_layers: [
               {
                 id: "association",
@@ -128,7 +128,7 @@ A basic example may then look like this:
           }
         ]
       };
-      var plot = LocusZoom.populate("#plot", data_sources, layout);
+      var plot = LocusZoom.populate("#lz-plot", data_sources, layout);
     </script>
   </body>
 </html>
@@ -155,12 +155,12 @@ const layout = {
   width: 1000,
   height: 500,
   panels: [
-    LocusZoom.Layouts.get("panel","gwas"),
+    LocusZoom.Layouts.get("panel", "gwas"),
     {
       id: "custom_panel",
-      ...
+      ...options
     },
-    LocusZoom.Layouts.get("panel","genes")
+    LocusZoom.Layouts.get("panel", "genes")
   ],
   ...
 };
@@ -196,7 +196,7 @@ You can also describe the locus query aspect of the State (chromosome, start, an
  attribute of the containing element before populating it, like so:
 
 ```html
-<div id="foo" data-region="10:114550452-115067678"></div>
+<div id="lz-plot" data-region="10:114550452-115067678"></div>
 ```
 
 When `LocusZoom.populate()` is executed on the element defined above it will automatically parse any `data-region` 
@@ -242,7 +242,7 @@ LocusZoom runs code quality checks via [ESLint](http://eslint.org/), the rules f
 
 ## Help and Support
 
-Full documentation can be found here: [github.com/statgen/locuszoom/wiki](https://github.com/statgen/locuszoom/wiki)
+Full documentation can be found here: [docs/](https://statgen.github.io/locuszoom/docs/)
 
 A LocusZoom discussion forum is available here: [groups.google.com/forum/#!forum/locuszoom](https://groups.google.com/forum/#!forum/locuszoom). 
 For the most effective help, please specify that your question  is about "LocusZoom.js".
