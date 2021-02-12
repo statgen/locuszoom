@@ -4,14 +4,15 @@ toc: true
 toc-title: Table of Contents
 ---
 
+# Overview
 LocusZoom.js provides many powerful options for visualizing genetic data in biological context. Our goal is to make the most common tasks easy, while providing advanced options for custom visualization and interactivity. For an overview of capabilities (and places where it is used), see our preprint: ["LocusZoom.js: Interactive and embeddable visualization of genetic association study results"](https://www.biorxiv.org/content/10.1101/2021.01.01.423803v1)
 
-## First steps
-### Add the library to your page
+# First steps
+## Add the library to your page
 
 LocusZoom.js is designed to work with your web page, regardless of your skill level or the tools you are used to using.
 
-#### Plain HTML and JavaScript (defines LocusZoom as a global variable)
+### Plain HTML and JavaScript (defines LocusZoom as a global variable)
 Many of our users work on small projects with a single HTML file and no special tools. By loading three files, the library will be automatically available as a global variable `LocusZoom` that provides access to all helper methods (`LocusZoom.populate(...)`, etc).
 
 In the example below, be sure to replace `VERSION_GOES_HERE` with the actual version of the [newest release](https://github.com/statgen/locuszoom/releases). It is possible to omit `@VERSION` entirely, but in order to keep up with a fast changing field, sometimes we need to make breaking changes. Using a real version string allows you to avoid things breaking by surprise later.
@@ -22,7 +23,7 @@ In the example below, be sure to replace `VERSION_GOES_HERE` with the actual ver
 <script src="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.app.min.js" type="application/javascript"></script>
 ```
 
-#### Modern JS frameworks with a "build" step
+### Modern JS frameworks with a "build" step
 Many "modern" JS frameworks (like React or Vue.js) use package managers (npm) and build tools (such as webpack) to manage the code and assets for your app. LocusZoom.js can be incorporated into fully modern tools as follows:
 
 First install the library using your package manager, which will keep track of the version known to work with your app:
@@ -40,7 +41,7 @@ import 'locuszoom/dist/locuszoom.css';
 
 If you are a very experienced developer, you may notice that we are using helper methods like `LocusZoom.populate()`, instead of importing individual symbols like `populate`. We have chosen this coding style because it lets us write a single set of instructions for all of our users, regardless of what tools they use.
 
-### Create your first plot
+## Create your first plot
 Creating a LocusZoom plot requires three pieces of information:
 
 * Where to render the plot (eg, the unique ID of an HTML element on the page)
@@ -52,13 +53,13 @@ Once defined, these values can be passed to the populate() method along with a s
 
 The "classic" LocusZoom plot consists of two panels: a GWAS scatter plot on top, and a view of nearby genes in the region on bottom. See [simple GWAS template](simplest_template.html) for the code you will need to get started. This introduction describes the very broad outlines of the process, but additional guides are available that cover each piece in more detail.
 
-### Do you really need to write code?
-If your only goal is to generate a LocusZoom plot, we provide two "plot your own data" services that do not require writing any code at all:
+## Do you really need to write code?
+If your only goal is to generate a LocusZoom plot, we provide two "plot your own data" services that provide the benefits of LocusZoom.js without writing any code at all:
 
 * [LocalZoom](https://statgen.github.io/localzoom/) - Generate plots from a tabix-indexed file, without uploading for a shared server. Good for sensitive data.
 * [my.locuszoom.org](https://my.locuszoom.org) - Upload your data to our server to create interactive, shareable plots plus summary information (such as a manhattan plot and list of top loci). The upload process will add annotations such as rsID and nearby genes of interest.
 
-## What does LocusZoom.js provide?
+# What does LocusZoom.js provide?
 LocusZoom-style visualizations are widely used throughout the field of genetics, and this is by no means the only tool available for creating them. However, many existing tools only create a static image. LocusZoom.js was designed to power large data-exploration hubs such as PheWeb or the HuGeAMP family of knowledge portals: it can be used by websites that want to take full advantage of what the web browser has to offer.
 
 * A public [REST API](https://portaldev.sph.umich.edu/docs/api/v1/#introduction) with "standard" datasets that are useful for any LocusZoom plot (genes, recombination rate, etc), and an associated [LDServer](https://portaldev.sph.umich.edu/playground) to calculate on-the-fly Linkage Disequilibrium for 1000G
@@ -70,8 +71,8 @@ LocusZoom-style visualizations are widely used throughout the field of genetics,
   * Tables that can update whenever data changes
   * Plugins to update the page URL and create bookmarkable views for interesting regions 
 
-## Key concepts for developers looking to go deeper
-### Declarative and configuration driven
+# Key concepts for developers looking to go deeper
+## Declarative and configuration driven
 As you read the examples, you may notice that all of our instructions are based on layout objects that ask for features by name (a declarative style), rather than creating new classes directly and managing every aspect of the plot yourself (imperative). This is for two reasons:
 
 1. LocusZoom.js provides a number of plugins that make it easy to inject custom user-provided functions that modify the behavior of existing rendering types. The declarative layout system (asking for features by name) makes it easy to use both premade features and "extra" code from plugins in a consistent way, without extra work.
@@ -79,7 +80,7 @@ As you read the examples, you may notice that all of our instructions are based 
 
 Each piece of the system has many configuration options; we provide a [full developer reference](../api) with exhaustive details. Most websites will only need a small subset of the options, like "layout point color". We encourage you to try the premade layouts first, and use the "how to" guidance below to help you focus on the specific page required for a given task.
 
-### A system of building blocks
+## A system of building blocks
 LocusZoom.js defines reusable, highly configurable building blocks that can be combined to create many kinds of visualization. This approach grants enormous flexibility, but it also means that the configuration (*layout*) can be very overwhelming at first. Understanding the basic structure and terminology can be very helpful in knowing where to look for more information. 
 
 The key pieces are:
@@ -101,14 +102,14 @@ This is achieved via *events*. Common actions (such as clicking a point, draggin
 
 See the full [developer documentation](../api/global.html#event:baseLZEvent) for a list of available events and how they are emitted.
 
-### Documentation by example
+## Documentation by example
 Plots are highly customizable, and it can be easy to get lost in the dense web of configuration options. In addition to the [prose documentation](..), we provide a wide range of source code examples that demonstrate how to do specific things. (see the resources below for details) Documentation by example is an explicit and formal part of our documentation process.  
 
-### We are open source
-LocusZoom.js is an [open source](https://github.com/statgen/locuszoom) project. We welcome and encourage contributions from other groups. If there is a new visualization or feature that you would like to see, please reach out via our [public issue tracker](https://github.com/statgen/locuszoom/issues) or [mailing list](https://groups.google.com/forum/#!forum/locuszoom) to get started.
+## Open source software
+LocusZoom.js is an [open source](https://github.com/statgen/locuszoom) project under the permissive MIT license. We welcome and encourage contributions from our users. If there is a new visualization or feature that you would like to see, please reach out via our [public issue tracker](https://github.com/statgen/locuszoom/issues) or [mailing list](https://groups.google.com/forum/#!forum/locuszoom) to get started.
 
-## Resources
-### See it in action
+# Resources
+## See it in action
 LocusZoom.js has many advanced features. Some are implemented in code, and others are available as configuration options. We provide a range of examples for how to use it. Many of the examples below are open source.
 
 * [LocusZoom.js example gallery](https://statgen.github.io/locuszoom) - Demonstrates how to use LocusZoom.js for common visualization types, with minor customization and interactivity. A focus on built-in features and layouts, with some introductory text.
@@ -119,7 +120,7 @@ LocusZoom.js has many advanced features. Some are implemented in code, and other
 * [CROCPOT](https://www.crocpot.org/crocpot/) - ChROmatin-based Collection of Predicted Target genes. A repository and genome browser of data linking pairs of genomic loci for example from 3D chromatin interaction, single cell chromatin accessibility and CRISPRi screen assays
 * ...and others! Let us know if you have a tool you would like to share.
 
-### Documentation
+## Documentation
 LocusZoom provides a lot of functionality, but getting the most of it does requires some help. We provide prose guides on the following topics:
 
 * Where to find data (see: [Working with data](data_retrieval.html))

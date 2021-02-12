@@ -3,10 +3,10 @@ title: Working with data
 toc: true
 toc-title: Table of Contents
 ---
-## Overview
+# Overview
 LocusZoom.js aims to provide reusable and highly customizable visualizations. Towards this goal, a separation of concerns is enforced between data adapters (data) and data layers (presentation).
 
-## Your first plot: defining how to retrieve data
+# Your first plot: defining how to retrieve data
 All data retrieval is performed by *adapters*: special objects whose job is to fetch the information required to render a plot. A major strength of LocusZoom.js is that it can connect several kinds of annotation from different places into a single view: the act of organizing data requests together is managed by an object called `LocusZoom.DataSources`.  Below is an example creating a "classic" LocusZoom plot, in which GWAS, LD, and recombination rate are overlaid on a scatter plot, with genes and gnomAD constraint information on another track below. In total, five API endpoints are used to create this plot; four standard datasets, and one user-provided summary statistics file.
 
 ```javascript
@@ -21,7 +21,7 @@ const data_sources = new LocusZoom.DataSources()
 
 Of course, defining datasets is only half the problem; see the [Getting Started Guide](index.html) for how to define rendering instructions (layout) and combine these pieces together to create the LocusZoom plot.
 
-### Understanding the example
+## Understanding the example
 In the example above, a new data source is added via a line of code such as the following:
 
 ```javascript
@@ -36,30 +36,30 @@ A lot is going on in this line!
 * The second argument to the function is a list of values: the name of a [predefined adapter](../api/module-LocusZoom_Adapters.html) that defines how to retrieve this data, followed by an object of  configuration options (like url and params) that control which data will be fetched. Each type of data has its own options; see the documentation for a guide to available choices.
   * You are not limited to the types of data retrieval built into LocusZoom.js. See "creating your own adapter" for more information.
 
-### What should the data look like?
+## What should the data look like?
 In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layout to specify what fields should be used for the x and y axes.
 
 In practice, it is much more convenient to use pre-existing layouts that solve a common problem well out of the box: the set of options needed to control point size, shape, color, and labels is rather verbose, and highly custom behaviors entail a degree of complexity that is not always beginner friendly. For basic LocusZoom.js visualizations, our default layouts assume that you use the field names and format conventions defined in the [UM PortalDev API docs](https://portaldev.sph.umich.edu/docs/api/v1/). This is the quickest way to get started.
 
 Most users will only need to implement their own way of retrieving GWAS summary statistics; the other annotations are standard datasets and can be freely used from our public API. For complex plots (like annotations of new data), see our [example gallery](https://statgen.github.io/locuszoom).
 
-## How data gets to the plot
+# How data gets to the plot
 If you are building a custom tool for exploring data, it is common to show the same data in several ways (eg, a LocusZoom plot next to a table of results). The user will have a better experience if the two widgets are synchronized to always show the same data, which raises a question: which widget is responsible for making the API request?
 
 In LocusZoom.js, the user is allowed to change the information shown via mouse interaction (drag or zoom to change region, change LD calculations by clicking a button... etc). This means that LocusZoom must always be able to ask for the data it needs, and initiate a new API request if necessary: a *pull* model. This contrasts with static plotting libraries like R which show whatever data they are given (a *push* approach).
 
-The act of contacting an external API, and fetching the data needed, is coordinated by *Adapters*. It is possible to share data with other widgets on the page via event callbacks, so that those widgets retrieve the newest data whenever the plot is updated (see `subscribeToData` in the [guide to interactivity](interactivity.html) for details).
+The act of contacting an external data repository, and fetching the information needed, is coordinated by *Adapters*. It is possible to share data with other widgets on the page via event callbacks, so that those widgets retrieve the newest data whenever the plot is updated (see `subscribeToData` in the [guide to interactivity](interactivity.html) for details).
 
-### Not every web page requires an API
+## Not every web page requires an API
 LocusZoom.js is designed to work well with REST APIs, but you do not need to create an entire web server just to render a single interactive plot. As long as the inputs can be transformed into a recognized format, they should work with the plot.
 
 Some examples of other data retrieval mechanisms used in the wild are:
 
 * Loading the data from a static JSON file (this can be as simple as giving the URL of the JSON file, instead of the URL of an API server!). Many bioinformaticians are comfortable converting between text files, so this is a low-effort way to get started... but static files always return the same data, and they return all of it at once. This can be limiting for big datasets or "jump to region" style interactivity.
 * Fetching the data from a Tabix-indexed file in an Amazon S3 bucket (via the [lz-tabix-source](../api/module-ext_lz-tabix-source.html) plugin; you will need to write your own function that parses each line into the required data format). This is exactly how our chromatin coaccessibility demo works!
-* Loading the data into a "shared global store" like vuex for a reactive single-page application, and asking LocusZoom to query the store instead of contacting a REST API directly. This is relatively advanced, but it can be useful if many page widgets need to coordinate and share a lot of data.
+* Loading the data into a "shared global store" that acts as a middle layer for API calls, and asking LocusZoom to query the store instead of contacting a REST API directly. (example: Vuex for a reactive single-page application) This is relatively advanced, but it can be useful if many page widgets need to coordinate and share a lot of data that frequently changes.
 
-### Example: Loading data from static JSON files
+## Example: Loading data from static JSON files
 One way to make a LocusZoom plot quickly is to load the data for your region in a static file, formatted as JSON objects to look like the payload from our standard REST API. The key concept below is that instead of a server, the URL points to the static file. This demonstration is subject to the limits described above, but it can be a way to get started. 
 
 ```javascript
@@ -71,13 +71,13 @@ data_sources = new LocusZoom.DataSources()
     .add("constraint", ["GeneConstraintLZ", {  url: "constraint_10_114550452-115067678.json" }]);
 ```
 
-### What if my data doesn't fit the expected format?
+## What if my data doesn't fit the expected format?
 The built-in adapters are designed to work with a specific set of known REST APIs and fetch data over the web, but we provide mechanisms to customize every aspect of the data retrieval process, including how to construct the query sent to the server and how to modify the fields returned. See the guidance on "custom adapters" below.
 
 In general, the more similar that your field names are to those used in premade layouts, the easier it will be to get started with common tasks. Certain features require additional assumptions about field format, and these sorts of differences may cause behavioral (instead of cosmetic) issues. For example:
 
-* In order to fetch LD information relative to a specific variant, the data in the summary statistics must provide the variant name as a single string that combines chromosome, position, reference, and alt allele, like `1:12_A/C`. Our builtin LD adapter tries to handle the common marker formats from various programs and normalize them into a format that the LD server will understand, but we cannot guess the ref and alt allele. Following the order of values and using a known format will ensure best results.   
-* The JavaScript language is not able to accurately represent very small pvalues (numbers smaller than ~ 5e-324), and will truncate them to 0, changing the meaning of your data. For this reason, we recommend sending your data to the web page already transformed to -log pvalue format; this is much less susceptible to problems with numerical underflow.
+* In order to fetch LD information relative to a specific variant, the data in the summary statistics must provide the variant name as a single string that combines chromosome, position, reference, and alt allele, like `1:12_A/C`. Our builtin LD adapter tries to handle the common marker formats from various programs and normalize them into a format that the LD server will understand, but we cannot guess everything. Following the order of values and using a known format will ensure best results.
+* JavaScript is not able to accurately represent very small pvalues (numbers smaller than ~ 5e-324), and will truncate them to 0, changing the meaning of your data. For this reason, we recommend sending your data to the web page already transformed to -log pvalue format; this is much less susceptible to problems with numerical underflow.
 
 # Creating your own custom adapter
 ## Re-using code via subclasses
@@ -110,7 +110,7 @@ Common types of data retrieval that are most often customized:
   * This contains special logic used to combine association data (from a previous request) with LD information. To ensure that the matching code works properly, we recommend matching the payload format of the public LDServer, but you can customize the `getURL` method to control where the data comes from.
 * PheWAS results
 
-## The request lifecycle
+## What happens during a data request?
 The adapter performs many functions related to data retrieval: constructing the query, caching to avoid unnecessary network traffic, and parsing the data into a transformed representation suitable for use in rendering.
 
  Methods are provided to override all or part of the process, called in roughly the order below:
@@ -139,9 +139,10 @@ The parameters passed to getData are as follows:
 The first step of the process is to retrieve the data from an external location. `getRequest` is responsible for deciding whether the query can be satisfied by a previously cached request, and if not, sending the response to the server. At the conclusion of this step, we typically have a large unparsed string: eg REST APIs generally return JSON-formatted text, and tabix sources return lines of text for records in the region of interest.
 
 Most custom data sources will focus on customizing two things:
+
 * getURL (how to ask the external source for data)
 * getCacheKey (decide whether the request can be satisfied by local data)
-  * By default this returns a string based on the region in view: `${state.chr}_${state.start}_${state.end}`
+  * By default this returns a string based on the region in view: `'${state.chr}_${state.start}_${state.end}'`
   * You may need to customize this if your source has other inputs required to uniquely define the query (like LD reference variant, or calculation parameters for credible set annotation). 
   
 ### Step 2: Formatting and parsing the data
@@ -159,6 +160,7 @@ The `parseResponse` sequence handles the job of parsing the data. It can be used
 Each data layer is able to request data from multiple different sources. Internally, this process is referred to as the "chain" of linked data requested. LocusZoom.js assumes that every data layer is independent and decoupled: it follows that each data layer has its own chain of requests and its own parsing process.  
 
 This chain defines how to share information between different adapters. It contains of two key pieces:
+
 * `body`: the actual consolidated payload. Each subsequent link in the chain receives all the data from the previous step as `chain.body`
 * `headers`: this is a "meta" section used to store information used during the consolidation process. For example, the LD adapter needs to find the most significant variant from the previous step in the chain (association data) in order to query the API for LD. The name of that variant can be stored for subsequent use during the data retrieval process.
 

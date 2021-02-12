@@ -4,14 +4,14 @@ toc: true
 toc-title: Table of Contents
 ---
 
-## Overview
+# Overview
 LocusZoom provides a rich set of features for visualizing and comparing genetic data, including by comparing multiple datasets within the same plot. It does so by embracing a configuration-driven model that decouples content ([data adapters](data_retrieval.html)) from presentation (data layers).
  
 Although the individual pieces are [documented](../) in depth, many of the most interesting features arise from combining those pieces together in new ways. *Layouts* are the "glue" that connects pieces together, as well as being the primary means through which plots and data sources are created and configured.
 
 At the simplest, a layout is a serializable object that describes every customizable feature of a LocusZoom plot. A layout should only ever contain scalar values, arrays, and objects - no functions! 
 
-## Your first plot: defining how to render data
+# Your first plot: defining how to render data
 We provide a set of built-in layouts for rendering common types of LocusZoom plots. If your field names match the assumptions of the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/), you should be able to create common types of visualization with very little modification.
 
 ```javascript
@@ -27,7 +27,7 @@ const plot = LocusZoom.populate('#lz-plot', data_sources, layout);
 
 Highly customized LocusZoom usages may create their own layout from scratch, but it is much more common to start with a pre-existing layout. 
 
-### Understanding the example
+## Understanding the example
 In the example above, a pre-defined layout is retrieved from the *registry* of common options: `LocusZoom.Layouts`. This registry is organized by type of building block (plot, panel, data layer, etc), and the specific layout requested is the "classic" LocusZoom plot (called `standard_association`). See the [developer documentation](../api/module-LocusZoom_Layouts.html) for a full list of the pre-defined options, or introspect the currently available options in the javascript console using the following command:
 
 `LocusZoom.Layouts.list()`
@@ -36,13 +36,13 @@ The final argument used to retrieve the layout above is an object containing "ov
 
 Running these commands in the JS developer console will allow you to examine the entire layout in detail. Introspecting the behavior of the plot is an extremely powerful tool for learning and debugging!
 
-## Composition of pieces
+# Composition of pieces
 The key to rendering multiple kinds of data is *composition*. LocusZoom provides a broad set of reusable building blocks, which can be stacked on top of each other (data layers), or adjacent (panels). New developers often begin by inspecting the entire layout at once (top-down), but breaking it into individual pieces (reading the layout "bottom-up") is much more effective (and less intimidating). Oftentimes, you can achieve the customizations you want by modifying only a few options. 
  
 Understanding the basic building blocks is key to customizing a rendering for your needs. 
 See: [Getting started](index.html) for a guide to these building blocks and how they are arranged, or skip to "how to read a layout" below.
 
-### Plugins via a central registry
+## Plugins via a central registry
 LocusZoom supports plugins without additional installation code, via a central *registry* that tracks available features. For example, the known data rendering options are registered in `LocusZoom.DataLayers`.
 
 A layout object does not define code or new features: layouts are simple JSON-serializable configuration objects that 
@@ -259,7 +259,7 @@ Currently, modifying every level of a deeply nested layout is not an ideal proce
 with our efforts at backwards compatibility) makes the process possible without copying hundreds of lines of code, 
 we are exploring other, more ergonomic ways to customize layouts in the future. 
 
-> TIP: When modifying one option from a list (like changing the label of a toolbar button), it is tempting to address it using simple JavaScript operations, like `widgets[0].button_html += 'something'`. However, this becomes very hard to read and maintain over time: if someone adds a new button to the start of the list, it will not be obvious that the meaning of `button[0]` has changed (or what the correct meaning should be). Try to use clear variable names like `const display_options = button[0]` to convey intent, and override the smallest reusable piece possible. Layouts are built from the bottom up, not the top down!
+> TIP: When modifying one option from a list (like changing the label of a toolbar button), it is tempting to address it using simple JavaScript operations, like `widgets[0].button_html += 'something'`. However, this becomes very hard to read and maintain over time: if someone adds a new button to the start of the list, it will not be obvious that the meaning of `button[0]` has changed (or what the correct meaning should be). Try to use clear variable names like `const display_options = button[0]` to convey intent, and override the smallest reusable piece possible. Layouts are defined from the bottom up, not the top down!
 
 ## Nested rule example: scalable parameters
 Each key in a layout object corresponds to a set of options supported by the thing that the configuration is intended to control. For example, scatter plots provide simple options that obey exactly one rule (like what to show on the x-axis), but there are also *scalable* parameters like `point_size` and `point_shape`, in which case several rules can be tried in sequence until the first matching condition is satisfied.

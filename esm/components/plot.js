@@ -199,8 +199,8 @@ class Plot {
      * @param {module:LocusZoom_Widgets[]} [layout.toolbar.widgets] Configuration options for each widget to place on the
      *   plot-level toolbar
      * @param {boolean} [layout.panel_boundaries=true] Whether to show interactive resize handles to change panel dimensions
-     * @param {boolean} [layout.mouse_guide=true] Whether to show a mouse guide as the user mouses over the plot-
-     *   this line spans all area and is especially useful for plots with multiple panels.
+     * @param {boolean} [layout.mouse_guide=true] Whether to always show horizontal and vertical dotted lines that intersect at the current location of the mouse pointer.
+     *   This line spans the entire plot area and is especially useful for plots with multiple panels.
      */
     constructor(id, datasource, layout) {
         /**

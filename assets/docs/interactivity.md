@@ -263,7 +263,7 @@ It works as follows:
 1. In the layout, a directive is specified to opt in to this behavior: `match: {send: field_to_be_broadcast , receive: field_to_be_checked }`
 2. If a datalayer specifies `match.send`, then when any element is selected, the value of the specified field for that data element is broadcast to other layers. Eg if the user clicks on a scatter plot point, the variant ID for that point could be sent.
 3. Whenever a match event is initiated, any data layer that specifies `match.receive` will examine each data point, and tag any point where the specified field value is the same as the broadcast value.
-4. The special tag added to these points (`ls_is_match`) is treated as an extra field, and can be used in any scalable layout directive to control point size, shape, color, filters, etc. This field doesn't come from the API or data adapter- it is an internal value that is checked on every render.
+4. The special tag added to these points (`lz_is_match`) is treated as an extra field, and can be used in any scalable layout directive to control point size, shape, color, filters, etc. This field doesn't come from the API or data adapter- it is an internal value that is checked on every render.
 
 Usage example:
 ```javascript
@@ -273,7 +273,7 @@ Usage example:
   match: { send: '{{namespace[access]}}target', receive: '{{namespace[access]}}target' },
   color: [
     {
-      field: 'ls_is_match', // When a match is detected, it is tagged with a special field name that can be used to trigger custom rendering
+      field: 'lz_is_match', // When a match is detected, it is tagged with a special field name that can be used to trigger custom rendering
       scale_function: 'if',
       parameters: {
         field_value: true,
@@ -286,7 +286,7 @@ Usage example:
 > *TIP:* Matching builds on the primitives described above: it responds to a specific internal event (`match_requested`), and broadcasts a field to all layers via `plot.state.lz_match_value` . This means that outside code can also cause the plot to render matching elements, by initiating the rendering update manually:
 > `plot.applyState({lz_match_value: your_value_here })`
 
-> *NOTE:* For performance reasons, this feature is currently limited to exact value match. Only a single value may be broadcast across all data layers at one time.
+> *NOTE:* For performance reasons, this feature is currently limited to simple rules. Only a single value may be broadcast across all data layers at one time, and only one field can be broadcast.
 
 ### Matching rules can be customized
 Matching is not limited to exact value equality. Using a third parameter ("operator"), matching rules can use any of the comparison functions in `LocusZoom.MatchFunctions`. As described in the description of filtering rules above, match rules can also take into account transforms that modify the field value before it is broadcast, or, how the broadcast value is compared to a specific field. Custom logic (operators) can also be added via MatchFunctions and accessed via name.
@@ -309,14 +309,14 @@ For very different kinds of data, usually the API must be customized a bit to cr
 
 
 # Built-in features to simplify interactivity
-The above mechanisms are very powerful, but they require a deep knowledge of LocusZoom's internals to use effectively. We provide a number of low or no-code mechanisms to implement interactive plot features in controlled, well-tested.
+The above mechanisms are very powerful, but they require a deep knowledge of LocusZoom's internals to use effectively. We provide a number of low or no-code mechanisms to implement interactive plot features in controlled, well-tested ways.
 
 ## Tooltips
 The first interactive feature that most LocusZoom users notice is the *tooltip*: a simple box that appears with more information when a user interacts with a point.
 
 In addition to showing data associated with a field, tooltips can be customized with interactive action links that modify `plot.state` (eg setting the LD reference variant), or trigger annotations (like showing a label).
 
-A tooltip is defined as an object describing when to display it, as well as the HTML template to render. It responds to the same LocusZoom template syntax supported elsewhere.
+A tooltip is defined as an object describing when to display it, as well as the HTML template to render. It responds to the same LocusZoom template syntax supported elsewhere. For example, values can be embedded in the string with curly braces (`{{assoc:fieldname}}`) and a simple conditional syntax is supported to only render text if a value is defined: `{{#if sourcename:field_name}} Conditional text {{/if}}`.
 
 ```javascript
 {
