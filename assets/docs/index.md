@@ -6,7 +6,41 @@ toc-title: Table of Contents
 
 LocusZoom.js provides many powerful options for visualizing genetic data in biological context. Our goal is to make the most common tasks easy, while providing advanced options for custom visualization and interactivity. For an overview of capabilities (and places where it is used), see our preprint: ["LocusZoom.js: Interactive and embeddable visualization of genetic association study results"](https://www.biorxiv.org/content/10.1101/2021.01.01.423803v1)
 
-## Creating your first plot
+## First steps
+### Add the library to your page
+
+LocusZoom.js is designed to work with your web page, regardless of your skill level or the tools you are used to using.
+
+#### Plain HTML and JavaScript (defines LocusZoom as a global variable)
+Many of our users work on small projects with a single HTML file and no special tools. By loading three files, the library will be automatically available as a global variable `LocusZoom` that provides access to all helper methods (`LocusZoom.populate(...)`, etc).
+
+In the example below, be sure to replace `VERSION_GOES_HERE` with the actual version of the [newest release](https://github.com/statgen/locuszoom/releases). It is possible to omit `@VERSION` entirely, but in order to keep up with a fast changing field, sometimes we need to make breaking changes. Using a real version string allows you to avoid things breaking by surprise later.
+
+```javascript
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.css" type="text/css"/>
+<script src="https://cdn.jsdelivr.net/npm/d3@^5.16.0" type="application/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/locuszoom@VERSION_GOES_HERE/dist/locuszoom.app.min.js" type="application/javascript"></script>
+```
+
+#### Modern JS frameworks with a "build" step
+Many "modern" JS frameworks (like React or Vue.js) use package managers (npm) and build tools (such as webpack) to manage the code and assets for your app. LocusZoom.js can be incorporated into fully modern tools as follows:
+
+First install the library using your package manager, which will keep track of the version known to work with your app:
+
+`$ npm install locuszoom`
+
+Then, load the code where it is used, and write code as normally. This will load from native ES6 module files for a smaller build size. From there, you can access all helper methods from the parent symbol, eg `LocusZoom.populate()`.
+
+```javascript
+import LocusZoom from 'locuszoom';
+import 'locuszoom/dist/locuszoom.css';
+```
+
+> TIP: Many build tools will recognize the import of a CSS file, and automatically combine it with your other CSS files into a single bundle. If you have problems importing CSS this way, you can instead load the stylesheet from a `<link>` tag in your HTML, as in the previous section.
+
+If you are a very experienced developer, you may notice that we are using helper methods like `LocusZoom.populate()`, instead of importing individual symbols like `populate`. We have chosen this coding style because it lets us write a single set of instructions for all of our users, regardless of what tools they use.
+
+### Create your first plot
 Creating a LocusZoom plot requires three pieces of information:
 
 * Where to render the plot (eg, the unique ID of an HTML element on the page)
@@ -16,7 +50,13 @@ Creating a LocusZoom plot requires three pieces of information:
 Once defined, these values can be passed to the populate() method along with a selector to identify a div, like so:
 `const plot = LocusZoom.populate(selector_id, data_sources, layout);` 
 
-The "classic" LocusZoom plot consists of two panels: a GWAS scatter plot on top, and a view of nearby genes in the region on bottom. See [simple GWAS template](simplest_template.html) for the code you will need to get started.
+The "classic" LocusZoom plot consists of two panels: a GWAS scatter plot on top, and a view of nearby genes in the region on bottom. See [simple GWAS template](simplest_template.html) for the code you will need to get started. This introduction describes the very broad outlines of the process, but additional guides are available that cover each piece in more detail.
+
+### Do you really need to write code?
+If your only goal is to generate a LocusZoom plot, we provide two "plot your own data" services that do not require writing any code at all:
+
+* [LocalZoom](https://statgen.github.io/localzoom/) - Generate plots from a tabix-indexed file, without uploading for a shared server. Good for sensitive data.
+* [my.locuszoom.org](https://my.locuszoom.org) - Upload your data to our server to create interactive, shareable plots plus summary information (such as a manhattan plot and list of top loci). The upload process will add annotations such as rsID and nearby genes of interest.
 
 ## What does LocusZoom.js provide?
 LocusZoom-style visualizations are widely used throughout the field of genetics, and this is by no means the only tool available for creating them. However, many existing tools only create a static image. LocusZoom.js was designed to power large data-exploration hubs such as PheWeb or the HuGeAMP family of knowledge portals: it can be used by websites that want to take full advantage of what the web browser has to offer.
@@ -30,7 +70,16 @@ LocusZoom-style visualizations are widely used throughout the field of genetics,
   * Tables that can update whenever data changes
   * Plugins to update the page URL and create bookmarkable views for interesting regions 
 
-## Structure and organization
+## Key concepts for developers looking to go deeper
+### Declarative and configuration driven
+As you read the examples, you may notice that all of our instructions are based on layout objects that ask for features by name (a declarative style), rather than creating new classes directly and managing every aspect of the plot yourself (imperative). This is for two reasons:
+
+1. LocusZoom.js provides a number of plugins that make it easy to inject custom user-provided functions that modify the behavior of existing rendering types. The declarative layout system (asking for features by name) makes it easy to use both premade features and "extra" code from plugins in a consistent way, without extra work.
+2. These configuration options allow you to activate complex functionality (like filtering rules) using one or two lines of code.
+
+Each piece of the system has many configuration options; we provide a [full developer reference](../api) with exhaustive details. Most websites will only need a small subset of the options, like "layout point color". We encourage you to try the premade layouts first, and use the "how to" guidance below to help you focus on the specific page required for a given task.
+
+### A system of building blocks
 LocusZoom.js defines reusable, highly configurable building blocks that can be combined to create many kinds of visualization. This approach grants enormous flexibility, but it also means that the configuration (*layout*) can be very overwhelming at first. Understanding the basic structure and terminology can be very helpful in knowing where to look for more information. 
 
 The key pieces are:
@@ -41,7 +90,22 @@ The key pieces are:
 * A Toolbar is an area above the plot and/or individual panels. It can show title text or user interface widgets that control how data is shown, or simply provide additional information for context. They are described with their own configuration rules, and a range of [interactive widgets](../api/module-LocusZoom_Widgets.html) are available.
 * A Legend provides information needed to interpret the visualization. To show a legend, configuration must be provided in two places: the panel describes the legend position, and each specific data layer describes which elements should appear in the legend. Most data layers require the legend to be defined manually, to reflect the specific options of color/size/shape that are most relevant to the view.
 
+To achieve high reusability, each of these building blocks is intended to be loosely coupled: building blocks typically do not know about or depend on the internal data structures, state, or behavior of other pieces. For example, each data layer is responsible for requesting its own data and maintaining its own state. Similarly, scale functions are generally stateless (eg, operate only on a single scalar value from a single datum element).
+
 ![Each plot can have several sections (panels), each with several types of data stacked as layers](../svg_architecture.svg)
+
+### Elements communicate through events
+Plots are not limited to a static visualization: they are capable of sharing data with elements outside the page, as well as forming connections with matching data elements on other panels. (see: [guide to interactivity](interactivity_tutorial.html))  
+
+This is achieved via *events*. Common actions (such as clicking a point, dragging to change the view, or receiving new data) will emit an event, along with information about how the event was triggered. Events are used for internal features (such as match events between decoupled data layers), but they can also be used to communicate with external widgets like a table of data on the page.
+
+See the full [developer documentation](../api/global.html#event:baseLZEvent) for a list of available events and how they are emitted.
+
+### Documentation by example
+Plots are highly customizable, and it can be easy to get lost in the dense web of configuration options. In addition to the [prose documentation](..), we provide a wide range of source code examples that demonstrate how to do specific things. (see the resources below for details) Documentation by example is an explicit and formal part of our documentation process.  
+
+### We are open source
+LocusZoom.js is an [open source](https://github.com/statgen/locuszoom) project. We welcome and encourage contributions from other groups. If there is a new visualization or feature that you would like to see, please reach out via our [public issue tracker](https://github.com/statgen/locuszoom/issues) or [mailing list](https://groups.google.com/forum/#!forum/locuszoom) to get started.
 
 ## Resources
 ### See it in action

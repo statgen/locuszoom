@@ -17,7 +17,5 @@ rm -rf docs/api/
 mkdir docs/guides
 mkdir docs/api
 
-
-#find ./assets/docs -iname "*.md" -type f -exec sh -c 'pandoc "${0}" -o "./output/$(basename ${0%.html}.md)"' {} \;
 find ./assets/docs -iname "*.md" -type f -exec sh -c 'pandoc -s --toc --css ../css/pandoc.css "${0}" -o "./docs/guides/$(basename ${0%.md}).html"' {} \;
 jsdoc --verbose --recurse -c jsdoc.conf.json --readme ./README.md --destination ./docs/api/ esm/
