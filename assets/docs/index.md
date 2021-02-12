@@ -80,7 +80,7 @@ As you read the examples, you may notice that all of our instructions are based 
 
 Each piece of the system has many configuration options; we provide a [full developer reference](../api) with exhaustive details. Most websites will only need a small subset of the options, like "layout point color". We encourage you to try the premade layouts first, and use the "how to" guidance below to help you focus on the specific page required for a given task.
 
-## A system of building blocks
+## Visual building blocks
 LocusZoom.js defines reusable, highly configurable building blocks that can be combined to create many kinds of visualization. This approach grants enormous flexibility, but it also means that the configuration (*layout*) can be very overwhelming at first. Understanding the basic structure and terminology can be very helpful in knowing where to look for more information. 
 
 The key pieces are:
@@ -89,7 +89,7 @@ The key pieces are:
 * A Panel is a subdivided area of a plot. Panels contain graph features such as titles, axes, and toolbar buttons, but they are not responsible for actual data. Panels occupy the full width the of the plot and are stacked vertically along the y-axis (typically in the order they are added). They are usually created through [layout configuration options](../api/Panel.html) rather than custom code.
 * A Data Layer is a layer within a panel that is responsible for rendering data. Data layers are stacked depth-wise along the z-axis, typically in the order they are added. They are usually created via layout configuration objects rather than custom mode. There are several [rendering types](../api/module-LocusZoom_DataLayers.html) available, each with their own set of pre-defined behaviors.
 * A Toolbar is an area above the plot and/or individual panels. It can show title text or user interface widgets that control how data is shown, or simply provide additional information for context. They are described with their own configuration rules, and a range of [interactive widgets](../api/module-LocusZoom_Widgets.html) are available.
-* A Legend provides information needed to interpret the visualization. To show a legend, configuration must be provided in two places: the panel describes the legend position, and each specific data layer describes which elements should appear in the legend. Most data layers require the legend to be defined manually, to reflect the specific options of color/size/shape that are most relevant to the view.
+* A [Legend](../api/module-components_legend-Legend.html) provides information needed to interpret the visualization. To show a legend, configuration must be provided in two places: the panel describes the legend position, and each specific data layer describes which elements should appear in the legend. Most data layers require the legend to be defined manually, to reflect the specific options of color/size/shape that are most relevant to the visualization. (see panel and layer documentation for legend configuration options)
 
 To achieve high reusability, each of these building blocks is intended to be loosely coupled: building blocks typically do not know about or depend on the internal data structures, state, or behavior of other pieces. For example, each data layer is responsible for requesting its own data and maintaining its own state. Similarly, scale functions are generally stateless (eg, operate only on a single scalar value from a single datum element).
 
@@ -101,6 +101,16 @@ Plots are not limited to a static visualization: they are capable of sharing dat
 This is achieved via *events*. Common actions (such as clicking a point, dragging to change the view, or receiving new data) will emit an event, along with information about how the event was triggered. Events are used for internal features (such as match events between decoupled data layers), but they can also be used to communicate with external widgets like a table of data on the page.
 
 See the full [developer documentation](../api/global.html#event:baseLZEvent) for a list of available events and how they are emitted.
+
+## Separation of concerns
+Visualizations are responsible for displaying the information given. Each element is intended to be largely isolated and decoupled: for the most part, pieces can be mixed and matched without needing to know about (or influence) the internal behavior of other pieces.
+
+Operations on data are performed by the following elements,
+* [Adapters](../api/module-LocusZoom_Adapters.html) coordinate the formatting and retrieval of data (see: [guide to working with data](data_retrieval.html))
+* Various function registries provide a way to modify the display or behavior of elements by injecting custom user-defined code into existing reusable elements:  
+  * [Matching functions](../api/module-LocusZoom_MatchFunctions.html) coordinate filter and match operations that affect which items are displayed across different panels (see: [guide to interactivity](interactivity.html)).
+  * [Scale functions](../api/module-LocusZoom_ScaleFunctions.html) can be used to control the size, shape, or color of various plot elements. These are used in any layout directives marked as `ScalableParameter` in the developer configuration documentation. 
+  * [Transformation Functions](../api/module-LocusZoom_TransformationFunctions.html) are used to control the display or content of field values in tooltips, axis labels, etc. They are used in the template syntax `{{fieldname|functionname}}`
 
 ## Documentation by example
 Plots are highly customizable, and it can be easy to get lost in the dense web of configuration options. In addition to the [prose documentation](..), we provide a wide range of source code examples that demonstrate how to do specific things. (see the resources below for details) Documentation by example is an explicit and formal part of our documentation process.  
