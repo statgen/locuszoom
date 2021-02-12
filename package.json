@@ -35,7 +35,7 @@
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
-    "build": "npm run echo_version && npm run test && npm run css && webpack --config webpack.prod.cjs",
+    "build": "npm run echo_version && npm run test && npm run css && webpack --config webpack.prod.cjs && npm run docs",
     "docs": "./build_docs.sh"
   },
   "dependencies": {

@@ -11,7 +11,7 @@
  *    - LocusZoom
  *    - raremetal.js (available via NPM or a related CDN)
  *
- * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
  * ```
  * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-aggregation-tests.min.js" type="application/javascript"></script>
  * ```

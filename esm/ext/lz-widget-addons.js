@@ -12,13 +12,14 @@
  * The page must incorporate and load all libraries before this file can be used, including:
  * - LocusZoom
  *
- * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
- * ```
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ *
+ * ```javascript
  * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-widget-addons.min.js" type="application/javascript"></script>
  * ```
  *
  * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
- * ```
+ * ```javascript
  * import LocusZoom from 'locuszoom';
  * import WidgetAddons from 'locuszoom/esm/ext/lz-widget-addons';
  * LocusZoom.use(WidgetAddons);

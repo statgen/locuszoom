@@ -7,7 +7,9 @@ toc-title: Table of Contents
 LocusZoom.js aims to provide reusable and highly customizable visualizations. Towards this goal, a separation of concerns is enforced between data adapters (data) and data layers (presentation).
 
 # Your first plot: defining how to retrieve data
-All data retrieval is performed by *adapters*: special objects whose job is to fetch the information required to render a plot. A major strength of LocusZoom.js is that it can connect several kinds of annotation from different places into a single view: the act of organizing data requests together is managed by an object called `LocusZoom.DataSources`.  Below is an example creating a "classic" LocusZoom plot, in which GWAS, LD, and recombination rate are overlaid on a scatter plot, with genes and gnomAD constraint information on another track below. In total, five API endpoints are used to create this plot; four standard datasets, and one user-provided summary statistics file.
+All data retrieval is performed by *adapters*: special objects whose job is to fetch the information required to render a plot. A major strength of LocusZoom.js is that it can connect several kinds of annotation from different places into a single view: the act of organizing data requests together is managed by an object called `LocusZoom.DataSources`.  
+
+Below is an example that defines how to retrieve the data for a "classic" LocusZoom plot, in which GWAS, LD, and recombination rate are overlaid on a scatter plot, with genes and gnomAD constraint information on another track below. In total, five REST API endpoints are used to create this plot: four standard datasets, and one user-provided summary statistics file.
 
 ```javascript
 const apiBase = 'https://portaldev.sph.umich.edu/api/v1/';
@@ -56,10 +58,10 @@ LocusZoom.js is designed to work well with REST APIs, but you do not need to cre
 Some examples of other data retrieval mechanisms used in the wild are:
 
 * Loading the data from a static JSON file (this can be as simple as giving the URL of the JSON file, instead of the URL of an API server!). Many bioinformaticians are comfortable converting between text files, so this is a low-effort way to get started... but static files always return the same data, and they return all of it at once. This can be limiting for big datasets or "jump to region" style interactivity.
-* Fetching the data from a Tabix-indexed file in an Amazon S3 bucket (via the [lz-tabix-source](../api/module-ext_lz-tabix-source.html) plugin; you will need to write your own function that parses each line into the required data format). This is exactly how our chromatin coaccessibility demo works!
-* Loading the data into a "shared global store" that acts as a middle layer for API calls, and asking LocusZoom to query the store instead of contacting a REST API directly. (example: Vuex for a reactive single-page application) This is relatively advanced, but it can be useful if many page widgets need to coordinate and share a lot of data that frequently changes.
+* Fetching the data from a Tabix-indexed file in an Amazon S3 bucket (see the [lz-tabix-source plugin example](../api/module-ext_lz-tabix-source.html) plugin; you will need to write your own function that parses each line into the required data format). This is exactly how our chromatin coaccessibility demo works!
+* Loading the data into a "shared global store" that acts as a middle layer for API calls, and asking LocusZoom to query the store instead of contacting a REST API directly. (example: Vuex for a reactive single-page application) This is relatively advanced, but it can be useful if many page widgets need to share a lot of data that frequently changes in response to user interaction. (example: performing an analysis after selecting a list of variants from a table)
 
-## Example: Loading data from static JSON files
+### Example: Loading data from static JSON files
 One way to make a LocusZoom plot quickly is to load the data for your region in a static file, formatted as JSON objects to look like the payload from our standard REST API. The key concept below is that instead of a server, the URL points to the static file. This demonstration is subject to the limits described above, but it can be a way to get started. 
 
 ```javascript
@@ -70,6 +72,11 @@ data_sources = new LocusZoom.DataSources()
     .add("recomb", ["RecombLZ", { url: "recomb_10_114550452-115067678.json" }])
     .add("constraint", ["GeneConstraintLZ", {  url: "constraint_10_114550452-115067678.json" }]);
 ```
+
+## Mix and match
+Each data adapter in the chain is largely independent, and it is entirely normal to mix data from several sources: for example, GWAS data from a tabix file alongside genes data from the UMich API server.
+
+If a single data layer needs to combine two kinds of data (eg association and LD), you will achieve the best results if the sources have some common assumptions about data format. Adapters are highly modular, but because they do not enforce a specific contract of field names or payload structure, you are responsible . 
 
 ## What if my data doesn't fit the expected format?
 The built-in adapters are designed to work with a specific set of known REST APIs and fetch data over the web, but we provide mechanisms to customize every aspect of the data retrieval process, including how to construct the query sent to the server and how to modify the fields returned. See the guidance on "custom adapters" below.
@@ -148,12 +155,12 @@ Most custom data sources will focus on customizing two things:
 ### Step 2: Formatting and parsing the data
 The `parseResponse` sequence handles the job of parsing the data. It can be used to convert many different API formats into a single standard form. There are four steps to the process:
 
-* `normalizeResponse` - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data transformation functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be transformed first.
+* `normalizeResponse` - Converts any data source response into a standard format. This can be used when you want to take advantage of existing data handling functionality of a particular adapter (like performing an interesting calculation), but your data comes from something like a tabix file that needs to be adjusted to match the expected format.
   * Internally, most data layer rendering types assume that data is an array, with each data element represented by an object: `[{a_field: 1, other_field: 1}]`
   * Some sources, such as the UM PortalDev API, represent the data in a column-oriented format instead. (`{a_field: [1], other_field: [1]}`) The default adapter will attempt to detect this and transform those columns into the row-based one-record-per-datum format.
 * `annotateData` - This can be used to add custom calculated fields to the data. For example, if your data source does not provide a variant marker field, one can be generated in javascript (by concatenating chromosome:position_ref/alt), without having to modify the web server.
 * `extractFields` - Each data layer receives only the fields it asks for, and the data is  reformatted in a way that clearly identifies where they come from (the namespace is prefixed onto each field name, eg `{'mynamespace:a_field': 1}`).
-  * The most common reason to override this method is if the data uses an extremely complex payload format (like genes), and a custom data layer expects to receive that entire structure as-is. If you are working with layouts, the most common sign of an adapter that does this is that the data layer asks for a nonexistent field (`genes:all`: a synthetic field because data is only retrieved if at least one field is used)
+  * The most common reason to override this method is if the data uses an extremely complex payload format (like genes), and a custom data layer expects to receive that entire structure as-is. If you are working with layouts, the most common sign of an adapter that does this is that the data layer asks for a nonexistent field (`gene:all` - a synthetic value whose sole purpose is to indicate that the source is used)
 * `combineChainBody`: If a single data layer asks for data from more than one source, this function is responsible for combining several different pieces of information together. For example, in order to show an association plot with points colored by LD, the LD adapter implements custom code that annotations the association data with matching LD information. At the end of this function, the data layer will receive a single combined record per visualized data element. 
 
 #### Working with the data "chain"
@@ -161,8 +168,8 @@ Each data layer is able to request data from multiple different sources. Interna
 
 This chain defines how to share information between different adapters. It contains of two key pieces:
 
-* `body`: the actual consolidated payload. Each subsequent link in the chain receives all the data from the previous step as `chain.body`
-* `headers`: this is a "meta" section used to store information used during the consolidation process. For example, the LD adapter needs to find the most significant variant from the previous step in the chain (association data) in order to query the API for LD. The name of that variant can be stored for subsequent use during the data retrieval process.
+* `body` - the actual consolidated payload. Each subsequent link in the chain receives all the data from the previous step as `chain.body`
+* `headers` - this is a "meta" section used to store information used during the consolidation process. For example, the LD adapter needs to find the most significant variant from the previous step in the chain (association data) in order to query the API for LD. The name of that variant can be stored for subsequent use during the data retrieval process.
 
 Only `chain.body` is sent to the data layer. All other parts of the chain are discarded at the end of the data retrieval process.
 

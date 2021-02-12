@@ -45,20 +45,13 @@ See: [Getting started](index.html) for a guide to these building blocks and how 
 ## Plugins via a central registry
 LocusZoom supports plugins without additional installation code, via a central *registry* that tracks available features. For example, the known data rendering options are registered in `LocusZoom.DataLayers`.
 
-A layout object does not define code or new features: layouts are simple JSON-serializable configuration objects that 
-spell out how to use existing rendering types. Custom data sources, layers, or scale functions must be defined before use. 
-The dependence on the central registry means that code features (like a particular type of data layer or scale function) 
-are requested by name, as strings. 
+A layout object does not define code or new features: layouts are simple JSON-serializable configuration objects that spell out how to use existing rendering types. Custom data sources, layers, or scale functions must be defined before use. The dependence on the central registry means that code features (like a particular type of data layer or scale function) are requested by name, as strings. 
 
-In order to ensure that each rendering is totally isolated and de-coupled, all **layouts must be JSON-serializable**. 
-Simple types like strings, objects, numbers, and lists are allowed, but a layout cannot contain code. At plot creation, 
-LocusZoom will interpret the layout and locate the features you request by name.
+In order to ensure that each rendering is totally isolated and de-coupled, all **layouts must be JSON-serializable**. Simple types like strings, objects, numbers, and lists are allowed, but a layout cannot contain code. At plot creation, LocusZoom will interpret the layout and locate the features you request by name.
 
 # Working with layouts
 ## How to read a layout
-A good way to practice reading layouts (as a combination of several pieces) is to look at the 
-[source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js) where standard layouts 
-are defined. Consider the `standard_association` plot:
+A good way to practice reading layouts (as a combination of several pieces) is to look at the [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js) where standard layouts are defined. Consider the `standard_association` plot:
 
 ```js
 LocusZoom.Layouts.add('plot', 'standard_association', {
@@ -75,23 +68,14 @@ LocusZoom.Layouts.add('plot', 'standard_association', {
 });
 ```
 
-In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this 
-plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, 
-each panel is 225px high, so the total plot height will be the sum of panels (450 px); if more panels are added, 
-the plot height will increase to match. The actual details of what to render are defined as nested layouts 
-(association and genes panels), and the registry also contains predefined options for each of these smaller pieces- 
-`LocusZoom.Layouts.get(...)` returns a JSON object.  
+In this view, we have abstracted away all the details of what is plotted, and we can just see the basic pieces: this plot has two panels (association data and genes data) that are displayed separately on the same screen. At the plot level, each panel is 225px high, so the total plot height will be the sum of panels (450 px); if more panels are added, the plot height will increase to match. The actual details of what to render are defined as nested layouts (association and genes panels), and the registry also contains predefined options for each of these smaller pieces- `LocusZoom.Layouts.get(...)` returns a JSON object.  
 
-Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in 
-terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
+Although the layout could be defined as a single giant object (top-down view of everything at once), defining it in terms of reusable building blocks (bottom up) makes it much easier to read and see boundaries. 
 
 Note that this layout is added to the registry using `LocusZoom.Layouts.add(...)`. We will cover this in "working with the registry", below.
 
 ### Will this layout work with my data?
-LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the 
-field names (and formats) used by the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints).
-If your data source returns a different payload format, field names, or notation conventions, you may need to modify a 
-pre-existing layout in order to plot that data.
+LocusZoom has two pieces: content and presentation. By default, the default data layers are designed to work with the field names (and formats) used by the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/#overview-of-api-endpoints). If your data source returns a different payload format, field names, or notation conventions, you may need to modify a pre-existing layout in order to plot that data.
 
 Consider this fragment of the standard association data layer, shown below: 
 
@@ -109,28 +93,18 @@ LocusZoom.Layouts.add('data_layer', 'association_pvalues', {
 
 Key things to notice are:
 
-1. The data layer will only see the fields requested by name. Even if a field is present in the API payload, it
-    will not be visible in the data layer unless explicitly referenced in the `fields` array for that data layer.
-2. This layout is generic: the use of namespaces means "given association data from somewhere". See "using namespaces" 
-    below for more details on how to use an abstract layout with a specific dataset (via namespaces).
-3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax. But the 
-    field must always be requested in the `fields` array.
+1. The data layer will only see the fields requested by name. Even if a field is present in the API payload, it will not be visible in the data layer unless explicitly referenced in the `fields` array for that data layer.
+2. This layout is generic: the use of namespaces means "given association data from somewhere". See "using namespaces" below for more details on how to use an abstract layout with a specific dataset (via namespaces).
+3. Other sections of the layout (such as `x_axis`) can reference the fields requested, using the same syntax. But the field must always be requested in the `fields` array.
 
-You will sometimes see fields referenced elsewhere with an additional syntax, like `{{namespace[assoc]}}variant|htmlescape`.
-The `|htmlescape` is a [*transform*](../api/module-LocusZoom_TransformationFunctions.html) that affects value display. The fields array only needs to specify the names of fields; 
-transforms can be applied at any time later.
+You will sometimes see fields referenced elsewhere with an additional syntax, like `{{namespace[assoc]}}variant|htmlescape`. The `|htmlescape` is a [*transform*](../api/module-LocusZoom_TransformationFunctions.html) that affects value display. The fields array only needs to specify the names of fields; transforms can be applied at any time later.
 
 #### No system of notation survives contact with developers
 There are some exceptions to this rule- it is difficult to support every possible combination of data sources from every possible set of API conventions.
  
-One place where this breaks down is *dependent* sources- eg, LD information is requested relative to the most significant
- variant in the association data. Differences in field formatting or nomenclature can sometimes break the ability to
- find the relevant information that the second data source requires; efforts are made to handle common use cases.
-  These sources gradually become more generic over time based on user feedback and needs. 
+One place where this breaks down is *dependent* sources- eg, LD information is requested relative to the most significant variant in the association data. Differences in field formatting or nomenclature can sometimes break the ability to find the relevant information that the second data source requires; efforts are made to handle common use cases. These sources gradually become more generic over time based on user feedback and needs. 
  
-The other main exception to the `fields` mechanism involves API endpoints that return complex nested objects (eg the list
- of genes in a region, a standard dataset that few people will ever need to customize directly). By notation convention,
- the default LocusZoom layouts will indicate that special behavior is in effect via a dummy field called `all`, eg 
+The other main exception to the `fields` mechanism involves API endpoints that return complex nested objects (eg the list of genes in a region, a standard dataset that few people will ever need to customize directly). By notation convention, the default LocusZoom layouts will indicate that special behavior is in effect via a dummy field called `all`, eg 
  
 ```js
 { 
@@ -138,18 +112,14 @@ The other main exception to the `fields` mechanism involves API endpoints that r
 }
 ```
 
-Explanation: a data layer will not fetch from a source unless the fields array references at least one piece
- of data from that source. Since the genes source bypasses explicit fields, it uses a dummy field to trigger the request.
+Explanation: a data layer will not fetch from a source unless the fields array references at least one piece of data from that source. Since the genes source bypasses explicit fields, it uses a dummy field to trigger the request.
   
-Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; 
- this behavior is governed by the `extractFields` method of `LocusZoom.Data.Source`.
+Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the `extractFields` method of `LocusZoom.Data.Source`.
 
 ## Working with the Registry
-Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a 
-layout converts it from the abstract definition to one that works with a specific dataset.  
+Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a layout converts it from the abstract definition to one that works with a specific dataset.  
 
-Since the registry just returns JSON-serializable objects, you could create a plot or panel configuration by hand. 
-But this is often tedious, and using the registry will save you from writing many lines of boilerplate code. 
+Since the registry just returns JSON-serializable objects, you could create a plot or panel configuration by hand. But this is often tedious, and using the registry will save you from writing many lines of boilerplate code. 
 
 ### What pieces are available?
 
@@ -159,13 +129,9 @@ To see the list of pre-defined layouts (as well as any custom ones you have crea
 {plot: Array(4), panel: Array(7), data_layer: Array(9), dashboard: Array(4), dashboard_components: Array(1), tooltip: Array(5) }
 ```
 
-This will return a top level representation of the available types, showing the available categories. Note that even 
-data layers are composed of smaller building blocks. This lets you use individual parts of a representation (like 
-association tooltips) without committing to the other design choices for a common piece (like the association layer). 
+This will return a top level representation of the available types, showing the available categories. Note that even data layers are composed of smaller building blocks. This lets you use individual parts of a representation (like association tooltips) without committing to the other design choices for a common piece (like the association layer). 
 
-Asking for just the plots shows a list of specific options. Typically, we try to provide example pages that use (most) 
-of the layouts that come with LocusZoom; see the [example gallery](http://statgen.github.io/locuszoom/) to preview how 
-these layouts would look.
+Asking for just the plots shows a list of specific options. Typically, we try to provide example pages that use (most) of the layouts that come with LocusZoom; see the [example gallery](http://statgen.github.io/locuszoom/) to preview how these layouts would look.
  
 ```js
 > LocusZoom.Layouts.list('plot');
@@ -194,8 +160,7 @@ It is the act of fetching the layout from the registry that turns it into a conc
         fields: ["my_dataset_1:variant","my_dataset_1:position","my_dataset_1:log_pvalue","my_dataset_1:log_pvalue|logtoscinotation","my_dataset_1:ref_allele","ld:state","ld:isrefvar"]
     }
     ```
-2. Fetch an existing layout, and use the "default" data sources. If you follow the examples very closely 
-    (eg naming your data source "assoc" and "ld"), this will automatically find the right data.
+2. Fetch an existing layout, and use the "default" data sources. If you follow the examples very closely (eg naming your data source "assoc" and "ld"), this will automatically find the right data.
     
     ```js
     > LocusZoom.Layouts.get('data_layer', 'association_pvalues');
@@ -204,9 +169,7 @@ It is the act of fetching the layout from the registry that turns it into a conc
     }
     ```
 
-3. Fetch an existing abstract layout for further modification, and keep it abstract. Note the special `unnamespaced: true` option, which causes
- the layout to be returned exactly as it appears in the registry (*abstract*). This option is used quite a lot in the LZ source code (`Layouts.js`), 
- because it makes it easy to build a reusable abstract layout (like a panel) out of smaller reusable pieces (like datalayers).
+3. Fetch an existing abstract layout for further modification, and keep it abstract. Note the special `unnamespaced: true` option, which causes the layout to be returned exactly as it appears in the registry (*abstract*). This option is used quite a lot in the LZ source code (`Layouts.js`), because it makes it easy to build a reusable abstract layout (like a panel) out of smaller reusable pieces (like datalayers).
  
     ```js
     > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { unnamespaced: true });
@@ -217,14 +180,11 @@ It is the act of fetching the layout from the registry that turns it into a conc
     ```
 
 ### Modifying all (or part) of a layout
-If you are building your own API aimed at use with LocusZoom, then the path of least resistance is to use the same field
- names as the pre-defined layouts.
+If you are building your own API aimed at use with LocusZoom, then the path of least resistance is to use the same field names as the pre-defined layouts.
  
 The most straightforward way to modify a layout is to pass just a few overrides. This works will for simple values (like strings), or keys of nested objects:
 
-Consider an association plot, where the only requested change is to use the right side y-axis (2) instead of the 
-left side y-axis (1, the default). This can be accomplished by adding a key to the third argument of 
-`LocusZoom.Layouts.get(...)`. Note how the other existing options are preserved.
+Consider an association plot, where the only requested change is to use the right side y-axis (2) instead of the left side y-axis (1, the default). This can be accomplished by adding a key to the third argument of `LocusZoom.Layouts.get(...)`. Note how the other existing options are preserved.
 
 ```js
 > LocusZoom.Layouts.get('data_layer', 'association_pvalues', { namespace: { assoc: 'my_dataset_1' }, y_axis: { axis: 2 } } );
@@ -233,14 +193,9 @@ left side y-axis (1, the default). This can be accomplished by adding a key to t
 }
 ```
 
-The "modifications" object does not work as well for compound values, like a list, because this behavior is not well defined: 
- changing the 5th element of a list could mean replacement, removal, or minor additions to fields... etc. In practice, 
- this is quite often relevant... because panels and data layers are specified as lists. (order matters)
+The "modifications" object does not work as well for compound values, like a list, because this behavior is not well defined: changing the 5th element of a list could mean replacement, removal, or minor additions to fields... etc. In practice, this is quite often relevant... because panels and data layers are specified as lists. (order matters)
  
-For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, then you can build 
-your own layout using all or some of the pieces of the layouts registry. One commonly used trick is to modify just 
-one part of an existing array field via *self-calling functions* that immediately 
-return a new, modified object. Eg, for a toolbar (dashboard) that adds just one extra button to an existing layout:
+For complex scenarios like adding toolbar buttons or overriding the panels/data layers in a plot, you can build your own layout using all or some of the pieces of the layouts registry. One trick that is commonly used in the LocusZoom.js source code is to modify just one part of an existing array field via *self-calling functions* that immediately return a new, modified object. (this creates the modifications in-place, without leaving any temporary variables around afterwards) Eg, for a toolbar (dashboard) that adds just one extra button to an existing layout:
 
 ```js
 {
@@ -255,9 +210,7 @@ return a new, modified object. Eg, for a toolbar (dashboard) that adds just one 
 }
 ```
 
-Currently, modifying every level of a deeply nested layout is not an ideal process. Although the above trick (combined 
-with our efforts at backwards compatibility) makes the process possible without copying hundreds of lines of code, 
-we are exploring other, more ergonomic ways to customize layouts in the future. 
+Currently, modifying every level of a deeply nested layout is not an ideal process. Although the above trick (combined with our efforts at backwards compatibility) makes the process possible without copying hundreds of lines of code, we are exploring other, more ergonomic ways to customize layouts in the future. 
 
 > TIP: When modifying one option from a list (like changing the label of a toolbar button), it is tempting to address it using simple JavaScript operations, like `widgets[0].button_html += 'something'`. However, this becomes very hard to read and maintain over time: if someone adds a new button to the start of the list, it will not be obvious that the meaning of `button[0]` has changed (or what the correct meaning should be). Try to use clear variable names like `const display_options = button[0]` to convey intent, and override the smallest reusable piece possible. Layouts are defined from the bottom up, not the top down!
 
@@ -299,10 +252,10 @@ Common scalable parameters include point size, color, and shape. The full develo
 Custom scaling functions may be defined as follows:
 
 ```javascript
-LocusZoom.ScaleFunctions.add('myfunction', (parameters, field_value) => calculated_result); 
+LocusZoom.ScaleFunctions.add('myfunction', (parameters, field_value) => calculated_result_or_null); 
 ```
 
-## Where to find more information
+## Documentation by example
 Composition of smaller pieces is a powerful strategy- but it also means that no single documentation page can explain every feature (because important behavior emerges when two building blocks are combined). As such, examples are a key and explicit part of how LocusZoom usage is documented. 
 
 We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js)) as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with [example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice.  The full [developer documentation](../api) provides a full enumeration of every possible layout configuration option for each plot, panel, data layer rendering type, or rule.
@@ -412,6 +365,9 @@ plot.applyState(); // to re-render with labels
 ```
 
 When you are not sure what notation convention to use, check the rest of your layout- the JS console is a very powerful tool, and development is much easier when you can introspect the actual behavior of your code.
+
+## Layouts also control behavior
+In this guide, we have mostly focused on Layouts as a tool for controlling how data is rendered. However, layouts also provide configuration directives to enable powerful behaviors such as zooming, matching, and filtering. See the [guide to interactivity](interactivity.html) for details.
 
 ## Where to find more information
  We also provide other tools (such as [LocalZoom](https://github.com/statgen/localzoom/blob/develop/src/util/lz-helpers.js)), which demonstrate higher-order concepts like adding multiple panels to the same plot. Note that this code base is very heavily oriented around the idea of composition, with functions like `createStudyLayout`, `createStudyTabixSources`, and `addPanels`. Instead of defining the entire layout, this structure is focused on creating each piece required and combining them as appropriate. The same process is used to create layouts for the first study track as for the fourth.
