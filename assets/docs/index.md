@@ -44,8 +44,8 @@ If you are a very experienced developer, you may notice that we are using helper
 Creating a LocusZoom plot requires three pieces of information:
 
 * Where to render the plot (eg, the unique ID of an HTML element on the page)
-* Where to find data (see: [Working with data](data_tutorial.html))
-* How to render the data (see: [Layouts and visualization options](layout_tutorial.html))
+* Where to find data (see: [Working with data](data_retrieval.html))
+* How to render the data (see: [Layouts and visualization options](rendering_layouts.html))
 
 Once defined, these values can be passed to the populate() method along with a selector to identify a div, like so:
 `const plot = LocusZoom.populate(selector_id, data_sources, layout);` 
@@ -95,7 +95,7 @@ To achieve high reusability, each of these building blocks is intended to be loo
 ![Each plot can have several sections (panels), each with several types of data stacked as layers](../svg_architecture.svg)
 
 ### Elements communicate through events
-Plots are not limited to a static visualization: they are capable of sharing data with elements outside the page, as well as forming connections with matching data elements on other panels. (see: [guide to interactivity](interactivity_tutorial.html))  
+Plots are not limited to a static visualization: they are capable of sharing data with elements outside the page, as well as forming connections with matching data elements on other panels. (see: [guide to interactivity](interactivity.html))  
 
 This is achieved via *events*. Common actions (such as clicking a point, dragging to change the view, or receiving new data) will emit an event, along with information about how the event was triggered. Events are used for internal features (such as match events between decoupled data layers), but they can also be used to communicate with external widgets like a table of data on the page.
 
@@ -122,9 +122,8 @@ LocusZoom.js has many advanced features. Some are implemented in code, and other
 ### Documentation
 LocusZoom provides a lot of functionality, but getting the most of it does requires some help. We provide prose guides on the following topics:
 
-* Where to find data (see: [Working with data](data_tutorial.html))
-* How to render the data (see: [Layouts and visualization options](layout_tutorial.html))
-* Advanced interactive features (see: [Mechanisms for Interactivity](interactivity_tutorial.html))
-* Extending LocusZoom.js with custom features (see: [Using and creating plugins](plugins_tutorial.html))
+* Where to find data (see: [Working with data](data_retrieval.html))
+* How to render the data (see: [Layouts and visualization options](rendering_layouts.html))
+* Advanced interactive features (see: [Mechanisms for Interactivity](interactivity.html))
 
 If you are ready to go deeper, see the [detailed API documentation](../api/), describing all the configuration options, plugins, and visualization types available.

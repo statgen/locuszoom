@@ -32,9 +32,9 @@ A lot is going on in this line!
 
 * `data_sources.add` defines a piece of information that *could* be used by the plot. (if no layout asks for data from this source, then no API request will ever be made)
 * The first argument to the function is a *namespace name*. It is an arbitrary reference to this particular piece of data. For example, you might want to plot three association studies together in the same window, and they could be defined as `.add('mystudy', ...)`, `.add('somephenotype', ...)`, `.add('founditinthegwascatalog', ...)`
-  * In the [layouts guide](layout_tutorial.html), we will see how `data_layer.fields` uses these namespaces to identify what data to render.
+  * In the [layouts guide](rendering_layouts.html), we will see how `data_layer.fields` uses these namespaces to identify what data to render.
 * The second argument to the function is a list of values: the name of a [predefined adapter](../api/module-LocusZoom_Adapters.html) that defines how to retrieve this data, followed by an object of  configuration options (like url and params) that control which data will be fetched. Each type of data has its own options; see the documentation for a guide to available choices.
-  * You are not limited to the types of data retrieval built into LocusZoom.js. See "creating your own adapter" or the [guide to plugins](plugins_tutorial.md) for more information.
+  * You are not limited to the types of data retrieval built into LocusZoom.js. See "creating your own adapter" for more information.
 
 ### What should the data look like?
 In theory, LocusZoom.js can display whatever data it is given: layouts allow any individual layout to specify what fields should be used for the x and y axes.
@@ -48,7 +48,7 @@ If you are building a custom tool for exploring data, it is common to show the s
 
 In LocusZoom.js, the user is allowed to change the information shown via mouse interaction (drag or zoom to change region, change LD calculations by clicking a button... etc). This means that LocusZoom must always be able to ask for the data it needs, and initiate a new API request if necessary: a *pull* model. This contrasts with static plotting libraries like R which show whatever data they are given (a *push* approach).
 
-The act of contacting an external API, and fetching the data needed, is coordinated by *Adapters*. It is possible to share data with other widgets on the page via event callbacks, so that those widgets retrieve the newest data whenever the plot is updated (see `subscribeToData` in the [guide to interactivity](interactivity_tutorial.html) for details).
+The act of contacting an external API, and fetching the data needed, is coordinated by *Adapters*. It is possible to share data with other widgets on the page via event callbacks, so that those widgets retrieve the newest data whenever the plot is updated (see `subscribeToData` in the [guide to interactivity](interactivity.html) for details).
 
 ### Not every web page requires an API
 LocusZoom.js is designed to work well with REST APIs, but you do not need to create an entire web server just to render a single interactive plot. As long as the inputs can be transformed into a recognized format, they should work with the plot.
@@ -164,5 +164,5 @@ This chain defines how to share information between different adapters. It conta
 
 Only `chain.body` is sent to the data layer. All other parts of the chain are discarded at the end of the data retrieval process.
 
-## See also
-LocusZoom.js is able to share its data with external widgets on the page, via event listeners that allow those widgets to update whenever the user interacts with the plot (eg panning or zooming to change the region in view). See `subscribeToData` in the [guide to interactivity](interactivity_tutorial.html) for more information.  
+# See also
+LocusZoom.js is able to share its data with external widgets on the page, via event listeners that allow those widgets to update whenever the user interacts with the plot (eg panning or zooming to change the region in view). See `subscribeToData` in the [guide to interactivity](interactivity.html) for more information.  
