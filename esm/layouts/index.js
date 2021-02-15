@@ -240,7 +240,7 @@ const coaccessibility_layer = {
             scale_function: 'if',
             parameters: {
                 field_value: true,
-                then: '#ff0000',
+                then: '#4285f4',
             },
         },
         {
@@ -991,7 +991,7 @@ const coaccessibility_plot = {
                     scale_function: 'if',
                     parameters: {
                         field_value: true,
-                        then: '#ff0000',
+                        then: '#4285f4',
                     },
                 },
                 {
