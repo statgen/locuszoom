@@ -9,7 +9,7 @@ LocusZoom provides a rich set of features for visualizing and comparing genetic 
  
 Although the individual pieces are [documented](../) in depth, many of the most interesting features arise from combining those pieces together in new ways. *Layouts* are the "glue" that connects pieces together, as well as being the primary means through which plots and data sources are created and configured.
 
-At the simplest, a layout is a serializable object that describes every customizable feature of a LocusZoom plot. A layout should only ever contain scalar values, arrays, and objects - no functions! 
+At the simplest, a layout is a JSON-serializable object that describes every customizable feature of a LocusZoom plot. A layout should only ever contain scalar values, arrays, and objects - no functions! 
 
 # Your first plot: defining how to render data
 We provide a set of built-in layouts for rendering common types of LocusZoom plots. If your field names match the assumptions of the [UMich Portaldev API](https://portaldev.sph.umich.edu/docs/api/v1/), you should be able to create common types of visualization with very little modification.
@@ -112,9 +112,9 @@ The other main exception to the `fields` mechanism involves API endpoints that r
 }
 ```
 
-Explanation: a data layer will not fetch from a source unless the fields array references at least one piece of data from that source. Since the genes source bypasses explicit fields, it uses a dummy field to trigger the request.
+> Explanation: a data layer will not fetch from a source unless the fields array references at least one piece of data from that source. Since the genes source contains special code to bypass fetching explicit fields, the data layer uses a dummy field to trigger the request.
   
-Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the `extractFields` method of `LocusZoom.Data.Source`.
+Most standard data types use the system of exact field names. A more detailed guide is beyond the scope of this tutorial; this behavior is governed by the `extractFields` method of `BaseAdapter`. (see: [guide to working with data](data_retrieval.html))
 
 ## Working with the Registry
 Typically, LocusZoom layouts are loaded via the registry, a set of pre-made reusable layouts. The act of fetching a layout converts it from the abstract definition to one that works with a specific dataset.  
@@ -215,7 +215,7 @@ Currently, modifying every level of a deeply nested layout is not an ideal proce
 > TIP: When modifying one option from a list (like changing the label of a toolbar button), it is tempting to address it using simple JavaScript operations, like `widgets[0].button_html += 'something'`. However, this becomes very hard to read and maintain over time: if someone adds a new button to the start of the list, it will not be obvious that the meaning of `button[0]` has changed (or what the correct meaning should be). Try to use clear variable names like `const display_options = button[0]` to convey intent, and override the smallest reusable piece possible. Layouts are defined from the bottom up, not the top down!
 
 ## Nested rule example: scalable parameters
-Each key in a layout object corresponds to a set of options supported by the thing that the configuration is intended to control. For example, scatter plots provide simple options that obey exactly one rule (like what to show on the x-axis), but there are also *scalable* parameters like `point_size` and `point_shape`, in which case several rules can be tried in sequence until the first matching condition is satisfied.
+Each key in a layout object corresponds to a set of options supported by the thing that the configuration is intended to control. For example, scatter plots provide simple options that obey exactly one rule (like what to show on the x-axis), but there are also *scalable* parameters like `point_size` and `point_shape`, in which case several rules can be tried in sequence until the first non-null result is found.
 
 Consider the rules below: in a classic LocusZoom plot, points are colored by LD information, or shown in grey if no LD information is available.
 
@@ -258,7 +258,7 @@ LocusZoom.ScaleFunctions.add('myfunction', (parameters, field_value) => calculat
 ## Documentation by example
 Composition of smaller pieces is a powerful strategy- but it also means that no single documentation page can explain every feature (because important behavior emerges when two building blocks are combined). As such, examples are a key and explicit part of how LocusZoom usage is documented. 
 
-We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js)) as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with [example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice.  The full [developer documentation](../api) provides a full enumeration of every possible layout configuration option for each plot, panel, data layer rendering type, or rule.
+We encourage you to look at the builtin layouts (via the JS console, or [source code](https://github.com/statgen/locuszoom/blob/develop/esm/layouts/index.js)) as a guide to "what works", and the [example gallery](http://statgen.github.io/locuszoom/) (with [example code](https://github.com/statgen/locuszoom/tree/develop/examples)) to see what options look like in practice.  The full [developer documentation](../api) enumerates every possible layout configuration option for each plot, panel, data layer rendering type, or rule.
 
 Lastly: LocusZoom works with evolving datasets, and pieces were contributed by different authors. For every hard and fast "rule", there is always an exception! If you find gaps in the documentation, please contact the developers (or [mailing list](https://groups.google.com/forum/#!forum/locuszoom)) and we will make improvements. 
 

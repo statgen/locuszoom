@@ -49,7 +49,9 @@ Creating a LocusZoom plot requires three pieces of information:
 * How to render the data (see: [Layouts and visualization options](rendering_layouts.html))
 
 Once defined, these values can be passed to the populate() method along with a selector to identify a div, like so:
-`const plot = LocusZoom.populate(selector_id, data_sources, layout);` 
+```javascript
+const plot = LocusZoom.populate(selector_id, data_sources, layout);
+``` 
 
 The "classic" LocusZoom plot consists of two panels: a GWAS scatter plot on top, and a view of nearby genes in the region on bottom. See [simple GWAS template](simplest_template.html) for the code you will need to get started. This introduction describes the very broad outlines of the process, but additional guides are available that cover each piece in more detail.
 
@@ -76,7 +78,7 @@ LocusZoom-style visualizations are widely used throughout the field of genetics,
 As you read the examples, you may notice that all of our instructions are based on layout objects that ask for features by name (a declarative style), rather than creating new classes directly and managing every aspect of the plot yourself (imperative). This is for two reasons:
 
 1. LocusZoom.js provides a number of plugins that make it easy to inject custom user-provided functions that modify the behavior of existing rendering types. The declarative layout system (asking for features by name) makes it easy to use both premade features and "extra" code from plugins in a consistent way, without extra work.
-2. These configuration options allow you to activate complex functionality (like filtering rules) using one or two lines of code.
+2. These configuration options allow you to activate complex functionality (like interactivity) using one or two lines of code.
 
 Each piece of the system has many configuration options; we provide a [full developer reference](../api) with exhaustive details. Most websites will only need a small subset of the options, like "layout point color". We encourage you to try the premade layouts first, and use the "how to" guidance below to help you focus on the specific page required for a given task.
 
