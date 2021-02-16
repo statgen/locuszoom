@@ -1,5 +1,5 @@
 /**
- * A datasource that fetches data from a remote Tabix file, instead of a RESTful API.
+ * An adapter that fetches data from a remote Tabix-indexed datafile, instead of a RESTful API.
  * Requires a generic user-specified parser function.
  *
  * ### Features provided
@@ -11,7 +11,7 @@
  * - LocusZoom
  * - tabix-reader (available via NPM or a related CDN)
  *
- * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
  * ```
  * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-tabix-source.min.js" type="application/javascript"></script>
  * ```
@@ -23,8 +23,18 @@
  * LocusZoom.use(LzTabixSource);
  * ```
  *
- * Then use the layouts made available by this extension. (see demos and documentation for guidance)
+ * Then use the Adapter made available by this extension. For example:
  *
+ * ```javascript
+ * data_sources.add("assoc", ["TabixUrlSource", {
+ *     url_data: 'https://s3-bucket.example/tabix-indexed-bgzip-file.gz',
+ *     parser_func: (line_of_text) => object_of_parsed_data_for_this_line,
+ *     // Tabix performs region queries. If you are fetching interval data (one end outside the edge of the plot), then
+ *     // "overfetching" can help to ensure that data partially outside the view region is retrieved
+ *     // If you are fetching single-point data like association summary stats, then overfetching is unnecessary
+ *     params: { overfetch: 0.25 }
+ * }]);
+ * ```
  *
  * @module
  */

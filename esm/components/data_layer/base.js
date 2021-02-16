@@ -26,10 +26,10 @@ import SCALABLE from '../../registry/scalable';
  *  below describes how each member of the array should specify the field and scale function to be used.
  * Often, the last item in the list is a string, providing a "default" value if all scale functions evaluate to null.
  *
- * @typedef {object|string} ScalableParameter
+ * @typedef {object[]|string} ScalableParameter
  * @property {string} [field] The name of the field to use in the scale function. If omitted, all fields for the given
  *  datum element will be passed to the scale function.
- * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run
+ * @property {module:LocusZoom_ScaleFunctions} scale_function The name of a scale function that will be run on each individual datum
  * @property {object} parameters A set of parameters that configure the desired scale function (options very by function)
  */
 

@@ -23,7 +23,7 @@
  *  ```
  *  const data_sources = new LocusZoom.DataSources();
  *  data_sources.add("trait1", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 1}}]);
- *  data_sources.add("trait2", ["AssociationLZ", {url: "http://server.com/api/single/", params: {analysis: 2}}]);
+ *  data_sources.add("trait2", ["AssociationLZ", {url: "http://server.com/api/single/", params: {source: 2}}]);
  *  ```
  *
  *  These data sources are then passed to the plot when data is to be rendered:

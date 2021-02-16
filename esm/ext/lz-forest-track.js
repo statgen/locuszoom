@@ -10,7 +10,7 @@
  * The page must incorporate and load all libraries before this file can be used, including:
  * - LocusZoom
  *
- * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN:
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
  * ```
  * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-forest-track.min.js" type="application/javascript"></script>
  * ```

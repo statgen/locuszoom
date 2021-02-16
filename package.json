@@ -35,8 +35,8 @@
     "test:coverage": "nyc --reporter=text mocha --recursive test/**/*.js",
     "css": "sass --style compressed ./css/locuszoom.scss ./dist/locuszoom.css",
     "dev": "npm run css && webpack --watch --config webpack.dev.cjs",
-    "build": "npm run echo_version && npm run test && npm run css && webpack --config webpack.prod.cjs",
-    "docs": "jsdoc --recurse -c jsdoc.conf.json --readme ./README.md --destination jsdoc esm/ && pandoc -s --toc --css css/pandoc.css assets/docs/layout_tutorial.md -o docs/layout_tutorial.html && pandoc -s --toc --css css/pandoc.css assets/docs/interactivity_tutorial.md -o docs/interactivity_tutorial.html"
+    "build": "npm run echo_version && npm run test && npm run css && webpack --config webpack.prod.cjs && npm run docs",
+    "docs": "./build_docs.sh"
   },
   "dependencies": {
     "d3": "^5.16.0"
