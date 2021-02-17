@@ -31,7 +31,7 @@ describe('highlight_regions data layer', function () {
         beforeEach(function () {
             this.data = [
                 {start: 1, end: 100, category: 'a'}, // merge 2
-                { start: 25, end: 75, category: 'b' },
+                {start: 25, end: 75, category: 'b'},
                 {start: 50, end: 150, category: 'a'},
                 {start: 200, end: 300, category: 'a'}, // take as is
                 {start: 400, end: 450, category: 'a'}, // merge 2

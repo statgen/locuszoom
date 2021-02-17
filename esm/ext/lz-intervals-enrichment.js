@@ -1,12 +1,35 @@
 /**
- Interval annotation track that groups annotations by enrichment value (a fixed y-axis) rather than by merged/split tracks.
+ * Interval annotation track that groups annotations by enrichment value (a fixed y-axis) rather than by merged/split tracks.
 
- This is not part of the core LocusZoom library, but can be included as a standalone file.
+ * This is not part of the core LocusZoom library, but can be included as a standalone file.
 
- The page must incorporate and load all libraries before this file can be used, including:
- - Vendor assets
- - LocusZoom
- @module
+ * ### Features provided
+ * * {@link module:LocusZoom_DataLayers~intervals_enrichment}
+ * * {@link module:LocusZoom_Layouts~intervals_association_enrichment}
+ * * {@link module:LocusZoom_Layouts~intervals_enrichment_panel}
+ * * {@link module:LocusZoom_Layouts~intervals_enrichment_data_layer}
+ * * {@link module:LocusZoom_Layouts~intervals_enrichment_tooltip}
+ *
+ *
+ * ### Loading and usage
+ * The page must incorporate and load all libraries before this file can be used, including:
+ * - LocusZoom
+ *
+ * To use in an environment without special JS build tooling, simply load the extension file as JS from a CDN (after any dependencies):
+ * ```javascript
+ * <script src="https://cdn.jsdelivr.net/npm/locuszoom@INSERT_VERSION_HERE/dist/ext/lz-intervals-enrichment.min.js" type="application/javascript"></script>
+ * ```
+ *
+ * To use with ES6 modules, the plugin must be loaded and registered explicitly before use:
+ *
+ * ```javascript
+ * import LocusZoom from 'locuszoom';
+ * import IntervalsTrack from 'locuszoom/esm/ext/lz-intervals-track';
+ * LocusZoom.use(IntervalsTrack);
+ * ```
+ *
+ * Then use the layouts made available by this extension. (see demos and documentation for guidance)
+ * @module
  */
 
 // Coordinates (start, end) are cached to facilitate rendering
@@ -17,35 +40,41 @@ const YCE = Symbol.for('lzYCE');
 
 
 function install(LocusZoom) {
+    /**
+     * @memberof module:LocusZoom_DataLayers~intervals_enrichment
+     */
     const default_layout = {
         start_field: 'start',
         end_field: 'end',
-        track_label_field: 'state_name', // Used to label items on the y-axis
-        // Used to uniquely identify tracks for coloring. This tends to lead to more stable coloring/sorting
-        //  than using the label field- eg, state_ids allow us to set global colors across the entire dataset,
-        //  not just choose unique colors within a particular narrow region. (where changing region might lead to more
-        //  categories and different colors)
-        track_split_field: 'state_id',
-        track_split_order: 'DESC',
-        track_split_legend_to_y_axis: 2,
-        split_tracks: true,
         track_height: 10,
         track_vertical_spacing: 3,
         bounding_box_padding: 2,
-        always_hide_legend: false,
         color: '#B8B8B8',
-        fill_opacity: 1,
+        fill_opacity: 0.5,
         tooltip_positioning: 'vertical',
     };
 
-
-    /**
-     * Intervals Data Layer
-     * Implements a data layer that will render interval annotation tracks (intervals must provide start and end values)
-     */
     const BaseLayer = LocusZoom.DataLayers.get('BaseDataLayer');
 
+    /**
+     * Intervals-by-enrichment Data Layer
+     *
+     * Implements a data layer that groups interval annotations by enrichment value (a fixed y-axis)
+     * @alias module:LocusZoom_DataLayers~intervals_enrichment
+     * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
+     */
     class LzIntervalsEnrichment extends BaseLayer {
+        /**
+         * @param {string} [layout.start_field='start'] The field that defines interval start position
+         * @param {string} [layout.end_field='end'] The field that defines interval end position
+         * @param {number} [layout.track_height=10] The height of each interval rectangle, in px
+         * @param {number} [layout.track_vertical_spacing=3]
+         * @param {number} [layout.bounding_box_padding=2]
+         * @param {string|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#B8B8B8'] The color of each datum rectangle
+         * @param {number|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=0.5] The opacity of
+         *   each rectangle. The default is semi-transparent, because low-significance tracks may overlap very closely.
+         * @param {string} [layout.tooltip_positioning='vertical']
+         */
         constructor(layout) {
             LocusZoom.Layouts.merge(layout, default_layout);
             super(...arguments);
@@ -117,6 +146,12 @@ function install(LocusZoom) {
         }
     }
 
+    /**
+     * (**extension**) A basic tooltip with information to be shown over an intervals-by-enrichment datum
+     * @alias module:LocusZoom_Layouts~intervals_enrichment_tooltip
+     * @type tooltip
+     * @see {@link module:ext/lz-intervals-enrichment} for required extension and installation instructions
+     */
     const intervals_tooltip_layout = {
         namespace: { 'intervals': 'intervals' },
         closable: true,
@@ -128,6 +163,14 @@ function install(LocusZoom) {
                <b>Enrichment (n-fold)</b>: {{{{namespace[intervals]}}fold|scinotation|htmlescape}}`,
     };
 
+    /**
+     * (**extension**) A data layer with some preconfigured options for intervals-by-enrichment display, in
+     *  which intervals are ranked by priority from enrichment analysis.
+     *
+     * @alias module:LocusZoom_Layouts~intervals_enrichment_data_layer
+     * @type data_layer
+     * @see {@link module:ext/lz-intervals-enrichment} for required extension and installation instructions
+     */
     const intervals_layer_layout = {
         namespace: { 'intervals': 'intervals' },
         id: 'intervals_enrichment',
@@ -139,6 +182,8 @@ function install(LocusZoom) {
         end_field: '{{namespace[intervals]}}end',
         filters: [
             { field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU' },
+            { field: '{{namespace[intervals]}}pValue', operator: '<=', value: 0.05 },
+            { field: '{{namespace[intervals]}}fold', operator: '>', value: 2.0 },
         ],
         y_axis: {
             axis: 1,
@@ -174,18 +219,23 @@ function install(LocusZoom) {
         tooltip: intervals_tooltip_layout,
     };
 
+    // This is tied to a rather specific demo, so it's not added to the reusable registry
+    // Highlights areas of a scatter plot that match the HuGeAMP-provided enrichment analysis data
+    // Relies on matching behavior/ interaction (not visible initially)
     const intervals_highlight_layout = {
         id: 'interval_matches',
         type: 'highlight_regions',
         namespace: { intervals: 'intervals' },
         match: { receive: '{{namespace[intervals]}}tissueId' },
-        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry'],
+        fields: ['{{namespace[intervals]}}start', '{{namespace[intervals]}}end', '{{namespace[intervals]}}tissueId', '{{namespace[intervals]}}ancestry', '{{namespace[intervals]}}pValue', '{{namespace[intervals]}}fold'],
         start_field: '{{namespace[intervals]}}start',
         end_field: '{{namespace[intervals]}}end',
         merge_field: '{{namespace[intervals]}}tissueId',
         filters: [
             { field: 'lz_is_match', operator: '=', value: true },
             { field: '{{namespace[intervals]}}ancestry', operator: '=', value: 'EU' },
+            { field: '{{namespace[intervals]}}pValue', operator: '<=', value: 0.05 },
+            { field: '{{namespace[intervals]}}fold', operator: '>', value: 2.0 },
         ],
         color: [{
             field: '{{namespace[intervals]}}tissueId',
@@ -197,6 +247,12 @@ function install(LocusZoom) {
         fill_opacity: 0.1,
     };
 
+    /**
+     * (**extension**) A panel containing an intervals-by-enrichment data layer
+     * @alias module:LocusZoom_Layouts~intervals_enrichment_panel
+     * @type panel
+     * @see {@link module:ext/lz-intervals-enrichment} for required extension and installation instructions
+     */
     const intervals_panel_layout = {
         id: 'intervals_enrichment',
         min_height: 250,
@@ -225,6 +281,15 @@ function install(LocusZoom) {
         data_layers: [intervals_layer_layout],
     };
 
+    /**
+     * (**extension**) A plot layout that shows association summary statistics, genes, and intervals-by-enrichment data.
+     *  This layout provides interactive matching: clicking an interval marking causes area of the scatter plot to be
+     *  highlighted for any annotations that match the specified category.
+     *  It is intended to work with data in the HuGeAMP format.
+     * @alias module:LocusZoom_Layouts~intervals_association_enrichment
+     * @type plot
+     * @see {@link module:ext/lz-intervals-enrichment} for required extension and installation instructions
+     */
     const intervals_plot_layout = {
         state: {},
         width: 800,

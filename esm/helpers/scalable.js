@@ -115,9 +115,7 @@ const ordinal_cycle = (parameters, value, index) => {
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
  * @param parameters
- * @param {Array} [parameters.values] A list of option values for exact chosen values
- * @param {String} [parameters.d3_interpolator] The name of a builtin d3 interpolator to use- eg, a builtin color
- *   scheme. This option is mutually exclusive with values.
+ * @param {Array} [parameters.values] A list of options to choose from
  * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
  *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
  *  discrete categories.

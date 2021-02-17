@@ -1,18 +1,11 @@
-/**
- * "Highlight regions with rectangle" data layer
- *
- * This has several useful modes:
- * 1. Draw one or more specified rectangles as provided from:
- *      A. Hard-coded layout
- *      B. Data fetched from a source (like intervals with start and end coordinates)
- * 2. Fetch data from an external source, and only render the intervals that match criteria
- * @module */
-
 import * as d3 from 'd3';
 
 import BaseDataLayer from './base';
 import {merge} from '../../helpers/layouts';
 
+/**
+ * @memberof module:LocusZoom_DataLayers~highlight_regions
+ */
 const default_layout = {
     color: '#CCCCCC',
     fill_opacity: 0.5,
@@ -28,20 +21,34 @@ const default_layout = {
 };
 
 /**
- * Create a single continuous 2D track that provides information about each datapoint
+ * "Highlight regions with rectangle" data layer.
+ * Creates one (or more) continuous 2D rectangles that mark an entire interval, to the full height of the panel.
  *
- * For example, this can be used to color by membership in a group, alongside information in other panels
+ * Each individual rectangle can be shown in full, or overlapping ones can be merged (eg, based on same category).
+ * The rectangles are generally drawn with partial transparency, and do not respond to mouse events: they are a
+ *   useful highlight tool to draw attention to intervals that contain interesting variants.
  *
+ * This layer has several useful modes:
+ * 1. Draw one or more specified rectangles as provided from:
+ *      A. Hard-coded layout (layout.regions)
+ *      B. Data fetched from a source (like intervals with start and end coordinates)- as specified in layout.fields
+ * 2. Fetch data from an external source, and only render the intervals that match criteria
+ *
+ * @alias module:LocusZoom_DataLayers~highlight_regions
+ * @see {@link module:LocusZoom_DataLayers~BaseDataLayer} for additional layout options
  */
 class HighlightRegions extends BaseDataLayer {
-    /*
-     * @param {Object} layout
-     * @param {Object[]|String} [layout.color]
-     * @param {Array|String} [layout.fill_opacity]
-     * @param {Object[]} layout.filters An array of filter entries specifying which points to draw annotations for.
-     * @param {Object[]]} [layout.regions] A hard-coded list of regions. If provided, takes precedence over data fetched from an external source.
-     * @param {String} [layout.start_field='start'] The field to use for rectangle start coordinate
-     * @param {String} [layout.end_field='end'] The field to use for rectangle end coordinate
+    /**
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.color='#CCCCCC'] The fill color for each rectangle
+     * @param {String|module:LocusZoom_DataLayers~ScalableParameter[]} [layout.fill_opacity=0.5] The opacity (0-1). We recommend partial transparency so that
+     *   rectangles do not hide or interfere with adjacent elements.
+     * @param {Object[]} [layout.filters] An array of filter entries specifying which intervals to draw annotations for.
+     * @param {Object[]} [layout.regions] A hard-coded list of regions. If provided, takes precedence over data fetched from an external source.
+     * @param {String} [layout.start_field='start'] The field to use for rectangle start x coordinate
+     * @param {String} [layout.end_field='end'] The field to use for rectangle end x coordinate
+     * @param {String} [layout.merge_field] If two intervals overlap, they can be "merged" based on a field that
+     *  identifies the category (eg, only rectangles of the same category will be merged).
+     *  This field must be present in order to trigger merge behavior. This is applied after filters.
      */
     constructor(layout) {
         merge(layout, default_layout);
