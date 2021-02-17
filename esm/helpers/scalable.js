@@ -115,7 +115,7 @@ const ordinal_cycle = (parameters, value, index) => {
  *    just to appease D3. This hash function only works if there is a meaningful, stable identifier in the data,
  *    like a category or gene name.
  * @param parameters
- * @param {Array} parameters.values A list of option values
+ * @param {Array} [parameters.values] A list of options to choose from
  * @param {Number} [parameters.max_cache_size=500] The maximum number of values to cache. This option is mostly used
  *  for unit testing, because stable choice is intended for datasets with a relatively limited number of
  *  discrete categories.
@@ -123,9 +123,8 @@ const ordinal_cycle = (parameters, value, index) => {
  * @param index
  */
 let stable_choice = (parameters, value, index) => {
-    const options = parameters.values;
     // Each place the function gets used has its own parameters object. This function thus memoizes per usage
-    //  ("association point color") rather than globally
+    //  ("association - point color - directive 1") rather than globally ("all properties/panels")
     const cache = parameters._cache = parameters._cache || new Map();
     const max_cache_size = parameters.max_cache_size || 500;
 
@@ -146,7 +145,8 @@ let stable_choice = (parameters, value, index) => {
         hash  = ((hash << 5) - hash) + chr;
         hash |= 0; // Convert to 32bit integer
     }
-    // Convert 32 bit integer to be within the range of options allowed
+    // Convert signed 32 bit integer to be within the range of options allowed
+    const options = parameters.values;
     const result = options[Math.abs(hash) % options.length];
     cache.set(value, result);
     return result;

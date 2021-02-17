@@ -140,7 +140,7 @@ describe('Display and parsing helpers', function () {
             const expected_value = '<strong>123 and foo, fooherpderp; </strong>';
             assert.equal(parseFields(data, html), expected_value);
         });
-        it('should hide non-existant fields but show broken ones', function() {
+        it('should hide non-existent fields but show broken ones', function() {
             const data = {
                 'foo:field_1': 12345,
                 'bar:field2': 'foo',

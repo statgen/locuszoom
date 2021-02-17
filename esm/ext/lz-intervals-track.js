@@ -28,7 +28,7 @@
  * LocusZoom.use(IntervalsTrack);
  * ```
  *
- * Then use the layouts made available by this extension. (see demos and documentation for guidance)
+ * Then use the features made available by this extension. (see demos and documentation for guidance)
  * @module
  */
 
@@ -702,7 +702,7 @@ function install (LocusZoom) {
      * (**extension**) A plot layout that shows association summary statistics, genes, and interval data. This example assumes
      *  chromHMM data. (see panel layout)
      * @alias module:LocusZoom_Layouts~interval_association
-     * @type tooltip
+     * @type plot
      * @see {@link module:ext/lz-intervals-track} for required extension and installation instructions
      */
     const intervals_plot_layout = {
