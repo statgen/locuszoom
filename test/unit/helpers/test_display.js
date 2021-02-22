@@ -171,6 +171,20 @@ describe('Display and parsing helpers', function () {
             const expected_value2 = 'A2<br>B2<br>';
             assert.equal(parseFields(data2, html2), expected_value2);
         });
+        it('should handle else in conditions', function () {
+            const data = {
+                'foo:field_1': 1234,
+                'bar:field2': 'foo',
+            };
+            const html = '{{#if foo:field_2}}{{foo:field_2}}{{#else}}{{bar:field2}}{{/if}}';
+            const expected_value = 'foo';
+            assert.equal(parseFields(data, html), expected_value, 'Else block is rendered');
+
+            const html2 = `{{#if foo:field_x}}
+{{foo:field_x}}{{#else}}{{#if foo:field_1}}bar{{/if}} extra_tokens {{bar:field2}}{{/if}}`;
+            const expected_value2 = 'bar extra_tokens foo';
+            assert.equal(parseFields(data, html2), expected_value2, 'Else blocks follow nesting rules and can contain arbitrary additional tokens');
+        });
         it('should treat 0 as truthy in conditions', function() {
             const data = {
                 'foo': 0,
@@ -179,7 +193,7 @@ describe('Display and parsing helpers', function () {
             const expected_value = 'a0';
             assert.equal(parseFields(data, html), expected_value);
         });
-        it('should treat broken/non-existant conditions as false', function() {
+        it('should treat broken/non-existent conditions as false', function() {
             const data = {
                 'foo:field_1': 12345,
                 'bar:field2': 'foo',

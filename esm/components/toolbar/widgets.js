@@ -15,17 +15,19 @@ import {deepCopy} from '../../helpers/layouts';
  *
  * A widget is an empty div rendered on a toolbar that can display custom
  * html of user interface elements.
- * @param {('left'|'right')} [layout.position='left']  Whether to float the widget left or right.
- * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
- *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
- *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
- *  For example, the region_nav_plot toolbar is a defined as a group.
- * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} [layout.color='gray']  Color scheme for the
- *   widget. Applies to buttons and menus.
- * @param [layout.style] CSS styles that will be applied to the widget
- * @param {Toolbar} parent The toolbar that contains this widget
  */
 class BaseWidget {
+    /**
+     * @param {('left'|'right')} [layout.position='left']  Whether to float the widget left or right.
+     * @param {('start'|'middle'|'end')} [layout.group_position] Buttons can optionally be gathered into a visually
+     *  distinctive group whose elements are closer together. If a button is identified as the start or end of a group,
+     *  it will be drawn with rounded corners and an extra margin of spacing from any button not part of the group.
+     *  For example, the region_nav_plot toolbar is a defined as a group.
+     * @param {('gray'|'red'|'orange'|'yellow'|'green'|'blue'|'purple')} [layout.color='gray']  Color scheme for the
+     *   widget. Applies to buttons and menus.
+     * @param [layout.style] CSS styles that will be applied to the widget
+     * @param {Toolbar} parent The toolbar that contains this widget
+     */
     constructor(layout, parent) {
         /** @member {Object} */
         this.layout = layout || {};

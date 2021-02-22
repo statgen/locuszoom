@@ -158,19 +158,27 @@ function parseFields(data, html) {
     // `tokens` is like [token,...]
     // `token` is like {text: '...'} or {variable: 'foo|bar'} or {condition: 'foo|bar'} or {close: 'if'}
     const tokens = [];
-    const regex = /{{(?:(#if )?([A-Za-z0-9_:|]+)|(\/if))}}/;
+    const regex = /{{(?:(#if )?([A-Za-z0-9_:|]+)|(#else)|(\/if))}}/;
     while (html.length > 0) {
         const m = regex.exec(html);
         if (!m) {
-            tokens.push({text: html}); html = '';
+            tokens.push({text: html});
+            html = '';
         } else if (m.index !== 0) {
-            tokens.push({text: html.slice(0, m.index)}); html = html.slice(m.index);
+            tokens.push({text: html.slice(0, m.index)});
+            html = html.slice(m.index);
         } else if (m[1] === '#if ') {
-            tokens.push({condition: m[2]}); html = html.slice(m[0].length);
+            tokens.push({condition: m[2]});
+            html = html.slice(m[0].length);
         } else if (m[2]) {
-            tokens.push({variable: m[2]}); html = html.slice(m[0].length);
-        } else if (m[3] === '/if') {
-            tokens.push({close: 'if'}); html = html.slice(m[0].length);
+            tokens.push({variable: m[2]});
+            html = html.slice(m[0].length);
+        } else if (m[3] === '#else') {
+            tokens.push({branch: 'else'});
+            html = html.slice(m[0].length);
+        } else if (m[4] === '/if') {
+            tokens.push({close: 'if'});
+            html = html.slice(m[0].length);
         } else {
             console.error(`Error tokenizing tooltip when remaining template is ${JSON.stringify(html)} and previous tokens are ${JSON.stringify(tokens)} and current regex match is ${JSON.stringify([m[1], m[2], m[3]])}`);
             html = html.slice(m[0].length);
@@ -181,13 +189,19 @@ function parseFields(data, html) {
         if (typeof token.text !== 'undefined' || token.variable) {
             return token;
         } else if (token.condition) {
-            token.then = [];
+            let dest = token.then = [];
+            token.else = [];
+            // Inside an if block, consume all tokens related to text and/or else block
             while (tokens.length > 0) {
                 if (tokens[0].close === 'if') {
                     tokens.shift();
                     break;
                 }
-                token.then.push(astify());
+                if (tokens[0].branch === 'else') {
+                    tokens.shift();
+                    dest = token.else;
+                }
+                dest.push(astify());
             }
             return token;
         } else {
@@ -230,6 +244,8 @@ function parseFields(data, html) {
                 const condition = resolve(node.condition);
                 if (condition || condition === 0) {
                     return node.then.map(render_node).join('');
+                } else if (node.else) {
+                    return node.else.map(render_node).join('');
                 }
             } catch (error) {
                 console.error(`Error while processing condition ${JSON.stringify(node.variable)}`);
