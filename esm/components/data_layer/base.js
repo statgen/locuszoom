@@ -532,7 +532,7 @@ class BaseDataLayer {
                         const f = new Field(option_layout.field);
                         let extra;
                         try {
-                            extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
+                            extra = this.getElementAnnotation(element_data);
                         } catch (e) {
                             extra = null;
                         }
@@ -814,7 +814,7 @@ class BaseDataLayer {
             // Return the field value or annotation. If no `field` is specified, the filter function will operate on
             //  the entire data object. This behavior is only really useful with custom functions, because the
             //  builtin ones expect to receive a scalar value
-            const extra = this.layer_state.extra_fields[this.getElementId(item)];
+            const extra = this.getElementAnnotation(item);
             const field_value = field ? (new Field(field)).resolve(item, extra) : item;
             if (!test_func(field_value, target)) {
                 is_match = false;
@@ -828,13 +828,13 @@ class BaseDataLayer {
      *
      * @protected
      * @param {String|Object} element The data object or ID string for the element
-     * @param {String} key The name of the annotation to track
+     * @param {String} [key] The name of the annotation to track. If omitted, returns all annotations for this element as an object.
      * @return {*}
      */
     getElementAnnotation (element, key) {
         const id = this.getElementId(element);
         const extra = this.layer_state.extra_fields[id];
-        return extra && extra[key];
+        return key ? (extra && extra[key]) : extra;
     }
 
     /****** Private methods: rarely overridden or modified by external usages */
