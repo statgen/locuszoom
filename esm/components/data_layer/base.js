@@ -990,7 +990,7 @@ class BaseDataLayer {
         this.tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html) {
-            this.tooltips[id].selector.html(parseFields(d, this.layout.tooltip.html));
+            this.tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
         }
         // If the layout allows tool tips on this data layer to be closable then add the close button
         // and add padding to the tooltip to accommodate it
@@ -1399,7 +1399,7 @@ class BaseDataLayer {
                 // Link to a dynamic URL
                 case 'link':
                     if (typeof behavior.href == 'string') {
-                        const url = parseFields(element, behavior.href);
+                        const url = parseFields(behavior.href, element, self.getElementAnnotation(element));
                         if (typeof behavior.target == 'string') {
                             window.open(url, behavior.target);
                         } else {

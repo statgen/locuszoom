@@ -139,16 +139,18 @@ function prettyTicks(range, clip_range, target_tick_count) {
  *  Only works on scalar values in data! Will ignore non-scalars. This is useful in, eg, tooltip templates.
  *
  *  NOTE: Trusts content exactly as given. XSS prevention is the responsibility of the implementer.
- * @param {Object} data
  * @param {String} html A placeholder string in which to substitute fields. Supports several template options:
  *   `{{field_name}}` is a variable placeholder for the value of `field_name` from the provided data
  *   `{{#if field_name}} Conditional text {{/if}}` will insert the contents of the tag only if the value exists.
- *     Since this is only an existence check, **variables with a value of 0 will be evaluated as true**.
  *     This can be used with namespaced values, `{{#if assoc:field}}`; any dynamic namespacing will be applied when the
- *     layout is first retrieved.
+ *     layout is first retrieved. For numbers, transforms like `{{#if field|is_numeric}}` can help to ensure that 0
+ *     values are displayed when expected.
+ *     Can optionally take an else block, useful for things like toggle buttons: {{#if field}} ... {{#else}} ... {{/if}}
+ * @param {Object} data The data associated with a particular element. Eg, tooltips often appear over a specific point.
+ * @param {Object|null} extra Any additional fields (eg element annotations) associated with the specified datum
  * @returns {string}
  */
-function parseFields(data, html) {
+function parseFields(html, data, extra) {
     if (typeof data != 'object') {
         throw new Error('invalid arguments: data is not an object');
     }
@@ -218,7 +220,7 @@ function parseFields(data, html) {
 
     const resolve = function (variable) {
         if (!Object.prototype.hasOwnProperty.call(resolve.cache, variable)) {
-            resolve.cache[variable] = (new Field(variable)).resolve(data);
+            resolve.cache[variable] = (new Field(variable)).resolve(data, extra);
         }
         return resolve.cache[variable];
     };

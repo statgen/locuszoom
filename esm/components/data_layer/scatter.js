@@ -328,7 +328,7 @@ class Scatter extends BaseDataLayer {
 
             this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
-                .text((d) => parseFields(d, data_layer.layout.label.text || ''))
+                .text((d) => parseFields(data_layer.layout.label.text || '', d, this.getElementAnnotation(d)))
                 .attr('x', (d) => {
                     return d[xcs]
                         + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
