@@ -242,7 +242,7 @@ function parseFields(data, html) {
         } else if (node.condition) {
             try {
                 const condition = resolve(node.condition);
-                if (condition || condition === 0) {
+                if (condition) {
                     return node.then.map(render_node).join('');
                 } else if (node.else) {
                     return node.else.map(render_node).join('');

@@ -126,6 +126,19 @@ export function htmlescape (value) {
 }
 
 /**
+ * Return true if the value is numeric (including 0)
+ *
+ * This is useful in template code, where we might wish to hide a field that is absent, but show numeric values even if they are 0
+ *   Eg, `{{#if value|is_numeric}}...{{/if}}
+ *
+ * @param {Number} value
+ * @return {boolean}
+ */
+export function is_numeric(value) {
+    return typeof value === 'number';
+}
+
+/**
  * URL-encode the provided text, eg for constructing hyperlinks
  * @param {String} value
  * @return {string}

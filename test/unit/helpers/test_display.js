@@ -184,14 +184,23 @@ describe('Display and parsing helpers', function () {
 {{foo:field_x}}{{#else}}{{#if foo:field_1}}bar{{/if}} extra_tokens {{bar:field2}}{{/if}}`;
             const expected_value2 = 'bar extra_tokens foo';
             assert.equal(parseFields(data, html2), expected_value2, 'Else blocks follow nesting rules and can contain arbitrary additional tokens');
+
+            const html3 = '{{#if foo:field_x}}{{#else}}bare else{{/if}}';
+            const expected_value3 = 'bare else';
+            assert.equal(parseFields(data, html3), expected_value3, 'Else blocks work with empty if');
         });
-        it('should treat 0 as truthy in conditions', function() {
+        it('should allow filters on values, eg 0 is_numeric', function() {
             const data = {
                 'foo': 0,
             };
+
             const html = 'a{{#if foo}}{{foo}}{{/if}}';
-            const expected_value = 'a0';
-            assert.equal(parseFields(data, html), expected_value);
+            const expected_value = 'a';
+            assert.equal(parseFields(data, html), expected_value, '0 is falsy under normal circumstances');
+
+            const html2 = 'a{{#if foo|is_numeric}}{{foo}}{{/if}}';
+            const expected_value2 = 'a0';
+            assert.equal(parseFields(data, html2), expected_value2, 'A filter can modify the value to be truthy');
         });
         it('should treat broken/non-existent conditions as false', function() {
             const data = {
