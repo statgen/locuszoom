@@ -30,10 +30,11 @@ const standard_association_tooltip = {
     html: `<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>
         P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>
         Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>
+        {{#if {{namespace[ld]}}isrefvar}}<strong>LD Reference Variant</strong>{{#else}}
         <a href="javascript:void(0);" 
         onclick="var data = this.parentNode.__data__;
                  data.getDataLayer().makeLDReference(data);"
-                 >Make LD Reference</a><br>`,
+                 >Make LD Reference</a><br>{{/if}}`,
 };
 
 const standard_association_tooltip_with_label = function() {
