@@ -365,9 +365,6 @@ class Panel {
         // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
         if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
-        } else if (!this.event_hooks[event]) {
-            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
-            return this;
         }
         if (typeof eventData === 'boolean' && arguments.length === 2) {
             // Overloaded method signature: emit(event, bubble)
@@ -376,12 +373,18 @@ class Panel {
         }
         const sourceID = this.getBaseId();
         const eventContext = { sourceID: sourceID, target: this, data: eventData || null };
-        this.event_hooks[event].forEach((hookToRun) => {
-            // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
-            // registered as a handler, the previously bound `this` will override anything provided to `call` below.
-            hookToRun.call(this, eventContext);
-        });
+
+        if (this.event_hooks[event]) {
+            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
+            this.event_hooks[event].forEach((hookToRun) => {
+                // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+                // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+                hookToRun.call(this, eventContext);
+            });
+        }
+
         if (bubble && this.parent) {
+            // Even if this event has no listeners locally, it might still have listeners on the parent
             this.parent.emit(event, eventContext);
         }
         return this;
