@@ -328,7 +328,7 @@ class Scatter extends BaseDataLayer {
 
             this.label_texts = this.label_groups.merge(groups_enter)
                 .append('text')
-                .text((d) => parseFields(d, data_layer.layout.label.text || ''))
+                .text((d) => parseFields(data_layer.layout.label.text || '', d, this.getElementAnnotation(d)))
                 .attr('x', (d) => {
                     return d[xcs]
                         + Math.sqrt(data_layer.resolveScalableParameter(data_layer.layout.point_size, d))
@@ -417,7 +417,13 @@ class Scatter extends BaseDataLayer {
             .call(this.applyBehaviors.bind(this));
     }
 
-    // Method to set a passed element as the LD reference in the plot-level state
+    /**
+     * Method to set a passed element as the LD reference variant in the plot-level state. Triggers a re-render
+     *   so that the plot will update with the new LD information.
+     * This is useful in tooltips, eg the "make LD reference" action link for GWAS scatter plots.
+     * @param {object} element The data associated with a particular plot element
+     * @return {Promise}
+      */
     makeLDReference(element) {
         let ref = null;
         if (typeof element == 'undefined') {
@@ -433,7 +439,7 @@ class Scatter extends BaseDataLayer {
         } else {
             ref = element.toString();
         }
-        this.parent_plot.applyState({ ldrefvar: ref });
+        return this.parent_plot.applyState({ ldrefvar: ref });
     }
 }
 

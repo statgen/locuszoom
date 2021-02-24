@@ -1429,7 +1429,7 @@ class Panel {
             this.svg[`${axis}_axis_label`]
                 .attr('x', axis_params[axis].label_x)
                 .attr('y', axis_params[axis].label_y)
-                .text(parseFields(this.state, label))
+                .text(parseFields(label, this.state))
                 .attr('fill', 'currentColor');
             if (axis_params[axis].label_rotate !== null) {
                 this.svg[`${axis}_axis_label`]

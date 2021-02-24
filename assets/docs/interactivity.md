@@ -316,7 +316,7 @@ The first interactive feature that most LocusZoom users notice is the *tooltip*:
 
 In addition to showing data associated with a field, tooltips can be customized with interactive action links that modify `plot.state` (eg setting the LD reference variant), or trigger annotations (like showing a label).
 
-A tooltip is defined as an object describing when to display it, as well as the HTML template to render. It responds to the same LocusZoom template syntax supported elsewhere. For example, values can be embedded in the string with curly braces (`{{assoc:fieldname}}`) and a simple conditional syntax is supported to only render text if a value is defined: `{{#if sourcename:field_name}} Conditional text {{/if}}`.
+A tooltip is defined as an object describing when to display it, as well as the HTML template to render. It responds to the same LocusZoom template syntax supported elsewhere. For example, values can be embedded in the string with curly braces (`{{assoc:fieldname}}`) and a simple conditional syntax is supported to only render text if a value is defined: `{{#if sourcename:field_name}} Conditional text {{#else}} Optional else block {{/if}}`.
 
 ```javascript
 {

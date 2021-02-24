@@ -998,16 +998,21 @@ describe('LocusZoom.DataLayer', function () {
         it('can store user-defined marks for points that persist across re-renders', function () {
             const data_layer = this.plot.panels.p.data_layers.d;
             // Set the annotation for a point with id value of "a"
-            data_layer.setElementAnnotation({'d:id': 'a'}, 'custom_field', 'some_value');
+            const datum = { 'd:id': 'a' };
+            data_layer.setElementAnnotation(datum, 'custom_field', 'some_value');
 
             // Find the element annotation for this point via several different ways
             assert.equal(data_layer.layer_state.extra_fields['plot_p_d-a']['custom_field'], 'some_value', 'Found in internal storage (as elementID)');
-            assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
+            assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (from id_field)');
             assert.equal(data_layer.getElementAnnotation({'d:id': 'b'}, 'custom_field'), null, 'If no annotation found, returns null. Annotation does not return actual field values.');
-            assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+            assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Found via helper method (as data object)');
+
+            // If a datum (but no field) is specified, it will return the appropriate result
+            assert.deepEqual(data_layer.getElementAnnotation(datum), {custom_field: 'some_value'}, 'When no key is specified, return object with all annotations');
+            assert.deepEqual(data_layer.getElementAnnotation({'d:id': 'b'}), undefined, 'When no key is specified, and no annotations exist, then return nothing');
 
             return this.plot.applyState().then(function() {
-                assert.equal(data_layer.getElementAnnotation({'d:id': 'a'}, 'custom_field'), 'some_value', 'Annotations persist across renderings');
+                assert.equal(data_layer.getElementAnnotation(datum, 'custom_field'), 'some_value', 'Annotations persist across renderings');
             });
         });
 

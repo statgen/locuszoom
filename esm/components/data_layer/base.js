@@ -138,11 +138,10 @@ class BaseDataLayer {
      * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
      * @param {object} [layout.tooltip.hide] Define when to hide a tooltip in terms of interaction states, eg, `{ and: ['unhighlighted', 'unselected'] }`
      * @param {boolean} [layout.tooltip.closable] Whether a tool tip should render a "close" button in the upper right corner.
-     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax is
-     *   inspired by Mustache, including `{{sourcename:fieldname}} to insert a field value from the datum associated with
-     *   the tooltip/element. Conditional tags are also supported using the format:
-     *   `{{#if sourcename:fieldname}}render text here{{/if}}`.
-     *  This only checks if the value is present; it does not check if the value is truthy.
+     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax uses curly braces to allow simple expressions:
+     *   eg `{{sourcename:fieldname}} to insert a field value from the datum associated with
+     *   the tooltip/element. Conditional tags are supported using the format:
+     *   `{{#if sourcename:fieldname|transforms_can_be_used_too}}render text here{{#else}}Optional else branch{{/if}}`.
      * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='horizontal'] Where to draw the tooltip relative to the datum.
      *  Typically tooltip positions are centered around the midpoint of the data element, subject to overflow off the edge of the plot.
      * @param {object} [layout.behaviors] LocusZoom data layers support the binding of mouse events to one or more
@@ -532,7 +531,7 @@ class BaseDataLayer {
                         const f = new Field(option_layout.field);
                         let extra;
                         try {
-                            extra = this.layer_state && this.layer_state.extra_fields[this.getElementId(element_data)];
+                            extra = this.getElementAnnotation(element_data);
                         } catch (e) {
                             extra = null;
                         }
@@ -814,7 +813,7 @@ class BaseDataLayer {
             // Return the field value or annotation. If no `field` is specified, the filter function will operate on
             //  the entire data object. This behavior is only really useful with custom functions, because the
             //  builtin ones expect to receive a scalar value
-            const extra = this.layer_state.extra_fields[this.getElementId(item)];
+            const extra = this.getElementAnnotation(item);
             const field_value = field ? (new Field(field)).resolve(item, extra) : item;
             if (!test_func(field_value, target)) {
                 is_match = false;
@@ -828,13 +827,13 @@ class BaseDataLayer {
      *
      * @protected
      * @param {String|Object} element The data object or ID string for the element
-     * @param {String} key The name of the annotation to track
+     * @param {String} [key] The name of the annotation to track. If omitted, returns all annotations for this element as an object.
      * @return {*}
      */
     getElementAnnotation (element, key) {
         const id = this.getElementId(element);
         const extra = this.layer_state.extra_fields[id];
-        return extra && extra[key];
+        return key ? (extra && extra[key]) : extra;
     }
 
     /****** Private methods: rarely overridden or modified by external usages */
@@ -990,7 +989,7 @@ class BaseDataLayer {
         this.tooltips[id].arrow = null;
         // Set the new HTML
         if (this.layout.tooltip.html) {
-            this.tooltips[id].selector.html(parseFields(d, this.layout.tooltip.html));
+            this.tooltips[id].selector.html(parseFields(this.layout.tooltip.html, d, this.getElementAnnotation(d)));
         }
         // If the layout allows tool tips on this data layer to be closable then add the close button
         // and add padding to the tooltip to accommodate it
@@ -1399,7 +1398,7 @@ class BaseDataLayer {
                 // Link to a dynamic URL
                 case 'link':
                     if (typeof behavior.href == 'string') {
-                        const url = parseFields(element, behavior.href);
+                        const url = parseFields(behavior.href, element, self.getElementAnnotation(element));
                         if (typeof behavior.target == 'string') {
                             window.open(url, behavior.target);
                         } else {

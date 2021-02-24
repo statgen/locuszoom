@@ -93,10 +93,10 @@ describe('Display and parsing helpers', function () {
         });
         it('should require that data be present and be an object', function() {
             assert.throws(function() {
-                parseFields('foo', 'html');
+                parseFields('html', 'foo');
             });
             assert.throws(function() {
-                parseFields(123, 'html');
+                parseFields('html', 123);
             });
         });
         it('should require that html be present and be a string', function() {
@@ -104,32 +104,40 @@ describe('Display and parsing helpers', function () {
                 parseFields({}, {});
             });
             assert.throws(function() {
-                parseFields({}, 123);
+                parseFields(123, {});
             });
             assert.throws(function() {
-                parseFields({}, null);
+                parseFields(null, {});
             });
         });
         it('should return html untouched if passed a null or empty data object', function() {
-            assert.equal(parseFields(null, 'foo'), 'foo');
-            assert.equal(parseFields({}, 'foo'), 'foo');
+            assert.equal(parseFields('foo', null), 'foo');
+            assert.equal(parseFields('foo', {}), 'foo');
         });
         it('should parse every matching scalar field from a data object into the html string', function() {
             let data, html, expected_value;
             data = { field1: 123, field2: 'foo' };
             html = '<strong>{{field1}} and {{field2}}</strong>';
             expected_value = '<strong>123 and foo</strong>';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
             html = '<strong>{{field1}} and {{field2}} or {{field1}}{{field1}}</strong>';
             expected_value = '<strong>123 and foo or 123123</strong>';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
+        });
+        it('should consider fields in both data and annotations where appropriate', function() {
+            const data = { field1: 123, field2: 'fire' };
+            const annotations = { field3: 'squid' };
+
+            const template = '<strong>{{field2}} {{field3}} {{no_match}}</strong>';
+            const expected_value = '<strong>fire squid </strong>';
+            assert.equal(parseFields(template, data, annotations), expected_value, 'Uses fields from annotations and hides nonexistent fields');
         });
         it('should skip parsing of non-scalar fields but not throw an error', function() {
             let data, html, expected_value;
             data = { field1: 123, field2: 'foo', field3: { foo: 'bar' }, field4: [ 4, 5, 6 ], field5: true, field6: NaN };
             html = '<strong>{{field1}}, {{field2}}, {{field3}}, {{field4}}, {{field5}}, {{field6}}</strong>';
             expected_value = '<strong>123, foo, {{field3}}, {{field4}}, true, NaN</strong>';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
         });
         it('should parse all fields that match the general field pattern whether explicitly present in the data object or not', function() {
             const data = {
@@ -138,7 +146,7 @@ describe('Display and parsing helpers', function () {
             };
             const html = '<strong>{{foo:field_1}} and {{bar:field2}}, {{bar:field2|herp|derp}}; {{field3}}</strong>';
             const expected_value = '<strong>123 and foo, fooherpderp; </strong>';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
         });
         it('should hide non-existent fields but show broken ones', function() {
             const data = {
@@ -147,7 +155,7 @@ describe('Display and parsing helpers', function () {
             };
             const html = '{{bar:field2||nope|}}{{wat}}{{bar:field2|herp||derp}}';
             const expected_value = '{{bar:field2||nope|}}{{bar:field2|herp||derp}}';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
         });
         it('should handle conditional blocks', function() {
             const data = {
@@ -159,7 +167,7 @@ describe('Display and parsing helpers', function () {
                 + '{{#if nope}}wat{{/if}}'
                 + '{{bar:field2|herp|derp}}; {{field3}}</strong>{{/if}}';
             const expected_value = '<strong>1234 and foo, fooherpderp; </strong>';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
             const data2 = {
                 'fieldA': '',
                 'fieldB': '',
@@ -169,26 +177,49 @@ describe('Display and parsing helpers', function () {
                 + '{{#if foo:fieldB}}B1<br>{{/if}}'
                 + '{{#if foo:fieldB|derp}}B2<br>{{/if}}';
             const expected_value2 = 'A2<br>B2<br>';
-            assert.equal(parseFields(data2, html2), expected_value2);
+            assert.equal(parseFields(html2, data2), expected_value2);
         });
-        it('should treat 0 as truthy in conditions', function() {
+        it('should handle else in conditions', function () {
+            const data = {
+                'foo:field_1': 1234,
+                'bar:field2': 'foo',
+            };
+            const html = '{{#if foo:field_2}}{{foo:field_2}}{{#else}}{{bar:field2}}{{/if}}';
+            const expected_value = 'foo';
+            assert.equal(parseFields(html, data), expected_value, 'Else block is rendered');
+
+            const html2 = `{{#if foo:field_x}}
+{{foo:field_x}}{{#else}}{{#if foo:field_1}}bar{{/if}} extra_tokens {{bar:field2}}{{/if}}`;
+            const expected_value2 = 'bar extra_tokens foo';
+            assert.equal(parseFields(html2, data), expected_value2, 'Else blocks follow nesting rules and can contain arbitrary additional tokens');
+
+            const html3 = '{{#if foo:field_x}}{{#else}}bare else{{/if}}';
+            const expected_value3 = 'bare else';
+            assert.equal(parseFields(html3, data), expected_value3, 'Else blocks work with empty if');
+        });
+        it('should allow filters on values, eg 0 is_numeric', function() {
             const data = {
                 'foo': 0,
             };
+
             const html = 'a{{#if foo}}{{foo}}{{/if}}';
-            const expected_value = 'a0';
-            assert.equal(parseFields(data, html), expected_value);
+            const expected_value = 'a';
+            assert.equal(parseFields(html, data), expected_value, '0 is falsy under normal circumstances');
+
+            const html2 = 'a{{#if foo|is_numeric}}{{foo}}{{/if}}';
+            const expected_value2 = 'a0';
+            assert.equal(parseFields(html2, data), expected_value2, 'A filter can modify the value to be truthy');
         });
-        it('should treat broken/non-existant conditions as false', function() {
+        it('should treat broken/non-existent conditions as false', function() {
             const data = {
                 'foo:field_1': 12345,
                 'bar:field2': 'foo',
             };
             const html = 'a{{#if foo:field_3}}b{{/if}}c';
             const expected_value = 'ac';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
             const html2 = 'a{{#if foo:field_1|nope}}b{{/if}}c';
-            assert.equal(parseFields(data, html2), expected_value);
+            assert.equal(parseFields(html2, data), expected_value);
         });
         it('should handle nasty input', function() {
             const data = {
@@ -202,7 +233,7 @@ describe('Display and parsing helpers', function () {
             const expected_value = '{{#iff foo:field_1}}<strong>{{12345}}'
                 + ' and {{bar:field2||nope|}}, '
                 + '{{#if }}';
-            assert.equal(parseFields(data, html), expected_value);
+            assert.equal(parseFields(html, data), expected_value);
         });
     });
 

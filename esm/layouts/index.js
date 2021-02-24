@@ -30,10 +30,11 @@ const standard_association_tooltip = {
     html: `<strong>{{{{namespace[assoc]}}variant|htmlescape}}</strong><br>
         P Value: <strong>{{{{namespace[assoc]}}log_pvalue|logtoscinotation|htmlescape}}</strong><br>
         Ref. Allele: <strong>{{{{namespace[assoc]}}ref_allele|htmlescape}}</strong><br>
+        {{#if {{namespace[ld]}}isrefvar}}<strong>LD Reference Variant</strong>{{#else}}
         <a href="javascript:void(0);" 
         onclick="var data = this.parentNode.__data__;
                  data.getDataLayer().makeLDReference(data);"
-                 >Make LD Reference</a><br>`,
+                 >Make LD Reference</a>{{/if}}<br>`,
 };
 
 const standard_association_tooltip_with_label = function() {
@@ -44,7 +45,7 @@ const standard_association_tooltip_with_label = function() {
                   onclick="var item = this.parentNode.__data__, layer = item.getDataLayer(); 
                   var current = layer.getElementAnnotation(item, 'lz_show_label'); 
                   layer.setElementAnnotation(item, 'lz_show_label', !current );
-                  layer.parent_plot.applyState();">Toggle label</a>`;
+                  layer.parent_plot.applyState();">{{#if lz_show_label}}Hide{{#else}}Show{{/if}} label</a>`;
     return base;
 }();
 
