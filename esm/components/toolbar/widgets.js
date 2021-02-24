@@ -179,7 +179,8 @@ class BaseWidget {
 /**
  * Plots and panels may have a "toolbar" element suited for showing HTML widgets that may be interactive.
  *   When widgets need to incorporate a generic button, or additionally a button that generates a menu, this
- *   class provides much of the necessary framework.
+ *   class provides much of the necessary framework. This widget is rarely used directly; it is usually used as
+ *   part of the code for other widgets.
  * @alias module:LocusZoom_Widgets~_Button
  * @param {BaseWidget} parent
  */
@@ -662,32 +663,6 @@ class Title extends BaseWidget {
             title += ` <small>${this.layout.subtitle}</small>`;
         }
         this.title_selector.html(title);
-        return this;
-    }
-}
-
-/**
- * Display the current scale of the genome region displayed in the plot, as defined by the difference between
- *  `state.end` and `state.start`.
- *  FIXME: Move to an extension?
- * @alias module:LocusZoom_Widgets~region_scale
- * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
- */
-class RegionScale extends BaseWidget {
-    update() {
-        if (!isNaN(this.parent_plot.state.start) && !isNaN(this.parent_plot.state.end)
-            && this.parent_plot.state.start !== null && this.parent_plot.state.end !== null) {
-            this.selector.style('display', null);
-            this.selector.html(positionIntToString(this.parent_plot.state.end - this.parent_plot.state.start, null, true));
-        } else {
-            this.selector.style('display', 'none');
-        }
-        if (this.layout.class) {
-            this.selector.attr('class', this.layout.class);
-        }
-        if (this.layout.style) {
-            applyStyles(this.selector, this.layout.style);
-        }
         return this;
     }
 }
@@ -1557,7 +1532,6 @@ export {
     Menu as menu,
     MovePanelDown as move_panel_down,
     MovePanelUp as move_panel_up,
-    RegionScale as region_scale,
     ResizeToData as resize_to_data,
     SetState as set_state,
     ShiftRegion as shift_region,
