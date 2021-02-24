@@ -48,12 +48,15 @@ describe('Transformation Functions', function() {
     });
 
     describe('is_numeric', function () {
-        it('should special-case zero as a truthy value, so that numbers display in tables', function () {
+        it('should return true for numbers and false for strings that look like numbers', function () {
             const scenarios = [
                 [12, true],
                 [0, true],
                 [1.23, true],
+                [Infinity, true],
+                [NaN, true], // On the fence about this one, but it *is* a float value...
                 ['12', false],
+                ['aaa', false],
             ];
 
             for ( let [value, expected] of scenarios) {

@@ -138,11 +138,10 @@ class BaseDataLayer {
      * @param {object} [layout.tooltip.show] Define when to show a tooltip in terms of interaction states, eg, `{ or: ['highlighted', 'selected'] }`
      * @param {object} [layout.tooltip.hide] Define when to hide a tooltip in terms of interaction states, eg, `{ and: ['unhighlighted', 'unselected'] }`
      * @param {boolean} [layout.tooltip.closable] Whether a tool tip should render a "close" button in the upper right corner.
-     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax is
-     *   inspired by Mustache, including `{{sourcename:fieldname}} to insert a field value from the datum associated with
-     *   the tooltip/element. Conditional tags are also supported using the format:
-     *   `{{#if sourcename:fieldname}}render text here{{/if}}`.
-     *  This only checks if the value is present; it does not check if the value is truthy.
+     * @param {string} [layout.tooltip.html] HTML template to render inside the tool tip. The template syntax uses curly braces to allow simple expressions:
+     *   eg `{{sourcename:fieldname}} to insert a field value from the datum associated with
+     *   the tooltip/element. Conditional tags are supported using the format:
+     *   `{{#if sourcename:fieldname|transforms_can_be_used_too}}render text here{{#else}}Optional else branch{{/if}}`.
      * @param {'horizontal'|'vertical'|'top'|'bottom'|'left'|'right'} [layout.tooltip_positioning='horizontal'] Where to draw the tooltip relative to the datum.
      *  Typically tooltip positions are centered around the midpoint of the data element, subject to overflow off the edge of the plot.
      * @param {object} [layout.behaviors] LocusZoom data layers support the binding of mouse events to one or more
