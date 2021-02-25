@@ -805,7 +805,7 @@ class GwasCatalogLZ extends BaseApiAdapter {
      * @param {Object} config.params
      * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
      *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
-     * @param {Number} [config.params.source=6] The ID of the chosen catalog. Most usages should omit this parameter and
+     * @param {Number} [config.params.source] The ID of the chosen catalog. Most usages should omit this parameter and
      *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent EBI GWAS catalog, GRCh37.
      */
     constructor(config) {
@@ -819,17 +819,14 @@ class GwasCatalogLZ extends BaseApiAdapter {
     getURL(state, chain, fields) {
         // This is intended to be aligned with another source- we will assume they are always ordered by position, asc
         //  (regardless of the actual match field)
-        const build_option = state.genome_build || this.params.build;
-        validateBuildSource(this.constructor.name, build_option, null); // Source can override build- not mutually exclusive
+        const build = state.genome_build || this.params.build;
+        const source = this.params.source;
+        validateBuildSource(this.constructor.name, build, source);
 
-        // Most of our annotations will respect genome build before any other option.
-        //   But there can be more than one GWAS catalog version available in the same API, for the same build- an
-        //   explicit config option will always take
-        //   precedence.
-        // See: http://portaldev.sph.umich.edu/api/v1/annotation/gwascatalog/?format=objects
-        const default_source = (build_option === 'GRCh38') ? 5 : 6;  // EBI GWAS catalog
-        const source = this.params.source || default_source;
-        return `${this.url  }?format=objects&sort=pos&filter=id eq ${source} and chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and id eq ${source}`;
+        return `${this.url  }?format=objects&sort=pos&filter=chrom eq '${state.chr}' and pos ge ${state.start} and pos le ${state.end}${source_query}`;
     }
 
     findMergeFields(records) {
@@ -917,7 +914,7 @@ class GwasCatalogLZ extends BaseApiAdapter {
  * @param {Object} config.params
  * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
- * @param {Number} [config.params.source=5] The ID of the chosen gene dataset. Most usages should omit this parameter and
+ * @param {Number} [config.params.source] The ID of the chosen gene dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent GENCODE data, GRCh37.
  */
 class GeneLZ extends BaseApiAdapter {
@@ -929,13 +926,10 @@ class GeneLZ extends BaseApiAdapter {
         let source = this.params.source;
         validateBuildSource(this.constructor.name, build, source);
 
-        if (build) {
-            // If build specified, we auto-select the best current portaldev API dataset for that build
-            // If build is not specified, we use the exact source ID provided by the user.
-            // See: https://portaldev.sph.umich.edu/api/v1/annotation/genes/sources/?format=objects
-            source = (build === 'GRCh38') ? 4 : 5;
-        }
-        return `${this.url}?filter=source in ${source} and chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and source in ${source}`;
+        return `${this.url}?filter=chrom eq '${state.chr}' and start le ${state.end} and end ge ${state.start}${source_query}`;
     }
 
     /**
@@ -1079,7 +1073,7 @@ class GeneConstraintLZ extends BaseApiAdapter {
  * @param {Object} config.params
  * @param [config.params.build] The genome build to use when calculating LD relative to a specified reference variant.
  *  May be overridden by a global parameter `plot.state.genome_build` so that all datasets can be fetched for the appropriate build in a consistent way.
- * @param {Number} [config.params.source=15] The ID of the chosen dataset. Most usages should omit this parameter and
+ * @param {Number} [config.params.source] The ID of the chosen dataset. Most usages should omit this parameter and
  *  let LocusZoom choose the newest available dataset to use based on the genome build: defaults to recent HAPMAP recombination rate, GRCh37.
  */
 class RecombLZ extends BaseApiAdapter {
@@ -1091,10 +1085,10 @@ class RecombLZ extends BaseApiAdapter {
         let source = this.params.source;
         validateBuildSource(this.constructor.SOURCE_NAME, build, source);
 
-        if (build) { // If build specified, choose a known Portal API dataset IDs (build 37/38)
-            source = (build === 'GRCh38') ? 16 : 15;
-        }
-        return `${this.url}?filter=id in ${source} and chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}`;
+        // If a build name is provided, it takes precedence (the API will attempt to auto-select newest dataset based on the requested genome build).
+        //  Build and source are mutually exclusive, because hard-coded source IDs tend to be out of date
+        const source_query = build ? `&build=${build}` : ` and id in ${source}`;
+        return `${this.url}?filter=chromosome eq '${state.chr}' and position le ${state.end} and position ge ${state.start}${source_query}`;
     }
 }
 
@@ -1123,7 +1117,6 @@ class StaticSource extends BaseAdapter {
         return Promise.resolve(this._data);
     }
 }
-
 
 /**
  * Retrieve PheWAS data retrieved from a LocusZoom/PortalDev compatible API
@@ -1155,7 +1148,6 @@ class PheWASLZ extends BaseApiAdapter {
         return this.getURL(state, chain, fields);
     }
 }
-
 
 /**
  * Base class for "connectors"- this is a highly specialized kind of adapter that is rarely used in most LocusZoom
