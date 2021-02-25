@@ -7,8 +7,6 @@
  *  - The "data layers" button, which allows fine control over multiple data layers shown in the same panel
  *    (show/hide, fade, change order, etc). This is powerful, but rarely used because showing many datasets in a small
  *    space makes data hard to see. (see "multiple phenotypes layered" demo)
- *  - The "region_scale" widget is a text box that shows the start and end coordinates of the display. Few users are
- *    interested in seeing these coordinates with this level of precision, but it can be useful for debugging.
  *
  * ### Loading and usage
  * The page must incorporate and load all libraries before this file can be used, including:
@@ -32,9 +30,6 @@
  * @module
  */
 import {deepCopy} from '../helpers/layouts';
-import {positionIntToString} from '../helpers/display';
-import {applyStyles} from '../helpers/common';
-import {BaseWidget} from '../components/toolbar/widgets';
 
 // In order to work in a UMD context, this module imports the top-level LocusZoom symbol
 
@@ -200,30 +195,6 @@ function install(LocusZoom) {
         }
     }
 
-    /**
-     * Display the current scale of the genome region displayed in the plot, as defined by the difference between
-     *  `state.end` and `state.start`.
-     * @alias module:ext/lz-widget-addons~region_scale
-     * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
-     */
-    class RegionScale extends BaseWidget {
-        update() {
-            if (!isNaN(this.parent_plot.state.start) && !isNaN(this.parent_plot.state.end)
-                && this.parent_plot.state.start !== null && this.parent_plot.state.end !== null) {
-                this.selector.style('display', null);
-                this.selector.html(positionIntToString(this.parent_plot.state.end - this.parent_plot.state.start, null, true));
-            } else {
-                this.selector.style('display', 'none');
-            }
-            if (this.layout.class) {
-                this.selector.attr('class', this.layout.class);
-            }
-            if (this.layout.style) {
-                applyStyles(this.selector, this.layout.style);
-            }
-            return this;
-        }
-    }
 
     /**
      * Menu for manipulating multiple data layers in a single panel: show/hide, change order, etc.
@@ -344,7 +315,6 @@ function install(LocusZoom) {
 
     LocusZoom.Widgets.add('covariates_model', CovariatesModel);
     LocusZoom.Widgets.add('data_layers', DataLayersWidget);
-    LocusZoom.Widgets.add('region_scale', RegionScale);
 
     LocusZoom.Layouts.add('tooltip', 'covariates_model_association', covariates_model_tooltip);
     LocusZoom.Layouts.add('toolbar', 'covariates_model_plot', covariates_model_plot);

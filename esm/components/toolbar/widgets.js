@@ -646,6 +646,7 @@ class Button {
  * @alias module:LocusZoom_Widgets~title
  * @param {string} layout.title Text or HTML to render
  * @param {string} [layout.subtitle] Small text to render next to the title
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
  */
 class Title extends BaseWidget {
     show() {
@@ -667,6 +668,33 @@ class Title extends BaseWidget {
     }
 }
 
+/**
+ * Display the current scale of the genome region displayed in the plot, as defined by the difference between
+ *  `state.end` and `state.start`. Few users are interested in seeing coordinates with this level of precision, but
+ *  it can be useful for debugging.
+ *  TODO: It would be nice to move this to an extension, but helper functions drag in large dependencies as a side effect.
+ *    (we'd need to reorganize internals a bit before moving this widget)
+ * @alias module:LocusZoom_Widgets~region_scale
+ * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
+ */
+class RegionScale extends BaseWidget {
+    update() {
+        if (!isNaN(this.parent_plot.state.start) && !isNaN(this.parent_plot.state.end)
+            && this.parent_plot.state.start !== null && this.parent_plot.state.end !== null) {
+            this.selector.style('display', null);
+            this.selector.html(positionIntToString(this.parent_plot.state.end - this.parent_plot.state.start, null, true));
+        } else {
+            this.selector.style('display', 'none');
+        }
+        if (this.layout.class) {
+            this.selector.attr('class', this.layout.class);
+        }
+        if (this.layout.style) {
+            applyStyles(this.selector, this.layout.style);
+        }
+        return this;
+    }
+}
 
 /**
  * The filter field widget has triggered an update to the plot filtering rules
@@ -1596,6 +1624,7 @@ export {
     Menu as menu,
     MovePanelDown as move_panel_down,
     MovePanelUp as move_panel_up,
+    RegionScale as region_scale,
     ResizeToData as resize_to_data,
     SetState as set_state,
     ShiftRegion as shift_region,

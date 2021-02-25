@@ -6,6 +6,38 @@ import sinon from 'sinon';
 
 
 describe('Toolbar widgets', function () {
+    describe('Region Scale Widget', function() {
+        beforeEach(function() {
+            var datasources = new DataSources();
+            var layout = {
+                state: {
+                    chr: 1,
+                    start: 126547453,
+                    end: 126847453,
+                },
+                toolbar: {
+                    widgets: [
+                        { type: 'region_scale' },
+                    ],
+                },
+            };
+            d3.select('body').append('div').attr('id', 'plot');
+            this.plot = populate('#plot', datasources, layout);
+        });
+        afterEach(function() {
+            d3.select('#plot').remove();
+            this.plot = null;
+        });
+        it('Should show initial region scale from state', function() {
+            assert.equal(this.plot.toolbar.widgets[0].selector.html(), '300.00 Kb');
+        });
+        it('Should show updated region scale from state as state region boundaries change', function() {
+            return this.plot.applyState({ chr: 1, start: 126547453, end: 126947453 }).then(() => {
+                assert.equal(this.plot.toolbar.widgets[0].selector.html(), '400.00 Kb');
+            });
+        });
+    });
+
     describe('Filter fields Widget', function () {
         beforeEach(function() {
             const datasources = new DataSources()
