@@ -98,6 +98,8 @@ Below is a partial list of interesting events; consult the documentation for a f
 * `region_changed`
 * `state_changed`
 
+Custom widget or tooltip code can fire any event you want. For example, many widgets fire events to describe buttons that are clicked. Events are not limited to controlling the page- they can also be used in combination with page analytics to identify which options or features are being used the most.  
+
 ## Share data with other widgets via `subscribeToData`
 Using the same mechanisms and syntax as an LZ data layer, let arbitrary parts of the page listen for new data by asking for the (namespaced) fields of interest. 
 

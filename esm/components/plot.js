@@ -31,7 +31,7 @@ const default_layout = {
 
 
 /**
- * Fields common to every event emitted by LocusZoom.
+ * Fields common to every event emitted by LocusZoom. This is not an actual event; see list below.
  * @event baseLZEvent
  * @type {object}
  * @property {string} sourceID The fully qualified ID of the entity that originated the event, eg `lz-plot.association`
@@ -40,38 +40,41 @@ const default_layout = {
  */
 
 /**
- * A panel was removed from the plot.
+ * A panel was removed from the plot. Commonly initiated by the "remove panel" toolbar widget.
  * @event panel_removed
  * @property {string} data The id of the panel that was removed (eg 'genes')
  * @see event:baseLZEvent
  */
 
 /**
- * A request for data was initiated. This can be used for, eg, showing data loading indicators.
+ * A request for new or cached data was initiated. This can be used for, eg, showing data loading indicators.
  * @event data_requested
  * @see event:baseLZEvent
  */
 
 /**
- * A request for new data has completed, and all data has been rendered.
+ * A request for new data has completed, and all data has been rendered in the plot.
  * @event data_rendered
  * @see event:baseLZEvent
  */
 
 /**
- * An action occurred that changed, or could change, the layout
+ * An action occurred that changed, or could change, the layout.
+ *   Many rerendering operations can fire this event and it is somewhat generic: it includes resize, highlight,
+ *   and rerender on new data.
+ * Caution: Direct layout mutations might not be captured by this event. It is deprecated due to its limited utility.
  * @event layout_changed
  * @deprecated
  * @see event:baseLZEvent
  */
 
 /**
- * The user has requested state changes, eg via `plot.applyState`. This reports the original requested values even
- *  if they are overridden by plot logic.
+ * The user has requested any state changes, eg via `plot.applyState`. This reports the original requested values even
+ *  if they are overridden by plot logic. Only triggered when a state change causes a re-render.
  * @event state_changed
  * @property {object} data The set of all state changes requested
  * @see event:baseLZEvent
- * @see region_changed
+ * @see {@link event:region_changed} for a related event that provides more accurate information in some cases
  */
 
 /**
@@ -88,18 +91,19 @@ const default_layout = {
  * @event element_selection
  * @property {object} data An object with keys { element, active }, representing the datum bound to the element and the
  *   selection status (boolean)
+ * @see {@link event:element_clicked} if you are interested in tracking clicks that result in other behaviors, like links
  * @see event:baseLZEvent
  */
 
 /**
- * Indicates whether an element was clicked.
+ * Indicates whether an element was clicked. (regardless of the behavior associated with clicking)
  * @event element_clicked
- * @see {@link event:element_selection} for a more specific and frequently useful event
+ * @see {@link event:element_selection} for a more specific and more frequently useful event
  * @see event:baseLZEvent
  */
 
 /**
- * Indicate whether a match was requested from within the data layer.
+ * Indicate whether a match was requested from within a data layer.
  * @event match_requested
  * @property {object} data An object of `{value, active}` representing the scalar value to be matched and whether a match is
  *   being initiated or canceled
@@ -300,20 +304,11 @@ class Plot {
 
         /**
          * Known event hooks that the panel can respond to
+         * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
-        this.event_hooks = {
-            'layout_changed': [],  // Many rerendering operations, including dimensions changed, element highlighted, or rerender on chanegd data. Caution: Direct layout mutations might not be captured by this event.
-            'data_requested': [], // A request has been made for new data from any data adapter used in the plot
-            'data_rendered': [],  // Data from a request has been received and rendered in the plot
-            'element_clicked': [], // Select or unselect
-            'element_selection': [], // Element becomes active (only)
-            'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
-            'panel_removed': [],  // A panel has been removed (eg via the "x" button in plot)
-            'region_changed': [], // The viewing region (chr/start/end) has been changed
-            'state_changed': [],  // Only triggered when a state change causes rerender
-        };
+        this.event_hooks = {};
 
         /**
          * @callback eventCallback
@@ -343,33 +338,27 @@ class Plot {
      * There are several events that a LocusZoom plot can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
      *
-     * The following plot-level events are currently supported:
-     *   - `layout_changed` - context: plot - Any aspect of the plot's layout (including dimensions or state) has changed.
-     *   - `data_requested` - context: plot - A request for new data from any data source used in the plot has been made.
-     *   - `data_rendered` - context: plot - Data from a request has been received and rendered in the plot.
-     *   - `element_clicked` - context: plot - A data element in any of the plot's data layers has been clicked.
-     *   - `element_selection` - context: plot - Triggered when an element changes "selection" status, and identifies
-     *        whether the element is being selected or deselected.
-     *
      * To register a hook for any of these events use `plot.on('event_name', function() {})`.
      *
      * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
-     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
-     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
-     *   plot itself, but when element_clicked is emitted the context for this in the event hook will be the element
-     *   that was clicked.
+     *   were registered.
      *
      * @public
-     * @param {String} event The name of an event (as defined in `event_hooks`)
+     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @param {String} event The name of an event. Consult documentation for the names of built-in events.
      * @param {eventCallback} hook
      * @returns {function} The registered event listener
      */
     on(event, hook) {
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
+        if (typeof event !== 'string') {
+            throw new Error(`Unable to register event hook. Event name must be a string: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
+        }
+        if (!this.event_hooks[event]) {
+            // We do not validate on known event names, because LZ is allowed to track and emit custom events like "widget button clicked".
+            this.event_hooks[event] = [];
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -378,13 +367,14 @@ class Plot {
     /**
      * Remove one or more previously defined event listeners
      * @public
+     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
      * @param {String} event The name of an event (as defined in `event_hooks`)
      * @param {eventCallback} [hook] The callback to deregister
      * @returns {Plot}
      */
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
-        if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+        if (typeof event != 'string' || !Array.isArray(theseHooks)) {
             throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
@@ -405,6 +395,7 @@ class Plot {
     /**
      * Handle running of event hooks when an event is emitted
      * @public
+     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} eventData Data or event description that will be passed to the event listener
      * @returns {Plot}
@@ -412,8 +403,11 @@ class Plot {
     emit(event, eventData) {
         // TODO: there are small differences between the emit implementation between plots and panels. In the future,
         //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+        if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
+        } else if (!this.event_hooks[event]) {
+            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
+            return this;
         }
         const sourceID = this.getBaseId();
         this.event_hooks[event].forEach((hookToRun) => {
@@ -655,7 +649,7 @@ class Plot {
      * @public
      * @param {Object} state_changes
      * @returns {Promise} A promise that resolves when all data fetch and update operations are complete
-     * @listen event:match_requested
+     * @listens event:match_requested
      * @fires event:data_requested
      * @fires event:layout_changed
      * @fires event:data_rendered

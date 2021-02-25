@@ -2,6 +2,7 @@ import DataSources from '../../../esm/data';
 import * as d3 from 'd3';
 import {populate} from '../../../esm/helpers/display';
 import {assert} from 'chai';
+import sinon from 'sinon';
 
 
 describe('Toolbar widgets', function () {
@@ -91,6 +92,23 @@ describe('Toolbar widgets', function () {
             const target = this.widget._getTarget();
             assert.equal(this.data_layer.layout.filters.length, 1, 'No second filter created');
             assert.deepEqual(target, {field: 'd:a', operator: '!=', value: 5}, 'Updates filter with new value');
+        });
+
+        it('sends an event when the widget is updated', function () {
+            const widget_spy = sinon.spy();
+            this.plot.on('widget_filter_field_action', widget_spy);
+            this.plot.on('custom_name', widget_spy);
+
+            this.widget._setFilter(12);
+
+            const expected = {field: 'd:a', operator: '!=', value: 12, filter_id: null};
+            assert.ok(widget_spy.calledOnce, 'Widget event was fired');
+            assert.deepEqual(widget_spy.firstCall.args[0].data, expected, 'Filter widget fired an event');
+
+            this.widget._event_name = 'custom_name';
+            this.widget._setFilter(12);
+            assert.ok(widget_spy.calledTwice, 'Widget event was fired again, under the custom event name');
+            assert.deepEqual(widget_spy.secondCall.args[0].data, expected, 'Filter widget fired an event under a custom name');
         });
 
         it('finds a specific filter (by id field) when more than one with same operation is used', function() {

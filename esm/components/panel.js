@@ -275,17 +275,11 @@ class Panel {
 
         /**
          * Known event hooks that the panel can respond to
+         * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
          * @protected
          * @member {Object}
          */
-        this.event_hooks = {
-            'layout_changed': [],
-            'data_requested': [],
-            'data_rendered': [],
-            'element_clicked': [],
-            'element_selection': [],
-            'match_requested': [], // A data layer is attempting to highlight matching points (internal use only)
-        };
+        this.event_hooks = {};
 
         // Initialize the layout
         this.initializeLayout();
@@ -297,34 +291,28 @@ class Panel {
      * There are several events that a LocusZoom panel can "emit" when appropriate, and LocusZoom supports registering
      *   "hooks" for these events which are essentially custom functions intended to fire at certain times.
      *
-     * The following panel-level events are currently supported:
-     *   - `layout_changed` - context: panel - Any aspect of the panel's layout (including dimensions or state) has changed.
-     *   - `data_requested` - context: panel - A request for new data from any data adapter used in the panel has been made.
-     *   - `data_rendered` - context: panel - Data from a request has been received and rendered in the panel.
-     *   - `element_clicked` - context: panel - A data element in any of the panel's data layers has been clicked.
-     *   - `element_selection` - context: panel - Triggered when an element changes "selection" status, and identifies
-     *        whether the element is being selected or deselected.
-     *
      * To register a hook for any of these events use `panel.on('event_name', function() {})`.
      *
      * There can be arbitrarily many functions registered to the same event. They will be executed in the order they
-     *   were registered. The this context bound to each event hook function is dependent on the type of event, as
-     *   denoted above. For example, when data_requested is emitted the context for this in the event hook will be the
-     *   panel itself, but when element_clicked is emitted the context for this in the event hook will be the element
-     *   that was clicked.
+     *   were registered.
      *
      * @public
-     * @param {String} event The name of the event (as defined in `event_hooks`)
+     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
+     * @param {String} event The name of the event. Consult documentation for the names of built-in events.
      * @param {function} hook
      * @returns {function} The registered event listener
      */
     on(event, hook) {
         // TODO: Dry plot and panel event code into a shared mixin
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
-            throw new Error(`Unable to register event hook, invalid event: ${event.toString()}`);
+        if (typeof event !== 'string') {
+            throw new Error(`Unable to register event hook. Event name must be a string: ${event.toString()}`);
         }
         if (typeof hook != 'function') {
             throw new Error('Unable to register event hook, invalid hook function passed');
+        }
+        if (!this.event_hooks[event]) {
+            // We do not validate on known event names, because LZ is allowed to track and emit custom events like "widget button clicked".
+            this.event_hooks[event] = [];
         }
         this.event_hooks[event].push(hook);
         return hook;
@@ -339,7 +327,7 @@ class Panel {
      */
     off(event, hook) {
         const theseHooks = this.event_hooks[event];
-        if (typeof 'event' != 'string' || !Array.isArray(theseHooks)) {
+        if (typeof event != 'string' || !Array.isArray(theseHooks)) {
             throw new Error(`Unable to remove event hook, invalid event: ${event.toString()}`);
         }
         if (hook === undefined) {
@@ -364,6 +352,7 @@ class Panel {
      *   argument can be a boolean to control bubbling
      *
      * @public
+     * @see {@link event:baseLZEvent} for a list of pre-defined events commonly used by LocusZoom
      * @param {string} event A known event name
      * @param {*} [eventData] Data or event description that will be passed to the event listener
      * @param {boolean} [bubble=false] Whether to bubble the event to the parent
@@ -374,7 +363,7 @@ class Panel {
 
         // TODO: DRY this with the parent plot implementation. Ensure interfaces remain compatible.
         // TODO: Improve documentation for overloaded method signature (JSDoc may have trouble here)
-        if (typeof 'event' != 'string' || !Array.isArray(this.event_hooks[event])) {
+        if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
         }
         if (typeof eventData === 'boolean' && arguments.length === 2) {
@@ -384,12 +373,18 @@ class Panel {
         }
         const sourceID = this.getBaseId();
         const eventContext = { sourceID: sourceID, target: this, data: eventData || null };
-        this.event_hooks[event].forEach((hookToRun) => {
-            // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
-            // registered as a handler, the previously bound `this` will override anything provided to `call` below.
-            hookToRun.call(this, eventContext);
-        });
+
+        if (this.event_hooks[event]) {
+            // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
+            this.event_hooks[event].forEach((hookToRun) => {
+                // By default, any handlers fired here will see the panel as the value of `this`. If a bound function is
+                // registered as a handler, the previously bound `this` will override anything provided to `call` below.
+                hookToRun.call(this, eventContext);
+            });
+        }
+
         if (bubble && this.parent) {
+            // Even if this event has no listeners locally, it might still have listeners on the parent
             this.parent.emit(event, eventContext);
         }
         return this;
