@@ -418,10 +418,20 @@ class Scatter extends BaseDataLayer {
     }
 
     /**
+     * A new LD reference variant has been selected (usually by clicking within a GWAS scatter plot)
+     *   This event only fires for manually selected variants. It does not fire if the LD reference variant is
+     *   automatically selected (eg by choosing the most significant hit in the region)
+     * @event set_ldrefvar
+     * @property {object} data { ldrefvar } The variant identifier of the LD reference variant
+     * @see event:baseLZEvent
+     */
+
+    /**
      * Method to set a passed element as the LD reference variant in the plot-level state. Triggers a re-render
      *   so that the plot will update with the new LD information.
      * This is useful in tooltips, eg the "make LD reference" action link for GWAS scatter plots.
      * @param {object} element The data associated with a particular plot element
+     * @fires event:set_ldrefvar
      * @return {Promise}
       */
     makeLDReference(element) {
@@ -439,6 +449,7 @@ class Scatter extends BaseDataLayer {
         } else {
             ref = element.toString();
         }
+        this.parent.emit('set_ldrefvar', { ldrefvar: ref }, true);
         return this.parent_plot.applyState({ ldrefvar: ref });
     }
 }
