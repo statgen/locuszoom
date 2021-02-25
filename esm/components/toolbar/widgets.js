@@ -667,6 +667,16 @@ class Title extends BaseWidget {
     }
 }
 
+
+/**
+ * The filter field widget has triggered an update to the plot filtering rules
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_filter_field_action
+ * @property {Object} data { field, operator, value, filter_id }
+ * @see event:baseLZEvent
+ */
+
 /**
  * @alias module:LocusZoom_Widgets~filter_field
  */
@@ -681,6 +691,7 @@ class FilterField extends BaseWidget {
      * @param {number} [layout.input_size=4] How wide to make the input textbox (number characters shown at a time)
      * @param {('number'|'string')} [layout.data_type='number'] Convert the text box input to the specified type, and warn the
      *  user if the value would be invalid (eg, not numeric)
+     * @param {string} [layout.custom_event_name='widget_filter_field_action'] The name of the event that will be emitted when this filter is updated
      */
     constructor(layout, parent) {
         super(layout, parent);
@@ -694,6 +705,7 @@ class FilterField extends BaseWidget {
             throw new Error(`Filter widget could not locate the specified layer_name: '${layout.layer_name}'`);
         }
 
+        this._event_name = layout.custom_event_name || 'widget_filter_field_action';
         this._field = layout.field;
         this._field_display_html = layout.field_display_html;
         this._operator = layout.operator;
@@ -732,7 +744,10 @@ class FilterField extends BaseWidget {
         }
     }
 
-    /** Set the filter based on a provided value */
+    /**
+     * Set the filter based on a provided value
+     * @fires event:widget_filter_field_action
+     */
     _setFilter(value) {
         if (value === null) {
             // On blank or invalid value, remove the filter & warn
@@ -744,6 +759,7 @@ class FilterField extends BaseWidget {
             const filter = this._getTarget();
             filter.value = value;
         }
+        this.parent_svg.emit(this._event_name, { field: this._field, operator: this._operator, value, filter_id: this._filter_id }, true);
     }
 
     /** Get the user-entered value, coercing type if necessary. Returns null for invalid or missing values.
@@ -798,6 +814,24 @@ class FilterField extends BaseWidget {
 }
 
 /**
+ * The user has asked to download the plot as an SVG image
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_download_svg
+ * @property {Object} data { filename }
+ * @see event:baseLZEvent
+ */
+
+/**
+ * The user has asked to download the plot as a PNG image
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_download_png
+ * @property {Object} data { filename }
+ * @see event:baseLZEvent
+ */
+
+/**
  * Button to export current plot to an SVG image
  * @alias module:LocusZoom_Widgets~download_svg
  * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
@@ -807,12 +841,14 @@ class DownloadSVG extends BaseWidget {
      * @param {string} [layout.button_html="Download SVG"]
      * @param {string} [layout.button_title="Download hi-res image"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
+     * @param {string} [layout.custom_event_name='widget_download_svg'] The name of the event that will be emitted when the button is clicked
      */
     constructor(layout, parent) {
         super(layout, parent);
         this._filename = this.layout.filename || 'locuszoom.svg';
         this._button_html = this.layout.button_html || 'Save SVG';
         this._button_title = this.layout.button_title || 'Download hi-res image';
+        this._event_name = layout.custom_event_name || 'widget_download_svg';
     }
 
     update() {
@@ -846,7 +882,8 @@ class DownloadSVG extends BaseWidget {
         this.button.show();
         this.button.selector
             .attr('href-lang', 'image/svg+xml')
-            .attr('download', this._filename);
+            .attr('download', this._filename)
+            .on('click', () => this.parent_svg.emit(this._event_name, { filename: this._filename }, true));
         return this;
     }
 
@@ -971,6 +1008,7 @@ class DownloadPNG extends DownloadSVG {
      * @param {string} [layout.button_html="Download PNG"]
      * @param {string} [layout.button_title="Download image"]
      * @param {string} [layout.filename="locuszoom.svg"] The default filename to use when saving the image
+     * @param {string} [layout.custom_event_name='widget_download_png'] The name of the event that will be emitted when the button is clicked
      * @see {@link module:LocusZoom_Widgets~BaseWidget} for additional options
      */
     constructor(layout, parent) {
@@ -978,6 +1016,7 @@ class DownloadPNG extends DownloadSVG {
         this._filename = this.layout.filename || 'locuszoom.png';
         this._button_html = this.layout.button_html || 'Save PNG';
         this._button_title = this.layout.button_title || 'Download image';
+        this._event_name = layout.custom_event_name || 'widget_download_png';
     }
 
     /**
@@ -1296,6 +1335,15 @@ class ToggleLegend extends BaseWidget {
  */
 
 /**
+ * The user has chosen a specific display option to show information on the plot
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_display_options_choice
+ * @property {Object} data {choice} The display_name of the item chosen from the list
+ * @see event:baseLZEvent
+ */
+
+/**
  * Dropdown menu allowing the user to choose between different display options for a single specific data layer
  *  within a panel.
  *
@@ -1321,7 +1369,7 @@ class DisplayOptions extends BaseWidget {
      *   When the button is first created, all fields in the whitelist will have their default values saved, so the user can revert to the default view easily.
      * @param {module:LocusZoom_Widgets~DisplayOptionsButtonConfigField[]} layout.options Specify a label and set of layout directives associated
      *  with this `display` option. Display field should include all changes that will be merged to datalayer layout options.
-     * @param parent
+     * @param {string} [layout.custom_event_name='widget_display_options_choice'] The name of the event that will be emitted when an option is selected
      */
     constructor(layout, parent) {
         if (typeof layout.button_html != 'string') {
@@ -1331,6 +1379,7 @@ class DisplayOptions extends BaseWidget {
             layout.button_title = 'Control how plot items are displayed';
         }
         super(...arguments);
+        this._event_name = layout.custom_event_name || 'widget_display_options_choice';
 
         // List of layout fields that this button is allowed to control. This ensures that we don't override any other
         //  information (like plot height etc) while changing point rendering
@@ -1395,6 +1444,7 @@ class DisplayOptions extends BaseWidget {
                             dataLayer.layout[field_name] = has_option ? display_options[field_name] : defaultConfig[field_name];
                         });
 
+                        this.parent_svg.emit(this._event_name, { choice: display_name }, true);
                         this._selected_item = row_id;
                         this.parent_panel.render();
                         const legend = this.parent_panel.legend;
@@ -1428,6 +1478,15 @@ class DisplayOptions extends BaseWidget {
  */
 
 /**
+ * An option has been chosen from the set_state dropdown menu
+ *   Note: The widget can optionally be configured to broadcast this event under an alias (layout.custom_event_name)
+ *
+ * @event widget_set_state_choice
+ * @property {Object} data { choice_name, choice_value, state_field }
+ * @see event:baseLZEvent
+ */
+
+/**
  * Dropdown menu allowing the user to set the value of a specific `state_field` in plot.state
  * This is useful for things (like datasources) that allow dynamic configuration based on global information in state
  *
@@ -1439,6 +1498,7 @@ class DisplayOptions extends BaseWidget {
  * @param {bool} [layout.show_selected=false] Whether to append the selected value to the button label ("LD Population: ALL")
  * @param {string} [layout.state_field] The name of the field in plot.state that will be set by this button
  * @param {module:LocusZoom_Widgets~SetStateOptionsConfigField[]} layout.options Specify human labels and associated values for the dropdown menu
+ * @param {string} [layout.custom_event_name='widget_set_state_choice'] The name of the event that will be emitted when an option is selected
  */
 class SetState extends BaseWidget {
     constructor(layout, parent) {
@@ -1457,6 +1517,8 @@ class SetState extends BaseWidget {
         if (!layout.state_field) {
             throw new Error('Must specify the `state_field` that this widget controls');
         }
+
+        this._event_name = layout.custom_event_name || 'widget_set_state_choice';
 
         /**
          * Which item in the menu is currently selected. (track for rerendering menu)
@@ -1504,6 +1566,8 @@ class SetState extends BaseWidget {
                         this._selected_item = value;
                         this.parent_plot.applyState(new_state);
                         this.button.setHtml(layout.button_html + (layout.show_selected ? this._selected_item : ''));
+
+                        this.parent_svg.emit(this._event_name, { choice_name: display_name, choice_value: value, state_field: layout.state_field }, true);
                     });
                 row.append('td').append('label')
                     .style('font-weight', 'normal')
