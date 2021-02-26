@@ -411,9 +411,10 @@ class Plot {
     emit(event, eventData) {
         // TODO: there are small differences between the emit implementation between plots and panels. In the future,
         //  DRY this code via mixins, and make sure to keep the interfaces compatible when refactoring.
+        const these_hooks = this.event_hooks[event];
         if (typeof event != 'string') {
             throw new Error(`LocusZoom attempted to throw an invalid event: ${event.toString()}`);
-        } else if (!this.event_hooks[event]) {
+        } else if (!these_hooks && !this.event_hooks['any_lz_event']) {
             // If the tree_fall event is emitted in a forest and no one is around to hear it, does it really make a sound?
             return this;
         }
@@ -426,12 +427,15 @@ class Plot {
         } else {
             eventContext = {sourceID: sourceID, target: this, data: eventData || null};
         }
-        this.event_hooks[event].forEach((hookToRun) => {
-            // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
-            //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
-            //  override anything provided to `call` below.
-            hookToRun.call(this, eventContext);
-        });
+        if (these_hooks) {
+            // This event may have no hooks, but we could be passing by on our way to any_lz_event (below)
+            these_hooks.forEach((hookToRun) => {
+                // By default, any handlers fired here (either directly, or bubbled) will see the plot as the
+                //  value of `this`. If a bound function is registered as a handler, the previously bound `this` will
+                //  override anything provided to `call` below.
+                hookToRun.call(this, eventContext);
+            });
+        }
 
         // At the plot level (only), all events will be re-emitted under the special name "any_lz_event"- a single place to
         //  globally listen to every possible event.

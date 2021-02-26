@@ -536,6 +536,17 @@ describe('LocusZoom.Plot', function() {
             sinon.assert.calledWithMatch(spy.secondCall, Object.assign(baseExpected, {event_name: 'custom_event'}));
         });
 
+        it('allows catch-all events even without a more specific listener', function () {
+            const fixture = new Plot('hi', {}, {});
+            const spy = sinon.spy();
+
+            fixture.on('any_lz_event', spy);
+            fixture.emit('custom_event', { thing1: 'redfish', thing2: 'bluefish'});
+            assert.ok(spy.calledOnce, 'Event listener was called only as a catchall');
+            sinon.assert.calledWithMatch(spy.firstCall, {event_name: 'custom_event'});
+        });
+
+
         describe('allows communication between layers via match events', function () {
             beforeEach(function() {
                 this.plot = null;
